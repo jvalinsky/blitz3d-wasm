@@ -3,8 +3,8 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const WASMErrorCapture = require('./lib/wasm-error-capture');
+const EnhancedPerformanceMonitor = require('./lib/enhanced-performance-monitor');
 
-// Configuration
 const PORT = 8080;
 const TESTS = [
     { name: "Banks Test", url: `http://localhost:${PORT}/Tests/IntegrationTests/Assets/index.html`, expected: ["Value: 123", "Size: 20"], checkWASMErrors: true },
@@ -32,6 +32,10 @@ async function startServer() {
 
 async function runTest(test, browser, errorCapture) {
     const page = await browser.newPage();
+    const perfMonitor = new EnhancedPerformanceMonitor();
+    
+    await perfMonitor.initialize(page);
+    await perfMonitor.startMonitoring();
     
     // Initialize error capture for this page
     await errorCapture.initialize(page);
@@ -52,7 +56,8 @@ async function runTest(test, browser, errorCapture) {
         error: null,
         logs: [],
         errors: [],
-        wasmResults: null
+        wasmResults: null,
+        performanceMetrics: null
     };
 
     try {
@@ -143,6 +148,16 @@ async function runTest(test, browser, errorCapture) {
         testResult.endTime = Date.now();
         testResult.logs = logs;
         
+        // Capture performance metrics if monitoring
+        try {
+            const isClosed = await page.isClosed();
+            if (!isClosed && perfMonitor.isMonitoring) {
+                testResult.performanceMetrics = await perfMonitor.stopMonitoring();
+            }
+        } catch (e) {
+            console.log(`Failed to capture performance metrics: ${e.message}`);
+        }
+        
         // Capture comprehensive error results
         if (test.checkWASMErrors) {
             try {
@@ -210,8 +225,11 @@ async function runTests() {
         errorCapture.reset();
     }
 
-    // Generate comprehensive report
-    await generateReports(testResults, reportsDir);
+        // Generate summary report
+        await generateReports(testResults, reportsDir);
+        
+        // Generate performance report if metrics were collected
+        await generatePerformanceReport(testResults, reportsDir);
 
     await browser.close();
     serverProcess.kill();
@@ -285,6 +303,45 @@ async function generateReports(testResults, reportsDir) {
     const textReportPath = path.join(reportsDir, `test-report-${timestamp}.txt`);
     fs.writeFileSync(textReportPath, textReport);
     console.log(`Text report saved: ${textReportPath}`);
+}
+
+async function generatePerformanceReport(testResults, reportsDir) {
+    const testsWithMetrics = testResults.filter(r => r.performanceMetrics);
+    
+    if (testsWithMetrics.length === 0) {
+        console.log('\nNo performance metrics collected (requires --enhanced flag or browser environment)');
+        return;
+    }
+    
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    let perfReport = `=== WASM Performance Report ===\n`;
+    perfReport += `Generated: ${new Date().toISOString()}\n\n`;
+    
+    perfReport += `Tests with metrics: ${testsWithMetrics.length}/${testResults.length}\n\n`;
+    
+    testsWithMetrics.forEach(result => {
+        perfReport += `--- ${result.name} ---\n`;
+        perfReport += `Total Load Time: ${result.performanceMetrics.totalLoadTime.toFixed(2)}ms\n`;
+        
+        if (result.performanceMetrics.phases.fetchDuration) {
+            perfReport += `Download Time: ${result.performanceMetrics.phases.fetchDuration.toFixed(2)}ms\n`;
+        }
+        if (result.performanceMetrics.phases.compileDuration) {
+            perfReport += `Compile Time: ${result.performanceMetrics.phases.compileDuration.toFixed(2)}ms\n`;
+        }
+        
+        if (result.performanceMetrics.bottlenecks.length > 0) {
+            perfReport += `Bottlenecks:\n`;
+            result.performanceMetrics.bottlenecks.forEach(b => {
+                perfReport += `  - [${b.severity}] ${b.message}\n`;
+            });
+        }
+        perfReport += '\n';
+    });
+    
+    const perfReportPath = path.join(reportsDir, `performance-report-${timestamp}.txt`);
+    fs.writeFileSync(perfReportPath, perfReport);
+    console.log(`Performance report saved: ${perfReportPath}`);
 
     // Generate detailed WASM error reports
     testResults.forEach(result => {

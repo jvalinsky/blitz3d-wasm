@@ -1,0 +1,458 @@
+# Blitz3D Basic Skill
+
+A comprehensive skill for working with the Blitz3D Basic programming language implemented in the Blitz3D WASM Compiler.
+
+## When to Use
+
+Use this skill when:
+- Writing or editing `.bb` source files
+- Understanding Blitz3D language constructs
+- Working with the compiler's lexer/parser
+- Converting existing Blitz3D code to this WASM implementation
+- Debugging language-specific issues
+
+## Language Overview
+
+Blitz3D Basic is a case-insensitive, BASIC-like language designed for game development with a focus on 3D graphics. Key characteristics:
+
+- **Case insensitive**: `Print`, `PRINT`, `print` all work
+- **Type suffixes**: `var%` (integer), `var#` (float), `var$` (string)
+- **No parentheses required**: `Print "hello"` instead of `Print("hello")  
+- **Colon separators**: Multiple statements per line: `x = 1 : y = 2`
+- **Backslash field access**: `obj\field` for type member access
+
+## Data Types
+
+### Built-in Types
+
+| Suffix | Type | Description |
+|--------|------|-------------|
+| `%` or `Int()` | Integer | 32-bit signed integer |
+| `#` or `Float()` | Float | 32-bit floating point |
+| `$` or `Str()` | String | Text string |
+
+### Type Examples
+
+```basic
+age% = 25           ; Integer
+price# = 19.99      ; Float
+name$ = "John"      ; String
+
+age = Int(25)       ; Explicit cast
+price = Float("19.99")
+```
+
+### Custom Types (OOP-like)
+
+```basic
+Type TPlayer
+    Field x#, y#, z#           ; Position
+    Field health               ; Integer
+    Field name$                ; String
+    Field entity               ; 3D entity handle
+End Type
+
+; Create instance
+p.TPlayer = New TPlayer
+p\x = 10.0
+p\y = 0.0
+p\z = -50.0
+p\health = 100
+p\name$ = "Hero"
+
+; Iterate through all instances
+For p.TPlayer = Each TPlayer
+    Print p\name$ + " health: " + p\health
+Next
+
+; Delete instance
+Delete p.TPlayer
+
+; Traversal
+first.TPlayer = First TPlayer
+last.TPlayer = Last TPlayer
+prev.TPlayer = Before(p)
+next.TPlayer = After(p)
+```
+
+### Variable Scope
+
+```basic
+Local x = 1           ; Function-local (default)
+Global y = 2          ; Program-wide
+Const PI = 3.14159    ; Compile-time constant
+Dim array(10)         ; Array declaration
+```
+
+## Control Flow
+
+### If Statements
+
+```basic
+; Single-line If
+If x = 1 Then Print "one" Else Print "not one"
+
+; Multi-line If
+If x = 1 Then
+    Print "one"
+ElseIf x = 2 Then
+    Print "two"
+Else
+    Print "other"
+EndIf
+
+; One-line with multiple statements (colon-separated)
+If health <= 0 Then Die : Print "Game Over"
+```
+
+### Select Case
+
+```basic
+Select score
+    Case 100
+        Print "Perfect!"
+    Case 90 To 99
+        Print "A grade"
+    Case 80 To 89
+        Print "B grade"
+    Default
+        Print "Keep trying"
+End Select
+```
+
+### Loops
+
+```basic
+; For loop
+For i = 1 To 10 Step 2
+    Print i
+Next
+
+; While loop
+While Not KeyDown(1)  ; ESC to exit
+    UpdateGame
+Wend
+
+; Repeat until
+Repeat
+    DrawFrame
+Until KeyHit(1)
+
+; Infinite loop with Exit
+Repeat
+    AnimateSprite
+    Flip
+Forever
+
+; Exit from loop
+For i = 1 To 100
+    If i = 50 Then Exit
+Next
+```
+
+### Goto and Gosub
+
+```basic
+Goto start_label
+
+.start_label
+Print "Starting..."
+
+; Subroutine
+Gosub init_sound
+Print "Done"
+End
+
+.init_sound
+FSOUND_Init 44100, 32, 0
+Return
+```
+
+## Data Statements
+
+### Inline Data
+
+```basic
+; Data inside or outside functions
+Data 1, 2, 3, "hello", 4.5, "world"
+
+; With type suffixes in Data
+Data 100%, 3.14#, "text$"
+
+; Read in function (requires collectDataStatements())
+Function LoadEnemies()
+    Local count = 3
+    Restore enemy_data
+    For i = 1 To count
+        Read name$, x#, y#, health
+        ; ... create enemy
+    Next
+End Function
+
+.enemy_data
+Data "Goblin", 10.0, 0.0, 50
+Data "Orc", 25.0, 0.0, 100
+Data "Dragon", 100.0, 20.0, 500
+```
+
+## Operators
+
+### Arithmetic
+
+```basic
++   ; Addition
+-   ; Subtraction
+*   ; Multiplication
+/   ; Division
+Mod ; Modulo
+Abs ; Absolute value
+Sgn ; Sign (-1, 0, 1)
+```
+
+### Comparison
+
+```basic
+=   ; Equal
+<>  ; Not equal
+<   ; Less than
+>   ; Greater than
+<=  ; Less than or equal
+>=  ; Greater than or equal
+```
+
+### Logical/Bitwise
+
+```basic
+And ; Logical/bitwise AND
+Or  ; Logical/bitwise OR
+Xor ; Bitwise XOR
+Not ; Logical negation
+Shl ; Shift left
+Shr ; Shift right
+Sar ; Shift arithmetic right
+```
+
+## Built-in Functions
+
+### Graphics (3D)
+
+```basic
+; Setup
+Graphics3D 800, 600, 32, 2    ; width, height, depth, mode
+SetBuffer BackBuffer()
+Cls
+Flip
+
+; 3D Objects
+camera = CreateCamera([parent])
+light = CreateLight([type])    ; 0=Directional, 1=Point, 2=Spot
+cube = CreateCube([parent])
+sphere = CreateSphere([segments, parent])
+cone = CreateCone([segments, parent])
+plane = CreatePlane([segments, parent])
+
+; Mesh Loading
+mesh = LoadMesh("model.b3d")
+anim_mesh = LoadAnimMesh("animated.b3d")
+
+; Transform
+PositionEntity entity, x, y, z
+RotateEntity entity, pitch, yaw, roll
+ScaleEntity entity, x, y, z
+MoveEntity entity, x, y, z
+TurnEntity entity, x, y, z
+
+; Get transforms
+EntityX(entity), EntityY(entity), EntityZ(entity)
+EntityPitch(entity), EntityYaw(entity), EntityRoll(entity)
+
+; Animation
+Animate mesh, mode, speed, from, to
+; mode: 0=loop, 1=play once, 2=ping-pong
+AnimTime(mesh)
+AnimLength(mesh)
+Animating(mesh)
+```
+
+### Input
+
+```basic
+; Keyboard
+KeyDown(1)     ; ESC key code
+KeyHit(1)      ; Pressed this frame
+
+; Mouse
+MouseX(), MouseY(), MouseZ()
+MouseDown(0)   ; Left button
+MouseHit(0)    ; Left button pressed
+MouseXSpeed(), MouseYSpeed()
+HidePointer()
+ShowPointer()
+MoveMouse x, y
+```
+
+### Physics/Collisions
+
+```basic
+; Collision setup
+EntityType entity, type_id          ; 1-65535
+EntityRadius entity, radius, height
+Collisions src_type, tgt_type, method, response
+; method: 1=box, 2=sphere, 3= capsule
+; response: 0=none, 1=stop, 2=slide
+
+; Update
+UpdateWorld time_step
+
+; Query
+CountCollisions(entity)
+CollisionX(n), CollisionY(n), CollisionZ(n)
+CollisionEntity(n)
+```
+
+### File I/O
+
+```basic
+; Read
+file = ReadFile("data.txt")
+If file = 0 Then Print "Error opening file"
+While Not Eof(file)
+    line$ = ReadLine$(file)
+Wend
+CloseFile file
+
+; Write
+file = WriteFile("output.txt")
+WriteLine file, "Hello"
+WriteInt file, 123
+WriteFloat file, 3.14
+CloseFile file
+
+; Binary read
+ReadByte(file), ReadShort(file), ReadInt(file)
+ReadFloat(file), ReadString(file)
+```
+
+### Memory Banks
+
+```basic
+bank = CreateBank(1024)
+PokeByte bank, 0, 255
+PokeInt bank, 4, 12345
+value = PeekByte(bank, 0)
+ResizeBank bank, 2048
+FreeBank bank
+```
+
+## Common Patterns
+
+### Game Loop
+
+```basic
+Graphics3D 800, 600
+SetBuffer BackBuffer()
+
+; Setup
+camera = CreateCamera()
+PositionEntity camera, 0, 10, -30
+
+light = CreateLight()
+RotateEntity light, 45, 45, 0
+
+cube = CreateCube()
+PositionEntity cube, 0, 0, 0
+
+; Main loop
+While Not KeyHit(1)
+    Cls
+    
+    ; Update
+    RotateEntity cube, 0, 1, 0
+    
+    ; Render
+    RenderWorld
+    
+    Flip
+Wend
+End
+```
+
+### Object Collection
+
+```basic
+Type TParticle
+    Field x#, y#, z#
+    Field vx#, vy#, vz#
+    Field life
+End Type
+
+Function CreateExplosion(x#, y#, z#)
+    For i = 1 To 20
+        p.TParticle = New TParticle
+        p\x = x : p\y = y : p\z = z
+        p\vx = Rnd(-1, 1)
+        p\vy = Rnd(1, 3)
+        p\vz = Rnd(-1, 1)
+        p\life = 60
+    Next
+End Function
+
+Function UpdateParticles()
+    For p.TParticle = Each TParticle
+        p\x = p\x + p\vx
+        p\y = p\y + p\vy
+        p\z = p\vz + p\vz
+        p\life = p\life - 1
+        If p\life <= 0 Then Delete p.TParticle
+    Next
+End Function
+```
+
+## Compiler Notes
+
+### Data Collection
+
+Functions using `Data` statements must call `collectDataStatements()` before any `Restore` or `Read` operations:
+
+```basic
+Function LoadLevel()
+    collectDataStatements()  ; REQUIRED before accessing Data
+    Restore level_data
+    ; ... read data
+End Function
+```
+
+### Type Suffix Parsing
+
+When implementing lexer/parser:
+- Suffixes are part of identifier: `var%`, `var#`, `var$`
+- Suffix affects type inference
+- Also support explicit casts: `Int(x)`, `Float(x)`, `Str(x)`
+
+### Multi-line Statements
+
+Blitz3D uses `EndIf`, `Next`, `Wend`, `Until`, `End Select` to close blocks (not indentation-based).
+
+## Gotchas
+
+1. **Colon vs newline**: Multiple statements on one line use `:`
+2. **Type suffixes in variable names**: `count%` is a different variable from `count`
+3. **Data scope**: Data statements can be anywhere but restore position is global
+4. **String concatenation**: Use `+` not `.` (unlike some BASICs)
+5. **Boolean evaluation**: Zero = False, non-zero = True
+6. **Integer division**: `/` always produces float; use `Int(a/b)` for integer division
+7. **Array indices**: 0-based by default when using `Dim arr(10)` (creates 0-10 = 11 elements)
+
+## Quick Reference
+
+| Category | Key Commands |
+|----------|-------------|
+| Graphics | `Graphics3D`, `CreateCamera`, `CreateLight`, `RenderWorld` |
+| Input | `KeyDown`, `KeyHit`, `MouseX`, `MouseDown` |
+| 3D Transforms | `PositionEntity`, `RotateEntity`, `MoveEntity`, `TurnEntity` |
+| Types | `Type`, `Field`, `New`, `Delete`, `Each` |
+| Loops | `For...Next`, `While...Wend`, `Repeat...Until` |
+| Conditionals | `If...Then...Else...EndIf`, `Select...Case...End Select` |
+| Data | `Data`, `Read`, `Restore` |
+| Files | `ReadFile`, `WriteFile`, `CloseFile` |
+| Memory | `CreateBank`, `PokeByte`, `PeekByte` |

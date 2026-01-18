@@ -1,6 +1,19 @@
 /**
  * WASM Compilation WebWorker
  * Performs WASM compilation in a background thread to avoid blocking the UI
+ * 
+ * Usage:
+ *   const worker = new Worker('lib/wasm-compiler-worker.js');
+ *   worker.postMessage({ url, importObject, id });
+ *   worker.onmessage = (event) => {
+ *     if (event.data.success) {
+ *       const { module, compileTime, totalTime, size } = event.data;
+ *     } else {
+ *       const { error } = event.data;
+ *     }
+ *   };
+ * 
+ * @module wasm-compiler-worker
  */
 
 // Listen for compilation requests

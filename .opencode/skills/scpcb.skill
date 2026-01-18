@@ -1,0 +1,557 @@
+# SCPB Skill
+
+A comprehensive skill for working with the SCP - Containment Breach (SCPCB) game source code.
+
+## When to Use
+
+Use this skill when:
+- Working on SCPB source code (BlitzBasic/.bb files)
+- Porting SCPB to WASM or other platforms
+- Understanding game mechanics and SCP behaviors
+- Modifying game systems (NPCs, maps, items, save/load)
+- Debugging game issues
+- Adding new SCP entities or features
+- Working on the WASM port (scpcb.wat, scpcb.wasm)
+
+## Project Overview
+
+**SCP - Containment Breach** is a survival horror game based on the SCP Foundation fiction. Players escape a facility containing anomalous entities while managing:
+- **Blink system**: Must periodically blink to avoid certain SCPs
+- **Stamina**: Running depletes stamina
+- **Inventory**: Items with drag-and-drop and combination system
+- **Sanity/Injury**: Environmental effects on player
+- **Multiple endings**: Based on choices and survival
+
+### Project Facts
+
+| Attribute | Value |
+|-----------|-------|
+| Language | BlitzBasic (Blitz3D v1.108) |
+| Lines of Code | ~52,000 across 35 .bb files |
+| Version | 1.3.11 |
+| License | CC BY-SA 3.0 |
+| Original Author | Joonas Rikkonen (Regalis) |
+
+## Directory Structure
+
+```
+scpcb/
+├── *.bb              # Main source files (35 files)
+├── *.decls           # DLL interface declarations
+├── GFX/              # Graphics assets
+│   ├── map/          # Room meshes
+│   ├── npcs/         # NPC models
+│   ├── items/        # Item models
+│   ├── menu/         # Menu assets
+│   └── font/         # Fonts
+├── SFX/              # Audio
+│   ├── Music/        # Background music
+│   └── Room/         # Ambient sounds
+├── Data/             # Configuration
+│   ├── rooms.ini     # Room definitions
+│   ├── events.ini    # Event triggers
+│   ├── NPCs.ini      # NPC spawn data
+│   ├── SCP-294.ini   # Drink recipes
+│   └── materials.ini # Material properties
+└── Loadingscreens/   # Loading images
+```
+
+## File Hierarchy (by Complexity)
+
+### Tier 1: Utilities (Easy)
+- **Difficulty.bb** - Difficulty settings
+- **KeyName.bb** - Key mapping constants
+- **CPU_Details.bb** - CPU detection
+- **FMod.bb** - Audio wrapper
+
+### Tier 2: Low Complexity
+- **Blitz_Basic_Bank.bb** - Memory bank helpers
+- **Blitz_File_FileName.bb** - File utilities
+
+### Tier 3: Medium Complexity
+- **StrictLoads.bb** - Safe resource loading with error checking
+- **AAText.bb** - Anti-aliased text rendering
+- **Skybox.bb** - Sky rendering
+- **DevilParticleSystem.bb** - Particle effects
+
+### Tier 4: Graphics & Processing
+- **LightMapPNG.bb** - PNG image processing
+- **Particles.bb** - Particle effects
+- **DrawPortals.bb** - Portal rendering
+
+### Tier 5: Save/Load System
+- **Save.bb** - Complex save/load serialization
+
+### Tier 6: Audio & Video
+- **MusicPlayer.bb** - Background music
+- **LoadAllSounds.bb** - Sound loading
+
+### Tier 7: UI & Menu
+- **Menu.bb** - Main menu, settings, options
+- **Achievements.bb** - Achievement system
+
+### Tier 8: Game Mechanics
+- **Items.bb** - Inventory and item system
+- **Update.bb** - Network updates
+
+### Tier 9: Level System
+- **MapSystem.bb** - Procedural map generation
+
+### Tier 10: AI System
+- **NPCs.bb** - NPC AI with state machines
+
+### Tier 11: Core Game Loop
+- **Main.bb** - Entry point, initialization
+- **UpdateEvents.bb** - Events, SCP behaviors
+
+## SCP Entities
+
+### SCP-173 - The Sculpture
+```blitzbasic
+; Moves only when not observed
+; Can be frozen by eye contact
+; Neck snapping attack
+```
+**Behavior:**
+- Moves when player doesn't blink
+- Speed increases over time
+- Can be observed by other NPCs
+- Teleports to random locations
+
+### SCP-096 - The Shy Guy
+```blitzbasic
+; Killer when viewed
+; Instant death if in view
+;不可阻挡的追猎
+```
+**Behavior:**
+- docile until viewed (screenshot, camera, or direct sight)
+- Screams when disturbed
+- Fast pursuit
+- Can break through doors
+
+### SCP-106 - The Old Man
+```blitzbasic
+; Corrosion attacks
+; Can pull into dimension
+; Slow but dangerous
+```
+**Behavior:**
+- Emerges from walls/floors
+- Causes corrosion damage
+- Can drag player to pocket dimension
+- Telegraphed attacks
+
+### SCP-049 - The Plague Doctor
+```blitzbasic
+; Cures "pestilence"
+; Lethal touch
+; Revival mechanic
+```
+**Behavior:**
+- Approaches player
+- Demands to cure pestilence
+- Touch kills player
+- Can revive as SCP-049-2
+
+### SCP-939 - With Many Voices
+```blitzbasic
+; Predators that mimic voices
+; Pack behavior
+; Multiple instances
+```
+**Behavior:**
+- Mimics voices of other SCPs
+- Pack coordination
+- Cannot see (relies on sound)
+- Fast and aggressive
+
+## Game Systems
+
+### Player Mechanics
+
+```blitzbasic
+; Core player variables (typically in Main.bb or globals)
+Global PlayerRoom%
+Global Collider%
+Global Camera%
+
+; Blink system
+Global BlinkTimer#
+Global BlinkEffect#
+
+; Stamina
+Global Stamina#
+Const MAX_STAMINA = 100.0
+
+; Health and status
+Global Health#
+Global Sanity#
+Global Bleeding%
+
+; Equipment
+GlobalNVG%  ; Night vision goggles
+Global GasMask%
+Global Armor%
+```
+
+### Map System
+
+```blitzbasic
+; Zones
+Const ZONE_LCZ% = 0  ; Light Containment Zone
+Const ZONE_HCZ% = 1  ; Heavy Containment Zone
+Const ZONE_EZ% = 2   ; Entrance Zone
+
+; Room types
+Const ROOM_COMMON% = 0
+Const ROOM_SCP% = 1
+Const ROOM_EXIT% = 2
+```
+
+### Inventory System
+
+```blitzbasic
+Type Items
+    Field obj%
+    Field ItemID%
+    Field Name$
+    Field Description$
+    Field State%      ; 0=normal, 1=used, 2=combined
+    Field State2%
+End Type
+
+; Drag and drop
+; Item combination
+; Keycards and access levels
+```
+
+## Type System Pattern
+
+```blitzbasic
+; Standard SCPCB Type definition
+Type TEntityName
+    Field obj%              ; 3D object handle
+    Field obj2%             ; Secondary object
+    Field Collider%         ; Collision entity
+    Field ID%               ; Unique identifier
+    Field Type%             ; Entity type
+    Field State#            ; Primary state
+    Field State2#           ; Secondary state
+    Field State3#           ; Tertiary state
+    Field Speed#            ; Movement speed
+    Field CurrSpeed#        ; Current speed
+    Field Path.WayPoints[20]  ; Pathfinding waypoints
+    Field PathStatus%       ; Pathfinding state
+    ; ... additional fields
+End Type
+
+; Access patterns
+entity.TEntityName = New TEntityName
+entity\obj = CreateMesh()
+entity\Speed# = 5.0
+entity\ID% = 123
+
+For entity.TEntityName = Each TEntityName
+    UpdateEntity(entity)
+Next
+
+Delete entity.TEntityName
+```
+
+## Configuration Files
+
+### rooms.ini
+```ini
+[room_name]
+name=Room Display Name
+zone=0
+commonness=10
+doors=4
+min_size=2
+max_size=5
+requires=0
+exclude=0
+```
+
+### events.ini
+```ini
+[event_name]
+type=0
+trigger=room
+target=room_id
+timing=0
+```
+
+### SCP-294.ini
+```ini
+[drink_name]
+name=Display Name
+color=255,255,255
+effects=0,0,0
+description=Drink description
+```
+
+## Key Functions
+
+### Game Loop (Main.bb)
+```blitzbasic
+Function Main()
+    ; Check dependencies
+    ; Load configs
+    ; Initialize graphics
+    ; Load assets
+    ; Enter game loop
+End Function
+
+Function GameLoop()
+    UpdatePlayerInput()
+    UpdateNPCs()
+    UpdateEvents()
+    UpdatePhysics()
+    RenderScene()
+    UpdateUI()
+End Function
+```
+
+### NPC System (NPCs.bb)
+```blitzbasic
+Function CreateNPC%(type%)
+    npc.NPCs = New NPCs
+    npc\NPCtype = type
+    npc\obj = LoadMesh("npcs/" + NPCFilename$(type))
+    npc\State = 0  ; Idle state
+    Return Handle(npc)
+End Function
+
+Function UpdateNPCs()
+    For npc.NPCs = Each NPCs
+        Select npc\NPCtype
+            Case NPC_SCP_173: UpdateSCP173(npc)
+            Case NPC_SCP_096: UpdateSCP096(npc)
+            Case NPC_SCP_106: UpdateSCP106(npc)
+            ; ...
+        End Select
+    Next
+End Function
+```
+
+### Save System (Save.bb)
+```blitzbasic
+Function SaveGame(slot%)
+    file = WriteFile("save" + slot + ".sav")
+    ; Write player state
+    WriteInt(file, Health)
+    WriteInt(file, PlayerRoom)
+    WriteInt(file, Stamina)
+    ; Write inventory
+    ; Write NPC states
+    ; Write events
+    CloseFile(file)
+End Function
+
+Function LoadGame(slot%)
+    file = ReadFile("save" + slot + ".sav")
+    ; Read and restore state
+    CloseFile(file)
+End Function
+```
+
+### Map Generation (MapSystem.bb)
+```blitzbasic
+Function GenerateMap()
+    ; Clear existing rooms
+    ; Place starting room
+    ; Loop: place rooms based on connectivity
+    ;   - Check commonness
+    ;   - Verify zone rules
+    ;   - Check door compatibility
+    ; Place doors and connections
+    ; Generate forest if applicable
+End Function
+```
+
+## Coding Conventions
+
+### Naming
+```blitzbasic
+; Functions: PascalCase
+Function CreateNPC()
+Function UpdateEvents()
+Function LoadMaterials()
+
+; Variables: camelCase with type suffix
+Local playerObj%
+Local speed#
+Local name$
+
+; Constants: UPPER_CASE or Prefix
+Const MAX_HEALTH = 100
+Const ZONE_LCZ = 0
+```
+
+### Error Handling
+```blitzbasic
+; Safe loading pattern (StrictLoads.bb)
+Function StrictLoadMesh$(file$)
+    If FileType(file) = 0 Then
+        RuntimeError("Missing file: " + file)
+    End If
+    Return LoadMesh(file)
+End Function
+
+; Error tracking
+Global CatchErrors%[100]
+Global ErrorCount%
+```
+
+### State Machines
+```blitzbasic
+; NPC state machine pattern
+Select npc\State
+    Case STATE_IDLE
+        ; Check for player detection
+        ; Wander behavior
+    Case STATE_CHASE
+        ; Move toward player
+        ; Attack if close
+    Case STATE_ATTACK
+        ; Execute attack
+        ; Return to chase
+    Case STATE_FLEE
+        ; Move away from player
+End Select
+```
+
+## WASM Port Notes
+
+### Virtualization Layer
+The WASM port requires virtualizing Windows API calls:
+
+```blitzbasic
+; Original Windows API call
+kernel32_decls:
+Function GetTickCount%() ...
+
+; Virtualized for WASM
+; Need implementations in runtime.js
+```
+
+### Memory Banks
+SCPCB uses memory banks extensively - see `spec_memory_banks.md`:
+
+```blitzbasic
+; Data collection for save system
+collectDataStatements()
+```
+
+### Critical DLL Dependencies
+
+| DLL | Purpose | WASM Replacement |
+|-----|---------|------------------|
+| fmod.dll | Audio | Web Audio API |
+| zlibwapi.dll | ZIP access | JSZip |
+| FreeImage.dll | Image loading | Canvas/Image |
+| BlitzMovie.dll | Video | HTML5 Video |
+| kernel32.dll | Windows API | JavaScript |
+
+## Common Patterns
+
+### Game Loop Pattern
+```blitzbasic
+While Not AppTerminate
+    ; Update phase
+    UpdatePlayer()
+    UpdateNPCs()
+    UpdateEvents()
+
+    ; Render phase
+    ClearWorld True, True, True
+    RenderWorld
+
+    ; Frame limiting
+    Flip(1)
+Wend
+End
+```
+
+### Player Detection Pattern
+```blitzbasic
+Function CanSeePlayer%(npc)
+    ; Check line of sight
+    ; Check distance
+    ; Check angle
+    ; Check obstacles
+    Return result%
+End Function
+
+Function CanHearPlayer%(npc)
+    ; Check distance
+    ; Check obstacles
+    ; Check movement noise
+    Return result%
+End Function
+```
+
+### Room Transition Pattern
+```blitzbasic
+Function ChangeRoom%(room_id%, door%)
+    ; Save current room state
+    SaveRoomState()
+
+    ; Load new room
+    PlayerRoom = room_id
+    LoadRoom(room_id)
+
+    ; Position player
+    PositionEntity Collider, DoorX(door), DoorY(door), DoorZ(door)
+
+    ; Trigger events
+    TriggerRoomEvents(room_id)
+End Function
+```
+
+## Quick Reference
+
+| Category | Key Files | Key Functions |
+|----------|-----------|---------------|
+| Entry Point | Main.bb | Main(), GameLoop() |
+| Events | UpdateEvents.bb | UpdateEvents(), Event handlers |
+| NPCs | NPCs.bb | CreateNPC(), UpdateNPCs() |
+| Map | MapSystem.bb | GenerateMap(), ChangeRoom() |
+| Save | Save.bb | SaveGame(), LoadGame() |
+| UI | Menu.bb | ShowMenu(), UpdateSettings() |
+| Items | Items.bb | CreateItem(), CombineItems() |
+| Audio | MusicPlayer.bb, LoadAllSounds.bb | PlayMusic(), LoadSounds() |
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Missing assets** - Check paths in StrictLoads.bb
+2. **NPC not moving** - Check state machine and triggers
+3. **Save failures** - Verify memory bank allocation
+4. **Black screen** - Check graphics initialization in Main.bb
+5. **No audio** - Verify FMod initialization
+
+### Debug Patterns
+```blitzbasic
+; Debug output
+Print "Debug: " + variable
+
+; Conditional debug
+If DEBUG_MODE
+    Print stateInfo
+End If
+
+; Frame counter
+Global FrameCount%
+FrameCount = FrameCount + 1
+```
+
+## Resources
+
+- Original repo: https://github.com/Regalis11/scpcb
+- SCP Wiki: http://www.scp-wiki.net/
+- Documentation: docs/ folder
+- WASM files: scpcb.wasm, scpcb.wat

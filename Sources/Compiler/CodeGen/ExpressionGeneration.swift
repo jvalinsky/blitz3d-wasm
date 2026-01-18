@@ -8,52 +8,33 @@
 import Foundation
 
 /// Manages expression compilation and code generation
-public struct ExpressionGeneration {
-    private var module: WASMModule
-    private var typeIndexMap: [String: Int]
-    private var functionIndexMap: [String: Int]
-    
-    // Dependencies
-    private var localVariables: [String: LocalInfo] = [:]
-    private var globalVariables: [String: GlobalInfo] = [:]
-    private var arrayVariables: [String: ArrayInfo] = [:]
-    private var stringLiterals: [String: Int] = [:]
-    private var userTypes: [String: UserTypeInfo] = [:]
-    private var fieldOffsets: [String: [String: Int]] = [:]
-    
+public final class ExpressionGeneration {
+    private var context: ModuleContext
+
     // Type handling
     private let typeHandling = TypeHandling()
-    
-    public init(module: WASMModule, typeIndexMap: [String: Int], functionIndexMap: [String: Int]) {
-        self.module = module
-        self.typeIndexMap = typeIndexMap
-        self.functionIndexMap = functionIndexMap
+
+    public init(context: ModuleContext) {
+        self.context = context
     }
-    
-    /// Configure dependencies
-    public mutating func configure(
-        localVariables: [String: LocalInfo],
-        globalVariables: [String: GlobalInfo],
-        arrayVariables: [String: ArrayInfo],
-        stringLiterals: [String: Int],
-        userTypes: [String: UserTypeInfo],
-        fieldOffsets: [String: [String: Int]]
-    ) {
-        self.localVariables = localVariables
-        self.globalVariables = globalVariables
-        self.arrayVariables = arrayVariables
-        self.stringLiterals = stringLiterals
-        self.userTypes = userTypes
-        self.fieldOffsets = fieldOffsets
+
+    /// Configure dependencies from context
+    public func configure() {
+        // No longer caching variables or function map locally
+    }
+
+    /// Update context after generation (for side effects like adding data)
+    public func updateContext(_ newContext: ModuleContext) {
+        self.context = newContext
     }
     
     /// Generate WASM instructions for an expression
-    public mutating func generate(_ expr: ExpressionNode) -> [WASMInstruction] {
+    public func generate(_ expr: ExpressionNode) -> [WASMInstruction] {
         return generateWithInfo(expr).instrs
     }
     
     /// Generate WASM instructions along with type information
-    public mutating func generateWithInfo(_ expr: ExpressionNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    public func generateWithInfo(_ expr: ExpressionNode) -> (instrs: [WASMInstruction], type: WASMType) {
         switch expr {
         case .integerLiteral(let value):
             return ([.i32Const(Int32(value))], .i32)
@@ -66,10 +47,10 @@ public struct ExpressionGeneration {
             return ([.i32Const(Int32(offset))], .i32)
             
         case .identifier(let id):
-            if let local = localVariables[id.name] {
+            if let local = context.variableManagement.localInfo(for: id.name) {
                 return ([.localGet(local.index)], local.type)
             }
-            if let global = globalVariables[id.name] {
+            if let global = context.variableManagement.globalInfo(for: id.name) {
                 return ([.globalGet(global.index)], global.type)
             }
             // Default to 0 if not found
@@ -95,17 +76,17 @@ public struct ExpressionGeneration {
             
         case .new(let typeName):
             // new TypeName() - allocate instance
-            if let typeInfo = userTypes[typeName] {
+            if context.userTypes[typeName] != nil {
                 // Call allocation function (placeholder)
                 return ([.call(0)], .i32)
             }
             return ([.i32Const(0)], .i32)
             
-        case .first(let typeName):
+        case .first(_):
             // First TypeName - get first instance
             return ([.call(0)], .i32)
             
-        case .last(let typeName):
+        case .last(_):
             // Last TypeName - get last instance
             return ([.call(0)], .i32)
             
@@ -124,7 +105,7 @@ public struct ExpressionGeneration {
             let exprInstrs = generate(expr)
             return (exprInstrs, .i32)
             
-        case .objectCast(let typeName, let expr):
+        case .objectCast(_, let expr):
             // Object.TypeName(handle) - convert handle to instance
             let exprInstrs = generate(expr)
             return (exprInstrs, .i32)
@@ -133,17 +114,26 @@ public struct ExpressionGeneration {
     
     // MARK: - Binary Operations
     
-    private mutating func generateBinaryOp(_ binop: BinaryOpNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateBinaryOp(_ binop: BinaryOpNode) -> (instrs: [WASMInstruction], type: WASMType) {
         let leftResult = generateWithInfo(binop.left)
         let rightResult = generateWithInfo(binop.right)
         
-        var instrs = leftResult.instrs + rightResult.instrs
-        let resultType = typeHandling.resultType(for: binop.op, leftType: leftResult.type, rightType: rightResult.type)
+        let comparisonOps = ["=", "<>", "<", ">", "<=", ">="]
+        let isComparison = comparisonOps.contains(binop.op)
+        
+        let opType = typeHandling.commonType(leftResult.type, rightResult.type)
+        let resultType = isComparison ? .i32 : opType
+        
+        var instrs = leftResult.instrs
+        instrs.append(contentsOf: convert(from: leftResult.type, to: opType))
+        
+        instrs.append(contentsOf: rightResult.instrs)
+        instrs.append(contentsOf: convert(from: rightResult.type, to: opType))
         
         // Generate appropriate instruction based on operator and type
         switch binop.op {
         case "+":
-            switch resultType {
+            switch opType {
             case .i32: instrs.append(.i32Add)
             case .i64: instrs.append(.i64Add)
             case .f32: instrs.append(.f32Add)
@@ -152,7 +142,7 @@ public struct ExpressionGeneration {
             }
             
         case "-":
-            switch resultType {
+            switch opType {
             case .i32: instrs.append(.i32Sub)
             case .i64: instrs.append(.i64Sub)
             case .f32: instrs.append(.f32Sub)
@@ -161,7 +151,7 @@ public struct ExpressionGeneration {
             }
             
         case "*":
-            switch resultType {
+            switch opType {
             case .i32: instrs.append(.i32Mul)
             case .i64: instrs.append(.i64Mul)
             case .f32: instrs.append(.f32Mul)
@@ -170,7 +160,7 @@ public struct ExpressionGeneration {
             }
             
         case "/":
-            switch resultType {
+            switch opType {
             case .i32: instrs.append(.i32DivS)
             case .i64: instrs.append(.i64DivS)
             case .f32: instrs.append(.f32Div)
@@ -182,15 +172,25 @@ public struct ExpressionGeneration {
             instrs.append(.i32RemS)
             
         case "=":
-            instrs.append(.i32Eq)
+            switch opType {
+            case .i32, .i64: instrs.append(.i32Eq)
+            case .f32: instrs.append(.f32Eq)
+            case .f64: instrs.append(.f64Eq)
+            default: break
+            }
             return (instrs, .i32)
             
         case "<>":
-            instrs.append(.i32Ne)
+            switch opType {
+            case .i32, .i64: instrs.append(.i32Ne)
+            case .f32: instrs.append(.f32Ne)
+            case .f64: instrs.append(.f64Ne)
+            default: break
+            }
             return (instrs, .i32)
             
         case "<":
-            switch leftResult.type {
+            switch opType {
             case .i32, .i64: instrs.append(.i32LtS)
             case .f32: instrs.append(.f32Lt)
             case .f64: instrs.append(.f64Lt)
@@ -199,7 +199,7 @@ public struct ExpressionGeneration {
             return (instrs, .i32)
             
         case ">":
-            switch leftResult.type {
+            switch opType {
             case .i32, .i64: instrs.append(.i32GtS)
             case .f32: instrs.append(.f32Gt)
             case .f64: instrs.append(.f64Gt)
@@ -208,7 +208,7 @@ public struct ExpressionGeneration {
             return (instrs, .i32)
             
         case "<=":
-            switch leftResult.type {
+            switch opType {
             case .i32, .i64: instrs.append(.i32LeS)
             case .f32: instrs.append(.f32Le)
             case .f64: instrs.append(.f64Le)
@@ -217,7 +217,7 @@ public struct ExpressionGeneration {
             return (instrs, .i32)
             
         case ">=":
-            switch leftResult.type {
+            switch opType {
             case .i32, .i64: instrs.append(.i32GeS)
             case .f32: instrs.append(.f32Ge)
             case .f64: instrs.append(.f64Ge)
@@ -254,7 +254,7 @@ public struct ExpressionGeneration {
     
     // MARK: - Unary Operations
     
-    private mutating func generateUnaryOp(_ unaryOp: UnaryOpNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateUnaryOp(_ unaryOp: UnaryOpNode) -> (instrs: [WASMInstruction], type: WASMType) {
         let operandResult = generateWithInfo(unaryOp.expression)
         var instrs = operandResult.instrs
         let resultType = typeHandling.resultType(for: unaryOp.op, operandType: operandResult.type)
@@ -284,38 +284,85 @@ public struct ExpressionGeneration {
     
     // MARK: - Function Calls
     
-    private mutating func generateFunctionCall(_ call: FunctionCallNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateFunctionCall(_ call: FunctionCallNode) -> (instrs: [WASMInstruction], type: WASMType) {
         var instrs: [WASMInstruction] = []
         
+        // Map Blitz3D names to internal names
+        var internalName = call.name.lowercased()
+        if internalName.hasSuffix("$") {
+            internalName = String(internalName.dropLast())
+        } else if internalName.hasSuffix("#") {
+            internalName = String(internalName.dropLast())
+        } else if internalName.hasSuffix("%") {
+            internalName = String(internalName.dropLast())
+        }
+        
+        let def = context.functionDefinitions[internalName]
+        
         // Generate argument instructions
-        for arg in call.arguments {
-            let argInstrs = generate(arg)
-            instrs.append(contentsOf: argInstrs)
+        for (i, arg) in call.arguments.enumerated() {
+            let argResult = generateWithInfo(arg)
+            instrs.append(contentsOf: argResult.instrs)
+            
+            if let def = def, i < def.params.count {
+                instrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
+            }
+        }
+        
+        // Push default values for missing optional parameters
+        if let def = def, call.arguments.count < def.params.count {
+            for i in call.arguments.count..<def.params.count {
+                let targetType = def.params[i]
+                switch targetType {
+                case .i32, .i64: instrs.append(.i32Const(0))
+                case .f32: instrs.append(.f32Const(0))
+                case .f64: instrs.append(.f64Const(0))
+                default: instrs.append(.i32Const(0))
+                }
+            }
         }
         
         // Call function
-        if let funcIdx = functionIndexMap[call.name] {
+        if let funcIdx = context.functionIndexMap[internalName] {
             instrs.append(.call(Int(funcIdx)))
         } else {
             instrs.append(.call(0)) // Placeholder
         }
         
-        // Assume i32 return type (simplified)
-        return (instrs, .i32)
+        // Determine return type
+        var returnType: WASMType = .i32
+        if let def = def {
+            if let firstResult = def.results.first {
+                returnType = firstResult
+            } else {
+                returnType = .void
+            }
+        } else if call.name.hasSuffix("#") {
+            returnType = .f32
+        } else if ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "sqr", "rnd", "entityx", "entityy", "entityz", "entitypitch", "entityyaw", "entityroll", "entitydistance", "collisionx", "collisiony", "collisionz", "collisionnx", "collisionny", "collisionnz"].contains(internalName) {
+            returnType = .f32
+        }
+        
+        // If the function returns void but is used in an expression, push a dummy 0
+        if returnType == .void {
+            instrs.append(.i32Const(0))
+            returnType = .i32
+        }
+        
+        return (instrs, returnType)
     }
     
     // MARK: - Array Access
     
-    private mutating func generateArrayAccess(_ access: ArrayAccessNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateArrayAccess(_ access: ArrayAccessNode) -> (instrs: [WASMInstruction], type: WASMType) {
         var instrs: [WASMInstruction] = []
         
         // Get array base address
         if case .identifier(let arrayId) = access.array,
-           let array = arrayVariables[arrayId.name] {
+           let array = context.variableManagement.arrayInfo(for: arrayId.name) {
             instrs.append(.i32Const(Int32(array.baseAddress)))
             
             // Calculate offset
-            var currentOffset = 0
             for (index, indexExpr) in access.indices.enumerated() {
                 let indexInstrs = generate(indexExpr)
                 instrs.append(contentsOf: indexInstrs)
@@ -325,12 +372,9 @@ public struct ExpressionGeneration {
                     instrs.append(.i32Const(Int32(array.strides[index])))
                     instrs.append(.i32Mul)
                 }
-                
-                if index > 0 {
-                    instrs.append(.i32Const(Int32(array.strides[index])))
-                    instrs.append(.i32Mul)
-                }
             }
+            
+            instrs.append(.i32Add)
             
             // Load value
             switch array.elementType {
@@ -354,7 +398,7 @@ public struct ExpressionGeneration {
     
     // MARK: - Field Access
     
-    private mutating func generateFieldAccess(_ access: FieldAccessNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateFieldAccess(_ access: FieldAccessNode) -> (instrs: [WASMInstruction], type: WASMType) {
         var instrs: [WASMInstruction] = []
         
         // Get object pointer
@@ -362,19 +406,23 @@ public struct ExpressionGeneration {
         instrs.append(contentsOf: objectInstrs)
         
         // Add field offset
-        // We need to determine the type from the object
-        // This is simplified - a full implementation would track types
-        
-        // Check for known field offsets
-        for (typeName, offsets) in fieldOffsets {
-            if let fieldOffset = offsets[access.field] {
-                instrs.append(.i32Const(Int32(fieldOffset)))
-                instrs.append(.i32Add)
-                
-                // Load field value
-                instrs.append(.i32Load(2, 0))
-                return (instrs, .i32)
+        if let typeName = getTypeName(from: access.object),
+           let fieldOffset = context.fieldOffsets[typeName]?[access.field] {
+            instrs.append(.i32Const(Int32(fieldOffset)))
+            instrs.append(.i32Add)
+            
+            let fieldType = context.userTypes[typeName]?.fieldTypes[access.field] ?? "Int"
+            let wasmType = typeHandling.wasmType(from: fieldType)
+            
+            // Load field value
+            switch wasmType {
+            case .i32: instrs.append(.i32Load(2, 0))
+            case .f32: instrs.append(.f32Load(2, 0))
+            case .i64: instrs.append(.i64Load(2, 0))
+            case .f64: instrs.append(.f64Load(2, 0))
+            default: instrs.append(.i32Load(2, 0))
             }
+            return (instrs, wasmType)
         }
         
         return ([.i32Const(0)], .i32)
@@ -382,7 +430,7 @@ public struct ExpressionGeneration {
     
     // MARK: - Type Cast
     
-    private mutating func generateTypeCast(_ cast: TypeCastNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateTypeCast(_ cast: TypeCastNode) -> (instrs: [WASMInstruction], type: WASMType) {
         let exprInstrs = generate(cast.expression)
         let targetType = typeHandling.typeInfo(from: cast.targetType.rawValue).wasmType
         return (exprInstrs, targetType)
@@ -390,22 +438,67 @@ public struct ExpressionGeneration {
     
     // MARK: - Helper Functions
     
-    private mutating func addStringData(_ str: String) -> Int {
-        // Calculate offset
+    private func convert(from source: WASMType, to target: WASMType) -> [WASMInstruction] {
+        if source == target { return [] }
+        
+        switch (source, target) {
+        case (.i32, .f32): return [.f32ConvertI32S]
+        case (.f32, .i32): return [.i32TruncF32S]
+        case (.i32, .i64): return [.i64ExtendI32S]
+        case (.i64, .i32): return [.i32WrapI64]
+        case (.f32, .f64): return [.f64PromoteF32]
+        case (.f64, .f32): return [.f32DemoteF64]
+        default: return []
+        }
+    }
+    
+    private func getTypeName(from expr: ExpressionNode) -> String? {
+        switch expr {
+        case .identifier(let id):
+            if let local = context.variableManagement.localInfo(for: id.name) {
+                return local.typeName
+            }
+            if let global = context.variableManagement.globalInfo(for: id.name) {
+                return global.typeName
+            }
+        case .fieldAccess(let access):
+            if let objType = getTypeName(from: access.object),
+               let fieldType = context.userTypes[objType]?.fieldTypes[access.field] {
+                return fieldType
+            }
+        case .new(let type):
+            return type
+        case .first(let type):
+            return type
+        case .last(let type):
+            return type
+        case .before(let subExpr):
+            return getTypeName(from: subExpr)
+        case .after(let subExpr):
+            return getTypeName(from: subExpr)
+        case .objectCast(let type, _):
+            return type
+        default:
+            break
+        }
+        return nil
+    }
+
+    private func addStringData(_ str: String) -> Int {
         var bytes: [UInt8] = []
         for char in str.utf8 {
             bytes.append(char)
         }
         bytes.append(0)
-        
+
         var offset = 256
-        for segment in module.data {
+        for segment in context.module.data {
             offset += segment.bytes.count
         }
-        
+
         let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(offset)), bytes: bytes)
-        module.data.append(data)
-        
+        context.module.data.append(data)
+
         return offset
     }
 }

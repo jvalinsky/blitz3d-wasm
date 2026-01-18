@@ -467,14 +467,48 @@ public struct WASMTextWriter {
             return "\(prefix)f64.convert_i64_u\n"
         case .f64PromoteF32:
             return "\(prefix)f64.promote_f32\n"
-        case .f32ReinterpretI32:
-            return "\(prefix)f32.reinterpret_i32\n"
         case .i32ReinterpretF32:
             return "\(prefix)i32.reinterpret_f32\n"
-        case .f64ReinterpretI64:
-            return "\(prefix)f64.reinterpret_i64\n"
+        case .f32ReinterpretI32:
+            return "\(prefix)f32.reinterpret_i32\n"
         case .i64ReinterpretF64:
             return "\(prefix)i64.reinterpret_f64\n"
+        case .f64ReinterpretI64:
+            return "\(prefix)f64.reinterpret_i64\n"
+            
+        // Bulk Memory Operations (WASM 1.1)
+        case .memoryInit(let dataIdx, let memoryIdx):
+            return "\(prefix)memory.init \(dataIdx) \(memoryIdx)\n"
+        case .dataDrop(let dataIdx):
+            return "\(prefix)data.drop \(dataIdx)\n"
+        case .memoryCopy(let destMemoryIdx, let srcMemoryIdx):
+            return "\(prefix)memory.copy \(destMemoryIdx) \(srcMemoryIdx)\n"
+        case .memoryFill(let memoryIdx):
+            return "\(prefix)memory.fill \(memoryIdx)\n"
+        case .tableInit(let elemIdx, let tableIdx):
+            return "\(prefix)table.init \(elemIdx) \(tableIdx)\n"
+        case .elemDrop(let elemIdx):
+            return "\(prefix)elem.drop \(elemIdx)\n"
+        case .tableCopy(let destTableIdx, let srcTableIdx):
+            return "\(prefix)table.copy \(destTableIdx) \(srcTableIdx)\n"
+        case .tableGrow(let tableIdx):
+            return "\(prefix)table.grow \(tableIdx)\n"
+        case .tableSize(let tableIdx):
+            return "\(prefix)table.size \(tableIdx)\n"
+        case .tableFill(let tableIdx):
+            return "\(prefix)table.fill \(tableIdx)\n"
+            
+        // SIMD Operations (WASM 1.1)
+        case .v128Const(let bytes):
+            let bytesStr = bytes.map { String(format: "0x%02X", $0) }.joined(separator: " ")
+            return "\(prefix)v128.const \(bytesStr)\n"
+        case .i32x4Add: return "\(prefix)i32x4.add\n"
+        case .i32x4Sub: return "\(prefix)i32x4.sub\n"
+        case .i32x4Mul: return "\(prefix)i32x4.mul\n"
+        case .f32x4Add: return "\(prefix)f32x4.add\n"
+        case .f32x4Sub: return "\(prefix)f32x4.sub\n"
+        case .f32x4Mul: return "\(prefix)f32x4.mul\n"
+        case .f32x4Div: return "\(prefix)f32x4.div\n"
         }
     }
     
@@ -489,7 +523,7 @@ public struct WASMTextWriter {
             result += writeInstruction(instr)
         }
         indentLevel -= 1
-        result += "\(prefix))\n"
+        result += "\(prefix)end\n"
         return result
     }
     

@@ -152,6 +152,11 @@ public struct TypeHandling {
         return type1 == type2
     }
     
+    /// Get the common type for two types (promotion)
+    public func commonType(_ type1: WASMType, _ type2: WASMType) -> WASMType {
+        return max(type1, type2)
+    }
+    
     /// Get the result type of a binary operation
     public func resultType(for op: String, leftType: WASMType, rightType: WASMType) -> WASMType {
         switch op {

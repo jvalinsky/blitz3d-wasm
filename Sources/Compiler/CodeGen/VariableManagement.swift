@@ -92,6 +92,21 @@ public struct VariableManagement {
     public func allLocals() -> [String: LocalInfo] {
         return localVariables
     }
+
+    /// Get all global variables
+    public func allGlobals() -> [String: GlobalInfo] {
+        return globalVariables
+    }
+
+    /// Get all array variables
+    public func allArrays() -> [String: ArrayInfo] {
+        return arrayVariables
+    }
+
+    /// Get all string literals
+    public func allStringLiterals() -> [String: Int] {
+        return stringLiterals
+    }
     
     /// Clear all local variables (for new function)
     public mutating func clearLocals() {
@@ -201,5 +216,72 @@ public struct VariableManagement {
     /// Get total count of global variables
     public var globalCount: Int {
         return globalVariables.count
+    }
+}
+
+public struct FunctionDefinition {
+    public let params: [WASMType]
+    public let results: [WASMType]
+    
+    public init(params: [WASMType], results: [WASMType]) {
+        self.params = params
+        self.results = results
+    }
+}
+
+/// Context passed to generation modules containing shared state
+public final class ModuleContext {
+    public var module: WASMModule
+    public var variableManagement: VariableManagement
+    public var typeIndexMap: [String: Int]
+    public var functionIndexMap: [String: Int]
+    public var functionDefinitions: [String: FunctionDefinition]
+    public var userTypes: [String: UserTypeInfo]
+    public var fieldOffsets: [String: [String: Int]]
+
+    public init(module: WASMModule,
+                variableManagement: VariableManagement = VariableManagement(),
+                typeIndexMap: [String: Int] = [:],
+                functionIndexMap: [String: Int] = [:],
+                functionDefinitions: [String: FunctionDefinition] = [:],
+                userTypes: [String: UserTypeInfo] = [:],
+                fieldOffsets: [String: [String: Int]] = [:]) {
+        self.module = module
+        self.variableManagement = variableManagement
+        self.typeIndexMap = typeIndexMap
+        self.functionIndexMap = functionIndexMap
+        self.functionDefinitions = functionDefinitions
+        self.userTypes = userTypes
+        self.fieldOffsets = fieldOffsets
+    }
+
+    /// Add a string literal to the module's data section
+    public func addStringData(_ str: String) -> Int {
+        var bytes: [UInt8] = []
+        for char in str.utf8 {
+            bytes.append(char)
+        }
+        bytes.append(0)
+
+        var offset = 256
+        for segment in module.data {
+            offset += segment.bytes.count
+        }
+
+        let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(offset)), bytes: bytes)
+        module.data.append(data)
+        return offset
+    }
+
+    /// Get type size in bytes
+    public func typeSize(for wasmType: WASMType) -> Int {
+        switch wasmType {
+        case .i32, .f32:
+            return 4
+        case .i64, .f64:
+            return 8
+        default:
+            return 4
+        }
     }
 }

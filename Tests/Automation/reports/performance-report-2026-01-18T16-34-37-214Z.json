@@ -1,0 +1,1020 @@
+{
+  "timestamp": "2026-01-18T16:34:14.172Z",
+  "benchmarks": [
+    {
+      "name": "WASM Compilation",
+      "iterations": 5,
+      "results": [
+        {
+          "label": "WASM Compilation_iteration_0",
+          "startTime": 6737.699958,
+          "endTime": 7514.244541,
+          "duration": 776.5445829999999,
+          "pageMetrics": {
+            "startTime": 5.700000001117587,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.60000000149012,
+                "label": "baseline",
+                "used": 4343139,
+                "total": 7120503,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 4343775,
+                  "total": 7120503,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "http://localhost:8083/index_test.html": {
+                "startTime": 0,
+                "duration": 8.400000000372529,
+                "entryType": "navigation"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js": {
+                "startTime": 4,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.100000001490116,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/Phase3Test.wasm": {
+                "startTime": 7.900000000372529,
+                "duration": 0.599999999627471,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 56,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 56,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/Phase3Test.wasm",
+                "startTime": 7.800000000745058,
+                "endTime": 8.900000000372529,
+                "duration": 1.099999999627471,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 745.7000000011176,
+            "totalDuration": 740
+          },
+          "memorySnapshot": {
+            "timestamp": 747.5,
+            "label": "WASM Compilation_iteration_0",
+            "used": 4350439,
+            "total": 7120503,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 4350535,
+              "total": 7120503,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754059025
+        },
+        {
+          "label": "WASM Compilation_iteration_1",
+          "startTime": 7519.454583,
+          "endTime": 8564.135916,
+          "duration": 1044.6813329999995,
+          "pageMetrics": {
+            "startTime": 7,
+            "memorySnapshots": [
+              {
+                "timestamp": 108.59999999962747,
+                "label": "baseline",
+                "used": 4862899,
+                "total": 8509219,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 4863535,
+                  "total": 8509219,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "http://localhost:8083/index_test.html": {
+                "startTime": 0,
+                "duration": 9.5,
+                "entryType": "navigation"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js": {
+                "startTime": 5.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 5.200000001117587,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/Phase3Test.wasm": {
+                "startTime": 9,
+                "duration": 1.5,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/Phase3Test.wasm",
+                "startTime": 8.900000000372529,
+                "endTime": 10.800000000745058,
+                "duration": 1.900000000372529,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 1014.5999999996275,
+            "totalDuration": 1007.5999999996275
+          },
+          "memorySnapshot": {
+            "timestamp": 1016.5,
+            "label": "WASM Compilation_iteration_1",
+            "used": 4868611,
+            "total": 8509219,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 4868707,
+              "total": 8509219,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754060073
+        },
+        {
+          "label": "WASM Compilation_iteration_2",
+          "startTime": 8567.746208,
+          "endTime": 9604.706,
+          "duration": 1036.9597919999997,
+          "pageMetrics": {
+            "startTime": 6.099999999627471,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.20000000111759,
+                "label": "baseline",
+                "used": 5611275,
+                "total": 9111503,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 5611911,
+                  "total": 9111503,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "http://localhost:8083/index_test.html": {
+                "startTime": 0,
+                "duration": 8.800000000745058,
+                "entryType": "navigation"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/Phase3Test.wasm": {
+                "startTime": 8.300000000745058,
+                "duration": 1.099999999627471,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/Phase3Test.wasm",
+                "startTime": 8.200000001117587,
+                "endTime": 9.5,
+                "duration": 1.299999998882413,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 1006.0999999996275,
+            "totalDuration": 1000
+          },
+          "memorySnapshot": {
+            "timestamp": 1007.5,
+            "label": "WASM Compilation_iteration_2",
+            "used": 5617023,
+            "total": 9111503,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 5617119,
+              "total": 9111503,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754061112
+        },
+        {
+          "label": "WASM Compilation_iteration_3",
+          "startTime": 9607.157375,
+          "endTime": 10644.3435,
+          "duration": 1037.1861250000002,
+          "pageMetrics": {
+            "startTime": 5.900000000372529,
+            "memorySnapshots": [
+              {
+                "timestamp": 107,
+                "label": "baseline",
+                "used": 6358807,
+                "total": 9713787,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 6359443,
+                  "total": 9713787,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "http://localhost:8083/index_test.html": {
+                "startTime": 0,
+                "duration": 8.5,
+                "entryType": "navigation"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/Phase3Test.wasm": {
+                "startTime": 8.099999999627471,
+                "duration": 0.6000000014901161,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 56,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 56,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/Phase3Test.wasm",
+                "startTime": 7.900000000372529,
+                "endTime": 9,
+                "duration": 1.099999999627471,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 1006.4000000003725,
+            "totalDuration": 1000.5
+          },
+          "memorySnapshot": {
+            "timestamp": 1008.0999999996275,
+            "label": "WASM Compilation_iteration_3",
+            "used": 6364971,
+            "total": 9713787,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 6365067,
+              "total": 9713787,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754062153
+        },
+        {
+          "label": "WASM Compilation_iteration_4",
+          "startTime": 10647.60325,
+          "endTime": 11558.757791,
+          "duration": 911.1545409999999,
+          "pageMetrics": {
+            "startTime": 6.199999999254942,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.89999999850988,
+                "label": "baseline",
+                "used": 6720915,
+                "total": 9005351,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 6721551,
+                  "total": 9005351,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "http://localhost:8083/index_test.html": {
+                "startTime": 0,
+                "duration": 8.799999998882413,
+                "entryType": "navigation"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js": {
+                "startTime": 4.299999998882413,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.399999998509884,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/Phase3Test.wasm": {
+                "startTime": 8.399999998509884,
+                "duration": 0.8000000007450581,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/Phase3Test.wasm",
+                "startTime": 8.299999998882413,
+                "endTime": 9.299999998882413,
+                "duration": 1,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 878.5,
+            "totalDuration": 872.3000000007451
+          },
+          "memorySnapshot": {
+            "timestamp": 879.7999999988824,
+            "label": "WASM Compilation_iteration_4",
+            "used": 6726775,
+            "total": 9005351,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 6726871,
+              "total": 9005351,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754063066
+        }
+      ],
+      "summary": {
+        "duration": {
+          "min": 776.5445829999999,
+          "max": 1044.6813329999995,
+          "mean": 961.3052747999998,
+          "median": 1036.9597919999997,
+          "stdDev": 104.96159851669822,
+          "percentiles": {
+            "p50": 1036.9597919999997,
+            "p90": 1044.6813329999995,
+            "p95": 1044.6813329999995,
+            "p99": 1044.6813329999995
+          }
+        },
+        "memory": {
+          "minDelta": 0,
+          "maxDelta": 0,
+          "meanDelta": 0,
+          "totalDelta": 0
+        }
+      }
+    },
+    {
+      "name": "Main Menu Loading",
+      "iterations": 3,
+      "results": [
+        {
+          "label": "Main Menu Loading_iteration_0",
+          "startTime": 15620.0415,
+          "endTime": 16582.882666,
+          "duration": 962.841166000002,
+          "pageMetrics": {
+            "startTime": 6,
+            "memorySnapshots": [
+              {
+                "timestamp": 108,
+                "label": "baseline",
+                "used": 7609212,
+                "total": 12494708,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 7609764,
+                  "total": 12494708,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 4.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4.199999999254942,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_menu.html": {
+                "startTime": 0,
+                "duration": 12.099999999627471,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/MainMenu_Test.wasm": {
+                "startTime": 11.599999999627471,
+                "duration": 0.7000000011175871,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/MainMenu_Test.wasm",
+                "startTime": 11.400000000372529,
+                "endTime": 12.5,
+                "duration": 1.099999999627471,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 931.5,
+            "totalDuration": 925.5
+          },
+          "memorySnapshot": {
+            "timestamp": 932.9000000003725,
+            "label": "Main Menu Loading_iteration_0",
+            "used": 7616968,
+            "total": 12494708,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 7617064,
+              "total": 12494708,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754068091
+        },
+        {
+          "label": "Main Menu Loading_iteration_1",
+          "startTime": 16586.099458,
+          "endTime": 17623.577791,
+          "duration": 1037.478332999999,
+          "pageMetrics": {
+            "startTime": 6.300000000745058,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.40000000037253,
+                "label": "baseline",
+                "used": 9150494,
+                "total": 12844894,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 9151046,
+                  "total": 12844894,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 4.400000000372529,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4.5,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.5,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_menu.html": {
+                "startTime": 0,
+                "duration": 12,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/MainMenu_Test.wasm": {
+                "startTime": 11.400000000372529,
+                "duration": 0.8000000007450581,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 60,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/MainMenu_Test.wasm",
+                "startTime": 11.400000000372529,
+                "endTime": 12.400000000372529,
+                "duration": 1,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 1005.9000000003725,
+            "totalDuration": 999.6999999992549
+          },
+          "memorySnapshot": {
+            "timestamp": 1007.3000000007451,
+            "label": "Main Menu Loading_iteration_1",
+            "used": 9156346,
+            "total": 12844894,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 9156442,
+              "total": 12844894,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754069131
+        },
+        {
+          "label": "Main Menu Loading_iteration_2",
+          "startTime": 17626.23375,
+          "endTime": 18625.017541,
+          "duration": 998.7837910000017,
+          "pageMetrics": {
+            "startTime": 6.099999999627471,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.40000000037253,
+                "label": "baseline",
+                "used": 10690396,
+                "total": 14243656,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 10690948,
+                  "total": 14243656,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.400000000372529,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_menu.html": {
+                "startTime": 0,
+                "duration": 12.199999999254942,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/MainMenu_Test.wasm": {
+                "startTime": 11.699999999254942,
+                "duration": 0.6000000014901161,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 52,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 52,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/MainMenu_Test.wasm",
+                "startTime": 11.5,
+                "endTime": 12.599999999627471,
+                "duration": 1.099999999627471,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 967.0999999996275,
+            "totalDuration": 961
+          },
+          "memorySnapshot": {
+            "timestamp": 968.9000000003725,
+            "label": "Main Menu Loading_iteration_2",
+            "used": 10696272,
+            "total": 14243656,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 10696368,
+              "total": 14243656,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754070133
+        }
+      ],
+      "summary": {
+        "duration": {
+          "min": 962.841166000002,
+          "max": 1037.478332999999,
+          "mean": 999.7010966666676,
+          "median": 998.7837910000017,
+          "stdDev": 30.477398857852446,
+          "percentiles": {
+            "p50": 998.7837910000017,
+            "p90": 1037.478332999999,
+            "p95": 1037.478332999999,
+            "p99": 1037.478332999999
+          }
+        },
+        "memory": {
+          "minDelta": 0,
+          "maxDelta": 0,
+          "meanDelta": 0,
+          "totalDelta": 0
+        }
+      }
+    },
+    {
+      "name": "FPS Scene Performance",
+      "iterations": 3,
+      "results": [
+        {
+          "label": "FPS Scene Performance_iteration_0",
+          "startTime": 22686.750708,
+          "endTime": 23647.393041,
+          "duration": 960.6423329999998,
+          "pageMetrics": {
+            "startTime": 6,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.5,
+                "label": "baseline",
+                "used": 7219405,
+                "total": 12428181,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 7219957,
+                  "total": 12428181,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 4.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.300000000745058,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_fps.html": {
+                "startTime": 0,
+                "duration": 11.900000000372529,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/FPS_Test.wasm": {
+                "startTime": 11.400000000372529,
+                "duration": 0.599999999627471,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/FPS_Test.wasm",
+                "startTime": 11.300000000745058,
+                "endTime": 12.300000000745058,
+                "duration": 1,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 931,
+            "totalDuration": 925
+          },
+          "memorySnapshot": {
+            "timestamp": 932.0999999996275,
+            "label": "FPS Scene Performance_iteration_0",
+            "used": 7226733,
+            "total": 12428181,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 7226829,
+              "total": 12428181,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754075154
+        },
+        {
+          "label": "FPS Scene Performance_iteration_1",
+          "startTime": 23649.689875,
+          "endTime": 24695.171083,
+          "duration": 1045.481208000001,
+          "pageMetrics": {
+            "startTime": 5.599999999627471,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.09999999962747,
+                "label": "baseline",
+                "used": 8686679,
+                "total": 12712635,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 8687231,
+                  "total": 12712635,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 3.900000000372529,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_fps.html": {
+                "startTime": 0,
+                "duration": 11.400000000372529,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/FPS_Test.wasm": {
+                "startTime": 10.900000000372529,
+                "duration": 0.599999999627471,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 64,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/FPS_Test.wasm",
+                "startTime": 10.700000001117587,
+                "endTime": 11.700000001117587,
+                "duration": 1,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 1014.5,
+            "totalDuration": 1008.9000000003725
+          },
+          "memorySnapshot": {
+            "timestamp": 1015.7000000011176,
+            "label": "FPS Scene Performance_iteration_1",
+            "used": 8692563,
+            "total": 12712635,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 8692659,
+              "total": 12712635,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754076202
+        },
+        {
+          "label": "FPS Scene Performance_iteration_2",
+          "startTime": 24697.413625,
+          "endTime": 25697.341958,
+          "duration": 999.9283329999998,
+          "pageMetrics": {
+            "startTime": 5.800000000745058,
+            "memorySnapshots": [
+              {
+                "timestamp": 107.20000000111759,
+                "label": "baseline",
+                "used": 10151021,
+                "total": 13783521,
+                "limit": 4294967296,
+                "detailed": {
+                  "used": 10151573,
+                  "total": 13783521,
+                  "limit": 4294967296
+                }
+              }
+            ],
+            "functionCallTimes": {},
+            "wasmCompilationTime": null,
+            "pageLoadEvents": {
+              "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js": {
+                "startTime": 4,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js": {
+                "startTime": 4.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/Sources/Runtime/runtime.js": {
+                "startTime": 4.099999999627471,
+                "duration": 0,
+                "entryType": "resource"
+              },
+              "http://localhost:8083/index_fps.html": {
+                "startTime": 0,
+                "duration": 11.800000000745058,
+                "entryType": "navigation"
+              },
+              "http://localhost:8083/Tests/IntegrationTests/FPS_Test.wasm": {
+                "startTime": 11.200000001117587,
+                "duration": 0.599999999627471,
+                "entryType": "resource"
+              },
+              "first-paint": {
+                "startTime": 68,
+                "duration": 0,
+                "entryType": "paint"
+              },
+              "first-contentful-paint": {
+                "startTime": 68,
+                "duration": 0,
+                "entryType": "paint"
+              }
+            },
+            "networkRequests": [
+              {
+                "url": "Tests/IntegrationTests/FPS_Test.wasm",
+                "startTime": 11.099999999627471,
+                "endTime": 12.200000001117587,
+                "duration": 1.1000000014901161,
+                "status": 200,
+                "success": true
+              }
+            ],
+            "currentTime": 968.2000000011176,
+            "totalDuration": 962.4000000003725
+          },
+          "memorySnapshot": {
+            "timestamp": 969.3000000007451,
+            "label": "FPS Scene Performance_iteration_2",
+            "used": 10156945,
+            "total": 13783521,
+            "limit": 4294967296,
+            "detailed": {
+              "used": 10157041,
+              "total": 13783521,
+              "limit": 4294967296
+            }
+          },
+          "timestamp": 1768754077204
+        }
+      ],
+      "summary": {
+        "duration": {
+          "min": 960.6423329999998,
+          "max": 1045.481208000001,
+          "mean": 1002.0172913333336,
+          "median": 999.9283329999998,
+          "stdDev": 34.666809179244865,
+          "percentiles": {
+            "p50": 999.9283329999998,
+            "p90": 1045.481208000001,
+            "p95": 1045.481208000001,
+            "p99": 1045.481208000001
+          }
+        },
+        "memory": {
+          "minDelta": 0,
+          "maxDelta": 0,
+          "meanDelta": 0,
+          "totalDelta": 0
+        }
+      }
+    }
+  ],
+  "memoryAnalysis": {},
+  "overallAnalysis": {}
+}

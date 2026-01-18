@@ -1,0 +1,33 @@
+{
+  "": {
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/master.swiftdeps"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/BinaryEncoderTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/CodeGeneratorTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.dia"
+  }
+}

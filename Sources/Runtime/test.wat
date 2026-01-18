@@ -1,0 +1,43 @@
+(module
+  (type 0 (func (param ) (result i32)))
+  (type 1 (func (param i32) (result i32)))
+  (type 2 (func (param i32 i32) (result i32)))
+  (type 3 (func (param ) (result )))
+  (type 4 (func (param i32) (result )))
+  (type 5 (func (param i32) (result )))
+  (type 6 (func (param i32) (result )))
+  (type 7 (func (param i32 i32 i32 i32) (result )))
+  (type 8 (func (param ) (result )))
+  (type 9 (func (param i32) (result )))
+  (type 10 (func (param i32 i32 i32) (result )))
+  (type 11 (func (param i32 i32 i32) (result )))
+  (type 12 (func (param i32 i32 i32 i32 i32) (result )))
+  (type 13 (func (param i32 i32 i32 i32) (result )))
+  (type 14 (func (param i32 i32 i32 i32 i32) (result )))
+  (type 15 (func (param i32) (result i32)))
+  (type 16 (func (param i32) (result i32)))
+  (type 17 (func (param ) (result i32)))
+  (type 18 (func (param ) (result i32)))
+  (type 19 (func (param i32) (result i32)))
+  (type 20 (func (param i32) (result i32)))
+  (type 21 (func (param ) (result i32)))
+  (type 22 (func (param i32) (result i32)))
+  (type 23 (func (param i32) (result i32)))
+  (type 24 (func (param i32) (result )))
+  (type 25 (func (param i32) (result i32)))
+  (func 0 (type 25))
+  (func 1 (type 0))
+  (memory 1 2)
+  (export "__Alloc" (func 20))
+  (export "Main" (func 21))
+  (func
+    (local i32)
+        local.get 0
+        memory.grow
+  )
+  (func
+        i32.const 0
+        return
+  )
+  (data (i32.const 0) "48 65 6c 6c 6f 20 57 65 62 47 4c 21 00")
+)

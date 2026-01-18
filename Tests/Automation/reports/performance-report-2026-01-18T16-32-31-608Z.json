@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-18T16:32:16.698Z",
+  "benchmarks": [
+    {
+      "name": "WASM Compilation",
+      "error": "label is not defined",
+      "success": false
+    },
+    {
+      "name": "Main Menu Loading",
+      "error": "label is not defined",
+      "success": false
+    },
+    {
+      "name": "FPS Scene Performance",
+      "error": "label is not defined",
+      "success": false
+    }
+  ],
+  "memoryAnalysis": {},
+  "overallAnalysis": {}
+}

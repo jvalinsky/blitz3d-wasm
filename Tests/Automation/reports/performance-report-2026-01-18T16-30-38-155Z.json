@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-18T16:30:35.114Z",
+  "benchmarks": [
+    {
+      "name": "WASM Compilation",
+      "error": "Execution context was destroyed, most likely because of a navigation.",
+      "success": false
+    },
+    {
+      "name": "Main Menu Loading",
+      "error": "Execution context was destroyed, most likely because of a navigation.",
+      "success": false
+    },
+    {
+      "name": "FPS Scene Performance",
+      "error": "Execution context was destroyed, most likely because of a navigation.",
+      "success": false
+    }
+  ],
+  "memoryAnalysis": {},
+  "overallAnalysis": {}
+}

@@ -1,0 +1,76 @@
+Building for debugging...
+[0/4] Write sources
+[1/4] Write swift-version--58304C5D6DBC2206.txt
+[3/6] Emitting module Blitz3DCompiler
+[4/6] Compiling Blitz3DCompiler CodeGenerator.swift
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:459:20: [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+ [0;36m457 |[0;0m             
+ [0;36m458 |[0;0m         case .functionCall(let call):
+ [0;36m459 |[0;0m             if let globalInfo = globalVariables[call.name] {
+     [0;36m|[0;0m                    `- [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+ [0;36m460 |[0;0m                 // It's an array assignment!
+ [0;36m461 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:463:27: [1;33mwarning: [1;39mvalue 'localInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+ [0;36m461 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+ [0;36m462 |[0;0m                 generateAssignment(AssignmentNode(target: .arrayAccess(arrayAccess), value: assign.value), function: &function)
+ [0;36m463 |[0;0m             } else if let localInfo = localVariables[call.name] {
+     [0;36m|[0;0m                           `- [1;33mwarning: [1;39mvalue 'localInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+ [0;36m464 |[0;0m                 // Local array? (Dim inside function)
+ [0;36m465 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1534:27: [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1532 |[0;0m                 instrs.append(.call(funcIdx))
+[0;36m1533 |[0;0m                 return (instrs, resultType)
+[0;36m1534 |[0;0m             } else if let globalInfo = self.globalVariables[call.name] {
+     [0;36m|[0;0m                           `- [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1535 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+[0;36m1536 |[0;0m                 let info = generateExpressionWithInfo(.arrayAccess(arrayAccess))
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1634:30: [1;31merror: [1;39mcannot find 'userTypes' in scope[0;0m
+[0;36m1632 |[0;0m         var instrs: [WASMInstruction] = []
+[0;36m1633 |[0;0m         
+[0;36m1634 |[0;0m         guard let typeInfo = [4;39muserTypes[0;0m[forEachNode.typeName] else {
+     [0;36m|[0;0m                              `- [1;31merror: [1;39mcannot find 'userTypes' in scope[0;0m
+[0;36m1635 |[0;0m             return instrs
+[0;36m1636 |[0;0m         }
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1652:34: [1;31merror: [1;39mcannot find 'typeCollectionGlobal' in scope[0;0m
+[0;36m1650 |[0;0m         let headOffset = typeOffset + 0
+[0;36m1651 |[0;0m         
+[0;36m1652 |[0;0m         instrs.append(.globalGet([4;39mtypeCollectionGlobal[0;0m))
+     [0;36m|[0;0m                                  `- [1;31merror: [1;39mcannot find 'typeCollectionGlobal' in scope[0;0m
+[0;36m1653 |[0;0m         instrs.append(.i32Const(Int32(headOffset)))
+[0;36m1654 |[0;0m         instrs.append(.i32Add)
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1688:26: [1;31merror: [1;39mcannot find 'userTypes' in scope[0;0m
+[0;36m1686 |[0;0m     private func typeCollectionOffset(_ typeName: String) -> Int {
+[0;36m1687 |[0;0m         var offset = 0
+[0;36m1688 |[0;0m         for (name, _) in [4;39muserTypes[0;0m.sorted(by: { $0.key < $1.key }) {
+     [0;36m|[0;0m                          `- [1;31merror: [1;39mcannot find 'userTypes' in scope[0;0m
+[0;36m1689 |[0;0m             if name == typeName {
+[0;36m1690 |[0;0m                 return offset
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1912:20: [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1910 |[0;0m             
+[0;36m1911 |[0;0m         case .functionCall(let call):
+[0;36m1912 |[0;0m             if let globalInfo = self.globalVariables[call.name] {
+     [0;36m|[0;0m                    `- [1;33mwarning: [1;39mvalue 'globalInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1913 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+[0;36m1914 |[0;0m                 instrs.append(contentsOf: generateAssignmentInstrs(AssignmentNode(target: .arrayAccess(arrayAccess), value: assign.value), function: &function))
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1915:27: [1;33mwarning: [1;39mvalue 'localInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1913 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+[0;36m1914 |[0;0m                 instrs.append(contentsOf: generateAssignmentInstrs(AssignmentNode(target: .arrayAccess(arrayAccess), value: assign.value), function: &function))
+[0;36m1915 |[0;0m             } else if let localInfo = localVariables[call.name] {
+     [0;36m|[0;0m                           `- [1;33mwarning: [1;39mvalue 'localInfo' was defined but never used; consider replacing with boolean test[0;0m [#no-usage]
+[0;36m1916 |[0;0m                 let arrayAccess = ArrayAccessNode(array: .identifier(IdentifierNode(name: call.name)), indices: call.arguments)
+[0;36m1917 |[0;0m                 instrs.append(contentsOf: generateAssignmentInstrs(AssignmentNode(target: .arrayAccess(arrayAccess), value: assign.value), function: &function))
+
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift:1999:13: [1;33mwarning: [1;39mvariable 'stepInstrs' was never mutated; consider changing to 'let' constant[0;0m
+[0;36m1997 |[0;0m         let startInstrs = generateExpression(forNode.startValue)
+[0;36m1998 |[0;0m         let endInstrs = generateExpression(forNode.endValue)
+[0;36m1999 |[0;0m         var stepInstrs = forNode.stepValue.map { generateExpression($0) } ?? [.i32Const(1)]
+     [0;36m|[0;0m             `- [1;33mwarning: [1;39mvariable 'stepInstrs' was never mutated; consider changing to 'let' constant[0;0m
+[0;36m2000 |[0;0m         
+[0;36m2001 |[0;0m         let localIdx: Int

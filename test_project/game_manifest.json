@@ -1,0 +1,11 @@
+{
+  "embedAssets" : true,
+  "assets" : [
+    {
+      "size" : 18,
+      "path" : "\/Users\/jack\/Software\/scp_port\/blitz3d-wasm\/test_project\/assets\/test.txt",
+      "offset" : 274
+    }
+  ],
+  "version" : "1.0"
+}

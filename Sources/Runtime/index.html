@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blitz3D WASM - SCPCB</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        #canvasContainer {
+            position: relative;
+            margin: 20px auto;
+            width: 800px;
+            height: 600px;
+        }
+
+        canvas {
+            display: block;
+            background: #111;
+        }
+
+        #console {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 10px;
+            pointer-events: none;
+            max-height: 200px;
+            overflow: hidden;
+        }
+
+        #status {
+            text-align: center;
+            padding: 10px;
+            background: #222;
+            margin: 0 auto;
+            width: 800px;
+        }
+    </style>
+    <!-- Three.js and Loaders -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</head>
+
+<body>
+    <div id="status">
+        <p>SCP: Containment Breach - Blitz3D WASM Port</p>
+        <p id="loadStatus">Loading...</p>
+    </div>
+    <div id="canvasContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="console"></div>
+    </div>
+    <script src="runtime.js"></script>
+    <script>
+        // Override console.log to show on screen
+        const realConsoleLog = console.log;
+        const consoleDiv = document.getElementById('console');
+        const statusDiv = document.getElementById('loadStatus');
+
+        console.log = function (...args) {
+            realConsoleLog.apply(console, args);
+            const line = document.createElement('div');
+            line.textContent = args.join(' ');
+            consoleDiv.appendChild(line);
+            if (consoleDiv.childNodes.length > 20) {
+                consoleDiv.removeChild(consoleDiv.firstChild);
+            }
+        };
+
+        // Update status
+        statusDiv.textContent = 'Initializing WASM...';
+
+        // Load the WASM module
+        Blitz3D.load('scpcb.wasm', 'gameCanvas').then(() => {
+            statusDiv.textContent = 'Running! Press ESC to exit.';
+            statusDiv.style.color = '#4f4';
+        }).catch(err => {
+            statusDiv.textContent = 'Error: ' + err.message;
+            statusDiv.style.color = '#f44';
+            console.error(err);
+        });
+    </script>
+</body>
+
+</html>

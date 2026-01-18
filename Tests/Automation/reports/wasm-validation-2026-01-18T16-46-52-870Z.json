@@ -1,0 +1,319 @@
+{
+  "timestamp": "2026-01-18T16:46:51.567Z",
+  "compilationTests": [
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Animation_Test.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Animation_Test.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811569,
+      "endTime": 1768754811581,
+      "duration": 12,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3858,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Animation_Test.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_audio.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_audio.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811582,
+      "endTime": 1768754811588,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3924,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_audio.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_banks.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_banks.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811588,
+      "endTime": 1768754811594,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3652,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_banks.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_data_loop.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_data_loop.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811594,
+      "endTime": 1768754811600,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3658,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_data_loop.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_multiple_types.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_multiple_types.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811600,
+      "endTime": 1768754811606,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3661,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_multiple_types.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_read_file.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_read_file.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811606,
+      "endTime": 1768754811612,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3715,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_read_file.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_restore.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_restore.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811612,
+      "endTime": 1768754811618,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3650,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_restore.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_string_data.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_string_data.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811618,
+      "endTime": 1768754811623,
+      "duration": 5,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3632,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_string_data.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_zip.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Assets/test_zip.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811623,
+      "endTime": 1768754811629,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3991,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Assets/test_zip.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/FPS_Test.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/FPS_Test.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811630,
+      "endTime": 1768754811636,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3914,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/FPS_Test.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Lighting_Test.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Lighting_Test.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811636,
+      "endTime": 1768754811643,
+      "duration": 7,
+      "wasmValidation": {
+        "valid": true,
+        "size": 3918,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Lighting_Test.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/MainMenu_Test.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/MainMenu_Test.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811643,
+      "endTime": 1768754811650,
+      "duration": 7,
+      "wasmValidation": {
+        "valid": true,
+        "size": 4117,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MainMenu_Test.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/MainTest.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/MainTest.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811650,
+      "endTime": 1768754811656,
+      "duration": 6,
+      "wasmValidation": {
+        "valid": true,
+        "size": 4157,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MainTest.wasm"
+      }
+    },
+    {
+      "bbFile": "blitz3d-wasm/Tests/IntegrationTests/Phase3Test.bb",
+      "wasmFile": "blitz3d-wasm/Tests/IntegrationTests/Phase3Test.wasm",
+      "success": true,
+      "error": null,
+      "startTime": 1768754811656,
+      "endTime": 1768754811663,
+      "duration": 7,
+      "wasmValidation": {
+        "valid": true,
+        "size": 4642,
+        "version": 1,
+        "filePath": "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/Phase3Test.wasm"
+      }
+    }
+  ],
+  "validationTests": [
+    {
+      "test": "Browser WASM Compilation",
+      "success": true,
+      "result": {
+        "success": true,
+        "hasExports": false
+      },
+      "timestamp": 1768754812701
+    },
+    {
+      "test": "WASM Module Validation",
+      "success": true,
+      "result": {
+        "success": true,
+        "validModulePassed": true,
+        "invalidModuleRejected": true
+      },
+      "timestamp": 1768754812702
+    },
+    {
+      "test": "WASM Instantiation",
+      "success": true,
+      "result": {
+        "success": true,
+        "hasInstance": true,
+        "hasModule": true
+      },
+      "timestamp": 1768754812703
+    }
+  ],
+  "importTests": [
+    {
+      "test": "Missing Imports Test",
+      "success": false,
+      "result": {
+        "success": false,
+        "errorType": "TypeError",
+        "errorMessage": "WebAssembly.instantiate(): Import #0 \"env\": module is not an object or function"
+      },
+      "timestamp": 1768754812752
+    },
+    {
+      "test": "Incorrect Import Signatures Test",
+      "success": true,
+      "result": {
+        "success": true,
+        "errorType": "LinkError",
+        "errorMessage": "WebAssembly.instantiate(): Import #0 \"env\" \"f\": function import requires a callable"
+      },
+      "timestamp": 1768754812753
+    }
+  ],
+  "runtimeTests": [
+    {
+      "test": "WASM Function Calls",
+      "success": true,
+      "result": {
+        "success": true,
+        "result": 8,
+        "expected": 8
+      },
+      "timestamp": 1768754812800
+    },
+    {
+      "test": "WASM Memory Operations",
+      "success": true,
+      "result": {
+        "success": true,
+        "memorySize": 65536,
+        "hasMemory": true,
+        "memoryPageCount": 1
+      },
+      "timestamp": 1768754812802
+    }
+  ],
+  "summary": {
+    "totalTests": 21,
+    "passedTests": 20,
+    "failedTests": 1,
+    "categories": {
+      "compilation": {
+        "total": 14,
+        "passed": 14,
+        "failed": 0
+      },
+      "validation": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "import": {
+        "total": 2,
+        "passed": 1,
+        "failed": 1
+      },
+      "runtime": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      }
+    },
+    "successRate": "95.24"
+  }
+}

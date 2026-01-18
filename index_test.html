@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Phase 3 Integration Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="Sources/Runtime/runtime.js"></script>
+</head>
+
+<body>
+    <h1>Phase 3 Test</h1>
+    <div id="output"></div>
+    <script>
+        const oldLog = console.log;
+        const output = document.getElementById('output');
+        console.log = function (msg) {
+            oldLog(msg);
+            const line = document.createElement('div');
+            line.textContent = msg;
+            output.appendChild(line);
+        };
+        console.warn = console.log;
+        console.error = console.log;
+
+        Blitz3D.load('Tests/IntegrationTests/Phase3Test.wasm', 'output')
+            .then(() => {
+                console.log("Test execution finished.");
+            });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,91 @@
+(module
+  (type 0 (func (param ) (result i32)))
+  (type 1 (func (param i32) (result i32)))
+  (type 2 (func (param i32 i32) (result i32)))
+  (type 3 (func (param ) (result )))
+  (type 4 (func (param i32) (result )))
+  (type 5 (func (param i32) (result )))
+  (type 6 (func (param i32) (result )))
+  (type 7 (func (param i32 i32 i32 i32) (result )))
+  (type 8 (func (param ) (result )))
+  (type 9 (func (param i32) (result )))
+  (type 10 (func (param i32 i32 i32) (result )))
+  (type 11 (func (param i32 i32 i32) (result )))
+  (type 12 (func (param i32 i32 i32 i32 i32) (result )))
+  (type 13 (func (param i32 i32 i32 i32) (result )))
+  (type 14 (func (param i32 i32 i32 i32 i32) (result )))
+  (type 15 (func (param i32) (result i32)))
+  (type 16 (func (param i32) (result i32)))
+  (type 17 (func (param ) (result i32)))
+  (type 18 (func (param ) (result i32)))
+  (type 19 (func (param i32) (result i32)))
+  (type 20 (func (param i32) (result i32)))
+  (type 21 (func (param ) (result i32)))
+  (type 22 (func (param i32) (result i32)))
+  (type 23 (func (param i32) (result i32)))
+  (type 24 (func (param i32) (result )))
+  (type 25 (func (param i32) (result i32)))
+  (type 26 (func (param i32) (result i32)))
+  (type 27 (func (param i32) (result i32)))
+  (type 28 (func (param i32) (result i32)))
+  (type 29 (func (param i32 f32 f32 f32 i32) (result )))
+  (type 30 (func (param i32 f32 f32 f32 i32) (result )))
+  (type 31 (func (param i32 f32 f32 f32) (result )))
+  (type 32 (func (param i32 f32 f32 f32) (result )))
+  (type 33 (func (param i32 f32 f32 f32 i32) (result )))
+  (type 34 (func (param i32 i32 i32 i32) (result )))
+  (type 35 (func (param i32 i32) (result i32)))
+  (type 36 (func (param i32) (result i32)))
+  (type 37 (func (param i32) (result i32)))
+  (type 38 (func (param i32) (result i32)))
+  (type 39 (func (param i32 i32) (result i32)))
+  (type 40 (func (param i32) (result i32)))
+  (type 41 (func (param i32) (result i32)))
+  (type 42 (func (param i32) (result )))
+  (type 43 (func (param i32) (result i32)))
+  (type 44 (func (param i32) (result f32)))
+  (type 45 (func (param i32) (result i32)))
+  (type 46 (func (param i32) (result i32)))
+  (type 47 (func (param i32) (result i32)))
+  (type 48 (func (param i32) (result i32)))
+  (type 49 (func (param i32) (result i32)))
+  (type 50 (func (param i32) (result i32)))
+  (type 51 (func (param i32 i32 i32) (result i32)))
+  (type 52 (func (param i32) (result )))
+  (type 53 (func (param i32) (result i32)))
+  (func 0 (type 53))
+  (func 1 (type 0))
+  (memory 1 2)
+  (global (mut i32) (i32.const 256))
+  (export "__Alloc" (func 48))
+  (export "Main" (func 49))
+  (func
+    (local i32)
+        local.get 0
+        memory.grow
+  )
+  (func
+        global.get 0
+        i32.const 0
+        i32.const 2
+        call 46
+        global.set 0
+        global.get 0
+        i32.const 0
+        i32.const 0
+        call 46
+        global.set 0
+        global.get 0
+        i32.const 0
+        i32.const 1
+        call 46
+        global.set 0
+        call 22
+        local.set 0
+        i32.const 0
+        return
+  )
+  (data (i32.const 256) "48 65 6c 6c 6f 20 66 72 6f 6d 20 57 41 53 4d 21 00")
+  (data (i32.const 273) "2a 00 00 00")
+  (data (i32.const 277) "d0 0f 49 40")
+)

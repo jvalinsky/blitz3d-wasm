@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blitz3D WASM Zip Test</title>
+</head>
+
+<body>
+    <canvas id="gameCanvas" width="640" height="480"></canvas>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="runtime.js"></script>
+    <script>
+        // Override logging
+        const originalLog = console.log;
+        const logDiv = document.createElement('div');
+        logDiv.style.fontFamily = 'monospace';
+        logDiv.style.whiteSpace = 'pre';
+        document.body.appendChild(logDiv);
+
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            logDiv.innerText += args.join(' ') + '\n';
+        };
+
+        (async function () {
+            try {
+                // Preload the zip file
+                await Blitz3D.preload(['test.zip']);
+                // Load the WASM module
+                await Blitz3D.load('test_zip.wasm', 'gameCanvas');
+            } catch (e) {
+                console.error(e);
+                logDiv.innerText += 'Error: ' + e;
+                console.error(e.toString());
+            }
+        })();
+    </script>
+</body>
+
+</html>

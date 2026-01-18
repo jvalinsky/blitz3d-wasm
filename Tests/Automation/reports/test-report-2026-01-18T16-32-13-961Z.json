@@ -1,0 +1,556 @@
+{
+  "timestamp": "2026-01-18T16:32:13.962Z",
+  "totalTests": 7,
+  "passed": 4,
+  "failed": 0,
+  "results": [
+    {
+      "name": "Banks Test",
+      "url": "http://localhost:8080/Tests/IntegrationTests/Assets/index.html",
+      "startTime": 1768753894148,
+      "endTime": 1768753905096,
+      "passed": false,
+      "error": "Timeout waiting for expected output",
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "JSHandle@error",
+        "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 2,
+          "totalConsoleMessages": 9,
+          "compilationTime": 0.40000000037252903,
+          "errorCounts": {
+            "compile": 1,
+            "link": 0,
+            "runtime": 0,
+            "console": 3,
+            "network": 1,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [
+            {
+              "type": "WebAssemblyCompileError",
+              "name": "LinkError",
+              "message": "WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+              "stack": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+              "compilationTime": 0.40000000037252903,
+              "timestamp": 1768753894270
+            }
+          ],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [
+            {
+              "type": "error",
+              "text": "JSHandle@error",
+              "location": {
+                "url": "",
+                "lineNumber": 26,
+                "columnNumber": 39
+              },
+              "timestamp": 1768753894271
+            },
+            {
+              "type": "error",
+              "text": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+              "location": {
+                "url": "",
+                "lineNumber": 26,
+                "columnNumber": 39
+              },
+              "timestamp": 1768753894271
+            },
+            {
+              "type": "error",
+              "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+              "location": {
+                "url": "http://localhost:8080/favicon.ico"
+              },
+              "timestamp": 1768753894273
+            }
+          ],
+          "networkErrors": [
+            {
+              "type": "ResponseError",
+              "url": "http://localhost:8080/favicon.ico",
+              "status": 404,
+              "statusText": "Not Found",
+              "timestamp": 1768753894273
+            }
+          ],
+          "otherErrors": []
+        },
+        "rawErrors": [
+          {
+            "type": "ResponseError",
+            "url": "http://localhost:8080/favicon.ico",
+            "status": 404,
+            "statusText": "Not Found",
+            "timestamp": 1768753894273
+          },
+          {
+            "type": "WebAssemblyCompileError",
+            "name": "LinkError",
+            "message": "WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+            "stack": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+            "compilationTime": 0.40000000037252903,
+            "timestamp": 1768753894270
+          }
+        ],
+        "rawConsoleMessages": [
+          {
+            "type": "log",
+            "text": "Blitz3D Runtime Initialized",
+            "location": {
+              "url": "",
+              "lineNumber": 26,
+              "columnNumber": 39
+            },
+            "timestamp": 1768753894262
+          },
+          {
+            "type": "log",
+            "text": "WASM Imports: JSHandle@array",
+            "location": {
+              "url": "",
+              "lineNumber": 26,
+              "columnNumber": 39
+            },
+            "timestamp": 1768753894270
+          },
+          {
+            "type": "error",
+            "text": "JSHandle@error",
+            "location": {
+              "url": "",
+              "lineNumber": 26,
+              "columnNumber": 39
+            },
+            "timestamp": 1768753894271
+          },
+          {
+            "type": "error",
+            "text": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+            "location": {
+              "url": "",
+              "lineNumber": 26,
+              "columnNumber": 39
+            },
+            "timestamp": 1768753894271
+          },
+          {
+            "type": "error",
+            "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+            "location": {
+              "url": "http://localhost:8080/favicon.ico"
+            },
+            "timestamp": 1768753894273
+          },
+          {
+            "timestamp": 1768753894261,
+            "level": "log",
+            "message": "Blitz3D Runtime Initialized",
+            "stack": null
+          },
+          {
+            "timestamp": 1768753894270,
+            "level": "log",
+            "message": "WASM Imports: PrintInt,PrintString,Graphics3D,ClsColor,Color,Cls,CreateCamera,CreateLight,AmbientLight,LightColor,LightRange,FogMode,FogColor,FogRange,FogDensity,CameraClsColor,CameraRange,CameraZoom,CameraProjMode,CameraViewport,CreateCube,CreateSphere,LoadTexture,LoadMesh,LoadAnimMesh,Animate,SetAnimTime,AnimTime,AnimLength,ExtractAnimSeq,AddAnimSeq,AnimSeq,Animating,AppTitle,Delay,WaitKey,CreateMesh,CreatePivot,FreeEntity,CopyEntity,EntityX,EntityY,EntityZ,EntityPitch,EntityYaw,EntityRoll,EntityDistance,LoadAsset,GetAssetData,GetAssetSize,ReadFile,WriteFile,CloseFile,FileType,FileSize,ReadInt,ReadFloat,ReadByte,ReadShort,ReadString,ReadData,Eof,EntityTexture,PositionEntity,RotateEntity,ScaleEntity,MoveEntity,EntityType,EntityRadius,Collisions,UpdateWorld,EntityPick,LinePick,CollisionX,CollisionY,CollisionZ,CollisionEntity,TurnEntity,GetColor,Rect,Oval,Line,Text,LoadImage,DrawImage,DrawBlock,TileImage,ImageWidth,ImageHeight,HandleImage,MidHandle,AutoMidHandle,MaskImage,ScaleImage,ResizeImage,FreeImage,Flip,KeyDown,KeyHit,MouseX,MouseY,MouseZ,MouseDown,MouseHit,MouseXSpeed,MouseYSpeed,MoveMouse,HidePointer,ShowPointer,MilliCSecs,Abs,Sgn,Mod,Left,Right,Mid,Upper,Lower,Len,Chr,Asc,StringConcat,IntToString,FloatToString,LoadSound,PlaySound,FreeSound,RestoreData,CreateBank,FreeBank,BankSize,ResizeBank,CopyBank,PeekByte,PokeByte,PeekInt,PokeInt,PeekShort,PokeShort,ZlibWapi_Open,ZlibWapi_Close,ZlibWapi_GetFileCount,ZlibWapi_GetFileName,ZlibWapi_ExtractFile,PeekFloat,PokeFloat,FSOUND_Init,FSOUND_Stream_Open,FSOUND_Stream_Play,FSOUND_SetVolume,FSOUND_SetPaused,StopChannel,ChannelVolume,ChannelPaused,ChannelPlaying,FSOUND_Stream_Stop,FSOUND_Close",
+            "stack": null
+          },
+          {
+            "timestamp": 1768753894270,
+            "level": "error",
+            "message": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+            "stack": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable"
+          },
+          {
+            "timestamp": 1768753894271,
+            "level": "error",
+            "message": "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable",
+            "stack": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "Zip Test",
+      "url": "http://localhost:8080/Tests/IntegrationTests/Assets/index_zip.html",
+      "startTime": 1768753905141,
+      "endTime": 1768753916311,
+      "passed": false,
+      "error": "Timeout waiting for expected output",
+      "logs": [
+        "Mounted ZIP archive: test.zip (1 files)",
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "JSHandle@error",
+        "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    },
+    {
+      "name": "Audio Test",
+      "url": "http://localhost:8080/Tests/IntegrationTests/Assets/index_audio.html",
+      "startTime": 1768753916350,
+      "endTime": 1768753927744,
+      "passed": false,
+      "error": "Timeout waiting for expected output",
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "JSHandle@error",
+        "LinkError: WebAssembly.instantiate(): Import #95 \"env\" \"EntityVisible\": function import requires a callable"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    },
+    {
+      "name": "Menu Test",
+      "url": "http://localhost:8080/index_menu.html",
+      "startTime": 1768753927783,
+      "endTime": 1768753929277,
+      "passed": true,
+      "error": null,
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "Failed to load WASM: JSHandle@error"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    },
+    {
+      "name": "Lighting Test",
+      "url": "http://localhost:8080/index_lighting.html",
+      "startTime": 1768753929342,
+      "endTime": 1768753930833,
+      "passed": true,
+      "error": null,
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "Failed to load WASM: JSHandle@error"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    },
+    {
+      "name": "FPS Test",
+      "url": "http://localhost:8080/index_fps.html",
+      "startTime": 1768753930899,
+      "endTime": 1768753932391,
+      "passed": true,
+      "error": null,
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "Failed to load WASM: JSHandle@error"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    },
+    {
+      "name": "Animation Test",
+      "url": "http://localhost:8080/index_anim.html",
+      "startTime": 1768753932457,
+      "endTime": 1768753933949,
+      "passed": true,
+      "error": null,
+      "logs": [
+        "Blitz3D Runtime Initialized",
+        "WASM Imports: JSHandle@array",
+        "Failed to load WASM: JSHandle@error"
+      ],
+      "errors": [],
+      "wasmResults": {
+        "summary": {
+          "totalErrors": 0,
+          "totalConsoleMessages": 0,
+          "compilationTime": null,
+          "errorCounts": {
+            "compile": 0,
+            "link": 0,
+            "runtime": 0,
+            "console": 0,
+            "network": 0,
+            "other": 0
+          }
+        },
+        "categorized": {
+          "compileErrors": [],
+          "linkErrors": [],
+          "runtimeErrors": [],
+          "consoleErrors": [],
+          "networkErrors": [],
+          "otherErrors": []
+        },
+        "rawErrors": [],
+        "rawConsoleMessages": []
+      }
+    }
+  ],
+  "wasmErrors": [
+    {
+      "test": "Banks Test",
+      "summary": {
+        "totalErrors": 2,
+        "totalConsoleMessages": 9,
+        "compilationTime": 0.40000000037252903,
+        "errorCounts": {
+          "compile": 1,
+          "link": 0,
+          "runtime": 0,
+          "console": 3,
+          "network": 1,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": true,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "Zip Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "Audio Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "Menu Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "Lighting Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "FPS Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    },
+    {
+      "test": "Animation Test",
+      "summary": {
+        "totalErrors": 0,
+        "totalConsoleMessages": 0,
+        "compilationTime": null,
+        "errorCounts": {
+          "compile": 0,
+          "link": 0,
+          "runtime": 0,
+          "console": 0,
+          "network": 0,
+          "other": 0
+        }
+      },
+      "hasCompileErrors": false,
+      "hasLinkErrors": false,
+      "hasRuntimeErrors": false
+    }
+  ]
+}

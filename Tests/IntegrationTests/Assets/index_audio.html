@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blitz3D WASM Audio Test</title>
+    <style>
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="overlay">Click to Start Audio</div>
+    <canvas id="gameCanvas" width="640" height="480"></canvas>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="runtime.js"></script>
+    <script>
+        const logDiv = document.createElement('div');
+        logDiv.style.fontFamily = 'monospace';
+        logDiv.style.whiteSpace = 'pre';
+        document.body.appendChild(logDiv);
+
+        const originalLog = console.log;
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            logDiv.innerText += args.join(' ') + '\n';
+        };
+
+        document.getElementById('overlay').addEventListener('click', async function () {
+            this.style.display = 'none';
+
+            // Unlock AudioContext if needed
+            if (Blitz3D.audioContext && Blitz3D.audioContext.state === 'suspended') {
+                await Blitz3D.audioContext.resume();
+            }
+
+            try {
+                // Ensure audio is initialized from user gesture
+                Blitz3D.initAudio();
+
+                await Blitz3D.load('test_audio.wasm', 'gameCanvas');
+            } catch (e) {
+                console.error(e);
+                logDiv.innerText += 'Error: ' + e;
+                console.error(e.toString());
+            }
+        });
+    </script>
+</body>
+
+</html>

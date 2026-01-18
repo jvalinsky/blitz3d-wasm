@@ -1,0 +1,6 @@
+{
+    "entry": "src/main.bb",
+    "sources": ["src/main.bb", "src/utils.bb"],
+    "assets": ["assets/"],
+    "output": "game.wasm"
+}

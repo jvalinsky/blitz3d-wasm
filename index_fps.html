@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blitz3D WASM - FPS Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="Sources/Runtime/runtime.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+        }
+
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+        }
+
+        #log {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="log">FPS Test: WASD to Move, Mouse to Look<br>Wait for "WASM Loaded"...</div>
+    <canvas id="canvas"></canvas>
+    <script>
+        const log = document.getElementById('log');
+        const originalLog = console.log;
+        console.log = function (...args) {
+            originalLog(...args);
+            const msg = args.join(' ');
+            const line = document.createElement('div');
+            line.textContent = msg;
+            log.appendChild(line);
+            if (log.childNodes.length > 20) log.removeChild(log.firstChild);
+        };
+
+        async function start() {
+            try {
+                Blitz3D.init('canvas');
+                await Blitz3D.load('Tests/IntegrationTests/FPS_Test.wasm');
+                console.log("WASM Loaded. Click to start.");
+            } catch (e) {
+                console.error("Failed to load WASM:", e);
+            }
+        }
+        start();
+    </script>
+</body>
+
+</html>

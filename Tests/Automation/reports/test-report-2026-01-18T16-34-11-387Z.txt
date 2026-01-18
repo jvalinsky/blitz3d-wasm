@@ -1,0 +1,53 @@
+=== WASM Test Suite Report ===
+Generated: 2026-01-18T16:34:11.390Z
+Total Tests: 7
+Passed: 4
+Failed: 0
+
+--- Banks Test ---
+Status: FAIL
+Duration: 10953ms
+Error: Timeout waiting for expected output
+WASM Errors: 2
+Console Messages: 9
+Compilation Time: 0.90ms
+Compile Errors: 1
+
+--- Zip Test ---
+Status: FAIL
+Duration: 11161ms
+Error: Timeout waiting for expected output
+WASM Errors: 0
+Console Messages: 0
+
+--- Audio Test ---
+Status: FAIL
+Duration: 11397ms
+Error: Timeout waiting for expected output
+WASM Errors: 0
+Console Messages: 0
+
+--- Menu Test ---
+Status: PASS
+Duration: 1494ms
+WASM Errors: 0
+Console Messages: 0
+
+--- Lighting Test ---
+Status: PASS
+Duration: 1491ms
+WASM Errors: 0
+Console Messages: 0
+
+--- FPS Test ---
+Status: PASS
+Duration: 1490ms
+WASM Errors: 0
+Console Messages: 0
+
+--- Animation Test ---
+Status: PASS
+Duration: 1495ms
+WASM Errors: 0
+Console Messages: 0
+

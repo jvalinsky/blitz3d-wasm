@@ -1,0 +1,42 @@
+=== WASM Validation Suite Report ===
+Generated: 2026-01-18T16:35:00.285Z
+
+Summary:
+- Total Tests: 21
+- Passed: 17
+- Failed: 4
+- Success Rate: 80.95%
+
+COMPILATION Tests:
+- Total: 14
+- Passed: 14
+- Failed: 0
+- Success Rate: 100.00%
+
+VALIDATION Tests:
+- Total: 3
+- Passed: 2
+- Failed: 1
+- Success Rate: 66.67%
+
+IMPORT Tests:
+- Total: 2
+- Passed: 0
+- Failed: 2
+- Success Rate: 0.00%
+
+RUNTIME Tests:
+- Total: 2
+- Passed: 1
+- Failed: 1
+- Success Rate: 50.00%
+
+=== Failed Test Details ===
+1. WASM Instantiation
+
+2. Missing Imports Test
+
+3. Incorrect Import Signatures Test
+
+4. WASM Memory Operations
+

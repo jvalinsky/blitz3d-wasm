@@ -150,9 +150,18 @@ const Blitz3D = {
                     this.imports.blitz3d[key] = this.engineExports[key];
                 }
             }
+            
+            // Enable WASM collision if available
+            if (this.physics) {
+                this.physics.setWasmEngineReady(true);
+                this.physics.enableWasmCollision(true);
+            }
+            
             console.log("Blitz3DEngine loaded and linked.");
         } catch (e) {
-            console.error("Failed to load Blitz3DEngine:", e);
+            console.warn("Blitz3DEngine not available, using JS fallback:", e.message);
+            this.engineInstance = null;
+            this.engineExports = {};
         }
     },
 

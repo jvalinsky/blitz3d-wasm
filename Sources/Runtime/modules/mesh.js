@@ -1,6 +1,7 @@
 /**
  * Blitz3D Runtime Mesh Module
  * Handles procedural mesh generation and manipulation using Three.js BufferGeometry
+ * Supports both JS meshes and WASM-backed meshes
  */
 
 class Blitz3DSurface {
@@ -117,4 +118,84 @@ class Blitz3DSurface {
     }
 }
 
-module.exports = { Blitz3DSurface };
+/**
+ * WASM-backed surface - reads mesh data directly from WASM memory
+ * Zero-copy approach for maximum performance
+ */
+class Blitz3DWasmSurface {
+    constructor(core, mesh, surfaceIdx) {
+        this.core = core;
+        this.mesh = mesh;
+        this.surfaceIdx = surfaceIdx;
+        
+        // Get pointers from WASM
+        this.vertexPtr = this.core.engineExports?.GetSurfaceVerticesPtr(mesh, surfaceIdx) || 0;
+        this.indexPtr = this.core.engineExports?.GetSurfaceIndicesPtr(mesh, surfaceIdx) || 0;
+        this.vertexCount = this.core.engineExports?.GetSurfaceVertexCount(mesh, surfaceIdx) || 0;
+        this.indexCount = this.core.engineExports?.GetSurfaceIndexCount(mesh, surfaceIdx) || 0;
+        
+        // Create geometry
+        this.geometry = new THREE.BufferGeometry();
+        this.mesh.add(new THREE.Mesh(this.geometry, new THREE.MeshBasicMaterial({
+            vertexColors: true,
+            side: THREE.DoubleSide
+        })));
+        
+        this.update();
+    }
+    
+    update() {
+        if (!this.core.memory || this.vertexPtr === 0 || this.indexPtr === 0) {
+            return;
+        }
+        
+        const memory = new Float32Array(this.core.memory.buffer);
+        const indexMemory = new Int32Array(this.core.memory.buffer);
+        
+        const vertexCount = this.vertexCount;
+        const indexCount = this.indexCount;
+        
+        if (vertexCount === 0 || indexCount === 0) {
+            return;
+        }
+        
+        const positions = new Float32Array(vertexCount * 3);
+        const uvs = new Float32Array(vertexCount * 2);
+        const colors = new Float32Array(vertexCount * 4);
+        const indices = [];
+        
+        // Vertex format in WASM: x, y, z, nx, ny, nz, u, v, r, g, b, a (11 floats)
+        const stride = 11;
+        
+        for (let i = 0; i < vertexCount; i++) {
+            const offset = (this.vertexPtr / 4) + (i * stride);
+            
+            positions[i * 3] = memory[offset];
+            positions[i * 3 + 1] = memory[offset + 1];
+            positions[i * 3 + 2] = memory[offset + 2]; // Z is already in right-handed coords
+            
+            uvs[i * 2] = memory[offset + 6];
+            uvs[i * 2 + 1] = memory[offset + 7];
+            
+            // Colors are 0-255, convert to 0-1
+            colors[i * 4] = memory[offset + 8] / 255.0;
+            colors[i * 4 + 1] = memory[offset + 9] / 255.0;
+            colors[i * 4 + 2] = memory[offset + 10] / 255.0;
+            colors[i * 4 + 3] = 1.0;
+        }
+        
+        // Read indices
+        for (let i = 0; i < indexCount; i++) {
+            const offset = (this.indexPtr / 4) + i;
+            indices.push(indexMemory[offset]);
+        }
+        
+        this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+        this.geometry.setAttribute('color', new THREE.BufferAttribute(colors, 4));
+        this.geometry.setIndex(indices);
+        this.geometry.computeVertexNormals();
+    }
+}
+
+module.exports = { Blitz3DSurface, Blitz3DWasmSurface };

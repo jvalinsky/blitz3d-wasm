@@ -273,3 +273,5 @@ Phase 5 (SCPCB Specific) ───────┘
 | 2026-01-19 | 2 | String Functions | COMPLETE |
 | 2026-01-19 | 2 | Seeded Random | COMPLETE |
 | 2026-01-19 | 2 | Asc/Chr/Hex/Bin | COMPLETE |
+| 2026-01-19 | 2 | File I/O | COMPLETE |
+| 2026-01-19 | 3 | Graphics API | IN PROGRESS |

@@ -274,20 +274,177 @@ class Blitz3DCore {
             return 0;
         };
 
-        // File I/O Stubs
-        imports.env.ReadFile = (path) => 0;
-        imports.env.WriteFile = (path) => 0;
-        imports.env.CloseFile = (stream) => { };
-        imports.env.ReadInt = (stream) => 0;
-        imports.env.ReadFloat = (stream) => 0.0;
-        imports.env.ReadString = (stream) => 0;
-        imports.env.ReadByte = (stream) => 0;
-        imports.env.ReadShort = (stream) => 0;
-        imports.env.Eof = (stream) => 1;
-        imports.env.FileSize = (path) => 0;
-        imports.env.FileType = (path) => 0;
-        imports.env.ReadData = (stream, buf, count) => 0;
-        imports.env.RestoreData = (label) => { };
+        // File I/O - Full implementation using virtual file system
+        this.fileSystem = new Map();
+        this.openFiles = new Map();
+        this.nextFileHandle = 1;
+        
+        // Register a file in the virtual file system
+        this.registerFile = (filePath, data) => {
+            this.fileSystem.set(filePath, {
+                data: data,
+                size: data.length,
+                position: 0
+            });
+        };
+        
+        // Open a file and return a handle
+        this.openFile = (filePath) => {
+            if (this.fileSystem.has(filePath)) {
+                const file = this.fileSystem.get(filePath);
+                file.position = 0;
+                const handle = this.nextFileHandle++;
+                this.openFiles.set(handle, {
+                    ...file,
+                    path: filePath,
+                    eof: false
+                });
+                return handle;
+            }
+            return 0; // File not found
+        };
+        
+        // Close a file
+        this.closeFile = (handle) => {
+            this.openFiles.delete(handle);
+        };
+        
+        // Read a byte
+        this.readByte = (handle) => {
+            const file = this.openFiles.get(handle);
+            if (!file || file.position >= file.size) {
+                if (file) file.eof = true;
+                return -1;
+            }
+            return file.data[file.position++];
+        };
+        
+        // Read signed byte
+        this.readSignedByte = (handle) => {
+            const byte = this.readByte(handle);
+            return byte > 127 ? byte - 256 : byte;
+        };
+        
+        // Read short (16-bit, little endian)
+        this.readShort = (handle) => {
+            const b1 = this.readByte(handle);
+            const b2 = this.readByte(handle);
+            if (b1 < 0 || b2 < 0) return 0;
+            return b1 | (b2 << 8);
+        };
+        
+        // Read int (32-bit, little endian)
+        this.readInt = (handle) => {
+            const b1 = this.readByte(handle);
+            const b2 = this.readByte(handle);
+            const b3 = this.readByte(handle);
+            const b4 = this.readByte(handle);
+            if (b1 < 0 || b2 < 0 || b3 < 0 || b4 < 0) return 0;
+            return b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
+        };
+        
+        // Read float
+        this.readFloat = (handle) => {
+            const buffer = new ArrayBuffer(4);
+            const view = new DataView(buffer);
+            view.setUint8(0, this.readByte(handle));
+            view.setUint8(1, this.readByte(handle));
+            view.setUint8(2, this.readByte(handle));
+            view.setUint8(3, this.readByte(handle));
+            return view.getFloat32(0, true);
+        };
+        
+        // Check EOF
+        this.fileEof = (handle) => {
+            const file = this.openFiles.get(handle);
+            if (!file) return 1;
+            return file.position >= file.size ? 1 : 0;
+        };
+        
+        // Read string until newline or max length
+        this.readLineFromFile = (handle) => {
+            const file = this.openFiles.get(handle);
+            if (!file) return 0;
+            
+            let str = '';
+            let byte = this.readByte(handle);
+            let count = 0;
+            const maxLen = 1024;
+            
+            while (byte >= 0 && byte !== 10 && count < maxLen) {
+                if (byte !== 13) { // Skip CR
+                    str += String.fromCharCode(byte);
+                }
+                byte = this.readByte(handle);
+                count++;
+            }
+            
+            if (this.allocString) {
+                return this.allocString(str);
+            }
+            return 0;
+        };
+        
+        imports.env.ReadFile = (pathPtr) => {
+            const path = this.readString(pathPtr);
+            return this.openFile(path);
+        };
+        
+        imports.env.WriteFile = (pathPtr) => {
+            const path = this.readString(pathPtr);
+            // Write support is limited in browser - create a handle for saving
+            const handle = this.nextFileHandle++;
+            this.openFiles.set(handle, {
+                data: new Uint8Array([]),
+                size: 0,
+                position: 0,
+                path: path,
+                eof: false,
+                isWrite: true
+            });
+            console.log(`WriteFile: ${path} (handle: ${handle})`);
+            return handle;
+        };
+        
+        imports.env.CloseFile = (stream) => {
+            this.closeFile(stream);
+        };
+        
+        imports.env.ReadInt = (stream) => {
+            return this.readInt(stream);
+        };
+        
+        imports.env.ReadFloat = (stream) => {
+            return this.readFloat(stream);
+        };
+        
+        imports.env.ReadString = (stream) => {
+            return this.readLineFromFile(stream);
+        };
+        
+        imports.env.ReadByte = (stream) => {
+            return this.readByte(stream);
+        };
+        
+        imports.env.ReadShort = (stream) => {
+            return this.readShort(stream);
+        };
+        
+        imports.env.Eof = (stream) => {
+            return this.fileEof(stream);
+        };
+        
+        imports.env.FileSize = (pathPtr) => {
+            const path = this.readString(pathPtr);
+            const file = this.fileSystem.get(path);
+            return file ? file.size : 0;
+        };
+        
+        imports.env.FileType = (pathPtr) => {
+            const path = this.readString(pathPtr);
+            const file = this.fileSystem.get(path);
+            return file ? 1 : 0; // 1 = file, 0 = not found
+        };
 
         // Banks
         imports.env.CreateBank = (size) => 0;

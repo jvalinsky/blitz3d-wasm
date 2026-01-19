@@ -128,6 +128,17 @@ public struct VariableManagement {
         return info
     }
     
+    /// Register a global variable with a specific WASM index (for implicit variables)
+    public mutating func registerGlobalWithIndex(_ name: String, type: WASMType, typeName: String? = nil, wasmIndex: Int) -> GlobalInfo {
+        let info = GlobalInfo(
+            index: wasmIndex,  // Use the actual WASM global index
+            type: type,
+            typeName: typeName
+        )
+        globalVariables[name] = info
+        return info
+    }
+    
     /// Get global variable info
     public func globalInfo(for name: String) -> GlobalInfo? {
         return globalVariables[name]
@@ -238,6 +249,13 @@ public final class ModuleContext {
     public var functionDefinitions: [String: FunctionDefinition]
     public var userTypes: [String: UserTypeInfo]
     public var fieldOffsets: [String: [String: Int]]
+    
+    // Internal WASM Global indices
+    public var heapPointerIdx: Int = -1
+    public var dataPtrIdx: Int = -1
+    public var typeCollectionGlobalIdx: Int = -1
+    public var gosubStackPtrIdx: Int = -1
+    public var stringHeapPtrIdx: Int = -1
 
     public init(module: WASMModule,
                 variableManagement: VariableManagement = VariableManagement(),
@@ -253,6 +271,13 @@ public final class ModuleContext {
         self.functionDefinitions = functionDefinitions
         self.userTypes = userTypes
         self.fieldOffsets = fieldOffsets
+    }
+
+    /// Register a WASM global and return its index
+    public func registerGlobal(type: WASMType, mutability: Bool, initExpr: WASMInitExpression) -> Int {
+        let idx = module.globals.count
+        module.globals.append(WASMGlobal(type: type, mutability: mutability, initExpr: initExpr))
+        return idx
     }
 
     /// Add a string literal to the module's data section

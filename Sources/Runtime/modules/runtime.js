@@ -4,10 +4,11 @@
  */
 
 // Import modules if available, otherwise use global
-const Blitz3DCore = window.Blitz3DCore || require('./modules/core');
-const Blitz3DGraphics = window.Blitz3DGraphics || require('./modules/graphics');
-const Blitz3DPhysics = window.Blitz3DPhysics || require('./modules/physics');
-const Blitz3DInput = window.Blitz3DInput || require('./modules/input');
+// Import modules if available, otherwise use global
+const Blitz3DCore = window.Blitz3DCore || require('./core');
+const Blitz3DGraphics = window.Blitz3DGraphics || require('./graphics');
+const Blitz3DPhysics = window.Blitz3DPhysics || require('./physics');
+const Blitz3DInput = window.Blitz3DInput || require('./input');
 
 const Blitz3D = {
     // Core components
@@ -32,7 +33,7 @@ const Blitz3D = {
         mountedFiles: new Map(),
         nextHandle: 1,
 
-        loadZip: async function(url) {
+        loadZip: async function (url) {
             try {
                 const filename = url.replace(/\\/g, '/').split('/').pop();
                 const response = await fetch(url);
@@ -72,7 +73,7 @@ const Blitz3D = {
     files: {},
     nextFileId: 1,
 
-    init: function(canvasId) {
+    init: function (canvasId) {
         // Initialize core
         this.core = new Blitz3DCore();
         this.core.init(canvasId);
@@ -97,7 +98,7 @@ const Blitz3D = {
         console.log("Blitz3D Runtime Initialized (Modular)");
     },
 
-    getAssetData: function(path) {
+    getAssetData: function (path) {
         const asset = this.assets[path];
         if (asset && asset.data) {
             return asset.data;
@@ -112,7 +113,7 @@ const Blitz3D = {
         return null;
     },
 
-    setupInput: function() {
+    setupInput: function () {
         // Input is already set up in init()
     },
 
@@ -121,7 +122,7 @@ const Blitz3D = {
         env: {}
     },
 
-    load: async function(wasmUrl, canvasId) {
+    load: async function (wasmUrl, canvasId) {
         if (canvasId) {
             this.init(canvasId);
         } else if (!this.core.canvas) {
@@ -135,7 +136,7 @@ const Blitz3D = {
 
         try {
             let result;
-            
+
             // Try WASM cache if available
             if (window.WASMCache && typeof window.WASMCache === 'function') {
                 console.log("Attempting WASM cache load...");
@@ -147,7 +148,7 @@ const Blitz3D = {
                     this.core.module = result.module;
                     this.core.exports = result.instance.exports;
                     this.core.memory = result.instance.exports.memory;
-                    
+
                     const endTime = performance.now();
                     console.log(`WASM Loaded from Cache in ${(endTime - startTime).toFixed(2)}ms`);
                     console.log("WASM Imports:", Object.keys(this.imports.env));
@@ -182,6 +183,13 @@ const Blitz3D = {
                 console.log(`WASM size: ${(totalBytes / 1024).toFixed(2)} KB`);
             }
 
+            console.log("DEBUG: Checking imports.env.CreateCamera:", this.imports.env.CreateCamera);
+            if (this.imports.env.CreateCamera) {
+                console.log("DEBUG: CreateCamera source:", this.imports.env.CreateCamera.toString());
+            } else {
+                console.error("DEBUG: CreateCamera is MISSING from imports!");
+            }
+
             if (WebAssembly.instantiateStreaming) {
                 console.log("Using WebAssembly.instantiateStreaming.");
                 try {
@@ -207,7 +215,7 @@ const Blitz3D = {
 
             const alloc = instance.exports.__Alloc;
             if (alloc) {
-                this.core.allocString = function(str) {
+                this.core.allocString = function (str) {
                     const len = str.length;
                     const ptr = alloc(len + 1);
                     const mem = new Uint8Array(this.core.memory.buffer);
@@ -242,7 +250,7 @@ const Blitz3D = {
         }
     },
 
-    preload: async function(fileList) {
+    preload: async function (fileList) {
         const zips = fileList.filter(f => f.toLowerCase().endsWith('.zip'));
         const files = fileList.filter(f => !f.toLowerCase().endsWith('.zip'));
 
@@ -269,22 +277,25 @@ const Blitz3D = {
 
 // Convenience getters for compatibility
 Object.defineProperty(Blitz3D, 'memory', {
-    get: function() { return this.core?.memory; }
+    get: function () { return this.core?.memory; }
 });
 
 Object.defineProperty(Blitz3D, 'instance', {
-    get: function() { return this.core?.instance; }
+    get: function () { return this.core?.instance; }
 });
 
 Object.defineProperty(Blitz3D, 'exports', {
-    get: function() { return this.core?.exports; }
+    get: function () { return this.core?.exports; }
 });
 
 Object.defineProperty(Blitz3D, 'canvas', {
-    get: function() { return this.core?.canvas; }
+    get: function () { return this.core?.canvas; }
 });
 
 window.Blitz3D = Blitz3D;
+
+// Version for cache busting
+console.log("Blitz3D Runtime v1.0.5 loaded");
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Blitz3D;

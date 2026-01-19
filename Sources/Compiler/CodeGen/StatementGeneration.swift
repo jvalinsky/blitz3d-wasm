@@ -109,6 +109,17 @@ public final class StatementGeneration {
                 } else if let global = context.variableManagement.globalInfo(for: id.name) {
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.globalSet(global.index))
+                } else {
+                    // Auto-declare implicit variable as global (Blitz3D behavior)
+                    print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global")
+                    let wasmType = targetType
+                    
+                    // Register actual WASM global and track in VariableManagement
+                    let actualGlobalIdx = context.registerGlobal(type: wasmType, mutability: true, initExpr: .i32Const(0))
+                    _ = context.variableManagement.registerGlobalWithIndex(id.name, type: wasmType, typeName: nil, wasmIndex: actualGlobalIdx)
+                    
+                    function.body.append(contentsOf: finalInstrs)
+                    function.body.append(.globalSet(actualGlobalIdx))
                 }
             case .arrayAccess(let access):
                 if case .identifier(let arrayId) = access.array,
@@ -140,20 +151,42 @@ public final class StatementGeneration {
             
         case .functionCall(let call):
             let lowerName = call.name.lowercased()
-            if let funcIdx = context.functionIndexMap[lowerName] {
-                var instrs: [WASMInstruction] = []
-                for arg in call.arguments {
-                    let argInstrs = expressionGenerator?.generate(arg) ?? []
-                    instrs.append(contentsOf: argInstrs)
+            
+            // Generate argument instructions
+            var argInstrs: [WASMInstruction] = []
+            let def = context.functionDefinitions[lowerName]
+            
+            for (i, arg) in call.arguments.enumerated() {
+                let argResult = expressionGenerator?.generateWithInfo(arg) ?? ([], .i32)
+                argInstrs.append(contentsOf: argResult.instrs)
+                
+                // Implicit casting if function definition exists
+                if let def = def, i < def.params.count {
+                    argInstrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
                 }
-                instrs.append(.call(funcIdx))
+            }
+            
+            // Push default values for missing optional parameters
+            if let def = def, call.arguments.count < def.params.count {
+                for i in call.arguments.count..<def.params.count {
+                    let targetType = def.params[i]
+                    switch targetType {
+                    case .i32, .i64: argInstrs.append(.i32Const(0))
+                    case .f32: argInstrs.append(.f32Const(0))
+                    case .f64: argInstrs.append(.f64Const(0))
+                    default: argInstrs.append(.i32Const(0))
+                    }
+                }
+            }
+            
+            if let funcIdx = context.functionIndexMap[lowerName] {
+                function.body.append(contentsOf: argInstrs)
+                function.body.append(.call(funcIdx))
                 
                 // If the function returns a value, drop it since it's being used as a statement
-                if let def = context.functionDefinitions[lowerName], !def.results.isEmpty {
-                    instrs.append(.drop)
+                if let def = def, !def.results.isEmpty {
+                    function.body.append(.drop)
                 }
-                
-                function.body.append(contentsOf: instrs)
             }
             
         case .ifStatement(let ifNode):
@@ -381,7 +414,7 @@ public final class StatementGeneration {
             
         case .label(let name):
             // The label itself is just a state ID check point
-            if let stateNum = labelStateMap[name] {
+            if labelStateMap[name] != nil {
                 // We'll wrap segments in checks:
                 // if (gotoState == stateNum) { gotoState = 0; ... }
                 // This is actually better done in generateFunction's loop

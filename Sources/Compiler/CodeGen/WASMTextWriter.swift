@@ -509,6 +509,7 @@ public struct WASMTextWriter {
         case .f32x4Sub: return "\(prefix)f32x4.sub\n"
         case .f32x4Mul: return "\(prefix)f32x4.mul\n"
         case .f32x4Div: return "\(prefix)f32x4.div\n"
+        case .end: return "\(prefix)end\n"
         }
     }
     

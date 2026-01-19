@@ -53,8 +53,11 @@ public final class ExpressionGeneration {
             if let global = context.variableManagement.globalInfo(for: id.name) {
                 return ([.globalGet(global.index)], global.type)
             }
-            // Default to 0 if not found
-            return ([.i32Const(0)], .i32)
+            // Auto-declare implicit variable as global (Blitz3D behavior)
+            print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
+            let actualGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            _ = context.variableManagement.registerGlobalWithIndex(id.name, type: .i32, typeName: nil, wasmIndex: actualGlobalIdx)
+            return ([.globalGet(actualGlobalIdx)], .i32)
             
         case .binary(let binop):
             return generateBinaryOp(binop)
@@ -76,39 +79,130 @@ public final class ExpressionGeneration {
             
         case .new(let typeName):
             // new TypeName() - allocate instance
-            if context.userTypes[typeName] != nil {
-                // Call allocation function (placeholder)
-                return ([.call(0)], .i32)
+            guard let typeInfo = context.userTypes[typeName] else {
+                return ([.i32Const(0)], .i32)
+            }
+            
+            var instrs: [WASMInstruction] = []
+            
+            // 1. Allocation logic (Pool + Bump fallback)
+            // if (freeHead != 0) {
+            //   obj = freeHead;
+            //   freeHead = obj.next;
+            // } else {
+            //   obj = heapPointer;
+            //   heapPointer += size;
+            // }
+            
+            instrs.append(.globalGet(typeInfo.freeHeadGlobalIdx))
+            instrs.append(.if(.i32, [
+                // Pool Path
+                .globalGet(typeInfo.freeHeadGlobalIdx),
+                .localTee(0), // obj
+                .i32Load(2, 4), // obj.next
+                .globalSet(typeInfo.freeHeadGlobalIdx),
+                .localGet(0) // result
+            ], [
+                // Bump Path
+                .globalGet(context.heapPointerIdx),
+                .localTee(0), // obj
+                .i32Const(Int32(typeInfo.instanceSize)),
+                .i32Add,
+                .globalSet(context.heapPointerIdx),
+                .localGet(0) // result
+            ]))
+            
+            instrs.append(.localTee(0)) // Ensure obj is in local 0 for stitching
+            
+            // 2. Initialize header
+            // obj.prev = last
+            instrs.append(.localGet(0))
+            instrs.append(.globalGet(typeInfo.lastGlobalIdx))
+            instrs.append(.i32Store(2, 0)) // offset 0
+            
+            // obj.next = 0
+            instrs.append(.localGet(0))
+            instrs.append(.i32Const(0))
+            instrs.append(.i32Store(2, 4)) // offset 4
+            
+            // obj.typeID = typeID
+            instrs.append(.localGet(0))
+            instrs.append(.i32Const(Int32(typeInfo.typeID)))
+            instrs.append(.i32Store(2, 8)) // offset 8
+            
+            // 3. Stitch: if (last != 0) last.next = obj
+            instrs.append(.globalGet(typeInfo.lastGlobalIdx))
+            instrs.append(.if(.void, [
+                .globalGet(typeInfo.lastGlobalIdx),
+                .localGet(0),
+                .i32Store(2, 4) // last.next = obj
+            ], nil))
+            
+            // if (first == 0) first = obj
+            instrs.append(.globalGet(typeInfo.firstGlobalIdx))
+            instrs.append(.i32EqZ)
+            instrs.append(.if(.void, [
+                .localGet(0),
+                .globalSet(typeInfo.firstGlobalIdx)
+            ], nil))
+            
+            // last = obj
+            instrs.append(.localGet(0))
+            instrs.append(.globalSet(typeInfo.lastGlobalIdx))
+            
+            // return obj
+            instrs.append(.localGet(0))
+            
+            return (instrs, .i32)
+            
+        case .first(let typeName):
+            // First TypeName - get first instance
+            if let typeInfo = context.userTypes[typeName] {
+                return ([.globalGet(typeInfo.firstGlobalIdx)], .i32)
             }
             return ([.i32Const(0)], .i32)
             
-        case .first(_):
-            // First TypeName - get first instance
-            return ([.call(0)], .i32)
-            
-        case .last(_):
+        case .last(let typeName):
             // Last TypeName - get last instance
-            return ([.call(0)], .i32)
+            if let typeInfo = context.userTypes[typeName] {
+                return ([.globalGet(typeInfo.lastGlobalIdx)], .i32)
+            }
+            return ([.i32Const(0)], .i32)
             
         case .before(let expr):
-            // Before expr - get previous instance
+            // Before expr - get previous instance (offset 0)
             let exprInstrs = generate(expr)
-            return (exprInstrs + [.call(0)], .i32)
+            return (exprInstrs + [.i32Load(2, 0)], .i32)
             
         case .after(let expr):
-            // After expr - get next instance
+            // After expr - get next instance (offset 4)
             let exprInstrs = generate(expr)
-            return (exprInstrs + [.call(0)], .i32)
+            return (exprInstrs + [.i32Load(2, 4)], .i32)
             
         case .handle(let expr):
             // Handle(expr) - convert instance to handle
+            // In linear memory, instance pointer IS the handle
             let exprInstrs = generate(expr)
             return (exprInstrs, .i32)
             
-        case .objectCast(_, let expr):
+        case .objectCast(let typeName, let expr):
             // Object.TypeName(handle) - convert handle to instance
+            // We should add type safety check here using offset 8 (typeID)
             let exprInstrs = generate(expr)
-            return (exprInstrs, .i32)
+            var instrs = exprInstrs
+            if let typeInfo = context.userTypes[typeName] {
+                instrs.append(.localTee(0)) // handle
+                instrs.append(.localGet(0))
+                instrs.append(.i32Load(2, 8)) // load typeID
+                instrs.append(.i32Const(Int32(typeInfo.typeID)))
+                instrs.append(.i32Eq)
+                instrs.append(.if(.i32, [
+                    .localGet(0)
+                ], [
+                    .i32Const(0)
+                ]))
+            }
+            return (instrs, .i32)
         }
     }
     
@@ -133,6 +227,16 @@ public final class ExpressionGeneration {
         // Generate appropriate instruction based on operator and type
         switch binop.op {
         case "+":
+            if typeHandling.isString(from: binop.left) || typeHandling.isString(from: binop.right) {
+                // String concatenation
+                if let concatIdx = context.functionIndexMap["__stringconcat"] {
+                    // Need to reset instrs and rebuild for string call
+                    instrs = leftResult.instrs
+                    instrs.append(contentsOf: rightResult.instrs)
+                    instrs.append(.call(concatIdx))
+                    return (instrs, .i32)
+                }
+            }
             switch opType {
             case .i32: instrs.append(.i32Add)
             case .i64: instrs.append(.i64Add)
@@ -324,8 +428,12 @@ public final class ExpressionGeneration {
         
         // Call function
         if let funcIdx = context.functionIndexMap[internalName] {
+            if internalName == "createcamera" {
+                print("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
+            }
             instrs.append(.call(Int(funcIdx)))
         } else {
+            print("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0.")
             instrs.append(.call(0)) // Placeholder
         }
         
@@ -486,9 +594,22 @@ public final class ExpressionGeneration {
 
     private func addStringData(_ str: String) -> Int {
         var bytes: [UInt8] = []
-        for char in str.utf8 {
-            bytes.append(char)
-        }
+        
+        // 1. Add RefCount (4 bytes)
+        bytes.append(contentsOf: [0x01, 0x00, 0x00, 0x00])
+        
+        // 2. Add Length (4 bytes)
+        let utf8Bytes = Array(str.utf8)
+        let len = Int32(utf8Bytes.count)
+        bytes.append(UInt8(len & 0xFF))
+        bytes.append(UInt8((len >> 8) & 0xFF))
+        bytes.append(UInt8((len >> 16) & 0xFF))
+        bytes.append(UInt8((len >> 24) & 0xFF))
+        
+        // 3. Add Data
+        bytes.append(contentsOf: utf8Bytes)
+        
+        // 4. Add Null Terminator
         bytes.append(0)
 
         var offset = 256

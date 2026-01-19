@@ -103,7 +103,6 @@ final class CodeGeneratorTests: XCTestCase {
         var codeGen = CodeGenerator()
         let module = codeGen.generate(from: program)
         
-        // Should have at least one function in the module
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
@@ -185,7 +184,38 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertTrue(watOutput.contains("(data"))
     }
     
-    // MARK: - Data/Read/Restore Tests
+    func testGenerateGoto() throws {
+        let source = """
+        Function Test()
+            .start
+            Print "Loop"
+            Goto start
+        End Function
+        """
+        var parser = Parser(source: source)
+        let program = parser.parse()
+        
+        var codeGen = CodeGenerator()
+        let module = codeGen.generate(from: program)
+        
+        // Find Test function
+        let testFuncExport = module.exports.first { $0.name == "Test" }
+        XCTAssertNotNil(testFuncExport)
+        
+        let testFunc = module.code[testFuncExport!.index - module.imports.count]
+        
+        // Should have a loop
+        XCTAssertTrue(testFunc.body.contains { instr in
+            if case .loop = instr { return true }
+            return false
+        }, "Function with Goto should contain a loop")
+        
+        // Should have a br 0
+        XCTAssertTrue(testFunc.body.contains { instr in
+            if case .br(0) = instr { return true }
+            return false
+        }, "Function with Goto should contain a br 0")
+    }
     
     func testGenerateDataStatement() throws {
         let source = """

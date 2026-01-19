@@ -117,7 +117,7 @@ public struct CodeGenerator {
             ("ShowPointer", "ShowPointer", [], []),
             ("MilliCSecs", "MilliCSecs", [], [.i32]),
             ("CreateCamera", "CreateCamera", [.i32], [.i32]),
-            ("CreateLight", "CreateLight", [], [.i32]),
+            ("CreateLight", "CreateLight", [.i32], [.i32]),
             ("AmbientLight", "AmbientLight", [.f32, .f32, .f32], []),
             ("LightColor", "LightColor", [.i32, .f32, .f32, .f32], []),
             ("LightRange", "LightRange", [.i32, .f32], []),
@@ -138,12 +138,19 @@ public struct CodeGenerator {
             ("MoveEntity", "MoveEntity", [.i32, .f32, .f32, .f32], []),
             ("TurnEntity", "TurnEntity", [.i32, .f32, .f32, .f32, .i32], []),
             ("EntityTexture", "EntityTexture", [.i32, .i32, .i32, .i32], []),
+            ("RenderWorld", "RenderWorld", [.f32], []),
+            ("Flip", "Flip", [.i32], []),
             ("LoadTexture", "LoadTexture", [.i32, .i32], [.i32]),
             ("LoadAsset", "LoadAsset", [.i32], [.i32]),
             ("GetAssetData", "GetAssetData", [.i32], [.i32]),
             ("GetAssetSize", "GetAssetSize", [.i32], [.i32]),
             ("LoadMesh", "LoadMesh", [.i32, .i32], [.i32]),
             ("CreateMesh", "CreateMesh", [.i32], [.i32]),
+            ("CreateSurface", "CreateSurface", [.i32, .i32], [.i32]),
+            ("AddVertex", "AddVertex", [.i32, .f32, .f32, .f32, .f32, .f32, .f32], [.i32]),
+            ("AddTriangle", "AddTriangle", [.i32, .i32, .i32, .i32], [.i32]),
+            ("VertexColor", "VertexColor", [.i32, .i32, .f32, .f32, .f32, .f32], []),
+            ("UpdateNormals", "UpdateNormals", [.i32], []),
             ("LoadAnimMesh", "LoadAnimMesh", [.i32, .i32], [.i32]),
             ("Animate", "Animate", [.i32, .i32, .f32, .i32, .f32], []),
             ("SetAnimTime", "SetAnimTime", [.i32, .f32, .i32], []),
@@ -274,6 +281,10 @@ public struct CodeGenerator {
             let lowerInternalName = internalName.lowercased()
             context.functionIndexMap[lowerInternalName] = importIdx
             context.functionDefinitions[lowerInternalName] = FunctionDefinition(params: params, results: results)
+            
+            if name == "CreateCamera" {
+                print("DEBUG_COMPILER: Registered CreateCamera. Index: \(importIdx) Internal: \(lowerInternalName)")
+            }
             
             if name == "PrintInt" {
                 context.functionIndexMap["print"] = importIdx

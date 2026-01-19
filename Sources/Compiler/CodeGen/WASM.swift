@@ -10,6 +10,7 @@ public enum WASMType: String, Equatable {
     case i64 = "i64"
     case f32 = "f32"
     case f64 = "f64"
+    case v128 = "v128"
     case void = "void"
     case funcref = "funcref"
     case externref = "externref"
@@ -177,6 +178,31 @@ public enum WASMInstruction: Equatable {
     case i32ReinterpretF32
     case f64ReinterpretI64
     case i64ReinterpretF64
+    
+    // Bulk Memory Operations (WASM 1.1)
+    case memoryInit(Int, Int) // dataIdx, memoryIdx
+    case dataDrop(Int)        // dataIdx
+    case memoryCopy(Int, Int) // destMemoryIdx, srcMemoryIdx
+    case memoryFill(Int)      // memoryIdx
+    case tableInit(Int, Int)  // elemIdx, tableIdx
+    case elemDrop(Int)        // elemIdx
+    case tableCopy(Int, Int)  // destTableIdx, srcTableIdx
+    case tableGrow(Int)       // tableIdx
+    case tableSize(Int)       // tableIdx
+    case tableFill(Int)       // tableIdx
+    
+    // SIMD Operations (WASM 1.1)
+    case v128Const([UInt8])
+    case i32x4Add
+    case i32x4Sub
+    case i32x4Mul
+    case f32x4Add
+    case f32x4Sub
+    case f32x4Mul
+    case f32x4Div
+    
+    // Control flow end
+    case end
 }
 
 public struct WASMFunction {
@@ -309,5 +335,29 @@ public struct WASMData {
         self.memoryIndex = memoryIndex
         self.offset = offset
         self.bytes = bytes
+    }
+}
+
+extension Int {
+    public func toBytes() -> [UInt8] {
+        return [
+            UInt8((self >> 0) & 0xFF),
+            UInt8((self >> 8) & 0xFF),
+            UInt8((self >> 16) & 0xFF),
+            UInt8((self >> 24) & 0xFF)
+        ]
+    }
+}
+
+extension Double {
+    public func toBytes() -> [UInt8] {
+        let floatValue = Float(self)
+        let intValue = floatValue.bitPattern
+        return [
+            UInt8((Int(intValue) >> 0) & 0xFF),
+            UInt8((Int(intValue) >> 8) & 0xFF),
+            UInt8((Int(intValue) >> 16) & 0xFF),
+            UInt8((Int(intValue) >> 24) & 0xFF)
+        ]
     }
 }

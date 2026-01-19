@@ -30,6 +30,22 @@ class Blitz3DPhysics {
             this.collisionResults = {};
         };
 
+        imports.env.EntityType = (ent, type, recurse) => {
+            const entity = this.graphics.entities[ent];
+            if (entity) {
+                entity.userData.collisionType = type;
+                // recursive not fully implemented yet
+            }
+        };
+
+        imports.env.EntityRadius = (ent, r1, r2) => {
+            const entity = this.graphics.entities[ent];
+            if (entity) {
+                entity.userData.radius = r1;
+                // r2 corresponds to height/y-radius usually for capsules
+            }
+        };
+
         imports.env.EntityPick = (entity, range) => {
             const obj = this.graphics.entities[entity];
             if (obj && this.graphics.camera) {
@@ -156,7 +172,7 @@ class Blitz3DPhysics {
     updateCollisions() {
         // Perform collision detection based on rules
         this.collisionResults = {};
-        
+
         for (const rule of this.collisionRules) {
             // Simplified collision detection
             // In a full implementation, this would check entity positions and types

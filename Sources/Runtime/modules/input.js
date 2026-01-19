@@ -31,6 +31,9 @@ class Blitz3DInput {
         imports.env.MouseYSpeed = () => this.mouseYSpeed;
         imports.env.MouseDown = (button) => this.mouseButtons[button + 1] ? 1 : 0;
         imports.env.MouseHit = (button) => this.mouseButtonHits[button + 1] ? 1 : 0;
+        imports.env.MoveMouse = (x, y) => { /* Hardware cursor move not possible in browser */ };
+        imports.env.HidePointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'none'; };
+        imports.env.ShowPointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'default'; };
 
         imports.env.WaitKey = () => {
             return new Promise((resolve) => {

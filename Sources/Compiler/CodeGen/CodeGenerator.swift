@@ -219,6 +219,15 @@ public struct CodeGenerator {
             ("FileType", "FileType", [.i32], [.i32], "env"),
             ("ReadData", "ReadData", [.i32, .i32, .i32], [.i32], "env"),
             ("RestoreData", "RestoreData", [.i32], [], "env"),
+            
+            // Networking (TCP) for SCP:CB multiplayer
+            ("OpenTCPStream", "OpenTCPStream", [.i32, .i32], [.i32], "env"),
+            ("CloseTCPStream", "CloseTCPStream", [.i32], [], "env"),
+            ("WriteLine", "WriteLine", [.i32, .i32], [.i32], "env"),
+            ("ReadLine", "ReadLine", [.i32], [.i32], "env"),
+            ("ReadAvail", "ReadAvail", [.i32], [.i32], "env"),
+            ("SendNetMsg", "SendNetMsg", [.i32, .i32, .i32, .i32, .i32], [.i32], "env"),
+            
             ("StringConcat", "StringConcat", [.i32, .i32], [.i32], "env"),
             ("IntToString", "IntToString", [.i32], [.i32], "env"),
             ("FloatToString", "FloatToString", [.f32], [.i32], "env"),
@@ -237,12 +246,23 @@ public struct CodeGenerator {
             ("PokeShort", "PokeShort", [.i32, .i32, .i32], [], "blitz3d"),
             ("ParseB3D", "ParseB3D", [.i32], [.i32], "blitz3d"),
             ("ParseRMesh", "ParseRMesh", [.i32], [.i32], "blitz3d"),
+            ("GetMeshSurfaceCount", "GetMeshSurfaceCount", [.i32], [.i32], "blitz3d"),
+            ("GetSurfaceVertexCount", "GetSurfaceVertexCount", [.i32, .i32], [.i32], "blitz3d"),
+            ("GetSurfaceIndexCount", "GetSurfaceIndexCount", [.i32, .i32], [.i32], "blitz3d"),
+            ("GetSurfaceVerticesPtr", "GetSurfaceVerticesPtr", [.i32, .i32], [.i32], "blitz3d"),
+            ("GetSurfaceIndicesPtr", "GetSurfaceIndicesPtr", [.i32, .i32], [.i32], "blitz3d"),
             ("ZlibWapi_Open", "ZlibWapi_Open", [.i32], [.i32], "env"),
             ("ZlibWapi_Close", "ZlibWapi_Close", [.i32], [], "env"),
             ("ZlibWapi_GetFileCount", "ZlibWapi_GetFileCount", [.i32], [.i32], "env"),
             ("ZlibWapi_GetFileName", "ZlibWapi_GetFileName", [.i32, .i32], [.i32], "env"),
             ("ZlibWapi_ExtractFile", "ZlibWapi_ExtractFile", [.i32, .i32, .i32], [.i32], "env"),
-            ("FSOUND_Init", "FSOUND_Init", [.i32, .i32, .i32], [.i32], "env"),
+            
+            // Movie Functions (SCP:CB intro videos)
+            ("OpenMovie", "OpenMovie", [.i32], [.i32], "env"),
+            ("DrawMovie", "DrawMovie", [.i32, .i32, .i32, .i32, .i32], [], "env"),
+            ("MoviePlaying", "MoviePlaying", [.i32], [.i32], "env"),
+            
+            // Audio Functions
             ("FSOUND_Stream_Open", "FSOUND_Stream_Open", [.i32, .i32, .i32, .i32], [.i32], "env"),
             ("FSOUND_Stream_Play", "FSOUND_Stream_Play", [.i32, .i32], [.i32], "env"),
             ("FSOUND_SetVolume", "FSOUND_SetVolume", [.i32, .i32], [], "env"),

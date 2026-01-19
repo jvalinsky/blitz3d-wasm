@@ -763,12 +763,267 @@ class Blitz3DCore {
             this.listenerForward = { x: forwardX, y: forwardY, z: forwardZ };
         };
 
-        // Zip Stubs
-        imports.env.ZlibWapi_Open = (path) => 0;
-        imports.env.ZlibWapi_Close = (zip) => { };
-        imports.env.ZlibWapi_GetFileCount = (zip) => 0;
-        imports.env.ZlibWapi_GetFileName = (zip, index) => 0;
-        imports.env.ZlibWapi_ExtractFile = (zip, index, dest) => 0;
+        // Zip/Archive support for assets.zip
+        this.zipArchives = new Map();
+        this.nextZipHandle = 1;
+        
+        this.loadZipArchive = async (path) => {
+            try {
+                // Try virtual file system first
+                if (this.fileSystem && this.fileSystem.has(path)) {
+                    const file = this.fileSystem.get(path);
+                    const zip = await JSZip.loadAsync(file.data);
+                    const fileMap = new Map();
+                    
+                    zip.forEach((relativePath, zipEntry) => {
+                        if (!zipEntry.dir) {
+                            fileMap.set(relativePath, zipEntry);
+                        }
+                    });
+                    
+                    this.zipArchives.set(path, fileMap);
+                    return fileMap.size;
+                }
+                
+                // Try to fetch
+                const response = await fetch(path);
+                if (!response.ok) throw new Error("HTTP " + response.status);
+                const arrayBuffer = await response.arrayBuffer();
+                const zip = await JSZip.loadAsync(arrayBuffer);
+                const fileMap = new Map();
+                
+                zip.forEach((relativePath, zipEntry) => {
+                    if (!zipEntry.dir) {
+                        fileMap.set(relativePath, zipEntry);
+                    }
+                });
+                
+                this.zipArchives.set(path, fileMap);
+                console.log("Loaded ZIP: " + path + " (" + fileMap.size + " files)");
+                return fileMap.size;
+            } catch (e) {
+                console.error("Failed to load ZIP " + path + ":", e);
+                return 0;
+            }
+        };
+        
+        imports.env.ZlibWapi_Open = async (pathPtr) => {
+            const path = this.readString(pathPtr);
+            const handle = this.nextZipHandle++;
+            
+            const fileCount = await this.loadZipArchive(path);
+            if (fileCount > 0) {
+                this.zipArchives.set(handle, {
+                    path: path,
+                    files: this.zipArchives.get(path),
+                    isHandle: true
+                });
+                // Transfer ownership from path-based to handle-based
+                this.zipArchives.delete(path);
+                return handle;
+            }
+            return 0;
+        };
+        
+        imports.env.ZlibWapi_Close = (zip) => {
+            if (this.zipArchives.has(zip)) {
+                this.zipArchives.delete(zip);
+            }
+        };
+        
+        imports.env.ZlibWapi_GetFileCount = (zip) => {
+            const archive = this.zipArchives.get(zip);
+            if (archive && archive.files) {
+                return archive.files.size;
+            }
+            return 0;
+        };
+        
+        imports.env.ZlibWapi_GetFileName = (zip, index) => {
+            const archive = this.zipArchives.get(zip);
+            if (archive && archive.files) {
+                const entries = Array.from(archive.files.keys());
+                if (index >= 0 && index < entries.length) {
+                    const filename = entries[index];
+                    if (this.allocString) {
+                        return this.allocString(filename);
+                    }
+                }
+            }
+            return 0;
+        };
+        
+        imports.env.ZlibWapi_ExtractFile = async (zip, index, destPtr) => {
+            const archive = this.zipArchives.get(zip);
+            if (archive && archive.files) {
+                const entries = Array.from(archive.files.keys());
+                if (index >= 0 && index < entries.length) {
+                    const filename = entries[index];
+                    const zipEntry = archive.files.get(filename);
+                    
+                    if (zipEntry) {
+                        try {
+                            const data = await zipEntry.async("uint8array");
+                            const destPath = this.readString(destPtr);
+                            
+                            // Register in virtual file system
+                            this.registerFile(destPath, data);
+                            
+                            console.log("Extracted: " + filename + " -> " + destPath);
+                            return 1;
+                        } catch (e) {
+                            console.error("Failed to extract " + filename + ":", e);
+                        }
+                    }
+                }
+            }
+            return 0;
+        };
+        
+        // Networking (TCP) for SCP:CB multiplayer
+        this.tcpStreams = new Map();
+        this.nextStreamId = 1;
+        
+        imports.env.OpenTCPStream = async (hostPtr, port) => {
+            const host = this.readString(hostPtr);
+            const streamId = this.nextStreamId++;
+            
+            try {
+                // WebSocket as TCP substitute for browser
+                const ws = new WebSocket("ws://" + host + ":" + port);
+                
+                ws.binaryType = 'arraybuffer';
+                
+                const stream = {
+                    ws: ws,
+                    sendBuffer: [],
+                    receiveBuffer: new Uint8Array(0),
+                    connected: false,
+                    host: host,
+                    port: port
+                };
+                
+                ws.onopen = () => {
+                    stream.connected = true;
+                    console.log("TCPStream connected: " + host + ":" + port);
+                    // Send any buffered data
+                    while (stream.sendBuffer.length > 0 && ws.readyState === WebSocket.OPEN) {
+                        ws.send(stream.sendBuffer.shift());
+                    }
+                };
+                
+                ws.onmessage = (event) => {
+                    const data = new Uint8Array(event.data);
+                    const newBuffer = new Uint8Array(stream.receiveBuffer.length + data.length);
+                    newBuffer.set(stream.receiveBuffer);
+                    newBuffer.set(data, stream.receiveBuffer.length);
+                    stream.receiveBuffer = newBuffer;
+                };
+                
+                ws.onclose = () => {
+                    stream.connected = false;
+                    console.log("TCPStream closed: " + host + ":" + port);
+                };
+                
+                ws.onerror = (e) => {
+                    console.error("TCPStream error: " + host + ":" + port, e);
+                };
+                
+                this.tcpStreams.set(streamId, stream);
+                return streamId;
+            } catch (e) {
+                console.error("Failed to open TCPStream: " + e);
+                return 0;
+            }
+        };
+        
+        imports.env.CloseTCPStream = (streamId) => {
+            const stream = this.tcpStreams.get(streamId);
+            if (stream && stream.ws) {
+                stream.ws.close();
+                this.tcpStreams.delete(streamId);
+            }
+        };
+        
+        imports.env.WriteLine = (streamId, strPtr) => {
+            const stream = this.tcpStreams.get(streamId);
+            if (!stream || !stream.ws) return 0;
+            
+            const str = this.readString(strPtr);
+            const data = str + "\n";
+            
+            if (stream.connected && stream.ws.readyState === WebSocket.OPEN) {
+                stream.ws.send(data);
+                return 1;
+            } else {
+                // Buffer for later
+                stream.sendBuffer.push(data);
+                return 1;
+            }
+        };
+        
+        imports.env.ReadLine = (streamId) => {
+            const stream = this.tcpStreams.get(streamId);
+            if (!stream) return 0;
+            
+            // Look for newline in receive buffer
+            let newlineIdx = -1;
+            for (let i = 0; i < stream.receiveBuffer.length; i++) {
+                if (stream.receiveBuffer[i] === 10) { // \n
+                    newlineIdx = i;
+                    break;
+                }
+                if (stream.receiveBuffer[i] === 13) { // \r
+                    newlineIdx = i;
+                    break;
+                }
+            }
+            
+            if (newlineIdx >= 0) {
+                const line = stream.receiveBuffer.slice(0, newlineIdx);
+                stream.receiveBuffer = stream.receiveBuffer.slice(newlineIdx + 1);
+                
+                // Convert to string
+                let str = '';
+                for (let i = 0; i < line.length; i++) {
+                    str += String.fromCharCode(line[i]);
+                }
+                
+                if (this.allocString) {
+                    return this.allocString(str);
+                }
+            }
+            return 0;
+        };
+        
+        imports.env.ReadAvail = (streamId) => {
+            const stream = this.tcpStreams.get(streamId);
+            if (!stream) return 0;
+            
+            // Count bytes until newline
+            let count = 0;
+            for (let i = 0; i < stream.receiveBuffer.length; i++) {
+                if (stream.receiveBuffer[i] === 10 || stream.receiveBuffer[i] === 13) {
+                    break;
+                }
+                count++;
+            }
+            return count;
+        };
+        
+        imports.env.SendNetMsg = (streamId, destId, msgId, data$, reliable) => {
+            const stream = this.tcpStreams.get(streamId);
+            if (!stream || !stream.ws) return 0;
+            
+            const data = this.readString(data$);
+            const msg = JSON.stringify({ dest: destId, id: msgId, data: data, reliable: reliable });
+            
+            if (stream.connected && stream.ws.readyState === WebSocket.OPEN) {
+                stream.ws.send(msg);
+                return 1;
+            }
+            return 0;
+        };
     }
 }
 

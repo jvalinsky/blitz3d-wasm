@@ -278,3 +278,6 @@ Phase 5 (SCPCB Specific) ───────┘
 | 2026-01-19 | 3 | PointEntity/NameEntity | COMPLETE |
 | 2026-01-19 | 3 | VertexTexCoords | COMPLETE |
 | 2026-01-19 | 4 | FMOD Audio (Web Audio API) | COMPLETE |
+| 2026-01-19 | 5 | Movie Playback | COMPLETE |
+| 2026-01-19 | 5 | Zlib Decompression | COMPLETE |
+| 2026-01-19 | 5 | TCP Networking | COMPLETE |

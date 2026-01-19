@@ -1009,6 +1009,100 @@ class Blitz3DGraphics {
         imports.env.Animating = (ent) => 0;
         imports.env.Delay = (ms) => { };
         imports.env.WaitKey = () => 0;
+        
+        // Movie Playback Functions (for SCP:CB intro videos)
+        this.movies = new Map();
+        this.nextMovieId = 1;
+        
+        imports.env.OpenMovie = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            const id = this.nextMovieId++;
+            
+            const video = document.createElement('video');
+            video.src = path;
+            video.crossOrigin = 'anonymous';
+            video.muted = true; // Start muted for autoplay
+            video.playsInline = true;
+            
+            this.movies.set(id, {
+                path: path,
+                video: video,
+                x: 0,
+                y: 0,
+                width: 800,
+                height: 600,
+                playing: false
+            });
+            
+            console.log("OpenMovie: " + path + " (id=" + id + ")");
+            return id;
+        };
+        
+        imports.env.DrawMovie = (movieId, x, y, width, height) => {
+            const movie = this.movies.get(movieId);
+            if (movie) {
+                movie.x = x;
+                movie.y = y;
+                movie.width = width;
+                movie.height = height;
+                
+                // Store for rendering in update()
+                movie.shouldRender = true;
+            }
+        };
+        
+        imports.env.MoviePlaying = (movieId) => {
+            const movie = this.movies.get(movieId);
+            if (movie && movie.video) {
+                return (!movie.video.paused && !movie.video.ended) ? 1 : 0;
+            }
+            return 0;
+        };
+        
+        // Override renderWorld to draw movies
+        const originalRenderWorld = imports.env.RenderWorld;
+        imports.env.RenderWorld = (interp) => {
+            // First render 3D scene
+            if (this.renderer && this.scene && this.camera) {
+                this.renderer.setClearColor(0x000000, 1);
+                this.renderer.clear();
+                this.renderer.render(this.scene, this.camera);
+            }
+            
+            // Then render movies on top
+            for (const [id, movie] of this.movies) {
+                if (movie.shouldRender && movie.video && movie.video.readyState >= 2) {
+                    this.drawMovieFrame(movie);
+                }
+            }
+        };
+        
+        this.drawMovieFrame = (movie) => {
+            if (!this.core.ctx2d || !movie.video || movie.video.paused || movie.video.ended) return;
+            
+            // Draw video frame to 2D canvas
+            this.core.ctx2d.globalAlpha = 1.0;
+            this.core.ctx2d.drawImage(movie.video, movie.x, movie.y, movie.width, movie.height);
+        };
+        
+        // Start playing movie when opened
+        const originalStreamPlay = imports.env.FSOUND_Stream_Play;
+        imports.env.FSOUND_Stream_Play = (channel, streamId) => {
+            // Check if this is actually a movie
+            const movie = this.movies.get(streamId);
+            if (movie && movie.video) {
+                movie.video.play().then(() => {
+                    movie.playing = true;
+                    console.log("Movie started: " + movie.path);
+                }).catch(e => {
+                    console.error("Failed to play movie: " + e);
+                });
+                return streamId;
+            }
+            // Otherwise, use original audio stream logic
+            if (originalStreamPlay) return originalStreamPlay(channel, streamId);
+            return 0;
+        };
     }
 
     updateSurfaces() {

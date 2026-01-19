@@ -461,20 +461,307 @@ class Blitz3DCore {
         imports.env.PeekShort = (bank, offset) => 0;
         imports.env.PokeShort = (bank, offset, val) => { };
 
-        // Audio Stubs
-        imports.env.PlaySound = (sound) => 0;
-        imports.env.FreeSound = (sound) => { };
-        imports.env.StopChannel = (chn) => { };
-        imports.env.ChannelVolume = (chn, vol) => { };
-        imports.env.ChannelPaused = (chn, paused) => { };
-        imports.env.ChannelPlaying = (chn) => 0;
-        imports.env.FSOUND_Init = (freq, channels, flags) => 1;
-        imports.env.FSOUND_Stream_Open = (path, mode, offset, len) => 0;
-        imports.env.FSOUND_Stream_Play = (chn, stream) => 0;
-        imports.env.FSOUND_SetVolume = (chn, vol) => { };
-        imports.env.FSOUND_SetPaused = (chn, paused) => { };
-        imports.env.FSOUND_Stream_Stop = (stream) => { };
-        imports.env.FSOUND_Close = () => { };
+        // Audio System - Web Audio API implementation of FMOD-like interface
+        this.audioContext = null;
+        this.audioMaster = null;
+        this.sounds = new Map();
+        this.streams = new Map();
+        this.channels = new Map();
+        this.nextSoundId = 1;
+        this.nextStreamId = 1;
+        this.nextChannelId = 1;
+        this.audioInitialized = false;
+        
+        // Initialize audio context on user interaction
+        this.initAudio = () => {
+            if (this.audioInitialized) return true;
+            
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) {
+                    console.warn("Web Audio API not supported");
+                    return false;
+                }
+                
+                this.audioContext = new AudioContext();
+                this.audioMaster = this.audioContext.createGain();
+                this.audioMaster.gain.value = 1.0;
+                this.audioMaster.connect(this.audioContext.destination);
+                
+                this.audioInitialized = true;
+                console.log("Audio initialized: sample rate=" + this.audioContext.sampleRate);
+                return true;
+            } catch (e) {
+                console.error("Failed to initialize audio:", e);
+                return false;
+            }
+        };
+        
+        imports.env.FSOUND_Init = (freq, channels, flags) => {
+            const result = this.initAudio() ? 1 : 0;
+            if (result && freq > 0) {
+                this.audioContext.sampleRate = freq;
+            }
+            return result;
+        };
+        
+        imports.env.FSOUND_Close = () => {
+            if (this.audioContext) {
+                this.audioContext.close();
+                this.audioContext = null;
+                this.audioInitialized = false;
+            }
+        };
+        
+        // Load a sound sample into memory
+        imports.env.LoadSound = (pathPtr) => {
+            if (!this.initAudio()) return 0;
+            
+            const path = this.readString(pathPtr);
+            const id = this.nextSoundId++;
+            
+            // Store for async loading
+            this.sounds.set(id, {
+                path: path,
+                buffer: null,
+                loading: true,
+                volume: 1.0,
+                pan: 0
+            });
+            
+            // Try to load from virtual file system or fetch
+            this.loadSoundBuffer(id, path);
+            
+            return id;
+        };
+        
+        this.loadSoundBuffer = async (id, path) => {
+            try {
+                let audioData;
+                
+                // Try virtual file system first
+                if (this.fileSystem && this.fileSystem.has(path)) {
+                    const file = this.fileSystem.get(path);
+                    audioData = file.data;
+                } else {
+                    // Try to fetch
+                    const response = await fetch(path);
+                    if (!response.ok) throw new Error("Failed to fetch: " + response.status);
+                    const arrayBuffer = await response.arrayBuffer();
+                    audioData = new Uint8Array(arrayBuffer);
+                }
+                
+                // Decode audio
+                const buffer = await this.audioContext.decodeAudioData(audioData.buffer);
+                
+                const sound = this.sounds.get(id);
+                if (sound) {
+                    sound.buffer = buffer;
+                    sound.loading = false;
+                    console.log("Sound loaded: " + path + " (" + buffer.duration.toFixed(2) + "s)");
+                }
+            } catch (e) {
+                console.error("Failed to load sound " + path + ":", e);
+                const sound = this.sounds.get(id);
+                if (sound) sound.loading = false;
+            }
+        };
+        
+        // Play a one-shot sound
+        imports.env.PlaySound = (soundId) => {
+            if (!this.initAudio()) return 0;
+            
+            const sound = this.sounds.get(soundId);
+            if (!sound || !sound.buffer) {
+                console.warn("PlaySound: sound " + soundId + " not found or loading");
+                return 0;
+            }
+            
+            const source = this.audioContext.createBufferSource();
+            source.buffer = sound.buffer;
+            
+            const gainNode = this.audioContext.createGain();
+            gainNode.gain.value = sound.volume;
+            
+            const panNode = this.audioContext.createStereoPanner();
+            panNode.pan.value = sound.pan;
+            
+            source.connect(panNode);
+            panNode.connect(gainNode);
+            gainNode.connect(this.audioMaster);
+            
+            source.start(0);
+            
+            const channelId = this.nextChannelId++;
+            this.channels.set(channelId, {
+                source: source,
+                gain: gainNode,
+                pan: panNode,
+                playing: true
+            });
+            
+            source.onended = () => {
+                this.channels.delete(channelId);
+            };
+            
+            return channelId;
+        };
+        
+        imports.env.FreeSound = (soundId) => {
+            this.sounds.delete(soundId);
+        };
+        
+        imports.env.StopChannel = (channel) => {
+            const ch = this.channels.get(channel);
+            if (ch && ch.playing) {
+                ch.source.stop();
+                ch.playing = false;
+            }
+        };
+        
+        imports.env.ChannelVolume = (channel, volume) => {
+            const ch = this.channels.get(channel);
+            if (ch && ch.gain) {
+                ch.gain.gain.value = volume;
+            }
+            // Also update stored volume for sound
+            if (channel > 1000) { // It's a sound ID, not channel
+                const sound = this.sounds.get(channel);
+                if (sound) sound.volume = volume;
+            }
+        };
+        
+        imports.env.ChannelPaused = (channel, paused) => {
+            const ch = this.channels.get(channel);
+            if (ch && ch.source) {
+                if (paused) {
+                    ch.source.suspend ? ch.source.suspend() : ch.source.disconnect();
+                } else {
+                    ch.source.resume ? ch.source.resume() : ch.source.connect(ch.pan);
+                }
+                ch.paused = paused;
+            }
+        };
+        
+        imports.env.ChannelPlaying = (channel) => {
+            const ch = this.channels.get(channel);
+            return (ch && ch.playing) ? 1 : 0;
+        };
+        
+        // Stream functions - for longer audio (music, ambient)
+        imports.env.FSOUND_Stream_Open = (pathPtr, mode, offset, len) => {
+            if (!this.initAudio()) return 0;
+            
+            const path = this.readString(pathPtr);
+            const streamId = this.nextStreamId++;
+            
+            this.streams.set(streamId, {
+                path: path,
+                element: null,
+                source: null,
+                gain: null,
+                playing: false,
+                paused: false,
+                volume: 1.0
+            });
+            
+            console.log("Stream opened: " + path + " (id=" + streamId + ")");
+            return streamId;
+        };
+        
+        imports.env.FSOUND_Stream_Play = (channel, streamId) => {
+            if (!this.initAudio()) return 0;
+            
+            const stream = this.streams.get(streamId);
+            if (!stream) return 0;
+            
+            if (stream.playing) {
+                return channel; // Already playing
+            }
+            
+            // Create audio element for streaming
+            stream.element = new Audio();
+            stream.element.src = stream.path;
+            stream.element.loop = (channel & 1) !== 0; // Mode 1 = loop
+            
+            stream.source = this.audioContext.createMediaElementSource(stream.element);
+            stream.gain = this.audioContext.createGain();
+            stream.gain.gain.value = stream.volume;
+            
+            stream.source.connect(stream.gain);
+            stream.gain.connect(this.audioMaster);
+            
+            stream.element.play().then(() => {
+                stream.playing = true;
+                console.log("Stream playing: " + stream.path);
+            }).catch(e => {
+                console.error("Failed to play stream: " + e);
+            });
+            
+            stream.element.onended = () => {
+                stream.playing = false;
+            };
+            
+            return streamId;
+        };
+        
+        imports.env.FSOUND_Stream_Stop = (streamId) => {
+            const stream = this.streams.get(streamId);
+            if (stream && stream.element) {
+                stream.element.pause();
+                stream.element.currentTime = 0;
+                stream.playing = false;
+            }
+        };
+        
+        imports.env.FSOUND_SetVolume = (channel, volume) => {
+            // For streams
+            if (channel < 100 && this.streams.has(channel)) {
+                const stream = this.streams.get(channel);
+                if (stream.gain) {
+                    stream.gain.gain.value = volume;
+                }
+                stream.volume = volume;
+            }
+            // For channels
+            const ch = this.channels.get(channel);
+            if (ch && ch.gain) {
+                ch.gain.gain.value = volume;
+            }
+        };
+        
+        imports.env.FSOUND_SetPaused = (channel, paused) => {
+            if (this.streams.has(channel)) {
+                const stream = this.streams.get(channel);
+                if (stream.element) {
+                    if (paused) {
+                        stream.element.pause();
+                        stream.paused = true;
+                    } else {
+                        stream.element.play();
+                        stream.paused = false;
+                    }
+                }
+            }
+        };
+        
+        // 3D Sound functions
+        imports.env.Sound3D = (soundId, x, y, z) => {
+            const sound = this.sounds.get(soundId);
+            if (!sound || !this.audioContext) return;
+            
+            // Store position for when sound is played
+            sound.position = { x, y, z };
+        };
+        
+        imports.env.SetListenerLocation = (x, y, z, forwardX, forwardY, forwardZ, upX, upY, upZ) => {
+            if (!this.audioContext) return;
+            
+            // Web Audio API doesn't have direct listener API, 
+            // but we can store this for 3D sound calculations
+            this.listenerPosition = { x, y, z };
+            this.listenerForward = { x: forwardX, y: forwardY, z: forwardZ };
+        };
 
         // Zip Stubs
         imports.env.ZlibWapi_Open = (path) => 0;

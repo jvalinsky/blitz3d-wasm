@@ -274,7 +274,7 @@ Phase 5 (SCPCB Specific) ───────┘
 | 2026-01-19 | 2 | Seeded Random | COMPLETE |
 | 2026-01-19 | 2 | Asc/Chr/Hex/Bin | COMPLETE |
 | 2026-01-19 | 2 | File I/O | COMPLETE |
-| 2026-01-19 | 3 | Entity Properties (Alpha/Color/FX/Blend) | COMPLETE |
-| 2026-01-19 | 3 | PointEntity | COMPLETE |
-| 2026-01-19 | 3 | NameEntity/EntityName | COMPLETE |
+| 2026-01-19 | 3 | Entity Properties | COMPLETE |
+| 2026-01-19 | 3 | PointEntity/NameEntity | COMPLETE |
 | 2026-01-19 | 3 | VertexTexCoords | COMPLETE |
+| 2026-01-19 | 4 | FMOD Audio (Web Audio API) | COMPLETE |

@@ -41,6 +41,7 @@ public final class FunctionGeneration {
         // Determine function type signature
         let typeSignature = functionSignature(for: functionNode)
         let typeIdx = context.typeIndexMap[typeSignature] ?? 0
+        print("DEBUG: Function \(functionNode.name) signature='\(typeSignature)' typeIdx=\(typeIdx)")
         
         // Create new function
         var function = WASMFunction(typeIndex: typeIdx)
@@ -184,14 +185,19 @@ public final class FunctionGeneration {
         let paramTypes = functionNode.parameters.map { 
             typeHandling.wasmType(from: $0.type?.rawValue ?? "Int").rawValue
         }
-        let returnType = typeHandling.wasmType(from: functionNode.returnType?.rawValue ?? "Int")
+        let returnType: WASMType
+        if let returnTypeNode = functionNode.returnType {
+            returnType = typeHandling.wasmType(from: returnTypeNode.rawValue)
+        } else {
+            returnType = .void
+        }
         let resStr = (returnType == .void) ? "void" : returnType.rawValue
         return "(\(paramTypes.joined(separator: ", "))) -> \(resStr)"
     }
     
     private func ensureReturn(function: inout WASMFunction, returnType: TypeAnnotation?) {
         if function.body.last == .return { return }
-        let typeAnnot = returnType ?? .integer
+        let typeAnnot = returnType ?? .void  // Default to void for functions with no return type
         let returnWasmType = typeHandling.wasmType(from: typeAnnot.rawValue)
         print("Ensuring return for \(typeAnnot.rawValue) -> \(returnWasmType)")
         switch returnWasmType {

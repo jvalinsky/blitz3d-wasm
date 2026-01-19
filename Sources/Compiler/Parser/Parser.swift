@@ -98,16 +98,56 @@ public struct Parser {
         guard expect(.identifier) else {
             return nil
         }
-        let name = currentToken.text
+        var name = currentToken.text
+        var returnType: TypeAnnotation? = nil
+
+        // Parse return type from function name suffix
+        if name.hasSuffix("%") {
+            returnType = .integer
+            name = String(name.dropLast())
+        } else if name.hasSuffix("#") {
+            returnType = .float
+            name = String(name.dropLast())
+        } else if name.hasSuffix("$") {
+            returnType = .string
+            name = String(name.dropLast())
+        }
         advance()
-        
+
         var parameters: [ParameterNode] = []
         if consume(.leftParen) {
             if !expect(.rightParen) {
                 while true {
                     if expect(.identifier) {
-                        parameters.append(ParameterNode(name: currentToken.text))
+                        var paramName = currentToken.text
+                        var paramType: TypeAnnotation? = nil
+
+                        // Parse type suffix from parameter name
+                        if paramName.hasSuffix("%") {
+                            paramType = .integer
+                            paramName = String(paramName.dropLast())
+                        } else if paramName.hasSuffix("#") {
+                            paramType = .float
+                            paramName = String(paramName.dropLast())
+                        } else if paramName.hasSuffix("$") {
+                            paramType = .string
+                            paramName = String(paramName.dropLast())
+                        }
+
                         advance()
+
+                        // Also check for explicit type annotation (param.TypeName)
+                        if consume(.period) {
+                            if expect(.identifier) {
+                                let typeName = currentToken.text
+                                if let annotation = TypeAnnotation(rawValue: typeName) {
+                                    paramType = annotation
+                                }
+                                advance()
+                            }
+                        }
+
+                        parameters.append(ParameterNode(name: paramName, type: paramType))
                         if consume(.comma) {
                             continue
                         }
@@ -133,7 +173,7 @@ public struct Parser {
             _ = consume(.keywordFunction)
         }
         
-        return .function(FunctionNode(name: name, parameters: parameters, body: body))
+        return .function(FunctionNode(name: name, parameters: parameters, body: body, returnType: returnType))
     }
     
     private func isEndFunction() -> Bool {
@@ -238,15 +278,16 @@ public struct Parser {
     
     private mutating func parseLocalDeclaration() -> StatementNode? {
         advance() // consume 'Local'
-        
+
         var variables: [IdentifierNode] = []
-        
+        var initializers: [String: ExpressionNode] = [:]
+
         repeat {
             if expect(.identifier) {
                 var name = currentToken.text
                 var typeSuffix: TypeSuffix? = nil
                 var typeName: String? = nil
-                
+
                 if name.hasSuffix("%") {
                     typeSuffix = .integer
                     name = String(name.dropLast())
@@ -258,37 +299,40 @@ public struct Parser {
                     name = String(name.dropLast())
                 }
                 advance()
-                
+
                 if consume(.period) {
                     if expect(.identifier) {
                         typeName = currentToken.text
                         advance()
                     }
                 }
-                
-                variables.append(IdentifierNode(name: name, typeSuffix: typeSuffix, typeName: typeName))
-                
+
+                let id = IdentifierNode(name: name, typeSuffix: typeSuffix, typeName: typeName)
+                variables.append(id)
+
                 // Consume optional initializer
                 if consume(.equals) {
-                    _ = parseExpression()
+                    let expr = parseExpression()
+                    initializers[name] = expr
                 }
             }
         } while consume(.comma)
-        
-        return .local(LocalDeclaration(variables: variables))
+
+        return .local(LocalDeclaration(variables: variables, initializers: initializers))
     }
     
     private mutating func parseGlobalDeclaration() -> StatementNode? {
         advance() // consume 'Global'
-        
+
         var variables: [IdentifierNode] = []
-        
+        var initializers: [String: ExpressionNode] = [:]
+
         repeat {
             if expect(.identifier) {
                 var name = currentToken.text
                 var typeSuffix: TypeSuffix? = nil
                 var typeName: String? = nil
-                
+
                 if name.hasSuffix("%") {
                     typeSuffix = .integer
                     name = String(name.dropLast())
@@ -300,24 +344,26 @@ public struct Parser {
                     name = String(name.dropLast())
                 }
                 advance()
-                
+
                 if consume(.period) {
                     if expect(.identifier) {
                         typeName = currentToken.text
                         advance()
                     }
                 }
-                
-                variables.append(IdentifierNode(name: name, typeSuffix: typeSuffix, typeName: typeName))
-                
+
+                let id = IdentifierNode(name: name, typeSuffix: typeSuffix, typeName: typeName)
+                variables.append(id)
+
                 // Consume optional initializer
                 if consume(.equals) {
-                    _ = parseExpression()
+                    let expr = parseExpression()
+                    initializers[name] = expr
                 }
             }
         } while consume(.comma)
-        
-        return .global(GlobalDeclaration(variables: variables))
+
+        return .global(GlobalDeclaration(variables: variables, initializers: initializers))
     }
     
     private mutating func parseConstantDeclaration() -> StatementNode? {
@@ -379,6 +425,14 @@ public struct Parser {
             return parseForStatement()
         case .keywordRepeat:
             return parseRepeatStatement()
+        case .keywordLocal:
+            return parseLocalDeclaration()
+        case .keywordGlobal:
+            return parseGlobalDeclaration()
+        case .keywordConst:
+            return parseConstantDeclaration()
+        case .keywordDim:
+            return parseDimDeclaration()
         case .keywordReturn:
             advance()
             // Check if this is a bare Return (followed by statement-ending keywords)
@@ -467,6 +521,7 @@ public struct Parser {
              .keywordReturn, .keywordExit, .keywordGoto, .keywordGosub,
              .keywordSelect, .keywordData, .keywordRead, .keywordRestore,
              .keywordDelete, .keywordInsert,
+             .keywordLocal, .keywordGlobal, .keywordConst, .keywordDim,
              .identifier, .keywordNew, .keywordFirst, .keywordLast:
             return true
         default:
@@ -801,12 +856,19 @@ public struct Parser {
             }
             
             if consume(.keywordCase) {
-                // Parse expressions (comma separated)
-                var expressions: [ExpressionNode] = []
+                // Parse case values (comma separated, may include ranges with "To")
+                var caseValues: [CaseValue] = []
                 repeat {
-                    expressions.append(parseExpression())
+                    let firstExpr = parseExpression()
+                    // Check for "To" keyword indicating a range
+                    if consume(.keywordTo) {
+                        let secondExpr = parseExpression()
+                        caseValues.append(.range(firstExpr, secondExpr))
+                    } else {
+                        caseValues.append(.single(firstExpr))
+                    }
                 } while consume(.comma)
-                
+
                 // Parse body until next Case, Default, or End Select
                 var body: [StatementNode] = []
                 while !expect(.keywordCase) && !expect(.keywordDefault) && !expect(.keywordEndSelect) && !expect(.endOfFile) {
@@ -820,7 +882,7 @@ public struct Parser {
                         advance()
                     }
                 }
-                cases.append(CaseNode(expressions: expressions, body: body))
+                cases.append(CaseNode(values: caseValues, body: body))
             } else if consume(.keywordDefault) {
                 var body: [StatementNode] = []
                 while !expect(.keywordCase) && !expect(.keywordDefault) && !expect(.keywordEndSelect) && !expect(.endOfFile) {

@@ -51,22 +51,45 @@ public struct SelectNode {
     }
 }
 
+/// Represents a single case value or range
+public enum CaseValue {
+    case single(ExpressionNode)
+    case range(ExpressionNode, ExpressionNode)  // Case x To y
+}
+
 public struct CaseNode {
-    public var expressions: [ExpressionNode]
+    public var values: [CaseValue]
     public var body: [StatementNode]
-    
+
+    // Legacy compatibility - expressions returns single values for non-range cases
+    public var expressions: [ExpressionNode] {
+        return values.compactMap { value in
+            if case .single(let expr) = value {
+                return expr
+            }
+            return nil
+        }
+    }
+
     public init(expressions: [ExpressionNode], body: [StatementNode]) {
-        self.expressions = expressions
+        self.values = expressions.map { .single($0) }
+        self.body = body
+    }
+
+    public init(values: [CaseValue], body: [StatementNode]) {
+        self.values = values
         self.body = body
     }
 }
 
 public struct LocalDeclaration {
     public var variables: [IdentifierNode]
+    public var initializers: [String: ExpressionNode]  // variable name -> initializer expression
     public var type: TypeAnnotation?
-    
-    public init(variables: [IdentifierNode], type: TypeAnnotation? = nil) {
+
+    public init(variables: [IdentifierNode], initializers: [String: ExpressionNode] = [:], type: TypeAnnotation? = nil) {
         self.variables = variables
+        self.initializers = initializers
         self.type = type
     }
 }
@@ -85,10 +108,12 @@ public struct DimDeclaration {
 
 public struct GlobalDeclaration {
     public var variables: [IdentifierNode]
+    public var initializers: [String: ExpressionNode]
     public var type: TypeAnnotation?
-    
-    public init(variables: [IdentifierNode], type: TypeAnnotation? = nil) {
+
+    public init(variables: [IdentifierNode], initializers: [String: ExpressionNode] = [:], type: TypeAnnotation? = nil) {
         self.variables = variables
+        self.initializers = initializers
         self.type = type
     }
 }

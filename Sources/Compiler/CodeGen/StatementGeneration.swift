@@ -60,6 +60,20 @@ public final class StatementGeneration {
                 let wasmType = typeHandling.typeInfo(from: id.typeSuffix).wasmType
                 _ = context.variableManagement.registerLocal(id.name, type: wasmType, typeName: id.typeName)
                 function.locals.append(wasmType)
+
+                // Generate assignment for initializer if present
+                if let initializer = decl.initializers[id.name],
+                   let expressionGenerator = expressionGenerator {
+                    let valueResult = expressionGenerator.generateWithInfo(initializer)
+                    var instrs = valueResult.instrs
+                    if valueResult.type != wasmType {
+                        instrs.append(contentsOf: convert(from: valueResult.type, to: wasmType))
+                    }
+                    function.body.append(contentsOf: instrs)
+                    if let local = context.variableManagement.localInfo(for: id.name) {
+                        function.body.append(.localSet(local.index))
+                    }
+                }
             }
             
         case .global:
@@ -334,6 +348,10 @@ public final class StatementGeneration {
                             stepIsNegative = true
                         }
                     }
+                } else {
+                    // No step provided, default to 1 (constant)
+                    stepIsConstant = true
+                    stepIsNegative = false
                 }
 
                 // Loop condition check
@@ -356,14 +374,19 @@ public final class StatementGeneration {
                     // Save end value to scratch global 2
                     loopInstrs.append(.globalSet(context.scratchGlobal2Idx))
 
-                    // Generate step and check sign
-                    let stepInstrs = expressionGenerator.generate(forNode.stepValue!)
-                    loopInstrs.append(contentsOf: stepInstrs)
+                    // Generate step and check sign (use default 1 if not provided)
+                    if let stepExpr = forNode.stepValue {
+                        let stepInstrs = expressionGenerator.generate(stepExpr)
+                        loopInstrs.append(contentsOf: stepInstrs)
+                    } else {
+                        loopInstrs.append(.i32Const(1))
+                    }
                     loopInstrs.append(.i32Const(0))
                     loopInstrs.append(.i32LtS) // step < 0 ?
 
                     // if (step < 0) { exit if i < end } else { exit if i > end }
-                    loopInstrs.append(.if(.i32, [
+                    // Use select to choose the right comparison without leaving a value on stack
+                    loopInstrs.append(.if(.void, [
                         // Negative step: check i < end
                         .localGet(local.index),
                         .globalGet(context.scratchGlobal2Idx),
@@ -374,6 +397,7 @@ public final class StatementGeneration {
                         .globalGet(context.scratchGlobal2Idx),
                         .i32GtS
                     ]))
+                    loopInstrs.append(.drop) // Drop the comparison result from if
                     loopInstrs.append(.brIf(1))
                 }
 

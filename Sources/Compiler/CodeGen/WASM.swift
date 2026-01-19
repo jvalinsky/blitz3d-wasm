@@ -5,7 +5,7 @@
 //  WebAssembly types and instruction definitions
 //
 
-public enum WASMType: String, Equatable {
+public enum WASMType: String, Equatable, Comparable {
     case i32 = "i32"
     case i64 = "i64"
     case f32 = "f32"
@@ -17,6 +17,15 @@ public enum WASMType: String, Equatable {
     
     public var isNumeric: Bool {
         return self != .void && self != .funcref && self != .externref
+    }
+    
+    public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
+        let order: [WASMType] = [.i32, .f32, .i64, .f64, .v128, .void, .funcref, .externref]
+        guard let lhsIdx = order.firstIndex(of: lhs),
+              let rhsIdx = order.firstIndex(of: rhs) else {
+            return false
+        }
+        return lhsIdx < rhsIdx
     }
 }
 

@@ -480,28 +480,29 @@ public final class ExpressionGeneration {
         }
         
         // Call function
+        var returnType: WASMType = .i32
         if let funcIdx = context.functionIndexMap[internalName] {
             if internalName == "createcamera" {
                 print("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
             }
             instrs.append(.call(Int(funcIdx)))
+
+            // Determine return type from function definition
+            if let def = def {
+                if let firstResult = def.results.first {
+                    returnType = firstResult
+                } else {
+                    returnType = .void
+                }
+            } else if call.name.hasSuffix("#") {
+                returnType = .f32
+            } else if ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "sqr", "rnd", "entityx", "entityy", "entityz", "entitypitch", "entityyaw", "entityroll", "entitydistance", "collisionx", "collisiony", "collisionz", "collisionnx", "collisionny", "collisionnz"].contains(internalName) {
+                returnType = .f32
+            }
         } else {
             print("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0.")
-            instrs.append(.call(0)) // Placeholder
-        }
-        
-        // Determine return type
-        var returnType: WASMType = .i32
-        if let def = def {
-            if let firstResult = def.results.first {
-                returnType = firstResult
-            } else {
-                returnType = .void
-            }
-        } else if call.name.hasSuffix("#") {
-            returnType = .f32
-        } else if ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "sqr", "rnd", "entityx", "entityy", "entityz", "entitypitch", "entityyaw", "entityroll", "entitydistance", "collisionx", "collisiony", "collisionz", "collisionnx", "collisionny", "collisionnz"].contains(internalName) {
-            returnType = .f32
+            instrs.append(.i32Const(0)) // Placeholder return value for missing function
+            returnType = .i32
         }
         
         // If the function returns void but is used in an expression, push a dummy 0

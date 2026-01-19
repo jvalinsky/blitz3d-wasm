@@ -124,16 +124,47 @@ public final class StatementGeneration {
             case .arrayAccess(let access):
                 if case .identifier(let arrayId) = access.array,
                    let array = context.variableManagement.arrayInfo(for: arrayId.name) {
-                    var offset = 0
+                    // Start with base address
+                    function.body.append(.i32Const(Int32(array.baseAddress)))
+
+                    // Calculate index offset
                     for (i, indexExpr) in access.indices.enumerated() {
                         let indexInstrs = expressionGenerator.generate(indexExpr)
                         function.body.append(contentsOf: indexInstrs)
-                        offset += i * array.elementSize
+
+                        // Multiply by stride for multi-dimensional arrays
+                        if i > 0 && i < array.dimensions.count {
+                            var stride = array.elementSize
+                            for j in 0..<i {
+                                stride *= (array.dimensions[j] + 1)
+                            }
+                            function.body.append(.i32Const(Int32(stride)))
+                            function.body.append(.i32Mul)
+                        } else {
+                            function.body.append(.i32Const(Int32(array.elementSize)))
+                            function.body.append(.i32Mul)
+                        }
+
+                        if i > 0 {
+                            function.body.append(.i32Add)
+                        }
                     }
-                    function.body.append(.i32Const(Int32(offset)))
                     function.body.append(.i32Add)
                     function.body.append(contentsOf: finalInstrs)
-                    function.body.append(.i32Store(2, 0))
+
+                    // Use proper store instruction based on element type
+                    switch array.elementType {
+                    case .i32:
+                        function.body.append(.i32Store(2, 0))
+                    case .f32:
+                        function.body.append(.f32Store(2, 0))
+                    case .i64:
+                        function.body.append(.i64Store(2, 0))
+                    case .f64:
+                        function.body.append(.f64Store(2, 0))
+                    default:
+                        function.body.append(.i32Store(2, 0))
+                    }
                 }
             case .fieldAccess(let access):
                 let objInstrs = expressionGenerator.generate(access.object)
@@ -143,7 +174,22 @@ public final class StatementGeneration {
                     function.body.append(.i32Const(Int32(fieldOffset)))
                     function.body.append(.i32Add)
                     function.body.append(contentsOf: finalInstrs)
-                    function.body.append(.i32Store(2, 0))
+
+                    // Use proper store instruction based on field type
+                    let fieldTypeStr = context.userTypes[typeName]?.fieldTypes[access.field] ?? "Int"
+                    let fieldType = typeHandling.wasmType(from: fieldTypeStr)
+                    switch fieldType {
+                    case .i32:
+                        function.body.append(.i32Store(2, 0))
+                    case .f32:
+                        function.body.append(.f32Store(2, 0))
+                    case .i64:
+                        function.body.append(.i64Store(2, 0))
+                    case .f64:
+                        function.body.append(.f64Store(2, 0))
+                    default:
+                        function.body.append(.i32Store(2, 0))
+                    }
                 }
             default:
                 break
@@ -182,7 +228,7 @@ public final class StatementGeneration {
             if let funcIdx = context.functionIndexMap[lowerName] {
                 function.body.append(contentsOf: argInstrs)
                 function.body.append(.call(funcIdx))
-                
+
                 // If the function returns a value, drop it since it's being used as a statement
                 if let def = def, !def.results.isEmpty {
                     function.body.append(.drop)
@@ -191,20 +237,44 @@ public final class StatementGeneration {
             
         case .ifStatement(let ifNode):
             guard let expressionGenerator = expressionGenerator else { break }
-            let condResult = expressionGenerator.generateWithInfo(ifNode.condition)
-            function.body.append(contentsOf: condResult.instrs)
-            if condResult.type == .f32 {
-                function.body.append(.i32TruncF32S)
+
+            // Handle elseIfs by converting them to nested if-else statements
+            func buildIfChain(condition: ExpressionNode,
+                             thenBranch: [StatementNode],
+                             elseIfs: [(ExpressionNode, [StatementNode])],
+                             elseBranch: [StatementNode]) -> [WASMInstruction] {
+                var result: [WASMInstruction] = []
+
+                let condResult = expressionGenerator.generateWithInfo(condition)
+                result.append(contentsOf: condResult.instrs)
+                if condResult.type == .f32 {
+                    result.append(.i32TruncF32S)
+                }
+
+                currentDepth += 1
+                let thenBody = generateStatementBlock(thenBranch, function: &function)
+                currentDepth -= 1
+
+                var elseBody: [WASMInstruction]? = nil
+                if let (nextCondition, nextThenBranch) = elseIfs.first {
+                    elseBody = buildIfChain(condition: nextCondition,
+                                           thenBranch: nextThenBranch,
+                                           elseIfs: Array(elseIfs.dropFirst()),
+                                           elseBranch: elseBranch)
+                } else if !elseBranch.isEmpty {
+                    currentDepth += 1
+                    elseBody = generateStatementBlock(elseBranch, function: &function)
+                    currentDepth -= 1
+                }
+
+                result.append(.if(.void, thenBody, elseBody))
+                return result
             }
-            
-            currentDepth += 1
-            let thenBody = generateStatementBlock(ifNode.thenBranch, function: &function)
-            var elseBody: [WASMInstruction]? = nil
-            if !ifNode.elseBranch.isEmpty {
-                elseBody = generateStatementBlock(ifNode.elseBranch, function: &function)
-            }
-            currentDepth -= 1
-            function.body.append(.if(.void, thenBody, elseBody))
+
+            function.body.append(contentsOf: buildIfChain(condition: ifNode.condition,
+                                                         thenBranch: ifNode.thenBranch,
+                                                         elseIfs: ifNode.elseIfs,
+                                                         elseBranch: ifNode.elseBranch))
             
         case .whileLoop(let whileNode):
             guard let expressionGenerator = expressionGenerator else { break }
@@ -239,21 +309,77 @@ public final class StatementGeneration {
                 let startInstrs = expressionGenerator.generate(forNode.startValue)
                 function.body.append(contentsOf: startInstrs)
                 function.body.append(.localSet(local.index))
-                
+
                 currentDepth += 1 // block
                 loopExitDepths.append(currentDepth)
                 currentDepth += 1 // loop
-                
+
                 var loopInstrs: [WASMInstruction] = []
+
+                // Determine step direction at compile time if possible
+                var stepIsNegative = false
+                var stepIsConstant = false
+                var stepValue: Int = 1
+
+                if let stepExpr = forNode.stepValue {
+                    // Try to evaluate step as constant
+                    if case .integerLiteral(let v) = stepExpr {
+                        stepValue = v
+                        stepIsConstant = true
+                        stepIsNegative = v < 0
+                    } else if case .unary(let unary) = stepExpr, unary.op == "-" {
+                        if case .integerLiteral(let v) = unary.expression {
+                            stepValue = -v
+                            stepIsConstant = true
+                            stepIsNegative = true
+                        }
+                    }
+                }
+
+                // Loop condition check
                 loopInstrs.append(.localGet(local.index))
                 let endInstrs = expressionGenerator.generate(forNode.endValue)
                 loopInstrs.append(contentsOf: endInstrs)
-                loopInstrs.append(.i32GtS)
-                loopInstrs.append(.brIf(1))
-                
+
+                if stepIsConstant {
+                    // Use appropriate comparison based on step direction
+                    if stepIsNegative {
+                        // For negative step: exit when i < end
+                        loopInstrs.append(.i32LtS)
+                    } else {
+                        // For positive step: exit when i > end
+                        loopInstrs.append(.i32GtS)
+                    }
+                    loopInstrs.append(.brIf(1))
+                } else {
+                    // Runtime step direction check
+                    // Save end value to scratch global 2
+                    loopInstrs.append(.globalSet(context.scratchGlobal2Idx))
+
+                    // Generate step and check sign
+                    let stepInstrs = expressionGenerator.generate(forNode.stepValue!)
+                    loopInstrs.append(contentsOf: stepInstrs)
+                    loopInstrs.append(.i32Const(0))
+                    loopInstrs.append(.i32LtS) // step < 0 ?
+
+                    // if (step < 0) { exit if i < end } else { exit if i > end }
+                    loopInstrs.append(.if(.i32, [
+                        // Negative step: check i < end
+                        .localGet(local.index),
+                        .globalGet(context.scratchGlobal2Idx),
+                        .i32LtS
+                    ], [
+                        // Positive step: check i > end
+                        .localGet(local.index),
+                        .globalGet(context.scratchGlobal2Idx),
+                        .i32GtS
+                    ]))
+                    loopInstrs.append(.brIf(1))
+                }
+
                 let bodyInstrs = generateStatementBlock(forNode.body, function: &function)
                 loopInstrs.append(contentsOf: bodyInstrs)
-                
+
                 loopInstrs.append(.localGet(local.index))
                 if let stepExpr = forNode.stepValue {
                     let stepInstrs = expressionGenerator.generate(stepExpr)
@@ -264,10 +390,10 @@ public final class StatementGeneration {
                 loopInstrs.append(.i32Add)
                 loopInstrs.append(.localSet(local.index))
                 loopInstrs.append(.br(0))
-                
+
                 currentDepth -= 2
                 loopExitDepths.removeLast()
-                
+
                 function.body.append(.block(.void, [
                     .loop(.void, loopInstrs)
                 ]))
@@ -340,41 +466,62 @@ public final class StatementGeneration {
             //          else if (selectExpr == case2_1 || ...) { case2_body }
             //          ...
             //          else { default_body }
-            
+
             // Generate select expression and save to scratch global
             let selectExprInstrs = expressionGenerator?.generate(selectNode.expression) ?? []
             function.body.append(contentsOf: selectExprInstrs)
             function.body.append(.globalSet(context.scratchGlobalIdx))
-            
+
+            // Build a chain of if-else blocks for proper Select behavior
+            var allCaseInstrs: [WASMInstruction] = []
+
             for caseNode in selectNode.cases {
-                // Build match condition: (select == expr1) || (select == expr2) || ...
+                // Build match condition for this case
                 var conditionInstrs: [WASMInstruction] = []
-                
-                for (exprIndex, caseExpr) in caseNode.expressions.enumerated() {
-                    // Load select expression
-                    conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
-                    
-                    // Generate case expression
-                    let caseExprInstrs = expressionGenerator?.generate(caseExpr) ?? []
-                    conditionInstrs.append(contentsOf: caseExprInstrs)
-                    
-                    // Compare
-                    conditionInstrs.append(.i32Eq)
-                    
+
+                for (valueIndex, caseValue) in caseNode.values.enumerated() {
+                    switch caseValue {
+                    case .single(let caseExpr):
+                        // Load select expression
+                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
+                        // Generate case expression
+                        let caseExprInstrs = expressionGenerator?.generate(caseExpr) ?? []
+                        conditionInstrs.append(contentsOf: caseExprInstrs)
+                        // Compare: select == value
+                        conditionInstrs.append(.i32Eq)
+
+                    case .range(let fromExpr, let toExpr):
+                        // Generate: (select >= from) && (select <= to)
+                        // Part 1: select >= from
+                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
+                        let fromInstrs = expressionGenerator?.generate(fromExpr) ?? []
+                        conditionInstrs.append(contentsOf: fromInstrs)
+                        conditionInstrs.append(.i32GeS)
+                        // Part 2: select <= to
+                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
+                        let toInstrs = expressionGenerator?.generate(toExpr) ?? []
+                        conditionInstrs.append(contentsOf: toInstrs)
+                        conditionInstrs.append(.i32LeS)
+                        // Combine: AND
+                        conditionInstrs.append(.i32And)
+                    }
+
                     // OR with previous conditions
-                    if exprIndex > 0 {
+                    if valueIndex > 0 {
                         conditionInstrs.append(.i32Or)
                     }
                 }
-                
+
                 // Generate case body
-                var caseBodyInstrs = generateStatementBlock(caseNode.body, function: &function)
-                
+                let caseBodyInstrs = generateStatementBlock(caseNode.body, function: &function)
+
                 // Wrap in if: if (condition) { body }
-                function.body.append(contentsOf: conditionInstrs)
-                function.body.append(.if(.void, caseBodyInstrs, nil))
+                allCaseInstrs.append(contentsOf: conditionInstrs)
+                allCaseInstrs.append(.if(.void, caseBodyInstrs, nil))
             }
-            
+
+            function.body.append(contentsOf: allCaseInstrs)
+
             // Default case
             if let defaultCase = selectNode.defaultCase {
                 let defaultBodyInstrs = generateStatementBlock(defaultCase, function: &function)
@@ -567,7 +714,127 @@ public final class StatementGeneration {
             function.body.append(.i32Const(0))
             function.body.append(.i32Store(2, 8))
             
-        case .data, .insert, .empty, .function:
+        case .insert(let objExpr, let position):
+            // Insert a Before b  OR  Insert a After b
+            // Moves 'a' in the linked list to be before/after 'b'
+            guard let typeName = getTypeName(from: objExpr),
+                  let typeInfo = context.userTypes[typeName],
+                  let expressionGenerator = expressionGenerator else { break }
+
+            // Generate 'a' (the object to move)
+            let objInstrs = expressionGenerator.generate(objExpr)
+            function.body.append(contentsOf: objInstrs)
+            function.body.append(.globalSet(context.scratchGlobalIdx)) // scratch = a
+
+            // First, unstitch 'a' from its current position
+            // if (a.prev != 0) a.prev.next = a.next else first = a.next
+            function.body.append(.globalGet(context.scratchGlobalIdx))
+            function.body.append(.i32Load(2, 0)) // a.prev
+            function.body.append(.if(.void, [
+                // a.prev.next = a.next
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 0), // prev
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 4), // next
+                .i32Store(2, 4) // prev.next = a.next
+            ], [
+                // first = a.next
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 4),
+                .globalSet(typeInfo.firstGlobalIdx)
+            ]))
+
+            // if (a.next != 0) a.next.prev = a.prev else last = a.prev
+            function.body.append(.globalGet(context.scratchGlobalIdx))
+            function.body.append(.i32Load(2, 4)) // a.next
+            function.body.append(.if(.void, [
+                // a.next.prev = a.prev
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 4), // next
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 0), // prev
+                .i32Store(2, 0) // next.prev = a.prev
+            ], [
+                // last = a.prev
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 0),
+                .globalSet(typeInfo.lastGlobalIdx)
+            ]))
+
+            // Now stitch 'a' into new position
+            switch position {
+            case .before(let targetExpr):
+                // Insert a Before b
+                let targetInstrs = expressionGenerator.generate(targetExpr)
+                function.body.append(contentsOf: targetInstrs)
+                function.body.append(.globalSet(context.scratchGlobal2Idx)) // scratch2 = b
+
+                // a.next = b
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Store(2, 4))
+
+                // a.prev = b.prev
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Load(2, 0)) // b.prev
+                function.body.append(.i32Store(2, 0))
+
+                // if (b.prev != 0) b.prev.next = a else first = a
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Load(2, 0)) // b.prev
+                function.body.append(.if(.void, [
+                    .globalGet(context.scratchGlobal2Idx),
+                    .i32Load(2, 0), // b.prev
+                    .globalGet(context.scratchGlobalIdx),
+                    .i32Store(2, 4) // b.prev.next = a
+                ], [
+                    .globalGet(context.scratchGlobalIdx),
+                    .globalSet(typeInfo.firstGlobalIdx) // first = a
+                ]))
+
+                // b.prev = a
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.i32Store(2, 0))
+
+            case .after(let targetExpr):
+                // Insert a After b
+                let targetInstrs = expressionGenerator.generate(targetExpr)
+                function.body.append(contentsOf: targetInstrs)
+                function.body.append(.globalSet(context.scratchGlobal2Idx)) // scratch2 = b
+
+                // a.prev = b
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Store(2, 0))
+
+                // a.next = b.next
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Load(2, 4)) // b.next
+                function.body.append(.i32Store(2, 4))
+
+                // if (b.next != 0) b.next.prev = a else last = a
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.i32Load(2, 4)) // b.next
+                function.body.append(.if(.void, [
+                    .globalGet(context.scratchGlobal2Idx),
+                    .i32Load(2, 4), // b.next
+                    .globalGet(context.scratchGlobalIdx),
+                    .i32Store(2, 0) // b.next.prev = a
+                ], [
+                    .globalGet(context.scratchGlobalIdx),
+                    .globalSet(typeInfo.lastGlobalIdx) // last = a
+                ]))
+
+                // b.next = a
+                function.body.append(.globalGet(context.scratchGlobal2Idx))
+                function.body.append(.globalGet(context.scratchGlobalIdx))
+                function.body.append(.i32Store(2, 4))
+            }
+
+        case .data, .empty, .function:
             break
         }
     }

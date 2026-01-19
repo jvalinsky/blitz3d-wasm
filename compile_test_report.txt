@@ -1,0 +1,255 @@
+Blitz3D WASM Compilation Test Report
+=====================================
+Date: Mon Jan 19 10:49:50 EST 2026
+Source: /Users/jack/Software/scp_port/scpcb
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Dreamfilter.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Dreamfilter.wasm:0002247: error: type mismatch in f32.div, expected [f32, f32] but got [... f32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Dreamfilter.wasm:000224f: error: type mismatch in f32.div, expected [f32, f32] but got [... f32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/UpdateEvents.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/CPU_Details.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/CPU_Details.wasm:00021dd: error: type mismatch at end of loop, expected [] but got [... i32, i32, i32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Map Creator/mapcreator_new.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/window3d.wasm:00012c4: error: type mismatch in initializer expression, expected [f32] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/window3d.wasm:00012c9: error: type mismatch in initializer expression, expected [f32] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/window3d.wasm:00012ce: error: type mismatch in initializer expression, expected [f32] but got [i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/FMod.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/LightMapPNG.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/LightMapPNG.wasm:000226e: error: type mismatch at end of loop, expected [] but got [i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/LightMapPNG.wasm:000229d: error: global variable out of range: 127 (max 49)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/LightMapPNG.wasm:000229f: error: global variable out of range: 127 (max 49)
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Save.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Update.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Update.wasm:0002367: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Update.wasm:000243b: error: type mismatch at end of loop, expected [] but got [... i32, i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Update.wasm:000243d: error: type mismatch at end of `if false` branch, expected [] but got [... i32, i32, i32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Category: LOCAL VAR RANGE
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/DevilParticleSystem.wasm:0002474: error: local variable out of range (max 0)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/DevilParticleSystem.wasm:0002476: error: local variable out of range (max 0)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/DevilParticleSystem.wasm:000247d: error: local variable out of range (max 0)
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Skybox.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Difficulty.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/RMesh_Model_Viewer.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/RMesh_Model_Viewer.wasm:0002405: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/RMesh_Model_Viewer.wasm:000287a: error: type mismatch at end of loop, expected [] but got [i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/RMesh_Model_Viewer.wasm:0002898: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Converter.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Blitz_File_ZipApi.wasm:0002726: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Blitz_File_ZipApi.wasm:0002731: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Blitz_File_ZipApi.wasm:0002732: error: type mismatch at end of loop, expected [] but got [i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/StrictLoads.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/StrictLoads.wasm:00023c6: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/StrictLoads.wasm:00023fa: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/StrictLoads.wasm:000240f: error: type mismatch in call, expected [i32] but got [f32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_File_FileName.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/MapSystem.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/MapSystem.wasm:00021f9: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/MapSystem.wasm:00021fd: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/MapSystem.wasm:0002201: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/KeyName.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_Basic_Bank.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/AAText.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/AAText.wasm:00023f3: error: type mismatch in f32.div, expected [f32, f32] but got [i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/AAText.wasm:0002405: error: type mismatch in f32.div, expected [f32, f32] but got [i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/AAText.wasm:0002418: error: type mismatch in f32.div, expected [f32, f32] but got [... f32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Particles.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Menu.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Menu.wasm:00023a2: error: global variable out of range: 127 (max 32)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Menu.wasm:00023a4: error: global variable out of range: 127 (max 32)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Menu.wasm:00023a9: error: global variable out of range: 127 (max 32)
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/NPCs.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/NPCs.wasm:00021db: error: type mismatch in global.set, expected [i32] but got [... f32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/NPCs.wasm:00021e6: error: type mismatch in f32.store, expected [i32, f32] but got [... i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/NPCs.wasm:000220e: error: type mismatch in global.set, expected [i32] but got [... f32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Items.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DrawPortals.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/DrawPortals.wasm:0002257: error: type mismatch in f32.div, expected [f32, f32] but got [... i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/DrawPortals.wasm:0002260: error: type mismatch in f32.div, expected [f32, f32] but got [... i32, i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Main.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Main.wasm:0002aab: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Main.wasm:0002adf: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Main.wasm:0002cc2: error: type mismatch in global.set, expected [i32] but got [f32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/LoadAllSounds.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Achievements.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Achievements.wasm:000228f: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Achievements.wasm:00022c1: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.3xvArq9ndi/Achievements.wasm:0002375: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+
+
+=====================================
+Summary
+=====================================
+Total files tested: 32
+Passed: 13
+Failed: 19
+  - Compile errors: 3
+  - Validation errors: 16
+
+Validation error breakdown:
+  Type mismatches: 16
+  Missing returns: 16
+  Local var range: 1
+
+Passing files:
+/Users/jack/Software/scp_port/scpcb/Blitz_Basic_Bank.bb
+/Users/jack/Software/scp_port/scpcb/Blitz_File_FileName.bb
+/Users/jack/Software/scp_port/scpcb/Converter.bb
+/Users/jack/Software/scp_port/scpcb/Difficulty.bb
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb
+/Users/jack/Software/scp_port/scpcb/FMod.bb
+/Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb
+/Users/jack/Software/scp_port/scpcb/KeyName.bb
+/Users/jack/Software/scp_port/scpcb/LoadAllSounds.bb
+/Users/jack/Software/scp_port/scpcb/Particles.bb
+/Users/jack/Software/scp_port/scpcb/Save.bb
+/Users/jack/Software/scp_port/scpcb/Skybox.bb
+/Users/jack/Software/scp_port/scpcb/UpdateEvents.bb

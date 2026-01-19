@@ -149,7 +149,19 @@ public final class FunctionGeneration {
         self.context.module.functions.append(typeIdx)
 
         self.context.functionIndexMap[functionNode.name.lowercased()] = globalFuncIdx
-        self.context.module.exports.append(WASMExport(name: functionNode.name, kind: .function, index: globalFuncIdx))
+
+        let exportName: String
+        switch functionNode.returnType {
+        case .integer:
+            exportName = functionNode.name + "%"
+        case .float:
+            exportName = functionNode.name + "#"
+        case .string:
+            exportName = functionNode.name + "$"
+        case .void, .none:
+            exportName = functionNode.name
+        }
+        self.context.module.exports.append(WASMExport(name: exportName, kind: .function, index: globalFuncIdx))
     }
     
     /// Generate function call instructions

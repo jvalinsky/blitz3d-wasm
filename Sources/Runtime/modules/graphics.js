@@ -19,7 +19,10 @@ class Blitz3DGraphics {
         this.nextEntityId = 1;
         this.surfaces = {};
         this.nextSurfaceId = 1;
+        this.textures = {};
         this.nextTextureId = 1;
+        this.brushes = {};
+        this.nextBrushId = 1;
         this.currentFont = "arial";
         this.currentFontSize = 12;
         this.currentColor = [255, 255, 255, 255];
@@ -759,7 +762,7 @@ class Blitz3DGraphics {
         };
 
         imports.env.CreateSphere = (parent, segs) => {
-            const segments = segs || 8;
+            const segments = segs || 16;
             const geometry = new THREE.SphereGeometry(1, segments, segments); // Radius 1
             const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xffffff }));
             const id = this.nextEntityId++;
@@ -767,6 +770,97 @@ class Blitz3DGraphics {
             if (parent && this.entities[parent]) this.entities[parent].add(mesh);
             else this.scene.add(mesh);
             return id;
+        };
+
+        imports.env.CreatePlane = (parent) => {
+            const geometry = new THREE.PlaneGeometry(20, 20);
+            const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x888888, side: THREE.DoubleSide }));
+            const id = this.nextEntityId++;
+            this.entities[id] = mesh;
+            if (parent && this.entities[parent]) this.entities[parent].add(mesh);
+            else this.scene.add(mesh);
+            return id;
+        };
+
+        // Brush/Material functions
+        imports.env.CreateBrush = () => {
+            const brush = {
+                r: 255, g: 255, b: 255,
+                alpha: 255,
+                shininess: 0,
+                texture: null
+            };
+            const id = this.nextBrushId++;
+            this.brushes[id] = brush;
+            console.log("CreateBrush: ID=" + id);
+            return id;
+        };
+
+        imports.env.BrushColor = (brushId, r, g, b) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.r = r;
+                brush.g = g;
+                brush.b = b;
+                console.log("BrushColor: ID=" + brushId + " RGB(" + r + "," + g + "," + b + ")");
+            }
+        };
+
+        imports.env.BrushAlpha = (brushId, alpha) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.alpha = alpha;
+                console.log("BrushAlpha: ID=" + brushId + " alpha=" + alpha);
+            }
+        };
+
+        imports.env.BrushShininess = (brushId, shininess) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.shininess = shininess;
+                console.log("BrushShininess: ID=" + brushId + " shininess=" + shininess);
+            }
+        };
+
+        imports.env.PaintEntity = (entityId, brushId) => {
+            const entity = this.entities[entityId];
+            const brush = this.brushes[brushId];
+            if (entity && brush) {
+                const color = (brush.r << 16) | (brush.g << 8) | brush.b;
+                const opacity = brush.alpha / 255;
+
+                // Create material based on brush properties
+                let material;
+                if (brush.shininess > 0) {
+                    // Use Phong material for shininess
+                    material = new THREE.MeshPhongMaterial({
+                        color: color,
+                        transparent: opacity < 1,
+                        opacity: opacity,
+                        shininess: brush.shininess,
+                        specular: 0x444444
+                    });
+                } else {
+                    // Use basic material
+                    material = new THREE.MeshBasicMaterial({
+                        color: color,
+                        transparent: opacity < 1,
+                        opacity: opacity
+                    });
+                }
+
+                // Apply material to entity and all children
+                entity.traverse((child) => {
+                    if (child.isMesh) {
+                        child.material = material;
+                    }
+                });
+
+                // Store brush reference for debugging
+                entity.userData.brushId = brushId;
+
+                console.log("PaintEntity: Entity=" + entityId + " Brush=" + brushId + " Color=0x" + color.toString(16).padStart(6, '0'));
+            }
         };
 
         // Texture/Assets

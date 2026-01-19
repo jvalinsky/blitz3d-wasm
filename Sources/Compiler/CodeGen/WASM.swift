@@ -296,7 +296,7 @@ public struct WASMModule {
         self.imports = []
         self.functions = []
         self.tables = []
-        self.memories = [WASMMemory(initial: 1, maximum: 2)]
+        self.memories = [WASMMemory(initial: 256, maximum: 512)]
         self.globals = []
         self.exports = []
         self.code = []

@@ -84,8 +84,8 @@ class Blitz3DCore {
         imports.env.Delay = (ms) => { };
 
         // Math
-        imports.env.Sin = Math.sin;
-        imports.env.Cos = Math.cos;
+        imports.env.Sin = (val) => Math.sin(val * Math.PI / 180);
+        imports.env.Cos = (val) => Math.cos(val * Math.PI / 180);
         imports.env.Tan = Math.tan;
         imports.env.ASin = Math.asin;
         imports.env.ACos = Math.acos;

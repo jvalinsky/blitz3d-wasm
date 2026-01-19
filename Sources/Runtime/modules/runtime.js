@@ -4,9 +4,9 @@
  */
 
 // Import modules if available, otherwise use global
-// Import modules if available, otherwise use global
 const Blitz3DCore = window.Blitz3DCore || require('./core');
 const Blitz3DGraphics = window.Blitz3DGraphics || require('./graphics');
+const Blitz3DMesh = window.Blitz3DMesh || require('./mesh');
 const Blitz3DPhysics = window.Blitz3DPhysics || require('./physics');
 const Blitz3DInput = window.Blitz3DInput || require('./input');
 
@@ -14,6 +14,7 @@ const Blitz3D = {
     // Core components
     core: null,
     graphics: null,
+    mesh: null,
     physics: null,
     input: null,
 
@@ -82,6 +83,9 @@ const Blitz3D = {
         this.graphics = new Blitz3DGraphics(this.core);
         this.graphics.init3D();
 
+        // Initialize mesh module
+        this.mesh = new Blitz3DMesh(this.graphics);
+
         // Initialize physics
         this.physics = new Blitz3DPhysics(this.core, this.graphics);
 
@@ -89,9 +93,13 @@ const Blitz3D = {
         this.input = new Blitz3DInput(this.core, this.graphics);
         this.input.setupEventListeners();
 
+        // Expose input test globally
+        window.testBlitz3DInput = () => this.input.testInput();
+
         // Set up common imports
         this.core.setupCommonImports(this.imports);
         this.graphics.setupImports(this.imports);
+        this.mesh.setupImports(this.imports);
         this.physics.setupImports(this.imports);
         this.input.setupImports(this.imports);
 

@@ -33,7 +33,7 @@ public struct CodeGenerator {
     }
     
     public mutating func generate(from program: ProgramNode) -> WASMModule {
-        context.module.memories = [WASMMemory(initial: 1, maximum: 2)]
+        context.module.memories = [WASMMemory(initial: 256, maximum: 512)]
         
         dataGenerator.setup()
         

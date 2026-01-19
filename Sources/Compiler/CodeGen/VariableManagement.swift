@@ -249,6 +249,7 @@ public final class ModuleContext {
     public var functionDefinitions: [String: FunctionDefinition]
     public var userTypes: [String: UserTypeInfo]
     public var fieldOffsets: [String: [String: Int]]
+    public var fieldDimensions: [String: [String: [Int]]]  // typeName -> [fieldName: dimensions]
     
     // Internal WASM Global indices
     public var heapPointerIdx: Int = -1
@@ -256,14 +257,17 @@ public final class ModuleContext {
     public var typeCollectionGlobalIdx: Int = -1
     public var gosubStackPtrIdx: Int = -1
     public var stringHeapPtrIdx: Int = -1
-
+    public var scratchGlobalIdx: Int = -1  // For temporary storage
+    public var scratchGlobal2Idx: Int = -1  // For temporary storage
+    
     public init(module: WASMModule,
                 variableManagement: VariableManagement = VariableManagement(),
                 typeIndexMap: [String: Int] = [:],
                 functionIndexMap: [String: Int] = [:],
                 functionDefinitions: [String: FunctionDefinition] = [:],
                 userTypes: [String: UserTypeInfo] = [:],
-                fieldOffsets: [String: [String: Int]] = [:]) {
+                fieldOffsets: [String: [String: Int]] = [:],
+                fieldDimensions: [String: [String: [Int]]] = [:]) {
         self.module = module
         self.variableManagement = variableManagement
         self.typeIndexMap = typeIndexMap
@@ -271,6 +275,7 @@ public final class ModuleContext {
         self.functionDefinitions = functionDefinitions
         self.userTypes = userTypes
         self.fieldOffsets = fieldOffsets
+        self.fieldDimensions = fieldDimensions
     }
 
     /// Register a WASM global and return its index

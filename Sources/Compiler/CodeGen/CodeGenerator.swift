@@ -299,35 +299,98 @@ public struct CodeGenerator {
         }
     }
     
+    private func evaluateIntExpression(_ expr: ExpressionNode) -> Int? {
+        switch expr {
+        case .integerLiteral(let value):
+            return value
+        case .binary(let binop):
+            if let left = evaluateIntExpression(binop.left),
+               let right = evaluateIntExpression(binop.right) {
+                switch binop.op {
+                case "+": return left + right
+                case "-": return left - right
+                case "*": return left * right
+                case "/": return right != 0 ? left / right : nil
+                default: return nil
+                }
+            }
+        case .unary(let unop):
+            if let val = evaluateIntExpression(unop.expression) {
+                switch unop.op {
+                case "-": return -val
+                default: return nil
+                }
+            }
+        default:
+            return nil
+        }
+        return nil
+    }
+    
     private mutating func processTypeDeclarations(_ types: [TypeNode]) {
+        context.fieldDimensions = [:]
+        
         for (index, typeNode) in types.enumerated() {
             var offset = 12 // Header: prev(4), next(4), typeID(4)
             var typeFieldOffsets: [String: Int] = [:]
             var typeFieldTypes: [String: String] = [:]
+            var typeFieldDimensions: [String: [Int]] = [:]
+            var typeFieldDefaults: [String: ExpressionNode] = [:]
             typeFieldOffsets["__prev"] = 0
             typeFieldOffsets["__next"] = 4
             typeFieldOffsets["__typeID"] = 8
             context.fieldOffsets[typeNode.name] = [:]
+            context.fieldDimensions[typeNode.name] = [:]
             
             let typeHandling = TypeHandling()
             for field in typeNode.fields {
                 let fieldWasmType = typeHandling.typeInfo(from: field.type?.rawValue ?? "Int").wasmType
                 let fieldSize = context.typeSize(for: fieldWasmType)
+                
+                // Calculate array size from dimensions
+                var arraySize = 1
+                var dimensions: [Int] = []
+                for dimExpr in field.dimensions {
+                    if let dimValue = evaluateIntExpression(dimExpr), dimValue > 0 {
+                        dimensions.append(dimValue)
+                        arraySize *= dimValue
+                    }
+                }
+                
+                // Align offset
                 if offset % fieldSize != 0 {
                     offset = ((offset / fieldSize) + 1) * fieldSize
                 }
+                
                 context.fieldOffsets[typeNode.name]?[field.name] = offset
                 typeFieldOffsets[field.name] = offset
                 typeFieldTypes[field.name] = field.type?.rawValue ?? "Int"
-                offset += fieldSize
+                
+                // Store dimensions if field is an array
+                if !dimensions.isEmpty {
+                    typeFieldDimensions[field.name] = dimensions
+                    context.fieldDimensions[typeNode.name]?[field.name] = dimensions
+                }
+                
+                // Store default value if present
+                if let defaultValue = field.defaultValue {
+                    typeFieldDefaults[field.name] = defaultValue
+                }
+                
+                // Move offset by fieldSize * arraySize
+                offset += fieldSize * arraySize
             }
             
             var info = UserTypeInfo(
                 typeID: index + 1,
                 fieldOffsets: typeFieldOffsets,
                 fieldTypes: typeFieldTypes,
+                fieldDimensions: typeFieldDimensions,
+                fieldDefaults: typeFieldDefaults,
                 instanceSize: offset
             )
+            
+            // Register globals for this type's management
             
             // Register globals for this type's management
             info.firstGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
@@ -353,10 +416,13 @@ public struct CodeGenerator {
             context.typeCollectionGlobalIdx = context.module.globals.count
             context.module.globals.append(typeCollectionGlobalVar)
             
-            scratchGlobal = context.module.globals.count
+            context.scratchGlobalIdx = context.module.globals.count
             context.module.globals.append(WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(0)))
-            scratchGlobal2 = context.module.globals.count
+            context.scratchGlobal2Idx = context.module.globals.count
             context.module.globals.append(WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(0)))
+            
+            scratchGlobal = context.scratchGlobalIdx
+            scratchGlobal2 = context.scratchGlobal2Idx
         }
     }
     

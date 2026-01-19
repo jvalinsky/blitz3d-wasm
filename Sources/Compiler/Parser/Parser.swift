@@ -158,15 +158,53 @@ public struct Parser {
             if consume(.keywordField) {
                 repeat {
                     if expect(.identifier) {
-                        let name = currentToken.text
-                        fields.append(FieldNode(name: name))
+                        var name = currentToken.text
+                        var typeAnnotation: TypeAnnotation? = nil
+                        var dimensions: [ExpressionNode] = []
+                        var defaultValue: ExpressionNode? = nil
+                        
+                        // Handle type suffix (%, #, $)
+                        if name.hasSuffix("%") {
+                            typeAnnotation = .integer
+                            name = String(name.dropLast())
+                        } else if name.hasSuffix("#") {
+                            typeAnnotation = .float
+                            name = String(name.dropLast())
+                        } else if name.hasSuffix("$") {
+                            typeAnnotation = .string
+                            name = String(name.dropLast())
+                        }
+                        
                         advance()
+                        
+                        // Handle explicit Type annotation (Field x.Int)
+                        if consume(.period) {
+                            if expect(.identifier) {
+                                let typeName = currentToken.text
+                                if let annotation = TypeAnnotation(rawValue: typeName) {
+                                    typeAnnotation = annotation
+                                }
+                                advance()
+                            }
+                        }
                         
                         // Handle fixed array [size]
                         if consume(.leftBracket) {
-                            _ = parseExpression()
+                            var dims: [ExpressionNode] = []
+                            repeat {
+                                let expr = parseExpression()
+                                dims.append(expr)
+                            } while consume(.comma)
                             _ = consume(.rightBracket)
+                            dimensions = dims
                         }
+                        
+                        // Handle default value = expression
+                        if consume(.equals) {
+                            defaultValue = parseExpression()
+                        }
+                        
+                        fields.append(FieldNode(name: name, type: typeAnnotation, dimensions: dimensions, defaultValue: defaultValue))
                     }
                 } while consume(.comma)
             } else {

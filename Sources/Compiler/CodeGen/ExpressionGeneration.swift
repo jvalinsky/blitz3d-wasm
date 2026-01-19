@@ -94,47 +94,91 @@ public final class ExpressionGeneration {
             //   heapPointer += size;
             // }
             
+            // Store result in scratch global
             instrs.append(.globalGet(typeInfo.freeHeadGlobalIdx))
             instrs.append(.if(.i32, [
                 // Pool Path
                 .globalGet(typeInfo.freeHeadGlobalIdx),
-                .localTee(0), // obj
-                .i32Load(2, 4), // obj.next
-                .globalSet(typeInfo.freeHeadGlobalIdx),
-                .localGet(0) // result
+                .globalSet(context.scratchGlobalIdx),  // obj = freeHead
+                .globalGet(context.scratchGlobalIdx),
+                .i32Load(2, 4),  // obj.next
+                .globalSet(typeInfo.freeHeadGlobalIdx),  // freeHead = obj.next
+                .globalGet(context.scratchGlobalIdx)  // result
             ], [
                 // Bump Path
                 .globalGet(context.heapPointerIdx),
-                .localTee(0), // obj
+                .globalSet(context.scratchGlobalIdx),  // obj = heapPointer
+                .globalGet(context.scratchGlobalIdx),
                 .i32Const(Int32(typeInfo.instanceSize)),
                 .i32Add,
-                .globalSet(context.heapPointerIdx),
-                .localGet(0) // result
+                .globalSet(context.heapPointerIdx),  // heapPointer += size
+                .globalGet(context.scratchGlobalIdx)  // result
             ]))
-            
-            instrs.append(.localTee(0)) // Ensure obj is in local 0 for stitching
             
             // 2. Initialize header
             // obj.prev = last
-            instrs.append(.localGet(0))
+            instrs.append(.globalGet(context.scratchGlobalIdx))
             instrs.append(.globalGet(typeInfo.lastGlobalIdx))
             instrs.append(.i32Store(2, 0)) // offset 0
             
             // obj.next = 0
-            instrs.append(.localGet(0))
+            instrs.append(.globalGet(context.scratchGlobalIdx))
             instrs.append(.i32Const(0))
             instrs.append(.i32Store(2, 4)) // offset 4
             
             // obj.typeID = typeID
-            instrs.append(.localGet(0))
+            instrs.append(.globalGet(context.scratchGlobalIdx))
             instrs.append(.i32Const(Int32(typeInfo.typeID)))
             instrs.append(.i32Store(2, 8)) // offset 8
+            
+            // 2b. Initialize fields with default values
+            for (fieldName, defaultExpr) in typeInfo.fieldDefaults {
+                // Skip array fields - they don't get scalar default initialization
+                if typeInfo.fieldDimensions[fieldName] != nil {
+                    continue
+                }
+                
+                if let fieldOffset = typeInfo.fieldOffsets[fieldName] {
+                    // Get field type
+                    let fieldTypeStr = typeInfo.fieldTypes[fieldName] ?? "Int"
+                    let fieldType = typeHandling.wasmType(from: fieldTypeStr)
+                    
+                    // Generate default value expression
+                    let valueInstrs = generate(defaultExpr)
+                    instrs.append(contentsOf: valueInstrs)
+                    
+                    // Store value in scratch global 2
+                    instrs.append(.globalSet(context.scratchGlobal2Idx))
+                    
+                    // Compute field address: obj + offset
+                    instrs.append(.globalGet(context.scratchGlobalIdx))
+                    instrs.append(.i32Const(Int32(fieldOffset)))
+                    instrs.append(.i32Add)
+                    
+                    // Load value from scratch global 2
+                    instrs.append(.globalGet(context.scratchGlobal2Idx))
+                    
+                    // Store the value
+                    switch fieldType {
+                    case .i32:
+                        instrs.append(.i32Store(2, 0))
+                    case .f32:
+                        instrs.append(.f32Store(2, 0))
+                    case .i64:
+                        instrs.append(.i64Store(2, 0))
+                    case .f64:
+                        instrs.append(.f64Store(2, 0))
+                    default:
+                        instrs.append(.i32Store(2, 0))
+                    }
+                }
+            }
             
             // 3. Stitch: if (last != 0) last.next = obj
             instrs.append(.globalGet(typeInfo.lastGlobalIdx))
             instrs.append(.if(.void, [
                 .globalGet(typeInfo.lastGlobalIdx),
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Store(2, 4) // last.next = obj
             ], nil))
             
@@ -142,16 +186,16 @@ public final class ExpressionGeneration {
             instrs.append(.globalGet(typeInfo.firstGlobalIdx))
             instrs.append(.i32EqZ)
             instrs.append(.if(.void, [
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .globalSet(typeInfo.firstGlobalIdx)
             ], nil))
             
             // last = obj
-            instrs.append(.localGet(0))
+            instrs.append(.globalGet(context.scratchGlobalIdx))
             instrs.append(.globalSet(typeInfo.lastGlobalIdx))
             
             // return obj
-            instrs.append(.localGet(0))
+            instrs.append(.globalGet(context.scratchGlobalIdx))
             
             return (instrs, .i32)
             
@@ -190,17 +234,26 @@ public final class ExpressionGeneration {
             // We should add type safety check here using offset 8 (typeID)
             let exprInstrs = generate(expr)
             var instrs = exprInstrs
+            
+            // Store handle in scratch global
+            instrs.append(.globalSet(context.scratchGlobalIdx))
+            
+            // Load typeID from the handle
+            instrs.append(.globalGet(context.scratchGlobalIdx))
+            instrs.append(.i32Load(2, 8)) // load typeID from offset 8
+            
+            // Check if typeID matches
             if let typeInfo = context.userTypes[typeName] {
-                instrs.append(.localTee(0)) // handle
-                instrs.append(.localGet(0))
-                instrs.append(.i32Load(2, 8)) // load typeID
                 instrs.append(.i32Const(Int32(typeInfo.typeID)))
                 instrs.append(.i32Eq)
                 instrs.append(.if(.i32, [
-                    .localGet(0)
+                    .globalGet(context.scratchGlobalIdx)  // Return original handle if valid
                 ], [
-                    .i32Const(0)
+                    .i32Const(0)  // Return 0 if type mismatch
                 ]))
+            } else {
+                // Unknown type, just return the handle
+                instrs.append(.globalGet(context.scratchGlobalIdx))
             }
             return (instrs, .i32)
         }
@@ -465,7 +518,7 @@ public final class ExpressionGeneration {
     private func generateArrayAccess(_ access: ArrayAccessNode) -> (instrs: [WASMInstruction], type: WASMType) {
         var instrs: [WASMInstruction] = []
         
-        // Get array base address
+        // Case 1: Regular array variable (Dim array[10])
         if case .identifier(let arrayId) = access.array,
            let array = context.variableManagement.arrayInfo(for: arrayId.name) {
             instrs.append(.i32Const(Int32(array.baseAddress)))
@@ -501,6 +554,54 @@ public final class ExpressionGeneration {
             return (instrs, array.elementType)
         }
         
+        // Case 2: Field array access (obj.field[index])
+        if case .fieldAccess(let fieldAccess) = access.array {
+            if let typeName = getTypeName(from: fieldAccess.object),
+               let dimensions = context.fieldDimensions[typeName]?[fieldAccess.field],
+               !dimensions.isEmpty {
+                
+                // Generate the field access to get base pointer
+                let baseInstrs = generate(.fieldAccess(fieldAccess))
+                instrs.append(contentsOf: baseInstrs)
+                
+                // Get element type and size
+                let fieldType = context.userTypes[typeName]?.fieldTypes[fieldAccess.field] ?? "Int"
+                let elementType = typeHandling.wasmType(from: fieldType)
+                let elementSize = context.typeSize(for: elementType)
+                
+                // For 1D array: address = base + index * elementSize
+                // For multi-dimensional, we'd need strides
+                // Simplified: assume 1D or row-major for now
+                if access.indices.count >= 1 {
+                    let indexInstrs = generate(access.indices[0])
+                    instrs.append(contentsOf: indexInstrs)
+                    
+                    if elementSize != 4 {
+                        instrs.append(.i32Const(Int32(elementSize)))
+                        instrs.append(.i32Mul)
+                    }
+                    
+                    instrs.append(.i32Add)
+                }
+                
+                // Load the element value
+                switch elementType {
+                case .i32:
+                    instrs.append(.i32Load(2, 0))
+                case .f32:
+                    instrs.append(.f32Load(2, 0))
+                case .i64:
+                    instrs.append(.i64Load(2, 0))
+                case .f64:
+                    instrs.append(.f64Load(2, 0))
+                default:
+                    instrs.append(.i32Load(2, 0))
+                }
+                
+                return (instrs, elementType)
+            }
+        }
+        
         return ([.i32Const(0)], .i32)
     }
     
@@ -519,10 +620,19 @@ public final class ExpressionGeneration {
             instrs.append(.i32Const(Int32(fieldOffset)))
             instrs.append(.i32Add)
             
+            // Check if this field is an array
+            let fieldDimensions = context.fieldDimensions[typeName]?[access.field]
             let fieldType = context.userTypes[typeName]?.fieldTypes[access.field] ?? "Int"
             let wasmType = typeHandling.wasmType(from: fieldType)
             
-            // Load field value
+            // If field is an array, return address (pointer to array base)
+            // The ArrayAccess generator will handle indexing
+            if fieldDimensions != nil && !fieldDimensions!.isEmpty {
+                // Return the address as i32 (pointer to the array)
+                return (instrs, .i32)
+            }
+            
+            // For scalar fields, load the value
             switch wasmType {
             case .i32: instrs.append(.i32Load(2, 0))
             case .f32: instrs.append(.f32Load(2, 0))

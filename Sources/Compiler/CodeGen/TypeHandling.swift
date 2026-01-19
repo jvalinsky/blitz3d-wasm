@@ -372,6 +372,8 @@ public struct UserTypeInfo {
     public let typeID: Int
     public let fieldOffsets: [String: Int]
     public let fieldTypes: [String: String]
+    public let fieldDimensions: [String: [Int]]  // Field name -> array dimensions (e.g., [" NPCs": [12]])
+    public let fieldDefaults: [String: ExpressionNode]  // Field name -> default value expression
     public let instanceSize: Int
     
     // Global indices for WASM management
@@ -379,10 +381,12 @@ public struct UserTypeInfo {
     public var lastGlobalIdx: Int = -1
     public var freeHeadGlobalIdx: Int = -1
     
-    public init(typeID: Int, fieldOffsets: [String: Int], fieldTypes: [String: String], instanceSize: Int) {
+    public init(typeID: Int, fieldOffsets: [String: Int], fieldTypes: [String: String], fieldDimensions: [String: [Int]] = [:], fieldDefaults: [String: ExpressionNode] = [:], instanceSize: Int) {
         self.typeID = typeID
         self.fieldOffsets = fieldOffsets
         self.fieldTypes = fieldTypes
+        self.fieldDimensions = fieldDimensions
+        self.fieldDefaults = fieldDefaults
         self.instanceSize = instanceSize
     }
 }

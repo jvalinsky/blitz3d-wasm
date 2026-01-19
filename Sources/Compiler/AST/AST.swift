@@ -344,10 +344,14 @@ public struct TypeNode {
 public struct FieldNode {
     public var name: String
     public var type: TypeAnnotation?
+    public var dimensions: [ExpressionNode]
+    public var defaultValue: ExpressionNode?
     
-    public init(name: String, type: TypeAnnotation? = nil) {
+    public init(name: String, type: TypeAnnotation? = nil, dimensions: [ExpressionNode] = [], defaultValue: ExpressionNode? = nil) {
         self.name = name
         self.type = type
+        self.dimensions = dimensions
+        self.defaultValue = defaultValue
     }
 }
 

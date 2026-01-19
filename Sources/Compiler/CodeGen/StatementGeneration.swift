@@ -336,13 +336,49 @@ public final class StatementGeneration {
             ]))
             
         case .select(let selectNode):
+            // Generate: if (selectExpr == case1_1 || selectExpr == case1_2 || ...) { case1_body }
+            //          else if (selectExpr == case2_1 || ...) { case2_body }
+            //          ...
+            //          else { default_body }
+            
+            // Generate select expression and save to scratch global
+            let selectExprInstrs = expressionGenerator?.generate(selectNode.expression) ?? []
+            function.body.append(contentsOf: selectExprInstrs)
+            function.body.append(.globalSet(context.scratchGlobalIdx))
+            
             for caseNode in selectNode.cases {
-                let bodyInstrs = generateStatementBlock(caseNode.body, function: &function)
-                function.body.append(contentsOf: bodyInstrs)
+                // Build match condition: (select == expr1) || (select == expr2) || ...
+                var conditionInstrs: [WASMInstruction] = []
+                
+                for (exprIndex, caseExpr) in caseNode.expressions.enumerated() {
+                    // Load select expression
+                    conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
+                    
+                    // Generate case expression
+                    let caseExprInstrs = expressionGenerator?.generate(caseExpr) ?? []
+                    conditionInstrs.append(contentsOf: caseExprInstrs)
+                    
+                    // Compare
+                    conditionInstrs.append(.i32Eq)
+                    
+                    // OR with previous conditions
+                    if exprIndex > 0 {
+                        conditionInstrs.append(.i32Or)
+                    }
+                }
+                
+                // Generate case body
+                var caseBodyInstrs = generateStatementBlock(caseNode.body, function: &function)
+                
+                // Wrap in if: if (condition) { body }
+                function.body.append(contentsOf: conditionInstrs)
+                function.body.append(.if(.void, caseBodyInstrs, nil))
             }
+            
+            // Default case
             if let defaultCase = selectNode.defaultCase {
-                let bodyInstrs = generateStatementBlock(defaultCase, function: &function)
-                function.body.append(contentsOf: bodyInstrs)
+                let defaultBodyInstrs = generateStatementBlock(defaultCase, function: &function)
+                function.body.append(contentsOf: defaultBodyInstrs)
             }
             
         case .returnStatement(let expr):
@@ -380,7 +416,7 @@ public final class StatementGeneration {
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
                 function.body.append(.i32Const(Int32(stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(currentDepth + 1)) // Branch to state machine loop (beyond chunk if)
+                function.body.append(.br(0)) // Branch to loop start to re-evaluate state
             } else {
                 function.body.append(.nop)
             }
@@ -404,7 +440,7 @@ public final class StatementGeneration {
                 // 3. Set target state and jump
                 function.body.append(.i32Const(Int32(stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(currentDepth + 1)) // Branch to state machine loop
+                function.body.append(.br(0)) // Branch to loop start
                 
                 // 4. Mark return point (placeholder)
                 function.body.append(.nop)

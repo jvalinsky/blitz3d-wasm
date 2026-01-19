@@ -270,6 +270,11 @@ public struct CodeGenerator {
             ("FSOUND_Stream_Stop", "FSOUND_Stream_Stop", [.i32], [], "env"),
             ("FSOUND_Close", "FSOUND_Close", [], [], "env"),
             
+            // Performance Functions
+            ("MilliSecs", "MilliSecs", [], [.i32], "env"),
+            ("CountFPS", "CountFPS", [], [.i32], "env"),
+            ("PerformanceStats", "PerformanceStats", [], [.i32], "env"),
+            
             // String Functions
             ("Left", "Left", [.i32, .i32], [.i32], "env"),
             ("Right", "Right", [.i32, .i32], [.i32], "env"),

@@ -19,6 +19,51 @@ class Blitz3DCore {
         // Seeded random number generator (LCG)
         this.randomSeed = 0;
         this.randomState = 0;
+        
+        // Performance monitoring
+        this.frameCount = 0;
+        this.lastFrameTime = 0;
+        this.fps = 0;
+        this.frameTimes = [];
+        this.maxFrameSamples = 60;
+        
+        // Memory tracking
+        this.heapAllocations = 0;
+        this.stringAllocations = 0;
+        
+        // Optimization flags
+        this.useBatchRendering = true;
+        this.useGeometryInstancing = false;
+        this.cachedTextureLookups = true;
+    }
+
+    // Performance monitoring
+    beginFrame() {
+        const now = performance.now();
+        if (this.lastFrameTime > 0) {
+            const frameTime = now - this.lastFrameTime;
+            this.frameTimes.push(frameTime);
+            if (this.frameTimes.length > this.maxFrameSamples) {
+                this.frameTimes.shift();
+            }
+            // Calculate rolling average FPS
+            if (this.frameTimes.length === this.maxFrameSamples) {
+                const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) / this.maxFrameSamples;
+                this.fps = 1000 / avgFrameTime;
+            }
+        }
+        this.lastFrameTime = now;
+        this.frameCount++;
+    }
+
+    getPerformanceStats() {
+        return {
+            fps: this.fps.toFixed(1),
+            frameCount: this.frameCount,
+            heapAllocations: this.heapAllocations,
+            stringAllocations: this.stringAllocations,
+            memoryUsage: this.memory ? (this.memory.buffer.byteLength / 1024).toFixed(1) + ' KB' : 'N/A'
+        };
     }
 
     // Linear Congruential Generator for seeded random
@@ -1009,6 +1054,24 @@ class Blitz3DCore {
                 count++;
             }
             return count;
+        };
+        
+        // Performance monitoring functions
+        imports.env.MilliSecs = () => {
+            return Math.floor(performance.now());
+        };
+        
+        imports.env.CountFPS = () => {
+            return Math.floor(this.fps);
+        };
+        
+        imports.env.PerformanceStats = () => {
+            const stats = this.getPerformanceStats();
+            if (this.allocString) {
+                const statStr = `FPS:${stats.fps} Frames:${stats.frameCount} Heap:${stats.heapAllocations} Str:${stats.stringAllocations}`;
+                return this.allocString(statStr);
+            }
+            return 0;
         };
         
         imports.env.SendNetMsg = (streamId, destId, msgId, data$, reliable) => {

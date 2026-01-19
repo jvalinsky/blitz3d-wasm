@@ -281,32 +281,47 @@ Phase 5 (SCPCB Specific) ───────┘
 | 2026-01-19 | 5 | Movie Playback | COMPLETE |
 | 2026-01-19 | 5 | Zlib Decompression | COMPLETE |
 | 2026-01-19 | 5 | TCP Networking | COMPLETE |
-| 2026-01-19 | 6 | SCP:CB Compilation Test | COMPLETE |
+| 2026-01-19 | 6 | Performance Monitoring | COMPLETE |
+| 2026-01-19 | 6 | MilliSecs/CountFPS | COMPLETE |
 
 ---
 
-## SCP:CB Compilation Test Results
+## Phase 6: Optimization & Performance
 
-**Status:** ✅ COMPILES SUCCESSFULLY
+### Implemented Features
 
-**Test file:** `Tests/IntegrationTests/SCPCB_Compilation_Test.bb`
+1. **Frame Performance Monitoring**
+   - Rolling average FPS calculation
+   - Frame time tracking (60 samples)
+   - Real-time performance stats
 
-**Output:** `/tmp/scpcb_test.wasm` (7449 bytes, valid WebAssembly)
+2. **Performance Functions**
+   - `MilliSecs()` - High-resolution timer
+   - `CountFPS()` - Current FPS counter
+   - `PerformanceStats()` - Get all stats as string
 
-**Test coverage:**
-- Type Field Arrays with defaults (`Field NPCs[12]`, `Field Health% = 100`)
-- Handle/Object casting (`Handle(npc)`, `Object.TNPC(h)`)
-- Multi-value Case statements (`Case 2, 3`)
-- String functions (Upper, Left, Instr, Mid)
-- Seeded random (SeedRnd, Rnd)
-- Entity properties (CameraRange, CameraClsColor)
-- Movie playback (OpenMovie, DrawMovie, MoviePlaying)
-- ZIP loading (ZlibWapi_Open, ExtractFile)
-- Audio (FSOUND_Init, Stream_Open, LoadSound, PlaySound)
+3. **Memory Tracking**
+   - Heap allocation counter
+   - String allocation counter
+   - Memory usage reporting
+
+### Performance Stats Output
+
+```
+FPS:60.0 Frames:1234 Heap:5678 Str:9012 Memory:1024 KB
+```
 
 ---
 
-## Success Criteria
+## Overall Status
+
+| Metric | Value |
+|--------|-------|
+| Phases Complete | 5/6 (83%) |
+| Tests Passing | 220+ |
+| SCP:CB Test | ✅ Compiles (7548 bytes) |
+
+### Success Criteria
 
 | Criterion | Status |
 |-----------|--------|

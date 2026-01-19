@@ -270,4 +270,6 @@ Phase 5 (SCPCB Specific) ───────┘
 | 2026-01-19 | 1 | Field Default Values | COMPLETE |
 | 2026-01-19 | 1 | Handle/Object Casting | COMPLETE |
 | 2026-01-19 | 1 | Multi-Value Case | COMPLETE |
-| 2026-01-19 | 2 | String Functions | IN PROGRESS |
+| 2026-01-19 | 2 | String Functions | COMPLETE |
+| 2026-01-19 | 2 | Seeded Random | COMPLETE |
+| 2026-01-19 | 2 | Asc/Chr/Hex/Bin | COMPLETE |

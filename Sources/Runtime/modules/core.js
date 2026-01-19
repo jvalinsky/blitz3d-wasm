@@ -15,6 +15,38 @@ class Blitz3DCore {
         this.exports = null;
         this.dataPointer = 256;
         this.allocString = null;
+        
+        // Seeded random number generator (LCG)
+        this.randomSeed = 0;
+        this.randomState = 0;
+    }
+
+    // Linear Congruential Generator for seeded random
+    seedRnd(seed) {
+        this.randomSeed = seed;
+        this.randomState = seed;
+    }
+
+    // Returns float in [0, 1)
+    rndFloat(min, max) {
+        if (min === undefined) min = 0;
+        if (max === undefined) max = 1;
+        
+        // If seed is 0 (uninitialized), use Math.random
+        if (this.randomSeed === 0) {
+            return Math.random() * (max - min) + min;
+        }
+        
+        // LCG: x_{n+1} = (a * x_n + c) mod m
+        // Using parameters from Numerical Recipes
+        this.randomState = (1664525 * this.randomState + 1013904223) % 4294967296;
+        const normalized = this.randomState / 4294967296;
+        return normalized * (max - min) + min;
+    }
+
+    // Returns integer in [min, max]
+    rndInt(min, max) {
+        return Math.floor(this.rndFloat(min, max + 1));
     }
 
     init(canvasId) {
@@ -101,33 +133,146 @@ class Blitz3DCore {
         imports.env.Abs = Math.abs;
         imports.env.Sgn = Math.sign;
         imports.env.Mod = (a, b) => a % b;
-        imports.env.Rnd = (min, max) => Math.random() * (max - min) + min;
-        imports.env.Rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-        imports.env.SeedRnd = (seed) => { }; // TODO: Implement seeded random
+        imports.env.Rnd = (min, max) => this.rndFloat(min, max);
+        imports.env.Rand = (min, max) => this.rndInt(min, max);
+        imports.env.SeedRnd = (seed) => {
+            this.seedRnd(seed);
+        };
 
         // Strings
         imports.env.StringConcat = (aPtr, bPtr) => {
             const a = this.readString(aPtr);
             const b = this.readString(bPtr);
-            // Alloc new string currently not implemented fully in this stub
-            // Ideally we call back to WASM to alloc, or use a JS string manager
-            console.warn("StringConcat not fully implemented");
+            if (this.allocString) {
+                return this.allocString(a + b);
+            }
+            console.warn("StringConcat: allocString not available");
             return 0;
         };
-        imports.env.IntToString = (i) => 0; // Stub
-        imports.env.FloatToString = (f) => 0; // Stub
+        imports.env.IntToString = (i) => {
+            if (this.allocString) {
+                return this.allocString(i.toString());
+            }
+            return 0;
+        };
+        imports.env.FloatToString = (f) => {
+            if (this.allocString) {
+                return this.allocString(f.toString());
+            }
+            return 0;
+        };
 
-        imports.env.Left = (str, n) => 0;
-        imports.env.Right = (str, n) => 0;
-        imports.env.Mid = (str, start, len) => 0;
-        imports.env.Upper = (str) => 0;
-        imports.env.Lower = (str) => 0;
-        imports.env.Replace = (str, find, sub) => 0;
-        imports.env.Instr = (str, find, start) => 0;
-        imports.env.Len = (str) => 0;
-        imports.env.Trim = (str) => 0;
-        imports.env.LTrim = (str) => 0;
-        imports.env.RTrim = (str) => 0;
+        // String manipulation functions
+        imports.env.Left = (strPtr, n) => {
+            const str = this.readString(strPtr);
+            const result = str.substring(0, n);
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Right = (strPtr, n) => {
+            const str = this.readString(strPtr);
+            const result = str.substring(str.length - n);
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Mid = (strPtr, start, len) => {
+            const str = this.readString(strPtr);
+            // Blitz3D uses 1-based indexing
+            const result = str.substring(start - 1, start - 1 + len);
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Upper = (strPtr) => {
+            const str = this.readString(strPtr);
+            const result = str.toUpperCase();
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Lower = (strPtr) => {
+            const str = this.readString(strPtr);
+            const result = str.toLowerCase();
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Replace = (strPtr, findPtr, subPtr) => {
+            const str = this.readString(strPtr);
+            const find = this.readString(findPtr);
+            const sub = this.readString(subPtr);
+            const result = str.split(find).join(sub);
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.Instr = (strPtr, findPtr, start) => {
+            const str = this.readString(strPtr);
+            const find = this.readString(findPtr);
+            // Blitz3D uses 1-based indexing
+            const idx = str.indexOf(find, start - 1);
+            return idx >= 0 ? idx + 1 : 0;
+        };
+        imports.env.Len = (strPtr) => {
+            const str = this.readString(strPtr);
+            return str.length;
+        };
+        imports.env.Trim = (strPtr) => {
+            const str = this.readString(strPtr);
+            const result = str.trim();
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.LTrim = (strPtr) => {
+            const str = this.readString(strPtr);
+            const result = str.trimStart();
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        imports.env.RTrim = (strPtr) => {
+            const str = this.readString(strPtr);
+            const result = str.trimEnd();
+            if (this.allocString) {
+                return this.allocString(result);
+            }
+            return 0;
+        };
+        
+        // Character conversion functions
+        imports.env.Asc = (strPtr) => {
+            const str = this.readString(strPtr);
+            return str.length > 0 ? str.charCodeAt(0) : 0;
+        };
+        imports.env.Chr = (n) => {
+            if (this.allocString) {
+                return this.allocString(String.fromCharCode(n));
+            }
+            return 0;
+        };
+        imports.env.Hex = (n) => {
+            if (this.allocString) {
+                return this.allocString(n.toString(16).toUpperCase());
+            }
+            return 0;
+        };
+        imports.env.Bin = (n) => {
+            if (this.allocString) {
+                return this.allocString(n.toString(2));
+            }
+            return 0;
+        };
 
         // File I/O Stubs
         imports.env.ReadFile = (path) => 0;

@@ -250,6 +250,10 @@ public struct CodeGenerator {
             ("Trim", "Trim", [.i32], [.i32]),
             ("LTrim", "LTrim", [.i32], [.i32]),
             ("RTrim", "RTrim", [.i32], [.i32]),
+            ("Asc", "Asc", [.i32], [.i32]),
+            ("Chr", "Chr", [.i32], [.i32]),
+            ("Hex", "Hex", [.i32], [.i32]),
+            ("Bin", "Bin", [.i32], [.i32]),
             
             // Math Functions
             ("Sin", "Sin", [.f32], [.f32]),

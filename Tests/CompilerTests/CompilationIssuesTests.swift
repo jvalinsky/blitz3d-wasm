@@ -102,6 +102,13 @@ final class CompilationIssuesTests: XCTestCase {
                 case .return:
                     print("\(indent)return: break")
                     break
+                case .br(let _):
+                    print("\(indent)BR -> no stack change")
+                case .brIf(let _):
+                    count -= 1
+                    print("\(indent)BR_IF -> stack: \(count)")
+                case .end:
+                    print("\(indent)END -> no stack change")
                 default:
                     break
                 }
@@ -158,35 +165,57 @@ final class CompilationIssuesTests: XCTestCase {
             return
         }
 
-        func countStackValues(_ instructions: [WASMInstruction]) -> Int {
+        func countStackValues(_ instructions: [WASMInstruction], _ depth: Int = 0) -> Int {
             var count = 0
+            let indent = String(repeating: "  ", count: depth)
             for instr in instructions {
                 switch instr {
                 case .i32Const, .f32Const:
                     count += 1
+                    print("\(indent)CONST -> stack: \(count)")
                 case .localGet, .globalGet:
                     count += 1
+                    print("\(indent)GET -> stack: \(count)")
                 case .localSet, .globalSet, .drop:
                     count -= 1
+                    print("\(indent)SET/DROP -> stack: \(count)")
                 case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrU, .i32RemS:
                     count -= 1
-                case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg:
+                    print("\(indent)I32_BINOP -> stack: \(count)")
+                case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
                     count -= 1
                 case .call:
                     count += 1
-                case .block(_, let body):
-                    count += countStackValues(body)
-                case .loop(_, let body):
-                    count += countStackValues(body)
-                case .if(_, let thenBody, let elseBody):
+                case .block(let type, let body):
+                    print("\(indent)BLOCK(\(type)) enter -> stack: \(count)")
+                    count += countStackValues(body, depth + 1)
+                    print("\(indent)BLOCK(\(type)) exit -> stack: \(count)")
+                case .loop(let type, let body):
+                    print("\(indent)LOOP(\(type)) enter -> stack: \(count)")
+                    count += countStackValues(body, depth + 1)
+                    print("\(indent)LOOP(\(type)) exit -> stack: \(count)")
+                case .if(let type, let thenBody, let elseBody):
+                    print("\(indent)IF(\(type)) cond -> stack before: \(count)")
                     count -= 1
-                    count += countStackValues(thenBody)
+                    print("\(indent)IF(\(type)) cond consumed -> stack: \(count)")
+                    print("\(indent)IF(\(type)) THEN:")
+                    count += countStackValues(thenBody, depth + 1)
+                    print("\(indent)IF(\(type)) THEN end -> stack: \(count)")
                     if let elseBody = elseBody {
-                        count += countStackValues(elseBody)
+                        print("\(indent)IF(\(type)) ELSE:")
+                        count += countStackValues(elseBody, depth + 1)
+                        print("\(indent)IF(\(type)) ELSE end -> stack: \(count)")
                     }
+                    print("\(indent)IF(\(type)) exit -> stack: \(count)")
                 case .return:
+                    print("\(indent)RETURN -> break")
                     break
+                case .br, .brIf:
+                    print("\(indent)BR/BR_IF -> no stack change")
+                case .end:
+                    print("\(indent)END -> no stack change")
                 default:
+                    print("\(indent)OTHER: \(String(describing: instr).prefix(30))")
                     break
                 }
             }
@@ -239,42 +268,76 @@ final class CompilationIssuesTests: XCTestCase {
             return
         }
 
-        func countStackValues(_ instructions: [WASMInstruction]) -> Int {
+        func countStackValues(_ instructions: [WASMInstruction], _ depth: Int = 0) -> Int {
             var count = 0
+            let indent = String(repeating: "  ", count: depth)
             for instr in instructions {
                 switch instr {
                 case .i32Const, .f32Const:
                     count += 1
+                    print("\(indent)CONST -> stack: \(count)")
                 case .localGet, .globalGet:
                     count += 1
+                    print("\(indent)GET -> stack: \(count)")
                 case .localSet, .globalSet, .drop:
                     count -= 1
+                    print("\(indent)SET/DROP -> stack: \(count)")
                 case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrU, .i32RemS:
                     count -= 1
-                case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg:
+                    print("\(indent)I32_BINOP -> stack: \(count)")
+                case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
                     count -= 1
                 case .call:
                     count += 1
-                case .block(_, let body):
-                    count += countStackValues(body)
-                case .loop(_, let body):
-                    count += countStackValues(body)
-                case .if(_, let thenBody, let elseBody):
+                case .block(let type, let body):
+                    print("\(indent)BLOCK(\(type)) enter -> stack: \(count)")
+                    count += countStackValues(body, depth + 1)
+                    print("\(indent)BLOCK(\(type)) exit -> stack: \(count)")
+                case .loop(let type, let body):
+                    print("\(indent)LOOP(\(type)) enter -> stack: \(count)")
+                    count += countStackValues(body, depth + 1)
+                    print("\(indent)LOOP(\(type)) exit -> stack: \(count)")
+                case .if(let type, let thenBody, let elseBody):
+                    print("\(indent)IF(\(type)) cond -> stack before: \(count)")
                     count -= 1
-                    count += countStackValues(thenBody)
+                    print("\(indent)IF(\(type)) cond consumed -> stack: \(count)")
+                    print("\(indent)IF(\(type)) THEN:")
+                    count += countStackValues(thenBody, depth + 1)
+                    print("\(indent)IF(\(type)) THEN end -> stack: \(count)")
                     if let elseBody = elseBody {
-                        count += countStackValues(elseBody)
+                        print("\(indent)IF(\(type)) ELSE:")
+                        count += countStackValues(elseBody, depth + 1)
+                        print("\(indent)IF(\(type)) ELSE end -> stack: \(count)")
                     }
+                    print("\(indent)IF(\(type)) exit -> stack: \(count)")
                 case .return:
+                    print("\(indent)RETURN -> break")
                     break
+                case .br(let _):
+                    print("\(indent)BR -> no stack change")
+                case .brIf(let _):
+                    count -= 1
+                    print("\(indent)BR_IF -> stack: \(count)")
+                case .end:
+                    print("\(indent)END -> no stack change")
                 default:
+                    print("\(indent)OTHER: \(String(describing: instr).prefix(30))")
                     break
                 }
             }
             return count
         }
 
+        print("\n=== FULL STACK ANALYSIS FOR WHILE LOOP ===")
+        print("Main function has \(mainFunction.body.count) instructions")
+        print("Main function locals: \(mainFunction.locals)")
+        for (idx, instr) in mainFunction.body.enumerated() {
+            print("  [\(idx)] \(instr)")
+        }
+        print("---")
         let stackDelta = countStackValues(mainFunction.body)
+        print("=== FINAL STACK DELTA: \(stackDelta) ===\n")
+
         XCTAssertEqual(stackDelta, 0, "While loop should not leave values on stack. Stack delta: \(stackDelta)")
     }
 
@@ -352,6 +415,12 @@ final class CompilationIssuesTests: XCTestCase {
                         count += countStackValues(elseBody)
                     }
                 case .return:
+                    break
+                case .br(_):
+                    break
+                case .brIf(_):
+                    count -= 1
+                case .end:
                     break
                 default:
                     break
@@ -719,7 +788,7 @@ final class CompilationIssuesTests: XCTestCase {
                 case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrU, .i32RemS:
                     count -= 1
                 case .i32EqZ:
-                    break
+                    count -= 1
                 case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
                     count -= 1
                 case .call:
@@ -735,6 +804,12 @@ final class CompilationIssuesTests: XCTestCase {
                         count += countStackValues(elseBody)
                     }
                 case .return:
+                    break
+                case .br(_):
+                    break
+                case .brIf(_):
+                    count -= 1
+                case .end:
                     break
                 default:
                     break

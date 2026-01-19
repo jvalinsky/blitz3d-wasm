@@ -508,7 +508,6 @@ class Blitz3DGraphics {
             if (entity && texture) {
                 entity.traverse((child) => {
                     if (child.isMesh) {
-                        // Ensure material is not shared if we modify it
                         if (!Array.isArray(child.material)) {
                             child.material = child.material.clone();
                             child.material.map = texture;
@@ -518,7 +517,126 @@ class Blitz3DGraphics {
                 });
             }
         };
-
+        
+        // Entity Property Functions
+        imports.env.EntityAlpha = (ent, alpha) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.traverse((child) => {
+                    if (child.isMesh) {
+                        if (!Array.isArray(child.material)) {
+                            child.material = child.material.clone();
+                            child.material.opacity = alpha;
+                            child.material.transparent = alpha < 1.0;
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                });
+            }
+        };
+        
+        imports.env.EntityColor = (ent, red, green, blue) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.traverse((child) => {
+                    if (child.isMesh) {
+                        if (!Array.isArray(child.material)) {
+                            child.material = child.material.clone();
+                            child.material.color.setRGB(red / 255, green / 255, blue / 255);
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                });
+            }
+        };
+        
+        imports.env.EntityFX = (ent, fx) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.traverse((child) => {
+                    if (child.isMesh) {
+                        if (!Array.isArray(child.material)) {
+                            child.material = child.material.clone();
+                            // FX flags: 1 = fullbright, 2 = modulate, 4 = add, 8 = alpha
+                            child.material.emissive = new THREE.Color(0, 0, 0);
+                            if (fx & 1) { // fullbright
+                                child.material.emissive.setRGB(1, 1, 1);
+                            }
+                            if (fx & 4) { // additive blending
+                                child.material.blending = THREE.AdditiveBlending;
+                            } else {
+                                child.material.blending = THREE.NormalBlending;
+                            }
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                });
+            }
+        };
+        
+        imports.env.EntityBlend = (ent, blend) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.traverse((child) => {
+                    if (child.isMesh) {
+                        if (!Array.isArray(child.material)) {
+                            child.material = child.material.clone();
+                            // Blend: 0 = solid, 1 = alpha, 2 = multiply, 3 = additive
+                            switch (blend) {
+                                case 0: // solid
+                                    child.material.transparent = false;
+                                    child.material.blending = THREE.NoBlending;
+                                    break;
+                                case 1: // alpha
+                                    child.material.transparent = true;
+                                    child.material.blending = THREE.NormalBlending;
+                                    break;
+                                case 3: // additive
+                                    child.material.transparent = true;
+                                    child.material.blending = THREE.AdditiveBlending;
+                                    break;
+                                default:
+                                    child.material.transparent = false;
+                                    child.material.blending = THREE.NormalBlending;
+                            }
+                            child.material.needsUpdate = true;
+                        }
+                    }
+                });
+            }
+        };
+        
+        imports.env.PointEntity = (ent, target) => {
+            const entity = this.entities[ent];
+            const targetEntity = this.entities[target];
+            if (entity && targetEntity) {
+                entity.lookAt(targetEntity.position);
+            }
+        };
+        
+        imports.env.NameEntity = (ent, name) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.name = name;
+            }
+        };
+        
+        imports.env.EntityName = (ent) => {
+            const entity = this.entities[ent];
+            if (entity && entity.name && this.core.allocString) {
+                return this.core.allocString(entity.name);
+            }
+            return 0;
+        };
+        
+        // VertexTexCoords for UV mapping
+        imports.env.VertexTexCoords = (surfId, vid, u, v, w) => {
+            const surface = this.surfaces[surfId];
+            if (surface) {
+                surface.setVertexUV(vid, u, v);
+            }
+        };
+        
         // Mesh Surface Commands
         imports.env.CreateSurface = (meshId, brushId) => {
             const mesh = this.entities[meshId];

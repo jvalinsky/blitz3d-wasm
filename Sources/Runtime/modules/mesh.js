@@ -46,6 +46,16 @@ class Blitz3DSurface {
             this.dirty = true;
         }
     }
+    
+    setVertexUV(v, u, w) {
+        // w parameter is ignored in Three.js (only u, v used)
+        const index = v * 9 + 3;
+        if (index < this.vertices.length) {
+            this.vertices[index] = u;
+            // w parameter would be stored here if we had space
+            this.dirty = true;
+        }
+    }
 
     update() {
         if (!this.dirty) return;

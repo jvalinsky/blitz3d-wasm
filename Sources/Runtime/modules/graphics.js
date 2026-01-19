@@ -8,6 +8,7 @@ class Blitz3DGraphics {
         this.core = core;
         this.Blitz3DSurface = require('./mesh').Blitz3DSurface;
         this.Blitz3DAnimation = require('./animation').Blitz3DAnimation;
+        this.animationSystem = new this.Blitz3DAnimation(this, core);
         this.scene = null;
         this.camera = null;
         this.renderer = null;
@@ -139,7 +140,6 @@ class Blitz3DGraphics {
             };
         }
 
-        this.animationSystem = new this.Blitz3DAnimation(this);
         console.log("Animation system initialized");
 
         this.animate();

@@ -204,17 +204,43 @@ final class CodeGeneratorTests: XCTestCase {
         
         let testFunc = module.code[testFuncExport!.index - module.imports.count]
         
-        // Should have a loop
-        XCTAssertTrue(testFunc.body.contains { instr in
-            if case .loop = instr { return true }
+        // Helper to recursively search for instructions
+        func containsLoop(in instructions: [WASMInstruction]) -> Bool {
+            for instr in instructions {
+                if case .loop = instr { return true }
+                if case .block(_, let nested) = instr {
+                    if containsLoop(in: nested) { return true }
+                }
+                if case .if(_, let thenInstrs, let elseInstrs) = instr {
+                    if containsLoop(in: thenInstrs) { return true }
+                    if let elseInstrs = elseInstrs, containsLoop(in: elseInstrs) { return true }
+                }
+            }
             return false
-        }, "Function with Goto should contain a loop")
+        }
+        
+        func containsBr0(in instructions: [WASMInstruction]) -> Bool {
+            for instr in instructions {
+                if case .br(0) = instr { return true }
+                if case .block(_, let nested) = instr {
+                    if containsBr0(in: nested) { return true }
+                }
+                if case .loop(_, let nested) = instr {
+                    if containsBr0(in: nested) { return true }
+                }
+                if case .if(_, let thenInstrs, let elseInstrs) = instr {
+                    if containsBr0(in: thenInstrs) { return true }
+                    if let elseInstrs = elseInstrs, containsBr0(in: elseInstrs) { return true }
+                }
+            }
+            return false
+        }
+        
+        // Should have a loop
+        XCTAssertTrue(containsLoop(in: testFunc.body), "Function with Goto should contain a loop")
         
         // Should have a br 0
-        XCTAssertTrue(testFunc.body.contains { instr in
-            if case .br(0) = instr { return true }
-            return false
-        }, "Function with Goto should contain a br 0")
+        XCTAssertTrue(containsBr0(in: testFunc.body), "Function with Goto should contain a br 0")
     }
     
     func testGenerateDataStatement() throws {

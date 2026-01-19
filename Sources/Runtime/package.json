@@ -1,0 +1,19 @@
+{
+  "name": "scpcb-asset-viewer",
+  "version": "1.0.0",
+  "description": "SCPCB Asset Viewer Demo - Blitz3D-WASM Runtime",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node tools/test_fileio.js && node tools/test_rmesh.js && node tools/test_texture.js"
+  },
+  "keywords": [
+    "scpcb",
+    "blitz3d",
+    "wasm",
+    "threejs",
+    "game"
+  ],
+  "author": "",
+  "license": "MIT"
+}

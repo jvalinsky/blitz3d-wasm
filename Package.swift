@@ -23,9 +23,15 @@ let package = Package(
             path: "Tools/wasm-cli"
         ),
         .target(
+            name: "Blitz3DEngine",
+            dependencies: [],
+            path: "Sources/Blitz3DEngine"
+        ),
+        .target(
             name: "Blitz3DCompiler",
             dependencies: [],
-            path: "Sources/Compiler"
+            path: "Sources/Compiler",
+            exclude: ["CodeGen/REFACTORING_PLAN.md"]
         ),
         .testTarget(
             name: "CompilerTests",

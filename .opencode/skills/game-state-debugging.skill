@@ -1,0 +1,548 @@
+# Game State Debugging
+
+Skill for inspecting and debugging player, NPC, and room state at runtime in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Player state seems wrong (health, stamina, sanity)
+- NPC behavior is unexpected
+- Room state is incorrect
+- Inventory items missing or duplicated
+- Debugging save/load issues
+- Verifying game conditions
+
+## Player State Debug
+
+### Core Player Variables
+
+```blitzbasic
+Global PlayerRoom%
+Global PlayerHealth#
+Global PlayerStamina#
+Global Sanity#
+Global BlinkTimer#
+Global BlinkEffect#
+Global PlayerCollider%
+Global Camera%
+Global GOD_MODE%
+
+Function Debug_PlayerState()
+    If Not DEBUG_MODE Then Return
+
+    ; Core stats
+    Debug_Print "=== PLAYER STATE ==="
+    Debug_Print "Room: " + PlayerRoom + " (" + RoomName$(PlayerRoom) + ")"
+    Debug_Print "Health: " + Int(PlayerHealth) + "/" + Int(GetMaxHealth())
+    Debug_Print "Stamina: " + Int(PlayerStamina) + "/" + Int(GetMaxStamina())
+    Debug_Print "Sanity: " + Int(Sanity) + "/" + Int(GetMaxSanity())
+
+    ; Position
+    Debug_Print "Position: " + FormatVector(PlayerPosition())
+
+    ; Rotation
+    Debug_Print "Rotation: " + FormatRotation(PlayerRotation())
+
+    ; Blink state
+    Debug_Print "Blink: " + Int(BlinkTimer * 100) + "%"
+    Debug_Print "BlinkEffect: " + Int(BlinkEffect * 100) + "%"
+
+    ; Equipment
+    Debug_Print "NVG: " + (HaveNVG() ? "YES" : "NO")
+    Debug_Print "GasMask: " + (HaveGasMask() ? "YES" : "NO")
+
+    ; Status effects
+    Debug_Print "Status: " + GetStatusEffects()
+
+    ; God mode
+    Debug_Print "God Mode: " + (GOD_MODE ? "ON" : "OFF")
+End Function
+
+Function GetMaxHealth()
+    Return 100.0
+End Function
+
+Function GetMaxStamina()
+    Return 100.0
+End Function
+
+Function GetMaxSanity()
+    Return 100.0
+End Function
+
+Function PlayerPosition()
+    Return (EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider))
+End Function
+
+Function PlayerRotation()
+    GetEntityRotation Camera, pitch#, yaw#, roll#
+    Return (pitch, yaw, roll)
+End Function
+
+Function FormatVector(vec)
+    Return "(" + Int(vec[0]) + ", " + Int(vec[1]) + ", " + Int(vec[2]) + ")"
+End Function
+
+Function FormatRotation(rot)
+    Return "P:" + Int(rot[0]) + " Y:" + Int(rot[1]) + " R:" + Int(rot[2])
+End Function
+
+Function GetStatusEffects()
+    effects$ = ""
+    If Bleeding > 0 Then effects$ = effects$ + "BLEEDING "
+    If Poisoned > 0 Then effects$ = effects$ + "POISONED "
+    If OnFire > 0 Then effects$ = effects$ + "ON FIRE "
+    If DarkVision > 0 Then effects$ = effects$ + "DARK VISION "
+    If StaminaDepleted Then effects$ = effects$ + "EXHAUSTED "
+    If effects$ = "" Then effects$ = "NONE"
+    Return effects$
+End Function
+```
+
+### Health Debug
+
+```blitzbasic
+Function Debug_HealthState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== HEALTH DETAILS ==="
+    Debug_Print "Current: " + PlayerHealth
+    Debug_Print "Max: " + GetMaxHealth()
+    Debug_Print "Damage: " + (GetMaxHealth() - PlayerHealth)
+
+    ; Health zones
+    If PlayerHealth > 80
+        Debug_Print "Status: EXCELLENT"
+    ElseIf PlayerHealth > 60
+        Debug_Print "Status: GOOD"
+    ElseIf PlayerHealth > 40
+        Debug_Print "Status: FAIR"
+    ElseIf PlayerHealth > 20
+        Debug_Print "Status: CRITICAL"
+    Else
+        Debug_Print "Status: NEAR DEATH"
+    End If
+
+    ; Bleeding
+    If Bleeding > 0
+        Debug_Print "Bleeding: " + Bleeding + "/100"
+        Debug_Print "Blood Loss/sec: " + (Bleeding * 0.5)
+    End If
+
+    ; Recent damage
+    If DamageHistory > 0
+        Debug_Print "Recent Damage: " + DamageHistory
+    End If
+End Function
+```
+
+### Stamina Debug
+
+```blitzbasic
+Function Debug_StaminaState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== STAMINA DETAILS ==="
+    Debug_Print "Current: " + Int(PlayerStamina)
+    Debug_Print "Max: " + GetMaxStamina()
+
+    ; Stamina regeneration
+    If PlayerStamina < GetMaxStamina()
+        regen = GetStaminaRegen()
+        Debug_Print "Regen: +" + regen + "/sec"
+    End If
+
+    ; Sprint cost
+    Debug_Print "Sprint Cost: " + GetSprintCost() + "/sec"
+
+    ; Depleted state
+    If StaminaDepleted
+        Debug_Print "DEPLETED - Cannot sprint for " + StaminaCooldown + "s"
+    End If
+
+    ; Recent sprint
+    If Sprinting
+        Debug_Print "Currently SPRINTING"
+    End If
+End Function
+```
+
+### Sanity Debug
+
+```blitzbasic
+Function Debug_SanityState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== SANITY DETAILS ==="
+    Debug_Print "Current: " + Int(Sanity)
+    Debug_Print "Max: " + GetMaxSanity()
+
+    ; Sanity zones
+    If Sanity > 80
+        Debug_Print "Status: STABLE"
+    ElseIf Sanity > 60
+        Debug_Print "Status: SHAKEN"
+    ElseIf Sanity > 40
+        Debug_Print "Status: UNSTABLE"
+    ElseIf Sanity > 20
+        Debug_Print "Status: FRACTURED"
+    Else
+        Debug_Print "Status: BREAKING"
+    End If
+
+    ; Sanity effects
+    If Sanity < 40
+        Debug_Print "EFFECTS ACTIVE:"
+        If Hallucinations Then Debug_Print "  - Hallucinations"
+        If Fear Then Debug_Print "  - Fear (panic chance)"
+        If Confusion Then Debug_Print "  - Confusion"
+    End If
+
+    ; Recent sanity changes
+    If SanityDamageHistory > 0
+        Debug_Print "Recent Sanity Loss: " + SanityDamageHistory
+    End If
+End Function
+```
+
+## NPC State Debug
+
+### All NPCs
+
+```blitzbasic
+Function Debug_AllNPCs()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== NPC STATE (" + CountNPCs() + " total) ==="
+
+    For npc.NPCs = Each NPCs
+        Debug_NPCState(npc)
+    Next
+End Function
+```
+
+### Single NPC
+
+```blitzbasic
+Function Debug_NPCState(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "--- NPC " + npc\ID + " ---"
+    Debug_Print "Type: " + NPCTypeName(npc\NPCtype) + " (" + npc\NPCtype + ")"
+    Debug_Print "State: " + GetStateName(npc\State) + " (" + npc\State + ")"
+    Debug_Print "State2: " + npc\State2
+    Debug_Print "State3: " + npc\State3
+
+    ; Position
+    pos# = EntityX(npc\obj)
+    posy# = EntityY(npc\obj)
+    posz# = EntityZ(npc\obj)
+    Debug_Print "Pos: (" + Int(pos) + ", " + Int(posy) + ", " + Int(posz) + ")"
+
+    ; Speed
+    Debug_Print "Speed: " + npc\Speed + " (curr: " + npc\CurrSpeed + ")"
+
+    ; Distance to player
+    dist# = Distance(npc\obj, PlayerCollider)
+    Debug_Print "Dist to player: " + Int(dist)
+
+    ; Health (if applicable)
+    If npc\Health <> 0
+        Debug_Print "Health: " + npc\Health + "/" + npc\MaxHealth
+    End If
+
+    ; Alert status
+    If CanSeePlayer(npc)
+        Debug_Print "SEES PLAYER"
+    ElseIf CanHearPlayer(npc)
+        Debug_Print "HEARS PLAYER"
+    Else
+        Debug_Print "Unaware of player"
+    End If
+
+    ; Pathfinding
+    If npc\PathStatus = PATH_ACTIVE
+        Debug_Print "Path: ACTIVE (nodes: " + npc\PathNodeCount + ")"
+    Else
+        Debug_Print "Path: IDLE"
+    End If
+End Function
+```
+
+### NPC Type Summary
+
+```blitzbasic
+Function Debug_NPCSummary()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== NPC SUMMARY ==="
+
+    ; Count by type
+    counts%[NUM_NPC_TYPES]
+    For npc.NPCs = Each NPCs
+        counts[npc\NPCtype] = counts[npc\NPCtype] + 1
+    Next
+
+    ; Print counts
+    For type = 0 To NUM_NPC_TYPES - 1
+        If counts[type] > 0
+            Debug_Print NPCTypeName(type) + ": " + counts[type]
+        End If
+    Next
+
+    ; Print states
+    Debug_Print ""
+    Debug_Print "State distribution:"
+    stateCounts%[NUM_STATES]
+    For npc.NPCs = Each NPCs
+        stateCounts[npc\State] = stateCounts[npc\State] + 1
+    Next
+
+    For state = 0 To NUM_STATES - 1
+        If stateCounts[state] > 0
+            Debug_Print "  " + GetStateName(state) + ": " + stateCounts[state]
+        End If
+    Next
+
+    ; Dead NPCs
+    deadCount = CountDeadNPCs()
+    If deadCount > 0
+        Debug_Print ""
+        Debug_Print "Dead NPCs: " + deadCount
+    End If
+End Function
+```
+
+## Room State Debug
+
+```blitzbasic
+Function Debug_RoomState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== ROOM STATE ==="
+    Debug_Print "Current Room: " + PlayerRoom + " (" + RoomName$(PlayerRoom) + ")"
+
+    ; Room details
+    Debug_Print "Zone: " + RoomZoneName(PlayerRoom)
+    Debug_Print "Door Count: " + RoomDoorCount(PlayerRoom)
+
+    ; Doors
+    For i = 0 To RoomDoorCount(PlayerRoom) - 1
+        Debug_Print "Door " + i + ": -> " + RoomDoorTarget(PlayerRoom, i)
+    Next
+
+    ; NPCs in room
+    roomNPCs = CountNPCsInRoom(PlayerRoom)
+    Debug_Print "NPCs in room: " + roomNPCs
+
+    ; Items in room
+    roomItems = CountItemsInRoom(PlayerRoom)
+    Debug_Print "Items in room: " + roomItems
+
+    ; Events
+    If RoomHasActiveEvent(PlayerRoom)
+        Debug_Print "ACTIVE EVENT: " + GetRoomEventName(PlayerRoom)
+    End If
+
+    ; Visited
+    If RoomVisited(PlayerRoom)
+        Debug_Print "Visited: YES (visit #" + RoomVisitCount(PlayerRoom) + ")"
+    Else
+        Debug_Print "Visited: NO (first time)"
+    End If
+End Function
+```
+
+## Inventory Debug
+
+```blitzbasic
+Function Debug_InventoryState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== INVENTORY STATE ==="
+    Debug_Print "Item Count: " + CountInventoryItems() + "/" + MaxInventorySlots()
+
+    ; All items
+    For i = 0 To MaxInventorySlots() - 1
+        item = GetInventoryItem(i)
+        If item <> 0
+            Debug_Print "Slot " + i + ": " + ItemName(item) + " (" + ItemID(item) + ")"
+            If ItemAtSlot(i) <> item
+                Debug_Print "  MISMATCH: ItemAtSlot says " + ItemName(ItemAtSlot(i))
+            End If
+        Else
+            Debug_Print "Slot " + i + ": (empty)"
+        End If
+    Next
+
+    ; Selected item
+    selected = GetSelectedItem()
+    If selected <> 0
+        Debug_Print "Selected: " + ItemName(selected) + " (slot " + GetSelectedSlot() + ")"
+    Else
+        Debug_Print "Selected: (none)"
+    End If
+
+    ; Keycards
+    Debug_Print "Keycards:"
+    If PlayerHasKeycard("RED") Then Debug_Print "  RED"
+    If PlayerHasKeycard("BLUE") Then Debug_Print "  BLUE"
+    If PlayerHasKeycard("GREEN") Then Debug_Print "  GREEN"
+    If PlayerHasKeycard("OMEGA") Then Debug_Print "  OMEGA"
+
+    ; Special items
+    Debug_Print "Special Items:"
+    If HaveNVG() Then Debug_Print "  Night Vision Goggles"
+    If HaveGasMask() Then Debug_Print "  Gas Mask"
+    If HaveKeycardOmni() Then Debug_Print "  Master Keycard"
+End Function
+```
+
+## Save State Debug
+
+```blitzbasic
+Function Debug_SaveState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== SAVE STATE ==="
+
+    ; Check save files
+    For slot = 0 To 3
+        If SaveFileExists(slot)
+            info = GetSaveInfo(slot)
+            Debug_Print "Slot " + slot + ": EXISTS"
+            Debug_Print "  Room: " + info\Room + " (" + RoomName$(info\Room) + ")"
+            Debug_Print "  Health: " + info\Health
+            Debug_Print "  Time: " + FormatTime(info\PlayTime)
+            Debug_Print "  Date: " + info\SaveDate
+        Else
+            Debug_Print "Slot " + slot + ": (empty)"
+        End If
+    Next
+
+    ; Current state snapshot
+    Debug_Print ""
+    Debug_Print "Current State Snapshot:"
+    Debug_Print "  Room: " + PlayerRoom
+    Debug_Print "  Health: " + Int(PlayerHealth)
+    Debug_Print "  Stamina: " + Int(PlayerStamina)
+    Debug_Print "  Sanity: " + Int(Sanity)
+    Debug_Print "  Inventory: " + CountInventoryItems() + " items"
+    Debug_Print "  NPCs Killed: " + CountDeadNPCs()
+    Debug_Print "  Time Played: " + FormatTime(GetTotalPlayTime())
+End Function
+```
+
+## Time State Debug
+
+```blitzbasic
+Function Debug_TimeState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== TIME STATE ==="
+
+    ; Game time
+    Debug_Print "Game Time: " + FormatTime(GetGameTime())
+    Debug_Print "Real Time: " + FormatTime(GetRealTime())
+
+    ; Time of day
+    Debug_Print "Time of Day: " + GetTimeOfDay()
+
+    ; Day/night cycle
+    If HasDayNightCycle()
+        Debug_Print "Day Phase: " + GetDayPhase()
+        Debug_Print "Darkness: " + Int(GetDarkness() * 100) + "%"
+    End If
+
+    ; Event timers
+    Debug_Print "Event Timers:"
+    Debug_Print "  MTF Spawn: " + TimeUntilEvent("MTF_SPAWN")
+    Debug_Print "  Chaos Insurgency: " + TimeUntilEvent("CI_SPAWN")
+    Debug_Print "  Breach: " + TimeUntilEvent("BREACH")
+
+    ; Warnings
+    If TimeUntilEvent("MTF_SPAWN") < 60
+        Debug_Print "WARNING: MTF arriving soon!"
+    End If
+End Function
+```
+
+## Complete State Dump
+
+```blitzbasic
+Function Debug_AllState()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "========================================"
+    Debug_Print "     GAME STATE DUMP"
+    Debug_Print "     Frame: " + FrameCount
+    Debug_Print "========================================"
+
+    Debug_PlayerState()
+    Debug_HealthState()
+    Debug_StaminaState()
+    Debug_SanityState()
+    Debug_RoomState()
+    Debug_InventoryState()
+    Debug_SaveState()
+    Debug_TimeState()
+
+    Debug_Print "========================================"
+    Debug_Print "     END STATE DUMP"
+    Debug_Print "========================================"
+End Function
+```
+
+## Watch Variables
+
+```blitzbasic
+Global WATCH_LIST$[10]
+Global WATCH_VALUES$[10]
+
+Function Debug_AddWatch(variableName$)
+    For i = 0 To 9
+        If WATCH_LIST$[i] = ""
+            WATCH_LIST$[i] = variableName$
+            WATCH_VALUES$[i] = ""
+            Return True
+        End If
+    Next
+    Debug_Print "Watch list full!"
+    Return False
+End Function
+
+Function Debug_UpdateWatches()
+    If Not DEBUG_MODE Then Return
+
+    Debug_Print "=== WATCHES ==="
+    For i = 0 To 9
+        If WATCH_LIST$[i] <> ""
+            value$ = EvaluateVariable(WATCH_LIST$[i])
+            oldValue$ = WATCH_VALUES$[i]
+
+            ; Highlight changes
+            If value$ <> oldValue$
+                Debug_Print WATCH_LIST$[i] + ": " + value$ + " (CHANGED)"
+            Else
+                Debug_Print WATCH_LIST$[i] + ": " + value$
+            End If
+
+            WATCH_VALUES$[i] = value$
+        End If
+    Next
+End Function
+```
+
+## Quick Reference
+
+| Debug Function | Shows |
+|---------------|-------|
+| `Debug_PlayerState()` | Core player stats, position, equipment |
+| `Debug_NPCState(npc)` | Single NPC detailed state |
+| `Debug_AllNPCs()` | All NPCs in game |
+| `Debug_RoomState()` | Current room, doors, NPCs, events |
+| `Debug_InventoryState()` | All items, keycards, selection |
+| `Debug_SaveState()` | Save slots, current snapshot |
+| `Debug_TimeState()` | Game time, event timers |
+| `Debug_AllState()` | Complete state dump |
+| `Debug_AddWatch(var)` | Track variable for changes |

@@ -2,6 +2,13 @@
   "": {
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/master.swiftdeps"
   },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/AudioTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.dia"
+  },
   "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/BinaryEncoderTests.swift": {
     "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.d",
     "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.swift.o",
@@ -16,6 +23,13 @@
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.swiftdeps",
     "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.dia"
   },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/GraphicsAPITests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.dia"
+  },
   "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift": {
     "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.d",
     "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swift.o",
@@ -29,5 +43,33 @@
     "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests~partial.swiftmodule",
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swiftdeps",
     "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.dia"
   }
 }

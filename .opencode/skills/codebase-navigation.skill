@@ -1,0 +1,523 @@
+# Large Codebase Navigation
+
+Skill for efficiently exploring and understanding large codebases, finding functions, tracing dependencies, and understanding system architecture.
+
+## When to Use
+
+Use this skill when:
+- Starting work on unfamiliar code
+- Finding where a feature is implemented
+- Understanding code dependencies
+- Mapping out system architecture
+- Locating related functions
+- Tracing execution flow
+
+## Navigation Strategy
+
+### Phase 1: Orient
+
+```blitzbasic
+; First steps when entering a new codebase
+Function Orient_Codebase()
+    ; 1. Find main entry point
+    Print "Main files:"
+    LocateFile("main.bb")
+    LocateFile("Main.bb")
+    LocateFile("main.c")
+    LocateFile("index.js")
+
+    ; 2. Find configuration
+    Print "Config files:"
+    LocateFile("package.json")
+    LocateFile("README*")
+    LocateFile("AGENTS.md")
+
+    ; 3. Find directory structure
+    ListTopLevelDirectories()
+
+    ; 4. Identify file count and types
+    CountFilesByExtension()
+End Function
+```
+
+### Phase 2: Map
+
+```blitzbasic
+; Build mental map of codebase
+Function Map_Codebase()
+    ; Group files by purpose
+    CreateFileGroup("Core", "*Main*, *Init*, *Game*")
+    CreateFileGroup("NPCs", "*NPC*, *Entity*, *AI*")
+    CreateFileGroup("Graphics", "*Render*, *Draw*, *Mesh*")
+    CreateFileGroup("Audio", "*Sound*, *Music*, *FMod*")
+    CreateFileGroup("UI", "*Menu*, *HUD*, *Interface*")
+    CreateFileGroup("System", "*Save*, *Load*, *File*")
+
+    ; Identify largest files (most complex)
+    GetLargestFiles(10)
+
+    ; Identify most frequently referenced files
+    GetMostReferencedFiles(10)
+End Function
+```
+
+### Phase 3: Drill Down
+
+```blitzbasic
+; Focus on specific area
+Function Drill_Down(target$)
+    Select target$
+        Case "NPCs"
+            Drill_NPCs()
+        Case "SaveSystem"
+            Drill_SaveLoad()
+        Case "GameLoop"
+            Drill_GameLoop()
+        Default
+            Drill_Custom(target$)
+    End Select
+End Function
+```
+
+## Finding Functions
+
+### By Name
+
+```blitzbasic
+; Find function definitions
+Function Find_Function(name$)
+    results$ = Grep("Function " + name$, "*.bb")
+    Print results$
+    Return results
+End Function
+
+; Find all functions in file
+Function List_Functions(file$)
+    lines$ = Grep("^Function ", file$)
+    ForEach line$ in lines$
+        Print ExtractFunctionName(line$)
+    Next
+End Function
+
+; Find function calls
+Function Find_Calls(functionName$)
+    results$ = Grep(functionName$, "*.bb")
+    Print results$
+    Return results
+End Function
+```
+
+### By Pattern
+
+```blitzbasic
+; Find all NPC-related functions
+Function Find_NPC_Functions()
+    Print "NPC Creation:"
+    Grep("Function CreateNPC", "*.bb")
+
+    Print "NPC Updates:"
+    Grep("Function UpdateNPC", "*.bb")
+
+    Print "NPC State Management:"
+    Grep("Function.*NPC.*State", "*.bb")
+End Function
+
+; Find all save/load functions
+Function Find_SaveLoad_Functions()
+    Grep("Function Save", "*.bb")
+    Grep("Function Load", "*.bb")
+    Grep("Function Write", "*.bb")
+    Grep("Function Read", "*.bb")
+End Function
+
+; Find all event handlers
+Function Find_EventHandlers()
+    Grep("Function.*Event", "*.bb")
+    Grep("Function.*On.*Event", "*.bb")
+End Function
+```
+
+## Tracing Dependencies
+
+### Function Dependencies
+
+```blitzbasic
+; Find what a function calls
+Function Trace_Calls(functionName$)
+    Print "Functions called by " + functionName$ + ":"
+    calls$ = Grep(functionName$ + "\(", "*.bb")
+
+    ; Filter to function calls
+    ForEach call$ in calls$
+        If IsFunctionCall(call$)
+            Print "  " + ExtractFunctionName(call$)
+        End If
+    Next
+End Function
+
+; Find what calls a function
+Function Trace_CalledBy(functionName$)
+    Print "Functions that call " + functionName$ + ":"
+    callers$ = Grep(functionName$, "*.bb")
+
+    ; Filter to call sites
+    ForEach line$ in callers$
+        If IsFunctionCall(line$)
+            Print "  " + GetCurrentFunction(line$)
+        End If
+    Next
+End Function
+```
+
+### Variable Dependencies
+
+```blitzbasic
+; Find where variable is used
+Function Find_VariableUsage(variableName$)
+    Print "Variable " + variableName$ + " used in:"
+    Grep(variableName$, "*.bb")
+End Function
+
+; Find where variable is set
+Function Find_VariableSets(variableName$)
+    Print "Variable " + variableName$ + " set in:"
+    Grep(variableName$ + " =", "*.bb")
+    Grep(variableName$ + =, "*.bb")  ; With space
+End Function
+
+; Find global variables
+Function Find_GlobalVariables()
+    Grep("^Global ", "*.bb")
+End Function
+```
+
+### File Dependencies
+
+```blitzbasic
+; Find file includes
+Function Find_Includes(file$)
+    Grep("#Include", file$)
+End Function
+
+; Find files that include target
+Function Find_IncludedBy(targetFile$)
+    Grep(targetFile$, "*.bb")
+End Function
+```
+
+## Understanding Systems
+
+### NPC System Overview
+
+```blitzbasic
+Function Understand_NPCSystem()
+    Print "=== NPC System Overview ==="
+
+    ; Find NPC type definitions
+    Print "Type definitions:"
+    Grep("Type NPCs", "*.bb")
+
+    ; Find NPC creation
+    Print "Creation functions:"
+    Grep("Function CreateNPC", "*.bb")
+
+    ; Find main update loop
+    Print "Main update:"
+    Grep("Function UpdateNPCs", "*.bb")
+
+    ; Find state machine
+    Print "State definitions:"
+    Grep("Const STATE_", "*.bb")
+
+    ; Find behavior functions
+    Print "Behavior functions:"
+    Grep("Function UpdateSCP", "*.bb")
+
+    ; Find NPC initialization
+    Print "Initialization:"
+    Grep("Function InitNPCs", "*.bb")
+
+    Print "=== End Overview ==="
+End Function
+```
+
+### Save System Overview
+
+```blitzbasic
+Function Understand_SaveSystem()
+    Print "=== Save System Overview ==="
+
+    ; Find save function
+    Print "Main save:"
+    Grep("Function SaveGame", "*.bb")
+
+    ; Find load function
+    Print "Main load:"
+    Grep("Function LoadGame", "*.bb")
+
+    ; Find what gets saved
+    Print "Data saved:"
+    Grep("Function.*Save.*Data", "*.bb")
+    Grep("WriteInt.*Player", "*.bb")
+    Grep("WriteString.*Player", "*.bb")
+
+    ; Find format info
+    Print "File format:"
+    Grep("Function WriteFile", "*.bb")
+    Grep("Function ReadFile", "*.bb")
+
+    ; Find save slots
+    Print "Save slots:"
+    Grep("Const.*SAVE.*SLOT", "*.bb")
+End Function
+```
+
+### Game Loop Overview
+
+```blitzbasic
+Function Understand_GameLoop()
+    Print "=== Game Loop Overview ==="
+
+    ; Find main entry
+    Print "Main entry:"
+    LocateFile("main.bb")
+    LocateFile("Main.bb")
+
+    ; Find loop
+    Print "Game loop:"
+    Grep("While.*Not.*AppTerminate", "*.bb")
+    Grep("While.*True", "*.bb")
+
+    ; Find phases
+    Print "Update phase:"
+    Grep("Function Update", "*.bb")
+
+    Print "Render phase:"
+    Grep("Function Render", "*.bb")
+    Grep("Function Draw", "*.bb")
+
+    ; Find input handling
+    Print "Input:"
+    Grep("Function HandleInput", "*.bb")
+    Grep("Function UpdateInput", "*.bb")
+End Function
+```
+
+## File Summarization
+
+### Summarize File
+
+```blitzbasic
+Function Summarize_File(file$)
+    Print "=== " + file$ + " ==="
+
+    ; Count lines
+    lineCount = CountLines(file$)
+    Print "Lines: " + lineCount
+
+    ; List functions
+    functions$ = Grep("^Function ", file$)
+    Print "Functions (" + CountItems(functions$) + "):"
+    ForEach func$ in functions$
+        Print "  - " + ExtractFunctionName(func$)
+    Next
+
+    ; List types
+    types$ = Grep("^Type ", file$)
+    Print "Types (" + CountItems(types$) + "):"
+    ForEach type$ in types$
+        Print "  - " + ExtractTypeName(type$)
+    Next
+
+    ; List globals
+    globals$ = Grep("^Global ", file$)
+    Print "Globals (" + CountItems(globals$) + "):"
+    ForEach global$ in globals$
+        Print "  - " + ExtractGlobalName(global$)
+    Next
+
+    ; Find includes
+    includes$ = Grep("#Include", file$)
+    Print "Includes (" + CountItems(includes$) + "):"
+    ForEach inc$ in includes$
+        Print "  - " + ExtractIncludePath(inc$)
+    Next
+
+    ; Find constants
+    constants$ = Grep("^Const ", file$)
+    Print "Constants (" + CountItems(constants$) + "):"
+End Function
+```
+
+### Compare
+
+```blitz Filesbasic
+Function Compare_Files(file1$, file2$)
+    ; Compare sizes
+    size1 = FileSize(file1$)
+    size2 = FileSize(file2$)
+    Print file1$ + ": " + size1 + " bytes"
+    Print file2$ + ": " + size2 + " bytes"
+
+    ; Compare function counts
+    funcs1 = CountFunctions(file1$)
+    funcs2 = CountFunctions(file2$)
+    Print "Functions: " + funcs1 + " vs " + funcs2
+
+    ; Find common functions
+    common$ = IntersectFunctionLists(file1$, file2$)
+    Print "Common functions: " + CountItems(common$)
+
+    ; Find unique functions
+    unique1$ = SubtractFunctionLists(file1$, file2$)
+    unique2$ = SubtractFunctionLists(file2$, file1$)
+    Print "Unique to " + file1$ + ": " + CountItems(unique1$)
+    Print "Unique to " + file2$ + ": " + CountItems(unique2$)
+End Function
+```
+
+## Code Patterns
+
+### State Machine Pattern
+
+```blitzbasic
+; Find state machines
+Function Find_StateMachines()
+    ; Look for state definitions
+    Grep("Const STATE_", "*.bb")
+
+    ; Look for state switches
+    Grep("Select.*State", "*.bb")
+    Grep("Switch.*State", "*.bb")
+
+    ; Look for state updates
+    Grep("Function.*State.*Update", "*.bb")
+End Function
+```
+
+### Type Pattern
+
+```blitzbasic
+; Find type definitions
+Function Find_TypeDefinitions()
+    Grep("^Type ", "*.bb")
+
+    ; List all Type fields
+    ForEach file$ in "*.bb"
+        Grep("^Type ", file$)
+        Grep("^    Field ", file$)  ; With indentation
+    Next
+End Function
+```
+
+### Event Pattern
+
+```blitzbasic
+; Find event systems
+Function Find_EventSystems()
+    ; Event definitions
+    Grep("Const EVENT_", "*.bb")
+
+    ; Event handlers
+    Grep("Function.*Event.*Handler", "*.bb")
+
+    ; Event triggers
+    Grep("TriggerEvent", "*.bb")
+    Grep("RaiseEvent", "*.bb")
+End Function
+```
+
+## Quick Navigation
+
+### SCPB Specific
+
+```blitzbasic
+; NPC types
+LocateFile("NPCs.bb")
+
+; Game events
+LocateFile("UpdateEvents.bb")
+
+; Main loop
+LocateFile("Main.bb")
+
+; Map system
+LocateFile("MapSystem.bb")
+
+; Save/load
+LocateFile("Save.bb")
+
+; Menu
+LocateFile("Menu.bb")
+
+; Items
+LocateFile("Items.bb")
+
+; Configuration
+LocateFile("Data/rooms.ini")
+LocateFile("Data/events.ini")
+```
+
+### All Purposes
+
+```blitzbasic
+; Find by content
+Grep("keyword", "*.bb")
+
+; Find by name
+glob("**/*keyword*")
+
+; Find recent files
+ListFilesByDate("*.bb", 10)
+
+; Find largest files
+ListFilesBySize("*.bb", 10)
+```
+
+## Documentation Generation
+
+```blitzbasic
+Function Generate_CodebaseDoc()
+    ; Create documentation file
+    file = WriteFile("CODEBASE_DOC.md")
+
+    WriteLine file, "# Codebase Documentation"
+    WriteLine file, ""
+    WriteLine file, "Generated: " + Date()
+    WriteLine file, ""
+
+    ; File structure
+    WriteLine file, "## File Structure"
+    WriteLine file, ListTopLevelDirectories()
+
+    ; Largest files
+    WriteLine file, "## Largest Files (Most Complex)"
+    GetLargestFiles(20)
+    ForEach f in results
+        WriteLine file, "- " + f + " (" + FileSize(f) + " bytes)"
+    Next
+
+    ; System breakdown
+    WriteLine file, "## Systems"
+    WriteLine file, "### NPCs"
+    Summarize_File("NPCs.bb")
+    WriteLine file, "### Game Events"
+    Summarize_File("UpdateEvents.bb")
+
+    CloseFile(file)
+    Print "Documentation generated: CODEBASE_DOC.md"
+End Function
+```
+
+## Quick Reference
+
+| Goal | Command |
+|------|---------|
+| Find function | `Grep("Function name", "*.bb")` |
+| Find type | `Grep("^Type name", "*.bb")` |
+| Find calls to | `Grep("functionName(", "*.bb")` |
+| Find uses of var | `Grep("variableName", "*.bb")` |
+| List file contents | `Grep("^Function ", file$)` |
+| Find includes | `Grep("#Include", file$)` |
+| Map system | `Grep("Const STATE_", "*.bb")` |
+| Find main | `glob("**/main*")` |

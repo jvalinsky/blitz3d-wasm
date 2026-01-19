@@ -1,0 +1,491 @@
+# Integration Test Patterns
+
+Skill for testing game flow, room transitions, events, and end-to-end gameplay in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Testing complete game flows
+- Verifying room transitions work correctly
+- Testing event sequences
+- End-to-end gameplay testing
+- Testing multiple systems together
+- Verifying save/load mid-game
+
+## Game Flow Testing
+
+### Full Game Loop Test
+
+```blitzbasic
+Function Test_FullGameLoop()
+    ; Setup fresh game
+    StartNewGame()
+    SetDifficulty(DIFFICULTY_HARD)
+
+    ; Test: Initial room
+    AssertEqual(PlayerRoom(), ROOM_ENTRANCE_HALL, "Should start in entrance hall")
+
+    ; Test: Collect keycard
+    Assert(PlayerHasItem(ITEM_KEYCARD_NONE), "Should have no keycard initially")
+
+    ; Test: Progress through LCZ
+    NavigateToRoom(ROOM_LCZ_012)
+    PickupItem(ITEM_KEYCARD_RED)
+    Assert(PlayerHasItem(ITEM_KEYCARD_RED), "Should have red keycard")
+
+    ; Test: Enter HCZ
+    NavigateToRoom(ROOM_LCZ_GATE_A)
+    UseDoor(0)  ; Red door
+    AssertEqual(PlayerRoom(), ROOM_HCZ_002, "Should be in HCZ")
+
+    ; Test: Encounter SCP-173
+    Assert(NPCExists(NPC_SCP_173), "SCP-173 should exist")
+    Assert(PlayerCanBlink(), "Player should be able to blink")
+
+    ; Test: Die to SCP-173
+    MoveIntoRange(NPC_SCP_173)
+    DontBlinkFor(10)
+    Assert(PlayerDead(), "Player should die without blinking")
+
+    ; Test: Game over screen
+    Assert(GameOverShown(), "Should show game over")
+End Function
+```
+
+### Escape Ending Test
+
+```blitzbasic
+Function Test_EscapeEnding()
+    StartNewGame()
+
+    ; Get elevator keycard
+    NavigateToRoom(ROOM_HCZ_ELEVATOR)
+    PickupItem(ITEM_ELEVATOR_KEY)
+
+    ; Go to surface
+    UseElevator(0)
+    AssertEqual(PlayerRoom(), ROOM_SURFACE, "Should reach surface")
+
+    ; Find exit
+    NavigateToRoom(ROOM_SURFACE_GATE)
+
+    ; Test: Sneak past guards
+    SetSneaking(True)
+    NavigateThroughArea("GUARD_PATROL")
+    Assert(NotDetectedByGuards(), "Should sneak past guards")
+
+    ; Escape
+    UseDoor(0)
+    Assert(GameWon(), "Should win game")
+
+    ; Test: End screen shows
+    Assert(EndingScreenShown("ESCAPE"), "Should show escape ending")
+End Function
+```
+
+## Room Transition Testing
+
+### Door Transition Test
+
+```blitzbasic
+Function Test_DoorTransitions()
+    ; Setup
+    SetPlayerRoom(ROOM_LCZ_012)
+    originalRoom = PlayerRoom
+
+    ; Test: Valid door transition
+    MovePlayerToDoor(2)  ; Door index 2
+    UseDoor(2)
+    Assert(PlayerInNewRoom(), "Should transition rooms")
+    newRoom = PlayerRoom
+    AssertNotEqual(newRoom, originalRoom, "Should be different room")
+
+    ; Test: Door requires keycard
+    SetPlayerRoom(ROOM_LCZ_GATE_A)
+    MovePlayerToDoor(0)  ; Red door
+    If Not PlayerHasItem(ITEM_KEYCARD_RED)
+        Assert(DoorLocked("RED"), "Red door should require red keycard")
+        UseDoor(0)
+        Assert(PlayerRoom = ROOM_LCZ_GATE_A, "Should not enter locked door")
+    End If
+
+    ; Test: Open door with keycard
+    AddItemToInventory(ITEM_KEYCARD_RED)
+    UseDoor(0)
+    AssertEqual(PlayerRoom(), ROOM_HCZ_002, "Should enter HCZ")
+End Function
+```
+
+### Elevator Transition Test
+
+```blitzbasic
+Function Test_ElevatorTransitions()
+    ; Setup
+    SetPlayerRoom(ROOM_LCZ_ELEVATOR_SHAFT)
+
+    ; Test: Call elevator
+    CallElevator(0)
+    Assert(ElevatorArrived(0), "Elevator should arrive")
+
+    ; Test: Enter elevator
+    UseDoor(0)
+    Assert(PlayerInElevator(), "Should be in elevator")
+
+    ; Test: Floor selection
+    SelectFloor(1)  ; HCZ
+    CloseDoor()
+    Assert(ElevatorMoving(), "Elevator should move")
+
+    ; Test: Exit at new floor
+    AssertEqual(CurrentFloor(), 1, "Should be at HCZ floor")
+    OpenDoor()
+    AssertEqual(PlayerRoom(), ROOM_HCZ_ELEVATOR_SHAFT, "Should be in HCZ shaft")
+
+    ; Test: Elevator keycard
+    SetPlayerRoom(ROOM_HCZ_ELEVATOR_SHAFT)
+    SelectFloor(2)  ; EZ (requires keycard)
+    If Not PlayerHasItem(ITEM_ELEVATOR_KEY)
+        Assert(ElevatorRequiresKey("EZ"), "Should require elevator key")
+    End If
+End Function
+```
+
+### Forest Transition Test
+
+```blitzbasic
+Function Test_ForestTransitions()
+    ; Setup
+    SetPlayerRoom(ROOM_FOREST_EDGE)
+
+    ; Test: Enter forest
+    MovePlayerToDoor(0)
+    UseDoor(0)
+    Assert(PlayerInForest(), "Should be in forest")
+
+    ; Test: Forest navigation
+    NavigateForest("PATH_NORTH")
+    Assert(AtForestLocation("CABIN"), "Should reach cabin")
+
+    ; Test: Forest dangers
+    SetPlayerPosition(ForestDangerZone())
+    Assert(PlayerTakingDamage("THORNS"), "Should take damage in thorns")
+
+    ; Test: Exit forest
+    NavigateForest("PATH_SOUTH")
+    MovePlayerToExit()
+    UseDoor(0)
+    AssertEqual(PlayerRoom(), ROOM_ENTRANCE_HALL, "Should exit forest")
+End Function
+```
+
+## Event Sequence Testing
+
+### SCP-173 Encounter Test
+
+```blitzbasic
+Function Test_SCP173_EncounterSequence()
+    StartNewGame()
+    NavigateToRoom(ROOM_LCZ_173)
+
+    ; Test: First sighting
+    Assert(PlayerSeesNPC(NPC_SCP_173), "Should see SCP-173")
+    Assert(SCPActive(NPC_SCP_173), "SCP-173 should be active")
+
+    ; Test: Blink system active
+    Assert(BlinkSystemEnabled(), "Blink system should be enabled")
+
+    ; Test: Observation freezes SCP
+    LookAtNPC(NPC_SCP_173)
+    UpdateNPCs()
+    prevPos = GetNPCPosition(NPC_SCP_173)
+    WaitFrames(10)
+    currPos = GetNPCPosition(NPC_SCP_173)
+    AssertEqual(prevPos, currPos, "SCP-173 should freeze when observed")
+
+    ; Test: Look away triggers movement
+    LookAway()
+    UpdateNPCs()
+    WaitFrames(60)
+    currPos = GetNPCPosition(NPC_SCP_173)
+    AssertNotEqual(prevPos, currPos, "SCP-173 should move when not observed")
+
+    ; Test: Proximity snap
+    SetPlayerPositionNearNPC(NPC_SCP_173, 3.0)
+    LookAway()
+    WaitFrames(10)
+    Assert(PlayerDead(), "Player should die at close range without blinking")
+End Function
+```
+
+### SCP-096 Encounter Test
+
+```blitzbasic
+Function Test_SCP096_EncounterSequence()
+    StartNewGame()
+    NavigateToRoom(ROOM_HCZ_096)
+
+    ; Test: Find note about not looking
+    ReadSign("WARNING_096")
+    Assert(PlayerKnowsNotToLook(), "Player should know not to look")
+
+    ; Test: Peek without full view
+    PeekAtDoor(ROOM_HCZ_096)
+    AssertNotEqual(SCPActive(NPC_SCP_096), True, "SCP-096 should not trigger from peek")
+
+    ; Test: Accidental view triggers pursuit
+    MoveThroughDoor(0)
+    fullView = PlayerSeesNPCFullView(NPC_SCP_096)
+    Assert(fullView, "Player sees full view")
+    Assert(SCPActive(NPC_SCP_096), "SCP-096 should activate")
+
+    ; Test: Cannot escape once triggered
+    RunAway()
+    Assert(SCPPursuing(NPC_SCP_096), "SCP-096 should pursue")
+
+    ; Test: Death when caught
+    WaitForNPCToCatchPlayer()
+    Assert(PlayerDead(), "Player should die when SCP-096 catches")
+End Function
+```
+
+### MTF Ambush Test
+
+```blitzbasic
+Function Test_MTFAmbush()
+    StartNewGame()
+
+    ; Test: No MTF initially
+    AssertEqual(CountNPCsOfType(NPC_MTF), 0, "No MTF at start")
+
+    ; Advance to 6 minutes
+    AdvanceTime(360)
+
+    ; Test: MTF spawn
+    Assert(CountNPCsOfType(NPC_MTF) > 0, "MTF should spawn at 6 minutes")
+
+    ; Test: MTF hostile
+    npc = GetFirstNPCOfType(NPC_MTF)
+    Assert(MTFTargetsPlayer(npc), "MTF should target player")
+
+    ; Test: Combat
+    PlayerShootNPC(npc)
+    Assert(NPCTakingDamage(npc), "MTF should take damage")
+
+    ; Test: MTF can kill player
+    PlayerHealth = 100
+    MTFAttackPlayer(npc)
+    Assert(PlayerHealth < 100, "MTF should damage player")
+End Function
+```
+
+## Save/Load Integration Test
+
+### Mid-Game Save Test
+
+```blitzbasic
+Function Test_MidGameSave()
+    StartNewGame()
+    SetDifficulty(DIFFICULTY_HARD)
+
+    ; Progress game
+    NavigateToRoom(ROOM_LCZ_012)
+    AddItemToInventory(ITEM_KEYCARD_RED)
+    KillNPC(NPC_SCP_173)
+
+    ; Record state
+    savedHealth = PlayerHealth
+    savedRoom = PlayerRoom
+    savedItems = GetInventory()
+    savedNPCs = GetDeadNPCs()
+
+    ; Save game
+    SaveGame(0)
+
+    ; Test: Load restores exact state
+    LoadGame(0)
+    AssertEqual(PlayerHealth(), savedHealth, "Health should match")
+    AssertEqual(PlayerRoom(), savedRoom, "Room should match")
+    AssertEqual(GetInventory(), savedItems, "Items should match")
+    AssertEqual(GetDeadNPCs(), savedNPCs, "Dead NPCs should match")
+
+    ; Test: Can continue playing
+    NavigateToRoom(ROOM_LCZ_914)
+    Assert(CanContinuePlaying(), "Game should continue normally")
+End Function
+```
+
+### Death and Load Test
+
+```blitzbasic
+Function Test_DeathAndLoad()
+    StartNewGame()
+
+    ; Die
+    NavigateToRoom(ROOM_LCZ_173)
+    MoveIntoRange(NPC_SCP_173)
+    DontBlinkFor(15)
+    Assert(PlayerDead(), "Player should die")
+
+    ; Test: Death screen
+    Assert(DeathScreenShown(), "Should show death screen")
+
+    ; Test: Can load save
+    SelectLoadSlot(0)
+    LoadGame(0)
+    Assert(PlayerAlive(), "Player should be alive after loading")
+
+    ; Test: Back at pre-death state
+    AssertEqual(PlayerRoom(), ROOM_LCZ_173, "Should be back at SCP room")
+    Assert(NPCAlive(NPC_SCP_173), "SCP-173 should be alive")
+End Function
+```
+
+## Inventory Integration Test
+
+### Full Inventory Flow Test
+
+```blitzbasic
+Function Test_InventoryFlow()
+    StartNewGame()
+
+    ; Test: Start with no items
+    AssertEqual(CountInventoryItems(), 0, "Empty inventory at start")
+
+    ; Test: Pickup items
+    NavigateToRoom(ROOM_LCZ_012)
+    PickupItem(ITEM_MEDKIT)
+    AssertEqual(CountInventoryItems(), 1, "Should have 1 item")
+
+    ; Test: Use medkit
+    PlayerHealth = 50
+    SelectItem(ITEM_MEDKIT)
+    UseItem()
+    Assert(PlayerHealth > 50, "Health should increase")
+    AssertEqual(CountInventoryItems(), 0, "Medkit should be used")
+
+    ; Test: Combine items
+    AddItemToInventory(ITEM_BATTERY)
+    AddItemToInventory(ITEM_FLASHLIGHT)
+    SelectItem(ITEM_BATTERY)
+    CombineWith(ITEM_FLASHLIGHT)
+    Assert(PlayerHasItem(ITEM_WORKING_FLASHLIGHT), "Should have working flashlight")
+
+    ; Test: Drag and drop
+    MoveItemInInventory(0, 2)
+    Assert(ItemAtSlot(2) == ITEM_WORKING_FLASHLIGHT, "Item should move")
+
+    ; Test: Save with items
+    savedItems = GetInventory()
+    SaveGame(0)
+    LoadGame(0)
+    AssertEqual(GetInventory(), savedItems, "Items should persist")
+End Function
+```
+
+## Performance Integration Test
+
+```blitzbasic
+Function Test_PerformanceUnderLoad()
+    StartNewGame()
+
+    ; Test: FPS in empty room
+    StartFPSMeasurement()
+    NavigateToRoom(ROOM_ENTRANCE_HALL)
+    WaitFrames(60)
+    emptyRoomFPS = GetAverageFPS()
+    Assert(emptyRoomFPS > 30, "Should have good FPS in empty room")
+
+    ; Test: FPS with many NPCs
+    SpawnNPCs(10)
+    StartFPSMeasurement()
+    WaitFrames(60)
+    crowdedFPS = GetAverageFPS()
+    Assert(crowdedFPS > 20, "Should maintain playable FPS with NPCs")
+
+    ; Test: FPS in forest
+    SetPlayerRoom(ROOM_FOREST_DEEP)
+    StartFPSMeasurement()
+    WaitFrames(60)
+    forestFPS = GetAverageFPS()
+    Assert(forestFPS > 20, "Should have playable FPS in forest")
+
+    ; Report
+    Print "Performance Results:"
+    Print "Empty room: " + emptyRoomFPS + " FPS"
+    Print "With NPCs: " + crowdedFPS + " FPS"
+    Print "Forest: " + forestFPS + " FPS"
+End Function
+```
+
+## Test Runner
+
+```blitzbasic
+Global INTEGRATION_TEST_PASSED%
+Global INTEGRATION_TEST_FAILED%
+
+Function RunIntegrationTests()
+    INTEGRATION_TEST_PASSED = 0
+    INTEGRATION_TEST_FAILED = 0
+
+    Print "Running Integration Tests..."
+    Print "================================"
+
+    ; Game flow tests
+    Print "Game Flow Tests:"
+    RunTest("FullGameLoop", Test_FullGameLoop)
+    RunTest("EscapeEnding", Test_EscapeEnding)
+
+    ; Room transition tests
+    Print "Room Transition Tests:"
+    RunTest("DoorTransitions", Test_DoorTransitions)
+    RunTest("ElevatorTransitions", Test_ElevatorTransitions)
+    RunTest("ForestTransitions", Test_ForestTransitions)
+
+    ; Event sequence tests
+    Print "Event Sequence Tests:"
+    RunTest("SCP173Encounter", Test_SCP173_EncounterSequence)
+    RunTest("SCP096Encounter", Test_SCP096_EncounterSequence)
+    RunTest("MTFAmbush", Test_MTFAmbush)
+
+    ; Save/load tests
+    Print "Save/Load Tests:"
+    RunTest("MidGameSave", Test_MidGameSave)
+    RunTest("DeathAndLoad", Test_DeathAndLoad)
+
+    ; Inventory tests
+    Print "Inventory Tests:"
+    RunTest("InventoryFlow", Test_InventoryFlow)
+
+    ; Performance tests
+    Print "Performance Tests:"
+    RunTest("PerformanceUnderLoad", Test_PerformanceUnderLoad)
+
+    Print "================================"
+    Print "Integration Tests: " + INTEGRATION_TEST_PASSED + " passed, " + INTEGRATION_TEST_FAILED + " failed"
+
+    Return INTEGRATION_TEST_FAILED = 0
+End Function
+
+Function RunTest(name$, testFunc)
+    Print "  Running " + name$ + "..."
+    Excute testFunc
+    If GetLastAssertFailed()
+        Print "    FAILED: " + GetLastAssertMessage()
+        INTEGRATION_TEST_FAILED = INTEGRATION_TEST_FAILED + 1
+    Else
+        Print "    PASSED"
+        INTEGRATION_TEST_PASSED = INTEGRATION_TEST_PASSED + 1
+    End If
+End Function
+```
+
+## Quick Reference
+
+| Test Category | Key Tests |
+|--------------|-----------|
+| Game Flow | Start to death, escape ending |
+| Transitions | Doors, elevators, forest |
+| Events | SCP encounters, MTF ambush |
+| Save/Load | Mid-game save, death and load |
+| Inventory | Full flow, combine, drag-drop |
+| Performance | FPS under load |

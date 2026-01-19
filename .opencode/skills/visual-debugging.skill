@@ -1,0 +1,479 @@
+# Visual Debugging
+
+Skill for debugging game state, NPC positions, collision detection, and rendering issues in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Debugging NPC movement or AI behavior
+- Checking collision detection issues
+- Verifying rendering problems
+- Inspecting game state at runtime
+- Tracing player position and camera issues
+- Checking entity states and animations
+
+## Debug Drawing System
+
+### Basic Debug Overlay
+
+```blitzbasic
+Global DEBUG_MODE% = False
+Global DEBUG_FONT%
+
+Function Debug_Init()
+    DEBUG_FONT = LoadFont("Arial", 14)
+End Function
+
+Function Debug_Toggle()
+    DEBUG_MODE = Not DEBUG_MODE
+End Function
+
+Function Debug_Draw()
+    If Not DEBUG_MODE Then Return
+
+    ; Draw on top of everything
+    SetFont DEBUG_FONT
+    SetColor 0, 255, 0
+
+    ; FPS counter
+    DrawText "FPS: " + GetFPS(), 10, 10
+
+    ; Player info
+    DrawText "Health: " + Int(PlayerHealth), 10, 30
+    DrawText "Stamina: " + Int(PlayerStamina), 10, 50
+    DrawText "Sanity: " + Int(Sanity), 10, 70
+    DrawText "Room: " + PlayerRoom, 10, 90
+
+    ; Position
+    DrawText "Pos: " + EntityX(PlayerCollider) + ", " + EntityY(PlayerCollider) + ", " + EntityZ(PlayerCollider), 10, 110
+
+    ; Blink timer
+    DrawText "Blink: " + Int(BlinkTimer * 100) + "%", 10, 130
+End Function
+```
+
+### Debug Drawing Functions
+
+```blitzbasic
+; Draw wireframe box around entity
+Function Debug_DrawBox(entity, r% = 255, g% = 0, b% = 0)
+    Wireframe True
+    SetColor r, g, b
+    DrawWireframeBox(entity)
+    Wireframe False
+End Function
+
+; Draw sphere at position
+Function Debug_DrawSphere(x#, y#, z#, radius# = 0.5, r% = 255, g% = 0, b% = 0)
+    Wireframe True
+    SetColor r, g, b
+    DrawWireframeSphere(x, y, z, radius)
+    Wireframe False
+End Function
+
+; Draw line between two points
+Function Debug_DrawLine(x1#, y1#, z1#, x2#, y2#, z2#, r% = 255, g% = 0, b% = 0)
+    SetColor r, g, b
+    DrawLine x1, y1, z1, x2, y2, z2
+End Function
+
+; Draw coordinate axes at position
+Function Debug_DrawAxes(entity, scale# = 1.0)
+    x# = EntityX(entity)
+    y# = EntityY(entity)
+    z# = EntityZ(entity)
+
+    ; X axis - Red
+    DrawLine x, y, z, x + scale, y, z, 255, 0, 0
+    ; Y axis - Green
+    DrawLine x, y, z, x, y + scale, z, 0, 255, 0
+    ; Z axis - Blue
+    DrawLine x, y, z, x, y, z + scale, 0, 0, 255
+End Function
+
+; Draw arrow showing direction
+Function Debug_DrawArrow(entity, length# = 2.0, r% = 255, g% = 0, b% = 0)
+    x# = EntityX(entity)
+    y# = EntityY(entity)
+    z# = EntityZ(entity)
+
+    GetEntityRotation(entity, pitch#, yaw#, roll#)
+
+    ; Calculate forward vector
+    fx# = Sin(yaw) * length
+    fz# = Cos(yaw) * length
+
+    SetColor r, g, b
+    DrawLine x, y, z, x + fx, y, z + fz
+End Function
+```
+
+## Player Debug
+
+```blitzbasic
+Function Debug_PlayerInfo()
+    If Not DEBUG_MODE Then Return
+
+    ; Player position marker
+    Debug_DrawSphere(EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider), 0.3, 0, 255, 0)
+
+    ; Player direction
+    Debug_DrawArrow(PlayerCollider, 2.0, 0, 255, 0)
+
+    ; Camera position
+    Debug_DrawAxes(Camera, 0.5)
+
+    ; View direction
+    Debug_DrawLine(
+        EntityX(Camera), EntityY(Camera), EntityZ(Camera),
+        EntityX(Camera) + CameraDirectionX() * 5,
+        EntityY(Camera) + CameraDirectionY() * 5,
+        EntityZ(Camera) + CameraDirectionZ() * 5,
+        0, 255, 255
+    )
+
+    ; Blink radius
+    Debug_DrawSphere(EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider), 10.0, 255, 255, 0, 50)
+End Function
+```
+
+## NPC Debug
+
+```blitzbasic
+Function Debug_NPCInfo()
+    If Not DEBUG_MODE Then Return
+
+    For npc.NPCs = Each NPCs
+        ; Draw NPC bounding box
+        Debug_DrawBox(npc\obj, 255, 0, 0)
+
+        ; Draw state color
+        Select npc\State
+            Case STATE_IDLE: Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), 0.5, 0, 255, 0)
+            Case STATE_HUNTING: Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), 0.5, 255, 0, 0)
+            Case STATE_ATTACK: Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), 0.5, 255, 255, 0)
+            Case STATE_FLEE: Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), 0.5, 0, 255, 255)
+        End Select
+
+        ; Draw path if pathfinding
+        If npc\PathStatus = PATH_ACTIVE
+            For i = 0 To npc\PathNodeCount - 1
+                node = npc\PathNodes[i]
+                Debug_DrawSphere(EntityX(node), EntityY(node), EntityZ(node), 0.2, 255, 255, 255)
+                If i > 0
+                    prev = npc\PathNodes[i - 1]
+                    Debug_DrawLine(EntityX(node), EntityY(node), EntityZ(node),
+                                  EntityX(prev), EntityY(prev), EntityZ(prev), 255, 255, 255)
+                End If
+            Next
+        End If
+
+        ; Draw line to player if detecting
+        If CanSeePlayer(npc)
+            Debug_DrawLine(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj),
+                          EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider),
+                          255, 0, 0)
+        End If
+
+        ; Draw line to heard player
+        If CanHearPlayer(npc)
+            Debug_DrawLine(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj),
+                          EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider),
+                          255, 255, 0)
+        End If
+    Next
+End Function
+```
+
+## Collision Debug
+
+```blitzbasic
+Function Debug_CollisionInfo()
+    If Not DEBUG_MODE Then Return
+
+    ; Draw player collider
+    Debug_DrawBox(PlayerCollider, 0, 255, 0)
+
+    ; Draw all NPC colliders
+    For npc.NPCs = Each NPCs
+        If npc\Collider <> 0
+            Debug_DrawBox(npc\Collider, 255, 0, 0)
+        End If
+    Next
+
+    ; Draw item colliders
+    For item.Items = Each Items
+        If item\obj <> 0
+            Debug_DrawBox(item\obj, 0, 255, 255)
+        End If
+    Next
+
+    ; Highlight collision points
+    For i = 0 To CountCollisions(PlayerCollider) - 1
+        x# = CollisionX(i)
+        y# = CollisionY(i)
+        z# = CollisionZ(i)
+        Debug_DrawSphere(x, y, z, 0.2, 255, 0, 255)
+    Next
+End Function
+```
+
+## Room Debug
+
+```blitzbasic
+Function Debug_RoomInfo()
+    If Not DEBUG_MODE Then Return
+
+    ; Current room info
+    DrawText "Room: " + PlayerRoom, 10, 150
+    DrawText "Room Name: " + RoomName$(PlayerRoom), 10, 170
+
+    ; Draw doors
+    For i = 0 To RoomDoorCount(PlayerRoom) - 1
+        dx# = RoomDoorX(PlayerRoom, i)
+        dy# = RoomDoorY(PlayerRoom, i)
+        dz# = RoomDoorZ(PlayerRoom, i)
+        Debug_DrawSphere(dx, dy, dz, 0.5, 0, 255, 0)
+
+        ; Draw connected room
+        targetRoom = RoomDoorTarget(PlayerRoom, i)
+        DrawText "Door " + i + " -> Room " + targetRoom, 10, 190 + i * 20
+    Next
+
+    ; Room bounds
+    roomBounds = GetRoomBounds(PlayerRoom)
+    Debug_DrawBox(roomBounds, 255, 255, 255, 100)
+End Function
+```
+
+## AI State Debug
+
+```blitzbasic
+Function Debug_AIState(npc)
+    If Not DEBUG_MODE Then Return
+
+    x# = EntityX(npc\obj)
+    y# = EntityY(npc\obj)
+    z# = EntityZ(npc\obj)
+
+    ; State name
+    stateName$ = GetNPCStateName(npc\NPCtype, npc\State)
+    DrawText3D(stateName$, x, y + 2.5, z)
+
+    ; Speed
+    DrawText3D "Speed: " + npc\CurrSpeed, x, y + 2.3, z
+
+    ; Distance to player
+    dist# = Distance(npc\obj, PlayerCollider)
+    DrawText3D "Dist: " + Int(dist), x, y + 2.1, z
+
+    ; State-specific info
+    Select npc\NPCtype
+        Case NPC_SCP_173
+            DrawText3D "ObserveTime: " + npc\State2, x, y + 1.9, z
+
+        Case NPC_SCP_096
+            DrawText3D "Agitated: " + npc\State2, x, y + 1.9, z
+
+        Case NPC_SCP_106
+            DrawText3D "Corrosion: " + npc\State2, x, y + 1.9, z
+
+        Case NPC_SCP_049
+            DrawText3D "CureTimer: " + npc\State2, x, y + 1.9, z
+    End Select
+End Function
+```
+
+## Performance Debug
+
+```blitzbasic
+Global DEBUG_FRAMES%[60]
+Global DEBUG_FRAME_INDEX% = 0
+Global DEBUG_FPS% = 0
+
+Function Debug_Performance()
+    If Not DEBUG_MODE Then Return
+
+    ; FPS calculation
+    DEBUG_FRAMES[DEBUG_FRAME_INDEX] = GetMilliSecs()
+    DEBUG_FRAME_INDEX = (DEBUG_FRAME_INDEX + 1) Mod 60
+
+    If DEBUG_FRAME_INDEX = 0
+        DEBUG_FPS = 60000 / (DEBUG_FRAMES[59] - DEBUG_FRAMES[0])
+    End If
+
+    ; Draw FPS
+    SetColor DEBUG_FPS > 30 ? 0 : 255, DEBUG_FPS > 30 ? 255 : 0, 0
+    DrawText "FPS: " + Int(DEBUG_FPS), 10, 10
+
+    ; Entity count
+    DrawText "Entities: " + CountEntities(), 10, 30
+    DrawText "NPCs: " + CountNPCs(), 10, 50
+    DrawText "Items: " + CountItems(), 10, 70
+
+    ; Memory
+    Debug_DrawText "Memory: " + MemoryUsed(), 10, 90
+End Function
+```
+
+## Debug Console
+
+```blitzbasic
+Global DEBUG_CONSOLE_LINES$[20]
+Global DEBUG_CONSOLE_INDEX% = 0
+
+Function Debug_Print(message$)
+    DEBUG_CONSOLE_LINES[DEBUG_CONSOLE_INDEX] = message$
+    DEBUG_CONSOLE_INDEX = (DEBUG_CONSOLE_INDEX + 1) Mod 20
+
+    ; Also print to console
+    Print message$
+End Function
+
+Function Debug_DrawConsole()
+    If Not DEBUG_MODE Then Return
+
+    SetFont DEBUG_FONT
+    SetColor 0, 255, 0
+
+    For i = 0 To 19
+        line$ = DEBUG_CONSOLE_LINES[(DEBUG_CONSOLE_INDEX + i) Mod 20]
+        If line$ <> ""
+            DrawText line, 10, 600 - i * 15
+        End If
+    Next
+End Function
+```
+
+## Debug Hotkeys
+
+```blitzbasic
+Function Debug_HandleInput()
+    If Not KeyHit(KEY_F1) Then Return
+
+    Debug_Toggle()
+    Debug_Print("Debug mode: " + (DEBUG_MODE ? "ON" : "OFF"))
+End Function
+
+; F2 - God mode toggle
+Function Debug_GodMode()
+    If Not KeyHit(KEY_F2) Then Return
+    GOD_MODE = Not GOD_MODE
+    Debug_Print("God mode: " + (GOD_MODE ? "ON" : "OFF"))
+End Function
+
+; F3 - Teleport to room
+Function Debug_Teleport()
+    If Not KeyHit(KEY_F3) Then Return
+    ; Could show room selector UI
+End Function
+
+; F4 - Spawn NPC
+Function Debug_SpawnNPC()
+    If Not KeyHit(KEY_F4) Then Return
+    npc = CreateNPC(NPC_SCP_939)
+    PositionEntity npc\obj, EntityX(PlayerCollider), EntityY(PlayerCollider), EntityZ(PlayerCollider) + 5
+    Debug_Print("Spawned SCP-939")
+End Function
+
+; F5 - Kill all NPCs
+Function Debug_KillAllNPCs()
+    If Not KeyHit(KEY_F5) Then Return
+    For npc.NPCs = Each NPCs
+        KillNPC(npc)
+    Next
+    Debug_Print("All NPCs killed")
+End Function
+
+; F6 - Full health
+Function Debug_FullHealth()
+    If Not KeyHit(KEY_F6) Then Return
+    SetPlayerHealth(100)
+    SetPlayerStamina(100)
+    SetSanity(100)
+    Debug_Print("Full health restored")
+End Function
+
+; F7 - Save state snapshot
+Function Debug_SaveSnapshot()
+    If Not KeyHit(KEY_F7) Then Return
+    Debug_Print("State snapshot saved")
+    ; Save current state for comparison
+End Function
+
+; F8 - Step frame (pause)
+Global DEBUG_STEP_MODE% = False
+
+Function Debug_StepFrame()
+    If Not KeyHit(KEY_F8) Then Return
+
+    If DEBUG_STEP_MODE
+        ; Resume
+        DEBUG_STEP_MODE = False
+        Debug_Print("Resumed")
+    Else
+        ; Pause and step mode
+        DEBUG_STEP_MODE = True
+        Debug_Print("Step mode - press F9 to step")
+    End If
+End Function
+
+Function Debug_Step()
+    If DEBUG_STEP_MODE And KeyHit(KEY_F9)
+        Return True
+    End If
+    Return Not DEBUG_STEP_MODE
+End Function
+```
+
+## Complete Debug Loop
+
+```blitzbasic
+Function Debug_Update()
+    Debug_HandleInput()
+    Debug_GodMode()
+    Debug_Teleport()
+    Debug_SpawnNPC()
+    Debug_KillAllNPCs()
+    Debug_FullHealth()
+    Debug_SaveSnapshot()
+    Debug_StepFrame()
+End Function
+
+Function Debug_Render()
+    Debug_Update()
+    Debug_Performance()
+    Debug_Draw()
+    Debug_PlayerInfo()
+    Debug_NPCInfo()
+    Debug_CollisionInfo()
+    Debug_RoomInfo()
+    Debug_DrawConsole()
+
+    ; AI state for selected NPC
+    If SelectedNPC <> 0
+        Debug_AIState(SelectedNPC)
+    End If
+End Function
+```
+
+## Quick Reference
+
+| Hotkey | Action |
+|--------|--------|
+| F1 | Toggle debug mode |
+| F2 | God mode |
+| F3 | Teleport menu |
+| F4 | Spawn SCP-939 |
+| F5 | Kill all NPCs |
+| F6 | Full health |
+| F7 | Save snapshot |
+| F8 | Pause/step mode |
+| F9 | Step one frame |
+
+| Color | Meaning |
+|-------|---------|
+| Green | Idle/Safe |
+| Red | Hunting/Attacking |
+| Yellow | Warning |
+| Cyan | Fleeing |

@@ -16,6 +16,13 @@
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/CodeGenerator.swiftdeps",
     "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/CodeGenerator.dia"
   },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.dia"
+  },
   "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift": {
     "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/ExpressionGeneration.d",
     "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/ExpressionGeneration.swift.o",

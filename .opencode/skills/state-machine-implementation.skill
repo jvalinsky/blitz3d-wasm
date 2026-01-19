@@ -1,0 +1,551 @@
+# State Machine Implementation
+
+Skill for implementing finite state machines (FSM) for NPC AI, game logic, and entity behaviors in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Creating NPC AI with multiple states
+- Implementing game entity behaviors
+- Building game event systems
+- Managing entity lifecycle
+- Handling complex AI transitions
+
+## Basic State Machine
+
+### State Machine Framework
+
+```blitzbasic
+; State Machine Framework for SCPB
+
+; State constants
+Const STATE_INVALID% = -1
+Const STATE_IDLE% = 0
+Const STATE_ACTIVE% = 1
+Const STATE_ALERT% = 2
+Const STATE_ATTACK% = 3
+Const STATE_FLEE% = 4
+Const STATE_DEAD% = 5
+
+; Transition types
+Const TRANSITION_NORMAL% = 0
+Const TRANSITION_FORCED% = 1
+Const TRANSITION_INSTANT% = 2
+
+; State machine type
+Type StateMachine
+    Field Owner%         ; Entity that owns this SM
+    Field CurrentState%
+    Field PreviousState%
+    Field StateTimer#    ; Time in current state
+    Field StateTimerMax# ; Max time in state (for timed states)
+    Field Transition%    ; Current transition type
+    Field Transitions%[20] ; Transition table
+End Type
+
+Function CreateStateMachine%(owner%)
+    sm.StateMachine = New StateMachine
+    sm\Owner = owner
+    sm\CurrentState = STATE_IDLE
+    sm\PreviousState = STATE_INVALID
+    sm\StateTimer = 0
+    sm\Transition = TRANSITION_NORMAL
+    Return Handle(sm)
+End Function
+```
+
+### State Management
+
+```blitzbasic
+; Change state with transition
+Function StateMachine_ChangeState%(sm.StateMachine, newState%)
+    If sm = Null Then Return False
+
+    ; Call exit function for current state
+    StateMachine_OnExit(sm, sm\CurrentState)
+
+    ; Update history
+    sm\PreviousState = sm\CurrentState
+    sm\CurrentState = newState
+    sm\StateTimer = 0
+
+    ; Call entry function for new state
+    StateMachine_OnEnter(sm, newState)
+
+    Return True
+End Function
+
+; Timed state change
+Function StateMachine_SetTimedState%(sm.StateMachine, newState%, duration#)
+    sm\StateTimerMax = duration
+    StateMachine_ChangeState(sm, newState)
+End Function
+
+; Check if in state
+Function StateMachine_InState%(sm.StateMachine, state%)
+    Return sm\CurrentState = state
+End Function
+
+; Check if was in state
+Function StateMachine_WasInState%(sm.StateMachine, state%)
+    Return sm\PreviousState = state
+End Function
+
+; Get time in state
+Function StateMachine_GetStateTime#(sm.StateMachine)
+    Return sm\StateTimer
+End Function
+
+; Get state progress (0.0 to 1.0)
+Function StateMachine_GetStateProgress#(sm.StateMachine)
+    If sm\StateTimerMax = 0 Then Return 1.0
+    Return Min(sm\StateTimer / sm\StateTimerMax, 1.0)
+End Function
+```
+
+### State Update Loop
+
+```blitzbasic
+; Update state machine each frame
+Function StateMachine_Update%(sm.StateMachine)
+    If sm = Null Then Return False
+
+    ; Update timer
+    sm\StateTimer = sm\StateTimer + 1
+
+    ; Update current state behavior
+    StateMachine_UpdateState(sm, sm\CurrentState)
+
+    ; Check for transitions
+    StateMachine_CheckTransitions(sm)
+
+    Return True
+End Function
+
+; State behavior update
+Function StateMachine_UpdateState%(sm.StateMachine, state%)
+    Select state
+        Case STATE_IDLE
+            StateMachine_UpdateIdle(sm)
+        Case STATE_ACTIVE
+            StateMachine_UpdateActive(sm)
+        Case STATE_ALERT
+            StateMachine_UpdateAlert(sm)
+        Case STATE_ATTACK
+            StateMachine_UpdateAttack(sm)
+        Case STATE_FLEE
+            StateMachine_UpdateFlee(sm)
+        Case STATE_DEAD
+            StateMachine_UpdateDead(sm)
+    End Select
+End Function
+```
+
+## NPC State Machine
+
+### NPC State Machine Implementation
+
+```blitzbasic
+; Create NPC with state machine
+Function CreateNPCWithStateMachine%(type%, parent% = 0)
+    npc.NPCs = New NPCs
+    npc\NPCtype = type
+    npc\ID = GetUniqueNPCID()
+
+    ; Create state machine
+    npc\StateMachine = CreateStateMachine(Handle(npc))
+
+    ; Load mesh
+    npc\obj = LoadAnimMesh("GFX/npcs/" + NPCFilename$(type) + ".b3d")
+    npc\Collider = LoadMesh("GFX/npcs/" + NPCFilename$(type) + "_col.b3d")
+
+    ; Initialize state
+    StateMachine_ChangeState(npc\StateMachine, STATE_IDLE)
+
+    Return Handle(npc)
+End Function
+
+; Update NPC with state machine
+Function UpdateNPCStateMachine%(npc.NPCs)
+    If npc = Null Then Return False
+
+    ; Update state machine
+    StateMachine_Update(npc\StateMachine)
+
+    ; Update animation based on state
+    UpdateNPCAnimation(npc)
+
+    ; Update movement
+    UpdateNPCMovement(npc)
+
+    Return True
+End Function
+```
+
+### State Behaviors
+
+```blitzbasic
+; IDLE state
+Function StateMachine_UpdateIdle%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Check for player detection
+    If CanSeePlayer(owner) Or CanHearPlayer(owner)
+        StateMachine_ChangeState(sm, STATE_ALERT)
+        Return
+    End If
+
+    ; Random wander
+    sm\StateTimer = sm\StateTimer + 1
+    If sm\StateTimer > 300  ; 5 seconds
+        sm\StateTimer = 0
+        If Rand(1, 100) < 30
+            StateMachine_ChangeState(sm, STATE_ACTIVE)
+        End If
+    End If
+End Function
+
+; ACTIVE state
+Function StateMachine_UpdateActive%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Wander
+    Wander(owner)
+
+    ; Check for player
+    If CanSeePlayer(owner) Or CanHearPlayer(owner)
+        StateMachine_ChangeState(sm, STATE_ALERT)
+    End If
+End Function
+
+; ALERT state
+Function StateMachine_UpdateAlert%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Investigate or attack
+    If CanSeePlayer(owner)
+        StateMachine_ChangeState(sm, STATE_ATTACK)
+    ElseIf CanHearPlayer(owner)
+        InvestigateSound(owner)
+    Else
+        ; Lost player, search briefly
+        sm\StateTimer = sm\StateTimer + 1
+        If sm\StateTimer > 180  ; 3 seconds search
+            StateMachine_ChangeState(sm, STATE_ACTIVE)
+        End If
+    End If
+End Function
+
+; ATTACK state
+Function StateMachine_UpdateAttack%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Move to attack range
+    dist# = Distance(owner\obj, PlayerCollider)
+
+    If dist > 3.0
+        MoveTowards(owner, PlayerCollider, owner\Speed)
+    Else
+        ; Attack
+        PerformAttack(owner)
+    End If
+
+    ; Flee if low health
+    If owner\Health < owner\MaxHealth * 0.3
+        If Rand(1, 100) < 10
+            StateMachine_ChangeState(sm, STATE_FLEE)
+        End If
+    End If
+End Function
+
+; FLEE state
+Function StateMachine_UpdateFlee%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Run away from player
+    FleeFromPlayer(owner)
+
+    ; Stop when far enough
+    If Distance(owner\obj, PlayerCollider) > 30.0
+        StateMachine_ChangeState(sm, STATE_ACTIVE)
+    End If
+
+    ; Recover health when safe
+    sm\StateTimer = sm\StateTimer + 1
+    If sm\StateTimer > 600  ; 10 seconds
+        owner\Health = Min(owner\Health + 1, owner\MaxHealth)
+    End If
+End Function
+
+; DEAD state
+Function StateMachine_UpdateDead%(sm.StateMachine)
+    ; No update needed for dead NPCs
+End Function
+```
+
+### State Transitions
+
+```blitzbasic
+; Define transition table
+Function StateMachine_DefineTransitions%(sm.StateMachine)
+    ; From STATE_IDLE
+    AddTransition(sm, STATE_IDLE, STATE_ACTIVE, "timer")
+    AddTransition(sm, STATE_IDLE, STATE_ALERT, "detect")
+
+    ; From STATE_ACTIVE
+    AddTransition(sm, STATE_ACTIVE, STATE_IDLE, "timer")
+    AddTransition(sm, STATE_ACTIVE, STATE_ALERT, "detect")
+
+    ; From STATE_ALERT
+    AddTransition(sm, STATE_ALERT, STATE_ATTACK, "see")
+    AddTransition(sm, STATE_ALERT, STATE_ACTIVE, "lost")
+
+    ; From STATE_ATTACK
+    AddTransition(sm, STATE_ATTACK, STATE_FLEE, "low_health")
+    AddTransition(sm, STATE_ATTACK, STATE_ALERT, "lose_sight")
+
+    ; From STATE_FLEE
+    AddTransition(sm, STATE_FLEE, STATE_ACTIVE, "safe")
+End Function
+
+; Check transitions each frame
+Function StateMachine_CheckTransitions%(sm.StateMachine)
+    owner.NPCs = Object.NPCs(sm\Owner)
+
+    ; Check all possible transitions from current state
+    transitions$ = GetTransitions(sm\CurrentState)
+
+    ForEach transition$ in transitions$
+        If EvaluateTransitionCondition(owner, transition$)
+            nextState = GetTransitionTarget(sm\CurrentState, transition$)
+            StateMachine_ChangeState(sm, nextState)
+            Return
+        End If
+    Next
+End Function
+
+Function EvaluateTransitionCondition%(owner.NPCs, transition$)
+    Select transition$
+        Case "timer"
+            Return Rand(1, 100) < 30
+
+        Case "detect"
+            Return CanSeePlayer(owner) Or CanHearPlayer(owner)
+
+        Case "see"
+            Return CanSeePlayer(owner)
+
+        Case "lost"
+            Return Not CanSeePlayer(owner) And Not CanHearPlayer(owner)
+
+        Case "low_health"
+            Return owner\Health < owner\MaxHealth * 0.3
+
+        Case "safe"
+            Return Distance(owner\obj, PlayerCollider) > 30.0
+
+        Case "lose_sight"
+            Return Not CanSeePlayer(owner)
+
+        Default
+            Return False
+    End Select
+End Function
+```
+
+## HFSM (Hierarchical FSM)
+
+```blitzbasic
+; Hierarchical FSM for complex behaviors
+
+Type HFSM_State
+    Field Name$
+    Field Parent%        ; Parent state index (-1 for root)
+    Field OnEnter%       ; Function to call on enter
+    Field OnUpdate%      ; Function to call on update
+    Field OnExit%       ; Function to call on exit
+    Field SubStates%[10] ; Child states
+    Field DefaultSub%    ; Default substate
+    Field CurrentSub%    ; Current substate
+End Type
+
+Type HFSM
+    Field States[20]     ; State definitions
+    Field StateCount%
+    Field CurrentState%
+    Field CurrentSub%
+End Type
+
+Function CreateHFSM%()
+    hfsm.HFSM = New HFSM
+    hfsm\StateCount = 0
+    hfsm\CurrentState = -1
+    hfsm\CurrentSub = -1
+    Return Handle(hfsm)
+End Function
+
+Function HFSM_AddState%(hfsm.HFSM, name$, parent% = -1)
+    index = hfsm\StateCount
+    hfsm\States[index]\Name = name$
+    hfsm\States[index]\Parent = parent
+    hfsm\States[index]\CurrentSub = -1
+    hfsm\StateCount = index + 1
+    Return index
+End Function
+
+Function HFSM_EnterState%(hfsm.HFSM, state%)
+    ; Exit current substate
+    If hfsm\CurrentSub >= 0
+        HFSM_ExitState(hfsm, hfsm\States[hfsm\States[state]\CurrentSub])
+    End If
+
+    ; Exit current state
+    If hfsm\CurrentState >= 0
+        HFSM_ExitState(hfsm, hfsm\States[hfsm\CurrentState])
+    End If
+
+    ; Enter new state
+    hfsm\CurrentState = state
+    hfsm\CurrentSub = hfsm\States[state]\DefaultSub
+
+    If hfsm\CurrentSub >= 0
+        HFSM_EnterState(hfsm, hfsm\States[hfsm\CurrentSub])
+    End If
+
+    HFSM_EnterState(hfsm, hfsm\States[state])
+End Function
+
+Function HFSM_Update%(hfsm.HFSM)
+    If hfsm\CurrentState < 0 Then Return
+
+    ; Update current substate
+    If hfsm\CurrentSub >= 0
+        HFSM_UpdateState(hfsm, hfsm\States[hfsm\States[hfsm\CurrentState]\CurrentSub])
+    End If
+
+    ; Update current state
+    HFSM_UpdateState(hfsm, hfsm\States[hfsm\CurrentState])
+
+    ; Check for state transitions
+    HFSM_CheckTransitions(hfsm)
+End Function
+```
+
+## Behavior Tree Integration
+
+```blitzbasic
+; Simple behavior tree nodes for AI
+
+Type BT_Node
+    Field Type%          ; 0=Sequence, 1=Selector, 2=Action, 3=Condition
+    Field Children[10]   ; Child nodes
+    Field ChildCount%
+    Field Result%        ; 0=Running, 1=Success, 2=Failure
+    Field Name$
+End Type
+
+Const BT_SEQUENCE% = 0
+Const BT_SELECTOR% = 1
+Const BT_ACTION% = 2
+Const BT_CONDITION% = 3
+
+Function BT_Create%(type%, name$ = "")
+    node.BT_Node = New BT_Node
+    node\Type = type$
+    node\Name = name$
+    node\ChildCount = 0
+    node\Result = 0
+    Return Handle(node)
+End Function
+
+Function BT_AddChild%(parent.BT_Node, child.BT_Node)
+    parent\Children[parent\ChildCount] = Handle(child)
+    parent\ChildCount = parent\ChildCount + 1
+End Function
+
+Function BT_Run%(node.BT_Node)
+    Select node\Type
+        Case BT_SEQUENCE
+            Return BT_RunSequence(node)
+        Case BT_SELECTOR
+            Return BT_RunSelector(node)
+        Case BT_ACTION
+            Return BT_RunAction(node)
+        Case BT_CONDITION
+            Return BT_RunCondition(node)
+    End Select
+End Function
+
+Function BT_RunSequence%(node.BT_Node)
+    For i = 0 To node\ChildCount - 1
+        child.BT_Node = Object.BT_Node(node\Children[i])
+        result = BT_Run(child)
+        If result = 2  ; Failure
+            node\Result = 2
+            Return 2
+        End If
+    Next
+    node\Result = 1  ; All children succeeded
+    Return 1
+End Function
+
+Function BT_RunSelector%(node.BT_Node)
+    For i = 0 To node\ChildCount - 1
+        child.BT_Node = Object.BT_Node(node\Children[i])
+        result = BT_Run(child)
+        If result = 1  ; Success
+            node\Result = 1
+            Return 1
+        End If
+    Next
+    node\Result = 2  ; All children failed
+    Return 2
+End Function
+```
+
+## NPC State Debug
+
+```blitzbasic
+Function Debug_StateMachine(npc.NPCs)
+    If npc = Null Then Return
+
+    sm = npc\StateMachine
+    If sm = 0 Then Return
+
+    Debug_Print "=== STATE MACHINE ==="
+    Debug_Print "Current: " + GetStateName(sm\CurrentState)
+    Debug_Print "Previous: " + GetStateName(sm\PreviousState)
+    Debug_Print "Time: " + sm\StateTimer + " frames"
+    Debug_Print "Progress: " + Int(StateMachine_GetStateProgress(sm) * 100) + "%"
+
+    ; Possible transitions
+    Debug_Print "Transitions:"
+    transitions$ = GetTransitions(sm\CurrentState)
+    ForEach t$ in transitions$
+        If EvaluateTransitionCondition(npc, t$)
+            Debug_Print "  -> " + GetStateName(GetTransitionTarget(sm\CurrentState, t$)) + " (READY)"
+        Else
+            Debug_Print "  -> " + GetStateName(GetTransitionTarget(sm\CurrentState, t$)) + " (blocked)"
+        End If
+    Next
+End Function
+```
+
+## Quick Reference
+
+| State | Purpose |
+|-------|---------|
+| `STATE_IDLE` | Wait, no activity |
+| `STATE_ACTIVE` | Normal activity |
+| `STATE_ALERT` | Noticed something |
+| `STATE_ATTACK` | Engaging target |
+| `STATE_FLEE` | Escaping danger |
+| `STATE_DEAD` | No longer active |
+
+| Function | Purpose |
+|----------|---------|
+| `CreateStateMachine(owner)` | Create FSM for entity |
+| `StateMachine_ChangeState(sm, state)` | Change to new state |
+| `StateMachine_Update(sm)` | Update FSM each frame |
+| `StateMachine_InState(sm, state)` | Check current state |
+| `StateMachine_GetStateTime(sm)` | Get time in current state |

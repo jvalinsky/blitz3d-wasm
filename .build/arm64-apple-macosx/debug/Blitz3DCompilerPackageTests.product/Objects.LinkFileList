@@ -1,5 +1,6 @@
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/AST.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/CodeGenerator.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/ExpressionGeneration.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/FunctionGeneration.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/Lexer.swift.o
@@ -13,7 +14,13 @@
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASMBinaryEncoder.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASMTextWriter.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompilerPackageTests.build/runner.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swift.o
 /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.swift.o
+/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.swift.o

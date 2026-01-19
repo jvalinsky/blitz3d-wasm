@@ -1,0 +1,372 @@
+# Game Testing Patterns
+
+Skill for testing SCPB game functionality including SCP behaviors, inventory, and save/load systems.
+
+## When to Use
+
+Use this skill when:
+- Writing tests for game mechanics
+- Verifying SCP entity behaviors
+- Testing inventory interactions
+- Testing save/load functionality
+- Regression testing after changes
+
+## SCP Behavior Testing
+
+### SCP-173 (Observation Test)
+
+```blitzbasic
+Function Test_SCP173_Observation()
+    ; Setup
+    npc = CreateNPC(NPC_SCP_173)
+    PositionEntity npc\obj, 0, 0, -10
+
+    ; Test: NPC frozen when observed
+    Position Camera, 0, 5, 5
+    PointEntity Camera, npc\obj
+    UpdateNPCs()
+    AssertEqual(npc\State, STATE_IDLE, "SCP-173 should freeze when observed")
+
+    ; Test: NPC moves when not observed
+    RotateEntity Camera, 0, 180, 0  ; Look away
+    UpdateNPCs()  ; Multiple frames
+    AssertNotEqual(npc\obj, startPos, "SCP-173 should move when not observed")
+
+    ; Test: Snap on proximity
+    PositionEntity Player, 0, 0, 2
+    LookAwayFrom(npc)
+    UpdateNPCs()
+    Assert(PlayerDead(), "Player should die when SCP-173 gets close")
+End Function
+```
+
+### SCP-096 (Viewed Test)
+
+```blitzbasic
+Function Test_SCP096_Trigger()
+    ; Setup
+    npc = CreateNPC(NPC_SCP_096)
+    npc\State = STATE_DOCILE
+
+    ; Test: Triggered by screenshot
+    TakeScreenshot()
+    WaitFrame(10)
+    AssertEqual(npc\State, STATE_AGITATED, "SCP-096 should react to screenshot")
+
+    ; Test: Instant kill in view
+    PositionEntity Player, 0, 0, -5
+    LookAt(npc)
+    UpdateNPCs()
+    Assert(PlayerDead(), "Player should die instantly when viewing SCP-096")
+
+    ; Test: Cannot stop pursuit
+    Distance(npc, Player) > 50
+    AssertEqual(npc\State, STATE_PURSUIT, "SCP-096 cannot stop pursuit")
+End Function
+```
+
+### SCP-106 (Corrosion Test)
+
+```blitzbasic
+Function Test_SCP106_Corrosion()
+    ; Setup
+    npc = CreateNPC(NPC_SCP_106)
+    npc\State = STATE_HUNTING
+
+    ; Test: Corrosion damage over time
+    PositionEntity Player, 5, 0, 5
+    UpdateNPCs()  ; Multiple frames while in range
+    Assert(PlayerHealth() < 100, "Player should take corrosion damage")
+
+    ; Test: Pocket dimension pull
+    PositionEntity Player, 1, 0, 1  ; Very close
+    UpdateNPCs()
+    Assert(PlayerInPocketDimension(), "Player should be pulled into dimension")
+End Function
+```
+
+### SCP-049 (Cure/Test Test)
+
+```blitzbasic
+Function Test_SCP049_Behavior()
+    ; Setup
+    npc = CreateNPC(NPC_SCP_049)
+    npc\State = STATE_IDLE
+
+    ; Test: Approaches player
+    PositionEntity Player, 10, 0, 10
+    UpdateNPCs()  ; Multiple frames
+    Assert(Distance(npc, Player) < 8, "SCP-049 should approach player")
+
+    ; Test: Demands cure
+    AssertSaid("I must cure you of your pestilence", "SCP-049 should speak")
+
+    ; Test: Touch kills
+    PositionEntity Player, 1, 0, 1
+    UpdateNPCs()
+    Assert(PlayerDead(), "Touch should kill player")
+
+    ; Test: Revival as SCP-049-2
+    Assert(SpawnedSCP0492(), "SCP-049-2 should spawn after death")
+End Function
+```
+
+### SCP-939 (Voice Mimicry Test)
+
+```blitzbasic
+Function Test_SCP939_VoiceMimic()
+    ; Setup
+    npc = CreateNPC(NPC_SCP_939)
+
+    ; Test: Mimics other SCP voices
+    npc\MimicTarget = NPC_SCP_173
+    UpdateNPCs()
+    Assert(PlayedSound("scp173_breath"), "Should mimic SCP-173 sound")
+
+    ; Test: Mimics dead SCP-049-2
+    npc\MimicTarget = NPC_SCP_049_2
+    UpdateNPCs()
+    Assert(PlayedSound("scp0492_screech"), "Should mimic SCP-049-2 sound")
+End Function
+```
+
+## Inventory Testing
+
+### Item Pickup Test
+
+```blitzbasic
+Function Test_ItemPickup()
+    ; Setup
+    item = CreateItem(ITEM_KEYCARD_RED, 0, 0, -5)
+    PositionEntity Player, 0, 0, 0
+
+    ; Test: Auto-pickup on collision
+    MoveEntity Player, 0, 0, -5
+    UpdateItems()
+    Assert(PlayerHasItem(ITEM_KEYCARD_RED), "Item should be picked up")
+
+    ; Test: Item removed from world
+    Assert(EntityDeleted(item\obj), "Item entity should be deleted")
+End Function
+```
+
+### Item Combination Test
+
+```blitzbasic
+Function Test_ItemCombination()
+    ; Setup
+    item1 = CreateItem(ITEM_BATTERY, 0, 0, 0)
+    item2 = CreateItem(ITEM_FLASHLIGHT, 0, 0, 0)
+    SelectItem(item1)
+
+    ; Test: Valid combination
+    CombineWith(item2)
+    Assert(PlayerHasItem(ITEM_WORKING_FLASHLIGHT), "Should create working flashlight")
+
+    ; Test: Invalid combination
+    ClearSelection()
+    SelectItem(item1)
+    CombineWith(CreateItem(ITEM_2999_BEVERAGE))
+    Assert(PlayerInventoryUnchanged(), "Invalid combo should not work")
+End Function
+```
+
+### Drag and Drop Test
+
+```blitzbasic
+Function Test_InventoryDragDrop()
+    ; Setup
+    AddItemToInventory(ITEM_MEDKIT, 0)
+    AddItemToInventory(ITEM_BANDAGE, 1)
+
+    ; Test: Drag changes position
+    DragItem(0, 2)
+    Assert(ItemAtSlot(2) == ITEM_MEDKIT, "Item should move to slot 2")
+
+    ; Test: Swap items
+    DragItem(2, 1)
+    Assert(ItemAtSlot(1) == ITEM_MEDKIT And ItemAtSlot(2) == ITEM_BANDAGE, "Items should swap")
+End Function
+```
+
+## Save/Load Testing
+
+### Save Integrity Test
+
+```blitzbasic
+Function Test_SaveIntegrity()
+    ; Setup game state
+    SetPlayerHealth(75)
+    SetPlayerStamina(50)
+    SetSanity(80)
+    AddItemToInventory(ITEM_KEYCARD_RED)
+    KillNPC(NPC_SCP_173)
+    SetPlayerRoom(ROOM_LCZ_914)
+
+    ; Test: Save preserves state
+    SaveGame(0)
+    Assert(SaveFileValid(0), "Save file should be created")
+
+    ; Test: Load restores state
+    LoadGame(0)
+    AssertEqual(PlayerHealth(), 75, "Health should restore")
+    AssertEqual(PlayerStamina(), 50, "Stamina should restore")
+    AssertEqual(Sanity(), 80, "Sanity should restore")
+    Assert(PlayerHasItem(ITEM_KEYCARD_RED), "Inventory should restore")
+    Assert(NPCDead(NPC_SCP_173), "NPC state should restore")
+    AssertEqual(PlayerRoom(), ROOM_LCZ_914, "Room should restore")
+End Function
+```
+
+### Multi-Slot Save Test
+
+```blitzbasic
+Function Test_MultipleSaveSlots()
+    ; Create different game states
+    SetPlayerHealth(100)
+    SaveGame(0)
+
+    SetPlayerHealth(50)
+    SaveGame(1)
+
+    ; Test: Slots are independent
+    LoadGame(0)
+    AssertEqual(PlayerHealth(), 100, "Slot 0 should have full health")
+
+    LoadGame(1)
+    AssertEqual(PlayerHealth(), 50, "Slot 1 should have damaged state")
+End Function
+```
+
+### Corrupted Save Test
+
+```blitzbasic
+Function Test_CorruptedSave()
+    ; Setup corrupted file
+    WriteString("save0.sav", "CORRUPTED DATA")
+
+    ; Test: Graceful failure
+    LoadGame(0)
+    Assert(ShowedError("Corrupted save file"), "Should show error")
+    Assert(GameStateUnchanged(), "Current game should not change")
+End Function
+```
+
+## Game State Testing
+
+### Room Transition Test
+
+```blitzbasic
+Function Test_RoomTransition()
+    ; Setup
+    SetPlayerRoom(ROOM_LCZ_012)
+    SetPlayerPosition(5, 0, 10)  ; Near door
+
+    ; Test: Transition via door
+    MoveThroughDoor(0)
+    AssertEqual(PlayerRoom(), ROOM_LCZ_013, "Should transition to adjacent room")
+    Assert(PlayerPositionNearDoor(0), "Player should be at door in new room")
+
+    ; Test: NPCs don't follow (unless they should)
+    npc = CreateNPC(NPC_SCP_173)
+    PositionEntity npc\obj, 10, 0, 10
+    MoveThroughDoor(0)
+    Assert(NPCInOriginalRoom(npc), "NPCs should not follow through doors")
+End Function
+```
+
+### Time-Based Events Test
+
+```blitzbasic
+Function Test_TimeBasedEvents()
+    ; Setup
+    SetTime(0)
+
+    ; Test: MTF ambush at 6 minutes
+    AdvanceTime(360)  ; 6 minutes
+    Assert(EventTriggered("MTF_Ambush"), "MTF should ambush at 6 minutes")
+
+    ; Test: SCP-173 gets faster over time
+    ResetGame()
+    StartTime()
+    AdvanceTime(300)  ; 5 minutes
+    initialSpeed = GetSCP173Speed()
+    AdvanceTime(300)  ; 10 minutes
+    Assert(GetSCP173Speed() > initialSpeed, "SCP-173 should speed up")
+End Function
+```
+
+## Testing Utilities
+
+```blitzbasic
+Global TestAsserts%[1000]
+Global TestAssertCount%
+Global TestPassed%
+Global TestFailed%
+
+Function AssertEqual(actual#, expected#, message$)
+    TestAssertCount = TestAssertCount + 1
+    If Abs(actual - expected) < 0.01
+        TestPassed = TestPassed + 1
+    Else
+        TestFailed = TestFailed + 1
+        Print "FAIL: " + message + " (expected " + expected + ", got " + actual + ")"
+    End If
+End Function
+
+Function AssertTrue(condition%, message$)
+    TestAssertCount = TestAssertCount + 1
+    If condition
+        TestPassed = TestPassed + 1
+    Else
+        TestFailed = TestFailed + 1
+        Print "FAIL: " + message
+    End If
+End Function
+
+Function AssertFalse(condition%, message$)
+    AssertTrue(Not condition, message)
+End Function
+
+Function Test_Suite_Run(suite$)
+    Select suite$
+        Case "SCP_Behaviors": RunSCPBehaviorTests()
+        Case "Inventory": RunInventoryTests()
+        Case "SaveLoad": RunSaveLoadTests()
+        Case "All": RunAllTests()
+    End Select
+
+    Print "Tests: " + TestPassed + "/" + TestAssertCount + " passed"
+    If TestFailed > 0
+        Print TestFailed + " tests failed!"
+    End If
+End Function
+```
+
+## Test Execution
+
+```blitzbasic
+; Run individual test
+Test_SCP173_Observation()
+
+; Run test suite
+Test_Suite_Run("SCP_Behaviors")
+Test_Suite_Run("Inventory")
+Test_Suite_Run("SaveLoad")
+
+; Run all tests
+Test_Suite_Run("All")
+```
+
+## Common Test Patterns
+
+| Scenario | Pattern |
+|----------|---------|
+| NPC state changes | Check state before and after update |
+| Player death | Verify health, death animation, game over |
+| Item pickup | Check inventory, world entity deleted |
+| Room transition | Verify room ID, player position, NPC locations |
+| Save/load | Compare all relevant globals before and after |
+| Time events | Advance time and check trigger conditions |
+| Collision | Check collision callbacks and damage |
+| Animation | Check animation frame, speed, looping |

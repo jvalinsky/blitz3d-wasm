@@ -1,0 +1,771 @@
+/**
+ * Browser-compatible RMesh Parser for SCPCB Asset Viewer Demo
+ * Uses actual file reading to parse real RMesh files
+ */
+
+class RMeshParserBrowser {
+    constructor(graphics, fileIO) {
+        this.graphics = graphics;
+        this.fileIO = fileIO;
+        this.debugMode = false;
+        this.textureCache = new Map();
+    }
+
+    /**
+     * Load and parse an RMesh file
+     */
+    async parseFile(filePath) {
+        console.log(`[RMeshParser] Parsing: ${filePath}`);
+
+        // Read file via fetch
+        let response;
+        try {
+            response = await fetch(filePath);
+            if (!response.ok) {
+                console.error(`[RMeshParser] HTTP ${response.status}: ${response.statusText} for ${filePath}`);
+                console.error(`[RMeshParser] URL being fetched: ${window.location.origin + filePath}`);
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (err) {
+            console.warn(`[RMeshParser] Cannot fetch ${filePath}, using fallback room`);
+            return this.createFallbackRoom(filePath);
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+
+        console.log(`[RMeshParser] Fetched ${data.length} bytes from ${filePath}`);
+        
+        // Log first 32 bytes for debugging
+        const firstBytes = Array.from(data.slice(0, 32)).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        console.log(`[RMeshParser] First 32 bytes: ${firstBytes}`);
+        const firstAscii = Array.from(data.slice(0, 32)).map(b => b >= 32 && b < 127 ? String.fromCharCode(b) : '.').join('');
+        console.log(`[RMeshParser] First 32 ASCII: ${firstAscii}`);
+
+        return this.parseBinaryData(data, filePath);
+    }
+
+    /**
+     * Load a texture from the SCPCB GFX directory
+     */
+    async loadTexture(texturePath) {
+        // Check cache first
+        if (this.textureCache.has(texturePath)) {
+            return this.textureCache.get(texturePath);
+        }
+
+        // Convert relative path to absolute URL
+        const resolvedPath = this.resolveTexturePath(texturePath);
+
+        try {
+            const texture = await new Promise((resolve, reject) => {
+                const loader = new window.window.THREE.TextureLoader();
+                loader.load(
+                    resolvedPath,
+                    (tex) => {
+                        tex.wrapS = window.window.THREE.RepeatWrapping;
+                        tex.wrapT = window.window.THREE.RepeatWrapping;
+                        resolve(tex);
+                    },
+                    undefined,
+                    () => {
+                        console.warn(`[RMeshParser] Failed to load texture: ${resolvedPath}`);
+                        resolve(null);
+                    }
+                );
+            });
+
+            this.textureCache.set(texturePath, texture);
+            return texture;
+        } catch (err) {
+            console.warn(`[RMeshParser] Error loading texture ${texturePath}:`, err);
+            return null;
+        }
+    }
+
+    /**
+     * Resolve texture path to absolute URL
+     */
+    resolveTexturePath(texturePath) {
+        // Handle various path formats
+        if (texturePath.startsWith('/')) {
+            return texturePath;
+        }
+        if (texturePath.startsWith('textures/')) {
+            return `/scpcb/GFX/${texturePath}`;
+        }
+        if (texturePath.includes('/')) {
+            return `/scpcb/GFX/${texturePath}`;
+        }
+        // Plain filename
+        return `/scpcb/GFX/${texturePath}`;
+    }
+
+    /**
+     * Clear texture cache
+     */
+    clearTextureCache() {
+        this.textureCache.forEach((texture) => {
+            if (texture && texture.image) {
+                texture.dispose();
+            }
+        });
+        this.textureCache.clear();
+    }
+
+    /**
+     * Parse binary RMesh data
+     */
+    parseBinaryData(data, filePath) {
+        const view = new DataView(data.buffer);
+        let offset = 0;
+
+        // Validate minimum file size
+        if (data.length < 12) {
+            console.error(`[RMeshParser] File too small: ${data.length} bytes`);
+            return this.createFallbackRoom(filePath);
+        }
+
+        // Read header - always 4-byte length prefixed
+        const headerLen = this.readInt32(data, offset);
+        offset += 4;
+        
+        if (headerLen > 256 || headerLen > data.length - offset) {
+            console.error(`[RMeshParser] Invalid header length: ${headerLen}`);
+            return this.createFallbackRoom(filePath);
+        }
+        
+        let header = '';
+        for (let i = 0; i < headerLen; i++) {
+            header += String.fromCharCode(data[offset++]);
+        }
+
+        console.log(`[RMeshParser] Header: "${header}" (4-byte len=${headerLen})`);
+
+        // Validate header
+        if (header !== 'RoomMesh' && header !== 'RoomMesh.HasTriggerBox') {
+            console.error(`[RMeshParser] Invalid header: "${header}"`);
+            return this.createFallbackRoom(filePath);
+        }
+
+        const hasTriggerBox = (header === 'RoomMesh.HasTriggerBox');
+
+        // Helper function to read 4-byte length prefixed string
+        const readString = () => {
+            if (offset + 4 > data.length) return '';
+            const len = this.readInt32(data, offset);
+            offset += 4;
+            if (len < 0 || offset + len > data.length) return '';
+            let str = '';
+            for (let i = 0; i < len; i++) {
+                str += String.fromCharCode(data[offset++]);
+            }
+            return str;
+        };
+
+        // Read opaque meshes
+        const opaqueMeshes = [];
+        if (offset + 4 > data.length) {
+            console.error(`[RMeshParser] Unexpected end before opaque count`);
+            return this.createFallbackRoom(filePath);
+        }
+        const opaqueCount = this.readInt32(data, offset);
+        offset += 4;
+        console.log(`[RMeshParser] Opaque mesh count: ${opaqueCount}`);
+
+        for (let i = 0; i < opaqueCount; i++) {
+            const mesh = this.parseDrawnMesh(data, offset, readString);
+            if (!mesh) {
+                console.error(`[RMeshParser] Failed to parse opaque mesh ${i + 1}`);
+                break;
+            }
+            offset = mesh.endOffset;
+            opaqueMeshes.push(mesh);
+        }
+
+        // Read alpha meshes
+        const alphaMeshes = [];
+        if (offset + 4 > data.length) {
+            console.warn(`[RMeshParser] Unexpected end before alpha meshes`);
+        } else {
+            const alphaCount = this.readInt32(data, offset);
+            offset += 4;
+            console.log(`[RMeshParser] Alpha mesh count: ${alphaCount}`);
+
+            for (let i = 0; i < alphaCount; i++) {
+                const mesh = this.parseDrawnMesh(data, offset, readString);
+                if (!mesh) {
+                    console.error(`[RMeshParser] Failed to parse alpha mesh ${i + 1}`);
+                    break;
+                }
+                offset = mesh.endOffset;
+                alphaMeshes.push(mesh);
+            }
+        }
+
+        // Read collision meshes
+        const collisionMeshes = [];
+        if (offset + 4 > data.length) {
+            console.warn(`[RMeshParser] Unexpected end before collision meshes`);
+        } else {
+            const collisionCount = this.readInt32(data, offset);
+            offset += 4;
+            console.log(`[RMeshParser] Collision mesh count: ${collisionCount}`);
+
+            if (collisionCount < 0 || collisionCount > 10000) {
+                console.error(`[RMeshParser] Invalid collision count: ${collisionCount}`);
+            } else {
+                for (let i = 0; i < collisionCount; i++) {
+                    const mesh = this.parseCollisionMesh(data, offset);
+                    if (!mesh) break;
+                    offset = mesh.endOffset;
+                    collisionMeshes.push(mesh);
+                }
+            }
+        }
+
+        // Read trigger boxes if present
+        const triggerBoxes = [];
+        if (hasTriggerBox) {
+            if (offset + 4 > data.length) {
+                console.warn(`[RMeshParser] Unexpected end before trigger boxes`);
+            } else {
+                const triggerCount = this.readInt32(data, offset);
+                offset += 4;
+                console.log(`[RMeshParser] Trigger box count: ${triggerCount}`);
+                
+                for (let i = 0; i < triggerCount; i++) {
+                    const box = this.parseTriggerBox(data, offset, readString);
+                    if (!box) {
+                        console.error(`[RMeshParser] Failed to parse trigger box ${i + 1}`);
+                        break;
+                    }
+                    offset = box.endOffset;
+                    triggerBoxes.push(box);
+                }
+            }
+        }
+
+        // Read point entities
+        const entities = [];
+        if (offset + 4 > data.length) {
+            console.warn(`[RMeshParser] Unexpected end before entities`);
+        } else {
+            const entityCount = this.readInt32(data, offset);
+            offset += 4;
+            console.log(`[RMeshParser] Entity count: ${entityCount}`);
+
+            for (let i = 0; i < entityCount; i++) {
+                const entity = this.parsePointEntity(data, offset, readString);
+                if (!entity) {
+                    console.error(`[RMeshParser] Failed to parse entity ${i + 1}`);
+                    break;
+                }
+                offset = entity.endOffset;
+                entities.push(entity);
+            }
+        }
+
+        console.log(`[RMeshParser] Parsed: ${opaqueMeshes.length} opaque, ${alphaMeshes.length} alpha, ${collisionMeshes.length} collision, ${entities.length} entities`);
+
+        return {
+            header,
+            hasTriggerBox,
+            opaque: opaqueMeshes,
+            alpha: alphaMeshes,
+            collision: collisionMeshes,
+            triggerBoxes,
+            entities,
+            sourcePath: filePath
+        };
+    }
+
+    parseDrawnMesh(data, startOffset, readString) {
+        let offset = startOffset;
+        const textures = [];
+
+        // Parse 2 texture slots
+        for (let j = 0; j < 2; j++) {
+            if (offset >= data.length) {
+                console.error(`[RMeshParser] End of data reading texture flag ${j}`);
+                return null;
+            }
+            
+            const hasTexture = data[offset++];
+            if (hasTexture) {
+                const texPath = readString();
+                textures.push({ path: texPath, uvSet: j });
+            }
+        }
+
+        // Read vertices
+        if (offset + 4 > data.length) {
+            console.error(`[RMeshParser] End of data before vertex count`);
+            return null;
+        }
+        const vertexCount = this.readInt32(data, offset);
+        offset += 4;
+        
+        if (vertexCount < 0 || vertexCount > 1000000) {
+            console.error(`[RMeshParser] Invalid vertex count: ${vertexCount}`);
+            return null;
+        }
+
+        const vertices = [];
+        for (let j = 0; j < vertexCount; j++) {
+            if (offset + 44 > data.length) {
+                console.error(`[RMeshParser] End of data reading vertex ${j}/${vertexCount}`);
+                break;
+            }
+            
+            const x = this.readFloat32(data, offset);
+            const y = this.readFloat32(data, offset + 4);
+            const z = this.readFloat32(data, offset + 8);
+            offset += 12;
+
+            const uvs = [];
+            for (let k = 0; k < 2; k++) {
+                const u = this.readFloat32(data, offset);
+                const v = this.readFloat32(data, offset + 4);
+                offset += 8;
+                uvs.push({ u, v });
+            }
+
+            const r = data[offset++];
+            const g = data[offset++];
+            const b = data[offset++];
+            
+            // Skip 13 bytes of unknown data
+            offset += 13;
+
+            vertices.push({ x, y, z: -z, uvs, color: { r, g, b, a: 255 } });
+        }
+
+        // Read triangles
+        if (offset + 4 > data.length) {
+            console.error(`[RMeshParser] End of data before triangle count`);
+            return null;
+        }
+        const triangleCount = this.readInt32(data, offset);
+        offset += 4;
+
+        if (triangleCount < 0 || triangleCount > 1000000) {
+            console.error(`[RMeshParser] Invalid triangle count: ${triangleCount}`);
+            return null;
+        }
+
+        const triangles = [];
+        const maxIndex = vertices.length - 1;
+        for (let j = 0; j < triangleCount; j++) {
+            if (offset + 12 > data.length) {
+                console.error(`[RMeshParser] End of data reading triangle ${j}`);
+                break;
+            }
+            const v0 = this.readInt32(data, offset);
+            const v1 = this.readInt32(data, offset + 4);
+            const v2 = this.readInt32(data, offset + 8);
+            offset += 12;
+            
+            if (v0 <= maxIndex && v1 <= maxIndex && v2 <= maxIndex && v0 >= 0 && v1 >= 0 && v2 >= 0) {
+                triangles.push({ v0, v1, v2 });
+            }
+        }
+
+        return { textures, vertices, triangles, isAlpha: false, endOffset: offset };
+    }
+
+    parseCollisionMesh(data, startOffset) {
+        let offset = startOffset;
+        const vertices = [];
+        const vertexCount = this.readInt32(data, offset);
+        offset += 4;
+        
+        if (vertexCount < 0 || vertexCount > 1000000) {
+            console.error(`[RMeshParser] Invalid collision vertex count: ${vertexCount}`);
+            return { vertices: [], triangles: [], doubleSided: true, endOffset: offset };
+        }
+
+        for (let j = 0; j < vertexCount; j++) {
+            if (offset + 12 > data.length) break;
+            const x = this.readFloat32(data, offset);
+            const y = this.readFloat32(data, offset + 4);
+            const z = this.readFloat32(data, offset + 8);
+            offset += 12;
+            vertices.push({ x, y, z: -z });
+        }
+
+        const triangleCount = this.readInt32(data, offset);
+        offset += 4;
+        
+        const triangles = [];
+        const maxIndex = vertices.length - 1;
+        for (let j = 0; j < triangleCount; j++) {
+            if (offset + 12 > data.length) break;
+            const v0 = this.readInt32(data, offset);
+            const v1 = this.readInt32(data, offset + 4);
+            const v2 = this.readInt32(data, offset + 8);
+            offset += 12;
+            if (v0 <= maxIndex && v1 <= maxIndex && v2 <= maxIndex && v0 >= 0 && v1 >= 0 && v2 >= 0) {
+                triangles.push({ v0, v1, v2 }, { v0, v2, v1 });
+            }
+        }
+
+        return { vertices, triangles, doubleSided: true, endOffset: offset };
+    }
+
+    parseTriggerBox(data, startOffset, readString) {
+        let offset = startOffset;
+
+        const mesh = this.parseDrawnMesh(data, offset, readString);
+        offset = mesh.endOffset;
+
+        const name = readString();
+
+        return { mesh, name, endOffset: offset };
+    }
+
+    parsePointEntity(data, startOffset, readString) {
+        let offset = startOffset;
+
+        const entityType = readString();
+
+        const position = {
+            x: this.readFloat32(data, offset),
+            y: this.readFloat32(data, offset + 4),
+            z: this.readFloat32(data, offset + 8)
+        };
+        offset += 12;
+
+        const rotation = {
+            pitch: this.readFloat32(data, offset),
+            yaw: this.readFloat32(data, offset + 4),
+            roll: this.readFloat32(data, offset + 8)
+        };
+        offset += 12;
+
+        const dataObj = {};
+
+        switch (entityType) {
+            case 'screen':
+                dataObj.screenTexture = readString();
+                break;
+            case 'light':
+                dataObj.lightType = 'point';
+                dataObj.color = {
+                    r: data[offset],
+                    g: data[offset + 1],
+                    b: data[offset + 2]
+                };
+                offset += 3;
+                dataObj.range = this.readFloat32(data, offset);
+                offset += 4;
+                break;
+            case 'soundemitter':
+                dataObj.soundFile = readString();
+                dataObj.loop = data[offset++] !== 0;
+                dataObj.vol = this.readFloat32(data, offset);
+                offset += 4;
+                break;
+            case 'waypoint':
+                dataObj.nextWaypoint = readString();
+                break;
+        }
+
+        return { type: entityType, position, rotation, data: dataObj, endOffset: offset };
+    }
+
+        // Detect format: check first bytes
+        const firstInt = this.readInt32(data, 0);
+        const firstByte = data[0];
+        
+        let header = '';
+        let isLengthPrefixed = false;
+        
+        // If first 4 bytes look like a length prefix (reasonable string length)
+        if (firstInt > 0 && firstInt < 256 && firstInt < data.length) {
+            isLengthPrefixed = true;
+            const len = firstInt;
+            offset = 4; // Skip length prefix
+            for (let i = 0; i < len && offset < data.length; i++) {
+                header += String.fromCharCode(data[offset++]);
+            }
+            console.log(`[RMeshParser] Format: length-prefixed strings, header="${header}"`);
+        } else {
+            // Try null-terminated
+            while (offset < data.length && data[offset] !== 0) {
+                header += String.fromCharCode(data[offset++]);
+            }
+            offset++; // Skip null terminator
+            console.log(`[RMeshParser] Format: null-terminated strings, header="${header}"`);
+        }
+
+        // Validate header
+        if (header !== 'RoomMesh' && header !== 'RoomMesh.HasTriggerBox') {
+            console.error(`[RMeshParser] Invalid header: "${header}" (first byte=0x${firstByte.toString(16)}, firstInt=${firstInt})`);
+            return this.createFallbackRoom(filePath);
+        }
+
+        const hasTriggerBox = (header === 'RoomMesh.HasTriggerBox');
+        console.log(`[RMeshParser] hasTriggerBox=${hasTriggerBox}, offset=${offset}`);
+
+        // Read opaque meshes - format depends on file version
+        const opaqueMeshes = [];
+        const opaqueCount = isLengthPrefixed ? data[offset++] : this.readInt32(data, offset);
+        if (!isLengthPrefixed) offset += 4;
+        console.log(`[RMeshParser] Opaque mesh count: ${opaqueCount} (${isLengthPrefixed ? 'byte' : 'int32'})`);
+
+        for (let i = 0; i < opaqueCount; i++) {
+            const mesh = this.parseDrawnMesh(data, offset, isLengthPrefixed);
+            if (!mesh) {
+                console.error(`[RMeshParser] Failed to parse opaque mesh ${i + 1}`);
+                break;
+            }
+            offset = mesh.endOffset;
+            opaqueMeshes.push(mesh);
+        }
+
+        // Read alpha meshes
+        const alphaMeshes = [];
+        if (offset >= data.length) {
+            console.warn(`[RMeshParser] Unexpected end before alpha meshes`);
+        } else {
+            const alphaCount = isLengthPrefixed ? data[offset++] : this.readInt32(data, offset);
+            if (!isLengthPrefixed) offset += 4;
+            console.log(`[RMeshParser] Alpha mesh count: ${alphaCount}`);
+
+            for (let i = 0; i < alphaCount; i++) {
+                const mesh = this.parseDrawnMesh(data, offset, isLengthPrefixed);
+                if (!mesh) {
+                    console.error(`[RMeshParser] Failed to parse alpha mesh ${i + 1}`);
+                    break;
+                }
+                offset = mesh.endOffset;
+                alphaMeshes.push(mesh);
+            }
+        }
+
+        // Read collision meshes (always int32 count)
+        const collisionMeshes = [];
+        if (offset + 4 > data.length) {
+            console.warn(`[RMeshParser] Unexpected end before collision meshes`);
+        } else {
+            const collisionCount = this.readInt32(data, offset);
+            offset += 4;
+            console.log(`[RMeshParser] Collision mesh count: ${collisionCount}`);
+
+            if (collisionCount < 0 || collisionCount > 10000) {
+                console.error(`[RMeshParser] Invalid collision count: ${collisionCount}`);
+            } else {
+                for (let i = 0; i < collisionCount; i++) {
+                    const mesh = this.parseCollisionMesh(data, offset);
+                    if (!mesh) break;
+                    offset = mesh.endOffset;
+                    collisionMeshes.push(mesh);
+                }
+            }
+        }
+
+        // Read trigger boxes if present
+        const triggerBoxes = [];
+        if (hasTriggerBox) {
+            if (offset >= data.length) {
+                console.warn(`[RMeshParser] Unexpected end before trigger boxes`);
+            } else {
+                const triggerCount = this.readInt32(data, offset);
+                offset += 4;
+                console.log(`[RMeshParser] Trigger box count: ${triggerCount}`);
+                
+                for (let i = 0; i < triggerCount; i++) {
+                    const box = this.parseTriggerBox(data, offset, isLengthPrefixed);
+                    if (!box) {
+                        console.error(`[RMeshParser] Failed to parse trigger box ${i + 1}`);
+                        break;
+                    }
+                    offset = box.endOffset;
+                    triggerBoxes.push(box);
+                }
+            }
+        }
+
+        // Read point entities
+        const entities = [];
+        if (offset + 4 > data.length) {
+            console.warn(`[RMeshParser] Unexpected end before entities`);
+        } else {
+            const entityCount = this.readInt32(data, offset);
+            offset += 4;
+            console.log(`[RMeshParser] Entity count: ${entityCount}`);
+
+            for (let i = 0; i < entityCount; i++) {
+                const entity = this.parsePointEntity(data, offset, isLengthPrefixed);
+                if (!entity) {
+                    console.error(`[RMeshParser] Failed to parse entity ${i + 1}`);
+                    break;
+                }
+                offset = entity.endOffset;
+                entities.push(entity);
+            }
+        }
+
+        console.log(`[RMeshParser] Parsed: ${opaqueMeshes.length} opaque, ${alphaMeshes.length} alpha, ${collisionMeshes.length} collision, ${entities.length} entities`);
+
+        return {
+            header,
+            hasTriggerBox,
+            opaque: opaqueMeshes,
+            alpha: alphaMeshes,
+            collision: collisionMeshes,
+            triggerBoxes,
+            entities,
+            sourcePath: filePath
+        };
+    }
+
+
+/**
+ * Create Three.js geometry from parsed RMesh data
+ */
+function createThreeJSFromRMesh(roomData, textureLoader) {
+    const group = new window.THREE.Group();
+
+    // Create opaque meshes
+    for (const meshData of roomData.opaque) {
+        const mesh = createThreeJSMesh(meshData, textureLoader);
+        if (mesh) group.add(mesh);
+    }
+
+    // Create alpha meshes (transparent)
+    for (const meshData of roomData.alpha) {
+        const mesh = createThreeJSMesh(meshData, textureLoader, true);
+        if (mesh) group.add(mesh);
+    }
+
+    // Store collision data for debugging
+    group.userData.collisionMeshes = roomData.collision;
+
+    // Create entity objects
+    group.userData.entities = [];
+    for (const entity of roomData.entities) {
+        const entityMesh = createEntityMesh(entity);
+        if (entityMesh) {
+            group.add(entityMesh);
+            group.userData.entities.push(entityMesh);
+        }
+    }
+
+    return group;
+}
+
+function createThreeJSMesh(meshData, textureLoader, isAlpha = false) {
+    if (!meshData.vertices.length || !meshData.triangles.length) return null;
+
+    const geometry = new window.THREE.BufferGeometry();
+
+    // Build position array
+    const positions = [];
+    const colors = [];
+    const uvs = [[], []];
+
+    for (const v of meshData.vertices) {
+        positions.push(v.x, v.y, v.z);
+        colors.push(v.color.r / 255, v.color.g / 255, v.color.b / 255);
+        uvs[0].push(v.uvs[0].u, v.uvs[0].v);
+        uvs[1].push(v.uvs[1].u, v.uvs[1].v);
+    }
+
+    geometry.setAttribute('position', new window.THREE.Float32BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new window.THREE.Float32BufferAttribute(colors, 3));
+    geometry.setAttribute('uv', new window.THREE.Float32BufferAttribute(uvs[0], 2));
+    geometry.setAttribute('uv2', new window.THREE.Float32BufferAttribute(uvs[1], 2));
+
+    // Build index array with validation
+    const indices = [];
+    const maxVertexIndex = meshData.vertices.length - 1;
+    for (const tri of meshData.triangles) {
+        if (tri.v0 > maxVertexIndex || tri.v1 > maxVertexIndex || tri.v2 > maxVertexIndex) {
+            console.warn(`[RMeshParser] Invalid triangle indices: ${tri.v0}, ${tri.v1}, ${tri.v2} (Max: ${maxVertexIndex})`);
+            continue;
+        }
+        indices.push(tri.v0, tri.v1, tri.v2);
+    }
+
+    if (indices.length === 0) {
+        console.warn(`[RMeshParser] No valid triangles for mesh`);
+        return null;
+    }
+
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+
+    // Create material with textures
+    const texture = meshData.textures && meshData.textures[0]
+        ? meshData.textures[0].texture
+        : null;
+
+    const material = new window.THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        vertexColors: true,
+        side: window.THREE.DoubleSide,
+        transparent: isAlpha,
+        opacity: isAlpha ? 0.7 : 1.0,
+        wireframe: false,
+        map: texture || null
+    });
+
+    return new window.THREE.Mesh(geometry, material);
+}
+
+function createEntityMesh(entity) {
+    const { type, position, rotation, data } = entity;
+
+    switch (type) {
+        case 'light':
+            // Create light source
+            const color = data.color || { r: 255, g: 255, b: 255 };
+            const light = new window.THREE.PointLight(
+                new window.THREE.Color(color.r / 255, color.g / 255, color.b / 255),
+                1,
+                data.range || 20
+            );
+            light.position.copy(position);
+            light.userData.entityType = 'light';
+            return light;
+
+        case 'waypoint':
+            const wp = new window.THREE.Mesh(
+                new window.THREE.SphereGeometry(0.3, 8, 8),
+                new window.THREE.MeshBasicMaterial({ color: 0xffff00 })
+            );
+            wp.position.copy(position);
+            wp.userData.entityType = 'waypoint';
+            return wp;
+
+        case 'soundemitter':
+            const se = new window.THREE.Mesh(
+                new window.THREE.BoxGeometry(0.5, 0.5, 0.5),
+                new window.THREE.MeshBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 })
+            );
+            se.position.copy(position);
+            se.userData.entityType = 'soundemitter';
+            return se;
+
+        case 'playerstart':
+            const ps = new window.THREE.Mesh(
+                new window.THREE.ConeGeometry(0.5, 1, 8),
+                new window.THREE.MeshBasicMaterial({ color: 0x00ffff })
+            );
+            ps.position.copy(position);
+            ps.rotation.x = Math.PI / 2;
+            ps.userData.entityType = 'playerstart';
+            return ps;
+
+        default:
+            const generic = new window.THREE.Mesh(
+                new window.THREE.SphereGeometry(0.3, 8, 8),
+                new window.THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 })
+            );
+            generic.position.copy(position);
+            generic.userData.entityType = type;
+            return generic;
+    }
+}

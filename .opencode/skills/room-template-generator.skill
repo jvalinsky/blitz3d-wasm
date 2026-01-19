@@ -1,0 +1,537 @@
+# Room Template Generator
+
+Skill for generating room code with common patterns, door connectivity, event triggers, and standard layout for SCPB.
+
+## When to Use
+
+Use this skill when:
+- Creating a new room for the facility
+- Adding room to map generation
+- Setting up room events and triggers
+- Defining door connections
+- Creating special room types (SCP containment, offices, etc.)
+
+## Generate Room Command
+
+```blitzbasic
+; Command format:
+; GenerateRoom name$, zone$, [options]
+;
+; Examples:
+; GenerateRoom "MyOffice" LCZ
+; GenerateRoom "Containment_173" HCZ scp="173"
+; GenerateRoom "ExitZone" EZ exit=True
+```
+
+## Room Template Structure
+
+```blitzbasic
+; Generated room template
+; Run: GenerateRoom "Room_Name" ZONE [options]
+
+; Room constants
+Const ROOM_MY_ROOM% = 500  ; Next available ID
+
+; Room data structure
+Type RoomData
+    Field ID%
+    Field Name$
+    Field Zone%
+    Field DoorCount%
+    Field DoorTargets[6]
+    Field DoorTypes[6]
+    Field EventCount%
+    Field Events[10]
+    Field Commonness%
+    Field MinSize%
+    Field MaxSize%
+    Field Requires%
+    Field Excludes%
+End Type
+
+; Room configuration
+Global Room_MyRoom.RoomData
+```
+
+## Basic Room Template
+
+```blitzbasic
+Function GenerateRoom_MyRoom()
+    ; Create room data
+    Room_MyRoom.RoomData = New RoomData
+    Room_MyRoom\ID = ROOM_MY_ROOM
+    Room_MyRoom\Name$ = "My Room"
+    Room_MyRoom\Zone% = ZONE_LCZ
+    Room_MyRoom\DoorCount% = 4
+    Room_MyRoom\Commonness% = 10
+    Room_MyRoom\MinSize% = 2
+    Room_MyRoom\MaxSize% = 4
+    Room_MyRoom\Requires% = 0
+    Room_MyRoom\Excludes% = 0
+
+    ; Door connections (to be filled by MapSystem)
+    For i = 0 To 5
+        Room_MyRoom\DoorTargets[i] = -1
+        Room_MyRoom\DoorTypes[i] = DOOR_STANDARD
+    Next
+
+    Return Handle(Room_MyRoom)
+End Function
+
+Function LoadRoom_MyRoom()
+    ; Unload existing room
+    UnloadCurrentRoom()
+
+    ; Load room mesh
+    roomMesh = LoadMesh("GFX/map/my_room.b3d")
+    SetParent roomMesh, RoomRoot
+
+    ; Load collision mesh
+    roomCollider = LoadMesh("GFX/map/my_room_col.b3d")
+    SetParent roomCollider, RoomRoot
+
+    ; Set up doors
+    SetupDoors(ROOM_MY_ROOM)
+
+    ; Set up SCP (if any)
+    SetupRoomSCP(ROOM_MY_ROOM)
+
+    ; Set up items
+    SetupRoomItems(ROOM_MY_ROOM)
+
+    ; Set up events
+    SetupRoomEvents(ROOM_MY_ROOM)
+
+    ; Set up lights
+    SetupRoomLights(ROOM_MY_ROOM)
+
+    ; Set room fog
+    SetRoomFog(ROOM_MY_ROOM)
+
+    ; Play ambient sound
+    PlayRoomAmbient(ROOM_MY_ROOM)
+End Function
+
+Function UnloadRoom_MyRoom()
+    ; Clean up room resources
+    If roomMesh <> 0 Then FreeEntity roomMesh
+    If roomCollider <> 0 Then FreeEntity roomCollider
+
+    ; Unload NPCs in room
+    UnloadRoomNPCs(ROOM_MY_ROOM)
+
+    ; Unload items in room
+    UnloadRoomItems(ROOM_MY_ROOM)
+
+    ; Stop ambient sound
+    StopRoomAmbient(ROOM_MY_ROOM)
+End Function
+```
+
+## Containment Room Template
+
+```blitzbasic
+; SCP Containment Cell
+; Run: GenerateRoom "Containment_XXX" HCZ scp="XXX"
+
+Function GenerateRoom_Containment()
+    room.RoomData = New RoomData
+    room\ID = ROOM_CONTAINMENT_XXX
+    room\Name$ = "Containment Cell XXX"
+    room\Zone% = ZONE_HCZ
+    room\DoorCount% = 2
+    room\Commonness% = 5  ; Rare
+    room\MinSize% = 1
+    room\MaxSize% = 1
+
+    ; Heavy containment door
+    room\DoorTypes[0] = DOOR_HEAVY
+    room\DoorTypes[1] = DOOR_STANDARD
+
+    ; SCP info
+    room\SCP_ID% = NPC_SCP_XXX
+    room\ContainmentActive% = True
+    room\BreachChance% = 10
+
+    Return Handle(room)
+End Function
+
+Function LoadRoom_Containment()
+    ; Base room
+    roomMesh = LoadMesh("GFX/map/containment_standard.b3d")
+
+    ; Containment features
+    LoadContainmentChamber()
+
+    ; SCP mesh (if active)
+    If RoomContainsSCP(ROOM_CURRENT)
+        LoadSCPModel()
+        PositionEntity scp\obj, 0, 0, 0
+    End If
+
+    ; Warning signs
+    LoadWarningSigns()
+
+    ; Intercom
+    LoadIntercom()
+End Function
+
+Function SetupContainmentEvents()
+    ; Breach event
+    AddRoomEvent("SCP_BREACH", EVENT_SCP_BREACH, 0, 10)  ; 10% chance
+
+    ; Containment failure
+    AddRoomEvent("CONTAINMENT_FAIL", EVENT_CONTAINMENT_FAIL, 100, 0)
+
+    ; SCP escape
+    AddRoomEvent("SCP_ESCAPE", EVENT_SCP_ESCAPE, 0, 0)
+End Function
+```
+
+## Office Room Template
+
+```blitzbasic
+; Standard office/workspace
+; Run: GenerateRoom "Office_Standard" LCZ type="office"
+
+Function GenerateRoom_Office()
+    room.RoomData = New RoomData
+    room\ID = ROOM_OFFICE_STANDARD
+    room\Name$ = "Office"
+    room\Zone% = ZONE_LCZ
+    room\DoorCount% = 2
+    room\Commonness% = 15
+    room\MinSize% = 2
+    room\MaxSize% = 3
+
+    ; Furniture
+    room\Furniture$ = "desk,chair,filing_cabinet,computer"
+    room\KeycardLevel% = 0
+
+    ; Items that can spawn
+    room\PossibleItems$ = "keycard_red,medkit,flashlight,battery"
+
+    ; Can contain dead scientist
+    room\DeadBodyChance% = 30
+
+    Return Handle(room)
+End Function
+
+Function LoadRoom_Office()
+    ; Base office mesh
+    roomMesh = LoadMesh("GFX/map/office_standard.b3d")
+
+    ; Add furniture
+    LoadFurniture("desk", 0, 0, -5)
+    LoadFurniture("chair", 0, 0, -4)
+    LoadFurniture("filing_cabinet", 5, 0, 0)
+    LoadFurniture("computer", 0, 1, -5)
+
+    ; Dead body (random chance)
+    If Rand(1, 100) < GetRoomData("DeadBodyChance")
+        SpawnDeadScientist()
+    End If
+
+    ; Items
+    SpawnRoomItems()
+End Function
+
+Function SpawnRoomItems()
+    items$ = GetRoomData("PossibleItems")
+    count = Rand(1, 3)
+
+    For i = 1 To count
+        item$ = PickRandomItem(items$)
+        If Not RoomHasItem(item$)
+            SpawnItem(item$, RandomPositionInRoom())
+        End If
+    Next
+End Function
+```
+
+## Corridor Room Template
+
+```blitzbasic
+; Standard corridor
+; Run: GenerateRoom "Corridor_LCZ" LCZ type="corridor"
+
+Const CORRIDOR_STRAIGHT% = 0
+Const CORRIDOR_TURN% = 1
+Const CORRIDOR_T_JUNCTION% = 2
+Const CORRIDOR_CROSS% = 3
+
+Function GenerateRoom_Corridor()
+    room.RoomData = New RoomData
+    room\ID = ROOM_CORRIDOR_STRAIGHT
+    room\Name$ = "Corridor"
+    room\Zone% = ZONE_LCZ
+    room\DoorCount% = 4  ; Can connect to multiple
+    room\Commonness% = 30  ; Very common
+    room\MinSize% = 1
+    room\MaxSize% = 1
+
+    ; Corridor type
+    room\CorridorType% = CORRIDOR_STRAIGHT
+
+    ; Lighting
+    room\LightLevel% = 80
+    room\Flickering% = False
+
+    ; Hazards
+    room\HazardChance% = 5
+
+    Return Handle(room)
+End Function
+
+Function LoadRoom_Corridor()
+    ; Select mesh based on corridor type
+    Select GetRoomData("CorridorType")
+        Case CORRIDOR_STRAIGHT
+            mesh$ = "corridor_straight"
+        Case CORRIDOR_TURN
+            mesh$ = "corridor_turn"
+        Case CORRIDOR_T_JUNCTION
+            mesh$ = "corridor_t"
+        Case CORRIDOR_CROSS
+            mesh$ = "corridor_cross"
+    End Select
+
+    roomMesh = LoadMesh("GFX/map/" + mesh$ + ".b3d")
+
+    ; Lights along corridor
+    SetupCorridorLights()
+
+    ; Hazard (random)
+    If Rand(1, 100) < GetRoomData("HazardChance")
+        SpawnCorridorHazard()
+    End If
+End Function
+
+Function SetupCorridorLights()
+    ; Place lights every few units
+    For i = 0 To 10
+        x# = i * 5 - 25
+        CreateLightPoint(x#, 2, 0)
+    Next
+End Function
+```
+
+## Exit/Entrance Room Template
+
+```blitzbasic
+; Room leading to surface or elevator
+; Run: GenerateRoom "Elevator_LCZ" LCZ exit=True
+
+Function GenerateRoom_Elevator()
+    room.RoomData = New RoomData
+    room\ID = ROOM_ELEVATOR_LCZ
+    room\Name$ = "Elevator Shaft"
+    room\Zone% = ZONE_LCZ
+    room\DoorCount% = 2
+    room\Commonness% = 5
+
+    ; Elevator info
+    room\IsElevator% = True
+    room\ElevatorTarget% = ZONE_HCZ
+    room\RequiresKeycard% = True
+    room\KeycardLevel% = KEYCARD_RED
+
+    Return Handle(room)
+End Function
+
+Function LoadRoom_Elevator()
+    ; Elevator room mesh
+    roomMesh = LoadMesh("GFX/map/elevator_room.b3d")
+
+    ; Elevator doors
+    elevatorDoors = LoadMesh("GFX/map/elevator_doors.b3d")
+
+    ; Elevator panel
+    LoadElevatorPanel()
+
+    ; Keycard reader
+    LoadKeycardReader(KEYCARD_RED)
+End Function
+
+Function UseElevator(targetFloor%)
+    ; Check requirements
+    If GetRoomData("RequiresKeycard")
+        If Not PlayerHasKeycard(GetRoomData("KeycardLevel"))
+            ShowMessage("Requires keycard level " + GetRoomData("KeycardLevel"))
+            Return False
+        End If
+    End If
+
+    ; Animation
+    PlayAnimation("elevator_doors_open")
+    Wait(60)
+    PlayAnimation("elevator_travel")
+    Wait(120)
+    PlayAnimation("elevator_doors_open")
+
+    ; Change room
+    ChangeRoom(GetRoomData("ElevatorTarget"))
+
+    Return True
+End Function
+```
+
+## Complete Room Generator
+
+```blitzbasic
+; Main generator function
+Function GenerateRoom%(name$, zone$, options$ = "")
+    ; Parse options
+    roomType$ = ParseOptionStr(options$, "type")
+    scp$ = ParseOptionStr(options$, "scp")
+    exit% = ParseOption(options$, "exit")
+    danger% = ParseOption(options$, "danger")
+
+    ; Generate file
+    file$ = "Generated_Room_" + name$ + ".bb"
+    file = WriteFile(file$)
+
+    ; Write header
+    WriteLine file, "; Generated Room: " + name$
+    WriteLine file, "; Zone: " + zone$
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+
+    ; Write constants
+    WriteLine file, "; === CONSTANTS ==="
+    WriteLine file, "Const ROOM_" + Upper(name$) + "% = " + GetNextRoomID()
+    WriteLine file, ""
+
+    ; Write type definition
+    WriteLine file, "; === ROOM DATA ==="
+    WriteLine file, "Type RoomData"
+    WriteLine file, "    Field ID%"
+    WriteLine file, "    Field Name$"
+    WriteLine file, "    Field Zone%"
+    WriteLine file, "    Field DoorCount%"
+    WriteLine file, "    Field DoorTargets[6]"
+    WriteLine file, "    Field DoorTypes[6]"
+    WriteLine file, "    Field Commonness%"
+    WriteLine file, "    Field MinSize%"
+    WriteLine file, "    Field MaxSize%"
+    WriteLine file, "    Field Requires%"
+    WriteLine file, "    Field Excludes%"
+    WriteLine file, "End Type"
+    WriteLine file, ""
+
+    ; Write Generate function
+    WriteLine file, "; === GENERATION ==="
+    WriteLine file, "Function GenerateRoom_" + name$ + "%()"
+    WriteLine file, "    room.RoomData = New RoomData"
+    WriteLine file, "    room\ID = ROOM_" + Upper(name$) + ""
+    WriteLine file, "    room\Name$ = """ + name$ + """"
+    WriteLine file, "    room\Zone% = ZONE_" + Upper(zone$) + ""
+    WriteLine file, "    room\DoorCount% = 4"
+    WriteLine file, "    room\Commonness% = 10"
+    WriteLine file, "    room\MinSize% = 2"
+    WriteLine file, "    room\MaxSize% = 4"
+    WriteLine file, ""
+    WriteLine file, "    ; Door connections"
+    WriteLine file, "    For i = 0 To 5"
+    WriteLine file, "        room\DoorTargets[i] = -1"
+    WriteLine file, "        room\DoorTypes[i] = DOOR_STANDARD"
+    WriteLine file, "    Next"
+    WriteLine file, ""
+    WriteLine file, "    Return Handle(room)"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write Load function
+    WriteLine file, "; === LOADING ==="
+    WriteLine file, "Function LoadRoom_" + name$ + "%()"
+    WriteLine file, "    UnloadCurrentRoom()"
+    WriteLine file, ""
+    WriteLine file, "    ; Load room mesh"
+    WriteLine file, "    roomMesh = LoadMesh(""GFX/map/" + Lower(name$) + ".b3d"")"
+    WriteLine file, "    SetParent roomMesh, RoomRoot"
+    WriteLine file, ""
+    WriteLine file, "    ; Load collision"
+    WriteLine file, "    roomCollider = LoadMesh(""GFX/map/" + Lower(name$) + "_col.b3d"")"
+    WriteLine file, "    SetParent roomCollider, RoomRoot"
+    WriteLine file, ""
+    WriteLine file, "    ; Setup doors"
+    WriteLine file, "    SetupDoors(ROOM_" + Upper(name$) + ")"
+    WriteLine file, ""
+    WriteLine file, "    ; Setup items"
+    WriteLine file, "    SetupRoomItems(ROOM_" + Upper(name$) + ")"
+    WriteLine file, ""
+    WriteLine file, "    ; Setup events"
+    WriteLine file, "    SetupRoomEvents(ROOM_" + Upper(name$) + ")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write Unload function
+    WriteLine file, "; === UNLOADING ==="
+    WriteLine file, "Function UnloadRoom_" + name$ + "%()"
+    WriteLine file, "    If roomMesh <> 0 Then FreeEntity roomMesh"
+    WriteLine file, "    If roomCollider <> 0 Then FreeEntity roomCollider"
+    WriteLine file, "    UnloadRoomNPCs(ROOM_" + Upper(name$) + ")"
+    WriteLine file, "    UnloadRoomItems(ROOM_" + Upper(name$) + ")"
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+
+    Print "Generated: " + file$
+    Return True
+End Function
+```
+
+## Usage Examples
+
+```blitzbasic
+; Basic room
+GenerateRoom "Staff_Breakroom" LCZ
+
+; SCP containment
+GenerateRoom "Containment_173" HCZ scp="173"
+
+; Exit room
+GenerateRoom "Surface_Exit" EZ exit=True
+
+; Corridor
+GenerateRoom "Main_Corridor" LCZ type="corridor"
+
+; Danger room
+GenerateRoom "Armory" HCZ danger=True
+```
+
+## Room Configuration
+
+```blitzbasic
+; Room zones
+Const ZONE_LCZ% = 0  ; Light Containment
+Const ZONE_HCZ% = 1  ; Heavy Containment
+Const ZONE_EZ% = 2   ; Entrance Zone
+Const ZONE_SURFACE% = 3
+
+; Door types
+Const DOOR_STANDARD% = 0
+Const DOOR_HEAVY% = 1
+Const DOOR_CHECKPOINT% = 2
+Const DOOR_ELEVATOR% = 3
+Const DOOR_EXIT% = 4
+
+; Keycard levels
+Const KEYCARD_NONE% = 0
+Const KEYCARD_RED% = 1
+Const KEYCARD_BLUE% = 2
+Const KEYCARD_GREEN% = 3
+Const KEYCARD_OMEGA% = 4
+```
+
+## Quick Reference
+
+| Option | Effect |
+|--------|--------|
+| `type=office` | Office with furniture |
+| `type=corridor` | Corridor layout |
+| `type=containment` | SCP containment cell |
+| `scp="XXX"` | Contains SCP-XXX |
+| `exit=True` | Is exit/elevator room |
+| `danger=True` | High hazard chance |
+| `zone=HCZ` | Set zone (LCZ/HCZ/EZ) |

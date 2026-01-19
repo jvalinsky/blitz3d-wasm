@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:webassembly.github.io)",
+      "Bash(swift test:*)",
+      "Bash(xcodebuild test:*)",
+      "Bash(/usr/bin/swift test:*)",
+      "Bash(swift build:*)",
+      "Bash(wc:*)",
+      "Bash(.build/debug/blitz3d-wasm:*)"
+    ]
+  }
+}

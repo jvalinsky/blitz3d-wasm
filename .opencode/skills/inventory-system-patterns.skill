@@ -1,0 +1,633 @@
+# Inventory System Patterns
+
+Skill for implementing inventory systems including items, combination, drag-and-drop, keycards, and equipment in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Implementing inventory functionality
+- Adding new items to the game
+- Creating item combinations
+- Managing equipment slots
+- Handling keycard access
+- Debugging inventory issues
+
+## Inventory Structure
+
+```blitzbasic
+; Inventory constants
+Const MAX_INVENTORY_SLOTS% = 9
+Const MAX_EQUIPMENT_SLOTS% = 4
+
+Const EQUIP_NONE% = 0
+Const EQUIP_NVG% = 0
+Const EQUIP_GAS_MASK% = 1
+Const EQUIP_HEADLAMP% = 2
+Const EQUIP_ARMOR% = 3
+
+; Item categories
+Const ITEM_CATEGORY_GENERAL% = 0
+Const ITEM_CATEGORY_KEYCARD% = 1
+Const ITEM_CATEGORY_MEDICAL% = 2
+Const ITEM_CATEGORY_EQUIPMENT% = 3
+Const ITEM_CATEGORY_CONSUMABLE% = 4
+
+; Inventory type
+Type Inventory
+    Field Slots[MAX_INVENTORY_SLOTS]  ; Item IDs
+    Field SelectedSlot%               ; Currently selected
+    Field Equipment[EQUIP_ARMOR]      ; Equipped items
+    Field Capacity%                   ; Max slots
+    Field Weight#                     ; Current weight
+    Field MaxWeight#                  ; Max weight
+End Type
+
+Global PlayerInventory.Inventory
+```
+
+## Item Definition
+
+```blitzbasic
+; Item type
+Type Items
+    Field obj%              ; 3D object in world
+    Field ItemID%           ; Unique item instance ID
+    Field Type%             ; Item type constant
+    Field Name$
+    Field Description$
+    Field Category%
+    Field Icon$             ; Icon texture
+    Field Mesh$             ; World mesh
+    Field State%            ; 0=normal, 1=used, 2=combined
+    Field State2%           ; Secondary state (durability, charges)
+    Field Quantity%         ; Stackable items
+    Field MaxQuantity%      ; Max stack size
+End Type
+
+; Item constants
+Const ITEM_NONE% = 0
+Const ITEM_MEDKIT% = 1
+Const ITEM_BANDAGE% = 2
+Const ITEM_BATTERY% = 3
+Const ITEM_FLASHLIGHT% = 4
+Const ITEM_WORKING_FLASHLIGHT% = 5
+Const ITEM_KEYCARD_RED% = 10
+Const ITEM_KEYCARD_BLUE% = 11
+Const ITEM_KEYCARD_GREEN% = 12
+Const ITEM_KEYCARD_OMEGA% = 13
+Const ITEM_2999_BEVERAGE% = 20
+```
+
+## Inventory Management
+
+### Create Inventory
+
+```blitzbasic
+Function CreateInventory%()
+    inv.Inventory = New Inventory
+    inv\Capacity = MAX_INVENTORY_SLOTS
+    inv\SelectedSlot = 0
+    inv\MaxWeight = 50.0
+
+    ; Initialize slots
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        inv\Slots[i] = ITEM_NONE
+    Next
+
+    ; Initialize equipment
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        inv\Equipment[i] = ITEM_NONE
+    Next
+
+    Return Handle(inv)
+End Function
+```
+
+### Add Item
+
+```blitzbasic
+Function Inventory_AddItem%(inv.Inventory, itemType%, quantity% = 1)
+    If inv = Null Then Return False
+
+    ; Check for existing stack
+    If IsStackable(itemType)
+        For i = 0 To inv\Capacity - 1
+            If inv\Slots[i] = itemType
+                item.Items = GetItemAtSlot(i)
+                If item\Quantity < item\MaxQuantity
+                    item\Quantity = item\Quantity + quantity
+                    Return True
+                End If
+            End If
+        Next
+    End If
+
+    ; Find empty slot
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = ITEM_NONE
+            inv\Slots[i] = itemType
+            CreateInventoryItem(i, itemType, quantity)
+            Return True
+        End If
+    Next
+
+    ; Inventory full
+    Return False
+End Function
+
+Function IsStackable%(itemType%)
+    Select itemType
+        Case ITEM_BATTERY
+        Case ITEM_BANDAGE
+        Case ITEM_2999_BEVERAGE
+            Return True
+        Default
+            Return False
+    End Select
+End Function
+```
+
+### Remove Item
+
+```blitzbasic
+Function Inventory_RemoveItem%(inv.Inventory, itemType%, quantity% = 1)
+    If inv = Null Then Return False
+
+    ; Find item
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = itemType
+            item.Items = GetItemAtSlot(i)
+            If item\Quantity > quantity
+                item\Quantity = item\Quantity - quantity
+            Else
+                FreeItem(item)
+                inv\Slots[i] = ITEM_NONE
+            End If
+            Return True
+        End If
+    Next
+
+    Return False
+End Function
+
+Function Inventory_RemoveAtSlot%(inv.Inventory, slot%)
+    If slot < 0 Or slot >= inv\Capacity Then Return False
+
+    item.Items = GetItemAtSlot(slot)
+    If item <> Null
+        FreeItem(item)
+        inv\Slots[slot] = ITEM_NONE
+        Return True
+    End If
+
+    Return False
+End Function
+```
+
+### Query Inventory
+
+```blitzbasic
+Function Inventory_HasItem%(inv.Inventory, itemType%)
+    If inv = Null Then Return False
+
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = itemType
+            Return True
+        End If
+    Next
+
+    Return False
+End Function
+
+Function Inventory_GetItemCount%(inv.Inventory, itemType%)
+    count% = 0
+
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = itemType
+            item.Items = GetItemAtSlot(i)
+            count = count + item\Quantity
+        End If
+    Next
+
+    Return count
+End Function
+
+Function Inventory_IsFull%(inv.Inventory)
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = ITEM_NONE
+            Return False
+        End If
+    Next
+    Return True
+End Function
+
+Function Inventory_GetFirstEmptySlot%(inv.Inventory)
+    For i = 0 To inv\Capacity - 1
+        If inv\Slots[i] = ITEM_NONE
+            Return i
+        End If
+    Next
+    Return -1
+End Function
+```
+
+## Item Combination
+
+```blitzbasic
+; Combination table
+Type Combination
+    Field Item1%
+    Field Item2%
+    Field Result%
+End Type
+
+Global Combinations[50]
+
+Function InitCombinations()
+    ; Define combinations
+    AddCombination(ITEM_BATTERY, ITEM_FLASHLIGHT, ITEM_WORKING_FLASHLIGHT)
+    AddCombination(ITEM_MEDKIT, ITEM_BANDAGE, ITEM_ADVANCED_MEDKIT)
+    AddCombination(ITEM_KEYCARD_RED, ITEM_KEYCARD_BLUE, ITEM_KEYCARD_GREEN)
+End Function
+
+Function AddCombination%(item1%, item2%, result%)
+    For i = 0 To 49
+        If Combinations[i]\Item1 = 0
+            Combinations[i]\Item1 = item1
+            Combinations[i]\Item2 = item2
+            Combinations[i]\Result = result
+            Return True
+        End If
+    Next
+    Return False
+End Function
+
+Function CanCombine%(item1%, item2%)
+    For i = 0 To 49
+        If (Combinations[i]\Item1 = item1 And Combinations[i]\Item2 = item2) Or _
+           (Combinations[i]\Item1 = item2 And Combinations[i]\Item2 = item1)
+            Return True
+        End If
+    Next
+    Return False
+End Function
+
+Function GetCombinationResult%(item1%, item2%)
+    For i = 0 To 49
+        If (Combinations[i]\Item1 = item1 And Combinations[i]\Item2 = item2) Or _
+           (Combinations[i]\Item1 = item2 And Combinations[i]\Item2 = item1)
+            Return Combinations[i]\Result
+        End If
+    Next
+    Return ITEM_NONE
+End Function
+```
+
+### Perform Combination
+
+```blitzbasic
+Function Inventory_Combine%(inv.Inventory, slot1%, slot2%)
+    item1.Items = GetItemAtSlot(slot1)
+    item2.Items = GetItemAtSlot(slot2)
+
+    If item1 = Null Or item2 = Null Then Return False
+
+    result% = GetCombinationResult(item1\Type, item2\Type)
+
+    If result <> ITEM_NONE
+        ; Remove both items
+        Inventory_RemoveAtSlot(inv, slot1)
+        Inventory_RemoveAtSlot(inv, slot2)
+
+        ; Add result
+        Inventory_AddItem(inv, result)
+
+        ; Play sound
+        PlaySound("sfx/combine.wav")
+
+        ; Show message
+        ShowMessage("Combined: " + ItemName(result))
+
+        Return True
+    End If
+
+    Return False
+End Function
+```
+
+## Drag and Drop
+
+```blitzbasic
+; Drag state
+Global DRAG_SLOT% = -1
+Global DRAG_ITEM% = 0
+Global DRAG_START_X% = 0
+Global DRAG_START_Y% = 0
+
+Function Inventory_StartDrag%(slot%, x%, y%)
+    If slot < 0 Or slot >= MAX_INVENTORY_SLOTS Then Return False
+
+    itemType = PlayerInventory\Slots[slot]
+    If itemType = ITEM_NONE Then Return False
+
+    DRAG_SLOT = slot
+    DRAG_ITEM = itemType
+    DRAG_START_X = x
+    DRAG_START_Y = y
+
+    Return True
+End Function
+
+Function Inventory_UpdateDrag%(x%, y%)
+    ; Update drag position
+    ; Render drag preview
+End Function
+
+Function Inventory_EndDrag%(dropSlot%)
+    If DRAG_SLOT < 0 Then Return False
+
+    ; Same slot = deselect
+    If dropSlot = DRAG_SLOT
+        DRAG_SLOT = -1
+        DRAG_ITEM = 0
+        Return True
+    End If
+
+    ; Empty slot = move
+    If PlayerInventory\Slots[dropSlot] = ITEM_NONE
+        PlayerInventory\Slots[dropSlot] = PlayerInventory\Slots[DRAG_SLOT]
+        PlayerInventory\Slots[DRAG_SLOT] = ITEM_NONE
+    ; Occupied slot = swap
+    Else
+        temp = PlayerInventory\Slots[dropSlot]
+        PlayerInventory\Slots[dropSlot] = PlayerInventory\Slots[DRAG_SLOT]
+        PlayerInventory\Slots[DRAG_SLOT] = temp
+    End If
+
+    DRAG_SLOT = -1
+    DRAG_ITEM = 0
+
+    Return True
+End Function
+```
+
+## Keycard System
+
+```blitzbasic
+; Keycard levels
+Const KEY_NONE% = 0
+Const KEY_RED% = 1
+Const KEY_BLUE% = 2
+Const KEY_GREEN% = 3
+Const KEY_OMEGA% = 4
+
+Function Inventory_HasKeycard%(inv.Inventory, level%)
+    Select level
+        Case KEY_RED
+            Return inv\Slots[ContainsItem(ITEM_KEYCARD_RED)] <> ITEM_NONE
+        Case KEY_BLUE
+            Return inv\Slots[ContainsItem(ITEM_KEYCARD_BLUE)] <> ITEM_NONE
+        Case KEY_GREEN
+            Return inv\Slots[ContainsItem(ITEM_KEYCARD_GREEN)] <> ITEM_NONE
+        Case KEY_OMEGA
+            Return inv\Slots[ContainsItem(ITEM_KEYCARD_OMEGA)] <> ITEM_NONE Or _
+                   (inv\Slots[ContainsItem(ITEM_KEYCARD_RED)] <> ITEM_NONE And _
+                    inv\Slots[ContainsItem(ITEM_KEYCARD_BLUE)] <> ITEM_NONE And _
+                    inv\Slots[ContainsItem(ITEM_KEYCARD_GREEN)] <> ITEM_NONE)
+    End Select
+    Return False
+End Function
+
+Function Door_RequiresKeycard%(doorType%)
+    Select doorType
+        Case DOOR_STANDARD
+            Return KEY_NONE
+        Case DOOR_CHECKPOINT
+            Return KEY_BLUE
+        Case DOOR_HEAVY
+            Return KEY_RED
+        Case DOOR_OMEGA
+            Return KEY_GREEN
+        Case DOOR_ELEVATOR_HCZ
+            Return KEY_RED
+        Case DOOR_ELEVATOR_EZ
+            Return KEY_GREEN
+        Default
+            Return KEY_NONE
+    End Select
+End Function
+
+Function Door_TryOpen%(doorType%)
+    required = Door_RequiresKeycard(doorType)
+
+    If required = KEY_NONE
+        Return True
+    End If
+
+    If Inventory_HasKeycard(PlayerInventory, required)
+        Return True
+    End If
+
+    ; Show access denied
+    ShowAccessDenied(required)
+    Return False
+End Function
+```
+
+## Equipment System
+
+```blitzbasic
+Function Inventory_Equip%(inv.Inventory, slot%)
+    itemType = inv\Slots[slot]
+    If itemType = ITEM_NONE Then Return False
+
+    ; Check if equippable
+    equipSlot = GetEquipmentSlot(itemType)
+    If equipSlot < 0 Then Return False
+
+    ; Unequip current
+    If inv\Equipment[equipSlot] <> ITEM_NONE
+        UnequipItem(inv, equipSlot)
+    End If
+
+    ; Equip new
+    inv\Equipment[equipSlot] = itemType
+    RemoveFromInventory(inv, itemType, 1)
+
+    ; Apply effects
+    ApplyEquipmentEffects(equipSlot, True)
+
+    PlaySound("sfx/equip.wav")
+    Return True
+End Function
+
+Function Inventory_Unequip%(inv.Inventory, equipSlot%)
+    itemType = inv\Equipment[equipSlot]
+    If itemType = ITEM_NONE Then Return False
+
+    ; Check for space
+    If Inventory_IsFull(inv)
+        ShowMessage("Inventory full!")
+        Return False
+    End If
+
+    ; Remove effects
+    ApplyEquipmentEffects(equipSlot, False)
+
+    ; Add back to inventory
+    inv\Equipment[equipSlot] = ITEM_NONE
+    Inventory_AddItem(inv, itemType)
+
+    PlaySound("sfx/unequip.wav")
+    Return True
+End Function
+
+Function GetEquipmentSlot%(itemType%)
+    Select itemType
+        Case ITEM_NVG
+            Return EQUIP_NVG
+        Case ITEM_GAS_MASK
+            Return EQUIP_GAS_MASK
+        Case ITEM_HEADLAMP
+            Return EQUIP_HEADLAMP
+        Case ITEM_LIGHT_ARMOR
+            Return EQUIP_ARMOR
+        Default
+            Return -1
+    End Select
+End Function
+
+Function ApplyEquipmentEffects%(equipSlot%, equip%)
+    Select equipSlot
+        Case EQUIP_NVG
+            SetNightVision(equip)
+        Case EQUIP_GAS_MASK
+            SetGasMask(equip)
+        Case EQUIP_HEADLAMP
+            SetHeadlamp(equip)
+        Case EQUIP_ARMOR
+            SetArmor(equip)
+    End Select
+End Function
+```
+
+## Item Use
+
+```blitzbasic
+Function Inventory_UseItem%(inv.Inventory, slot%)
+    itemType = inv\Slots[slot]
+    If itemType = ITEM_NONE Then Return False
+
+    Select itemType
+        Case ITEM_MEDKIT
+            UseMedkit()
+        Case ITEM_BANDAGE
+            UseBandage()
+        Case ITEM_FLASHLIGHT
+            ToggleFlashlight()
+        Case ITEM_WORKING_FLASHLIGHT
+            ToggleFlashlight()
+        Case ITEM_2999_BEVERAGE
+            UseBeverage()
+    End Select
+
+    ; Consumable items
+    If IsConsumable(itemType)
+        Inventory_RemoveAtSlot(inv, slot)
+    End If
+
+    Return True
+End Function
+
+Function UseMedkit()
+    HealAmount# = 50.0
+    If PlayerHealth < 100
+        PlayerHealth = Min(PlayerHealth + HealAmount, 100)
+        PlaySound("sfx/use_medkit.wav")
+        ShowMessage("Healed for " + Int(HealAmount))
+    End If
+End Function
+
+Function UseBandage()
+    If Bleeding > 0
+        Bleeding = 0
+        PlaySound("sfx/use_bandage.wav")
+        ShowMessage("Bandage applied")
+    End If
+End Function
+
+Function ToggleFlashlight()
+    If FlashlightOn
+        FlashlightOn = False
+        ShowMessage("Flashlight OFF")
+    Else
+        If HasItem(ITEM_WORKING_FLASHLIGHT)
+            FlashlightOn = True
+            ShowMessage("Flashlight ON")
+        Else
+            ShowMessage("No working flashlight!")
+        End If
+    End If
+End Function
+```
+
+## Inventory UI
+
+```blitzbasic
+Function RenderInventoryUI()
+    ; Draw inventory slots
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        x = INVENTORY_START_X + i * SLOT_SIZE
+        y = INVENTORY_START_Y
+
+        ; Draw slot background
+        DrawSlot(x, y, SLOT_SIZE, (i = PlayerInventory\SelectedSlot))
+
+        ; Draw item if present
+        itemType = PlayerInventory\Slots[i]
+        If itemType <> ITEM_NONE
+            DrawItemIcon(x, y, itemType)
+        End If
+
+        ; Draw quantity if stackable
+        item.Items = GetItemAtSlot(i)
+        If item\Quantity > 1
+            DrawQuantity(x, y, item\Quantity)
+        End If
+    Next
+
+    ; Draw equipment slots
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        x = EQUIP_START_X
+        y = EQUIP_START_Y + i * SLOT_SIZE
+
+        DrawSlot(x, y, SLOT_SIZE, False)
+
+        itemType = PlayerInventory\Equipment[i]
+        If itemType <> ITEM_NONE
+            DrawItemIcon(x, y, itemType)
+        End If
+    Next
+
+    ; Draw drag preview
+    If DRAG_SLOT >= 0
+        DrawDragPreview()
+    End If
+
+    ; Draw tooltip
+    DrawItemTooltip()
+End Function
+```
+
+## Quick Reference
+
+| Function | Purpose |
+|----------|---------|
+| `Inventory_AddItem(inv, type, qty)` | Add item to inventory |
+| `Inventory_RemoveItem(inv, type)` | Remove item from inventory |
+| `Inventory_HasItem(inv, type)` | Check if has item |
+| `Inventory_Combine(inv, slot1, slot2)` | Combine two items |
+| `Inventory_Equip(inv, slot)` | Equip item from inventory |
+| `Inventory_UseItem(inv, slot)` | Use item in slot |
+| `Inventory_HasKeycard(inv, level)` | Check for keycard |
+| `Inventory_IsFull(inv)` | Check if inventory full |

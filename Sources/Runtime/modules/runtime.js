@@ -127,7 +127,33 @@ const Blitz3D = {
 
     // Import object for WASM
     imports: {
-        env: {}
+        env: {},
+        blitz3d: {}
+    },
+
+    loadEngine: async function() {
+        console.log("Loading Blitz3DEngine.wasm...");
+        try {
+            const response = await fetch('dist/Blitz3DEngine.wasm');
+            const arrayBuffer = await response.arrayBuffer();
+            const result = await WebAssembly.instantiate(arrayBuffer, {
+                env: {
+                    // Engine might need some JS imports later
+                }
+            });
+            this.engineInstance = result.instance;
+            this.engineExports = result.instance.exports;
+            
+            // Populate blitz3d imports for game WASM
+            for (const key in this.engineExports) {
+                if (typeof this.engineExports[key] === 'function') {
+                    this.imports.blitz3d[key] = this.engineExports[key];
+                }
+            }
+            console.log("Blitz3DEngine loaded and linked.");
+        } catch (e) {
+            console.error("Failed to load Blitz3DEngine:", e);
+        }
     },
 
     load: async function (wasmUrl, canvasId) {
@@ -137,6 +163,8 @@ const Blitz3D = {
             console.error("Blitz3D canvas not initialized.");
             return;
         }
+
+        await this.loadEngine();
 
         this.setupInput();
         console.log(`Loading WASM from ${wasmUrl}...`);

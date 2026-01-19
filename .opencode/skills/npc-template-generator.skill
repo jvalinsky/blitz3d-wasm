@@ -1,0 +1,649 @@
+# NPC Template Generator
+
+Skill for scaffolding new SCP NPC entities with standard structure, state machines, and common behaviors.
+
+## When to Use
+
+Use this skill when:
+- Creating a new SCP entity
+- Adding a new NPC type to the game
+- Implementing NPC with standard patterns
+- Generating NPC code quickly
+- Ensuring consistency with existing NPCs
+
+## Generate NPC Command
+
+```blitzbasic
+; Command format:
+; GenerateNPC name$, type$, [options]
+;
+; Examples:
+; GenerateNPC "MySCP" SCP_TYPE_MEDIUM
+; GenerateNPC "Guard" NPC_TYPE_HUMAN features="patrol,weapon"
+; GenerateNPC "TestSubject" SCP_TYPE_LOW behavior="passive"
+```
+
+## Basic SCP Template
+
+```blitzbasic
+; Generated template for new SCP entity
+; Run: GenerateNPC "SCP-XXX" SCP_TYPE_MEDIUM
+
+Type NPCs
+    Field obj%
+    Field obj2%
+    Field Collider%
+    Field NPCtype%
+    Field ID%
+    Field State#
+    Field State2#
+    Field State3#
+    Field Speed#
+    Field CurrSpeed#
+    Field Path.WayPoints[20]
+    Field PathStatus%
+    Field Alerted%
+    Field Health#
+    Field MaxHealth#
+End Type
+
+Const NPC_SCP_XXX% = 50  ; Next available ID
+
+Function CreateNPC_SCP_XXX%(parent% = 0)
+    npc.NPCs = New NPCs
+    npc\NPCtype = NPC_SCP_XXX
+    npc\ID = GetUniqueNPCID()
+
+    npc\obj = LoadAnimMesh("GFX/npcs/scp_xxx.b3d")
+    npc\obj2 = LoadAnimMesh("GFX/npcs/scp_xxx_legs.b3d")
+    npc\Collider = LoadMesh("GFX/npcs/scp_xxx_collider.b3d")
+
+    If parent <> 0
+        SetParent npc\obj, parent
+        SetParent npc\obj2, parent
+        SetParent npc\Collider, parent
+    End If
+
+    PositionEntity npc\obj, 0, 0, 0
+    PositionEntity npc\obj2, 0, 0, 0
+    PositionEntity npc\Collider, 0, 0, 0
+
+    npc\State = STATE_IDLE
+    npc\Speed# = 4.0
+    npc\CurrSpeed# = 0.0
+    npc\Health# = 100.0
+    npc\MaxHealth# = 100.0
+    npc\Alerted% = False
+    npc\PathStatus% = PATH_IDLE
+
+    Return Handle(npc)
+End Function
+
+Function UpdateSCP_XXX%(npc.NPCs)
+    If npc = Null Then Return False
+
+    Select npc\State
+        Case STATE_IDLE
+            UpdateSCP_XXX_Idle(npc)
+        Case STATE_WANDER
+            UpdateSCP_XXX_Wander(npc)
+        Case STATE_HUNTING
+            UpdateSCP_XXX_Hunting(npc)
+        Case STATE_ATTACK
+            UpdateSCP_XXX_Attack(npc)
+        Case STATE_FLEE
+            UpdateSCP_XXX_Flee(npc)
+    End Select
+
+    UpdateNPCMovement(npc)
+    Return True
+End Function
+
+Function UpdateSCP_XXX_Idle%(npc.NPCs)
+    ; Check for player detection
+    If CanSeePlayer(npc)
+        npc\State = STATE_HUNTING
+        Return
+    End If
+
+    If CanHearPlayer(npc)
+        npc\State = STATE_SEARCH
+        TurnEntityToSound(npc)
+        Return
+    End If
+
+    ; Random wander timer
+    npc\State2 = npc\State2 + 1
+    If npc\State2 > 600  ; 10 seconds
+        npc\State2 = 0
+        If Rand(1, 100) < 30
+            npc\State = STATE_WANDER
+            StartWander(npc)
+        End If
+    End If
+End Function
+
+Function UpdateSCP_XXX_Wander%(npc.NPCs)
+    ; Follow path
+    If npc\PathStatus = PATH_ACTIVE
+        FollowPath(npc)
+    Else
+        ; Random movement
+        If Rand(1, 100) < 5
+            npc\State = STATE_IDLE
+        End If
+    End If
+
+    ; Check for player
+    If CanSeePlayer(npc) Or CanHearPlayer(npc)
+        npc\State = STATE_HUNTING
+    End If
+End Function
+
+Function UpdateSCP_XXX_Hunting%(npc.NPCs)
+    ; Move towards player
+    TargetPlayer(npc)
+
+    ; Check attack range
+    dist# = Distance(npc\obj, PlayerCollider)
+    If dist < 3.0
+        npc\State = STATE_ATTACK
+        npc\State2 = 0  ; Reset attack timer
+    End If
+
+    ; Lost player
+    If Not CanSeePlayer(npc) And Not CanHearPlayer(npc)
+        npc\State = STATE_SEARCH
+        npc\State2 = 0
+    End If
+End Function
+
+Function UpdateSCP_XXX_Attack%(npc.NPCs)
+    npc\State2 = npc\State2 + 1
+
+    ; Attack animation timing
+    If npc\State2 = 30  ; Halfway through animation
+        ; Deal damage
+        If Distance(npc\obj, PlayerCollider) < 4.0
+            DamagePlayer(25)
+            PlaySound("sfx/scp_xxx_attack.wav")
+        End If
+    End If
+
+    If npc\State2 > 60  ; Animation complete
+        npc\State = STATE_HUNTING
+    End If
+End Function
+
+Function UpdateSCP_XXX_Flee%(npc.NPCs)
+    ; Flee from player
+    FleeFromPlayer(npc)
+
+    ; Stop fleeing when far enough
+    If Distance(npc\obj, PlayerCollider) > 30.0
+        npc\State = STATE_IDLE
+    End If
+End Function
+```
+
+## Passive NPC Template
+
+```blitzbasic
+; For docile NPCs that don't attack
+; Run: GenerateNPC "SCP-999" SCP_TYPE_PASSIVE passive=True
+
+Function UpdateSCP_XXX_Passive%(npc.NPCs)
+    Select npc\State
+        Case STATE_IDLE
+            UpdateSCP_XXX_PassiveIdle(npc)
+        Case STATE_FOLLOW
+            UpdateSCP_XXX_Follow(npc)
+    End Select
+
+    UpdateNPCMovement(npc)
+End Function
+
+Function UpdateSCP_XXX_PassiveIdle%(npc.NPCs)
+    ; Wander randomly
+    npc\State2 = npc\State2 + 1
+
+    If npc\State2 > 300
+        npc\State2 = 0
+        direction# = Rand(0, 360)
+        npc\State3 = direction
+        npc\State = STATE_WANDER
+    End If
+
+    ; Approach nearby player
+    If Distance(npc\obj, PlayerCollider) < 10.0
+        npc\State = STATE_FOLLOW
+    End If
+End Function
+
+Function UpdateSCP_XXX_Follow%(npc.NPCs)
+    ; Follow player at distance
+    dist# = Distance(npc\obj, PlayerCollider)
+
+    If dist > 5.0
+        MoveTowards(npc, PlayerCollider, 2.0)
+    ElseIf dist < 3.0
+        MoveAway(npc, PlayerCollider, 1.0)
+    End If
+
+    ; Stop following if player moves away
+    If dist > 20.0
+        npc\State = STATE_IDLE
+    End If
+End Function
+```
+
+## Human NPC Template
+
+```blitzbasic
+; For MTF, guards, scientists
+; Run: GenerateNPC "Guard" NPC_TYPE_HUMAN human=True weapon="rifle"
+
+Const NPC_TYPE_MTF% = 100
+Const NPC_TYPE_GUARD% = 101
+Const NPC_TYPE_SCIENTIST% = 102
+
+Function CreateNPC_Human%(type%, parent% = 0)
+    npc.NPCs = New NPCs
+
+    Select type
+        Case NPC_TYPE_MTF
+            npc\NPCtype = NPC_TYPE_MTF
+            npc\Speed# = 5.0
+            npc\MaxHealth# = 100.0
+            npc\obj = LoadAnimMesh("GFX/npcs/mtf.b3d")
+        Case NPC_TYPE_GUARD
+            npc\NPCtype = NPC_TYPE_GUARD
+            npc\Speed# = 4.0
+            npc\MaxHealth# = 80.0
+            npc\obj = LoadAnimMesh("GFX/npcs/guard.b3d")
+        Case NPC_TYPE_SCIENTIST
+            npc\NPCtype = NPC_TYPE_SCIENTIST
+            npc\Speed# = 3.5
+            npc\MaxHealth# = 50.0
+            npc\obj = LoadAnimMesh("GFX/npcs/scientist.b3d")
+    End Select
+
+    npc\ID = GetUniqueNPCID()
+    npc\Health# = npc\MaxHealth#
+    npc\State = STATE_IDLE
+    npc\PathStatus% = PATH_IDLE
+
+    Return Handle(npc)
+End Function
+
+Function UpdateNPC_Human%(npc.NPCs)
+    Select npc\State
+        Case STATE_IDLE
+            UpdateHumanIdle(npc)
+        Case STATE_PATROL
+            UpdateHumanPatrol(npc)
+        Case STATE_ALERT
+            UpdateHumanAlert(npc)
+        Case STATE_COMBAT
+            UpdateHumanCombat(npc)
+        Case STATE_FLEE
+            UpdateHumanFlee(npc)
+    End Select
+
+    UpdateNPCMovement(npc)
+End Function
+
+Function UpdateHumanIdle%(npc.NPCs)
+    ; Wait at position
+    npc\State2 = npc\State2 + 1
+
+    If npc\State2 > 300
+        npc\State2 = 0
+        npc\State = STATE_PATROL
+        SetRandomPatrolRoute(npc)
+    End If
+
+    ; Notice player
+    If CanSeePlayer(npc) Or CanHearPlayer(npc)
+        If IsHostileToPlayer(npc)
+            npc\State = STATE_ALERT
+            PlaySound("sfx/voice_alert.wav")
+        End If
+    End If
+End Function
+
+Function UpdateHumanPatrol%(npc.NPCs)
+    ; Follow patrol route
+    If npc\PathStatus = PATH_ACTIVE
+        FollowPath(npc)
+    Else
+        ; Next patrol point
+        npc\State2 = npc\State2 + 1
+        If npc\State2 > 60
+            npc\State2 = 0
+            SetNextPatrolPoint(npc)
+        End If
+    End If
+
+    ; Alert triggers
+    If CanSeePlayer(npc) Or CanHearPlayer(npc)
+        If IsHostileToPlayer(npc)
+            npc\State = STATE_ALERT
+        End If
+    End If
+End Function
+
+Function UpdateHumanAlert%(npc.NPCs)
+    ; Investigate or attack
+    If CanSeePlayer(npc)
+        If IsHostileToPlayer(npc)
+            npc\State = STATE_COMBAT
+        End If
+    ElseIf CanHearPlayer(npc)
+        ; Investigate sound
+        TurnEntityToSound(npc)
+        MoveTowards(npc, SoundSource(), 2.0)
+    Else
+        npc\State = STATE_PATROL
+    End If
+
+    ; Timeout
+    npc\State2 = npc\State2 + 1
+    If npc\State2 > 300
+        npc\State = STATE_PATROL
+    End If
+End Function
+
+Function UpdateHumanCombat%(npc.NPCs)
+    ; Take cover and shoot
+    dist# = Distance(npc\obj, PlayerCollider)
+
+    If dist > 15.0
+        MoveTowards(npc, PlayerCollider, 3.0)
+    ElseIf dist < 5.0
+        MoveAway(npc, PlayerCollider, 2.0)
+    End If
+
+    ; Shoot
+    npc\State2 = npc\State2 + 1
+    If npc\State2 > 30  ; Fire rate
+        npc\State2 = 0
+        If CanSeePlayer(npc)
+            FireWeapon(npc)
+        End If
+    End If
+
+    ; Low health
+    If npc\Health < npc\MaxHealth * 0.3
+        If Rand(1, 100) < 10
+            npc\State = STATE_FLEE
+        End If
+    End If
+End Function
+
+Function UpdateHumanFlee%(npc.NPCs)
+    ; Run away
+    FleeFromPlayer(npc)
+
+    ; Stop when far enough
+    If Distance(npc\obj, PlayerCollider) > 40.0
+        npc\State = STATE_PATROL
+    End If
+End Function
+```
+
+## Hostile Animal Template
+
+```blitzbasic
+; For SCP-939, dogs, etc.
+; Run: GenerateNPC "Predator" NPC_TYPE_ANIMAL predator=True
+
+Const NPC_TYPE_PREDATOR% = 200
+Const NPC_TYPE_SCP_939% = 201
+
+Function CreateNPC_Predator%(type%, parent% = 0)
+    npc.NPCs = New NPCs
+    npc\NPCtype = type
+
+    Select type
+        Case NPC_TYPE_SCP_939
+            npc\Speed# = 6.0
+            npc\MaxHealth# = 150.0
+            npc\obj = LoadAnimMesh("GFX/npcs/scp_939.b3d")
+    End Select
+
+    npc\ID = GetUniqueNPCID()
+    npc\Health# = npc\MaxHealth#
+    npc\State = STATE_IDLE
+    npc\PathStatus% = PATH_IDLE
+
+    Return Handle(npc)
+End Function
+
+Function UpdateNPC_Predator%(npc.NPCs)
+    Select npc\State
+        Case STATE_IDLE
+            UpdatePredatorIdle(npc)
+        Case STATE_HUNT
+            UpdatePredatorHunt(npc)
+        Case STATE_STALK
+            UpdatePredatorStalk(npc)
+        Case STATE_ATTACK
+            UpdatePredatorAttack(npc)
+    End Select
+
+    UpdateNPCMovement(npc)
+End Function
+
+Function UpdatePredatorIdle%(npc.NPCs)
+    ; Listen for prey
+    If CanHearPlayer(npc)
+        npc\State = STATE_STALK
+        npc\State2 = 0  ; Stalk timer
+    End If
+
+    ; Wander
+    npc\State3 = npc\State3 + 1
+    If npc\State3 > 600
+        npc\State3 = 0
+        npc\State = STATE_HUNT
+        SetRandomHuntTarget(npc)
+    End If
+End Function
+
+Function UpdatePredatorStalk%(npc.NPCs)
+    ; Move towards sound
+    MoveTowardsSound(npc)
+
+    npc\State2 = npc\State2 + 1
+
+    ; Give up
+    If npc\State2 > 180  ; 3 seconds
+        npc\State = STATE_IDLE
+    End If
+
+    ; Spot prey
+    If CanSeePlayer(npc)
+        npc\State = STATE_ATTACK
+        PlaySound("sfx/scp_939_screech.wav")
+    End If
+End Function
+
+Function UpdatePredatorHunt%(npc.NPCs)
+    ; Track prey
+    If npc\PathStatus = PATH_ACTIVE
+        FollowPath(npc)
+    End If
+
+    ; Spot prey
+    If CanSeePlayer(npc)
+        npc\State = STATE_ATTACK
+    End If
+
+    ; Lost trail
+    If Distance(npc\obj, npc\PathTarget) < 2.0
+        npc\State = STATE_IDLE
+    End If
+End Function
+
+Function UpdatePredatorAttack%(npc.NPCs)
+    ; Sprint at prey
+    dist# = Distance(npc\obj, PlayerCollider)
+    MoveTowards(npc, PlayerCollider, npc\Speed * 1.5)
+
+    ; Attack when close
+    If dist < 2.0
+        DamagePlayer(35)
+        PlaySound("sfx/predator_attack.wav")
+        npc\State = STATE_HUNT
+    End If
+End Function
+```
+
+## Complete NPC Generator
+
+```blitzbasic
+; Main generator function
+Function GenerateNPC%(name$, type$, options$ = "")
+    ; Parse options
+    passive% = ParseOption(options$, "passive")
+    human% = ParseOption(options$, "human")
+    predator% = ParseOption(options$, "predator")
+    weapon$ = ParseOptionStr(options$, "weapon")
+
+    ; Generate file
+    file$ = "Generated_" + name$ + ".bb"
+    file = WriteFile(file$)
+
+    ; Write header
+    WriteLine file, "; Generated NPC: " + name$
+    WriteLine file, "; Type: " + type$
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+    WriteLine file, "; === CONSTANTS ==="
+    WriteLine file, "Const NPC_" + Upper(name$) + "% = " + GetNextNPCID()
+    WriteLine file, ""
+    WriteLine file, "; === TYPE DEFINITION ==="
+    WriteLine file, "Type NPCs"
+    WriteLine file, "    Field obj%"
+    WriteLine file, "    Field obj2%"
+    WriteLine file, "    Field Collider%"
+    WriteLine file, "    Field NPCtype%"
+    WriteLine file, "    Field ID%"
+    WriteLine file, "    Field State#"
+    WriteLine file, "    Field State2#"
+    WriteLine file, "    Field State3#"
+    WriteLine file, "    Field Speed#"
+    WriteLine file, "    Field CurrSpeed#"
+    WriteLine file, "    Field Path.WayPoints[20]"
+    WriteLine file, "    Field PathStatus%"
+    WriteLine file, "    Field Alerted%"
+    WriteLine file, "    Field Health#"
+    WriteLine file, "    Field MaxHealth#"
+    WriteLine file, "End Type"
+    WriteLine file, ""
+
+    ; Write Create function
+    WriteLine file, "; === CREATION ==="
+    WriteLine file, "Function CreateNPC_" + name$ + "%(parent% = 0)"
+    WriteLine file, "    npc.NPCs = New NPCs"
+    WriteLine file, "    npc\NPCtype = NPC_" + Upper(name$) + ""
+    WriteLine file, "    npc\ID = GetUniqueNPCID()"
+    WriteLine file, ""
+    WriteLine file, "    npc\obj = LoadAnimMesh(""GFX/npcs/" + Lower(name$) + ".b3d"")"
+    WriteLine file, "    npc\obj2 = 0"
+    WriteLine file, "    npc\Collider = LoadMesh(""GFX/npcs/" + Lower(name$) + "_collider.b3d"")"
+    WriteLine file, ""
+    WriteLine file, "    If parent <> 0"
+    WriteLine file, "        SetParent npc\obj, parent"
+    WriteLine file, "        SetParent npc\Collider, parent"
+    WriteLine file, "    End If"
+    WriteLine file, ""
+    WriteLine file, "    npc\State = STATE_IDLE"
+    WriteLine file, "    npc\Speed# = 4.0"
+    WriteLine file, "    npc\CurrSpeed# = 0.0"
+    WriteLine file, "    npc\Health# = 100.0"
+    WriteLine file, "    npc\MaxHealth# = 100.0"
+    WriteLine file, "    npc\Alerted% = False"
+    WriteLine file, "    npc\PathStatus% = PATH_IDLE"
+    WriteLine file, ""
+    WriteLine file, "    Return Handle(npc)"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write Update function
+    WriteLine file, "; === UPDATE ==="
+    WriteLine file, "Function UpdateNPC_" + name$ + "%(npc.NPCs)"
+    WriteLine file, "    If npc = Null Then Return False"
+    WriteLine file, ""
+    WriteLine file, "    Select npc\State"
+    WriteLine file, "        Case STATE_IDLE"
+    WriteLine file, "            Update" + name$ + "_Idle(npc)"
+    WriteLine file, "        Case STATE_HUNTING"
+    WriteLine file, "            Update" + name$ + "_Hunting(npc)"
+    WriteLine file, "        Case STATE_ATTACK"
+    WriteLine file, "            Update" + name$ + "_Attack(npc)"
+    WriteLine file, "    End Select"
+    WriteLine file, ""
+    WriteLine file, "    UpdateNPCMovement(npc)"
+    WriteLine file, "    Return True"
+    WriteLine file, "End Function"
+
+    ; Write state functions
+    WriteLine file, ""
+    WriteLine file, "; === STATE FUNCTIONS ==="
+    WriteLine file, "Function Update" + name$ + "_Idle%(npc.NPCs)"
+    WriteLine file, "    ; Wander behavior"
+    WriteLine file, "    npc\State2 = npc\State2 + 1"
+    WriteLine file, "    If npc\State2 > 300"
+    WriteLine file, "        npc\State2 = 0"
+    WriteLine file, "        If Rand(1, 100) < 30"
+    WriteLine file, "            npc\State = STATE_WANDER"
+    WriteLine file, "            StartWander(npc)"
+    WriteLine file, "        End If"
+    WriteLine file, "    End If"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+    WriteLine file, "Function Update" + name$ + "_Hunting%(npc.NPCs)"
+    WriteLine file, "    If CanSeePlayer(npc)"
+    WriteLine file, "        MoveTowards(npc, PlayerCollider, npc\Speed)"
+    WriteLine file, "    End If"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+    WriteLine file, "Function Update" + name$ + "_Attack%(npc.NPCs)"
+    WriteLine file, "    ; Attack implementation"
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+
+    Print "Generated: " + file$
+    Return True
+End Function
+```
+
+## Usage Examples
+
+```blitzbasic
+; Basic SCP
+GenerateNPC("SCP_7734", "SCP_TYPE_MEDIUM")
+
+; Passive SCP
+GenerateNPC("SCP_999", "SCP_TYPE_PASSIVE", "passive=True")
+
+; Human NPC with weapon
+GenerateNPC("MTF_Soldier", "NPC_TYPE_HUMAN", "human=True,weapon=rifle")
+
+; Predator NPC
+GenerateNPC("SCP_939_Variant", "NPC_TYPE_PREDATOR", "predator=True")
+```
+
+## Quick Reference
+
+| Option | Effect |
+|--------|--------|
+| `passive=True` | Docile, follows player |
+| `human=True` | Human behavior (patrol, combat) |
+| `predator=True` | Animal behavior (stalk, hunt) |
+| `weapon=rifle` | Gives human weapon |
+| `speed=X` | Set movement speed |
+| `health=X` | Set max health |

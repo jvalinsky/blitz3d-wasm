@@ -1,0 +1,639 @@
+# Save/Load Patterns
+
+Skill for implementing save/load systems with serialization, state management, and save slots in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Implementing save functionality
+- Implementing load functionality
+- Serializing game state
+- Handling save file corruption
+- Managing save slots
+- Implementing quicksave/quickload
+
+## Save System Structure
+
+```blitzbasic
+; Save system constants
+Const MAX_SAVE_SLOTS% = 4
+Const SAVE_VERSION% = 11  ; Current save format version
+
+; Save slot info
+Type SaveSlot
+    Field Exists%         ; Does save exist
+    Field Slot%           ; Slot number
+    Field File$           ; Save file path
+    Field Timestamp%      ; Save time
+    Field PlayTime%       ; Total play time in seconds
+    Field Room%           ; Room ID
+    Field Health#         ; Player health
+    Field Level%          ; Player level/progress
+    Field Difficulty%     ; Difficulty setting
+    Field Thumbnail$      ; Screenshot path
+End Type
+
+Global SaveSlots[MAX_SAVE_SLOTS]
+Global CurrentSaveSlot% = -1
+
+; Save data structure
+Type SaveData
+    ; Header
+    Field Version%
+    Field Timestamp%
+    Field PlayTime%
+
+    ; Player state
+    Field PlayerRoom%
+    Field PlayerHealth#
+    Field PlayerStamina#
+    Field Sanity#
+    Field BlinkTimer#
+    Field Position#[3]
+    Field Rotation#[3]
+
+    ; Inventory
+    Field InventorySize%
+    Field Inventory[MAX_INVENTORY_SLOTS]
+    Field Equipment[MAX_EQUIPMENT_SLOTS]
+
+    ; Game progress
+    Field DeadNPCs[NUM_NPC_TYPES]
+    Field VisitedRooms[NUM_ROOMS]
+    Field CompletedEvents[NUM_EVENTS]
+    Field Achievements[NUM_ACHIEVEMENTS]
+
+    ; Time
+    Field GameTime%
+    Field RealTime%
+
+    ; Difficulty
+    Field Difficulty%
+End Type
+
+Global CurrentSave.SaveData
+```
+
+## Save File Format
+
+```blitzbasic
+; Save file header
+Const SAVE_HEADER$ = "SCPCBSAVE"
+Const SAVE_VERSION% = 11
+
+Function SaveGame%(slot%)
+    ; Validate slot
+    If slot < 0 Or slot >= MAX_SAVE_SLOTS
+        Return False
+    End If
+
+    ; Create save data
+    CurrentSave.SaveData = New SaveData
+    CollectSaveData(CurrentSave)
+
+    ; Open file
+    file$ = "save" + slot + ".sav"
+    file = WriteFile(file$)
+
+    If file = 0
+        Return False
+    End If
+
+    ; Write header
+    WriteString(file, SAVE_HEADER)
+    WriteInt(file, SAVE_VERSION)
+    WriteInt(file, GetTimestamp())
+
+    ; Write player state
+    WriteInt(file, CurrentSave\PlayerRoom)
+    WriteFloat(file, CurrentSave\PlayerHealth)
+    WriteFloat(file, CurrentSave\PlayerStamina)
+    WriteFloat(file, CurrentSave\Sanity)
+    WriteFloat(file, CurrentSave\BlinkTimer)
+    WriteFloat(file, CurrentSave\Position[0])
+    WriteFloat(file, CurrentSave\Position[1])
+    WriteFloat(file, CurrentSave\Position[2])
+    WriteFloat(file, CurrentSave\Rotation[0])
+    WriteFloat(file, CurrentSave\Rotation[1])
+    WriteFloat(file, CurrentSave\Rotation[2])
+
+    ; Write inventory
+    WriteInt(file, CurrentSave\InventorySize)
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        WriteInt(file, CurrentSave\Inventory[i])
+    Next
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        WriteInt(file, CurrentSave\Equipment[i])
+    Next
+
+    ; Write game progress
+    WriteInt(file, CurrentSave\PlayTime)
+    For i = 0 To NUM_NPC_TYPES - 1
+        WriteInt(file, CurrentSave\DeadNPCs[i])
+    Next
+    For i = 0 To NUM_ROOMS - 1
+        WriteInt(file, CurrentSave\VisitedRooms[i])
+    Next
+
+    ; Write difficulty
+    WriteInt(file, CurrentSave\Difficulty)
+
+    ; Write checksum
+    WriteInt(file, CalculateSaveChecksum(file))
+
+    CloseFile(file)
+
+    ; Update slot info
+    UpdateSaveSlotInfo(slot)
+
+    ; Take screenshot
+    SaveScreenshot("save" + slot + "_thumb.png")
+
+    Print "Game saved to slot " + slot
+    Return True
+End Function
+```
+
+## Collect Save Data
+
+```blitzbasic
+Function CollectSaveData%(save.SaveData)
+    ; Header
+    save\Version = SAVE_VERSION
+    save\Timestamp = GetTimestamp()
+    save\PlayTime = GetTotalPlayTime()
+
+    ; Player state
+    save\PlayerRoom = PlayerRoom
+    save\PlayerHealth = PlayerHealth
+    save\PlayerStamina = PlayerStamina
+    save\Sanity = Sanity
+    save\BlinkTimer = BlinkTimer
+
+    pos# = EntityX(PlayerCollider)
+    posy# = EntityY(PlayerCollider)
+    posz# = EntityZ(PlayerCollider)
+    save\Position[0] = pos#
+    save\Position[1] = posy#
+    save\Position[2] = posz#
+
+    GetEntityRotation Camera, pitch#, yaw#, roll#
+    save\Rotation[0] = pitch#
+    save\Rotation[1] = yaw#
+    save\Rotation[2] = roll#
+
+    ; Inventory
+    save\InventorySize = MAX_INVENTORY_SLOTS
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        save\Inventory[i] = PlayerInventory\Slots[i]
+    Next
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        save\Equipment[i] = PlayerInventory\Equipment[i]
+    Next
+
+    ; Game progress
+    save\PlayTime = GetTotalPlayTime()
+
+    ; Dead NPCs
+    For i = 0 To NUM_NPC_TYPES - 1
+        save\DeadNPCs[i] = NPCIsDead(i)
+    Next
+
+    ; Visited rooms
+    For i = 0 To NUM_ROOMS - 1
+        save\VisitedRooms[i] = RoomWasVisited(i)
+    Next
+
+    ; Difficulty
+    save\Difficulty = GetDifficulty()
+End Function
+```
+
+## Load Game
+
+```blitzbasic
+Function LoadGame%(slot%)
+    ; Validate slot
+    If slot < 0 Or slot >= MAX_SAVE_SLOTS
+        Return False
+    End If
+
+    ; Check if save exists
+    file$ = "save" + slot + ".sav"
+    If Not FileExists(file$)
+        Return False
+    End If
+
+    ; Open file
+    file = ReadFile(file$)
+
+    If file = 0
+        Return False
+    End If
+
+    ; Read and verify header
+    header$ = ReadString(file)
+    If header$ <> SAVE_HEADER
+        CloseFile(file)
+        Return False
+    End If
+
+    version% = ReadInt(file)
+    If version$ <> SAVE_VERSION
+        CloseFile(file)
+        ; Handle old save format
+        Return LoadOldSaveFormat(file, version)
+    End If
+
+    ; Create save data
+    CurrentSave.SaveData = New SaveData
+
+    ; Read player state
+    CurrentSave\PlayerRoom = ReadInt(file)
+    CurrentSave\PlayerHealth = ReadFloat(file)
+    CurrentSave\PlayerStamina = ReadFloat(file)
+    CurrentSave\Sanity = ReadFloat(file)
+    CurrentSave\BlinkTimer = ReadFloat(file)
+    CurrentSave\Position[0] = ReadFloat(file)
+    CurrentSave\Position[1] = ReadFloat(file)
+    CurrentSave\Position[2] = ReadFloat(file)
+    CurrentSave\Rotation[0] = ReadFloat(file)
+    CurrentSave\Rotation[1] = ReadFloat(file)
+    CurrentSave\Rotation[2] = ReadFloat(file)
+
+    ; Read inventory
+    CurrentSave\InventorySize = ReadInt(file)
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        CurrentSave\Inventory[i] = ReadInt(file)
+    Next
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        CurrentSave\Equipment[i] = ReadInt(file)
+    Next
+
+    ; Read game progress
+    CurrentSave\PlayTime = ReadInt(file)
+    For i = 0 To NUM_NPC_TYPES - 1
+        CurrentSave\DeadNPCs[i] = ReadInt(file)
+    Next
+    For i = 0 To NUM_ROOMS - 1
+        CurrentSave\VisitedRooms[i] = ReadInt(file)
+    Next
+
+    ; Read difficulty
+    CurrentSave\Difficulty = ReadInt(file)
+
+    ; Verify checksum
+    savedChecksum = ReadInt(file)
+    calculatedChecksum = CalculateSaveChecksum(file)
+    If savedChecksum <> calculatedChecksum
+        CloseFile(file)
+        Return False
+    End If
+
+    CloseFile(file)
+
+    ; Apply save data to game
+    ApplySaveData(CurrentSave)
+
+    CurrentSaveSlot = slot
+
+    Print "Game loaded from slot " + slot
+    Return True
+End Function
+```
+
+## Apply Save Data
+
+```blitzbasic
+Function ApplySaveData%(save.SaveData)
+    ; Unload current room
+    UnloadCurrentRoom()
+
+    ; Restore player state
+    PlayerRoom = save\PlayerRoom
+    PlayerHealth = save\PlayerHealth
+    PlayerStamina = save\PlayerStamina
+    Sanity = save\Sanity
+    BlinkTimer = save\BlinkTimer
+
+    ; Restore position
+    PositionEntity PlayerCollider, save\Position[0], save\Position[1], save\Position[2]
+    RotateEntity Camera, save\Rotation[0], save\Rotation[1], save\Rotation[2]
+
+    ; Restore inventory
+    For i = 0 To MAX_INVENTORY_SLOTS - 1
+        PlayerInventory\Slots[i] = save\Inventory[i]
+    Next
+    For i = 0 To MAX_EQUIPMENT_SLOTS - 1
+        PlayerInventory\Equipment[i] = save\Equipment[i]
+    Next
+
+    ; Restore game progress
+    SetTotalPlayTime(save\PlayTime)
+
+    ; Restore dead NPCs
+    For i = 0 To NUM_NPC_TYPES - 1
+        If save\DeadNPCs[i]
+            KillNPCByType(i)
+        End If
+    Next
+
+    ; Mark rooms as visited
+    For i = 0 To NUM_ROOMS - 1
+        If save\VisitedRooms[i]
+            MarkRoomVisited(i)
+        End If
+    Next
+
+    ; Set difficulty
+    SetDifficulty(save\Difficulty)
+
+    ; Load room
+    LoadRoom(save\PlayerRoom)
+End Function
+```
+
+## Save Slot Management
+
+```blitzbasic
+Function GetSaveSlotInfo%(slot%)
+    If slot < 0 Or slot >= MAX_SAVE_SLOTS
+        Return False
+    End If
+
+    file$ = "save" + slot + ".sav"
+
+    If Not FileExists(file$)
+        SaveSlots[slot]\Exists = False
+        Return False
+    End If
+
+    ; Read header info (without loading full save)
+    file = ReadFile(file$)
+
+    header$ = ReadString(file)
+    version% = ReadInt(file)
+    timestamp% = ReadInt(file)
+    playTime% = ReadInt(file)
+    room% = ReadInt(file)
+    health# = ReadFloat(file)
+
+    CloseFile(file)
+
+    ; Update slot info
+    SaveSlots[slot]\Exists = True
+    SaveSlots[slot]\Slot = slot
+    SaveSlots[slot]\File = file$
+    SaveSlots[slot]\Timestamp = timestamp%
+    SaveSlots[slot]\PlayTime = playTime%
+    SaveSlots[slot]\Room = room%
+    SaveSlots[slot]\Health = health%
+
+    Return True
+End Function
+
+Function UpdateSaveSlotInfo%(slot%)
+    GetSaveSlotInfo(slot)
+
+    ; Update UI if visible
+    If SaveMenuOpen
+        RefreshSaveSlotUI(slot)
+    End If
+End Function
+
+Function RefreshAllSaveSlots()
+    For slot = 0 To MAX_SAVE_SLOTS - 1
+        GetSaveSlotInfo(slot)
+    Next
+End Function
+```
+
+## Quick Save/Load
+
+```blitzbasic
+Function Quicksave%()
+    ; Auto-save to quicksave slot
+    file$ = "save_quick.sav"
+
+    ; Copy current state to quicksave
+    If CurrentSaveSlot >= 0
+        ; Copy from current slot
+        CopyFile("save" + CurrentSaveSlot + ".sav", file$)
+        Print "Quicksaved"
+        Return True
+    Else
+        ; Save new game
+        Return SaveGame(0)
+    End If
+End Function
+
+Function Quickload%()
+    ; Load from quicksave slot
+    file$ = "save_quick.sav"
+
+    If Not FileExists(file$)
+        Print "No quicksave found"
+        Return False
+    End If
+
+    ; Temporarily swap to quicksave slot
+    tempSlot = CurrentSaveSlot
+    CurrentSaveSlot = -1
+
+    result = LoadQuickSaveFile(file$)
+
+    If result
+        CurrentSaveSlot = tempSlot
+    End If
+
+    Return result
+End Function
+
+Function LoadQuickSaveFile%(file$)
+    ; Load from specified file path
+    ; Similar to LoadGame but from arbitrary path
+
+    ; Open file
+    fileId = ReadFile(file$)
+
+    ; ... (same as LoadGame)
+
+    CloseFile(fileId)
+
+    Return True
+End Function
+```
+
+## Save Corruption Handling
+
+```blitzbasic
+Function LoadGame%(slot%)
+    ; ... existing code ...
+
+    ; Verify checksum
+    savedChecksum = ReadInt(file)
+    calculatedChecksum = CalculateSaveChecksum(file)
+
+    If savedChecksum <> calculatedChecksum
+        CloseFile(file)
+        HandleCorruptedSave(slot)
+        Return False
+    End If
+
+    ; ... rest of load ...
+End Function
+
+Function CalculateSaveChecksum%(file%)
+    ; Simple checksum of save data
+    ; For production, use CRC32 or similar
+
+    checksum% = 0
+
+    ; Get file position
+    pos = FilePos(file)
+
+    ; Seek to beginning
+    SeekFile(file, 0)
+
+    ; Read all bytes
+    While Not Eof(file)
+        byte = ReadByte(file)
+        checksum = checksum + byte
+        checksum = checksum Mod 65536
+    Wend
+
+    ; Restore position
+    SeekFile(file, pos)
+
+    Return checksum
+End Function
+
+Function HandleCorruptedSave%(slot%)
+    ; Show error
+    ShowMessage("Save file is corrupted or invalid.")
+
+    ; Log error
+    Print "Corrupted save at slot " + slot
+
+    ; Delete corrupted save
+    file$ = "save" + slot + ".sav"
+    If FileExists(file$)
+        DeleteFile(file$)
+    End If
+
+    ; Update slot info
+    SaveSlots[slot]\Exists = False
+End Function
+```
+
+## Auto-Save
+
+```blitzbasic
+; Auto-save configuration
+Global AUTO_SAVE_ENABLED% = True
+Global AUTO_SAVE_INTERVAL% = 300  ; 5 minutes
+Global AUTO_SAVE_SLOT% = 3        ; Reserved slot for auto-save
+
+Global AutoSaveTimer% = 0
+
+Function UpdateAutoSave()
+    If Not AUTO_SAVE_ENABLED Then Return
+
+    ; Only auto-save during gameplay
+    If Not InGame Then Return
+
+    ; Don't auto-save during combat
+    If InCombat Then Return
+
+    AutoSaveTimer = AutoSaveTimer + 1
+
+    If AutoSaveTimer >= AUTO_SAVE_INTERVAL * 60  ; Convert to frames
+        AutoSaveTimer = 0
+        PerformAutoSave()
+    End If
+End Function
+
+Function PerformAutoSave%()
+    ; Save to reserved slot
+    result = SaveGame(AUTO_SAVE_SLOT)
+
+    If result
+        Print "Auto-saved"
+        ShowSaveIndicator()
+    End If
+
+    Return result
+End Function
+
+Function ShowSaveIndicator()
+    ; Flash save icon
+    saveIndicatorAlpha = 255
+
+    While saveIndicatorAlpha > 0
+        saveIndicatorAlpha = saveIndicatorAlpha - 5
+        DrawSaveIndicator(saveIndicatorAlpha)
+        Flip
+    Wend
+End Function
+```
+
+## Save Menu
+
+```blitzbasic
+Function RenderSaveMenu()
+    ; Background
+    DrawFullscreenDim()
+
+    ; Title
+    DrawText("SAVE GAME", ScreenWidth / 2, 50, ALIGN_CENTER)
+
+    ; Save slots
+    For slot = 0 To MAX_SAVE_SLOTS - 1
+        x = ScreenWidth / 2 - 200
+        y = 150 + slot * 120
+
+        ; Slot background
+        DrawSlotBackground(x, y, 400, 100, slot = SelectedSlot)
+
+        If SaveSlots[slot]\Exists
+            ; Show save info
+            DrawSavePreview(x + 10, y + 10, SaveSlots[slot]\Thumbnail)
+            DrawSaveInfo(x + 120, y + 20, SaveSlots[slot])
+        Else
+            ; Empty slot
+            DrawText("Empty Save", x + 200, y + 50, ALIGN_CENTER)
+        End If
+
+        ; Slot number
+        DrawText("Slot " + (slot + 1), x + 10, y + 85)
+    Next
+
+    ; Controls
+    DrawText("WASD/Arrows: Select", ScreenWidth / 2, ScreenHeight - 80, ALIGN_CENTER)
+    DrawText("ENTER: Save | ESC: Cancel", ScreenWidth / 2, ScreenHeight - 50, ALIGN_CENTER)
+End Function
+
+Function RenderLoadMenu()
+    ; Similar to save menu but for loading
+    ; ...
+
+    ; Add "Delete" option for existing saves
+    If SaveSlots[SelectedSlot]\Exists
+        DrawText("DELETE: Delete save", ScreenWidth / 2, ScreenHeight - 30, ALIGN_CENTER)
+    End If
+End Function
+```
+
+## Quick Reference
+
+| Function | Purpose |
+|----------|---------|
+| `SaveGame(slot)` | Save game to slot |
+| `LoadGame(slot)` | Load game from slot |
+| `Quicksave()` | Quick save to temp slot |
+| `Quickload()` | Load from quicksave |
+| `CollectSaveData(save)` | Gather current state |
+| `ApplySaveData(save)` | Restore state from save |
+| `GetSaveSlotInfo(slot)` | Get slot metadata |
+| `UpdateAutoSave()` | Auto-save timer |
+| `HandleCorruptedSave(slot)` | Handle corrupted file |

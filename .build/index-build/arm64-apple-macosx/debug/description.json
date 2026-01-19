@@ -36,6 +36,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift"
         },
         {
@@ -97,6 +101,7 @@
       "objects" : [
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/AST.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/CodeGenerator.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/ExpressionGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/FunctionGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.swift.o",
@@ -182,6 +187,7 @@
       "sources" : [
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/AST/AST.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
@@ -301,11 +307,144 @@
       "tempsPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompilerPackageTests.build",
       "wholeModuleOptimization" : false
     },
+    "C.Blitz3DEngine-arm64-apple-macosx26.0-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/sources",
+      "importPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Banks/Bank.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Exports.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics/Mesh.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/B3DParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/RMeshParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Utils/BinaryReader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "Blitz3DEngine",
+      "moduleOutputPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules/Blitz3DEngine.swiftmodule",
+      "objects" : [
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/Bank.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/Exports.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/Mesh.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/B3DParser.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/RMeshParser.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/BinaryReader.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx10.13",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-Onone",
+        "-enable-testing",
+        "-j8",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/include/Blitz3DEngine-Swift.h",
+        "-swift-version",
+        "6",
+        "-Xfrontend",
+        "-experimental-lazy-typecheck",
+        "-Xfrontend",
+        "-experimental-skip-all-function-bodies",
+        "-Xfrontend",
+        "-experimental-allow-module-with-compiler-errors",
+        "-Xfrontend",
+        "-empty-abi-descriptor",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "blitz3d_wasm"
+      ],
+      "outputFileMapPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules/Blitz3DEngine.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : true,
+      "sources" : [
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Banks/Bank.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Exports.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics/Mesh.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/B3DParser.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/RMeshParser.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Utils/BinaryReader.swift"
+      ],
+      "tempsPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build",
+      "wholeModuleOptimization" : false
+    },
     "C.CompilerTests-arm64-apple-macosx26.0-debug.module" : {
       "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "fileList" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/sources",
       "importPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules",
       "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/AudioTests.swift"
+        },
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/BinaryEncoderTests.swift"
@@ -316,11 +455,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/GraphicsAPITests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift"
         },
         {
           "kind" : "file",
@@ -339,10 +498,16 @@
       "moduleName" : "CompilerTests",
       "moduleOutputPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules/CompilerTests.swiftmodule",
       "objects" : [
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/AudioTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/BinaryEncoderTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/CodeGeneratorTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/GraphicsAPITests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swift.o",
-        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swift.o"
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.swift.o"
       ],
       "otherArguments" : [
         "-target",
@@ -413,10 +578,16 @@
       ],
       "prepareForIndexing" : true,
       "sources" : [
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/AudioTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/BinaryEncoderTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/CodeGeneratorTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/GraphicsAPITests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift",
-        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift"
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift"
       ],
       "tempsPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build",
       "wholeModuleOptimization" : false
@@ -538,6 +709,7 @@
       "-c",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/AST/AST.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
@@ -686,6 +858,83 @@
       "-driver-use-frontend-path",
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     ],
+    "Blitz3DEngine" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "Blitz3DEngine",
+      "-package-name",
+      "blitz3d_wasm",
+      "-c",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Banks/Bank.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Exports.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics/Mesh.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/B3DParser.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/RMeshParser.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Utils/BinaryReader.swift",
+      "-I",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx10.13",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-Onone",
+      "-enable-testing",
+      "-j8",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/include/Blitz3DEngine-Swift.h",
+      "-swift-version",
+      "6",
+      "-Xfrontend",
+      "-experimental-lazy-typecheck",
+      "-Xfrontend",
+      "-experimental-skip-all-function-bodies",
+      "-Xfrontend",
+      "-experimental-allow-module-with-compiler-errors",
+      "-Xfrontend",
+      "-empty-abi-descriptor",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "blitz3d_wasm",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
     "CompilerTests" : [
       "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
       "-module-name",
@@ -693,10 +942,16 @@
       "-package-name",
       "blitz3d_wasm",
       "-c",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/AudioTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/BinaryEncoderTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/CodeGeneratorTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/GraphicsAPITests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift",
       "-I",
       "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules",
       "-target",
@@ -841,6 +1096,9 @@
       "CompilerTests",
       "Blitz3DCompiler"
     ],
+    "Blitz3DEngine" : [
+
+    ],
     "CompilerTests" : [
       "Blitz3DCompiler"
     ],
@@ -874,6 +1132,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/CodeGenerator.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift"
         },
         {
           "kind" : "file",
@@ -940,12 +1202,50 @@
       ],
       "outputFilePath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompilerPackageTests.build/sources"
     },
+    "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Banks/Bank.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Exports.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics/Mesh.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/B3DParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Parsers/RMeshParser.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Utils/BinaryReader.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DEngine.build/sources"
+    },
     "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/sources" : {
       "alwaysOutOfDate" : false,
       "inputs" : [
         {
           "kind" : "virtual",
           "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/AudioTests.swift"
         },
         {
           "kind" : "file",
@@ -957,11 +1257,31 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/GraphicsAPITests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift"
         }
       ],
       "outputFilePath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/sources"

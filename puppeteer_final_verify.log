@@ -1,0 +1,85 @@
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.13s)
+Compiling: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.bb
+Output: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.wasm
+
+Preprocessed source size: 789 characters
+Parsed program:
+  - 22 top-level statements
+  - 0 functions
+  - 22 total statements (including functions)
+  - 0 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 44 Internal: createcamera
+DEBUG_COMPILER: Generating call to CreateCamera. Index: 44
+Ensuring return for void -> void
+Generated WASM module:
+  - 33 function types
+  - 4 functions
+  - 1 memory pages
+  - 4 globals
+  - 192 exports
+  - 4 function bodies
+  - 3 data segments
+
+Wrote WASM file: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.wasm (6094 bytes)
+Using Chrome executable at: /Users/jack/Software/scp_port/blitz3d-wasm/chrome/mac_arm-146.0.7642.0/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing
+[57695:883890:0118/203434.283135:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57695:883890:0118/203434.299856:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+
+DevTools listening on ws://127.0.0.1:54025/devtools/browser/29c02995-f1bc-4a67-80a6-c1e43b4a8329
+[57701:883988:0118/203434.714135:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57701:883988:0118/203434.725464:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+Navigating to http://localhost:8080/index_mesh.html...
+::1 - - [18/Jan/2026 20:34:34] "GET /index_mesh.html?v=1768786474845 HTTP/1.1" 200 -
+::1 - - [18/Jan/2026 20:34:35] "GET /dist/runtime.bundle.js?v=1768786475060 HTTP/1.1" 200 -
+[Browser] Blitz3D Runtime (Modular) loaded successfully ["Blitz3D Runtime (Modular) loaded successfully"]
+[Browser] Available modules: core, graphics, physics, input ["Available modules: core, graphics, physics, input"]
+[Browser] Blitz3D Runtime Core Initialized ["Blitz3D Runtime Core Initialized"]
+[Browser] THREE.WebGLRenderer: Error creating WebGL context. ["THREE.WebGLRenderer: Error creating WebGL context."]
+[Browser] WebGL Init Failed, using mock renderer. ["WebGL Init Failed, using mock renderer."]
+[Browser] Blitz3D Runtime Initialized (Modular) ["Blitz3D Runtime Initialized (Modular)"]
+[Browser] Loading WASM from Tests/IntegrationTests/MeshTest.wasm?v=1768786475086... ["Loading WASM from Tests/IntegrationTests/MeshTest.wasm?v=1768786475086..."]
+::1 - - [18/Jan/2026 20:34:35] "GET /Tests/IntegrationTests/MeshTest.wasm?v=1768786475086 HTTP/1.1" 200 -
+[Browser] WASM size: 5.95 KB ["WASM size: 5.95 KB"]
+[Browser] DEBUG: CreateCamera source: (parent) => {
+            console.error("!!! EXECUTION REACHED CreateCamera !!! Parent: " + parent);
+            const cam = new THREE.PerspectiveCamera(75, this.core.canvas.width / this.core.canvas.height, 1.0, 1000.0);
+            const id = this.nextEntityId++;
+            this.entities[id] = cam;
+            if (parent && this.entities[parent]) this.entities[parent].add(cam);
+            else this.scene.add(cam);
+
+            if (!this.camera) {
+                console.log("Setting active camera to ID:", id);
+                this.camera = cam;
+            }
+            return id;
+        } ["DEBUG: CreateCamera source:","(parent) => {\n            console.error(\"!!! EXECUTION REACHED CreateCamera !!! Parent: \" + parent);\n            const cam = new THREE.PerspectiveCamera(75, this.core.canvas.width / this.core.canvas.height, 1.0, 1000.0);\n            const id = this.nextEntityId++;\n            this.entities[id] = cam;\n            if (parent && this.entities[parent]) this.entities[parent].add(cam);\n            else this.scene.add(cam);\n\n            if (!this.camera) {\n                console.log(\"Setting active camera to ID:\", id);\n                this.camera = cam;\n            }\n            return id;\n        }"]
+[Browser] Using WebAssembly.instantiateStreaming. ["Using WebAssembly.instantiateStreaming."]
+[Browser] WASM Loaded and Compiled in 9.70ms ["WASM Loaded and Compiled in 9.70ms"]
+[Browser] Graphics3D Init: 800x600 ["Graphics3D Init: 800x600"]
+[Browser] [Blitz3D] Int: 1111 ["[Blitz3D] Int: 1111"]
+[Browser] [Blitz3D] Int: 2222 ["[Blitz3D] Int: 2222"]
+[Browser]  [""]
+[Browser] [Blitz3D] Int: 3333 ["[Blitz3D] Int: 3333"]
+[Browser]  [""]
+[Browser]  [""]
+[Browser] WASM Loaded. Running... ["WASM Loaded. Running..."]
+::1 - - [18/Jan/2026 20:34:35] code 404, message File not found
+::1 - - [18/Jan/2026 20:34:35] "GET /favicon.ico HTTP/1.1" 404 -
+[Browser] Failed to load resource: the server responded with a status of 404 (File not found) []
+[Browser] DEBUG: Checking imports.env.CreateCamera: JSHandle@function ["DEBUG: Checking imports.env.CreateCamera:",{}]
+[Browser] WASM Imports: JSHandle@array ["WASM Imports:",["PrintInt","PrintString","Cls","Flip","MilliCSecs","Delay","Sin","Cos","Tan","ASin","ACos","ATan","ATan2","Sqr","Sqrt","Floor","Ceil","Exp","Log","Log10","Abs","Sgn","Mod","Rnd","Rand","SeedRnd","StringConcat","IntToString","FloatToString","Left","Right","Mid","Upper","Lower","Replace","Instr","Len","Trim","LTrim","RTrim","ReadFile","WriteFile","CloseFile","ReadInt","ReadFloat","ReadString","ReadByte","ReadShort","Eof","FileSize","FileType","ReadData","RestoreData","CreateBank","FreeBank","BankSize","ResizeBank","CopyBank","PeekByte","PokeByte","PeekInt","PokeInt","PeekFloat","PokeFloat","PeekShort","PokeShort","PlaySound","FreeSound","StopChannel","ChannelVolume","ChannelPaused","ChannelPlaying","FSOUND_Init","FSOUND_Stream_Open","FSOUND_Stream_Play","FSOUND_SetVolume","FSOUND_SetPaused","FSOUND_Stream_Stop","FSOUND_Close","ZlibWapi_Open","ZlibWapi_Close","ZlibWapi_GetFileCount","ZlibWapi_GetFileName","ZlibWapi_ExtractFile","Graphics3D","ClsColor","Color","GetColor","Rect","Oval","Line","Text","LoadImage","DrawImage","DrawBlock","TileImage","ImageWidth","ImageHeight","HandleImage","MidHandle","AutoMidHandle","MaskImage","ScaleImage","ResizeImage","FreeImage","CreateCamera","CreateLight","CreateMesh","PositionEntity","RotateEntity","ScaleEntity","MoveEntity","TurnEntity","EntityX","EntityY","EntityZ","EntityPitch","EntityYaw","EntityRoll","EntityDistance","EntityVisible","EntityInView","CreatePivot","FreeEntity","CopyEntity","EntityTexture","CreateSurface","AddVertex","AddTriangle","VertexColor","UpdateNormals","LoadMesh","LoadAnimMesh","Animate","SetAnimTime","RenderWorld","UpdateWorld","AmbientLight","LightColor","LightRange","CameraClsColor","CameraRange","CameraZoom","CameraProjMode","CameraViewport","FogMode","FogColor","FogRange","FogDensity","CreateCube","CreateSphere","LoadTexture","LoadAsset","GetAssetData","GetAssetSize","AnimTime","AnimLength","ExtractAnimSeq","AddAnimSeq","AnimSeq","Animating","WaitKey","Collisions","ClearCollisions","EntityType","EntityRadius","EntityPick","LinePick","GetMatPickX","GetMatPickY","GetMatPickZ","CountCollisions","CollisionX","CollisionY","CollisionZ","CollisionEntity","CollisionNX","CollisionNY","CollisionNZ","CollisionSurface","CollisionTriangle","KeyDown","KeyHit","MouseX","MouseY","MouseZ","MouseXSpeed","MouseYSpeed","MouseDown","MouseHit","MoveMouse","HidePointer","ShowPointer","EnablePointerLock"]]
+[Browser] --- Debug Frame 100 --- ["--- Debug Frame 100 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+[57687:883873:0118/203436.933309:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[Browser] --- Debug Frame 200 --- ["--- Debug Frame 200 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+[Browser] --- Debug Frame 300 --- ["--- Debug Frame 300 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+Test finished (TIMEOUT). Closing.

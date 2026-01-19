@@ -1,0 +1,623 @@
+# SCP Entity Patterns
+
+Skill for implementing SCP entity behaviors with standard patterns for observation, containment, breach, and unique mechanics.
+
+## When to Use
+
+Use this skill when:
+- Implementing a new SCP entity
+- Understanding existing SCP behaviors
+- Adding new mechanics to SCPs
+- Debugging SCP behaviors
+- Balancing SCP difficulty
+
+## SCP-173 Pattern (Observation)
+
+```blitzbasic
+; SCP-173 - The Sculpture
+; Moves when not observed
+; Snaps neck when close and unobserved
+
+Const NPC_SCP_173% = 1
+
+Type NPCs
+    Field obj%
+    Field Collider%
+    Field NPCtype%
+    Field State%
+    Field State2#      ; Time since last observed
+    Field State3#      ; Movement timer
+    Field Speed#
+    Field Observers%   ; Number of observers
+End Type
+
+Function UpdateSCP_173%(npc.NPCs)
+    If npc = Null Then Return False
+
+    ; Count observers
+    npc\Observers = CountObservers(npc)
+
+    ; Check if observed
+    observed% = (npc\Observers > 0)
+
+    Select npc\State
+        Case STATE_IDLE
+            If observed
+                ; Stay frozen
+                npc\State2 = 0
+                npc\State3 = 0
+            Else
+                ; Move towards player
+                npc\State3 = npc\State3 + 1
+                If npc\State3 > 30  ; Move every 0.5 seconds
+                    npc\State3 = 0
+                    If Distance(npc\obj, PlayerCollider) < 30.0
+                        MoveTowards(npc, PlayerCollider, npc\Speed)
+                    End If
+                End If
+            End If
+
+        Case STATE_SNAP
+            ; Kill attempt
+            If Distance(npc\obj, PlayerCollider) < 4.0 And Not observed
+                SnapPlayerNeck()
+            Else
+                npc\State = STATE_IDLE
+            End If
+    End Select
+
+    ; Snap check
+    If Distance(npc\obj, PlayerCollider) < 4.0
+        If Not observed
+            npc\State = STATE_SNAP
+        End If
+    End If
+
+    Return True
+End Function
+
+Function CountObservers%(npc.NPCs)
+    observers% = 0
+
+    ; Check player observation
+    If CanSeeEntity(npc\obj, Camera)
+        observers = observers + 1
+    End If
+
+    ; Check other NPC observations
+    For other.NPCs = Each NPCs
+        If other <> npc
+            If CanSeeEntity(npc\obj, other\obj)
+                observers = observers + 1
+            End If
+        End If
+    Next
+
+    Return observers
+End Function
+```
+
+## SCP-096 Pattern (View Trigger)
+
+```blitzbasic
+; SCP-096 - The Shy Guy
+; Docile until viewed
+; Unstoppable pursuit when triggered
+
+Const NPC_SCP_096% = 2
+
+Const STATE_SCP096_DOCILE% = 0
+Const STATE_SCP096_SCREAM% = 1
+Const STATE_SCP096_PURSUIT% = 2
+
+Type NPCs
+    Field State%         ; 0=docile, 1=scream, 2=pursuit
+    Field State2#        ; Agitation level
+    Field State3#        ; Time triggered
+    Field Triggered%     ; Has been viewed
+    Field SeenByScreenshot%  ; Seen via screenshot
+End Type
+
+Function UpdateSCP_096%(npc.NPCs)
+    If npc = Null Then Return False
+
+    Select npc\State
+        Case STATE_SCP096_DOCILE
+            ; Check if viewed
+            If PlayerHasViewedSCP(npc)
+                npc\Triggered = True
+                npc\State = STATE_SCP096_SCREAM
+                npc\State2 = 0
+                PlaySound("sfx/scp096_scream.wav")
+            End If
+
+        Case STATE_SCP096_SCREAM
+            ; Screaming animation
+            npc\State2 = npc\State2 + 1
+
+            If npc\State2 > 120  ; 2 seconds
+                npc\State = STATE_SCP096_PURSUIT
+                npc\State3 = GetGameTime()
+            End If
+
+        Case STATE_SCP096_PURSUIT
+            ; Move towards player
+            dist# = Distance(npc\obj, PlayerCollider)
+
+            If dist > 2.0
+                ; Move fast
+                MoveTowards(npc, PlayerCollider, npc\Speed * 1.5)
+            Else
+                ; Kill player
+                KillPlayer("SCP-096")
+            End If
+
+            ; Cannot stop pursuit
+            ; Door breaking
+            If dist < 10.0
+                BreakDoorsInPath(npc)
+            End If
+    End Select
+
+    Return True
+End Function
+
+Function PlayerHasViewedSCP%(npc.NPCs)
+    ; Direct line of sight
+    If CanSeeEntity(npc\obj, Camera)
+        Return True
+    End If
+
+    ; Screenshot taken
+    If npc\SeenByScreenshot
+        Return True
+    End If
+
+    ; Photo viewed
+    If PlayerViewedPhotoOfSCP(npc)
+        Return True
+    End If
+
+    Return False
+End Function
+```
+
+## SCP-106 Pattern (Corrosion)
+
+```blitzbasic
+; SCP-106 - The Old Man
+; Emerges from surfaces
+; Corrosion attack
+; Pocket dimension pull
+
+Const NPC_SCP_106% = 3
+
+Const STATE_SCP106_HUNTING% = 0
+Const STATE_SCP106_EMERGE% = 1
+Const STATE_SCP106_ATTACK% = 2
+Const STATE_SCP106_SUBMERGE% = 3
+
+Type NPCs
+    Field State%
+    Field State2#        ; Corrosion level
+    Field State3#        ; Emerge timer
+    Field EmergePoint#   ; Where to emerge
+    Field PullStrength#  ; Pocket dimension pull
+    Field InPocketDim%   ; Currently in dimension
+End Type
+
+Function UpdateSCP_106%(npc.NPCs)
+    If npc = Null Then Return False
+
+    Select npc\State
+        Case STATE_SCP106_HUNTING
+            ; Move through walls towards player
+            dist# = Distance(npc\obj, PlayerCollider)
+
+            If dist < 15.0
+                ; Emerge to attack
+                npc\State = STATE_SCP106_EMERGE
+                npc\State3 = 0
+                SetEmergePoint(npc)
+            Else
+                ; Move through walls
+                MoveThroughWalls(npc, PlayerCollider, npc\Speed * 0.5)
+            End If
+
+        Case STATE_SCP106_EMERGE
+            ; Emerge animation
+            npc\State3 = npc\State3 + 1
+
+            If npc\State3 > 60  ; Emerged
+                npc\State = STATE_SCP106_ATTACK
+
+                ; Corrosion damage
+                If Distance(npc\obj, PlayerCollider) < 8.0
+                    ApplyCorrosionDamage(npc)
+                End If
+
+                ; Pull to dimension
+                If Distance(npc\obj, PlayerCollider) < 4.0
+                    PullToPocketDimension(npc)
+                End If
+            End If
+
+        Case STATE_SCP106_ATTACK
+            npc\State3 = npc\State3 + 1
+
+            If npc\State3 > 180  ; 3 seconds attack
+                npc\State = STATE_SCP106_SUBMERGE
+                npc\State3 = 0
+            End If
+
+        Case STATE_SCP106_SUBMERGE
+            ; Submerge animation
+            npc\State3 = npc\State3 + 1
+
+            If npc\State3 > 60  ; Submerged
+                npc\State = STATE_SCP106_HUNTING
+                npc\InPocketDim = True
+                TeleportToDimension(npc)
+            End If
+    End Select
+
+    Return True
+End Function
+
+Function ApplyCorrosionDamage%(npc.NPCs)
+    ; Corrosion deals damage over time
+    damage# = npc\State2 * 0.5  ; Based on corrosion level
+    DamagePlayer(damage)
+
+    ; Visual effect
+    ShowCorrosionEffect(PlayerCollider)
+
+    ; Increase corrosion
+    npc\State2 = Min(npc\State2 + 1, 100)
+End Function
+
+Function PullToPocketDimension%(npc.NPCs)
+    ; Pull player into pocket dimension
+    npc\PullStrength = npc\PullStrength + 1
+
+    If npc\PullStrength > 10
+        ; Successful pull
+        TeleportPlayerToDimension(npc)
+        npc\PullStrength = 0
+    Else
+        ; Pull effect
+        PullPlayerTowards(npc, npc\PullStrength * 0.5)
+    End If
+End Function
+```
+
+## SCP-049 Pattern (Cure)
+
+```blitzbasic
+; SCP-049 - The Plague Doctor
+; Approaches and attempts to cure
+; Touch kills
+; Can revive as SCP-049-2
+
+Const NPC_SCP_049% = 4
+
+Const STATE_SCP049_IDLE% = 0
+Const STATE_SCP049_APPROACH% = 1
+Const STATE_SCP049_DIAGNOSE% = 2
+Const STATE_SCP049_CURE% = 3
+Const STATE_SCP049_REVIVE% = 4
+
+Type NPCs
+    Field State%
+    Field State2#        ; Cure timer
+    Field State3#        ; Revival progress
+    Field DialogueIndex% ; Current dialogue
+    Field Cured%         ; Has cured player
+End Type
+
+Function UpdateSCP_049%(npc.NPCs)
+    If npc = Null Then Return False
+
+    Select npc\State
+        Case STATE_SCP049_IDLE
+            ; Notice player
+            If Distance(npc\obj, PlayerCollider) < 30.0
+                npc\State = STATE_SCP049_APPROACH
+                npc\DialogueIndex = 0
+            End If
+
+        Case STATE_SCP049_APPROACH
+            ; Move towards player
+            dist# = Distance(npc\obj, PlayerCollider)
+
+            If dist > 5.0
+                MoveTowards(npc, PlayerCollider, npc\Speed)
+            Else
+                npc\State = STATE_SCP049_DIAGNOSE
+                npc\State2 = 0
+            End If
+
+        Case STATE_SCP049_DIAGNOSE
+            ; Dialogue
+            npc\State2 = npc\State2 + 1
+
+            If npc\State2 > 120  ; After dialogue
+                npc\State = STATE_SCP049_CURE
+                npc\State2 = 0
+            End If
+
+        Case STATE_SCP049_CURE
+            ; Attempt to cure
+            npc\State2 = npc\State2 + 1
+
+            If npc\State2 > 60  ; Touch player
+                ; Touch kills
+                KillPlayer("SCP-049")
+
+                ; Start revival
+                npc\State = STATE_SCP049_REVIVE
+                npc\State3 = 0
+
+                ; Create SCP-049-2
+                SpawnSCP0492(npc)
+            End If
+
+        Case STATE_SCP049_REVIVE
+            ; Wait for revival
+            npc\State3 = npc\State3 + 1
+
+            If npc\State3 > 300  ; 5 seconds
+                npc\State = STATE_SCP049_IDLE
+            End If
+    End Select
+
+    Return True
+End Function
+
+Function SpawnSCP0492%(parentNPC.NPCs)
+    npc.NPCs = New NPCs
+    npc\NPCtype = NPC_SCP_049_2
+    npc\obj = LoadAnimMesh("GFX/npcs/scp_049-2.b3d")
+    PositionEntity npc\obj, EntityX(parentNPC\obj), EntityY(parentNPC\obj), EntityZ(parentNPC\obj)
+End Function
+```
+
+## SCP-939 Pattern (Pack Hunt)
+
+```blitzbasic
+; SCP-939 - With Many Voices
+; Pack behavior
+; Mimics voices
+; Cannot see, relies on sound
+
+Const NPC_SCP_939% = 5
+
+Const STATE_SCP939_IDLE% = 0
+Const STATE_SCP939_STALK% = 1
+Const STATE_SCP939_HUNT% = 2
+Const STATE_SCP939_ATTACK% = 3
+
+Type NPCs
+    Field State%
+    Field State2#        ; Stalk timer
+    Field State3#        ; Voice mimic target
+    Field PackID%        ; Which pack
+    Field CanSee%        ; Always False for 939
+End Type
+
+Function UpdateSCP_939%(npc.NPCs)
+    If npc = Null Then Return False
+
+    ; 939 cannot see
+    npc\CanSee = False
+
+    Select npc\State
+        Case STATE_SCP939_IDLE
+            ; Listen for prey
+            soundLevel# = GetSoundLevelAt(npc\obj)
+
+            If soundLevel > 20
+                ; Heard something
+                npc\State = STATE_SCP939_STALK
+                npc\State2 = 0
+                TurnTowardsSound(npc)
+            Else
+                ; Wander with pack
+                WanderWithPack(npc)
+            End If
+
+        Case STATE_SCP939_STALK
+            ; Move towards sound
+            MoveTowardsSound(npc)
+            npc\State2 = npc\State2 + 1
+
+            ; Mimic voices
+            If Rand(1, 100) < 5
+                MimicRandomVoice(npc)
+            End If
+
+            ; Found player
+            If Distance(npc\obj, PlayerCollider) < 15.0
+                npc\State = STATE_SCP939_HUNT
+                npc\State2 = 0
+
+                ; Alert pack
+                AlertPack(npc\PackID)
+            End If
+
+            ; Lost sound
+            If npc\State2 > 180  ; 3 seconds
+                npc\State = STATE_SCP939_IDLE
+            End If
+
+        Case STATE_SCP939_HUNT
+            ; Chase player
+            MoveTowards(npc, PlayerCollider, npc\Speed * 1.2)
+            npc\State2 = npc\State2 + 1
+
+            ; Attack when close
+            If Distance(npc\obj, PlayerCollider) < 2.0
+                npc\State = STATE_SCP939_ATTACK
+            End If
+
+            ; Give up after 30 seconds
+            If npc\State2 > 1800
+                npc\State = STATE_SCP939_IDLE
+            End If
+
+        Case STATE_SCP939_ATTACK
+            ; Single attack
+            DamagePlayer(25)
+            PlaySound("sfx/scp_939_attack.wav")
+            npc\State = STATE_SCP939_HUNT
+    End Select
+
+    Return True
+End Function
+
+Function MimicRandomVoice%(npc.NPCs)
+    ; Pick random voice to mimic
+    voices$ = "scp173_breath,scp096_scream,scp049_diag,human_scream,door_open"
+    voice$ = PickRandom(voices$)
+
+    PlaySound3D(voice$, npc\obj)
+    npc\State3 = GetVoiceType(voice$)
+End Function
+
+Function WanderWithPack%(npc.NPCs)
+    ; Move with pack center
+    packCenter# = GetPackCenter(npc\PackID)
+
+    If Distance(npc\obj, packCenter) > 10.0
+        MoveTowards(npc, packCenter, npc\Speed * 0.5)
+    Else
+        ; Random movement around pack
+        MoveRandom(npc, 2.0)
+    End If
+End Function
+```
+
+## Generic SCP Template
+
+```blitzbasic
+; Template for new SCP
+; Run: GenerateSCP "SCP_XXX" category
+
+Type SCP_Config
+    Field ID%
+    Field Name$
+    Field Category%       ; SAFE, EUCLID, KETER
+    Field DangerLevel%    ; 1-10
+    Field Containment%    ; Difficulty to contain
+    Field BreachChance%   ; % chance of breach
+    Field Behavior$       ; Behavior description
+End Type
+
+; Standard SCP functions
+Function CreateSCP%(scpType%)
+    npc.NPCs = New NPCs
+    npc\NPCtype = scpType
+    npc\ID = GetUniqueNPCID()
+
+    ; Load model
+    npc\obj = LoadAnimMesh("GFX/npcs/" + SCPFilename$(scpType) + ".b3d")
+
+    ; Set initial state
+    npc\State = STATE_IDLE
+
+    ; Load SCP-specific config
+    LoadSCPConfig(scpType, npc)
+
+    Return Handle(npc)
+End Function
+
+Function LoadSCPConfig%(scpType%, npc.NPCs)
+    config.SCP_Config = GetSCPConfig(scpType)
+
+    npc\Speed# = config\DangerLevel * 0.5 + 2.0
+    npc\Health# = config\DangerLevel * 20 + 50
+
+    ; Set containment breach timer
+    npc\State2 = 0
+    npc\State3 = config\BreachChance
+End Function
+
+Function UpdateSCP%(npc.NPCs)
+    ; Standard SCP update
+    If npc\State3 > 0  ; Breach chance
+        npc\State2 = npc\State2 + 1
+
+        ; Random breach check
+        If npc\State2 > 3600  ; Check every minute
+            npc\State2 = 0
+            If Rand(1, 100) < npc\State3
+                TriggerBreach(npc)
+            End If
+        End If
+    End If
+
+    ; SCP-specific update
+    Select npc\NPCtype
+        Case NPC_SCP_173: UpdateSCP_173(npc)
+        Case NPC_SCP_096: UpdateSCP_096(npc)
+        Case NPC_SCP_106: UpdateSCP_106(npc)
+        Case NPC_SCP_049: UpdateSCP_049(npc)
+        Case NPC_SCP_939: UpdateSCP_939(npc)
+        Default: UpdateSCP_Generic(npc)
+    End Select
+End Function
+```
+
+## Containment Mechanics
+
+```blitzbasic
+; SCP containment system
+Global SCP_CONTAINED[NUM_SCP_TYPES]
+Global SCP_BREACHED[NUM_SCP_TYPES]
+
+Function CheckContainment%(scpType%)
+    ; Returns True if SCP is contained
+    Return SCP_CONTAINED[scpType]
+End Function
+
+Function BreachSCP%(scpType%)
+    ; Trigger breach
+    SCP_BREACHED[scpType] = True
+    SCP_CONTAINED[scpType] = False
+
+    ; Play breach sound
+    PlaySound("sfx/scp_breach.wav")
+
+    ; Show warning
+    ShowSCPWarning(scpType)
+
+    ; Notify player
+    ShowMessage("WARNING: SCP-" + GetSCPNumber(scpType) + " has breached containment!")
+
+    ; Spawn NPC
+    npc = CreateSCP(scpType)
+    PositionEntity npc\obj, GetContainmentPosition(scpType)
+End Function
+
+Function ContainSCP%(scpType%)
+    ; Return to containment
+    SCP_BREACHED[scpType] = False
+    SCP_CONTAINED[scpType] = True
+
+    ; Remove NPC
+    RemoveSCP(scpType)
+
+    ; Show message
+    ShowMessage("SCP-" + GetSCPNumber(scpType) + " has been contained.")
+End Function
+```
+
+## Quick Reference
+
+| SCP | Key Mechanic | State Pattern |
+|-----|--------------|---------------|
+| 173 | Observation freeze | IDLE→SNAP when close & unobserved |
+| 096 | View trigger | DOCILE→SCREAM→PURSUIT |
+| 106 | Corrosion/pull | HUNT→EMERGE→ATTACK→SUBMERGE |
+| 049 | Cure attempt | IDLE→APPROACH→DIAGNOSE→CURE |
+| 939 | Pack/sound | IDLE→STALK→HUNT→ATTACK |

@@ -1,0 +1,577 @@
+# Test Generator
+
+Skill for automatically creating tests for game functions, NPC behaviors, and game mechanics in SCPB.
+
+## When to Use
+
+Use this skill when:
+- Writing tests for new features
+- Creating regression tests for bugs
+- Generating unit tests automatically
+- Testing NPC behaviors
+- Testing game mechanics
+- Building test coverage
+
+## Generate Test Command
+
+```blitzbasic
+; Command format:
+; GenerateTest target$, [options]
+;
+; Examples:
+; GenerateTest "NPC_SCP_173" type="behavior"
+; GenerateTest "Inventory" type="system"
+; GenerateTest "SaveGame" type="save_load"
+; GenerateTest "All" type="full"
+```
+
+## NPC Behavior Test Generator
+
+```blitzbasic
+; Generate tests for NPC behavior
+; Run: GenerateTest "NPC_SCP_173" type="behavior"
+
+Function GenerateNPCTests(npcType$)
+    file$ = "Test_" + npcType$ + ".bb"
+    file = WriteFile(file$)
+
+    ; Header
+    WriteLine file, "; Tests for " + npcType$
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+
+    ; Test setup
+    WriteLine file, "Function Setup" + npcType$ + "Tests()"
+    WriteLine file, "    ; Reset game state"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    ; Load specific room if needed"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Generate state tests
+    WriteLine file, "; === STATE MACHINE TESTS ==="
+    WriteLine file, ""
+    WriteLine file, "Function Test_" + npcType$ + "_InitialState()"
+    WriteLine file, "    Setup" + npcType$ + "Tests()"
+    WriteLine file, ""
+    WriteLine file, "    ; Create NPC"
+    WriteLine file, "    npc = CreateNPC(NPC_" + Upper(npcType$) + ")"
+    WriteLine file, ""
+    WriteLine file, "    ; Verify initial state"
+    WriteLine file, "    AssertEqual(npc\State, STATE_IDLE, ""Initial state should be IDLE"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Generate detection tests
+    WriteLine file, "; === DETECTION TESTS ==="
+    WriteLine file, ""
+    WriteLine file, "Function Test_" + npcType$ + "_Detection()"
+    WriteLine file, "    Setup" + npcType$ + "Tests()"
+    WriteLine file, ""
+    WriteLine file, "    npc = CreateNPC(NPC_" + Upper(npcType$) + ")"
+    WriteLine file, ""
+    WriteLine file, "    ; Test: Player in range but not visible"
+    WriteLine file, "    PositionEntity Player, 5, 0, 5  ; Within range"
+    WriteLine file, "    PositionEntity npc\obj, 0, 0, 0"
+    WriteLine file, "    LookAway()"
+    WriteLine file, "    AssertFalse(CanSeePlayer(npc), ""Should not see player when not looking"")"
+    WriteLine file, ""
+    WriteLine file, "    ; Test: Player visible"
+    WriteLine file, "    LookAt(npc\obj)"
+    WriteLine file, "    AssertTrue(CanSeePlayer(npc), ""Should see player when looking"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Generate state transition tests
+    WriteLine file, "; === STATE TRANSITION TESTS ==="
+    WriteLine file, ""
+    WriteLine file, "Function Test_" + npcType$ + "_StateTransitions()"
+    WriteLine file, "    Setup" + npcType$ + "Tests()"
+    WriteLine file, ""
+    WriteLine file, "    npc = CreateNPC(NPC_" + Upper(npcType$) + ")"
+    WriteLine file, "    AssertEqual(npc\State, STATE_IDLE, ""Start in IDLE"")"
+    WriteLine file, ""
+    WriteLine file, "    ; Transition: IDLE -> HUNTING"
+    WriteLine file, "    MovePlayerNearNPC(npc, 5.0)"
+    WriteLine file, "    LookAt(npc\obj)"
+    WriteLine file, "    UpdateNPCs()"
+    WriteLine file, "    AssertEqual(npc\State, STATE_HUNTING, ""Should transition to HUNTING"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Generate movement tests
+    WriteLine file, "; === MOVEMENT TESTS ==="
+    WriteLine file, ""
+    WriteLine file, "Function Test_" + npcType$ + "_Movement()"
+    WriteLine file, "    Setup" + npcType$ + "Tests()"
+    WriteLine file, ""
+    WriteLine file, "    npc = CreateNPC(NPC_" + Upper(npcType$) + ")"
+    WriteLine file, "    startPos# = EntityX(npc\obj)"
+    WriteLine file, ""
+    WriteLine file, "    ; Test: Movement when hunting"
+    WriteLine file, "    npc\State = STATE_HUNTING"
+    WriteLine file, "    PositionEntity Player, 10, 0, 10"
+    WriteLine file, "    UpdateNPCs()"
+    WriteLine file, "    endPos# = EntityX(npc\obj)"
+    WriteLine file, "    AssertNotEqual(startPos, endPos, ""NPC should move when hunting"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Generate attack tests
+    WriteLine file, "; === ATTACK TESTS ==="
+    WriteLine file, ""
+    WriteLine file, "Function Test_" + npcType$ + "_Attack()"
+    WriteLine file, "    Setup" + npcType$ + "Tests()"
+    WriteLine file, ""
+    WriteLine file, "    npc = CreateNPC(NPC_" + Upper(npcType$) + ")"
+    WriteLine file, "    PlayerHealth = 100"
+    WriteLine file, ""
+    WriteLine file, "    ; Move into attack range"
+    WriteLine file, "    npc\State = STATE_ATTACK"
+    WriteLine file, "    PositionEntity Player, 0, 0, 2"
+    WriteLine file, "    UpdateNPCs()"
+    WriteLine file, ""
+    WriteLine file, "    ; Verify damage"
+    WriteLine file, "    Assert(PlayerHealth < 100, ""Player should take damage"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write test runner
+    WriteLine file, "; === TEST RUNNER ==="
+    WriteLine file, ""
+    WriteLine file, "Function Run" + npcType$ + "Tests()"
+    WriteLine file, "    Print ""Running " + npcType$ + " tests..."")"
+    WriteLine file, "    Test_" + npcType$ + "_InitialState()"
+    WriteLine file, "    Test_" + npcType$ + "_Detection()"
+    WriteLine file, "    Test_" + npcType$ + "_StateTransitions()"
+    WriteLine file, "    Test_" + npcType$ + "_Movement()"
+    WriteLine file, "    Test_" + npcType$ + "_Attack()"
+    WriteLine file, "    Print ""Tests complete."")"
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+    Print "Generated: " + file$
+End Function
+```
+
+## System Test Generator
+
+```blitzbasic
+; Generate tests for game systems
+; Run: GenerateTest "Inventory" type="system"
+
+Function GenerateSystemTests(system$)
+    Select system$
+        Case "Inventory"
+            GenerateInventoryTests()
+        Case "SaveLoad"
+            GenerateSaveLoadTests()
+        Case "Blink"
+            GenerateBlinkTests()
+        Case "Sanity"
+            GenerateSanityTests()
+        Case "Stamina"
+            GenerateStaminaTests()
+    End Select
+End Function
+
+Function GenerateInventoryTests()
+    file$ = "Test_Inventory.bb"
+    file = WriteFile(file$)
+
+    ; Header
+    WriteLine file, "; Tests for Inventory system"
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+
+    ; Test: Empty inventory
+    WriteLine file, "Function Test_Inventory_Empty()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AssertEqual(CountInventoryItems(), 0, ""Inventory should start empty"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Add item
+    WriteLine file, "Function Test_Inventory_AddItem()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AddItemToInventory(ITEM_MEDKIT)"
+    WriteLine file, "    AssertEqual(CountInventoryItems(), 1, ""Should have 1 item"")"
+    WriteLine file, "    AssertTrue(PlayerHasItem(ITEM_MEDKIT), ""Should have medkit"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Remove item
+    WriteLine file, "Function Test_Inventory_RemoveItem()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AddItemToInventory(ITEM_MEDKIT)"
+    WriteLine file, "    RemoveItemFromInventory(ITEM_MEDKIT)"
+    WriteLine file, "    AssertEqual(CountInventoryItems(), 0, ""Inventory should be empty"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Max capacity
+    WriteLine file, "Function Test_Inventory_MaxCapacity()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    For i = 1 To MaxInventorySlots() + 1"
+    WriteLine file, "        AddItemToInventory(ITEM_BATTERY)"
+    WriteLine file, "    Next"
+    WriteLine file, "    AssertEqual(CountInventoryItems(), MaxInventorySlots(), ""Should not exceed max"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Item combination
+    WriteLine file, "Function Test_Inventory_Combine()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AddItemToInventory(ITEM_BATTERY)"
+    WriteLine file, "    AddItemToInventory(ITEM_FLASHLIGHT)"
+    WriteLine file, "    SelectItem(ITEM_BATTERY)"
+    WriteLine file, "    CombineWith(ITEM_FLASHLIGHT)"
+    WriteLine file, "    AssertTrue(PlayerHasItem(ITEM_WORKING_FLASHLIGHT), ""Should create working flashlight"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Keycard access
+    WriteLine file, "Function Test_Inventory_Keycards()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AssertFalse(PlayerHasKeycard(RED), ""Should not have red keycard"")"
+    WriteLine file, "    AddItemToInventory(ITEM_KEYCARD_RED)"
+    WriteLine file, "    AssertTrue(PlayerHasKeycard(RED), ""Should have red keycard"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Drag and drop
+    WriteLine file, "Function Test_Inventory_DragDrop()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AddItemToInventory(ITEM_MEDKIT)"
+    WriteLine file, "    AddItemToInventory()"
+    WriteLine file, "   ITEM_BANDAGE DragItem(0, 2)"
+    WriteLine file, "    AssertEqual(ItemAtSlot(2), ITEM_MEDKIT, ""Item should move to slot 2"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write test runner
+    WriteLine file, "Function RunInventoryTests()"
+    WriteLine file, "    Print ""Running Inventory tests..."")"
+    WriteLine file, "    Test_Inventory_Empty()"
+    WriteLine file, "    Test_Inventory_AddItem()"
+    WriteLine file, "    Test_Inventory_RemoveItem()"
+    WriteLine file, "    Test_Inventory_MaxCapacity()"
+    WriteLine file, "    Test_Inventory_Combine()"
+    WriteLine file, "    Test_Inventory_Keycards()"
+    WriteLine file, "    Test_Inventory_DragDrop()"
+    WriteLine file, "    Print ""Inventory tests complete."")"
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+End Function
+```
+
+## Save/Load Test Generator
+
+```blitzbasic
+Function GenerateSaveLoadTests()
+    file$ = "Test_SaveLoad.bb"
+    file = WriteFile(file$)
+
+    ; Header
+    WriteLine file, "; Tests for Save/Load system"
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+
+    ; Test: Save file creation
+    WriteLine file, "Function Test_SaveLoad_CreateFile()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, "    AssertTrue(SaveFileExists(0), ""Save file should be created"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Health persistence
+    WriteLine file, "Function Test_SaveLoad_Health()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    PlayerHealth = 75"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertEqual(PlayerHealth, 75, ""Health should persist"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Room persistence
+    WriteLine file, "Function Test_SaveLoad_Room()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    SetPlayerRoom(ROOM_LCZ_012)"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertEqual(PlayerRoom, ROOM_LCZ_012, ""Room should persist"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Inventory persistence
+    WriteLine file, "Function Test_SaveLoad_Inventory()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    AddItemToInventory(ITEM_KEYCARD_RED)"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertTrue(PlayerHasItem(ITEM_KEYCARD_RED), ""Inventory should persist"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: NPC state persistence
+    WriteLine file, "Function Test_SaveLoad_NPCState()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    KillNPC(NPC_SCP_173)"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertTrue(NPCDead(NPC_SCP_173), ""NPC death should persist"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Multiple slots
+    WriteLine file, "Function Test_SaveLoad_MultipleSlots()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    PlayerHealth = 100"
+    WriteLine file, "    SaveGame(0)"
+    WriteLine file, ""
+    WriteLine file, "    PlayerHealth = 50"
+    WriteLine file, "    SaveGame(1)"
+    WriteLine file, ""
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertEqual(PlayerHealth, 100, ""Slot 0 should have full health"")"
+    WriteLine file, ""
+    WriteLine file, "    LoadGame(1)"
+    WriteLine file, "    AssertEqual(PlayerHealth, 50, ""Slot 1 should have reduced health"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Test: Corrupted save
+    WriteLine file, "Function Test_SaveLoad_Corrupted()"
+    WriteLine file, "    StartNewGame()"
+    WriteLine file, "    ; Corrupt save file"
+    WriteLine file, "    WriteString(""save0.sav"", ""CORRUPTED"")"
+    WriteLine file, ""
+    WriteLine file, "    ; Should handle gracefully"
+    WriteLine file, "    LoadGame(0)"
+    WriteLine file, "    AssertTrue(ShowedError(), ""Should show error for corrupted save"")"
+    WriteLine file, "End Function"
+    WriteLine file, ""
+
+    ; Write test runner
+    WriteLine file, "Function RunSaveLoadTests()"
+    WriteLine file, "    Print ""Running Save/Load tests..."")"
+    WriteLine file, "    Test_SaveLoad_CreateFile()"
+    WriteLine file, "    Test_SaveLoad_Health()"
+    WriteLine file, "    Test_SaveLoad_Room()"
+    WriteLine file, "    Test_SaveLoad_Inventory()"
+    WriteLine file, "    Test_SaveLoad_NPCState()"
+    WriteLine file, "    Test_SaveLoad_MultipleSlots()"
+    WriteLine file, "    Test_SaveLoad_Corrupted()"
+    WriteLine file, "    Print ""Save/Load tests complete."")"
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+End Function
+```
+
+## Complete Test Generator
+
+```blitzbasic
+; Main test generator
+Function GenerateTest%(target$, options$ = "")
+    ; Parse options
+    testType$ = ParseOptionStr(options$, "type")
+
+    Select Lower(target$)
+        Case "npc_scp_173"
+            GenerateNPCTests("SCP_173")
+        Case "npc_scp_096"
+            GenerateNPCTests("SCP_096")
+        Case "npc_scp_106"
+            GenerateNPCTests("SCP_106")
+        Case "npc_scp_049"
+            GenerateNPCTests("SCP_049")
+        Case "inventory"
+            GenerateSystemTests("Inventory")
+        Case "saveload"
+            GenerateSystemTests("SaveLoad")
+        Case "blink"
+            GenerateSystemTests("Blink")
+        Case "sanity"
+            GenerateSystemTests("Sanity")
+        Case "stamina"
+            GenerateSystemTests("Stamina")
+        Case "all"
+            GenerateAllTests()
+    End Select
+
+    Return True
+End Function
+
+Function GenerateAllTests()
+    ; Generate all test files
+    GenerateNPCTests("SCP_173")
+    GenerateNPCTests("SCP_096")
+    GenerateNPCTests("SCP_106")
+    GenerateNPCTests("SCP_049")
+    GenerateSystemTests("Inventory")
+    GenerateSystemTests("SaveLoad")
+    GenerateSystemTests("Blink")
+    GenerateSystemTests("Sanity")
+    GenerateSystemTests("Stamina")
+
+    ; Generate master test runner
+    file$ = "Test_All.bb"
+    file = WriteFile(file$)
+
+    WriteLine file, "; All Tests Runner"
+    WriteLine file, "; Generated: " + Date()
+    WriteLine file, ""
+    WriteLine file, "Function RunAllTests()"
+    WriteLine file, "    Print ""================================="""
+    WriteLine file, "    Print ""    RUNNING ALL TESTS"""
+    WriteLine file, "    Print ""================================="""
+    WriteLine file, ""
+    WriteLine file, "    ; NPC Tests"
+    WriteLine file, "    RunSCP173Tests()"
+    WriteLine file, "    RunSCP096Tests()"
+    WriteLine file, "    RunSCP106Tests()"
+    WriteLine file, "    RunSCP049Tests()"
+    WriteLine file, ""
+    WriteLine file, "    ; System Tests"
+    WriteLine file, "    RunInventoryTests()"
+    WriteLine file, "    RunSaveLoadTests()"
+    WriteLine file, "    RunBlinkTests()"
+    WriteLine file, "    RunSanityTests()"
+    WriteLine file, "    RunStaminaTests()"
+    WriteLine file, ""
+    WriteLine file, "    Print ""================================="""
+    WriteLine file, "    Print ""ALL TESTS COMPLETE"""
+    WriteLine file, "    Print ""================================="""
+    WriteLine file, "End Function"
+
+    CloseFile(file)
+End Function
+```
+
+## Assertion Library
+
+```blitzbasic
+; Test assertions
+Global TEST_PASSED%
+Global TEST_FAILED%
+Global TEST_ASSERTIONS%
+
+Function AssertTrue%(condition%, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If condition
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$
+        Return False
+    End If
+End Function
+
+Function AssertFalse%(condition%, message$)
+    Return AssertTrue(Not condition, message$)
+End Function
+
+Function AssertEqual%(actual#, expected#, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If Abs(actual - expected) < 0.01
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (expected " + expected + ", got " + actual + ")"
+        Return False
+    End If
+End Function
+
+Function AssertNotEqual%(actual#, expected#, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If Abs(actual - expected) >= 0.01
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (values should differ)"
+        Return False
+    End If
+End Function
+
+Function AssertGreater%(actual#, expected#, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If actual > expected
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (" + actual + " not > " + expected + ")"
+        Return False
+    End If
+End Function
+
+Function AssertLess%(actual#, expected#, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If actual < expected
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (" + actual + " not < " + expected + ")"
+        Return False
+    End If
+End Function
+
+Function AssertNull%(value%, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If value = 0
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (value should be null)"
+        Return False
+    End If
+End Function
+
+Function AssertNotNull%(value%, message$)
+    TEST_ASSERTIONS = TEST_ASSERTIONS + 1
+    If value <> 0
+        TEST_PASSED = TEST_PASSED + 1
+        Return True
+    Else
+        TEST_FAILED = TEST_FAILED + 1
+        Print "FAIL: " + message$ + " (value should not be null)"
+        Return False
+    End If
+End Function
+```
+
+## Usage Examples
+
+```blitzbasic
+; Generate tests for specific NPC
+GenerateTest "NPC_SCP_173"
+
+; Generate tests for game system
+GenerateTest "Inventory"
+
+; Generate all tests
+GenerateTest "All"
+
+; With options
+GenerateTest "NPC_SCP_096" type="behavior"
+GenerateTest "SaveLoad" type="save_load"
+```
+
+## Quick Reference
+
+| Command | Generates |
+|---------|----------|
+| `GenerateTest "NPC_SCP_173"` | Tests for SCP-173 behavior |
+| `GenerateTest "Inventory"` | Inventory system tests |
+| `GenerateTest "SaveLoad"` | Save/load tests |
+| `GenerateTest "Blink"` | Blink system tests |
+| `GenerateTest "All"` | All test files |

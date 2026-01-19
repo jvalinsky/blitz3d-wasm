@@ -1,0 +1,427 @@
+# Code Refactoring
+
+Skill for refactoring BlitzBasic code including renaming, extracting functions, updating type fields, and improving code structure.
+
+## When to Use
+
+Use this skill when:
+- Renaming variables or functions across files
+- Extracting duplicate code into functions
+- Updating Type field definitions
+- Improving code structure
+- Adding consistent error handling
+- Standardizing code patterns
+
+## Rename Refactoring
+
+### Rename Function
+
+```blitzbasic
+; Rename a function across all files
+; Run: RenameFunction "OldName" "NewName"
+
+Function RenameFunction%(oldName$, newName$)
+    ; Find all occurrences
+    files$ = FindFiles("*.bb")
+
+    ForEach file$ in files$
+        content$ = ReadFile(file$)
+
+        ; Replace function definition
+        content$ = Replace(content$, "Function " + oldName$, "Function " + newName$)
+
+        ; Replace function calls
+        content$ = Replace(content$, oldName$ + "(", newName$ + "(")
+
+        ; Write back
+        WriteFile(file$, content$)
+    Next
+
+    Print "Renamed " + oldName$ + " to " + newName$ + " in " + CountFiles(files$) + " files"
+End Function
+
+; Example usage
+; RenameFunction "OldUpdateNPC" "UpdateNPCv2"
+; RenameFunction "CreateNPC_Old" "CreateNPC_New"
+```
+
+### Rename Variable
+
+```blitzbasic
+; Rename a variable across all files
+; Run: RenameVariable "oldVar" "newVar" scope="global|local|all"
+
+Function RenameVariable%(oldVar$, newVar$, scope$ = "all")
+    files$ = FindFiles("*.bb")
+
+    ForEach file$ in files$
+        content$ = ReadFile(file$)
+
+        ; Only process if not in strings
+        lines$ = SplitLines(content$)
+
+        ForEach line$ in lines$
+            ; Skip if in string
+            If Not InString(line$, """ + oldVar$ + """)
+
+                ; Replace variable usage
+                ; Be careful with partial matches
+                pattern$ = "(^|[^a-zA-Z0-9_])" + oldVar$ + "([^a-zA-Z0-9_])"
+                replacement$ = "$1" + newVar$ + "$2"
+
+                line$ = RegexReplace(line$, pattern$, replacement$)
+            End If
+        Next
+
+        WriteFile(file$, JoinLines(lines$))
+    Next
+End Function
+
+; Example usage
+; RenameVariable "oldHealth" "PlayerHealth"
+; RenameVariable "tempNPC" "currentNPC" scope="local"
+```
+
+### Rename Type
+
+```blitzbasic
+; Rename a Type definition
+; Run: RenameType "OldType" "NewType"
+
+Function RenameType%(oldType$, newType$)
+    files$ = FindFiles("*.bb")
+
+    ForEach file$ in files$
+        content$ = ReadFile(file$)
+
+        ; Replace Type definition
+        content$ = Replace(content$, "Type " + oldType$, "Type " + newType$)
+
+        ; Replace variable declarations
+        content$ = Replace(content$, oldType$ + ".", newType$ + ".")
+
+        ; Replace New statements
+        content$ = Replace(content$, "New " + oldType$, "New " + newType$)
+
+        ; Replace Handle calls
+        content$ = Replace(content$, "Handle(" + oldType$, "Handle(" + newType$)
+
+        WriteFile(file$, content$)
+    Next
+End Function
+
+; Example usage
+; RenameType "NPC" "NPCs"
+; RenameType "Item" "Items"
+```
+
+## Extract Function
+
+### Extract Duplicate Code
+
+```blitzbasic
+; Extract duplicate code into a new function
+; Run: ExtractFunction startLine endLine newFunctionName
+
+Function ExtractFunction%(startLine%, endLine%, funcName$, targetFile$ = "")
+    ; Read source file
+    content$ = ReadFile(targetFile$)
+    lines$ = SplitLines(content$)
+
+    ; Extract code
+    code$ = ""
+    For i = startLine To endLine
+        code$ = code$ + lines$[i] + Chr(10)
+    Next
+
+    ; Analyze parameters
+    params$ = AnalyzeParameters(code$)
+
+    ; Generate function
+    newFunc$ = "Function " + funcName$ + "(" + params$ + ")" + Chr(10)
+    newFunc$ = newFunc$ + IndentCode(code$, 4)
+    newFunc$ = newFunc$ + "End Function" + Chr(10)
+
+    ; Insert function before extraction point
+    InsertLine(targetFile$, startLine - 1, newFunc$)
+
+    ; Replace original code with call
+    callLine$ = funcName$ + "(" + GenerateArguments(code$) + ")"
+    ReplaceLines(targetFile$, startLine, endLine, callLine$)
+
+    Print "Extracted " + funcName$ + " at line " + startLine
+End Function
+
+; Example: Extract movement code
+; ExtractFunction 100 120 "CalculateMovementSpeed"
+```
+
+### Extract NPC Behavior
+
+```blitzbasic
+; Extract common NPC behavior into shared function
+; Run: ExtractNPCBehavior behaviorName lines
+
+Function ExtractNPCBehavior%(behaviorName$, startLine%, endLine%)
+    ; This pattern is common across multiple NPCs
+    code$ = ExtractCode(startLine, endLine)
+
+    ; Create shared function
+    func$ = "Function NPC_" + behaviorName$ + "%(npc.NPCs)" + Chr(10)
+    func$ = func$ + IndentCode(code$, 4)
+    func$ = func$ + "End Function" + Chr(10)
+
+    ; Add to NPCs.bb
+    AppendToFile("Sources/NPCs.bb", func$)
+
+    ; Replace in all NPC update functions
+    ReplaceInFiles("NPCs.bb", code$, "NPC_" + behaviorName$ + "(npc)")
+
+    Print "Extracted NPC behavior: NPC_" + behaviorName$
+End Function
+
+; Example: Extract movement calculations
+; ExtractNPCBehavior "MoveToTarget" 50 80
+```
+
+## Update Type Fields
+
+### Add Field to Type
+
+```blitzbasic
+; Add a new field to a Type definition
+; Run: AddField "TypeName" "FieldName" "FieldType"
+
+Function AddFieldToType%(typeName$, fieldName$, fieldType$)
+    ; Find the Type definition
+    file$ = FindTypeDefinition(typeName$)
+    If file$ = "" Then Return False
+
+    content$ = ReadFile(file$)
+
+    ; Find "End Type" and insert before it
+    lines$ = SplitLines(content$)
+    For i = 0 To CountLines(lines$) - 1
+        If Trim(lines$[i]) = "End Type"
+            ; Insert field before End Type
+            lines$[i] = "    Field " + fieldName$ + fieldType$ + Chr(10) + "End Type"
+            Exit
+        End If
+    Next
+
+    WriteFile(file$, JoinLines(lines$))
+    Print "Added field " + fieldName$ + " to Type " + typeName$
+End Function
+
+; Example usage
+; AddFieldToType "NPCs" "AlertLevel#" ""
+; AddFieldToType "Items" "Durability%" ""
+; AddFieldToType "Player" "StaminaRegen#" ""
+```
+
+### Remove Field from Type
+
+```blitzbasic
+; Remove a field from a Type definition
+; Run: RemoveField "TypeName" "FieldName"
+
+Function RemoveFieldFromType%(typeName$, fieldName$)
+    file$ = FindTypeDefinition(typeName$)
+    If file$ = "" Then Return False
+
+    content$ = ReadFile(file$)
+
+    ; Remove field line
+    pattern$ = "    Field " + fieldName$ + "[^" + Chr(10) + "]*"
+    content$ = RegexReplace(content$, pattern$, "")
+
+    WriteFile(file$, content$)
+    Print "Removed field " + fieldName$ + " from Type " + typeName$
+End Function
+```
+
+### Rename Field in Type
+
+```blitzbasic
+; Rename a field across all usage
+; Run: RenameField "TypeName" "OldName" "NewName"
+
+Function RenameFieldInType%(typeName$, oldName$, newName$)
+    ; Update Type definition
+    file$ = FindTypeDefinition(typeName$)
+    content$ = ReadFile(file$)
+    content$ = Replace(content$, "    Field " + oldName$, "    Field " + newName$)
+    WriteFile(file$, content$)
+
+    ; Update all usage
+    RenameVariable(typeName$ + "\" + oldName$, typeName$ + "\" + newName$)
+End Function
+```
+
+## Improve Structure
+
+### Add Error Handling
+
+```blitzbasic
+; Wrap code with error handling
+; Run: AddErrorHandling startLine endLine
+
+Function AddErrorHandling%(startLine%, endLine%)
+    file$ = GetCurrentFile()
+    lines$ = ReadLines(file$)
+
+    ; Add try-catch equivalent
+    lines$[startLine] = "    ; === Error handling added ==="
+    lines$[startLine] = "    errorOccurred = False"
+    lines$[startLine] = "    errorMessage$ = """""
+
+    ; Wrap code
+    lines$[startLine] = "    If Not errorOccurred Then"
+    lines$[startLine - 1] = "    errorOccurred = True"
+    lines$[startLine - 1] = "    errorMessage$ = GetLastError()"
+    lines$[startLine - 1] = "    CatchError:"
+
+    WriteLines(file$, lines$)
+    Print "Added error handling from line " + startLine + " to " + endLine
+End Function
+```
+
+### Standardize Function
+
+```blitzbasic
+; Standardize function format
+; Run: StandardizeFunction functionName
+
+Function StandardizeFunction%(funcName$)
+    ; Find function
+    file$ = FindFunctionDefinition(funcName$)
+    If file$ = "" Then Return False
+
+    content$ = ReadFile(file$)
+
+    ; Get function code
+    funcCode$ = ExtractFunction(funcName$)
+
+    ; Apply standard format
+    standardized$ = "; ========================================" + Chr(10)
+    standardized$ = standardized$ + "; " + funcName$ + Chr(10)
+    standardized$ = standardized$ + "; ========================================" + Chr(10)
+    standardized$ = standardized$ + StandardizeIndentation(funcCode$)
+
+    ; Replace in file
+    content$ = Replace(content$, funcCode$, standardized$)
+    WriteFile(file$, content$)
+
+    Print "Standardized function: " + funcName$
+End Function
+```
+
+### Add Documentation
+
+```blitzbasic
+; Add documentation to function
+; Run: DocumentFunction functionName description
+
+Function DocumentFunction%(funcName$, description$)
+    file$ = FindFunctionDefinition(funcName$)
+    If file$ = "" Then Return False
+
+    content$ = ReadFile(file$)
+
+    ; Find function definition
+    lines$ = SplitLines(content$)
+    For i = 0 To CountLines(lines$) - 1
+        If InString(lines$[i], "Function " + funcName$)
+            ; Insert documentation before
+            doc$ = "; " + description$ + Chr(10)
+            doc$ = doc$ + "; Parameters:" + Chr(10)
+            doc$ = doc$ = "; Returns:" + Chr(10)
+            doc$ = doc$ = "; " + funcName$ + Chr(10)
+            lines$[i] = doc$ + lines$[i]
+            Exit
+        End If
+    Next
+
+    WriteFile(file$, JoinLines(lines$))
+    Print "Added documentation to " + funcName$
+End Function
+```
+
+## Batch Refactoring
+
+### Rename NPC Type
+
+```blitzbasic
+; Complete rename of NPC type across codebase
+; Run: RenameNPCType "OldNPC" "NewNPC"
+
+Function RenameNPCType%(oldType$, newType$)
+    ; Rename Type
+    RenameType(oldType$, newType$)
+
+    ; Rename constants
+    RenameVariable("NPC_" + Upper(oldType$), "NPC_" + Upper(newType$))
+
+    ; Rename files
+    If FileExists("Sources/NPCs/" + oldType$ + ".bb")
+        RenameFile("Sources/NPCs/" + oldType$ + ".bb", "Sources/NPCs/" + newType$ + ".bb")
+    End If
+
+    ; Update NPCs.ini if exists
+    If FileExists("Data/NPCs.ini")
+        content$ = ReadFile("Data/NPCs.ini")
+        content$ = Replace(content$, oldType$, newType$)
+        WriteFile("Data/NPCs.ini", content$)
+    End If
+
+    Print "Renamed NPC type from " + oldType$ + " to " + newType$
+End Function
+
+; Example usage
+; RenameNPCType "OldSCP173" "NewSCP173"
+```
+
+### Update All NPC Functions
+
+```blitzbasic
+; Update pattern across all NPC functions
+; Run: UpdateAllNPCs pattern replacement
+
+Function UpdateAllNPCs%(pattern$, replacement$)
+    ; Update NPCs.bb
+    file$ = "Sources/NPCs.bb"
+    content$ = ReadFile(file$)
+    content$ = Replace(content$, pattern$, replacement$)
+    WriteFile(file$, content$)
+
+    ; Update individual NPC files
+    npcFiles$ = FindFiles("Sources/NPCs/*.bb")
+    ForEach npcFile$ in npcFiles$
+        content$ = ReadFile(npcFile$)
+        content$ = Replace(content$, pattern$, replacement$)
+        WriteFile(npcFile$, content$)
+    Next
+
+    Print "Updated pattern in " + CountFiles(npcFiles$) + " files"
+End Function
+
+; Example: Update all NPC speed to use new calculation
+; UpdateAllNPCs "npc\Speed# = 4.0" "npc\Speed# = CalculateNPCSpeed(npc)"
+```
+
+## Quick Reference
+
+| Command | Purpose |
+|---------|---------|
+| `RenameFunction "Old" "New"` | Rename function everywhere |
+| `RenameVariable "old" "new"` | Rename variable everywhere |
+| `RenameType "Old" "New"` | Rename Type everywhere |
+| `ExtractFunction 100 120 "Name"` | Extract code to function |
+| `AddField "Type" "Field" "Type"` | Add field to Type |
+| `RemoveField "Type" "Field"` | Remove field from Type |
+| `RenameField "Type" "Old" "New"` | Rename Type field |
+| `AddErrorHandling 50 100` | Wrap code in error handling |
+| `StandardizeFunction "Name"` | Standardize function format |
+| `DocumentFunction "Name" "Desc"` | Add documentation |
+| `RenameNPCType "Old" "New"` | Rename NPC type |
+| `UpdateAllNPCs "pat" "rep"` | Update pattern in all NPCs |

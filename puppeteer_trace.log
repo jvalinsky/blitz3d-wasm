@@ -1,0 +1,92 @@
+Building for debugging...
+[0/3] Write swift-version--58304C5D6DBC2206.txt
+Build complete! (0.13s)
+Compiling: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.bb
+Output: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.wasm
+
+Preprocessed source size: 732 characters
+Parsed program:
+  - 20 top-level statements
+  - 0 functions
+  - 20 total statements (including functions)
+  - 0 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 44 Internal: createcamera
+DEBUG_COMPILER: Generating call to CreateCamera. Index: 44
+Ensuring return for void -> void
+Generated WASM module:
+  - 33 function types
+  - 4 functions
+  - 1 memory pages
+  - 4 globals
+  - 192 exports
+  - 4 function bodies
+  - 1 data segments
+
+Wrote WASM file: /Users/jack/Software/scp_port/blitz3d-wasm/Tests/IntegrationTests/MeshTest.wasm (6027 bytes)
+Using Chrome executable at: /Users/jack/Software/scp_port/blitz3d-wasm/chrome/mac_arm-146.0.7642.0/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing
+[57283:881473:0118/203257.070262:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57283:881473:0118/203257.086930:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+
+DevTools listening on ws://127.0.0.1:53933/devtools/browser/dfbea0ca-95b6-491a-afb4-5508dae14bee
+[57288:881557:0118/203257.582298:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57288:881557:0118/203257.596439:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+[57289:881583:0118/203257.645776:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57289:881583:0118/203257.657324:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+Navigating to http://localhost:8080/index_mesh.html...
+[57291:881610:0118/203257.715199:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57291:881610:0118/203257.725421:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+::1 - - [18/Jan/2026 20:32:57] "GET /index_mesh.html?v=1768786377698 HTTP/1.1" 200 -
+::1 - - [18/Jan/2026 20:32:57] "GET /dist/runtime.bundle.js?v=2 HTTP/1.1" 200 -
+[57292:881623:0118/203257.783115:ERROR:ui/gl/init/gl_factory.cc:111] Requested GL implementation (gl=none,angle=none) not found in allowed implementations: [(gl=egl-angle,angle=opengl),(gl=egl-angle,angle=metal),(gl=egl-angle,angle=swiftshader)].
+[57292:881623:0118/203257.793071:ERROR:components/viz/service/main/viz_main_impl.cc:189] Exiting GPU process due to errors during initialization
+[Browser] Blitz3D Runtime (Modular) loaded successfully ["Blitz3D Runtime (Modular) loaded successfully"]
+[Browser] Available modules: core, graphics, physics, input ["Available modules: core, graphics, physics, input"]
+[Browser] Blitz3D Runtime Core Initialized ["Blitz3D Runtime Core Initialized"]
+[Browser] THREE.WebGLRenderer: Error creating WebGL context. ["THREE.WebGLRenderer: Error creating WebGL context."]
+[Browser] WebGL Init Failed, using mock renderer. ["WebGL Init Failed, using mock renderer."]
+[Browser] Blitz3D Runtime Initialized (Modular) ["Blitz3D Runtime Initialized (Modular)"]
+[Browser] Loading WASM from Tests/IntegrationTests/MeshTest.wasm?v=1768786377911... ["Loading WASM from Tests/IntegrationTests/MeshTest.wasm?v=1768786377911..."]
+::1 - - [18/Jan/2026 20:32:57] "GET /Tests/IntegrationTests/MeshTest.wasm?v=1768786377911 HTTP/1.1" 200 -
+[Browser] WASM size: 5.89 KB ["WASM size: 5.89 KB"]
+[Browser] DEBUG: CreateCamera source: (parent) => {
+            console.error("!!! EXECUTION REACHED CreateCamera !!! Parent: " + parent);
+            const cam = new THREE.PerspectiveCamera(75, this.core.canvas.width / this.core.canvas.height, 1.0, 1000.0);
+            const id = this.nextEntityId++;
+            this.entities[id] = cam;
+            if (parent && this.entities[parent]) this.entities[parent].add(cam);
+            else this.scene.add(cam);
+
+            if (!this.camera) {
+                console.log("Setting active camera to ID:", id);
+                this.camera = cam;
+            }
+            return id;
+        } ["DEBUG: CreateCamera source:","(parent) => {\n            console.error(\"!!! EXECUTION REACHED CreateCamera !!! Parent: \" + parent);\n            const cam = new THREE.PerspectiveCamera(75, this.core.canvas.width / this.core.canvas.height, 1.0, 1000.0);\n            const id = this.nextEntityId++;\n            this.entities[id] = cam;\n            if (parent && this.entities[parent]) this.entities[parent].add(cam);\n            else this.scene.add(cam);\n\n            if (!this.camera) {\n                console.log(\"Setting active camera to ID:\", id);\n                this.camera = cam;\n            }\n            return id;\n        }"]
+[Browser] Using WebAssembly.instantiateStreaming. ["Using WebAssembly.instantiateStreaming."]
+[Browser] WASM Loaded and Compiled in 10.60ms ["WASM Loaded and Compiled in 10.60ms"]
+[Browser] Graphics3D Init: 800x600 ["Graphics3D Init: 800x600"]
+[Browser] [Blitz3D] Int: 1111 ["[Blitz3D] Int: 1111"]
+[Browser] [Blitz3D] Int: 2222 ["[Blitz3D] Int: 2222"]
+[Browser] [Blitz3D] Int: 3333 ["[Blitz3D] Int: 3333"]
+::1 - - [18/Jan/2026 20:32:57] code 404, message File not found
+::1 - - [18/Jan/2026 20:32:57] "GET /favicon.ico HTTP/1.1" 404 -
+[Browser]  [""]
+[Browser] WASM Loaded. Running... ["WASM Loaded. Running..."]
+[Browser] DEBUG: Checking imports.env.CreateCamera: JSHandle@function ["DEBUG: Checking imports.env.CreateCamera:",{}]
+[Browser] WASM Imports: JSHandle@array ["WASM Imports:",["PrintInt","PrintString","Cls","Flip","MilliCSecs","Delay","Sin","Cos","Tan","ASin","ACos","ATan","ATan2","Sqr","Sqrt","Floor","Ceil","Exp","Log","Log10","Abs","Sgn","Mod","Rnd","Rand","SeedRnd","StringConcat","IntToString","FloatToString","Left","Right","Mid","Upper","Lower","Replace","Instr","Len","Trim","LTrim","RTrim","ReadFile","WriteFile","CloseFile","ReadInt","ReadFloat","ReadString","ReadByte","ReadShort","Eof","FileSize","FileType","ReadData","RestoreData","CreateBank","FreeBank","BankSize","ResizeBank","CopyBank","PeekByte","PokeByte","PeekInt","PokeInt","PeekFloat","PokeFloat","PeekShort","PokeShort","PlaySound","FreeSound","StopChannel","ChannelVolume","ChannelPaused","ChannelPlaying","FSOUND_Init","FSOUND_Stream_Open","FSOUND_Stream_Play","FSOUND_SetVolume","FSOUND_SetPaused","FSOUND_Stream_Stop","FSOUND_Close","ZlibWapi_Open","ZlibWapi_Close","ZlibWapi_GetFileCount","ZlibWapi_GetFileName","ZlibWapi_ExtractFile","Graphics3D","ClsColor","Color","GetColor","Rect","Oval","Line","Text","LoadImage","DrawImage","DrawBlock","TileImage","ImageWidth","ImageHeight","HandleImage","MidHandle","AutoMidHandle","MaskImage","ScaleImage","ResizeImage","FreeImage","CreateCamera","CreateLight","CreateMesh","PositionEntity","RotateEntity","ScaleEntity","MoveEntity","TurnEntity","EntityX","EntityY","EntityZ","EntityPitch","EntityYaw","EntityRoll","EntityDistance","EntityVisible","EntityInView","CreatePivot","FreeEntity","CopyEntity","EntityTexture","CreateSurface","AddVertex","AddTriangle","VertexColor","UpdateNormals","LoadMesh","LoadAnimMesh","Animate","SetAnimTime","RenderWorld","UpdateWorld","AmbientLight","LightColor","LightRange","CameraClsColor","CameraRange","CameraZoom","CameraProjMode","CameraViewport","FogMode","FogColor","FogRange","FogDensity","CreateCube","CreateSphere","LoadTexture","LoadAsset","GetAssetData","GetAssetSize","AnimTime","AnimLength","ExtractAnimSeq","AddAnimSeq","AnimSeq","Animating","WaitKey","Collisions","ClearCollisions","EntityType","EntityRadius","EntityPick","LinePick","GetMatPickX","GetMatPickY","GetMatPickZ","CountCollisions","CollisionX","CollisionY","CollisionZ","CollisionEntity","CollisionNX","CollisionNY","CollisionNZ","CollisionSurface","CollisionTriangle","KeyDown","KeyHit","MouseX","MouseY","MouseZ","MouseXSpeed","MouseYSpeed","MouseDown","MouseHit","MoveMouse","HidePointer","ShowPointer","EnablePointerLock"]]
+[Browser] Failed to load resource: the server responded with a status of 404 (File not found) []
+[Browser] --- Debug Frame 100 --- ["--- Debug Frame 100 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+[57271:881424:0118/203259.822486:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[57271:881424:0118/203259.832251:ERROR:google_apis/gcm/engine/registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[57271:881424:0118/203259.925983:ERROR:google_apis/gcm/engine/mcs_client.cc:700]   Error code: 401  Error message: Authentication Failed: wrong_secret
+[57271:881424:0118/203259.926022:ERROR:google_apis/gcm/engine/mcs_client.cc:702] Failed to log in to GCM, resetting connection.
+[Browser] --- Debug Frame 200 --- ["--- Debug Frame 200 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+[Browser] --- Debug Frame 300 --- ["--- Debug Frame 300 ---"]
+[Browser] Loop Running. Camera: MISSING ["Loop Running. Camera:","MISSING"]
+[Browser] Scene Children: 0 ["Scene Children:",0]
+Test finished (TIMEOUT). Closing.

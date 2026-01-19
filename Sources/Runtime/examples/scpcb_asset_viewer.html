@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCPCB Asset Viewer - Blitz3D-WASM</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        #sidebar {
+            width: 320px;
+            background: #12121a;
+            border-right: 1px solid #2a2a3a;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .sidebar-header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e94560;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-header p {
+            font-size: 11px;
+            color: #888;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            background: #0a0a0f;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px 8px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .nav-tab:hover {
+            color: #ccc;
+            background: #1a1a2a;
+        }
+
+        .nav-tab.active {
+            color: #e94560;
+            border-bottom-color: #e94560;
+        }
+
+        /* Tab Content */
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 0 8px;
+            border-bottom: 1px solid #2a2a3a;
+            margin-bottom: 8px;
+        }
+
+        /* Asset List */
+        .asset-list {
+            list-style: none;
+        }
+
+        .asset-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: #1a1a2e;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .asset-item:hover {
+            background: #252540;
+            border-color: #3a3a5a;
+        }
+
+        .asset-item.selected {
+            background: #2a2a45;
+            border-color: #e94560;
+        }
+
+        .asset-item.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .asset-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background: #2a2a3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 14px;
+        }
+
+        .asset-icon.room {
+            background: #1e3a5f;
+            color: #4a9eff;
+        }
+
+        .asset-icon.texture {
+            background: #3a1e3a;
+            color: #ff4a9e;
+        }
+
+        .asset-icon.model {
+            background: #3a3a1e;
+            color: #ffda4a;
+        }
+
+        .asset-icon.sound {
+            background: #1e3a2a;
+            color: #4aff9e;
+        }
+
+        .asset-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .asset-name {
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .asset-meta {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+
+        /* Main Viewport */
+        #viewport {
+            flex: 1;
+            position: relative;
+            background: #000;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        #loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid #2a2a3a;
+            border-top-color: #e94560;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Info Panel */
+        #info-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(18, 18, 26, 0.95);
+            padding: 16px 20px;
+            border-radius: 8px;
+            border: 1px solid #2a2a3a;
+            min-width: 200px;
+        }
+
+        #info-panel h3 {
+            font-size: 14px;
+            color: #e94560;
+            margin-bottom: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 6px 0;
+            font-size: 12px;
+        }
+
+        .info-label {
+            color: #666;
+        }
+
+        .info-value {
+            color: #ccc;
+            font-family: monospace;
+        }
+
+        /* Debug Controls */
+        #debug-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(18, 18, 26, 0.95);
+            padding: 16px 20px;
+            border-radius: 8px;
+            border: 1px solid #2a2a3a;
+        }
+
+        #debug-panel h4 {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .debug-option {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            cursor: pointer;
+        }
+
+        .debug-option input[type="range"] {
+            accent-color: #e94560;
+        }
+
+        .debug-option input {
+            margin-right: 10px;
+            accent-color: #e94560;
+        }
+
+        .debug-option label {
+            font-size: 12px;
+            color: #ccc;
+            cursor: pointer;
+        }
+
+        /* Stats */
+        #stats {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 11px;
+            color: #555;
+            font-family: monospace;
+        }
+
+        /* Texture Preview */
+        #texture-preview {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(18, 18, 26, 0.95);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #2a2a3a;
+            max-width: 200px;
+            max-height: 200px;
+            display: none;
+        }
+
+        #texture-preview.active {
+            display: block;
+        }
+
+        #texture-preview img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 4px;
+        }
+
+        #texture-preview p {
+            font-size: 11px;
+            color: #888;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0f;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a3a;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a3a5a;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #555;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+        }
+
+        /* Status Bar */
+        #status-bar {
+            padding: 8px 16px;
+            background: #0a0a0f;
+            border-top: 1px solid #2a2a3a;
+            font-size: 11px;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h1>SCPCB Asset Viewer</h1>
+                <p>Blitz3D-WASM Runtime Demo</p>
+            </div>
+
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="rooms">Rooms</button>
+                <button class="nav-tab" data-tab="textures">Textures</button>
+                <button class="nav-tab" data-tab="models">Models</button>
+                <button class="nav-tab" data-tab="about">About</button>
+            </nav>
+
+            <div class="tab-content">
+                <!-- Rooms Tab -->
+                <div class="tab-panel active" id="tab-rooms">
+                    <div class="section-header">Available Rooms</div>
+                    <ul class="asset-list" id="room-list">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Textures Tab -->
+                <div class="tab-panel" id="tab-textures">
+                    <div class="section-header">Environment Textures</div>
+                    <ul class="asset-list" id="texture-list">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- Models Tab -->
+                <div class="tab-panel" id="tab-models">
+                    <div class="section-header">3D Models</div>
+                    <ul class="asset-list" id="model-list">
+                        <!-- Populated by JavaScript -->
+                    </ul>
+                </div>
+
+                <!-- About Tab -->
+                <div class="tab-panel" id="tab-about">
+                    <div class="section-header">About</div>
+                    <div style="padding: 20px 0; color: #888; font-size: 13px; line-height: 1.6;">
+                        <p style="margin-bottom: 16px;">
+                            <strong style="color: #e94560;">SCPCB Asset Viewer</strong> is a web-based demo
+                            that showcases the Blitz3D-WASM runtime for loading and rendering
+                            SCP: Containment Breach assets in the browser.
+                        </p>
+                        <p style="margin-bottom: 16px;">
+                            Built with Three.js and WebAssembly, this viewer can load
+                            SCPCB's proprietary RMesh room format along with textures
+                            and models.
+                        </p>
+                        <p>
+                            <strong>Controls:</strong><br>
+                            • Left-click + drag: Rotate<br>
+                            • Right-click + drag: Pan<br>
+                            • Scroll: Zoom<br>
+                            • WASD / Arrow Keys: Move
+                        </p>
+                    </div>
+
+                    <div class="section-header">Credits</div>
+                    <div style="padding: 12px 0; font-size: 12px; color: #666;">
+                        <p>SCPCB Assets: Joon Rik KIM</p>
+                        <p>Blitz3D Runtime: Custom Implementation</p>
+                        <p>Three.js: Ricardo Cabello</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport -->
+        <main id="viewport">
+            <canvas id="renderCanvas"></canvas>
+
+            <!-- Loading Overlay -->
+            <div id="loading-overlay">
+                <div class="loading-spinner"></div>
+                <div class="loading-text" id="loading-text">Loading...</div>
+            </div>
+
+            <!-- Info Panel -->
+            <div id="info-panel">
+                <h3>Asset Info</h3>
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value" id="info-name">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Vertices:</span>
+                    <span class="info-value" id="info-vertices">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Triangles:</span>
+                    <span class="info-value" id="info-triangles">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Textures:</span>
+                    <span class="info-value" id="info-textures">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Entities:</span>
+                    <span class="info-value" id="info-entities">-</span>
+                </div>
+            </div>
+
+            <!-- Debug Panel -->
+            <div id="debug-panel">
+                <h4>Debug Options</h4>
+                <div class="debug-option">
+                    <input type="checkbox" id="debug-wireframe">
+                    <label for="debug-wireframe">Wireframe Mode</label>
+                </div>
+                <div class="debug-option">
+                    <input type="checkbox" id="debug-collision">
+                    <label for="debug-collision">Show Collision</label>
+                </div>
+                <div class="debug-option">
+                    <input type="checkbox" id="debug-normals">
+                    <label for="debug-normals">Show Normals</label>
+                </div>
+                <div class="debug-option">
+                    <input type="checkbox" id="debug-bounds">
+                    <label for="debug-bounds">Show Bounds</label>
+                </div>
+                <div class="debug-option">
+                    <input type="checkbox" id="debug-lights">
+                    <label for="debug-lights">Show Lights</label>
+                </div>
+                <div class="debug-option">
+                    <label for="exposure">Exposure:</label>
+                    <input type="range" id="exposure" min="0.1" max="5" step="0.01" value="1" style="width: 100px; margin-left: 10px;">
+                    <button id="reset-exposure" style="margin-left: 5px; background: none; border: 1px solid #3a3a5a; color: #888; cursor: pointer; font-size: 10px; padding: 2px 6px; border-radius: 3px;">Reset</button>
+                </div>
+                <div class="debug-option">
+                    <label for="light-intensity">Light Intensity:</label>
+                    <input type="range" id="light-intensity" min="0" max="0.5" step="0.0001" value="0.002" style="width: 100px; margin-left: 10px;">
+                    <button id="reset-intensity" style="margin-left: 5px; background: none; border: 1px solid #3a3a5a; color: #888; cursor: pointer; font-size: 10px; padding: 2px 6px; border-radius: 3px;">Reset</button>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div id="stats">
+                FPS: <span id="fps">0</span> |
+                Draw Calls: <span id="draw-calls">0</span> |
+                Triangles: <span id="tri-count">0</span>
+            </div>
+
+            <!-- Texture Preview -->
+            <div id="texture-preview">
+                <img id="texture-img" src="" alt="">
+                <p id="texture-name">-</p>
+            </div>
+        </main>
+
+        <!-- Status Bar -->
+        <footer id="status-bar">
+            <span>SCPCB Asset Viewer v1.0</span>
+            <span>Blitz3D-WASM Runtime</span>
+        </footer>
+    </div>
+
+    <!-- Three.js Import Map -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.152.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.152.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- App Logic -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // Expose THREE and OrbitControls to window for legacy scripts
+        window.THREE = THREE;
+        window.OrbitControls = OrbitControls;
+    </script>
+
+    <!-- RMesh Parser -->
+    <script src="rmesh_parser.js"></script>
+
+    <!-- B3D Model Parser (Runtime Module) -->
+    <script src="b3d_module.js"></script>
+    <script>
+        // Verify B3DLoader loaded
+        console.log('[Viewer] B3DLoader available:', typeof B3DLoader !== 'undefined');
+        if (typeof B3DLoader === 'undefined') {
+            console.error('[Viewer] B3DLoader not found! Check script path.');
+        }
+    </script>
+
+    <!-- Asset Data -->
+    <script>
+        // SCPCB Asset Manifest
+        const ASSETS = {
+            rooms: [
+                { name: 'SCP-173 Chamber', path: '/scpcb/GFX/map/173.rmesh', size: '910 KB' },
+                { name: 'SCP-173 Bright', path: '/scpcb/GFX/map/173bright.rmesh', size: '1.5 MB' },
+                { name: 'Checkpoint 1', path: '/scpcb/GFX/map/checkpoint1_opt.rmesh', size: '153 KB' },
+                { name: 'Checkpoint 2', path: '/scpcb/GFX/map/checkpoint2_opt.rmesh', size: '152 KB' },
+                { name: 'Exit Room 1', path: '/scpcb/GFX/map/exit1_opt.rmesh', size: '1.9 MB' },
+                { name: 'Coffin Room', path: '/scpcb/GFX/map/coffin_opt.rmesh', size: '196 KB' },
+                { name: '4 Tunnels', path: '/scpcb/GFX/map/4tunnels_opt.rmesh', size: '141 KB' },
+                { name: 'End Room', path: '/scpcb/GFX/map/endroom_opt.rmesh', size: '328 KB' },
+                { name: 'Gate A', path: '/scpcb/GFX/map/gatea_opt.rmesh', size: '288 KB' }
+            ],
+            textures: [
+                { name: 'Containment Doors', path: '/scpcb/GFX/containment_doors.jpg', size: '800 KB' },
+                { name: 'Metal Texture', path: '/scpcb/GFX/dirtymetal.jpg', size: '242 KB' },
+                { name: 'Light Sprite', path: '/scpcb/GFX/lightsprite.jpg', size: '68 KB' },
+                { name: 'Fog', path: '/scpcb/GFX/fog.jpg', size: '35 KB' },
+                { name: 'Screen Texture', path: '/scpcb/GFX/monitortexture.jpg', size: '34 KB' },
+                { name: 'Blood Decal', path: '/scpcb/GFX/decal1.png', size: '187 KB' }
+            ],
+            models: [
+                { name: 'SCP-173 Box', path: '/scpcb/GFX/173box.b3d', size: '54 KB' },
+                { name: 'Door Hit', path: '/scpcb/GFX/doorhit.b3d', size: '1.1 KB' },
+                { name: 'Light Cone', path: '/scpcb/GFX/lightcone.b3d', size: '24 KB' },
+                { name: 'Apache Helicopter', path: '/scpcb/GFX/apache.b3d', size: '91 KB' },
+                { name: 'Apache Rotor', path: '/scpcb/GFX/apacherotor.b3d', size: '10 KB' }
+            ]
+        };
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // SCPCB Asset Viewer Application
+        class SCPCBAssetViewer {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.controls = null;
+                this.currentRoom = null;
+                this.loadedMeshes = [];
+                this.loadedModel = null;
+                this.clock = new THREE.Clock();
+                this.frameCount = 0;
+                this.lastFpsUpdate = 0;
+                this.helpers = [];
+                this.lights = [];
+                this.keyState = {};
+
+                this.init();
+            }
+
+            init() {
+                this.setupThreeJS();
+                this.setupLighting();
+                this.setupControls();
+                this.populateAssetLists();
+                this.setupEventListeners();
+                this.animate();
+
+                // Load default room
+                this.loadRoom(ASSETS.rooms[0].path, ASSETS.rooms[0].name);
+            }
+
+            setupThreeJS() {
+                const canvas = document.getElementById('renderCanvas');
+                const container = document.getElementById('viewport');
+
+                // Scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x1a1a2e);
+                this.scene.fog = new THREE.FogExp2(0x1a1a2e, 0.0003);  // Much less fog for huge rooms
+
+                // Camera
+                this.camera = new THREE.PerspectiveCamera(
+                    70,  // Wider FOV
+                    container.clientWidth / container.clientHeight,
+                    1,  // Near plane
+                    50000  // Large far plane for huge rooms
+                );
+                this.camera.position.set(10, 10, 10);
+
+                // Renderer
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas,
+                    antialias: true,
+                    powerPreference: 'high-performance'
+                });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.0;
+
+                // Grid helper
+                const grid = new THREE.GridHelper(100, 100, 0x222233, 0x111122);
+                grid.position.y = -0.1;
+                this.scene.add(grid);
+
+                // Axes helper (small)
+                const axes = new THREE.AxesHelper(5);
+                axes.position.set(-20, -20, 0);
+                this.scene.add(axes);
+
+                // Handle resize
+                window.addEventListener('resize', () => this.onResize());
+            }
+
+            setupLighting() {
+                this.lights = [];
+
+                // Ambient light (lower base intensity)
+                const ambient = new THREE.AmbientLight(0x404050, 0.3);
+                this.scene.add(ambient);
+                this.lights.push(ambient);
+
+                // Main directional light
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+                dirLight.position.set(50, 100, 50);
+                dirLight.castShadow = true;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.camera.near = 0.5;
+                dirLight.shadow.camera.far = 500;
+                dirLight.shadow.camera.left = -100;
+                dirLight.shadow.camera.right = 100;
+                dirLight.shadow.camera.top = 100;
+                dirLight.shadow.camera.bottom = -100;
+                this.scene.add(dirLight);
+                this.lights.push(dirLight);
+
+                // Hemisphere light for natural outdoor feel
+                const hemiLight = new THREE.HemisphereLight(0x606080, 0x404040, 0.2);
+                this.scene.add(hemiLight);
+                this.lights.push(hemiLight);
+            }
+
+            setupControls() {
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.minDistance = 10;
+                this.controls.maxDistance = 10000;  // Much larger for huge rooms
+                this.controls.target.set(0, 2, 0);
+            }
+
+            populateAssetLists() {
+                // Rooms
+                const roomList = document.getElementById('room-list');
+                ASSETS.rooms.forEach(room => {
+                    const li = document.createElement('li');
+                    li.className = 'asset-item';
+                    li.innerHTML = `
+                        <div class="asset-icon room">⌂</div>
+                        <div class="asset-info">
+                            <div class="asset-name">${room.name}</div>
+                            <div class="asset-meta">${room.size}</div>
+                        </div>
+                    `;
+                    li.addEventListener('click', () => this.loadRoom(room.path, room.name, li));
+                    roomList.appendChild(li);
+                });
+
+                // Textures
+                const textureList = document.getElementById('texture-list');
+                ASSETS.textures.forEach(tex => {
+                    const li = document.createElement('li');
+                    li.className = 'asset-item';
+                    li.innerHTML = `
+                        <div class="asset-icon texture">🖼</div>
+                        <div class="asset-info">
+                            <div class="asset-name">${tex.name}</div>
+                            <div class="asset-meta">${tex.size}</div>
+                        </div>
+                    `;
+                    li.addEventListener('click', () => this.showTexture(tex.path, tex.name, li));
+                    textureList.appendChild(li);
+                });
+
+                // Models
+                const modelList = document.getElementById('model-list');
+                ASSETS.models.forEach(model => {
+                    const li = document.createElement('li');
+                    li.className = 'asset-item';
+                    li.innerHTML = `
+                        <div class="asset-icon model">◈</div>
+                        <div class="asset-info">
+                            <div class="asset-name">${model.name}</div>
+                            <div class="asset-meta">${model.size}</div>
+                        </div>
+                    `;
+                    li.addEventListener('click', () => this.loadModel(model.path, model.name, li));
+                    modelList.appendChild(li);
+                });
+            }
+
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.nav-tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                        e.target.classList.add('active');
+                        document.getElementById(`tab-${e.target.dataset.tab}`).classList.add('active');
+                    });
+                });
+
+                // Debug options
+                document.getElementById('debug-wireframe').addEventListener('change', (e) => {
+                    this.toggleWireframe(e.target.checked);
+                });
+
+                document.getElementById('debug-collision').addEventListener('change', (e) => {
+                    this.toggleCollision(e.target.checked);
+                });
+
+                document.getElementById('debug-normals').addEventListener('change', (e) => {
+                    this.toggleNormals(e.target.checked);
+                });
+
+                document.getElementById('debug-bounds').addEventListener('change', (e) => {
+                    this.toggleBounds(e.target.checked);
+                });
+
+                document.getElementById('debug-lights').addEventListener('change', (e) => {
+                    this.toggleLightHelpers(e.target.checked);
+                });
+
+                document.getElementById('exposure').addEventListener('input', (e) => {
+                    this.setExposure(parseFloat(e.target.value));
+                });
+
+                document.getElementById('reset-exposure').addEventListener('click', () => {
+                    document.getElementById('exposure').value = 1;
+                    this.setExposure(1);
+                });
+
+                this.setupKeyboardControls();
+            }
+
+            async loadRoom(filePath, name, element) {
+                // UI feedback
+                this.showLoading(true, `Loading ${name}...`);
+
+                // Clear previous room
+                this.clearCurrentRoom();
+
+                // Update selection
+                document.querySelectorAll('.asset-item').forEach(el => el.classList.remove('selected'));
+                if (element) element.classList.add('selected');
+
+                try {
+                    // Use the actual RMesh parser to load the room
+                    await this.loadRMeshRoom(filePath, name);
+
+                    // Update info panel
+                    document.getElementById('info-name').textContent = name;
+                    document.getElementById('info-vertices').textContent = this.countVertices();
+                    document.getElementById('info-triangles').textContent = this.countTriangles();
+                    document.getElementById('info-textures').textContent = this.currentRoom?.userData?.textureCount || '0';
+                    document.getElementById('info-entities').textContent = this.currentRoom?.userData?.entities?.length || '0';
+
+                } catch (error) {
+                    console.error('Failed to load room:', error);
+                }
+
+                this.showLoading(false);
+            }
+
+            async loadRMeshRoom(filePath, name) {
+                // Initialize RMesh parser
+                const parser = new RMeshParserBrowser(null, null);
+                
+                // Set the RMesh directory for relative texture paths
+                const lastSlash = filePath.lastIndexOf('/');
+                parser.currentRMeshDir = lastSlash > 0 ? filePath.substring(0, lastSlash + 1) : '';
+
+                console.log(`[Viewer] Loading RMesh: ${filePath}`);
+                this.updateLoadingText(`Loading ${name}...`);
+
+                // Parse the RMesh file
+                const roomData = await parser.parseFile(filePath);
+
+                if (roomData.fallback) {
+                    console.log('[Viewer] Using fallback room representation');
+                    document.getElementById('info-name').textContent = `${name} (Fallback)`;
+                } else {
+                    console.log(`[Viewer] Successfully parsed RMesh: ${roomData.opaque.length} opaque, ${roomData.alpha.length} alpha, ${roomData.collision.length} collision, ${roomData.entities.length} entities`);
+                }
+
+                // Load textures for all meshes
+                this.updateLoadingText('Loading textures...');
+                console.log('[Viewer] Loading textures and lightmaps for', roomData.opaque.length + roomData.alpha.length, 'meshes');
+
+                const allMeshes = [...roomData.opaque, ...roomData.alpha];
+                let loadedCount = 0;
+                for (const mesh of allMeshes) {
+                    // Load main texture
+                    for (const tex of mesh.textures) {
+                        if (!tex.texture) {
+                            console.log('[Viewer] Loading texture:', tex.path);
+                            tex.texture = await parser.loadTexture(tex.path);
+                        }
+                    }
+                    // Load lightmaps (if present)
+                    if (mesh.lightmaps) {
+                        for (const lmap of mesh.lightmaps) {
+                            if (!lmap.texture) {
+                                console.log('[Viewer] Loading lightmap:', lmap.path);
+                                lmap.texture = await parser.loadTexture(lmap.path);
+                            }
+                        }
+                    }
+                }
+                console.log('[Viewer] All textures loaded');
+
+                // Create Three.js objects from parsed data
+                const roomGroup = createThreeJSFromRMesh(roomData, parser);
+                roomGroup.name = 'currentRoom';
+
+                // Store metadata
+                roomGroup.userData.textureCount = roomData.opaque.reduce((sum, m) => sum + m.textures.length, 0) +
+                    roomData.alpha.reduce((sum, m) => sum + m.textures.length, 0);
+                roomGroup.userData.entityCount = roomData.entities.length;
+                roomGroup.userData.rawData = roomData;
+
+                // Add to scene
+                this.scene.add(roomGroup);
+                this.currentRoom = roomGroup;
+                this.loadedMeshes.push(roomGroup);
+                console.log('[Viewer] Added roomGroup to scene, scene.children:', this.scene.children.length);
+
+                // Center camera on room
+                const box = new THREE.Box3().setFromObject(roomGroup);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+
+                // Debug: log scene contents
+                console.log('[Viewer] Scene children:', this.scene.children.length);
+                console.log('[Viewer] Room group children:', roomGroup.children.length);
+                console.log('[Viewer] Room bounds:', box.min, 'to', box.max);
+                console.log('[Viewer] Finding roomGroup in scene...');
+                console.log('[Viewer] scene.getObjectByName("currentRoom"):', this.scene.getObjectByName('currentRoom'));
+                
+                // Handle NaN bounds - compute from first valid vertex
+                if (isNaN(box.min.x) || isNaN(box.max.x)) {
+                    console.warn('[Viewer] Room bounds are NaN, scanning meshes...');
+                    let foundAny = false;
+                    let minX = Infinity, minY = Infinity, minZ = Infinity;
+                    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+                    
+                    roomGroup.traverse((child) => {
+                        if (child.isMesh && child.geometry) {
+                            const positions = child.geometry.attributes.position;
+                            if (positions) {
+                                foundAny = true;
+                                for (let i = 0; i < positions.count; i++) {
+                                    const x = positions.getX(i);
+                                    const y = positions.getY(i);
+                                    const z = positions.getZ(i);
+                                    if (!isNaN(x) && !isNaN(y) && !isNaN(z)) {
+                                        minX = Math.min(minX, x); maxX = Math.max(maxX, x);
+                                        minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+                                        minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z);
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    
+                    if (foundAny) {
+                        box.min.set(minX, minY, minZ);
+                        box.max.set(maxX, maxY, maxZ);
+                        box.getCenter(center);
+                        box.getSize(size);
+                        console.log('[Viewer] Computed bounds:', box.min, 'to', box.max);
+                    }
+                }
+
+                console.log('[Viewer] Camera position before:', this.camera.position);
+                console.log('[Viewer] Room center:', center);
+                console.log('[Viewer] Room size:', size);
+
+                // For huge rooms, use a more reasonable camera distance
+                const maxDim = Math.max(size.x, size.y, size.z);
+                
+                // Position camera to view entire room - scale based on room size
+                // For rooms > 1000 units, use a fixed reasonable distance
+                let cameraDist;
+                if (maxDim > 2000) {
+                    // For very large rooms, use a distance proportional to maxDim but capped
+                    cameraDist = maxDim * 0.3;  // 30% of room size
+                } else {
+                    cameraDist = maxDim * 1.5;
+                }
+                
+                // Clamp to reasonable range
+                cameraDist = Math.max(200, Math.min(cameraDist, 2000));
+
+                this.camera.position.set(
+                    center.x + cameraDist * 0.5,
+                    center.y + Math.min(cameraDist * 0.5, 500),  // Don't go too high
+                    center.z + cameraDist
+                );
+                this.controls.target.copy(center);
+                this.controls.update();
+
+                console.log('[Viewer] Camera positioned at:', this.camera.position, 'looking at:', this.controls.target);
+
+                // Add strong basic lighting for rooms without lightmaps
+                const ambient = new THREE.AmbientLight(0xffffff, 2.0);  // Very bright ambient
+                this.scene.add(ambient);
+                this.lights.push(ambient);
+
+                // Add multiple directional lights from different angles
+                const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+                dirLight1.position.set(center.x + 500, center.y + 500, center.z + 500);
+                this.scene.add(dirLight1);
+                this.lights.push(dirLight1);
+
+                const dirLight2 = new THREE.DirectionalLight(0xaaaaff, 0.8);  // Cool tinted
+                dirLight2.position.set(center.x - 500, center.y + 300, center.z - 500);
+                this.scene.add(dirLight2);
+                this.lights.push(dirLight2);
+
+                const dirLight3 = new THREE.DirectionalLight(0xffaaaa, 0.5);  // Warm tinted
+                dirLight3.position.set(center.x, center.y + 200, center.z - 300);
+                this.scene.add(dirLight3);
+                this.lights.push(dirLight3);
+
+                // Log scene stats
+                let meshCount = 0;
+                let vertexCount = 0;
+                let visibleMeshes = 0;
+                roomGroup.traverse(child => {
+                    if (child.isMesh) {
+                        meshCount++;
+                        if (child.geometry?.attributes?.position) {
+                            vertexCount += child.geometry.attributes.position.count;
+                        }
+                        if (child.visible) visibleMeshes++;
+                    }
+                });
+                console.log('[Viewer] Final: meshes=', meshCount, 'visible=', visibleMeshes, 'vertices=', vertexCount);
+                console.log('[Viewer] Scene children after adding lights:', this.scene.children.length);
+            }
+
+            updateLoadingText(text) {
+                document.getElementById('loading-text').textContent = text;
+            }
+
+            async showTexture(filePath, name, element) {
+                // Update selection
+                document.querySelectorAll('.asset-item').forEach(el => el.classList.remove('selected'));
+                if (element) element.classList.add('selected');
+
+                // Show texture preview
+                const preview = document.getElementById('texture-preview');
+                const img = document.getElementById('texture-img');
+                const label = document.getElementById('texture-name');
+
+                // Load actual texture
+                try {
+                    const texture = await new Promise((resolve, reject) => {
+                        const loader = new THREE.TextureLoader();
+                        loader.load(filePath, resolve, undefined, reject);
+                    });
+                    img.src = texture.image.src;
+                    console.log('[Viewer] Loaded texture:', filePath);
+                } catch (err) {
+                    console.warn('[Viewer] Failed to load texture:', filePath);
+                    // Fallback placeholder
+                    img.src = 'data:image/svg+xml,' + encodeURIComponent(`
+                        <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="200" height="200" fill="#333"/>
+                            <text x="100" y="100" fill="#666" text-anchor="middle" font-size="14">${name}</text>
+                            <text x="100" y="120" fill="#555" text-anchor="middle" font-size="10">Not Found</text>
+                        </svg>
+                    `);
+                }
+                label.textContent = name;
+                preview.classList.add('active');
+            }
+
+            async loadModel(filePath, name, element) {
+                console.log('[Viewer] Loading model:', filePath);
+
+                // Check B3DLoader is available
+                if (typeof B3DLoader === 'undefined') {
+                    console.error('[Viewer] B3DLoader not defined! Check script loading.');
+                    alert('B3DLoader not loaded. Please refresh the page.');
+                    return;
+                }
+
+                // Clear any loaded model
+                if (this.loadedModel) {
+                    this.scene.remove(this.loadedModel);
+                    this.loadedModel.traverse(child => {
+                        if (child.isMesh) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) child.material.dispose();
+                        }
+                    });
+                }
+
+                // Update selection
+                document.querySelectorAll('.asset-item').forEach(el => el.classList.remove('selected'));
+                if (element) element.classList.add('selected');
+
+                // Use the new B3D loader from runtime modules
+                const mockGraphics = {
+                    nextEntityId: 1,
+                    entities: {},
+                    scene: this.scene,
+                    textureLoader: {
+                        loadTexture: async (texName, flags) => {
+                            return new Promise((resolve) => {
+                                const loader = new THREE.TextureLoader();
+                                // Translate path if needed
+                                let texPath = texName;
+                                if (texName.includes('\\')) {
+                                    texPath = '/scpcb/GFX/' + texName.split('\\').join('/');
+                                }
+                                loader.load(texPath, resolve, undefined, () => resolve(null));
+                            });
+                        }
+                    }
+                };
+
+                const mockCore = {
+                    fileIO: {
+                        openFile: async (path) => {
+                            try {
+                                const response = await fetch(path);
+                                if (!response.ok) return 0;
+                                return { handle: 1, data: new Uint8Array(await response.arrayBuffer()) };
+                            } catch (e) {
+                                console.warn('[Viewer] Failed to open:', path);
+                                return 0;
+                            }
+                        },
+                        closeFile: (handle) => {},
+                        fileSize: (handle) => mockCore.fileIO.currentSize || 0,
+                        readByte: (handle, pos) => mockCore.fileIO.currentData?.[pos] || 0,
+                        readInt: (handle) => 0,
+                        readFloat: (handle) => 0
+                    }
+                };
+
+                const b3dLoader = new B3DLoader(mockGraphics, mockCore);
+                
+                // Fetch and parse B3D file
+                const response = await fetch(filePath);
+                if (!response.ok) {
+                    console.error('[Viewer] Failed to fetch B3D file:', filePath);
+                    return;
+                }
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                
+                // Parse B3D data
+                const b3dData = b3dLoader.parseBinaryData(data);
+                
+                if (!b3dData || !b3dData.meshes.length) {
+                    console.error('[Viewer] Failed to parse B3D model');
+                    return;
+                }
+
+                console.log('[Viewer] Parsed B3D:', b3dData.meshes.length, 'meshes,', 
+                    b3dData.textures.length, 'textures,', b3dData.brushes.length, 'brushes');
+
+                // Create Three.js objects from B3D data
+                const group = new THREE.Group();
+                
+                for (let i = 0; i < b3dData.meshes.length; i++) {
+                    const meshData = b3dData.meshes[i];
+                    if (!meshData.positions || meshData.positions.length === 0) continue;
+
+                    const geometry = new THREE.BufferGeometry();
+                    geometry.setAttribute('position', new THREE.Float32BufferAttribute(meshData.positions, 3));
+                    
+                    if (meshData.normals && meshData.normals.length > 0) {
+                        geometry.setAttribute('normal', new THREE.Float32BufferAttribute(meshData.normals, 3));
+                    }
+                    
+                    if (meshData.uvs && meshData.uvs[0] && meshData.uvs[0].length > 0) {
+                        geometry.setAttribute('uv', new THREE.Float32BufferAttribute(meshData.uvs[0], 2));
+                    }
+                    
+                    if (meshData.indices && meshData.indices.length > 0) {
+                        geometry.setIndex(meshData.indices);
+                    }
+                    
+                    geometry.computeVertexNormals();
+
+                    // Create material from brush
+                    let material;
+                    if (meshData.brushIndex >= 0 && meshData.brushIndex < b3dData.brushes.length) {
+                        const brush = b3dData.brushes[meshData.brushIndex];
+                        material = new THREE.MeshStandardMaterial({
+                            color: new THREE.Color(brush.color.r, brush.color.g, brush.color.b),
+                            opacity: brush.alpha,
+                            transparent: brush.alpha < 1,
+                            side: THREE.DoubleSide
+                        });
+                        
+                        // Load texture if brush has one
+                        if (brush.textureIds && brush.textureIds.length > 0 && brush.textureIds[0] >= 0) {
+                            const texIdx = brush.textureIds[0];
+                            if (texIdx < b3dData.textures.length) {
+                                const texData = b3dData.textures[texIdx];
+                                try {
+                                    const texLoader = new THREE.TextureLoader();
+                                    let texPath = texData.name;
+                                    if (texPath.includes('\\')) {
+                                        texPath = '/scpcb/GFX/' + texPath.split('\\').join('/');
+                                    }
+                                    material.map = await new Promise((resolve) => {
+                                        texLoader.load(texPath, resolve, undefined, () => resolve(null));
+                                    });
+                                } catch (e) {
+                                    console.warn('[Viewer] Failed to load texture:', texData.name);
+                                }
+                            }
+                        }
+                    } else {
+                        material = new THREE.MeshStandardMaterial({
+                            color: 0x888888,
+                            side: THREE.DoubleSide
+                        });
+                    }
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    group.add(mesh);
+                }
+
+                this.loadedModel = group;
+                group.name = 'loadedModel';
+
+                // Center and scale model
+                const box = new THREE.Box3().setFromObject(group);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+
+                // Scale to reasonable size (max 20 units)
+                const maxDim = Math.max(size.x, size.y, size.z);
+                const scale = maxDim > 20 ? 20 / maxDim : 1;
+                group.scale.setScalar(scale);
+
+                // Position at origin for easy viewing
+                group.position.set(0, 0, 0);
+
+                // Adjust camera to look at model
+                this.camera.position.set(30, 20, 30);
+                this.controls.target.set(0, 0, 0);
+                this.controls.update();
+
+                this.scene.add(group);
+                console.log('[Viewer] Model loaded:', group.children.length, 'meshes');
+
+                // Update info panel
+                document.getElementById('info-name').textContent = name;
+                document.getElementById('info-vertices').textContent = b3dData.meshes.reduce((sum, m) => sum + (m.vertexCount || 0), 0).toLocaleString();
+                document.getElementById('info-triangles').textContent = b3dData.meshes.reduce((sum, m) => sum + (m.triangleCount || 0), 0).toLocaleString();
+                document.getElementById('info-textures').textContent = b3dData.textures.length;
+                document.getElementById('info-entities').textContent = b3dData.meshes.length;
+            }
+
+            clearCurrentRoom() {
+                // Remove room-added lights (keep first 3 from setupLighting)
+                while (this.lights.length > 3) {
+                    const light = this.lights.pop();
+                    if (light.parent) light.parent.remove(light);
+                }
+                if (this.currentRoom) {
+                    this.scene.remove(this.currentRoom);
+
+                    // Dispose geometries and materials
+                    this.currentRoom.traverse(child => {
+                        if (child.isMesh) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) {
+                                if (Array.isArray(child.material)) {
+                                    child.material.forEach(m => m.dispose());
+                                } else {
+                                    child.material.dispose();
+                                }
+                            }
+                        }
+                    });
+
+                    this.currentRoom = null;
+                }
+
+                // Also clear any loaded model
+                if (this.loadedModel) {
+                    this.scene.remove(this.loadedModel);
+                    this.loadedModel.traverse(child => {
+                        if (child.isMesh) {
+                            if (child.geometry) child.geometry.dispose();
+                            if (child.material) child.material.dispose();
+                        }
+                    });
+                    this.loadedModel = null;
+                }
+
+                // Clear helpers
+                this.helpers.forEach(h => {
+                    if (h.parent) h.parent.remove(h);
+                });
+                this.helpers = [];
+
+                // Reset debug options
+                document.getElementById('debug-wireframe').checked = false;
+                document.getElementById('debug-collision').checked = false;
+                document.getElementById('debug-normals').checked = false;
+                document.getElementById('debug-bounds').checked = false;
+                document.getElementById('debug-lights').checked = false;
+            }
+
+            toggleWireframe(enabled) {
+                this.scene.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        if (Array.isArray(child.material)) {
+                            child.material.forEach(m => m.wireframe = enabled);
+                        } else {
+                            child.material.wireframe = enabled;
+                        }
+                    }
+                });
+            }
+
+            toggleCollision(enabled) {
+                // Collision visualization not implemented in demo
+                console.log('Collision visualization:', enabled ? 'enabled' : 'disabled');
+            }
+
+            toggleNormals(enabled) {
+                if (enabled) {
+                    this.scene.traverse(child => {
+                        if (child.isMesh) {
+                            const helper = new THREE.VertexNormalsHelper(child, 2, 0x00ff00);
+                            this.helpers.push(helper);
+                            child.add(helper);
+                        }
+                    });
+                } else {
+                    this.helpers.forEach(h => {
+                        if (h.parent) h.parent.remove(h);
+                    });
+                    this.helpers = [];
+                }
+            }
+
+            toggleBounds(enabled) {
+                if (enabled) {
+                    this.scene.traverse(child => {
+                        if (child.isMesh) {
+                            const helper = new THREE.BoxHelper(child, 0xffff00);
+                            this.helpers.push(helper);
+                            this.scene.add(helper);
+                        }
+                    });
+                } else {
+                    this.helpers.forEach(h => {
+                        if (h.parent) h.parent.remove(h);
+                    });
+                    this.helpers = [];
+                }
+            }
+
+            toggleLightHelpers(enabled) {
+                console.log('Light helpers:', enabled ? 'enabled' : 'disabled');
+            }
+
+            setupKeyboardControls() {
+                document.addEventListener('keydown', (e) => {
+                    this.keyState[e.code] = true;
+                });
+                document.addEventListener('keyup', (e) => {
+                    this.keyState[e.code] = false;
+                });
+            }
+
+            updateKeyboardMovement(delta) {
+                const speed = 500 * delta;
+                const forward = new THREE.Vector3();
+                const right = new THREE.Vector3();
+
+                this.camera.getWorldDirection(forward);
+                forward.y = 0;
+                forward.normalize();
+                right.crossVectors(forward, this.camera.up).normalize();
+
+                if (this.keyState['ArrowLeft'] || this.keyState['KeyA']) {
+                    this.camera.position.addScaledVector(right, -speed);
+                    this.controls.target.addScaledVector(right, -speed);
+                }
+                if (this.keyState['ArrowRight'] || this.keyState['KeyD']) {
+                    this.camera.position.addScaledVector(right, speed);
+                    this.controls.target.addScaledVector(right, speed);
+                }
+                if (this.keyState['ArrowUp'] || this.keyState['KeyW']) {
+                    this.camera.position.addScaledVector(forward, speed);
+                    this.controls.target.addScaledVector(forward, speed);
+                }
+                if (this.keyState['ArrowDown'] || this.keyState['KeyS']) {
+                    this.camera.position.addScaledVector(forward, -speed);
+                    this.controls.target.addScaledVector(forward, -speed);
+                }
+            }
+
+            setExposure(exposure) {
+                if (this.renderer) {
+                    this.renderer.toneMappingExposure = exposure;
+                }
+            }
+
+            countVertices() {
+                let count = 0;
+                this.scene.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+                        count += child.geometry.attributes.position?.count || 0;
+                    }
+                });
+                return count.toLocaleString();
+            }
+
+            countTriangles() {
+                let count = 0;
+                this.scene.traverse(child => {
+                    if (child.isMesh && child.geometry) {
+                        const index = child.geometry.index;
+                        if (index) {
+                            count += index.count / 3;
+                        } else {
+                            count += child.geometry.attributes.position?.count / 3 || 0;
+                        }
+                    }
+                });
+                return count.toLocaleString();
+            }
+
+            showLoading(show, text = 'Loading...') {
+                const overlay = document.getElementById('loading-overlay');
+                const loadingText = document.getElementById('loading-text');
+
+                loadingText.textContent = text;
+
+                if (show) {
+                    overlay.classList.add('active');
+                } else {
+                    overlay.classList.remove('active');
+                }
+            }
+
+            onResize() {
+                const container = document.getElementById('viewport');
+
+                this.camera.aspect = container.clientWidth / container.clientHeight;
+                this.camera.updateProjectionMatrix();
+
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+
+                const delta = this.clock.getDelta();
+                this.updateKeyboardMovement(delta);
+
+                this.controls.update();
+                this.renderer.render(this.scene, this.camera);
+                this.updateStats();
+            }
+
+            updateStats() {
+                this.frameCount++;
+                const now = performance.now();
+
+                if (now - this.lastFpsUpdate >= 1000) {
+                    const fps = Math.round(this.frameCount * 1000 / (now - this.lastFpsUpdate));
+                    document.getElementById('fps').textContent = fps;
+                    document.getElementById('draw-calls').textContent = this.renderer.info.render.calls;
+                    document.getElementById('tri-count').textContent = this.renderer.info.render.triangles.toLocaleString();
+
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                }
+            }
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait for Three.js to load
+            if (typeof THREE === 'undefined') {
+                console.error('Three.js not loaded!');
+                document.getElementById('loading-text').textContent = 'Error: Three.js failed to load. Refreshing...';
+                setTimeout(() => location.reload(), 2000);
+                return;
+            }
+
+            console.log('Three.js loaded successfully, version:', THREE.REVISION);
+            window.viewer = new SCPCBAssetViewer();
+        });
+    </script>
+</body>
+
+</html>

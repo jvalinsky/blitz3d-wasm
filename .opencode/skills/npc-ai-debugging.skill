@@ -1,0 +1,578 @@
+# NPC AI Debugging
+
+Skill for tracing state machines, pathfinding, line-of-sight, and NPC behaviors in SCPB.
+
+## When to Use
+
+Use this skill when:
+- NPC not moving or behaving incorrectly
+- Pathfinding failing or going wrong way
+- Line-of-sight detection issues
+- State machine transitions unexpected
+- Debugging SCP-specific behaviors
+- NPC detection ranges incorrect
+
+## State Machine Tracing
+
+### State Definitions
+
+```blitzbasic
+; NPC state constants (from NPCs.bb)
+Const STATE_IDLE% = 0
+Const STATE_WANDER% = 1
+Const STATE_HUNTING% = 2
+Const STATE_ATTACK% = 3
+Const STATE_FLEE% = 4
+Const STATE_SEARCH% = 5
+Const STATE_RETALIATE% = 6
+
+; SCP-specific states
+Const STATE_SCP173_FROZEN% = 10
+Const STATE_SCP173_MOVING% = 11
+Const STATE_SCP096_DOCILE% = 12
+Const STATE_SCP096_AGITATED% = 13
+Const STATE_SCP096_PURSUIT% = 14
+Const STATE_SCP106_HUNTING% = 15
+Const STATE_SCP106_EMERGE% = 16
+Const STATE_SCP049_IDLE% = 17
+Const STATE_SCP049_APPROACH% = 18
+Const STATE_SCP049_CURE% = 19
+```
+
+### Trace State Machine
+
+```blitzbasic
+Function Debug_NPCStateMachine(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "=== STATE MACHINE: " + NPCTypeName(npc\NPCtype) + " ==="
+    Debug_Print "Current State: " + GetStateName(npc\State) + " (" + npc\State + ")"
+    Debug_Print "State2: " + npc\State2
+    Debug_Print "State3: " + npc\State3
+
+    ; Trace state transitions
+    Debug_Print "State History: " + GetStateHistory(npc)
+
+    ; Show possible transitions
+    Debug_Print "Possible Transitions:"
+    transitions$ = GetPossibleTransitions(npc\NPCtype, npc\State)
+    ForEach t$ in transitions$
+        Debug_Print "  -> " + t$
+    Next
+
+    ; Show transition conditions
+    Debug_Print "Transition Conditions:"
+    ForEach t$ in transitions$
+        condition$ = GetTransitionCondition(npc\NPCtype, npc\State, t$)
+        Debug_Print "  " + t$ + ": " + condition$
+    Next
+End Function
+```
+
+### State History
+
+```blitzbasic
+Global NPC_STATE_HISTORY$[100][10]  ; 100 NPCs, 10 history entries
+Global NPC_STATE_HISTORY_INDEX[100]
+
+Function NPC_RecordStateChange(npc.NPCs, newState%)
+    idx = npc\ID
+    historyIdx = NPC_STATE_HISTORY_INDEX[idx]
+    NPC_STATE_HISTORY[idx][historyIdx] = GetStateName(newState) + " @" + FormatTime(GetGameTime())
+    NPC_STATE_HISTORY_INDEX[idx] = (historyIdx + 1) Mod 10
+End Function
+
+Function GetStateHistory(npc.NPCs)
+    idx = npc\ID
+    historyIdx = NPC_STATE_HISTORY_INDEX[idx]
+    result$ = ""
+
+    ; Get last 5 states
+    count = 0
+    i = historyIdx - 1
+    While count < 5
+        If i < 0 Then i = 9
+        If NPC_STATE_HISTORY[idx][i] <> ""
+            result$ = NPC_STATE_HISTORY[idx][i] + " <- " + result$
+            count = count + 1
+        End If
+        i = i - 1
+    Wend
+
+    Return result$
+End Function
+```
+
+## Pathfinding Debug
+
+### Path Visualization
+
+```blitzbasic
+Function Debug_Pathfinding(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "=== PATHFINDING: " + NPCTypeName(npc\NPCtype) + " ==="
+    Debug_Print "Path Status: " + GetPathStatusName(npc\PathStatus)
+
+    If npc\PathStatus = PATH_IDLE
+        Debug_Print "No active path"
+        Return
+    End If
+
+    ; Path info
+    Debug_Print "Path Target: " + FormatVector(npc\PathTarget)
+    Debug_Print "Path Nodes: " + npc\PathNodeCount
+    Debug_Print "Current Node: " + npc\PathCurrentNode
+
+    ; Draw path
+    DrawPath(npc)
+
+    ; Pathfinding stats
+    Debug_Print "Path Time: " + npc\PathFindTime + "ms"
+    Debug_Print "Path Attempts: " + npc\PathAttempts
+    Debug_Print "Path Successes: " + npc\PathSuccesses
+    Debug_Print "Path Failures: " + (npc\PathAttempts - npc\PathSuccesses)
+
+    ; Show current node
+    If npc\PathCurrentNode < npc\PathNodeCount
+        node = npc\PathNodes[npc\PathCurrentNode]
+        Debug_Print "Current Node Pos: " + FormatVector(node)
+    End If
+End Function
+
+Function DrawPath(npc.NPCs)
+    If npc\PathNodeCount = 0 Then Return
+
+    ; Draw start point
+    Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), 0.3, 0, 255, 0)
+
+    ; Draw path segments
+    prevX# = EntityX(npc\obj)
+    prevY# = EntityY(npc\obj)
+    prevZ# = EntityZ(npc\obj)
+
+    For i = 0 To npc\PathNodeCount - 1
+        node = npc\PathNodes[i]
+        Debug_DrawSphere(EntityX(node), EntityY(node), EntityZ(node), 0.2, 255, 255, 255)
+
+        Debug_DrawLine(prevX, prevY, prevZ, EntityX(node), EntityY(node), EntityZ(node), 255, 255, 255)
+
+        prevX = EntityX(node)
+        prevY = EntityY(node)
+        prevZ = EntityZ(node)
+    Next
+
+    ; Draw target
+    Debug_DrawSphere(EntityX(npc\PathTarget), EntityY(npc\PathTarget), EntityZ(npc\PathTarget), 0.4, 255, 0, 0)
+End Function
+```
+
+### Path Status
+
+```blitzbasic
+Const PATH_IDLE% = 0
+Const PATH_CALCULATING% = 1
+Const PATH_ACTIVE% = 2
+Const PATH_BLOCKED% = 3
+Const PATH_FAILED% = 4
+Const PATH_COMPLETE% = 5
+
+Function GetPathStatusName(status%)
+    Select status
+        Case PATH_IDLE: Return "IDLE"
+        Case PATH_CALCULATING: Return "CALCULATING"
+        Case PATH_ACTIVE: Return "ACTIVE"
+        Case PATH_BLOCKED: Return "BLOCKED"
+        Case PATH_FAILED: Return "FAILED"
+        Case PATH_COMPLETE: Return "COMPLETE"
+        Default: Return "UNKNOWN"
+    End Select
+End Function
+```
+
+## Line-of-Sight Debug
+
+### LOS Check
+
+```blitzbasic
+Function Debug_LineOfSight(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "=== LINE OF SIGHT: " + NPCTypeName(npc\NPCtype) + " ==="
+
+    ; Check if can see player
+    canSee = CanSeePlayer(npc)
+    Debug_Print "Can See Player: " + (canSee ? "YES" : "NO")
+
+    ; Distance check
+    dist# = Distance(npc\obj, PlayerCollider)
+    Debug_Print "Distance: " + Int(dist)
+
+    ; Angle check
+    angle# = GetAngleToPlayer(npc)
+    Debug_Print "Angle: " + Int(angle) + " degrees"
+    Debug_Print "FOV: " + GetNPCFOV(npc\NPCtype) + " degrees"
+
+    ; Obstacle check
+    hasObstacle = HasObstacleBetween(npc\obj, PlayerCollider)
+    Debug_Print "Has Obstacle: " + (hasObstacle ? "YES" : "NO")
+
+    ; Raycast result
+    If hasObstacle
+        hitPoint = GetFirstObstaclePoint(npc\obj, PlayerCollider)
+        Debug_Print "Obstacle at: " + FormatVector(hitPoint)
+        Debug_Print "Obstacle Type: " + GetObstacleType(hitPoint)
+    End If
+
+    ; Visibility cone
+    DrawVisibilityCone(npc)
+
+    ; Historical LOS
+    Debug_Print "LOS History: " + GetLOSHistory(npc)
+End Function
+```
+
+### Draw Visibility Cone
+
+```blitzbasic
+Function DrawVisibilityCone(npc.NPCs)
+    ; Get NPC forward direction
+    GetEntityRotation npc\obj, pitch#, yaw#, roll#
+
+    fov# = GetNPCFOV(npc\NPCtype)
+    range# = GetNPCViewRange(npc\NPCtype)
+
+    ; Draw cone edges
+    leftAngle# = yaw - fov / 2
+    rightAngle# = yaw + fov / 2
+
+    ; Left edge
+    lx# = EntityX(npc\obj) + Sin(leftAngle) * range
+    lz# = EntityZ(npc\obj) + Cos(leftAngle) * range
+
+    ; Right edge
+    rx# = EntityX(npc\obj) + Sin(rightAngle) * range
+    rz# = EntityZ(npc\obj) + Cos(rightAngle) * range
+
+    ; Draw cone (wireframe)
+    SetColor 0, 255, 0, 50  ; Semi-transparent green
+    DrawCone(npc\obj, range, fov)
+End Function
+```
+
+### LOS History
+
+```blitzbasic
+Global NPC_LOS_HISTORY[100][10]  ; 100 NPCs, 10 history entries
+
+Function NPC_RecordLOS(npc.NPCs, canSee%)
+    idx = npc\ID
+    historyIdx = NPC_LOS_HISTORY_INDEX[idx]
+    NPC_LOS_HISTORY[idx][historyIdx] = canSee
+    NPC_LOS_HISTORY_INDEX[idx] = (historyIdx + 1) Mod 10
+End Function
+
+Function GetLOSHistory(npc.NPCs)
+    idx = npc\ID
+    historyIdx = NPC_LOS_HISTORY_INDEX[idx]
+
+    visibleCount = 0
+    For i = 0 To 9
+        prevIdx -  = (historyIdx1 - i + 10) Mod 10
+        If NPC_LOS_HISTORY[idx][prevIdx] = 1
+            visibleCount = visibleCount + 1
+        End If
+    Next
+
+    Return visibleCount + "/10 recent frames visible"
+End Function
+```
+
+## Detection Debug
+
+### Detection Systems
+
+```blitzbasic
+Function Debug_Detection(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "=== DETECTION: " + NPCTypeName(npc\NPCtype) + " ==="
+
+    ; Visual detection
+    Debug_Print "VISUAL:"
+    Debug_Print "  Can See: " + (CanSeePlayer(npc) ? "YES" : "NO"))
+    Debug_Print "  Distance: " + Int(Distance(npc\obj, PlayerCollider))
+    Debug_Print "  In FOV: " + (PlayerInFOV(npc) ? "YES" : "NO")
+    Debug_Print "  Ray Clear: " + (RayClear(npc\obj, PlayerCollider) ? "YES" : "NO")
+    Debug_Print "  View Range: " + GetNPCViewRange(npc\NPCtype)
+
+    ; Audio detection
+    Debug_Print "AUDIO:"
+    Debug_Print "  Can Hear: " + (CanHearPlayer(npc) ? "YES" : "NO")
+    Debug_Print "  Sound Level: " + GetPlayerSoundLevel()
+    Debug_Print "  Hearing Range: " + GetNPCHearingRange(npc\NPCtype)
+    Debug_Print "  Sound Direction: " + GetSoundDirection(npc)
+
+    ; Smell detection (if applicable)
+    If NPCHasSmellSense(npc\NPCtype)
+        Debug_Print "SMELL:"
+        Debug_Print "  Can Smell: " + (CanSmellPlayer(npc) ? "YES" : "NO")
+        Debug_Print "  Scent Trail: " + GetScentStrength(npc)
+    End If
+
+    ; Combined detection
+    Debug_Print "COMBINED:"
+    Debug_Print "  Detection Level: " + GetDetectionLevel(npc)
+    Debug_Print "  Alert Threshold: " + GetNPCAlertThreshold(npc\NPCtype)
+    If GetDetectionLevel(npc) >= GetNPCAlertThreshold(npc\NPCtype)
+        Debug_Print "  ALERT TRIGGERED"
+    End If
+End Function
+```
+
+## SCP-Specific Debug
+
+### SCP-173 Debug
+
+```blitzbasic
+Function Debug_SCP173(npc.NPCs)
+    Debug_Print "=== SCP-173 DEBUG ==="
+
+    ; Observation state
+    Debug_Print "Observation Status:"
+    Debug_Print "  Is Observed: " + (IsObservedByPlayer(npc) ? "YES" : "NO")
+    Debug_Print "  Is Observed By NPC: " + (IsObservedByNPC(npc) ? "YES" : "NO")
+    Debug_Print "  Total Observers: " + GetObserverCount(npc)
+
+    ; Movement state
+    If IsObservedByPlayer(npc) Or IsObservedByNPC(npc)
+        Debug_Print "  Movement: FROZEN"
+        Debug_Print "  Frozen Since: " + npc\State2
+    Else
+        Debug_Print "  Movement: ACTIVE"
+        Debug_Print "  Last Moved: " + npc\State2
+        Debug_Print "  Move Timer: " + npc\State3
+    End If
+
+    ; Proximity
+    dist# = Distance(npc\obj, PlayerCollider)
+    Debug_Print "Player Distance: " + Int(dist)
+    If dist < 4.0
+        Debug_Print "PROXIMITY DANGER: < 4 meters"
+    End If
+
+    ; Snap chance
+    If dist < 4.0 And Not IsObserved(npc)
+        snapChance = CalculateSnapChance(npc)
+        Debug_Print "Snap Chance: " + snapChance + "%"
+    End If
+End Function
+```
+
+### SCP-096 Debug
+
+```blitzbasic
+Function Debug_SCP096(npc.NPCs)
+    Debug_Print "=== SCP-096 DEBUG ==="
+
+    ; State
+    Debug_Print "State: " + GetSCP096StateName(npc\State)
+    Debug_Print "Agitation: " + npc\State2 + "%"
+
+    ; Trigger status
+    Debug_Print "Trigger Status:"
+    If npc\State = STATE_SCP096_DOCILE
+        Debug_Print "  Not Triggered"
+        Debug_Print "  Viewed: " + (HasBeenViewed(npc) ? "YES" : "NO")
+        Debug_Print "  Screenshot: " + (HasScreenshot(npc) ? "YES" : "NO")
+    Else
+        Debug_Print "  TRIGGERED"
+        Debug_Print "  Trigger Time: " + npc\State3
+        Debug_Print  "  Pursuit Duration: " + (GetGameTime() - npc\State3)
+    End If
+
+    ; Pursuit
+    If npc\State = STATE_SCP096_PURSUIT
+        Debug_Print "Pursuit:"
+        Debug_Print "  Distance: " + Int(Distance(npc\obj, PlayerCollider))
+        Debug_Print "  Line of Sight: " + (HasLineOfSight(npc, PlayerCollider) ? "YES" : "NO")
+        Debug_Print "  Last Seen: " + GetLastSeenTime(npc)
+    End If
+
+    ; Speed
+    Debug_Print "Speed: " + npc\Speed + " (current: " + npc\CurrSpeed + ")"
+    If npc\State = STATE_SCP096_PURSUIT
+        Debug_Print "Sprint Speed: " + npc\Speed * 1.5
+    End If
+End Function
+
+Function GetSCP096StateName(state%)
+    Select state
+        Case STATE_SCP096_DOCILE: Return "DOCILE"
+        Case STATE_SCP096_AGITATED: Return "AGITATED"
+        Case STATE_SCP096_PURSUIT: Return "PURSUIT"
+        Default: Return "UNKNOWN"
+    End Select
+End Function
+```
+
+### SCP-106 Debug
+
+```blitzbasic
+Function Debug_SCP106(npc.NPCs)
+    Debug_Print "=== SCP-106 DEBUG ==="
+
+    ; State
+    Debug_Print "State: " + GetSCP106StateName(npc\State)
+    Debug_Print "Corrosion Level: " + npc\State2
+
+    ; Location
+    Debug_Print "Location: " + (npc\State = STATE_EMERGED ? "FACILITY" : "SUB_DIMENSION")
+
+    ; Emerge timer
+    If npc\State = STATE_SUB_DIMENSION
+        Debug_Print "Time Until Emerge: " + npc\State3 + " seconds"
+    End If
+
+    ; Emerge point
+    If npc\EmergePoint <> 0
+        Debug_Print "Emerge Point: " + FormatVector(npc\EmergePoint)
+    End If
+
+    ; Corrosion damage
+    If Distance(npc\obj, PlayerCollider) < 10.0
+        Debug_Print "Corrosion Damage Active"
+        Debug_Print "Damage/sec: " + npc\State2 * 0.5
+    End If
+
+    ; Pocket dimension pull
+    If IsPullingToDimension(npc)
+        Debug_Print "PULLING TO DIMENSION"
+        Debug_Print "Pull Strength: " + npc\State3
+    End If
+End Function
+```
+
+### SCP-049 Debug
+
+```blitzbasic
+Function Debug_SCP049(npc.NPCs)
+    Debug_Print "=== SCP-049 DEBUG ==="
+
+    ; State
+    Debug_Print "State: " + GetSCP049StateName(npc\State)
+    Debug_Print "Cure Timer: " + npc\State2
+
+    ; Dialog
+    Debug_Print "Dialogue:"
+    If npc\DialogueIndex >= 0
+        Debug_Print "  Current: " + GetSCP049Dialogue(npc\DialogueIndex)
+        Debug_Print "  Index: " + npc\DialogueIndex
+    End If
+
+    ; Player detection
+    Debug_Print "Player Status:"
+    If npc\State = STATE_SCP049_APPROACH
+        Debug_Print "  Target Acquired"
+        Debug_Print "  Distance: " + Int(Distance(npc\obj, PlayerCollider))
+        Debug_Print "  Saying: " + GetSCP049Dialogue(npc\DialogueIndex)
+    End If
+
+    ; Revival
+    If npc\State3 > 0
+        Debug_Print "Revival Progress: " + npc\State3 + "%"
+    End If
+
+    ; 049-2 status
+    If NPCExists(NPC_SCP_049_2)
+        Debug_Print "SCP-049-2 Present"
+        reviver = GetSCP0492Reviver()
+        Debug_Print "  Revived By: " + (reviver = npc ? "THIS NPC" : "OTHER")
+    End If
+End Function
+```
+
+## Detection Range Debug
+
+```blitzbasic
+Function Debug_DetectionRanges(npc.NPCs)
+    Debug_Print "=== DETECTION RANGES: " + NPCTypeName(npc\NPCtype) + " ==="
+
+    ; Visual range
+    viewRange# = GetNPCViewRange(npc\NPCtype)
+    Debug_Print "Visual Range: " + Int(viewRange) + " units"
+    Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), viewRange, 0, 255, 0, 30)
+
+    ; Audio range
+    audioRange# = GetNPCHearingRange(npc\NPCtype)
+    Debug_Print "Audio Range: " + Int(audioRange) + " units"
+    Debug_DrawSphere(EntityX(npc\obj), EntityY(npc\obj), EntityZ(npc\obj), audioRange, 0, 0, 255, 30)
+
+    ; Detection cone
+    fov# = GetNPCFOV(npc\NPCtype)
+    Debug_Print "FOV: " + Int(fov) + " degrees"
+End Function
+```
+
+## Complete AI Debug
+
+```blitzbasic
+Function Debug_NPCAI(npc.NPCs)
+    If npc = Null Then Return
+
+    Debug_Print "========================================"
+    Debug_Print "AI DEBUG: " + NPCTypeName(npc\NPCtype) + " (ID: " + npc\ID + ")"
+    Debug_Print "========================================"
+
+    ; Basic info
+    Debug_Print ""
+    Debug_Print "BASIC INFO:"
+    Debug_Print "  Position: " + FormatVector(PlayerPosition(npc\obj))
+    Debug_Print "  Type: " + npc\NPCtype + " (" + NPCTypeName(npc\NPCtype) + ")"
+
+    ; State machine
+    Debug_NPCStateMachine(npc)
+
+    ; Detection
+    Debug_Detection(npc)
+
+    ; Pathfinding
+    Debug_Pathfinding(npc)
+
+    ; LOS
+    Debug_LineOfSight(npc)
+
+    ; SCP-specific
+    Select npc\NPCtype
+        Case NPC_SCP_173: Debug_SCP173(npc)
+        Case NPC_SCP_096: Debug_SCP096(npc)
+        Case NPC_SCP_106: Debug_SCP106(npc)
+        Case NPC_SCP_049: Debug_SCP049(npc)
+    End Select
+
+    Debug_Print ""
+End Function
+
+Function Debug_AllAI()
+    If Not DEBUG_MODE Then Return
+
+    For npc.NPCs = Each NPCs
+        Debug_NPCAI(npc)
+    Next
+End Function
+```
+
+## Quick Reference
+
+| Function | Purpose |
+|----------|---------|
+| `Debug_NPCStateMachine(npc)` | Trace state transitions |
+| `Debug_Pathfinding(npc)` | Show path and nodes |
+| `Debug_LineOfSight(npc)` | Check LOS to player |
+| `Debug_Detection(npc)` | All detection methods |
+| `Debug_SCP173(npc)` | SCP-173 specific |
+| `Debug_SCP096(npc)` | SCP-096 specific |
+| `Debug_SCP106(npc)` | SCP-106 specific |
+| `Debug_SCP049(npc)` | SCP-049 specific |
+| `Debug_NPCAI(npc)` | Complete AI debug |
+| `Debug_AllAI()` | Debug all NPCs |

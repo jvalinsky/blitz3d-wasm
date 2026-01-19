@@ -25,6 +25,10 @@ public final class StatementGeneration {
     // Control flow depth tracking
     private var currentDepth: Int = 0
     private var loopExitDepths: [Int] = []
+    
+    // GOSUB support
+    private var gosubReturnCounter: Int = 0
+    private var gosubReturnMap: [Int: [WASMInstruction]] = [:]
 
     public init(context: ModuleContext) {
         self.context = context
@@ -40,6 +44,7 @@ public final class StatementGeneration {
     public func configureGotos(labelStateMap: [String: Int], gotoStateLocalIdx: Int) {
         self.labelStateMap = labelStateMap
         self.gotoStateLocalIdx = gotoStateLocalIdx
+        self.gosubReturnCounter = 0
     }
 
     /// Update context after generation
@@ -134,13 +139,20 @@ public final class StatementGeneration {
             }
             
         case .functionCall(let call):
-            if let funcIdx = context.functionIndexMap[call.name] {
+            let lowerName = call.name.lowercased()
+            if let funcIdx = context.functionIndexMap[lowerName] {
                 var instrs: [WASMInstruction] = []
                 for arg in call.arguments {
                     let argInstrs = expressionGenerator?.generate(arg) ?? []
                     instrs.append(contentsOf: argInstrs)
                 }
                 instrs.append(.call(funcIdx))
+                
+                // If the function returns a value, drop it since it's being used as a statement
+                if let def = context.functionDefinitions[lowerName], !def.results.isEmpty {
+                    instrs.append(.drop)
+                }
+                
                 function.body.append(contentsOf: instrs)
             }
             
@@ -229,22 +241,34 @@ public final class StatementGeneration {
             }
             
         case .forEach(let forEachNode):
+            guard let typeInfo = context.userTypes[forEachNode.typeName],
+                  let iterator = context.variableManagement.localInfo(for: forEachNode.iteratorName) else { break }
+            
             currentDepth += 1 // block
             loopExitDepths.append(currentDepth)
             currentDepth += 1 // loop
             
-            var loopInstrs: [WASMInstruction] = []
-            loopInstrs.append(.localGet(0))
-            loopInstrs.append(.i32EqZ)
-            loopInstrs.append(.brIf(1))
-            loopInstrs.append(.localTee(1))
+            // Initialization: it = type_first
+            function.body.append(.globalGet(typeInfo.firstGlobalIdx))
+            function.body.append(.localSet(iterator.index))
             
+            var loopInstrs: [WASMInstruction] = []
+            
+            // it == 0? exit
+            loopInstrs.append(.localGet(iterator.index))
+            loopInstrs.append(.i32EqZ)
+            loopInstrs.append(.brIf(1)) // exit block
+            
+            // body
             let bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
             loopInstrs.append(contentsOf: bodyInstrs)
             
-            loopInstrs.append(.localGet(0))
-            loopInstrs.append(.call(0))
-            loopInstrs.append(.localSet(0))
+            // it = it.next
+            loopInstrs.append(.localGet(iterator.index))
+            loopInstrs.append(.i32Load(2, 4)) // offset 4 is __next
+            loopInstrs.append(.localSet(iterator.index))
+            
+            // loop
             loopInstrs.append(.br(0))
             
             currentDepth -= 2
@@ -289,6 +313,23 @@ public final class StatementGeneration {
             }
             
         case .returnStatement(let expr):
+            // Check if we are in a GOSUB return context (stack not empty)
+            if gotoStateLocalIdx >= 0 {
+                function.body.append(.globalGet(context.gosubStackPtrIdx))
+                function.body.append(.i32Const(131072)) // Initial stack ptr
+                function.body.append(.i32GtU)
+                function.body.append(.if(.void, [
+                    .globalGet(context.gosubStackPtrIdx),
+                    .i32Const(4),
+                    .i32Sub,
+                    .globalSet(context.gosubStackPtrIdx),
+                    .globalGet(context.gosubStackPtrIdx),
+                    .i32Load(2, 0),
+                    .localSet(gotoStateLocalIdx),
+                    .br(currentDepth + 2) // Back to state machine loop (beyond return if AND chunk if)
+                ], nil))
+            }
+            
             if let returnExpr = expr {
                 let returnInstrs = expressionGenerator?.generate(returnExpr) ?? []
                 function.body.append(contentsOf: returnInstrs)
@@ -306,23 +347,47 @@ public final class StatementGeneration {
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
                 function.body.append(.i32Const(Int32(stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(0)) // Branch to start of state machine loop
+                function.body.append(.br(currentDepth + 1)) // Branch to state machine loop (beyond chunk if)
             } else {
-                // If no state machine, just a nop or unreachable
                 function.body.append(.nop)
             }
             
         case .gosub(let labelName):
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
+                // 1. Assign unique return ID
+                gosubReturnCounter += 1
+                let returnID = 1000 + gosubReturnCounter
+                
+                // 2. Push returnID to stack
+                function.body.append(.globalGet(context.gosubStackPtrIdx))
+                function.body.append(.i32Const(Int32(returnID)))
+                function.body.append(.i32Store(2, 0))
+                
+                function.body.append(.globalGet(context.gosubStackPtrIdx))
+                function.body.append(.i32Const(4))
+                function.body.append(.i32Add)
+                function.body.append(.globalSet(context.gosubStackPtrIdx))
+                
+                // 3. Set target state and jump
                 function.body.append(.i32Const(Int32(stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(0))
+                function.body.append(.br(currentDepth + 1)) // Branch to state machine loop
+                
+                // 4. Mark return point (placeholder)
+                function.body.append(.nop)
             } else {
                 function.body.append(.nop)
             }
             
-        case .label(_):
-            break
+        case .label(let name):
+            // The label itself is just a state ID check point
+            if let stateNum = labelStateMap[name] {
+                // We'll wrap segments in checks:
+                // if (gotoState == stateNum) { gotoState = 0; ... }
+                // This is actually better done in generateFunction's loop
+                // but for now we'll emit a nop
+                function.body.append(.nop)
+            }
             
         case .typeDeclaration(let typeNode):
             var offsets: [String: Int] = [:]
@@ -341,6 +406,7 @@ public final class StatementGeneration {
             }
             
             context.userTypes[typeNode.typeName] = UserTypeInfo(
+                typeID: context.userTypes.count + 1,
                 fieldOffsets: offsets,
                 fieldTypes: fieldTypes,
                 instanceSize: currentOffset
@@ -375,7 +441,64 @@ public final class StatementGeneration {
                 function.body.append(.globalSet(dataPtrIdx))
             }
             
-        case .data, .delete, .insert, .empty, .function:
+        case .delete(let expr):
+            guard let typeName = getTypeName(from: expr),
+                  let typeInfo = context.userTypes[typeName],
+                  let expressionGenerator = expressionGenerator else { break }
+            
+            let objInstrs = expressionGenerator.generate(expr)
+            function.body.append(contentsOf: objInstrs)
+            function.body.append(.localSet(0)) // local 0: obj
+            
+            // 1. Unstitch
+            // if (obj.prev != 0) obj.prev.next = obj.next
+            // else first = obj.next
+            function.body.append(.localGet(0))
+            function.body.append(.i32Load(2, 0)) // obj.prev
+            function.body.append(.if(.void, [
+                .localGet(0),
+                .i32Load(2, 0), // prev
+                .localGet(0),
+                .i32Load(2, 4), // next
+                .i32Store(2, 4) // prev.next = obj.next
+            ], [
+                .localGet(0),
+                .i32Load(2, 4), // next
+                .globalSet(typeInfo.firstGlobalIdx) // first = next
+            ]))
+            
+            // if (obj.next != 0) obj.next.prev = obj.prev
+            // else last = obj.prev
+            function.body.append(.localGet(0))
+            function.body.append(.i32Load(2, 4)) // obj.next
+            function.body.append(.if(.void, [
+                .localGet(0),
+                .i32Load(2, 4), // next
+                .localGet(0),
+                .i32Load(2, 0), // prev
+                .i32Store(2, 0) // next.prev = obj.prev
+            ], [
+                .localGet(0),
+                .i32Load(2, 0), // prev
+                .globalSet(typeInfo.lastGlobalIdx) // last = prev
+            ]))
+            
+            // 2. Recycle
+            // obj.next = freeHead
+            // freeHead = obj
+            function.body.append(.localGet(0))
+            function.body.append(.globalGet(typeInfo.freeHeadGlobalIdx))
+            function.body.append(.i32Store(2, 4)) // using next field for free list
+            
+            function.body.append(.localGet(0))
+            function.body.append(.globalSet(typeInfo.freeHeadGlobalIdx))
+            
+            // Invalidate typeID for safety
+            function.body.append(.localGet(0))
+            function.body.append(.i32Const(0))
+            function.body.append(.i32Store(2, 8))
+            
+        case .data, .insert, .empty, .function:
             break
         }
     }

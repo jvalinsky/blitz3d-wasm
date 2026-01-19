@@ -71,25 +71,29 @@ public struct WASMBinaryEncoder {
         let content: [UInt8] = encodeVector(types) { type -> [UInt8] in
             var result: [UInt8] = [0x60] // func type
             
-            result.append(contentsOf: encodeVector(type.parameters) { type -> UInt8 in
+            let params = encodeVector(type.parameters) { type -> UInt8 in
                 switch type {
                 case .i32: return 0x7F
                 case .i64: return 0x7E
                 case .f32: return 0x7D
                 case .f64: return 0x7C
+                case .v128: return 0x7B
                 default: return 0x00
                 }
-            })
+            }
+            result.append(contentsOf: params)
             
-            result.append(contentsOf: encodeVector(type.results) { type -> UInt8 in
+            let res = encodeVector(type.results) { type -> UInt8 in
                 switch type {
                 case .i32: return 0x7F
                 case .i64: return 0x7E
                 case .f32: return 0x7D
                 case .f64: return 0x7C
+                case .v128: return 0x7B
                 default: return 0x00
                 }
-            })
+            }
+            result.append(contentsOf: res)
             
             return result
         }
@@ -215,6 +219,7 @@ public struct WASMBinaryEncoder {
                 case .i64: typeByte = 0x7E
                 case .f32: typeByte = 0x7D
                 case .f64: typeByte = 0x7C
+                case .v128: typeByte = 0x7B
                 default: typeByte = 0x00
                 }
                 funcBody.append(typeByte)
@@ -374,13 +379,13 @@ public struct WASMBinaryEncoder {
         case .f32Ge:
             return [0x60]
         case .f32Add:
-            return [0xA0]
+            return [0x92]
         case .f32Sub:
-            return [0xA1]
+            return [0x93]
         case .f32Mul:
-            return [0xA2]
+            return [0x94]
         case .f32Div:
-            return [0xA3]
+            return [0x95]
         case .f32Sqrt:
             return [0x91]
         case .f32Neg:
@@ -398,29 +403,112 @@ public struct WASMBinaryEncoder {
         case .f64Ge:
             return [0x66]
         case .f64Add:
-            return [0xA4]
+            return [0xA0]
         case .f64Sub:
-            return [0xA5]
+            return [0xA1]
         case .f64Mul:
-            return [0xA6]
+            return [0xA2]
         case .f64Div:
-            return [0xA7]
+            return [0xA3]
         case .f64Sqrt:
             return [0x9F]
         case .f64Neg:
             return [0x9A]
+        case .f32Abs: return [0x8B]
+        case .f32Ceil: return [0x8D]
+        case .f32Floor: return [0x8E]
+        case .f32Trunc: return [0x8F]
+        case .f32Nearest: return [0x90]
+        case .f32Min: return [0x96]
+        case .f32Max: return [0x97]
+        case .f32Copysign: return [0x98]
+        case .f64Abs: return [0x99]
+        case .f64Ceil: return [0x9B]
+        case .f64Floor: return [0x9C]
+        case .f64Trunc: return [0x9D]
+        case .f64Nearest: return [0x9E]
+        case .f64Min: return [0xA4]
+        case .f64Max: return [0xA5]
+        case .f64Copysign: return [0xA6]
         case .i32WrapI64:
             return [0xA7]
+        case .i32TruncF32S: return [0xA8]
+        case .i32TruncF32U: return [0xA9]
+        case .i32TruncF64S: return [0xAA]
+        case .i32TruncF64U: return [0xAB]
         case .i64ExtendI32S:
             return [0xAC]
+        case .i64ExtendI32U: return [0xAD]
+        case .i64TruncF32S: return [0xAE]
+        case .i64TruncF32U: return [0xAF]
+        case .i64TruncF64S: return [0xB0]
+        case .i64TruncF64U: return [0xB1]
         case .f32ConvertI32S:
             return [0xB2]
+        case .f32ConvertI32U: return [0xB3]
+        case .f32ConvertI64S: return [0xB4]
+        case .f32ConvertI64U: return [0xB5]
+        case .f32DemoteF64: return [0xB6]
         case .f64ConvertI32S:
             return [0xB7]
+        case .f64ConvertI32U: return [0xB8]
+        case .f64ConvertI64S: return [0xB9]
+        case .f64ConvertI64U: return [0xBA]
+        case .f64PromoteF32: return [0xBB]
         case .i32ReinterpretF32:
             return [0xBC]
         case .f32ReinterpretI32:
-            return [0xBD]
+            return [0xBE]
+        case .i64ReinterpretF64: return [0xBD]
+        case .f64ReinterpretI64: return [0xBF]
+        
+        case .i64EqZ: return [0x50]
+        case .i64Eq: return [0x51]
+        case .i64Ne: return [0x52]
+        case .i64LtS: return [0x53]
+        case .i64LtU: return [0x54]
+        case .i64GtS: return [0x55]
+        case .i64GtU: return [0x56]
+        case .i64LeS: return [0x57]
+        case .i64LeU: return [0x58]
+        case .i64GeS: return [0x59]
+        case .i64GeU: return [0x5A]
+        
+        case .i32Rotl: return [0x77]
+        case .i32Rotr: return [0x78]
+        case .i64Clz: return [0x79]
+        case .i64Ctz: return [0x7A]
+        case .i64Popcnt: return [0x7B]
+        case .i64Add: return [0x7C]
+        case .i64Sub: return [0x7D]
+        case .i64Mul: return [0x7E]
+        case .i64DivS: return [0x7F]
+        case .i64DivU: return [0x80]
+        case .i64RemS: return [0x81]
+        case .i64RemU: return [0x82]
+        case .i64And: return [0x83]
+        case .i64Or: return [0x84]
+        case .i64Xor: return [0x85]
+        case .i64Shl: return [0x86]
+        case .i64ShrS: return [0x87]
+        case .i64ShrU: return [0x88]
+        case .i64Rotl: return [0x89]
+        case .i64Rotr: return [0x8A]
+        
+        case .brTable(let targets, let defaultTarget):
+            var res: [UInt8] = [0x0E]
+            res.append(contentsOf: encodeVarUInt(targets.count))
+            for target in targets {
+                res.append(contentsOf: encodeVarUInt(target))
+            }
+            res.append(contentsOf: encodeVarUInt(defaultTarget))
+            return res
+            
+        case .tableGet(let idx):
+            return [0x25] + encodeVarUInt(idx)
+        case .tableSet(let idx):
+            return [0x26] + encodeVarUInt(idx)
+            
         case .block(let type, let instrs):
             var blockBytes: [UInt8] = [0x02] // block
             
@@ -480,8 +568,41 @@ public struct WASMBinaryEncoder {
             }
             ifBytes.append(0x0B) // end
             return ifBytes
-        default:
-            return [0x00] // unreachable as fallback
+            
+        // Bulk Memory Operations (WASM 1.1)
+        case .memoryInit(let dataIdx, let memoryIdx):
+            return [0xFC, 0x08] + encodeVarUInt(dataIdx) + encodeVarUInt(memoryIdx)
+        case .dataDrop(let dataIdx):
+            return [0xFC, 0x09] + encodeVarUInt(dataIdx)
+        case .memoryCopy(let destMemoryIdx, let srcMemoryIdx):
+            return [0xFC, 0x0A] + encodeVarUInt(destMemoryIdx) + encodeVarUInt(srcMemoryIdx)
+        case .memoryFill(let memoryIdx):
+            return [0xFC, 0x0B] + encodeVarUInt(memoryIdx)
+        case .tableInit(let elemIdx, let tableIdx):
+            return [0xFC, 0x0C] + encodeVarUInt(elemIdx) + encodeVarUInt(tableIdx)
+        case .elemDrop(let elemIdx):
+            return [0xFC, 0x0D] + encodeVarUInt(elemIdx)
+        case .tableCopy(let destTableIdx, let srcTableIdx):
+            return [0xFC, 0x0E] + encodeVarUInt(destTableIdx) + encodeVarUInt(srcTableIdx)
+        case .tableGrow(let tableIdx):
+            return [0xFC, 0x0F] + encodeVarUInt(tableIdx)
+        case .tableSize(let tableIdx):
+            return [0xFC, 0x10] + encodeVarUInt(tableIdx)
+        case .tableFill(let tableIdx):
+            return [0xFC, 0x11] + encodeVarUInt(tableIdx)
+            
+        // SIMD Operations (WASM 1.1)
+        case .v128Const(let bytes):
+            return [0xFD, 0x0C] + bytes
+        case .i32x4Add: return [0xFD, 0x6E]
+        case .i32x4Sub: return [0xFD, 0x6D]
+        case .i32x4Mul: return [0xFD, 0x6F]
+        case .f32x4Add: return [0xFD, 0x94]
+        case .f32x4Sub: return [0xFD, 0x95]
+        case .f32x4Mul: return [0xFD, 0x96]
+        case .f32x4Div: return [0xFD, 0x97]
+        case .end:
+            return [0x0B]
         }
     }
     

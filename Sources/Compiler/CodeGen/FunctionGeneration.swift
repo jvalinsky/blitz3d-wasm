@@ -8,54 +8,42 @@
 import Foundation
 
 /// Manages function generation and compilation
-public struct FunctionGeneration {
-    private var module: WASMModule
-    private var typeIndexMap: [String: Int]
-    private var functionIndexMap: [String: Int]
-    
+public final class FunctionGeneration {
+    private var context: ModuleContext
+
     // GOTO/Label support
     private var labelStateMap: [String: Int] = [:]
     private var gotoStateLocalIdx: Int = -1
     private var hasGotoInCurrentFunction: Bool = false
-    
-    // Variable management (will be injected)
-    private var localVariables: [String: LocalInfo] = [:]
-    
-    // Type handling (will be injected)
+
+    // Type handling
     private var typeHandling: TypeHandling = TypeHandling()
-    private var userTypes: [String: UserTypeInfo] = [:]
-    
+
     // Statement generator (will be injected)
-    private var statementGenerator: ((StatementNode, inout WASMFunction) -> Void)?
-    
-    public init(module: WASMModule, typeIndexMap: [String: Int], functionIndexMap: [String: Int]) {
-        self.module = module
-        self.typeIndexMap = typeIndexMap
-        self.functionIndexMap = functionIndexMap
+    private weak var statementGenerator: StatementGeneration?
+
+    public init(context: ModuleContext) {
+        self.context = context
     }
-    
+
     /// Configure dependencies
-    public mutating func configure(
-        localVariables: [String: LocalInfo],
-        userTypes: [String: UserTypeInfo],
-        statementGenerator: @escaping (StatementNode, inout WASMFunction) -> Void
-    ) {
-        self.localVariables = localVariables
-        self.userTypes = userTypes
+    public func configure(statementGenerator: StatementGeneration) {
         self.statementGenerator = statementGenerator
+    }
+
+    /// Update context after generation
+    public func updateContext(_ newContext: ModuleContext) {
+        self.context = newContext
     }
     
     /// Generate a function from AST node
-    public mutating func generateFunction(_ functionNode: FunctionNode) {
+    public func generateFunction(_ functionNode: FunctionNode) {
         // Determine function type signature
         let typeSignature = functionSignature(for: functionNode)
-        let typeIdx = typeIndexMap[typeSignature] ?? 0
+        let typeIdx = context.typeIndexMap[typeSignature] ?? 0
         
         // Create new function
         var function = WASMFunction(typeIndex: typeIdx)
-        
-        // Clear local variables for this function
-        var newLocalVariables: [String: LocalInfo] = [:]
         
         // Reset GOTO/Label tracking for this function
         labelStateMap = [:]
@@ -63,13 +51,14 @@ public struct FunctionGeneration {
         hasGotoInCurrentFunction = false
         
         // Check if function uses GOTO/Labels and prepare state machine if needed
-        let (labels, hasGoto) = collectLabelsAndGotos(functionNode.body)
+        let (labels, hasGoto, _) = collectLabelsAndGotos(functionNode.body)
         hasGotoInCurrentFunction = hasGoto
         
+        var sortedLabels: [String] = []
         if hasGoto && !labels.isEmpty {
-            // Assign state numbers to each label (0 = start/normal flow)
+            sortedLabels = labels.sorted()
             var stateNum = 1
-            for label in labels.sorted() {
+            for label in sortedLabels {
                 labelStateMap[label] = stateNum
                 stateNum += 1
             }
@@ -79,277 +68,218 @@ public struct FunctionGeneration {
         }
         
         // Add parameters as locals
+        var newLocalVariables: [String: LocalInfo] = [:]
         for (index, param) in functionNode.parameters.enumerated() {
-            function.locals.append(.i32)
-            // Use type from annotation, default to i32
             let paramType = typeHandling.typeInfo(from: param.type?.rawValue ?? "Int")
+            function.locals.append(paramType.wasmType)
             newLocalVariables[param.name] = LocalInfo(
-                index: index + (hasGotoInCurrentFunction && !labels.isEmpty ? 1 : 0),
+                index: index + (gotoStateLocalIdx >= 0 ? 1 : 0),
                 type: paramType.wasmType
             )
         }
         
         // Update local variables reference
-        localVariables = newLocalVariables
-        
-        // Generate body statements
-        for statement in functionNode.body {
-            statementGenerator?(statement, &function)
+        context.variableManagement.clearLocals()
+        for (name, info) in newLocalVariables {
+            _ = context.variableManagement.registerLocal(name, type: info.type, typeName: info.typeName)
         }
         
+        // Configure statement generator
+        statementGenerator?.configureGotos(labelStateMap: labelStateMap, gotoStateLocalIdx: gotoStateLocalIdx)
+        
+        if hasGotoInCurrentFunction {
+            // Initial state: 0 (start of function)
+            function.body.append(.i32Const(0))
+            function.body.append(.localSet(gotoStateLocalIdx))
+            
+            var loopInstrs: [WASMInstruction] = []
+            
+            // 1. Check for termination state
+            // if (gotoState == -1) br 2 (exit state machine block)
+            loopInstrs.append(.localGet(gotoStateLocalIdx))
+            loopInstrs.append(.i32Const(-1))
+            loopInstrs.append(.i32Eq)
+            loopInstrs.append(.if(.void, [.br(2)], nil))
+            
+            // Divide body into chunks by labels and GOSUBs
+            var currentChunk: [StatementNode] = []
+            var currentState = 0
+            var gosubCounter = 0
+            
+            for statement in functionNode.body {
+                switch statement {
+                case .label(let name):
+                    if let stateNum = labelStateMap[name] {
+                        loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: stateNum, statements: currentChunk, function: &function))
+                        currentChunk = []
+                        currentState = stateNum
+                    }
+                case .gosub:
+                    gosubCounter += 1
+                    let returnState = 1000 + gosubCounter
+                    currentChunk.append(statement)
+                    loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: returnState, statements: currentChunk, function: &function))
+                    currentChunk = []
+                    currentState = returnState
+                default:
+                    currentChunk.append(statement)
+                }
+            }
+            // Flush final chunk
+            loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: -1, statements: currentChunk, function: &function))
+            
+            function.body.append(.block(.void, [
+                .loop(.void, loopInstrs)
+            ]))
+        } else {
+            // Generate body statements normally
+            for statement in functionNode.body {
+                statementGenerator?.generateStatement(statement, function: &function)
+            }
+        }
+
         // Ensure return at end
         ensureReturn(function: &function, returnType: functionNode.returnType)
-        
+
         // Add function to module
-        let localFuncIdx = self.module.code.count
-        let globalFuncIdx = self.module.imports.count + localFuncIdx
-        
-        self.module.code.append(function)
-        self.module.functions.append(typeIdx)
-        
-        self.functionIndexMap[functionNode.name] = globalFuncIdx
-        self.module.exports.append(WASMExport(name: functionNode.name, kind: .function, index: globalFuncIdx))
+        let localFuncIdx = self.context.module.code.count
+        let globalFuncIdx = self.context.module.imports.count + localFuncIdx
+
+        self.context.module.code.append(function)
+        self.context.module.functions.append(typeIdx)
+
+        self.context.functionIndexMap[functionNode.name.lowercased()] = globalFuncIdx
+        self.context.module.exports.append(WASMExport(name: functionNode.name, kind: .function, index: globalFuncIdx))
     }
     
     /// Generate function call instructions
     public func generateFunctionCallInstrs(_ call: FunctionCallNode, function: inout WASMFunction) -> [WASMInstruction] {
         var instrs: [WASMInstruction] = []
-        
-        // Generate argument instructions
-        for arg in call.arguments {
-            // Simplified: assume all args are i32
-            instrs.append(.i32Const(0)) // Placeholder
+        for _ in call.arguments {
+            instrs.append(.i32Const(0))
         }
-        
-        // Look up function index
-        if let funcIdx = functionIndexMap[call.name] {
+        if let funcIdx = context.functionIndexMap[call.name.lowercased()] {
             instrs.append(.call(Int(funcIdx)))
         } else {
-            // Function not found, use unreachable as placeholder
             instrs.append(.unreachable)
         }
-        
         return instrs
     }
     
     // MARK: - Private Helpers
     
-    /// Determine function signature string
-    private func functionSignature(for function: FunctionNode) -> String {
-        let paramTypes = function.parameters.map { _ in "i32" }
-        let returnType = function.returnType?.rawValue ?? "i32"
-        return "(\(paramTypes.joined(separator: ", "))) -> \(returnType)"
+    private func functionSignature(for functionNode: FunctionNode) -> String {
+        let paramTypes = functionNode.parameters.map { 
+            typeHandling.wasmType(from: $0.type?.rawValue ?? "Int").rawValue
+        }
+        let returnType = typeHandling.wasmType(from: functionNode.returnType?.rawValue ?? "Int")
+        let resStr = (returnType == .void) ? "void" : returnType.rawValue
+        return "(\(paramTypes.joined(separator: ", "))) -> \(resStr)"
     }
     
-    /// Ensure function ends with return statement
     private func ensureReturn(function: inout WASMFunction, returnType: TypeAnnotation?) {
-        // Check if last instruction is already a return
-        if function.body.last == .return {
-            return
-        }
-        
-        // Add default return value based on return type annotation
-        let returnWasmType = typeHandling.wasmType(from: returnType?.rawValue ?? "i32")
+        if function.body.last == .return { return }
+        let typeAnnot = returnType ?? .integer
+        let returnWasmType = typeHandling.wasmType(from: typeAnnot.rawValue)
+        print("Ensuring return for \(typeAnnot.rawValue) -> \(returnWasmType)")
         switch returnWasmType {
-        case .i32, .i64:
-            function.body.append(.i32Const(0))
-        case .f32:
-            function.body.append(.f32Const(0))
-        case .f64:
-            function.body.append(.f64Const(0))
-        default:
-            function.body.append(.i32Const(0))
+        case .i32, .i64: function.body.append(.i32Const(0))
+        case .f32: function.body.append(.f32Const(0))
+        case .f64: function.body.append(.f64Const(0))
+        case .void: break
+        default: function.body.append(.i32Const(0))
         }
-        
         function.body.append(.return)
     }
     
-    /// Collect labels and GOTO usage in statements
-    private func collectLabelsAndGotos(_ statements: [StatementNode]) -> (labels: Set<String>, hasGoto: Bool) {
-        var labels: Set<String> = []
-        var hasGoto = false
+    private func generateChunk(state: Int, nextState: Int, statements: [StatementNode], function: inout WASMFunction) -> [WASMInstruction] {
+        var chunkInstrs: [WASMInstruction] = []
         
-        for statement in statements {
-            switch statement {
-            case .label(let name):
-                labels.insert(name)
-            case .goto:
-                hasGoto = true
-            case .gosub:
-                hasGoto = true
-            case .ifStatement(let ifNode):
-                let thenLabels = collectLabelsAndGotos(ifNode.thenBranch)
-                labels.formUnion(thenLabels.labels)
-                hasGoto = hasGoto || thenLabels.hasGoto
-                
-                for (_, elseIfBranch) in ifNode.elseIfs {
-                    let elseIfLabels = collectLabelsAndGotos(elseIfBranch)
-                    labels.formUnion(elseIfLabels.labels)
-                    hasGoto = hasGoto || elseIfLabels.hasGoto
-                }
-                
-                let elseBranch = ifNode.elseBranch
-                if !elseBranch.isEmpty {
-                    let elseLabels = collectLabelsAndGotos(elseBranch)
-                    labels.formUnion(elseLabels.labels)
-                    hasGoto = hasGoto || elseLabels.hasGoto
-                }
-                
-            case .whileLoop(let whileNode):
-                let loopLabels = collectLabelsAndGotos(whileNode.body)
-                labels.formUnion(loopLabels.labels)
-                hasGoto = hasGoto || loopLabels.hasGoto
-                
-            case .forLoop(let forNode):
-                let forLabels = collectLabelsAndGotos(forNode.body)
-                labels.formUnion(forLabels.labels)
-                hasGoto = hasGoto || forLabels.hasGoto
-                
-            case .repeatLoop(let repeatNode):
-                let repeatLabels = collectLabelsAndGotos(repeatNode.body)
-                labels.formUnion(repeatLabels.labels)
-                hasGoto = hasGoto || repeatLabels.hasGoto
-                
-            case .forEach(let forEachNode):
-                let eachLabels = collectLabelsAndGotos(forEachNode.body)
-                labels.formUnion(eachLabels.labels)
-                hasGoto = hasGoto || eachLabels.hasGoto
-                
-            case .select(let selectNode):
-                let selectLabels = collectLabelsAndGotos(selectNode.cases.flatMap { $0.body })
-                labels.formUnion(selectLabels.labels)
-                hasGoto = hasGoto || selectLabels.hasGoto
-                
-                if let defaultCase = selectNode.defaultCase {
-                    let defaultLabels = collectLabelsAndGotos(defaultCase)
-                    labels.formUnion(defaultLabels.labels)
-                    hasGoto = hasGoto || defaultLabels.hasGoto
-                }
-                
-            default:
-                break
-            }
+        // if (gotoState == state) { ... }
+        chunkInstrs.append(.localGet(gotoStateLocalIdx))
+        chunkInstrs.append(.i32Const(Int32(state)))
+        chunkInstrs.append(.i32Eq)
+        
+        var thenBody: [WASMInstruction] = []
+        
+        // 1. Reset state (we are currently executing this chunk)
+        thenBody.append(.i32Const(0))
+        thenBody.append(.localSet(gotoStateLocalIdx))
+        
+        // 2. Generate statements for this chunk
+        var tempFunc = WASMFunction(typeIndex: function.typeIndex, locals: function.locals)
+        for stmt in statements {
+            statementGenerator?.generateStatement(stmt, function: &tempFunc)
+        }
+        thenBody.append(contentsOf: tempFunc.body)
+        
+        // 3. Fall through to next label (if any)
+        if nextState != -1 {
+            // Only fall through if we didn't GOTO somewhere else in the middle of the chunk
+            thenBody.append(.localGet(gotoStateLocalIdx))
+            thenBody.append(.i32EqZ)
+            thenBody.append(.if(.void, [
+                .i32Const(Int32(nextState)),
+                .localSet(gotoStateLocalIdx)
+            ], nil))
+        } else {
+            // End of function
+            thenBody.append(.i32Const(-1))
+            thenBody.append(.localSet(gotoStateLocalIdx))
+            thenBody.append(.br(2)) // Exit block
         }
         
-        return (labels, hasGoto)
+        // 4. Restart loop to check next state
+        thenBody.append(.br(1)) // Target the surrounding loop, not the 'if'
+        
+        chunkInstrs.append(.if(.void, thenBody, nil))
+        return chunkInstrs
     }
-}
 
-/// Generate ForEach loop instructions
-public func generateForEachInstrs(_ forEachNode: ForEachNode, function: inout WASMFunction, typeInfo: UserTypeInfo?) -> [WASMInstruction] {
-    var instrs: [WASMInstruction] = []
-    
-    guard let userType = typeInfo else {
-        return instrs
+    private func collectLabelsAndGotos(_ statements: [StatementNode]) -> (labels: Set<String>, hasGoto: Bool, gosubCount: Int) {
+        var labels: Set<String> = []
+        var hasGoto = false
+        var gosubCount = 0
+        for statement in statements {
+            switch statement {
+            case .label(let name): labels.insert(name)
+            case .goto: hasGoto = true
+            case .gosub: hasGoto = true; gosubCount += 1
+            case .ifStatement(let ifNode):
+                let thenLabels = collectLabelsAndGotos(ifNode.thenBranch)
+                labels.formUnion(thenLabels.labels); hasGoto = hasGoto || thenLabels.hasGoto; gosubCount += thenLabels.gosubCount
+                for (_, elseIfBranch) in ifNode.elseIfs {
+                    let elseIfLabels = collectLabelsAndGotos(elseIfBranch)
+                    labels.formUnion(elseIfLabels.labels); hasGoto = hasGoto || elseIfLabels.hasGoto; gosubCount += elseIfLabels.gosubCount
+                }
+                if !ifNode.elseBranch.isEmpty {
+                    let elseLabels = collectLabelsAndGotos(ifNode.elseBranch)
+                    labels.formUnion(elseLabels.labels); hasGoto = hasGoto || elseLabels.hasGoto; gosubCount += elseLabels.gosubCount
+                }
+            case .whileLoop(let whileNode):
+                let loopLabels = collectLabelsAndGotos(whileNode.body)
+                labels.formUnion(loopLabels.labels); hasGoto = hasGoto || loopLabels.hasGoto; gosubCount += loopLabels.gosubCount
+            case .forLoop(let forNode):
+                let forLabels = collectLabelsAndGotos(forNode.body)
+                labels.formUnion(forLabels.labels); hasGoto = hasGoto || forLabels.hasGoto; gosubCount += forLabels.gosubCount
+            case .repeatLoop(let repeatNode):
+                let repeatLabels = collectLabelsAndGotos(repeatNode.body)
+                labels.formUnion(repeatLabels.labels); hasGoto = hasGoto || repeatLabels.hasGoto; gosubCount += repeatLabels.gosubCount
+            case .forEach(let eachNode):
+                let eachLabels = collectLabelsAndGotos(eachNode.body)
+                labels.formUnion(eachLabels.labels); hasGoto = hasGoto || eachLabels.hasGoto; gosubCount += eachLabels.gosubCount
+            case .select(let selectNode):
+                for caseNode in selectNode.cases {
+                    let caseLabels = collectLabelsAndGotos(caseNode.body)
+                    labels.formUnion(caseLabels.labels); hasGoto = hasGoto || caseLabels.hasGoto; gosubCount += caseLabels.gosubCount
+                }
+                if let defaultCase = selectNode.defaultCase {
+                    let defaultLabels = collectLabelsAndGotos(defaultCase)
+                    labels.formUnion(defaultLabels.labels); hasGoto = hasGoto || defaultLabels.hasGoto; gosubCount += defaultLabels.gosubCount
+                }
+            default: break
+            }
+        }
+        return (labels, hasGoto, gosubCount)
     }
-    
-    // Get first instance of type (First TypeName)
-    instrs.append(.i32Const(0)) // placeholder for type collection base
-    instrs.append(.call(0)) // placeholder for First_ function call
-    
-    // Start of loop
-    instrs.append(.block(.void, [])) // Use block as label
-    let loopStart = instrs.count - 1
-    
-    // Check if iterator is null (end of list)
-    instrs.append(.localGet(0)) // Assuming iterator is in local 0
-    instrs.append(.i32EqZ)
-    
-    // Branch to end if null
-    let loopEnd = instrs.count
-    instrs.append(.brIf(Int(loopEnd - loopStart))) // Adjusted brIf target
-    
-    // Assign current instance to loop variable
-    instrs.append(.localTee(1)) // Store in second local
-    
-    // Loop body would be inserted here
-    
-    // Get next instance (After expr)
-    instrs.append(.localGet(0))
-    instrs.append(.call(0)) // placeholder for After_ function call
-    
-    // Store back to iterator
-    instrs.append(.localSet(0))
-    
-    // Branch back to start
-    instrs.append(.br(Int(loopStart)))
-    
-    // End of loop
-    // Block will end naturally
-    
-    return instrs
-}
-
-/// Generate For loop instructions
-public func generateForInstrs(_ forNode: ForNode, function: inout WASMFunction) -> [WASMInstruction] {
-    var instrs: [WASMInstruction] = []
-    
-    // Start of loop
-    let loopStart = instrs.count
-    
-    // Compare: variable <= endValue
-    instrs.append(.localGet(0)) // variable
-    instrs.append(.i32Const(0)) // placeholder for endValue
-    instrs.append(.i32GtS) // variable > endValue?
-    
-    // Branch if greater than end (exit loop)
-    let loopEnd = instrs.count
-    instrs.append(.brIf(Int(loopEnd - loopStart))) // Exit loop
-    
-    // Loop body would be inserted here
-    
-    // Increment: variable + step
-    instrs.append(.localGet(0)) // variable
-    instrs.append(.i32Const(1)) // placeholder for stepValue
-    instrs.append(.i32Add)
-    instrs.append(.localSet(0)) // Store back
-    
-    // Branch to start
-    instrs.append(.br(Int(loopStart)))
-    
-    return instrs
-}
-
-/// Generate While loop instructions
-public func generateWhileInstrs(_ whileNode: WhileNode, function: inout WASMFunction) -> [WASMInstruction] {
-    var instrs: [WASMInstruction] = []
-    
-    // Start of loop
-    let loopStart = instrs.count
-    
-    // Evaluate condition
-    // Condition instructions would be generated
-    
-    instrs.append(.i32Const(0)) // Placeholder for condition
-    instrs.append(.i32EqZ)
-    
-    // Branch if false (condition is 0)
-    let loopEnd = instrs.count
-    instrs.append(.brIf(Int(loopEnd - loopStart))) // Exit loop
-    
-    // Loop body would be inserted here
-    
-    // Branch back to start
-    instrs.append(.br(Int(loopStart)))
-    
-    return instrs
-}
-
-/// Generate Repeat loop instructions
-public func generateRepeatInstrs(_ repeatNode: RepeatNode, function: inout WASMFunction) -> [WASMInstruction] {
-    var instrs: [WASMInstruction] = []
-    
-    // Start of loop
-    let loopStart = instrs.count
-    
-    // Loop body would be inserted here
-    
-    // Evaluate until condition
-    instrs.append(.i32Const(0)) // Placeholder for condition
-    instrs.append(.i32EqZ) // Negate: until means "until condition is true"
-    
-    // Branch back if condition is false (keep looping)
-    instrs.append(.brIf(Int(loopStart)))
-    
-    return instrs
 }

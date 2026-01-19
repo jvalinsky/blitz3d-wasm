@@ -292,6 +292,7 @@ public enum TypeAnnotation: String {
     case integer = "Int"
     case float = "Float"
     case string = "String"
+    case void = "void"
 }
 
 public struct ProgramNode {

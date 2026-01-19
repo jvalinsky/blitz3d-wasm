@@ -40,7 +40,8 @@ public struct TypeHandling {
         "string": .i32,
         "byte": .i32,
         "short": .i32,
-        "long": .i32
+        "long": .i32,
+        "void": .void
     ]
     
     /// Default type for unspecified expressions
@@ -57,6 +58,23 @@ public struct TypeHandling {
     /// Get WASM type from type name
     public func wasmType(from typeName: String) -> WASMType {
         return typeNameMap[typeName.lowercased()] ?? defaultType
+    }
+    
+    /// Check if expression is a string
+    public func isString(from expr: ExpressionNode) -> Bool {
+        switch expr {
+        case .stringLiteral:
+            return true
+        case .identifier(let id):
+            return id.typeSuffix == .string || id.typeName?.lowercased() == "string"
+        case .functionCall(let call):
+            return call.name.hasSuffix("$")
+        case .fieldAccess(let access):
+            // Need to check field type... simplified for now
+            return access.field.hasSuffix("$")
+        default:
+            return false
+        }
     }
     
     /// Get WASM type from expression
@@ -310,6 +328,7 @@ public struct UserTypeHandling {
         currentOffset += 8  // Two 4-byte pointers
         
         userTypes[typeName] = UserTypeInfo(
+            typeID: userTypes.count + 1,
             fieldOffsets: offsets,
             fieldTypes: fieldTypes,
             instanceSize: currentOffset
@@ -350,9 +369,22 @@ public struct UserTypeHandling {
 
 /// User-defined type information
 public struct UserTypeInfo {
+    public let typeID: Int
     public let fieldOffsets: [String: Int]
     public let fieldTypes: [String: String]
     public let instanceSize: Int
+    
+    // Global indices for WASM management
+    public var firstGlobalIdx: Int = -1
+    public var lastGlobalIdx: Int = -1
+    public var freeHeadGlobalIdx: Int = -1
+    
+    public init(typeID: Int, fieldOffsets: [String: Int], fieldTypes: [String: String], instanceSize: Int) {
+        self.typeID = typeID
+        self.fieldOffsets = fieldOffsets
+        self.fieldTypes = fieldTypes
+        self.instanceSize = instanceSize
+    }
 }
 
 // MARK: - Operator Overloads for Type Comparison

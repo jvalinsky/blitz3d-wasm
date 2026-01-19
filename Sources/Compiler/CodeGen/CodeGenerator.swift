@@ -37,7 +37,6 @@ public struct CodeGenerator {
         
         dataGenerator.setup()
         
-        addCommonTypes()
         addImports()
         
         processTypeDeclarations(program.types)
@@ -69,23 +68,6 @@ public struct CodeGenerator {
         }
         
         return context.module
-    }
-    
-    private mutating func addCommonTypes() {
-        context.module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
-        context.typeIndexMap["() -> i32"] = 0
-        
-        context.module.types.append(WASMFunctionType(parameters: [.i32], results: [.i32]))
-        context.typeIndexMap["(i32) -> i32"] = 1
-        
-        context.module.types.append(WASMFunctionType(parameters: [.i32, .i32], results: [.i32]))
-        context.typeIndexMap["(i32, i32) -> i32"] = 2
-        
-        context.module.types.append(WASMFunctionType(parameters: [], results: []))
-        context.typeIndexMap["() -> void"] = 3
-        
-        context.module.types.append(WASMFunctionType(parameters: [.i32], results: []))
-        context.typeIndexMap["(i32) -> void"] = 4
     }
     
     private mutating func addImports() {
@@ -274,9 +256,17 @@ public struct CodeGenerator {
         ]
         
         for (name, internalName, params, results) in imports {
-            let type = WASMFunctionType(parameters: params, results: results)
-            let typeIdx = context.module.types.count
-            context.module.types.append(type)
+            let resStr = results.map { $0.rawValue }.joined(separator: ", ")
+            let sig = "(" + params.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
+            
+            let typeIdx: Int
+            if let existingIdx = context.typeIndexMap[sig] {
+                typeIdx = existingIdx
+            } else {
+                typeIdx = context.module.types.count
+                context.module.types.append(WASMFunctionType(parameters: params, results: results))
+                context.typeIndexMap[sig] = typeIdx
+            }
             
             let importIdx = context.module.imports.count
             context.module.imports.append(WASMImport(module: "env", name: name, kind: .function, index: typeIdx))
@@ -293,12 +283,13 @@ public struct CodeGenerator {
     }
     
     private mutating func processTypeDeclarations(_ types: [TypeNode]) {
-        for typeNode in types {
-            var offset = 8
+        for (index, typeNode) in types.enumerated() {
+            var offset = 12 // Header: prev(4), next(4), typeID(4)
             var typeFieldOffsets: [String: Int] = [:]
             var typeFieldTypes: [String: String] = [:]
             typeFieldOffsets["__prev"] = 0
             typeFieldOffsets["__next"] = 4
+            typeFieldOffsets["__typeID"] = 8
             context.fieldOffsets[typeNode.name] = [:]
             
             let typeHandling = TypeHandling()
@@ -314,18 +305,35 @@ public struct CodeGenerator {
                 offset += fieldSize
             }
             
-            context.userTypes[typeNode.name] = UserTypeInfo(
+            var info = UserTypeInfo(
+                typeID: index + 1,
                 fieldOffsets: typeFieldOffsets,
                 fieldTypes: typeFieldTypes,
                 instanceSize: offset
             )
+            
+            // Register globals for this type's management
+            info.firstGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            info.lastGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            info.freeHeadGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            
+            context.userTypes[typeNode.name] = info
         }
     }
     
     private mutating func setupUserTypeGlobals(_ types: [TypeNode]) {
+        // Heap pointer for the bump allocator (starting after the data section)
+        context.heapPointerIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(65536))
+        
+        // GOSUB Stack Pointer (starts at a fixed location in memory)
+        context.gosubStackPtrIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(131072))
+        
+        // String Heap Pointer (starts after GOSUB stack)
+        context.stringHeapPtrIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(262144))
+        
         if !types.isEmpty {
             let typeCollectionGlobalVar = WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(65536))
-            typeCollectionGlobal = context.module.globals.count
+            context.typeCollectionGlobalIdx = context.module.globals.count
             context.module.globals.append(typeCollectionGlobalVar)
             
             scratchGlobal = context.module.globals.count
@@ -343,13 +351,16 @@ public struct CodeGenerator {
             }
             let returnType = typeHandling.wasmType(from: function.returnType?.rawValue ?? "Int")
             let lowerName = function.name.lowercased()
-            context.functionDefinitions[lowerName] = FunctionDefinition(params: paramTypes, results: [returnType])
+            
+            let results: [WASMType] = (returnType == .void) ? [] : [returnType]
+            context.functionDefinitions[lowerName] = FunctionDefinition(params: paramTypes, results: results)
             
             // Also register the type signature in the module
-            let sig = "(" + paramTypes.map { $0.rawValue }.joined(separator: ", ") + ") -> " + returnType.rawValue
+            let resStr = results.map { $0.rawValue }.joined(separator: ", ")
+            let sig = "(" + paramTypes.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
             if context.typeIndexMap[sig] == nil {
                 let typeIdx = context.module.types.count
-                context.module.types.append(WASMFunctionType(parameters: paramTypes, results: [returnType]))
+                context.module.types.append(WASMFunctionType(parameters: paramTypes, results: results))
                 context.typeIndexMap[sig] = typeIdx
             }
         }
@@ -387,23 +398,23 @@ public struct CodeGenerator {
     private mutating func generateMainFunction(_ statements: [StatementNode]) {
         if statements.isEmpty { return }
         
-        let typeIdx = context.typeIndexMap["() -> void"] ?? 3
-        var mainFunction = WASMFunction(typeIndex: typeIdx)
-        context.variableManagement.clearLocals()
-        
-        statementGenerator.configure(expressionGenerator: expressionGenerator, dataGenerator: dataGenerator)
-        for statement in statements {
-            statementGenerator.generateStatement(statement, function: &mainFunction)
+        // Ensure () -> void type is registered
+        if context.typeIndexMap["() -> void"] == nil {
+            let typeIdx = context.module.types.count
+            context.module.types.append(WASMFunctionType(parameters: [], results: []))
+            context.typeIndexMap["() -> void"] = typeIdx
         }
         
-        mainFunction.body.append(.return)
+        // Wrap top-level statements in a dummy function node
+        let mainNode = FunctionNode(name: "Main", parameters: [], body: statements, returnType: .void)
         
-        let funcIdx = context.module.imports.count + context.module.functions.count
-        context.module.code.append(mainFunction)
-        context.module.functions.append(typeIdx)
+        functionGenerator.configure(statementGenerator: statementGenerator)
+        functionGenerator.generateFunction(mainNode)
         
-        context.functionIndexMap["_main"] = funcIdx
-        context.module.exports.append(WASMExport(name: "Main", kind: .function, index: funcIdx))
+        // Also register as _main for internal consistency
+        if let idx = context.functionIndexMap["main"] {
+            context.functionIndexMap["_main"] = idx
+        }
     }
     
     private mutating func generateFunction(_ functionNode: FunctionNode) {
@@ -412,22 +423,119 @@ public struct CodeGenerator {
     }
     
     private mutating func addAllocFunction() {
-        let allocType = WASMFunctionType(parameters: [.i32], results: [.i32])
+        // __Alloc(size: i32, freeHeadGlobalIdx: i32) -> ptr: i32
+        let allocType = WASMFunctionType(parameters: [.i32, .i32], results: [.i32])
         let allocIdx = context.module.types.count
         context.module.types.append(allocType)
         
         let allocFunc = WASMFunction(
             typeIndex: allocIdx,
-            locals: [.i32],
-            body: [.localGet(0), .memoryGrow]
+            locals: [.i32], // local 2: ptr
+            body: [
+                .globalGet(context.heapPointerIdx),
+                .localSet(2),
+                .localGet(2),
+                .localGet(0),
+                .i32Add,
+                .globalSet(context.heapPointerIdx),
+                .localGet(2)
+            ]
         )
         
         let funcIdx = context.module.imports.count + context.module.functions.count
-        
         context.module.code.append(allocFunc)
         context.module.functions.append(allocIdx)
-        
-        context.functionIndexMap["__Alloc"] = funcIdx
+        context.functionIndexMap["__alloc"] = funcIdx
         context.module.exports.append(WASMExport(name: "__Alloc", kind: .function, index: funcIdx))
+        
+        // __StringAlloc(length: i32) -> ptr: i32
+        let strAllocType = WASMFunctionType(parameters: [.i32], results: [.i32])
+        let strAllocTypeIdx = context.module.types.count
+        context.module.types.append(strAllocType)
+        
+        let strAllocFunc = WASMFunction(
+            typeIndex: strAllocTypeIdx,
+            locals: [.i32], // local 1: ptr
+            body: [
+                .globalGet(context.stringHeapPtrIdx),
+                .localSet(1),
+                .localGet(1),
+                .localGet(0),
+                .i32Const(9), // 8 header + 1 null
+                .i32Add,
+                .i32Add,
+                .globalSet(context.stringHeapPtrIdx),
+                .localGet(1)
+            ]
+        )
+        
+        let strFuncIdx = context.module.imports.count + context.module.functions.count
+        context.module.code.append(strAllocFunc)
+        context.module.functions.append(strAllocTypeIdx)
+        context.functionIndexMap["__stringalloc"] = strFuncIdx
+        context.module.exports.append(WASMExport(name: "__StringAlloc", kind: .function, index: strFuncIdx))
+        
+        // __StringConcat(a: i32, b: i32) -> ptr: i32
+        let strConcatType = WASMFunctionType(parameters: [.i32, .i32], results: [.i32])
+        let strConcatTypeIdx = context.module.types.count
+        context.module.types.append(strConcatType)
+        
+        let strConcatFunc = WASMFunction(
+            typeIndex: strConcatTypeIdx,
+            locals: [.i32, .i32, .i32], // local 2: lenA, local 3: lenB, local 4: newPtr
+            body: [
+                // Get lengths (assuming 8-byte header, length at offset 4)
+                .localGet(0),
+                .i32Load(2, 4),
+                .localSet(2),
+                .localGet(1),
+                .i32Load(2, 4),
+                .localSet(3),
+                
+                // Allocate new string (lenA + lenB)
+                .localGet(2),
+                .localGet(3),
+                .i32Add,
+                .call(strFuncIdx), // __StringAlloc
+                .localSet(4),
+                
+                // Copy A
+                .localGet(4),
+                .i32Const(8),
+                .i32Add, // Dest
+                .localGet(0),
+                .i32Const(8),
+                .i32Add, // Src
+                .localGet(2), // Len
+                .memoryCopy(0, 0),
+                
+                // Copy B
+                .localGet(4),
+                .i32Const(8),
+                .i32Add,
+                .localGet(2),
+                .i32Add, // Dest
+                .localGet(1),
+                .i32Const(8),
+                .i32Add, // Src
+                .localGet(3), // Len
+                .memoryCopy(0, 0),
+                
+                // Set length in new string
+                .localGet(4),
+                .localGet(2),
+                .localGet(3),
+                .i32Add,
+                .i32Store(2, 4),
+                
+                .localGet(4)
+            ]
+        )
+        
+        let strConcatIdx = context.module.imports.count + context.module.functions.count
+        context.module.code.append(strConcatFunc)
+        context.module.functions.append(strConcatTypeIdx)
+        context.functionIndexMap["__stringconcat"] = strConcatIdx
+        context.module.exports.append(WASMExport(name: "__StringConcat", kind: .function, index: strConcatIdx))
     }
 }

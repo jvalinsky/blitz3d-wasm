@@ -55,7 +55,22 @@ public final class FunctionGeneration {
         let (labels, hasGoto, _) = collectLabelsAndGotos(functionNode.body)
         hasGotoInCurrentFunction = hasGoto
         
+        // Initialize local variables tracking
+        context.variableManagement.clearLocals()
+        
         var sortedLabels: [String] = []
+        
+        // 1. Register Parameters (indices 0..N-1)
+        var newLocalVariables: [String: LocalInfo] = [:]
+        for (index, param) in functionNode.parameters.enumerated() {
+            let paramType = typeHandling.typeInfo(from: param.type?.rawValue ?? "Int")
+            // Register directly to variable management to get correct index
+            let info = context.variableManagement.registerLocal(param.name, type: paramType.wasmType, typeName: param.type?.rawValue)
+            // Store for local reference if needed (though we rely on VariableManagement)
+            newLocalVariables[param.name] = info
+        }
+        
+        // 2. Register Goto State Local (index N)
         if hasGoto && !labels.isEmpty {
             sortedLabels = labels.sorted()
             var stateNum = 1
@@ -63,30 +78,24 @@ public final class FunctionGeneration {
                 labelStateMap[label] = stateNum
                 stateNum += 1
             }
-            // Add local variable for goto state tracking
-            gotoStateLocalIdx = function.locals.count
+            
+            // Register implicit goto state variable
+            gotoStateLocalIdx = context.variableManagement.nextLocalIdx
             function.locals.append(.i32)
-        }
-        
-        // Add parameters as locals
-        var newLocalVariables: [String: LocalInfo] = [:]
-        for (index, param) in functionNode.parameters.enumerated() {
-            let paramType = typeHandling.typeInfo(from: param.type?.rawValue ?? "Int")
-            function.locals.append(paramType.wasmType)
-            newLocalVariables[param.name] = LocalInfo(
-                index: index + (gotoStateLocalIdx >= 0 ? 1 : 0),
-                type: paramType.wasmType
-            )
-        }
-        
-        // Update local variables reference
-        context.variableManagement.clearLocals()
-        for (name, info) in newLocalVariables {
-            _ = context.variableManagement.registerLocal(name, type: info.type, typeName: info.typeName)
+            _ = context.variableManagement.registerLocal("__gotoState", type: .i32)
         }
         
         // Configure statement generator
         statementGenerator?.configureGotos(labelStateMap: labelStateMap, gotoStateLocalIdx: gotoStateLocalIdx)
+        
+        // Propagate return type
+        let returnWasmType: WASMType
+        if let typeAnnot = functionNode.returnType {
+            returnWasmType = typeHandling.wasmType(from: typeAnnot.rawValue)
+        } else {
+            returnWasmType = typeHandling.wasmType(from: "Int")
+        }
+        statementGenerator?.setCurrentReturnType(returnWasmType)
         
         if hasGotoInCurrentFunction {
             // Initial state: 0 (start of function)
@@ -142,6 +151,14 @@ public final class FunctionGeneration {
         // Ensure return at end
         ensureReturn(function: &function, returnType: functionNode.returnType)
 
+        // Validate local variable indices
+        let paramCount = functionNode.parameters.count + (gotoStateLocalIdx >= 0 ? 1 : 0)
+        let maxLocalIndex = context.variableManagement.maxLocalIndex()
+        let declaredLocals = function.locals.count + paramCount
+        if maxLocalIndex >= declaredLocals {
+            print("ERROR: Function '\(functionNode.name)' - Local index \(maxLocalIndex) exceeds declared locals count \(declaredLocals) (params: \(paramCount), locals: \(function.locals.count))")
+        }
+
         // Add function to module
         let localFuncIdx = self.context.module.code.count
         let globalFuncIdx = self.context.module.imports.count + localFuncIdx
@@ -189,7 +206,7 @@ public final class FunctionGeneration {
         if let returnTypeNode = functionNode.returnType {
             returnType = typeHandling.wasmType(from: returnTypeNode.rawValue)
         } else {
-            returnType = .void
+            returnType = typeHandling.wasmType(from: "Int")
         }
         let resStr = (returnType == .void) ? "void" : returnType.rawValue
         return "(\(paramTypes.joined(separator: ", "))) -> \(resStr)"
@@ -197,9 +214,15 @@ public final class FunctionGeneration {
     
     private func ensureReturn(function: inout WASMFunction, returnType: TypeAnnotation?) {
         if function.body.last == .return { return }
-        let typeAnnot = returnType ?? .void  // Default to void for functions with no return type
-        let returnWasmType = typeHandling.wasmType(from: typeAnnot.rawValue)
-        print("Ensuring return for \(typeAnnot.rawValue) -> \(returnWasmType)")
+        
+        let returnWasmType: WASMType
+        if let typeAnnot = returnType {
+            returnWasmType = typeHandling.wasmType(from: typeAnnot.rawValue)
+        } else {
+            returnWasmType = typeHandling.wasmType(from: "Int")
+        }
+        
+        print("Ensuring return for \(returnType?.rawValue ?? "nil") -> \(returnWasmType)")
         switch returnWasmType {
         case .i32, .i64: function.body.append(.i32Const(0))
         case .f32: function.body.append(.f32Const(0))

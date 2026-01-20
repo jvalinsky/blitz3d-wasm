@@ -136,6 +136,92 @@ class Blitz3DCore {
     }
 
     setupCommonImports(imports) {
+        // Math utilities
+        imports.env.WrapAngle = (angle) => {
+            // Normalize angle to -180 to 180
+            while (angle > 180) angle -= 360;
+            while (angle < -180) angle += 360;
+            return angle;
+        };
+
+        imports.env.DeltaYaw = (src, dest) => {
+            let delta = dest - src;
+            while (delta > 180) delta -= 360;
+            while (delta < -180) delta += 360;
+            return delta;
+        };
+
+        imports.env.DeltaPitch = (src, dest) => {
+            let delta = dest - src;
+            while (delta > 180) delta -= 360;
+            while (delta < -180) delta += 360;
+            return delta;
+        };
+
+        imports.env.CurveValue = (current, target, speed) => {
+            // Smooth interpolation towards target
+            return current + (target - current) * speed;
+        };
+
+        imports.env.CurveAngle = (current, target, speed) => {
+            // Smooth angle interpolation
+            let delta = target - current;
+            while (delta > 180) delta -= 360;
+            while (delta < -180) delta += 360;
+            return current + delta * speed;
+        };
+
+        imports.env.Distance = (x1, y1, x2, y2) => {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        imports.env.Point_Direction = (x1, y1, x2, y2) => {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            return Math.atan2(dy, dx) * 180 / Math.PI;
+        };
+
+        imports.env.DebugLog = (msgPtr) => {
+            const msg = this.readString(msgPtr);
+            console.log(`[Blitz3D Debug] ${msg}`);
+        };
+
+        imports.env.RuntimeError = (msgPtr) => {
+            const msg = this.readString(msgPtr);
+            console.error(`[Blitz3D Error] ${msg}`);
+            throw new Error(msg);
+        };
+
+        // Math utilities
+        imports.env.Min = (a, b) => Math.min(a, b);
+        imports.env.Max = (a, b) => Math.max(a, b);
+        imports.env.ATan2 = (y, x) => Math.atan2(y, x);
+        imports.env.Log10 = (x) => Math.log10(x);
+
+        // String utilities
+        imports.env.StringEqual = (str1Ptr, str2Ptr) => {
+            const str1 = this.readString(str1Ptr);
+            const str2 = this.readString(str2Ptr);
+            return str1 === str2 ? 1 : 0;
+        };
+
+        // Data statements (not fully implemented)
+        imports.env.ReadData = (typeHint) => {
+            console.warn("ReadData not implemented");
+            return 0;
+        };
+
+        imports.env.RestoreData = () => {
+            console.warn("RestoreData not implemented");
+        };
+
+        imports.env.Print = (strPtr) => {
+            const str = this.readString(strPtr);
+            console.log(`[Blitz3D] ${str}`);
+        };
+
         imports.env.PrintInt = (val) => console.log(`[Blitz3D] Int: ${val}`);
         imports.env.PrintString = (ptr) => {
             const str = this.readString(ptr);
@@ -1090,5 +1176,7 @@ class Blitz3DCore {
     }
 }
 
-window.Blitz3DCore = Blitz3DCore;
+if (typeof window !== 'undefined') {
+    window.Blitz3DCore = Blitz3DCore;
+}
 module.exports = Blitz3DCore;

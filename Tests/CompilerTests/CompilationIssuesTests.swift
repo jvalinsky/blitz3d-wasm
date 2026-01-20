@@ -223,7 +223,8 @@ final class CompilationIssuesTests: XCTestCase {
         }
 
         let stackDelta = countStackValues(mainFunction.body)
-        XCTAssertEqual(stackDelta, 0, "If-Else statement should not leave values on stack. Stack delta: \(stackDelta)")
+        // Function Main() returns Int (i32) by default in Blitz3D, so expect 1 value for return
+        XCTAssertEqual(stackDelta, 1, "Function returning i32 should have exactly 1 value on stack at return. Stack delta: \(stackDelta)")
     }
 
     func testWhileLoopStackBalance() throws {
@@ -338,7 +339,8 @@ final class CompilationIssuesTests: XCTestCase {
         let stackDelta = countStackValues(mainFunction.body)
         print("=== FINAL STACK DELTA: \(stackDelta) ===\n")
 
-        XCTAssertEqual(stackDelta, 0, "While loop should not leave values on stack. Stack delta: \(stackDelta)")
+        // Function Main() returns Int (i32) by default in Blitz3D, so expect 1 value for return
+        XCTAssertEqual(stackDelta, 1, "Function returning i32 should have exactly 1 value on stack at return. Stack delta: \(stackDelta)")
     }
 
     func testForLoopStackBalance() throws {
@@ -430,7 +432,8 @@ final class CompilationIssuesTests: XCTestCase {
         }
 
         let stackDelta = countStackValues(mainFunction.body)
-        XCTAssertEqual(stackDelta, 0, "For loop should not leave values on stack. Stack delta: \(stackDelta)")
+        // Function Main() returns Int (i32) by default in Blitz3D, so expect 1 value for return
+        XCTAssertEqual(stackDelta, 1, "Function returning i32 should have exactly 1 value on stack at return. Stack delta: \(stackDelta)")
     }
 
     // MARK: - Type Promotion Tests
@@ -819,6 +822,7 @@ final class CompilationIssuesTests: XCTestCase {
         }
 
         let stackDelta = countStackValues(mainFunction.body)
-        XCTAssertEqual(stackDelta, 0, "Complex function should have balanced stack. Stack delta: \(stackDelta)")
+        // Function Main() returns Int (i32) by default in Blitz3D, so expect 1 value for return
+        XCTAssertEqual(stackDelta, 1, "Function returning i32 should have exactly 1 value on stack at return. Stack delta: \(stackDelta)")
     }
 }

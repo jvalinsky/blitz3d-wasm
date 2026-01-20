@@ -141,4 +141,10 @@ class Blitz3DAnimation {
     }
 }
 
+if (typeof window !== 'undefined') {
+    window.Blitz3DAnimation = Blitz3DAnimation;
+    // Also export as an object for consistency with require()
+    window.Blitz3DAnimationModule = { Blitz3DAnimation };
+}
+
 module.exports = { Blitz3DAnimation };

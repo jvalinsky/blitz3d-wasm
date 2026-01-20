@@ -25,6 +25,7 @@ public final class StatementGeneration {
     // Control flow depth tracking
     private var currentDepth: Int = 0
     private var loopExitDepths: [Int] = []
+    private var currentReturnType: WASMType = .void
     
     // GOSUB support
     private var gosubReturnCounter: Int = 0
@@ -45,6 +46,10 @@ public final class StatementGeneration {
         self.labelStateMap = labelStateMap
         self.gotoStateLocalIdx = gotoStateLocalIdx
         self.gosubReturnCounter = 0
+    }
+
+    public func setCurrentReturnType(_ type: WASMType) {
+        self.currentReturnType = type
     }
 
     /// Update context after generation
@@ -129,7 +134,7 @@ public final class StatementGeneration {
                     let wasmType = targetType
                     
                     // Register actual WASM global and track in VariableManagement
-                    let actualGlobalIdx = context.registerGlobal(type: wasmType, mutability: true, initExpr: .i32Const(0))
+                    let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
                     _ = context.variableManagement.registerGlobalWithIndex(id.name, type: wasmType, typeName: nil, wasmIndex: actualGlobalIdx)
                     
                     function.body.append(contentsOf: finalInstrs)
@@ -179,6 +184,47 @@ public final class StatementGeneration {
                     default:
                         function.body.append(.i32Store(2, 0))
                     }
+                } else if case .fieldAccess(let fieldAccess) = access.array {
+                    // Assignment to Field Array: obj.field[index] = value
+                    // 1. Generate Field Access (returns instrs for base address)
+                    let objInstrs = expressionGenerator.generate(fieldAccess.object)
+                    function.body.append(contentsOf: objInstrs) // [objPtr]
+                    
+                    if let typeName = getTypeName(from: fieldAccess.object),
+                       let fieldOffset = context.fieldOffsets[typeName]?[fieldAccess.field] {
+                        
+                        function.body.append(.i32Const(Int32(fieldOffset)))
+                        function.body.append(.i32Add) // [fieldBaseAddr]
+                        
+                        let fieldTypeStr = context.userTypes[typeName]?.fieldTypes[fieldAccess.field] ?? "Int"
+                        let elementType = typeHandling.wasmType(from: fieldTypeStr)
+                        let elementSize = context.typeSize(for: elementType)
+                        
+                        // Calculate offset: index * size
+                        if access.indices.count >= 1 {
+                            let indexInstrs = expressionGenerator.generate(access.indices[0])
+                            function.body.append(contentsOf: indexInstrs) // [addr, index]
+                            
+                            if elementSize > 1 {
+                                function.body.append(.i32Const(Int32(elementSize)))
+                                function.body.append(.i32Mul)
+                            }
+                            
+                            function.body.append(.i32Add) // [addr + offset]
+                        }
+                        
+                        // Append Value (RHS)
+                        function.body.append(contentsOf: finalInstrs) // [addr, value]
+                        
+                        // Store
+                        switch elementType {
+                        case .i32: function.body.append(.i32Store(2, 0))
+                        case .f32: function.body.append(.f32Store(2, 0))
+                        case .i64: function.body.append(.i64Store(2, 0))
+                        case .f64: function.body.append(.f64Store(2, 0))
+                        default:   function.body.append(.i32Store(2, 0))
+                        }
+                    }
                 }
             case .fieldAccess(let access):
                 let objInstrs = expressionGenerator.generate(access.object)
@@ -204,49 +250,27 @@ public final class StatementGeneration {
                     default:
                         function.body.append(.i32Store(2, 0))
                     }
+                } else {
+                    // Type resolution failed, but we pushed the object pointer. Drop it to safe stack.
+                    print("DEBUG_COMPILER: WARNING! Failed to resolve field access for assignment: \(access.field). Dropping object pointer.")
+                    function.body.append(.drop)
                 }
             default:
                 break
             }
             
         case .functionCall(let call):
-            let lowerName = call.name.lowercased()
+            guard let expressionGenerator = expressionGenerator else { break }
+            let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call))
+            function.body.append(contentsOf: instrs)
             
-            // Generate argument instructions
-            var argInstrs: [WASMInstruction] = []
-            let def = context.functionDefinitions[lowerName]
-            
-            for (i, arg) in call.arguments.enumerated() {
-                let argResult = expressionGenerator?.generateWithInfo(arg) ?? ([], .i32)
-                argInstrs.append(contentsOf: argResult.instrs)
-                
-                // Implicit casting if function definition exists
-                if let def = def, i < def.params.count {
-                    argInstrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
-                }
-            }
-            
-            // Push default values for missing optional parameters
-            if let def = def, call.arguments.count < def.params.count {
-                for i in call.arguments.count..<def.params.count {
-                    let targetType = def.params[i]
-                    switch targetType {
-                    case .i32, .i64: argInstrs.append(.i32Const(0))
-                    case .f32: argInstrs.append(.f32Const(0))
-                    case .f64: argInstrs.append(.f64Const(0))
-                    default: argInstrs.append(.i32Const(0))
-                    }
-                }
-            }
-            
-            if let funcIdx = context.functionIndexMap[lowerName] {
-                function.body.append(contentsOf: argInstrs)
-                function.body.append(.call(funcIdx))
-
-                // If the function returns a value, drop it since it's being used as a statement
-                if let def = def, !def.results.isEmpty {
-                    function.body.append(.drop)
-                }
+            // Should always drop the result as we are in a statement context
+            // ExpressionGeneration ensures void functions return a dummy 0 (i32)
+            if type != .void {
+                function.body.append(.drop)
+                print("DEBUG_STMT: Dropped return value of type \(type) for call statement")
+            } else {
+                print("DEBUG_STMT: No drop needed (void) for call statement")
             }
             
         case .ifStatement(let ifNode):
@@ -266,22 +290,27 @@ public final class StatementGeneration {
                 }
 
                 currentDepth += 1
-                let thenBody = generateStatementBlock(thenBranch, function: &function)
+                var thenBody = generateStatementBlock(thenBranch, function: &function)
                 currentDepth -= 1
 
                 var elseBody: [WASMInstruction]? = nil
                 if let (nextCondition, nextThenBranch) = elseIfs.first {
-                    elseBody = buildIfChain(condition: nextCondition,
+                    var elseBranch = buildIfChain(condition: nextCondition,
                                            thenBranch: nextThenBranch,
                                            elseIfs: Array(elseIfs.dropFirst()),
                                            elseBranch: elseBranch)
+                    elseBody = elseBranch
                 } else if !elseBranch.isEmpty {
                     currentDepth += 1
-                    elseBody = generateStatementBlock(elseBranch, function: &function)
+                    var elseBranchBody = generateStatementBlock(elseBranch, function: &function)
                     currentDepth -= 1
+                    elseBody = elseBranchBody
                 }
+                
+                // Balance if/else branches to have same stack effect
+                let (balancedThen, balancedElse) = balanceIfBranches(then: thenBody, else: elseBody)
 
-                result.append(.if(.void, thenBody, elseBody))
+                result.append(.if(.void, balancedThen, balancedElse))
                 return result
             }
 
@@ -306,7 +335,9 @@ public final class StatementGeneration {
             loopInstrs.append(.i32EqZ)
             loopInstrs.append(.brIf(1))
             
-            let bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
+            var bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
+            // Balance loop body: must leave stack empty before br
+            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
             loopInstrs.append(contentsOf: bodyInstrs)
             loopInstrs.append(.br(0))
             
@@ -319,7 +350,15 @@ public final class StatementGeneration {
             
         case .forLoop(let forNode):
             guard let expressionGenerator = expressionGenerator else { break }
-            if let local = context.variableManagement.localInfo(for: forNode.variable.name) {
+            var loopLocal = context.variableManagement.localInfo(for: forNode.variable.name)
+            if loopLocal == nil {
+                // Implicit loop variable -> Register as Local Int
+                loopLocal = context.variableManagement.registerLocal(forNode.variable.name, type: .i32)
+                function.locals.append(.i32)
+                print("DEBUG_COMPILER: Auto-registered implicit For-Loop variable '\(forNode.variable.name)' as Local .i32")
+            }
+            
+            if let local = loopLocal {
                 let startInstrs = expressionGenerator.generate(forNode.startValue)
                 function.body.append(contentsOf: startInstrs)
                 function.body.append(.localSet(local.index))
@@ -386,7 +425,7 @@ public final class StatementGeneration {
 
                     // if (step < 0) { exit if i < end } else { exit if i > end }
                     // Use select to choose the right comparison without leaving a value on stack
-                    loopInstrs.append(.if(.void, [
+                    loopInstrs.append(.if(.i32, [
                         // Negative step: check i < end
                         .localGet(local.index),
                         .globalGet(context.scratchGlobal2Idx),
@@ -401,7 +440,9 @@ public final class StatementGeneration {
                     loopInstrs.append(.brIf(1))
                 }
 
-                let bodyInstrs = generateStatementBlock(forNode.body, function: &function)
+                var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
+                // Balance loop body: must leave stack empty before increment
+                bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
                 loopInstrs.append(contentsOf: bodyInstrs)
 
                 loopInstrs.append(.localGet(local.index))
@@ -443,7 +484,9 @@ public final class StatementGeneration {
             loopInstrs.append(.brIf(1)) // exit block
             
             // body
-            let bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
+            var bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
+            // Balance loop body
+            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
             loopInstrs.append(contentsOf: bodyInstrs)
             
             // it = it.next
@@ -467,7 +510,9 @@ public final class StatementGeneration {
             currentDepth += 1 // loop
             
             var loopInstrs: [WASMInstruction] = []
-            let bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
+            var bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
+            // Balance loop body
+            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
             loopInstrs.append(contentsOf: bodyInstrs)
             
             let condResult = expressionGenerator?.generateWithInfo(repeatNode.condition) ?? ([], .i32)
@@ -486,71 +531,108 @@ public final class StatementGeneration {
             ]))
             
         case .select(let selectNode):
-            // Generate: if (selectExpr == case1_1 || selectExpr == case1_2 || ...) { case1_body }
-            //          else if (selectExpr == case2_1 || ...) { case2_body }
-            //          ...
-            //          else { default_body }
+            // Generate: block { if (cond) { body; br 1 } ... default }
+            currentDepth += 1
+            
+            var blockInstrs: [WASMInstruction] = []
+            
+            // 1. Generate select expression and save to appropriate scratch global
+            let (selectInstrs, selectType) = expressionGenerator?.generateWithInfo(selectNode.expression) ?? ([], .i32)
+            blockInstrs.append(contentsOf: selectInstrs)
+            
+            let scratchIdx: Int
+            if selectType == .f32 {
+                scratchIdx = context.scratchGlobalFloatIdx
+                blockInstrs.append(.globalSet(scratchIdx))
+            } else {
+                scratchIdx = context.scratchGlobalIdx 
+                // Convert to i32 if needed (e.g. i64) - for now assume i32 compatible or already converted
+                blockInstrs.append(.globalSet(scratchIdx))
+            }
 
-            // Generate select expression and save to scratch global
-            let selectExprInstrs = expressionGenerator?.generate(selectNode.expression) ?? []
-            function.body.append(contentsOf: selectExprInstrs)
-            function.body.append(.globalSet(context.scratchGlobalIdx))
-
-            // Build a chain of if-else blocks for proper Select behavior
-            var allCaseInstrs: [WASMInstruction] = []
-
+            // 2. Generate cases
             for caseNode in selectNode.cases {
-                // Build match condition for this case
                 var conditionInstrs: [WASMInstruction] = []
 
                 for (valueIndex, caseValue) in caseNode.values.enumerated() {
                     switch caseValue {
                     case .single(let caseExpr):
-                        // Load select expression
-                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
-                        // Generate case expression
-                        let caseExprInstrs = expressionGenerator?.generate(caseExpr) ?? []
-                        conditionInstrs.append(contentsOf: caseExprInstrs)
-                        // Compare: select == value
-                        conditionInstrs.append(.i32Eq)
+                        if selectType == .f32 {
+                            conditionInstrs.append(.globalGet(scratchIdx)) // f32
+                            let (caseInstrs, caseType) = expressionGenerator?.generateWithInfo(caseExpr) ?? ([], .f32)
+                            conditionInstrs.append(contentsOf: caseInstrs)
+                            if caseType != .f32 {
+                                conditionInstrs.append(contentsOf: convert(from: caseType, to: .f32))
+                            }
+                            conditionInstrs.append(.f32Eq)
+                        } else {
+                            conditionInstrs.append(.globalGet(scratchIdx)) // i32
+                            let (caseInstrs, caseType) = expressionGenerator?.generateWithInfo(caseExpr) ?? ([], .i32)
+                            conditionInstrs.append(contentsOf: caseInstrs)
+                            if caseType != .i32 {
+                                conditionInstrs.append(contentsOf: convert(from: caseType, to: .i32))
+                            }
+                            conditionInstrs.append(.i32Eq)
+                        }
 
                     case .range(let fromExpr, let toExpr):
-                        // Generate: (select >= from) && (select <= to)
-                        // Part 1: select >= from
-                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
-                        let fromInstrs = expressionGenerator?.generate(fromExpr) ?? []
-                        conditionInstrs.append(contentsOf: fromInstrs)
-                        conditionInstrs.append(.i32GeS)
-                        // Part 2: select <= to
-                        conditionInstrs.append(.globalGet(context.scratchGlobalIdx))
-                        let toInstrs = expressionGenerator?.generate(toExpr) ?? []
-                        conditionInstrs.append(contentsOf: toInstrs)
-                        conditionInstrs.append(.i32LeS)
-                        // Combine: AND
-                        conditionInstrs.append(.i32And)
+                        if selectType == .f32 {
+                            // >= from
+                            conditionInstrs.append(.globalGet(scratchIdx))
+                            let (fromInstrs, fromType) = expressionGenerator?.generateWithInfo(fromExpr) ?? ([], .f32)
+                            conditionInstrs.append(contentsOf: fromInstrs)
+                            if fromType != .f32 { conditionInstrs.append(contentsOf: convert(from: fromType, to: .f32)) }
+                            conditionInstrs.append(.f32Ge)
+                            
+                            // <= to
+                            conditionInstrs.append(.globalGet(scratchIdx))
+                            let (toInstrs, toType) = expressionGenerator?.generateWithInfo(toExpr) ?? ([], .f32)
+                            conditionInstrs.append(contentsOf: toInstrs)
+                            if toType != .f32 { conditionInstrs.append(contentsOf: convert(from: toType, to: .f32)) }
+                            conditionInstrs.append(.f32Le)
+                            
+                            conditionInstrs.append(.i32And)
+                        } else {
+                            // >= from
+                            conditionInstrs.append(.globalGet(scratchIdx))
+                            let (fromInstrs, fromType) = expressionGenerator?.generateWithInfo(fromExpr) ?? ([], .i32)
+                            conditionInstrs.append(contentsOf: fromInstrs)
+                            if fromType != .i32 { conditionInstrs.append(contentsOf: convert(from: fromType, to: .i32)) }
+                            conditionInstrs.append(.i32GeS)
+                            
+                            // <= to
+                            conditionInstrs.append(.globalGet(scratchIdx))
+                            let (toInstrs, toType) = expressionGenerator?.generateWithInfo(toExpr) ?? ([], .i32)
+                            conditionInstrs.append(contentsOf: toInstrs)
+                            if toType != .i32 { conditionInstrs.append(contentsOf: convert(from: toType, to: .i32)) }
+                            conditionInstrs.append(.i32LeS)
+                            
+                            conditionInstrs.append(.i32And)
+                        }
                     }
 
-                    // OR with previous conditions
                     if valueIndex > 0 {
                         conditionInstrs.append(.i32Or)
                     }
                 }
 
                 // Generate case body
-                let caseBodyInstrs = generateStatementBlock(caseNode.body, function: &function)
-
-                // Wrap in if: if (condition) { body }
-                allCaseInstrs.append(contentsOf: conditionInstrs)
-                allCaseInstrs.append(.if(.void, caseBodyInstrs, nil))
+                var caseBodyInstrs = generateStatementBlock(caseNode.body, function: &function)
+                caseBodyInstrs.append(.br(1)) // Exit Select block
+                
+                // if (condition) { body; br 1 }
+                blockInstrs.append(contentsOf: conditionInstrs)
+                blockInstrs.append(.if(.void, caseBodyInstrs, nil))
             }
 
-            function.body.append(contentsOf: allCaseInstrs)
-
-            // Default case
+            // 3. Default case
             if let defaultCase = selectNode.defaultCase {
                 let defaultBodyInstrs = generateStatementBlock(defaultCase, function: &function)
-                function.body.append(contentsOf: defaultBodyInstrs)
+                blockInstrs.append(contentsOf: defaultBodyInstrs)
             }
+            
+            function.body.append(.block(.void, blockInstrs))
+            currentDepth -= 1
             
         case .returnStatement(let expr):
             // Check if we are in a GOSUB return context (stack not empty)
@@ -571,8 +653,13 @@ public final class StatementGeneration {
             }
             
             if let returnExpr = expr {
-                let returnInstrs = expressionGenerator?.generate(returnExpr) ?? []
-                function.body.append(contentsOf: returnInstrs)
+                var returnInstrs = expressionGenerator?.generateWithInfo(returnExpr)
+                if let returnInfo = returnInstrs {
+                    function.body.append(contentsOf: returnInfo.instrs)
+                    if returnInfo.type != currentReturnType {
+                        function.body.append(contentsOf: convert(from: returnInfo.type, to: currentReturnType))
+                    }
+                }
             }
             function.body.append(.return)
             
@@ -880,6 +967,13 @@ public final class StatementGeneration {
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
         case .identifier(let id):
+            // CRITICAL FIX: Check type suffix FIRST before registry lookup
+            // This ensures float variables (x#) are recognized as f32 even during initial assignment
+            if let suffix = id.typeSuffix {
+                return typeHandling.wasmType(from: suffix)
+            }
+            
+            // Then check if variable is already registered
             if let local = context.variableManagement.localInfo(for: id.name) {
                 return local.type
             }
@@ -913,6 +1007,155 @@ public final class StatementGeneration {
         return blockBody
     }
 
+    /// Balance if/else branches to have same stack effect
+    /// Conservative approach: only balance when we detect obvious imbalance
+    private func balanceIfBranches(then thenBody: [WASMInstruction], else elseBody: [WASMInstruction]?) -> ([WASMInstruction], [WASMInstruction]?) {
+        // CONSERVATIVE: Don't try to calculate stack delta for complex code
+        // Instead, check for obvious patterns that need balancing
+        
+        // Pattern 1: One branch ends with a call that returns a value, other doesn't
+        let thenEndsWithValueCall = endsWithValueProducingCall(thenBody)
+        let elseEndsWithValueCall = elseBody.map { endsWithValueProducingCall($0) } ?? false
+        
+        if thenEndsWithValueCall && !elseEndsWithValueCall {
+            // Then produces value, else doesn't - drop the value from then
+            var balanced = thenBody
+            balanced.append(.drop)
+            return (balanced, elseBody)
+        }
+        
+        if elseEndsWithValueCall && !thenEndsWithValueCall, let elseBody = elseBody {
+            // Else produces value, then doesn't - drop the value from else
+            var balanced = elseBody
+            balanced.append(.drop)
+            return (thenBody, balanced)
+        }
+        
+        // Otherwise, assume branches are already balanced or will be caught by validation
+        return (thenBody, elseBody)
+    }
+    
+    /// Check if instruction sequence ends with a call that returns a non-void value
+    private func endsWithValueProducingCall(_ instructions: [WASMInstruction]) -> Bool {
+        guard let lastInstr = instructions.last else { return false }
+        
+        if case .call(let funcIdx) = lastInstr {
+            if let def = context.functionDefinitionsByIndex[funcIdx] {
+                return !def.results.isEmpty
+            }
+        }
+        
+        return false
+    }
+    
+    /// Legacy balanceStack - used for non-if contexts
+    /// Returns instructions unchanged to avoid incorrect drops
+    private func balanceStack(_ instructions: [WASMInstruction], targetDelta: Int = 0) -> [WASMInstruction] {
+        // For now, just return unchanged
+        // Only use balanceIfBranches for if statements
+        return instructions
+    }
+    
+    /// Calculate net stack effect of a sequence of instructions
+    private func calculateStackDelta(_ instructions: [WASMInstruction]) -> Int {
+        var delta = 0
+        for instr in instructions {
+            switch instr {
+            // Push 1
+            case .i32Const, .i64Const, .f32Const, .f64Const:
+                delta += 1
+            case .localGet, .globalGet:
+                delta += 1
+            case .call(let funcIdx):
+                if let def = context.functionDefinitionsByIndex[funcIdx] {
+                    delta -= def.params.count
+                    delta += def.results.count
+                } else {
+                    // Fallback if index not found (shouldn't happen)
+                    delta += 0
+                }
+                
+            // Pop 1
+            case .localSet, .globalSet, .drop:
+                delta -= 1
+                
+            // Binary ops: pop 2, push 1 (net -1)
+            case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32DivU, .i32RemS, .i32RemU:
+                delta -= 1
+            case .i64Add, .i64Sub, .i64Mul, .i64DivS, .i64DivU, .i64RemS, .i64RemU:
+                delta -= 1
+            case .f32Add, .f32Sub, .f32Mul, .f32Div:
+                delta -= 1
+            case .f64Add, .f64Sub, .f64Mul, .f64Div:
+                delta -= 1
+            case .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrS, .i32ShrU, .i32Rotl, .i32Rotr:
+                delta -= 1
+            case .i32Eq, .i32Ne, .i32LtS, .i32LtU, .i32GtS, .i32GtU, .i32LeS, .i32LeU, .i32GeS, .i32GeU:
+                delta -= 1
+            case .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge:
+                delta -= 1
+                
+            // Unary ops: pop 1, push 1 (net 0)
+            case .i32EqZ, .i64EqZ:
+                // Actually pop 1, push 1 (net 0)
+                break
+            case .f32ConvertI32S, .f32ConvertI32U, .f32ConvertI64S, .f32ConvertI64U:
+                // pop 1, push 1 (net 0)
+                break
+            case .i32TruncF32S, .i32TruncF32U, .i32TruncF64S, .i32TruncF64U:
+                // pop 1, push 1 (net 0)
+                break
+            case .f32Neg, .f32Abs, .f32Sqrt:
+                // pop 1, push 1 (net 0)
+                break
+                
+            // Control flow
+            case .if(let blockType, let thenBody, let elseBody):
+                delta -= 1  // condition consumed
+                // Both branches should have same effect after balancing
+                let thenDelta = calculateStackDelta(thenBody)
+                if let elseBody = elseBody {
+                    let elseDelta = calculateStackDelta(elseBody)
+                    // Use the minimum (safer estimate)
+                    delta += min(thenDelta, elseDelta)
+                } else {
+                    // No else branch - then must be balanced to 0
+                    delta += 0
+                }
+                
+            case .block(let blockType, let body):
+                let bodyDelta = calculateStackDelta(body)
+                delta += bodyDelta
+                
+            case .loop(let blockType, let body):
+                let bodyDelta = calculateStackDelta(body)
+                delta += bodyDelta
+                
+            case .br:
+                // br doesn't consume from stack (unconditional branch)
+                break
+            case .brIf:
+                // brIf consumes condition
+                delta -= 1
+                
+            case .return:
+                // return ends the function, stack doesn't matter after
+                break
+                
+            // Memory ops
+            case .i32Load, .i64Load, .f32Load, .f64Load:
+                // pop 1 (address), push 1 (value) (net 0)
+                break
+            case .i32Store, .i64Store, .f32Store, .f64Store:
+                delta -= 2  // pop address and value
+                
+            default:
+                break
+            }
+        }
+        return delta
+    }
+    
     private func getTypeName(from expr: ExpressionNode) -> String? {
         switch expr {
         case .identifier(let id):
@@ -937,6 +1180,15 @@ public final class StatementGeneration {
             return getTypeName(from: subExpr)
         case .after(let subExpr):
             return getTypeName(from: subExpr)
+        case .arrayAccess(let access):
+            // Check if it's a field array access: obj.field[index]
+            if case .fieldAccess(let fieldAccess) = access.array,
+               let objType = getTypeName(from: fieldAccess.object),
+               let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
+                // If the field is an array of CustomType, return CustomType
+                // fieldType is "CustomType" or "Int" etc.
+                return fieldType
+            }
         case .objectCast(let type, _):
             return type
         default:

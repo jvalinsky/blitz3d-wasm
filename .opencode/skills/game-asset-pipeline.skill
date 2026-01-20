@@ -1,0 +1,26 @@
+{
+  "name": "game-asset-pipeline",
+  "description": "Guidelines for building asset pipelines for game ports. Covers model formats (B3D, X, RMESH), textures, audio, and archive handling (ZIP).",
+  "contextPatterns": [
+    "Sources/Runtime/modules/b3d.js",
+    "Sources/Runtime/modules/rmesh.js",
+    "Sources/Runtime/modules/texture.js",
+    "Asset loading code"
+  ],
+  "workflow": "1. Identify asset formats in source game\n2. Implement parsers for each format\n3. Convert to web-native formats (glTF, WebP, OGG)\n4. Build archive extraction (ZIP)\5. Create asset loading API\n6. Test with game assets",
+  "keyConcepts": [
+    "Blitz3D mesh formats (B3D, XFile, RMESH)",
+    "Texture formats (BMP, PNG, TGA)",
+    "Archive formats (ZIP with zlib)",
+    "Coordinate and UV conversion",
+    "Animation data extraction"
+  ],
+  "commonIssues": [
+    "Missing or corrupted asset files",
+    "Incorrect UV mapping after conversion",
+    "Animation bone hierarchies not preserved",
+    "File path case sensitivity issues",
+    "Large asset file sizes"
+  ],
+  "tools": ["JSZip", "Three.js loaders", "ImageMagick", "ffmpeg"]
+}

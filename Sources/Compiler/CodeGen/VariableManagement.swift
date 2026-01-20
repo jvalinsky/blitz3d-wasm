@@ -228,6 +228,17 @@ public struct VariableManagement {
     public var globalCount: Int {
         return globalVariables.count
     }
+
+    /// Get the maximum local index currently assigned
+    /// Returns -1 if no locals have been registered
+    public func maxLocalIndex() -> Int {
+        return localVariables.values.map { $0.index }.max() ?? -1
+    }
+
+    /// Get the next local index that will be assigned
+    public var nextLocalIdx: Int {
+        return nextLocalIndex
+    }
 }
 
 public struct FunctionDefinition {
@@ -247,6 +258,7 @@ public final class ModuleContext {
     public var typeIndexMap: [String: Int]
     public var functionIndexMap: [String: Int]
     public var functionDefinitions: [String: FunctionDefinition]
+    public var functionDefinitionsByIndex: [Int: FunctionDefinition] = [:]
     public var userTypes: [String: UserTypeInfo]
     public var fieldOffsets: [String: [String: Int]]
     public var fieldDimensions: [String: [String: [Int]]]  // typeName -> [fieldName: dimensions]
@@ -259,6 +271,8 @@ public final class ModuleContext {
     public var stringHeapPtrIdx: Int = -1
     public var scratchGlobalIdx: Int = -1  // For temporary storage
     public var scratchGlobal2Idx: Int = -1  // For temporary storage
+    public var scratchGlobalFloatIdx: Int = -1 // For temporary float storage
+    public var scratchGlobalFloat2Idx: Int = -1 // For temporary float storage
     
     public init(module: WASMModule,
                 variableManagement: VariableManagement = VariableManagement(),
@@ -283,6 +297,22 @@ public final class ModuleContext {
         let idx = module.globals.count
         module.globals.append(WASMGlobal(type: type, mutability: mutability, initExpr: initExpr))
         return idx
+    }
+
+    /// Register a WASM global with a default zero initializer for its type
+    public func registerGlobalWithDefaultInit(type: WASMType, mutability: Bool) -> Int {
+        let initExpr: WASMInitExpression
+        switch type {
+        case .f32:
+            initExpr = .f32Const(0.0)
+        case .f64:
+            initExpr = .f64Const(0.0)
+        case .i64:
+            initExpr = .i64Const(0)
+        default:
+            initExpr = .i32Const(0)
+        }
+        return registerGlobal(type: type, mutability: mutability, initExpr: initExpr)
     }
 
     /// Add a string literal to the module's data section

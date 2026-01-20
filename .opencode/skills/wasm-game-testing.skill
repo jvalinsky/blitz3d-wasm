@@ -1,0 +1,26 @@
+{
+  "name": "wasm-game-testing",
+  "description": "Guidelines for testing WebAssembly games in browser. Covers WASM validation, runtime testing, performance profiling, and visual debugging.",
+  "contextPatterns": [
+    "Tests/IntegrationTests/",
+    "Browser testing with Puppeteer",
+    "WASM debugging",
+    "Performance profiling"
+  ],
+  "workflow": "1. Validate WASM binary structure\n2. Compile test programs\n3. Run in browser with runtime\n4. Check console for errors\n5. Profile performance (FPS, memory)\n6. Compare with original game behavior",
+  "keyConcepts": [
+    "WASM binary validation (wabt tools)",
+    "Browser DevTools WASM debugging",
+    "Performance API for FPS monitoring",
+    "Canvas/WebGL inspection",
+    "Audio context testing"
+  ],
+  "commonIssues": [
+    "WASM module fails to instantiate",
+    "Missing import functions",
+    "Memory out-of-bounds access",
+    "Graphics not rendering (black screen)",
+    "Audio not playing"
+  ],
+  "tools": ["wabt", "Puppeteer", "Chrome DevTools", "Performance API"]
+}

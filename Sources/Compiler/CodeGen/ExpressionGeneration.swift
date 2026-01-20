@@ -55,9 +55,10 @@ public final class ExpressionGeneration {
             }
             // Auto-declare implicit variable as global (Blitz3D behavior)
             print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
-            let actualGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
-            _ = context.variableManagement.registerGlobalWithIndex(id.name, type: .i32, typeName: nil, wasmIndex: actualGlobalIdx)
-            return ([.globalGet(actualGlobalIdx)], .i32)
+            let wasmType = typeHandling.typeInfo(from: id.name).wasmType // Guess type from name/suffix
+            let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
+            _ = context.variableManagement.registerGlobalWithIndex(id.name, type: wasmType, typeName: nil, wasmIndex: actualGlobalIdx)
+            return ([.globalGet(actualGlobalIdx)], wasmType)
             
         case .binary(let binop):
             return generateBinaryOp(binop)
@@ -265,10 +266,15 @@ public final class ExpressionGeneration {
         let leftResult = generateWithInfo(binop.left)
         let rightResult = generateWithInfo(binop.right)
         
+
+        // Determine operation type with strict float promotion
+        var opType = typeHandling.commonType(leftResult.type, rightResult.type)
+        if leftResult.type == .f32 || rightResult.type == .f32 {
+             if opType != .f64 { opType = .f32 }
+        }
+
         let comparisonOps = ["=", "<>", "<", ">", "<=", ">="]
         let isComparison = comparisonOps.contains(binop.op)
-        
-        let opType = typeHandling.commonType(leftResult.type, rightResult.type)
         let resultType = isComparison ? .i32 : opType
         
         var instrs = leftResult.instrs
@@ -278,14 +284,42 @@ public final class ExpressionGeneration {
         instrs.append(contentsOf: convert(from: rightResult.type, to: opType))
         
         // Generate appropriate instruction based on operator and type
-        switch binop.op {
+        switch binop.op.lowercased() {
         case "+":
             if typeHandling.isString(from: binop.left) || typeHandling.isString(from: binop.right) {
                 // String concatenation
                 if let concatIdx = context.functionIndexMap["__stringconcat"] {
                     // Need to reset instrs and rebuild for string call
-                    instrs = leftResult.instrs
+                    instrs = []
+                    
+                    // Left operand
+                    instrs.append(contentsOf: leftResult.instrs)
+                    if !typeHandling.isString(from: binop.left) {
+                        if leftResult.type == .i32 {
+                            if let intToStrIdx = context.functionIndexMap["inttostring"] {
+                                instrs.append(.call(intToStrIdx))
+                            }
+                        } else if leftResult.type == .f32 {
+                            if let floatToStrIdx = context.functionIndexMap["floattostring"] {
+                                instrs.append(.call(floatToStrIdx))
+                            }
+                        }
+                    }
+                    
+                    // Right operand
                     instrs.append(contentsOf: rightResult.instrs)
+                    if !typeHandling.isString(from: binop.right) {
+                        if rightResult.type == .i32 {
+                            if let intToStrIdx = context.functionIndexMap["inttostring"] {
+                                instrs.append(.call(intToStrIdx))
+                            }
+                        } else if rightResult.type == .f32 {
+                            if let floatToStrIdx = context.functionIndexMap["floattostring"] {
+                                instrs.append(.call(floatToStrIdx))
+                            }
+                        }
+                    }
+                    
                     instrs.append(.call(concatIdx))
                     return (instrs, .i32)
                 }
@@ -326,9 +360,52 @@ public final class ExpressionGeneration {
             }
             
         case "mod":
-            instrs.append(.i32RemS)
+            if opType == .f32 {
+                // x - y * trunc(x / y)
+                // We use the already generated and converted instrs for left/right
+                // but we need to rearrange them.
+                // Current instrs has [left] [right]
+                // We'll use scratch globals to make it cleaner.
+                
+                // Clear and rebuild for mod
+                instrs = []
+                
+                // Left operand (x)
+                instrs.append(contentsOf: leftResult.instrs)
+                instrs.append(contentsOf: convert(from: leftResult.type, to: .f32))
+                instrs.append(.globalSet(context.scratchGlobalFloatIdx))
+                
+                // Right operand (y)
+                instrs.append(contentsOf: rightResult.instrs)
+                instrs.append(contentsOf: convert(from: rightResult.type, to: .f32))
+                instrs.append(.globalSet(context.scratchGlobalFloat2Idx))
+                
+                // Stack: x - y * trunc(x / y)
+                instrs.append(.globalGet(context.scratchGlobalFloatIdx))  // [x]
+                instrs.append(.globalGet(context.scratchGlobalFloat2Idx)) // [x, y]
+                instrs.append(.globalGet(context.scratchGlobalFloatIdx))  // [x, y, x]
+                instrs.append(.globalGet(context.scratchGlobalFloat2Idx)) // [x, y, x, y]
+                instrs.append(.f32Div)                                   // [x, y, x/y]
+                instrs.append(.f32Trunc)                                  // [x, y, trunc(x/y)]
+                instrs.append(.f32Mul)                                   // [x, y*trunc(x/y)]
+                instrs.append(.f32Sub)                                   // [x - y*trunc(x/y)]
+            } else if opType == .f64 {
+                // Similar for f64 if we had scratchGlobalDoubleIdx
+                // For now, fall back to i32 if not f32
+                instrs.append(.i32RemS)
+            } else {
+                instrs.append(.i32RemS)
+            }
             
         case "=":
+            if typeHandling.isString(from: binop.left) || typeHandling.isString(from: binop.right) {
+                if let equalIdx = context.functionIndexMap["stringequal"] {
+                    instrs = leftResult.instrs
+                    instrs.append(contentsOf: rightResult.instrs)
+                    instrs.append(.call(equalIdx))
+                    return (instrs, .i32)
+                }
+            }
             switch opType {
             case .i32, .i64: instrs.append(.i32Eq)
             case .f32: instrs.append(.f32Eq)
@@ -338,6 +415,15 @@ public final class ExpressionGeneration {
             return (instrs, .i32)
             
         case "<>":
+            if typeHandling.isString(from: binop.left) || typeHandling.isString(from: binop.right) {
+                if let equalIdx = context.functionIndexMap["stringequal"] {
+                    instrs = leftResult.instrs
+                    instrs.append(contentsOf: rightResult.instrs)
+                    instrs.append(.call(equalIdx))
+                    instrs.append(.i32EqZ) // Not equal if stringequal returns 0
+                    return (instrs, .i32)
+                }
+            }
             switch opType {
             case .i32, .i64: instrs.append(.i32Ne)
             case .f32: instrs.append(.f32Ne)
@@ -457,55 +543,167 @@ public final class ExpressionGeneration {
         let def = context.functionDefinitions[internalName]
         
         // Generate argument instructions
-        for (i, arg) in call.arguments.enumerated() {
-            let argResult = generateWithInfo(arg)
-            instrs.append(contentsOf: argResult.instrs)
-            
-            if let def = def, i < def.params.count {
-                instrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
-            }
-        }
-        
-        // Push default values for missing optional parameters
-        if let def = def, call.arguments.count < def.params.count {
-            for i in call.arguments.count..<def.params.count {
-                let targetType = def.params[i]
-                switch targetType {
-                case .i32, .i64: instrs.append(.i32Const(0))
-                case .f32: instrs.append(.f32Const(0))
-                case .f64: instrs.append(.f64Const(0))
-                default: instrs.append(.i32Const(0))
-                }
-            }
-        }
-        
         // Call function
         var returnType: WASMType = .i32
+        var actualWasmReturnType: WASMType = .void
+        
         if let funcIdx = context.functionIndexMap[internalName] {
             if internalName == "createcamera" {
                 print("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
             }
+            
+            // Handle Extra Arguments (Stack Imbalance Fix)
+            // If def is missing, check WASM signature for param count!
+            var expectedArgCount = call.arguments.count
+            
+            // Resolve function type to get accurate param count
+            var paramCountFromWasm: Int? = nil
+            if Int(funcIdx) < context.module.imports.count {
+                 let importEntry = context.module.imports[Int(funcIdx)]
+                 if importEntry.kind == .function {
+                      let typeIdx = importEntry.index
+                      if typeIdx < context.module.types.count {
+                          paramCountFromWasm = context.module.types[typeIdx].parameters.count
+                      }
+                 }
+            } else {
+                 let localFuncIdx = Int(funcIdx) - context.module.imports.count
+                 if localFuncIdx < context.module.functions.count {
+                      let typeIdx = context.module.functions[localFuncIdx]
+                      if typeIdx < context.module.types.count {
+                          paramCountFromWasm = context.module.types[typeIdx].parameters.count
+                      }
+                 }
+            }
+            
+            if let def = def {
+                expectedArgCount = def.params.count
+            } else if let wasmCount = paramCountFromWasm {
+                expectedArgCount = wasmCount
+            }
+
+            // Re-implement argument generation loop to be safer
+            instrs = [] // Reset instructions from previous loop
+            let argsToPush = min(call.arguments.count, expectedArgCount)
+            
+            // 1. Generate arguments that WILL be consumed
+            for i in 0..<argsToPush {
+                let argResult = generateWithInfo(call.arguments[i])
+                instrs.append(contentsOf: argResult.instrs)
+                if let def = def, i < def.params.count {
+                    instrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
+                } else if let wasmCount = paramCountFromWasm, i < wasmCount {
+                    // Logic to convert to WASM param type? 
+                    // We need type lookup again. 
+                    // Simplify: Just push. WASM validation will catch bad types, but stack count will be correct.
+                }
+            }
+            
+            // 2. Generate side-effects for extra arguments but DROP results immediately
+            for i in argsToPush..<call.arguments.count {
+                print("DEBUG_COMPILER: Dropping extra argument \(i) for \(internalName)")
+                let argResult = generateWithInfo(call.arguments[i])
+                instrs.append(contentsOf: argResult.instrs)
+                instrs.append(.drop)
+            }
+            
+            // Push defaults for missing args (Only if def known - if relying on WASM signature, we can't easily guess default values without types)
+            // But we can try to zero-fill if needed.
+            // For now, assume if def is missing, we don't need to pad? Or pad with i32 0?
+            if let def = def, call.arguments.count < def.params.count {
+                 for i in call.arguments.count..<def.params.count {
+                     switch def.params[i] {
+                     case .f32: instrs.append(.f32Const(0))
+                     default: instrs.append(.i32Const(0))
+                     }
+                 }
+            } else if let wasmCount = paramCountFromWasm, call.arguments.count < wasmCount {
+                 // Pad with 0s based on WASM signature types
+                // We need the type index again...
+                // Redundant lookup, but safer.
+                // Optimally we'd store the 'typeFn' earlier.
+            }
+
             instrs.append(.call(Int(funcIdx)))
 
-            // Determine return type from function definition
+            // Determine ACTUAL return type from WASM Module (Source of Truth)
+            // This fixes mismatch between Heuristic (f32) and Stub (i32)
+            // Determine ACTUAL return type from WASM Module (Source of Truth)
+            // This fixes mismatch between Heuristic (f32) and Stub (i32)
+            if Int(funcIdx) < context.module.imports.count {
+                 let importEntry = context.module.imports[Int(funcIdx)]
+                 // importEntry.index IS the type index for functions
+                 if importEntry.kind == .function {
+                      let typeIdx = importEntry.index
+                      if typeIdx < context.module.types.count {
+                          let typeFn = context.module.types[typeIdx]
+                          actualWasmReturnType = typeFn.results.first ?? .void
+                      }
+                 }
+            } else {
+                 // Local function
+                 let localFuncIdx = Int(funcIdx) - context.module.imports.count
+                 if localFuncIdx < context.module.functions.count {
+                      let typeIdx = context.module.functions[localFuncIdx]
+                      if typeIdx < context.module.types.count {
+                          let typeFn = context.module.types[typeIdx]
+                          actualWasmReturnType = typeFn.results.first ?? .void
+                      }
+                 }
+            }
+            
+            // Determine EXPECTED return type (from definition or heuristic)
             if let def = def {
-                if let firstResult = def.results.first {
-                    returnType = firstResult
-                } else {
-                    returnType = .void
-                }
+                returnType = def.results.first ?? .void
             } else if call.name.hasSuffix("#") {
                 returnType = .f32
             } else if ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "sqr", "rnd", "entityx", "entityy", "entityz", "entitypitch", "entityyaw", "entityroll", "entitydistance", "collisionx", "collisiony", "collisionz", "collisionnx", "collisionny", "collisionnz"].contains(internalName) {
                 returnType = .f32
+            } else {
+                returnType = actualWasmReturnType // Fallback to truth
             }
+            
+            // If truth != expected, convert
+            if actualWasmReturnType != returnType {
+                 instrs.append(contentsOf: convert(from: actualWasmReturnType, to: returnType))
+            }
+
         } else {
-            print("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0.")
-            instrs.append(.i32Const(0)) // Placeholder return value for missing function
-            returnType = .i32
+            // Function not found - same fallback logic
+            print("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0/0.0.")
+            for _ in call.arguments {
+                instrs.append(.drop) // Drop logic here is simpler: we pushed nothing yet? No, original code pushed.
+                // Wait, I cleared instrs above.
+                // For unknown function, we can't clear, we must loop and drop.
+            }
+            // Re-generate args and drop them (simulated side effects)
+            instrs = [] 
+            for arg in call.arguments {
+                let res = generateWithInfo(arg)
+                instrs.append(contentsOf: res.instrs)
+                instrs.append(.drop)
+            }
+            
+            if internalName.hasSuffix("#") || 
+               internalName.hasSuffix("value") || 
+               ["distance", "min", "max", "abs", "sgn", "ceil", "floor"].contains(internalName) {
+                instrs.append(.f32Const(0.0)) 
+                returnType = .f32
+            } else {
+                instrs.append(.i32Const(0))
+                returnType = .i32
+            }
         }
         
-        // If the function returns void but is used in an expression, push a dummy 0
+        // Final void fix: if statement expects value but we have void (after conversion/truth)
+        // But generateFunctionCall returns (instrs, type). 
+        // Statement calls it. If type==void, no drop.
+        // If type!=void, drop.
+        // So we don't need to push dummy 0 if type is void.
+        // BUT if it's used in expression?
+            print("DEBUG_TRACE: Generating Call for \(internalName). Expected: \(returnType), Actual: \(actualWasmReturnType). Final: \(returnType == .void ? "VOID->I32" : returnType.rawValue)")
+
+            // If the function returns void but is used in an expression, push a dummy 0
         if returnType == .void {
             instrs.append(.i32Const(0))
             returnType = .i32
@@ -577,7 +775,7 @@ public final class ExpressionGeneration {
                     let indexInstrs = generate(access.indices[0])
                     instrs.append(contentsOf: indexInstrs)
                     
-                    if elementSize != 4 {
+                    if elementSize > 1 {
                         instrs.append(.i32Const(Int32(elementSize)))
                         instrs.append(.i32Mul)
                     }
@@ -650,9 +848,13 @@ public final class ExpressionGeneration {
     // MARK: - Type Cast
     
     private func generateTypeCast(_ cast: TypeCastNode) -> (instrs: [WASMInstruction], type: WASMType) {
-        let exprInstrs = generate(cast.expression)
+        let (exprInstrs, exprType) = generateWithInfo(cast.expression)
         let targetType = typeHandling.typeInfo(from: cast.targetType.rawValue).wasmType
-        return (exprInstrs, targetType)
+        
+        var instrs = exprInstrs
+        instrs.append(contentsOf: convert(from: exprType, to: targetType))
+        
+        return (instrs, targetType)
     }
     
     // MARK: - Helper Functions
@@ -667,6 +869,7 @@ public final class ExpressionGeneration {
         case (.i64, .i32): return [.i32WrapI64]
         case (.f32, .f64): return [.f64PromoteF32]
         case (.f64, .f32): return [.f32DemoteF64]
+        case (_, .void): return source != .void ? [.drop] : []
         default: return []
         }
     }
@@ -695,6 +898,13 @@ public final class ExpressionGeneration {
             return getTypeName(from: subExpr)
         case .after(let subExpr):
             return getTypeName(from: subExpr)
+        case .arrayAccess(let access):
+            // Check if it's a field array access: obj.field[index]
+            if case .fieldAccess(let fieldAccess) = access.array,
+               let objType = getTypeName(from: fieldAccess.object),
+               let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
+                return fieldType
+            }
         case .objectCast(let type, _):
             return type
         default:

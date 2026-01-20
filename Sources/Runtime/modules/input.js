@@ -104,5 +104,7 @@ class Blitz3DInput {
     }
 }
 
-window.Blitz3DInput = Blitz3DInput;
+if (typeof window !== 'undefined') {
+    window.Blitz3DInput = Blitz3DInput;
+}
 module.exports = Blitz3DInput;

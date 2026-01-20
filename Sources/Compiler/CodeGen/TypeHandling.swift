@@ -69,6 +69,11 @@ public struct TypeHandling {
             return id.typeSuffix == .string || id.typeName?.lowercased() == "string"
         case .functionCall(let call):
             return call.name.hasSuffix("$")
+        case .binary(let binaryOp):
+            if binaryOp.op == "+" {
+                return isString(from: binaryOp.left) || isString(from: binaryOp.right)
+            }
+            return false
         case .fieldAccess(let access):
             // Need to check field type... simplified for now
             return access.field.hasSuffix("$")

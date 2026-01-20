@@ -870,6 +870,7 @@ class B3DLoader {
 // Expose to window for browser use (when loaded via script tag)
 if (typeof window !== 'undefined') {
     window.B3DLoader = B3DLoader;
+    window.B3DLoaderModule = { B3DLoader };
 }
 
 module.exports = B3DLoader;

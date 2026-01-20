@@ -198,4 +198,68 @@ class Blitz3DWasmSurface {
     }
 }
 
-module.exports = { Blitz3DSurface, Blitz3DWasmSurface };
+// Blitz3DMesh is actually a constructor function that returns the module
+function Blitz3DMesh(graphics) {
+    const surfaces = {};
+    
+    return {
+        Blitz3DSurface,
+        Blitz3DWasmSurface,
+        setupImports: function(imports) {
+            // Mesh surface functions
+            imports.env.CountSurfaces = (meshId) => {
+                const entity = graphics.entities[meshId];
+                return entity?.surfaces?.length || 0;
+            };
+
+            imports.env.GetSurface = (meshId, index) => {
+                const entity = graphics.entities[meshId];
+                return entity?.surfaces?.[index] || 0;
+            };
+
+            imports.env.FindSurface = (meshId, brushId) => {
+                const entity = graphics.entities[meshId];
+                if (entity?.surfaces) {
+                    for (let i = 0; i < entity.surfaces.length; i++) {
+                        if (entity.surfaces[i].brush === brushId) return i;
+                    }
+                }
+                return 0;
+            };
+
+            imports.env.ClearSurface = (surfaceId, clearVerts, clearTris) => {
+                console.log("ClearSurface: surfaceId=" + surfaceId);
+            };
+
+            imports.env.AddVertexExtended = (surfaceId, x, y, z, u, v, w, nx, ny, nz) => {
+                console.log(`AddVertexExtended: surface=${surfaceId} pos=(${x},${y},${z})`);
+                return 0; // Return vertex index
+            };
+
+            imports.env.SetSurfaceTexture = (surfaceId, textureId, frame, index) => {
+                console.log(`SetSurfaceTexture: surface=${surfaceId} texture=${textureId}`);
+            };
+
+            imports.env.SetSurfaceLightmap = (surfaceId, textureId) => {
+                console.log(`SetSurfaceLightmap: surface=${surfaceId} lightmap=${textureId}`);
+            };
+
+            imports.env.AddCollisionVertex = (surfaceId, x, y, z) => {
+                return 0; // Return vertex index
+            };
+
+            imports.env.AddCollisionTriangle = (surfaceId, v0, v1, v2) => {
+                return 0; // Return triangle index
+            };
+        }
+    };
+}
+
+// Export to window for browser
+if (typeof window !== 'undefined') {
+    window.Blitz3DMesh = Blitz3DMesh;
+    window.Blitz3DSurface = Blitz3DSurface;
+    window.Blitz3DWasmSurface = Blitz3DWasmSurface;
+}
+
+module.exports = Blitz3DMesh;

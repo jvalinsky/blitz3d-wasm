@@ -65,6 +65,27 @@ cd Tests/IntegrationTests && node run_tests.js
 - **Branch naming**: `feature/description` or `fix/issue-number`
 - **Reviews**: Require 1 approval before merge
 
+## Documentation & Research
+
+Refer to these documents for technical research and architectural decisions:
+
+- **Stack Balancing**: [COMPILER_STACK_BALANCING.md](file:///Users/jack/Software/scp_port/docs/COMPILER_STACK_BALANCING.md) - Architectural overview of WASM stack management.
+- **Runtime Support**: [BLITZ3D_RUNTIME_GAPS.md](file:///Users/jack/Software/scp_port/docs/BLITZ3D_RUNTIME_GAPS.md) - Analysis of missing Blitz3D commands.
+- **Codebase Overview**: [CODEBASE_OVERVIEW.md](file:///Users/jack/Software/scp_port/docs/CODEBASE_OVERVIEW.md) - Hub for project script analysis.
+- **Particle System**: [DEVIL_PARTICLE_SYSTEM.md](file:///Users/jack/Software/scp_port/docs/DEVIL_PARTICLE_SYSTEM.md) - Technical analysis of the Devil Particle System.
+- **Module Analysis**: [scpcb-module-analysis.md](file:///Users/jack/Software/scp_port/docs/scpcb-module-analysis.md) - Breakdown of SCP:CB source files.
+
+### Major Script Analyses
+- **[UpdateEvents.bb](file:///Users/jack/Software/scp_port/docs/SCRIPT_UPDATE_EVENTS.md)** - Scripted sequences and game triggers.
+- **[NPCs.bb](file:///Users/jack/Software/scp_port/docs/SCRIPT_NPCS.md)** - Artificial Intelligence and entity management.
+- **[MapSystem.bb](file:///Users/jack/Software/scp_port/docs/SCRIPT_MAP_SYSTEM.md)** - World generation and RMESH parsing.
+- **Implementation Roadmap**: [implementation-roadmap.md](file:///Users/jack/Software/scp_port/docs/implementation-roadmap.md)
+- **Modding Research**: [scpcb_modding_research.md](file:///Users/jack/Software/scp_port/docs/scpcb_modding_research.md)
+- **Specifications**: 
+    - [spec_custom_dlls.md](file:///Users/jack/Software/scp_port/docs/spec_custom_dlls.md)
+    - [spec_memory_banks.md](file:///Users/jack/Software/scp_port/docs/spec_memory_banks.md)
+    - [spec_system_calls.md](file:///Users/jack/Software/scp_port/docs/spec_system_calls.md)
+
 ## Key Development Notes
 
 - The compiler processes: `Lexer → Parser → AST → CodeGen → WASM`

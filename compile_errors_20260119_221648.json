@@ -1,0 +1,27 @@
+{
+  "test_run": {
+    "timestamp": "2026-01-19T22:17:05-05:00",
+    "compiler": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/blitz3d-wasm",
+    "validator": "/opt/homebrew/bin/wasm-validate",
+    "source_directory": "/Users/jack/Software/scp_port/scpcb"
+  },
+  "summary": {
+    "total_files": 37,
+    "passed": 18,
+    "failed": 19,
+    "compile_errors": 5,
+    "validation_errors": 14
+  },
+  "error_categories": {
+    "TYPE_MISMATCH": 0,
+    "MISSING_RETURN": 0,
+    "LOCAL_VAR_RANGE": 0,
+    "GLOBAL_VAR_RANGE": 0,
+    "STACK_UNBALANCED": 0,
+    "INVALID_OPCODE": 0,
+    "TYPE_CONVERSION": 708,
+    "FUNCTION_SIGNATURE": 0,
+    "UNKNOWN_ERROR": 1
+  },
+  "failed_files": ["UpdateEvents.bb","Map Creator/mapcreator_new.bb","Map Creator/window3d.bb","LightMapPNG.bb","Save.bb","Update.bb","DevilParticleSystem.bb","RMesh_Model_Viewer.bb","Converter.bb","StrictLoads.bb","MapSystem.bb","MusicPlayer.bb","AAText.bb","Particles.bb","Menu.bb","NPCs.bb","Items.bb","Main.bb","Achievements.bb"]
+}

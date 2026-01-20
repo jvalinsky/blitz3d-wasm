@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Module Test</title>
+</head>
+<body>
+    <h1>Module Loading Test</h1>
+    <div id="output"></div>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <!-- Browser compat -->
+    <script src="Sources/Runtime/browser_compat.js?v=3"></script>
+    
+    <!-- Modules in order (with cache busting) -->
+    <script src="Sources/Runtime/modules/core.js?v=3"></script>
+    <script src="Sources/Runtime/modules/graphics.js?v=3"></script>
+    <script src="Sources/Runtime/modules/mesh.js?v=3"></script>
+    <script src="Sources/Runtime/modules/physics.js?v=3"></script>
+    <script src="Sources/Runtime/modules/input.js?v=3"></script>
+    <script src="Sources/Runtime/modules/audio.js?v=3"></script>
+    <script src="Sources/Runtime/modules/vfs_zip.js?v=3"></script>
+    <script src="Sources/Runtime/modules/runtime.js?v=3"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg) {
+            output.innerHTML += msg + '<br>';
+            console.log(msg);
+        }
+        
+        window.addEventListener('load', () => {
+            log('=== Module Loading Test ===');
+            log('');
+            log('Checking window globals:');
+            log('THREE: ' + (typeof THREE !== 'undefined' ? '✓' : '✗'));
+            log('JSZip: ' + (typeof JSZip !== 'undefined' ? '✓' : '✗'));
+            log('');
+            log('Blitz3DCore: ' + (typeof window.Blitz3DCore !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3DGraphics: ' + (typeof window.Blitz3DGraphics !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3DMesh: ' + (typeof window.Blitz3DMesh !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3DPhysics: ' + (typeof window.Blitz3DPhysics !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3DInput: ' + (typeof window.Blitz3DInput !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3DAudio: ' + (typeof window.Blitz3DAudio !== 'undefined' ? '✓' : '✗'));
+            log('VirtualFileSystem: ' + (typeof window.VirtualFileSystem !== 'undefined' ? '✓' : '✗'));
+            log('Blitz3D: ' + (typeof window.Blitz3D !== 'undefined' ? '✓' : '✗'));
+            log('');
+            
+            if (typeof window.Blitz3D !== 'undefined') {
+                log('Blitz3D properties:');
+                for (const key in Blitz3D) {
+                    log('  ' + key + ': ' + typeof Blitz3D[key]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

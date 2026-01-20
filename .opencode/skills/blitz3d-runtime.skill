@@ -1,0 +1,25 @@
+{
+  "name": "blitz3d-runtime",
+  "description": "Guidelines for implementing Blitz3D runtime in JavaScript/TypeScript for browser execution. Covers graphics (Three.js), audio (Web Audio API), file I/O, and game loop patterns.",
+  "contextPatterns": [
+    "Sources/Runtime/modules/*.js",
+    "Three.js integration",
+    "Web Audio API usage",
+    "WASM import functions"
+  ],
+  "workflow": "1. Create core module with memory access\n2. Implement graphics with Three.js\n3. Add audio with Web Audio API\n4. Build file I/O virtual file system\n5. Connect WASM imports to JS functions\n6. Implement game loop with requestAnimationFrame",
+  "keyConcepts": [
+    "WASM memory views (DataView, TypedArrays)",
+    "Three.js scene graph and materials",
+    "Web Audio context and nodes",
+    "Virtual file system for assets",
+    "Coordinate system conversion (left/right-handed)"
+  ],
+  "commonIssues": [
+    "Coordinate system mismatch (Blitz3D is left-handed, Three.js is right-handed)",
+    "Texture UV coordinate orientation",
+    "Audio context auto-play policies",
+    "Memory allocation between WASM and JS"
+  ],
+  "tools": ["Three.js docs", "Web Audio API docs", "wabt tools"]
+}

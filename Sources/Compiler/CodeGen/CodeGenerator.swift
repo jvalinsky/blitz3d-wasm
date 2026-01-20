@@ -34,7 +34,10 @@ public struct CodeGenerator {
     
     public mutating func generate(from program: ProgramNode) -> WASMModule {
         context.module.memories = [WASMMemory(initial: 256, maximum: 512)]
-        
+
+        // Export memory so JavaScript can access strings
+        context.module.exports.append(WASMExport(name: "memory", kind: .memory, index: 0))
+
         dataGenerator.setup()
         
         addImports()
@@ -43,8 +46,10 @@ public struct CodeGenerator {
         setupUserTypeGlobals(program.types)
         processGlobalDeclarations(program.statements)
         
-        // Pre-pass: Register all function signatures
-        registerFunctionSignatures(program.functions)
+        let topLevelStatements = extractTopLevelStatements(program.statements)
+        
+        // Pre-pass: Register all function signatures and indices
+        registerFunctionSignatures(program.functions, hasMain: !topLevelStatements.isEmpty)
         
         dataGenerator.collectDataStatements(program.statements)
         for function in program.functions {
@@ -52,7 +57,6 @@ public struct CodeGenerator {
         }
         dataGenerator.serializeDataSection()
         
-        let topLevelStatements = extractTopLevelStatements(program.statements)
         generateMainFunction(topLevelStatements)
         
         addAllocFunction()
@@ -84,6 +88,12 @@ public struct CodeGenerator {
             ("Oval", "Oval", [.i32, .i32, .i32, .i32, .i32], [], "env"),
             ("Line", "Line", [.i32, .i32, .i32, .i32], [], "env"),
             ("Text", "Text", [.i32, .i32, .i32, .i32, .i32], [], "env"),
+            
+            // Font Functions
+            ("LoadFont", "LoadFont", [.i32, .i32, .i32, .i32, .i32], [.i32], "env"),
+            ("SetFont", "SetFont", [.i32], [], "env"),
+            ("FreeFont", "FreeFont", [.i32], [], "env"),
+            
             ("LoadImage", "LoadImage", [.i32], [.i32], "env"),
             ("DrawImage", "DrawImage", [.i32, .i32, .i32, .i32], [], "env"),
             ("DrawBlock", "DrawBlock", [.i32, .i32, .i32, .i32], [], "env"),
@@ -168,6 +178,26 @@ public struct CodeGenerator {
             ("MoveEntity", "MoveEntity", [.i32, .f32, .f32, .f32], [], "env"),
             ("TurnEntity", "TurnEntity", [.i32, .f32, .f32, .f32, .i32], [], "env"),
             ("EntityTexture", "EntityTexture", [.i32, .i32, .i32, .i32], [], "env"),
+            
+            // Entity Creation & Management
+            ("CreatePivot", "CreatePivot", [.i32], [.i32], "env"),
+            ("FreeEntity", "FreeEntity", [.i32], [], "env"),
+            
+            // Entity Property Getters
+            ("EntityX", "EntityX", [.i32, .i32], [.f32], "env"),
+            ("EntityY", "EntityY", [.i32, .i32], [.f32], "env"),
+            ("EntityZ", "EntityZ", [.i32, .i32], [.f32], "env"),
+            ("EntityPitch", "EntityPitch", [.i32, .i32], [.f32], "env"),
+            ("EntityYaw", "EntityYaw", [.i32, .i32], [.f32], "env"),
+            ("EntityRoll", "EntityRoll", [.i32, .i32], [.f32], "env"),
+            ("EntityDistance", "EntityDistance", [.i32, .i32], [.f32], "env"),
+            
+            // Entity Hierarchy
+            ("CountChildren", "CountChildren", [.i32], [.i32], "env"),
+            ("GetChild", "GetChild", [.i32, .i32], [.i32], "env"),
+            ("FindChild", "FindChild", [.i32, .i32], [.i32], "env"),
+            ("GetParent", "GetParent", [.i32], [.i32], "env"),
+            
             ("RenderWorld", "RenderWorld", [.f32], [], "env"),
             ("Flip", "Flip", [.i32], [], "env"),
             ("LoadTexture", "LoadTexture", [.i32, .i32], [.i32], "env"),
@@ -194,39 +224,17 @@ public struct CodeGenerator {
             ("AnimSeq", "AnimSeq", [.i32], [.i32], "env"),
             ("Animating", "Animating", [.i32], [.i32], "env"),
             ("Delay", "Delay", [.i32], [], "env"),
-            ("WaitKey", "WaitKey", [], [.i32], "env"),
-            ("CreatePivot", "CreatePivot", [.i32], [.i32], "env"),
-            ("FreeEntity", "FreeEntity", [.i32], [], "env"),
-            ("CopyEntity", "CopyEntity", [.i32, .i32], [.i32], "env"),
-            ("EntityX", "EntityX", [.i32, .i32], [.f32], "env"),
-            ("EntityY", "EntityY", [.i32, .i32], [.f32], "env"),
-            ("EntityZ", "EntityZ", [.i32, .i32], [.f32], "env"),
-            ("EntityPitch", "EntityPitch", [.i32, .i32], [.f32], "env"),
-            ("EntityYaw", "EntityYaw", [.i32, .i32], [.f32], "env"),
-            ("EntityRoll", "EntityRoll", [.i32, .i32], [.f32], "env"),
-            ("EntityDistance", "EntityDistance", [.i32, .i32], [.f32], "env"),
-            ("EntityPick", "EntityPick", [.i32, .f32], [.i32], "env"),
-            ("LinePick", "LinePick", [.f32, .f32, .f32, .f32, .f32, .f32, .f32], [.i32], "env"),
-            ("EntityVisible", "EntityVisible", [.i32, .i32], [.i32], "env"),
-            ("EntityInView", "EntityInView", [.i32, .i32], [.i32], "env"),
-            ("EntityType", "EntityType", [.i32, .i32, .i32], [], "env"),
-            ("PointEntity", "PointEntity", [.i32, .i32, .f32], [], "env"),
-            ("EntityAlpha", "EntityAlpha", [.i32, .f32], [], "env"),
-            ("EntityColor", "EntityColor", [.i32, .f32, .f32, .f32], [], "env"),
-            ("EntityFX", "EntityFX", [.i32, .i32], [], "env"),
-            ("EntityBlend", "EntityBlend", [.i32, .i32], [], "env"),
-            ("NameEntity", "NameEntity", [.i32, .i32], [], "env"),
-            ("EntityName", "EntityName", [.i32], [.i32], "env"),
-            ("EntityParent", "EntityParent", [.i32, .i32, .i32], [], "env"),
-            ("GetParent", "GetParent", [.i32], [.i32], "env"),
-            ("EntityClass", "EntityClass", [.i32], [.i32], "env"),
-            ("EntityOrder", "EntityOrder", [.i32, .i32], [], "env"),
-            ("EntityAutoFade", "EntityAutoFade", [.i32, .f32, .f32], [], "env"),
-            ("HideEntity", "HideEntity", [.i32], [], "env"),
-            ("ShowEntity", "ShowEntity", [.i32], [], "env"),
-            ("EntityRadius", "EntityRadius", [.i32, .f32, .f32], [], "env"),
+            
+            // Collision System
             ("Collisions", "Collisions", [.i32, .i32, .i32, .i32], [], "env"),
+            ("ClearCollisions", "ClearCollisions", [], [], "env"),
+            ("EntityType", "EntityType", [.i32, .i32, .i32], [], "env"),
+            ("EntityRadius", "EntityRadius", [.i32, .f32, .f32], [], "env"),
+            ("EntityBox", "EntityBox", [.i32, .f32, .f32, .f32, .f32, .f32, .f32], [], "env"),
+            ("ResetEntity", "ResetEntity", [.i32], [], "env"),
             ("UpdateWorld", "UpdateWorld", [.f32], [], "env"),
+            
+            // Collision Queries
             ("CountCollisions", "CountCollisions", [.i32], [.i32], "env"),
             ("CollisionX", "CollisionX", [.i32, .i32], [.f32], "env"),
             ("CollisionY", "CollisionY", [.i32, .i32], [.f32], "env"),
@@ -237,13 +245,39 @@ public struct CodeGenerator {
             ("CollisionEntity", "CollisionEntity", [.i32, .i32], [.i32], "env"),
             ("CollisionSurface", "CollisionSurface", [.i32, .i32], [.i32], "env"),
             ("CollisionTriangle", "CollisionTriangle", [.i32, .i32], [.i32], "env"),
+            ("CollisionTime", "CollisionTime", [.i32, .i32], [.f32], "env"),
+            
+            // Custom Math Stubs (for compilation only)
+            ("WrapAngle", "WrapAngle", [.f32], [.f32], "env"),
+            ("CurveValue", "CurveValue", [.f32, .f32, .f32], [.f32], "env"),
+            ("Distance", "Distance", [.f32, .f32, .f32, .f32, .f32, .f32], [.f32], "env"),
+            ("Point_Direction", "Point_Direction", [.f32, .f32, .f32, .f32], [.f32], "env"),
+
+            
+            // System
+            ("DebugLog", "printstring", [.i32], [], "env"),
+            ("MilliSecs", "millisecs", [], [.i32], "env"),
+            ("Print", "printstring", [.i32], [], "env"),
+            ("KeyDown", "keydown", [.i32], [.i32], "env"),
+            ("KeyHit", "keyhit", [.i32], [.i32], "env"),
+            ("TFormVector", "tformvector", [.f32, .f32, .f32, .i32, .i32], [], "env"),
+            ("TFormedX", "tformedx", [], [.f32], "env"),
+            ("TFormedY", "tformedy", [], [.f32], "env"),
+            ("TFormedZ", "tformedz", [], [.f32], "env"),
             ("ReadFile", "ReadFile", [.i32], [.i32], "env"),
             ("WriteFile", "WriteFile", [.i32], [.i32], "env"),
+            ("OpenFile", "OpenFile", [.i32], [.i32], "env"),
             ("CloseFile", "CloseFile", [.i32], [], "env"),
             ("ReadInt", "ReadInt", [.i32], [.i32], "env"),
             ("ReadFloat", "ReadFloat", [.i32], [.f32], "env"),
             ("ReadString", "ReadString", [.i32], [.i32], "env"),
+            ("ReadLine", "ReadLine", [.i32], [.i32], "env"),
             ("ReadByte", "ReadByte", [.i32], [.i32], "env"),
+            ("Eof", "Eof", [.i32], [.i32], "env"),
+            ("FilePos", "FilePos", [.i32], [.i32], "env"),
+            ("SeekFile", "SeekFile", [.i32, .i32], [], "env"),
+            ("FileSize", "FileSize", [.i32], [.i32], "env"),
+            ("FileType", "FileType", [.i32], [.i32], "env"),
             ("ReadShort", "ReadShort", [.i32], [.i32], "env"),
             ("WriteInt", "WriteInt", [.i32, .i32], [], "env"),
             ("WriteFloat", "WriteFloat", [.i32, .f32], [], "env"),
@@ -289,6 +323,13 @@ public struct CodeGenerator {
             ("GetSurfaceIndexCount", "GetSurfaceIndexCount", [.i32, .i32], [.i32], "blitz3d"),
             ("GetSurfaceVerticesPtr", "GetSurfaceVerticesPtr", [.i32, .i32], [.i32], "blitz3d"),
             ("GetSurfaceIndicesPtr", "GetSurfaceIndicesPtr", [.i32, .i32], [.i32], "blitz3d"),
+            ("AddVertexExtended", "AddVertexExtended", [.i32, .f32, .f32, .f32, .f32, .f32, .f32, .f32, .i32, .i32, .i32], [.i32], "env"),
+            ("SetSurfaceTexture", "SetSurfaceTexture", [.i32, .i32, .i32], [], "env"),
+            ("SetSurfaceLightmap", "SetSurfaceLightmap", [.i32, .i32], [], "env"),
+            ("AddCollisionVertex", "AddCollisionVertex", [.f32, .f32, .f32], [], "env"),
+            ("AddCollisionTriangle", "AddCollisionTriangle", [.i32, .i32, .i32], [], "env"),
+            ("AddEntity", "AddEntity", [.i32, .f32, .f32, .f32], [], "env"),
+            ("StringEqual", "StringEqual", [.i32, .i32], [.i32], "env"),
             ("ZlibWapi_Open", "ZlibWapi_Open", [.i32], [.i32], "env"),
             ("ZlibWapi_Close", "ZlibWapi_Close", [.i32], [], "env"),
             ("ZlibWapi_GetFileCount", "ZlibWapi_GetFileCount", [.i32], [.i32], "env"),
@@ -386,7 +427,23 @@ public struct CodeGenerator {
             ("Sqr", "Sqr", [.f32], [.f32], "env"),
             ("Rnd", "Rnd", [.f32, .f32], [.f32], "env"),
             ("Rand", "Rand", [.i32, .i32], [.i32], "env"),
-            ("SeedRnd", "SeedRnd", [.i32], [], "env")
+            ("SeedRnd", "SeedRnd", [.i32], [], "env"),
+            
+            ("Min", "Min", [.f32, .f32], [.f32], "env"),
+            ("Max", "Max", [.f32, .f32], [.f32], "env"),
+            ("Abs", "Abs", [.f32], [.f32], "env"),
+            ("Sgn", "Sgn", [.f32], [.f32], "env"),
+            ("Ceil", "Ceil", [.f32], [.f32], "env"),
+            ("Floor", "Floor", [.f32], [.f32], "env"),
+            ("Mod", "Mod", [.f32, .f32], [.f32], "env"),
+            
+            // Transformation Functions
+            ("TFormVector", "TFormVector", [.f32, .f32, .f32, .i32, .i32], [], "env"),
+            ("TFormPoint", "TFormPoint", [.f32, .f32, .f32, .i32, .i32], [], "env"),
+            ("TFormNormal", "TFormNormal", [.f32, .f32, .f32, .i32, .i32], [], "env"),
+            ("TFormedX", "TFormedX", [], [.f32], "env"),
+            ("TFormedY", "TFormedY", [], [.f32], "env"),
+            ("TFormedZ", "TFormedZ", [], [.f32], "env")
         ]
         
         for (name, internalName, params, results, moduleName) in imports {
@@ -407,7 +464,9 @@ public struct CodeGenerator {
             
             let lowerInternalName = internalName.lowercased()
             context.functionIndexMap[lowerInternalName] = importIdx
-            context.functionDefinitions[lowerInternalName] = FunctionDefinition(params: params, results: results)
+            let def = FunctionDefinition(params: params, results: results)
+            context.functionDefinitions[lowerInternalName] = def
+            context.functionDefinitionsByIndex[importIdx] = def
             
             if name == "CreateCamera" {
                 print("DEBUG_COMPILER: Registered CreateCamera. Index: \(importIdx) Internal: \(lowerInternalName)")
@@ -418,6 +477,15 @@ public struct CodeGenerator {
                 context.functionDefinitions["print"] = FunctionDefinition(params: params, results: results)
             }
         }
+
+        // Validation: Ensure all imported functions are in BOTH maps
+        #if DEBUG
+        for (name, _) in context.functionIndexMap {
+            if context.functionDefinitions[name] == nil {
+                print("WARNING: Function '\(name)' in functionIndexMap but missing from functionDefinitions")
+            }
+        }
+        #endif
     }
     
     private func evaluateIntExpression(_ expr: ExpressionNode) -> Int? {
@@ -535,6 +603,8 @@ public struct CodeGenerator {
         // Scratch globals for temporary values (always needed, not just for types)
         context.scratchGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
         context.scratchGlobal2Idx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+        context.scratchGlobalFloatIdx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
+        context.scratchGlobalFloat2Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
         
         scratchGlobal = context.scratchGlobalIdx
         scratchGlobal2 = context.scratchGlobal2Idx
@@ -543,37 +613,58 @@ public struct CodeGenerator {
             let typeCollectionGlobalVar = WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(65536))
             context.typeCollectionGlobalIdx = context.module.globals.count
             context.module.globals.append(typeCollectionGlobalVar)
-            
-            context.scratchGlobalIdx = context.module.globals.count
-            context.module.globals.append(WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(0)))
-            context.scratchGlobal2Idx = context.module.globals.count
-            context.module.globals.append(WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(0)))
-            
-            scratchGlobal = context.scratchGlobalIdx
-            scratchGlobal2 = context.scratchGlobal2Idx
         }
     }
     
-    private mutating func registerFunctionSignatures(_ functions: [FunctionNode]) {
+    private mutating func registerFunctionSignatures(_ functions: [FunctionNode], hasMain: Bool) {
         let typeHandling = TypeHandling()
+        
+        // Pre-calculate function indices
+        // Local functions start after imports + Main (optional) + Alloc functions
+        var nextFuncIdx = context.module.imports.count 
+        
+        if hasMain {
+            nextFuncIdx += 1
+        }
+        
+        // Reserve slots for Alloc functions (__alloc, __stringalloc, __stringconcat)
+        nextFuncIdx += 3 
+        
         for function in functions {
             let paramTypes = function.parameters.map { 
                 typeHandling.wasmType(from: $0.type?.rawValue ?? "Int")
             }
             let returnType = typeHandling.wasmType(from: function.returnType?.rawValue ?? "Int")
             let lowerName = function.name.lowercased()
-            
+
             let results: [WASMType] = (returnType == .void) ? [] : [returnType]
-            context.functionDefinitions[lowerName] = FunctionDefinition(params: paramTypes, results: results)
+            let def = FunctionDefinition(params: paramTypes, results: results)
+            
+            // Don't overwrite existing definitions (e.g., from imports)
+            if context.functionDefinitions[lowerName] == nil {
+                context.functionDefinitions[lowerName] = def
+            }
             
             // Also register the type signature in the module
             let resStr = results.map { $0.rawValue }.joined(separator: ", ")
             let sig = "(" + paramTypes.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
+            
             if context.typeIndexMap[sig] == nil {
                 let typeIdx = context.module.types.count
                 context.module.types.append(WASMFunctionType(parameters: paramTypes, results: results))
                 context.typeIndexMap[sig] = typeIdx
             }
+            
+            // Register function index if not already present (imports)
+            let funcIdx = context.functionIndexMap[lowerName] ?? nextFuncIdx
+            if context.functionIndexMap[lowerName] == nil {
+                context.functionIndexMap[lowerName] = nextFuncIdx
+            }
+            context.functionDefinitionsByIndex[funcIdx] = def
+            
+            // Always increment nextFuncIdx because this function WILL be generated in the module code section,
+            // consuming a function index slot, regardless of whether it shadows an import or not.
+            nextFuncIdx += 1
         }
     }
     
@@ -583,11 +674,9 @@ public struct CodeGenerator {
             if case .global(let decl) = statement {
                 for variable in decl.variables {
                     let wasmType = typeHandling.typeInfo(from: variable.typeSuffix).wasmType
-                    let global = WASMGlobal(type: wasmType, mutability: true, initExpr: .i32Const(0))
-                    let globalIdx = context.module.globals.count
-                    context.module.globals.append(global)
-                    _ = context.variableManagement.registerGlobal(variable.name, type: wasmType, typeName: variable.typeName)
-                    context.module.exports.append(WASMExport(name: variable.name, kind: .global, index: globalIdx))
+                    let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
+                    _ = context.variableManagement.registerGlobalWithIndex(variable.name, type: wasmType, typeName: variable.typeName, wasmIndex: actualGlobalIdx)
+                    context.module.exports.append(WASMExport(name: variable.name, kind: .global, index: actualGlobalIdx))
                 }
             }
         }

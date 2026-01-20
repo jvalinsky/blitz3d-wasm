@@ -1,0 +1,27 @@
+{
+  "name": "wasm-performance",
+  "description": "Guidelines for optimizing WebAssembly game performance. Covers memory usage, rendering optimization, audio latency, and profiling techniques.",
+  "contextPatterns": [
+    "Performance monitoring code",
+    "Memory allocation tracking",
+    "Rendering optimization",
+    "Frame rate monitoring"
+  ],
+  "workflow": "1. Measure baseline performance (FPS, frame time)\n2. Profile memory usage\n3. Identify bottlenecks (rendering, audio, logic)\n4. Apply optimizations\n5. Verify improvements\n6. Test across browsers",
+  "keyConcepts": [
+    "WASM memory page size (64KB)",
+    "Garbage collection in JS runtime",
+    "Draw call batching",
+    "Texture atlasing",
+    "Audio buffer sizes",
+    "Budget: 16ms per frame (60 FPS)"
+  ],
+  "commonIssues": [
+    "Too many draw calls",
+    "Large textures not compressed",
+    "Audio buffer underruns",
+    "Memory leaks in runtime",
+    "Unoptimized geometry"
+  ],
+  "tools": ["Chrome DevTools Performance", "Memory profiler", "FPS counters", "wabt size"]
+}

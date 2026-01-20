@@ -3,12 +3,18 @@
  * Provides WebGL, Web Audio, and other browser APIs to the WASM module
  */
 
-// Import modules if available, otherwise use global
-const Blitz3DCore = window.Blitz3DCore || require('./core');
-const Blitz3DGraphics = window.Blitz3DGraphics || require('./graphics');
-const Blitz3DMesh = window.Blitz3DMesh || require('./mesh');
-const Blitz3DPhysics = window.Blitz3DPhysics || require('./physics');
-const Blitz3DInput = window.Blitz3DInput || require('./input');
+// Import modules - just reference the window globals directly
+// No need to redeclare since they're already in global scope from previous script tags
+console.log('[runtime.js] Checking module references...');
+console.log('[runtime.js] Module references available:', {
+    Blitz3DCore: typeof window.Blitz3DCore !== 'undefined',
+    Blitz3DGraphics: typeof window.Blitz3DGraphics !== 'undefined',
+    Blitz3DMesh: typeof window.Blitz3DMesh !== 'undefined',
+    Blitz3DPhysics: typeof window.Blitz3DPhysics !== 'undefined',
+    Blitz3DInput: typeof window.Blitz3DInput !== 'undefined',
+    Blitz3DAudio: typeof window.Blitz3DAudio !== 'undefined',
+    VirtualFileSystem: typeof window.VirtualFileSystem !== 'undefined'
+});
 
 const Blitz3D = {
     // Core components
@@ -17,6 +23,8 @@ const Blitz3D = {
     mesh: null,
     physics: null,
     input: null,
+    audio: null,
+    vfs: null,
 
     // Asset management
     assets: {},
@@ -76,22 +84,28 @@ const Blitz3D = {
 
     init: function (canvasId) {
         // Initialize core
-        this.core = new Blitz3DCore();
+        this.core = new window.Blitz3DCore();
         this.core.init(canvasId);
 
         // Initialize graphics
-        this.graphics = new Blitz3DGraphics(this.core);
+        this.graphics = new window.Blitz3DGraphics(this.core);
         this.graphics.init3D();
 
         // Initialize mesh module
-        this.mesh = new Blitz3DMesh(this.graphics);
+        this.mesh = new window.Blitz3DMesh(this.graphics);
 
         // Initialize physics
-        this.physics = new Blitz3DPhysics(this.core, this.graphics);
+        this.physics = new window.Blitz3DPhysics(this.core, this.graphics);
 
         // Initialize input
-        this.input = new Blitz3DInput(this.core, this.graphics);
+        this.input = new window.Blitz3DInput(this.core, this.graphics);
         this.input.setupEventListeners();
+
+        // Initialize audio
+        this.audio = new window.Blitz3DAudio(this.core);
+
+        // Initialize virtual file system
+        this.vfs = new window.VirtualFileSystem(this.core);
 
         // Expose input test globally
         window.testBlitz3DInput = () => this.input.testInput();
@@ -102,6 +116,15 @@ const Blitz3D = {
         this.mesh.setupImports(this.imports);
         this.physics.setupImports(this.imports);
         this.input.setupImports(this.imports);
+        this.audio.setupImports(this.imports);
+        this.vfs.setupImports(this.imports);
+
+        // Debug: check imports
+        console.log('[runtime] Imports configured:', {
+            envFunctions: Object.keys(this.imports.env).length,
+            alFunctions: Object.keys(this.imports.al).length,
+            hasPrintInt: typeof this.imports.env.PrintInt === 'function'
+        });
 
         console.log("Blitz3D Runtime Initialized (Modular)");
     },
@@ -128,7 +151,168 @@ const Blitz3D = {
     // Import object for WASM
     imports: {
         env: {},
-        blitz3d: {}
+        blitz3d: {
+            // Bank (byte array) functions
+            CreateBank: (size) => {
+                const bank = new Uint8Array(size);
+                const id = this.nextBankId || 1;
+                this.nextBankId = id + 1;
+                this.banks = this.banks || {};
+                this.banks[id] = bank;
+                return id;
+            },
+            FreeBank: (bankId) => {
+                delete this.banks[bankId];
+            },
+            BankSize: (bankId) => {
+                return this.banks[bankId]?.length || 0;
+            },
+            ResizeBank: (bankId, size) => {
+                const oldBank = this.banks[bankId];
+                if (oldBank) {
+                    const newBank = new Uint8Array(size);
+                    newBank.set(oldBank.slice(0, Math.min(oldBank.length, size)));
+                    this.banks[bankId] = newBank;
+                }
+            },
+            PeekByte: (bankId, offset) => {
+                return this.banks[bankId]?.[offset] || 0;
+            },
+            PokeByte: (bankId, offset, value) => {
+                if (this.banks[bankId]) {
+                    this.banks[bankId][offset] = value & 0xFF;
+                }
+            },
+            PeekInt: (bankId, offset) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    return bank[offset] | (bank[offset+1] << 8) | (bank[offset+2] << 16) | (bank[offset+3] << 24);
+                }
+                return 0;
+            },
+            PokeInt: (bankId, offset, value) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    bank[offset] = value & 0xFF;
+                    bank[offset+1] = (value >> 8) & 0xFF;
+                    bank[offset+2] = (value >> 16) & 0xFF;
+                    bank[offset+3] = (value >> 24) & 0xFF;
+                }
+            },
+            PeekFloat: (bankId, offset) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    const view = new DataView(bank.buffer, bank.byteOffset);
+                    return view.getFloat32(offset, true); // little-endian
+                }
+                return 0.0;
+            },
+            PokeFloat: (bankId, offset, value) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    const view = new DataView(bank.buffer, bank.byteOffset);
+                    view.setFloat32(offset, value, true); // little-endian
+                }
+            },
+            PeekShort: (bankId, offset) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    return bank[offset] | (bank[offset+1] << 8);
+                }
+                return 0;
+            },
+            PokeShort: (bankId, offset, value) => {
+                const bank = this.banks[bankId];
+                if (bank) {
+                    bank[offset] = value & 0xFF;
+                    bank[offset+1] = (value >> 8) & 0xFF;
+                }
+            },
+            
+            // Mesh parsing functions (stubs for now)
+            ParseB3D: (bankId) => {
+                console.log("ParseB3D: bankId=" + bankId);
+                return 0; // Return mesh ID
+            },
+            ParseRMesh: (bankId) => {
+                console.log("ParseRMesh: bankId=" + bankId);
+                return 0; // Return mesh ID
+            },
+            
+            // Mesh query functions
+            GetMeshSurfaceCount: (meshId) => {
+                return 0; // Number of surfaces
+            },
+            GetSurfaceVertexCount: (surfaceId) => {
+                return 0; // Number of vertices
+            },
+            GetSurfaceVerticesPtr: (surfaceId) => {
+                return 0; // Pointer to vertex data
+            },
+            GetSurfaceIndexCount: (surfaceId) => {
+                return 0; // Number of indices
+            },
+            GetSurfaceIndicesPtr: (surfaceId) => {
+                return 0; // Pointer to index data
+            }
+        },
+        al: {
+            // OpenAL (custom wrapper) stubs
+            alInit: () => { console.log("OpenAL initialized"); return 1; },
+            alDeviceInit: () => 1,
+            alDestroy: () => {},
+            alUpdate: () => {},
+            alGetNumSources: () => 0,
+            alGetAvailableDeviceCount: () => 1,
+            alGetAvailableDeviceName: () => 0,
+            
+            // Buffer management
+            alCreateBuffer: () => 1,
+            alFreeBuffer: () => {},
+            
+            // Source management  
+            alCreateSource: () => 1,
+            alCreateSource_: () => 1,
+            alFreeSource: () => {},
+            
+            // Source playback
+            alSourcePlay: () => {},
+            alSourcePlay_: () => {},
+            alSourcePlay2D: () => {},
+            alSourcePlay2D_: () => {},
+            alSourcePlay3D: () => {},
+            alSourcePlay3D_: () => {},
+            alSourceStop: () => {},
+            alSourcePause: () => {},
+            alSourceResume: () => {},
+            alSourceSeek: () => {},
+            
+            // Source state queries
+            alSourceIsPlaying: () => 0,
+            alSourceIsPaused: () => 0,
+            alSourceIsStopped: () => 1,
+            alSourceGetAudioTime: () => 0.0,
+            alSourceGetLenght: () => 0.0,
+            
+            // Source properties
+            alSourceSetVolume: () => {},
+            alSourceSetPitch: () => {},
+            alSourceSetLoop: () => {},
+            alSourceSet3DPosition: () => {},
+            alSourceSetRolloffFactor: () => {},
+            
+            // Listener properties
+            alListenerSetPosition: () => {},
+            alListenerSetDirection: () => {},
+            alListenerSetUp: () => {},
+            alListenerSetVelocity: () => {},
+            alListenerSetMasterVolume: () => {},
+            
+            // Effects
+            alCreateEffect: () => 1,
+            alFreeEffect: () => {},
+            alEffectSetEAXReverb: () => {}
+        }
     },
 
     loadEngine: async function() {
@@ -341,6 +525,11 @@ window.Blitz3D = Blitz3D;
 
 // Version for cache busting
 console.log("Blitz3D Runtime v1.0.5 loaded");
+
+// Export to window for browser
+if (typeof window !== 'undefined') {
+    window.Blitz3D = Blitz3D;
+}
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Blitz3D;

@@ -1,0 +1,25 @@
+{
+  "name": "wasm-compiler-development",
+  "description": "Guidelines for developing WebAssembly compilers, particularly for legacy game languages like Blitz3D. Covers lexer/parser architecture, AST design, code generation patterns, and WASM binary format.",
+  "contextPatterns": [
+    "*.swift files in Compiler/",
+    "WASM binary generation",
+    "Lexer/Parser implementation",
+    "AST node definitions"
+  ],
+  "workflow": "1. Design tokens for language syntax\n2. Implement recursive descent parser\n3. Build AST with proper node types\n4. Generate WASM instructions from AST\n5. Handle type system and memory layout\n6. Test with sample programs",
+  "keyConcepts": [
+    "WASM module structure (types, functions, memory, globals)",
+    "Instruction encoding (opcodes, immediate values)",
+    "Stack machine vs register machine code gen",
+    "Type inference and validation",
+    "Memory management (heap, stack, globals)"
+  ],
+  "commonIssues": [
+    "Stack discipline violations in code gen",
+    "Incorrect WASM type signatures",
+    "Memory alignment issues",
+    "Handle/Object pointer casting"
+  ],
+  "tools": ["swift build", "swift test", "wasm2wat", "wabt"]
+}

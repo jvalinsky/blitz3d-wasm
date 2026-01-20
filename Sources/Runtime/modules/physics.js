@@ -21,6 +21,38 @@ class Blitz3DPhysics {
     }
 
     setupImports(imports) {
+        // Entity collision bounds
+        imports.env.EntityBox = (entityId, x, y, z, width, height, depth) => {
+            console.log(`EntityBox: entity=${entityId} pos=(${x},${y},${z}) size=(${width},${height},${depth})`);
+            // Store collision box for this entity
+        };
+
+        imports.env.EntityRadius = (entityId, xRadius, yRadius) => {
+            console.log(`EntityRadius: entity=${entityId} radius=(${xRadius},${yRadius})`);
+            // Store collision radius for this entity
+        };
+
+        imports.env.EntityType = (entityId, collisionType, recursive) => {
+            console.log(`EntityType: entity=${entityId} type=${collisionType}`);
+            // Store collision type for this entity
+        };
+
+        imports.env.ResetEntity = (entityId) => {
+            console.log(`ResetEntity: entity=${entityId}`);
+            // Reset collision state for entity
+        };
+
+        imports.env.CollisionTime = (entityId, index) => {
+            return 0.0; // Time of collision
+        };
+
+        imports.env.CollisionTriangle = (entityId, index) => {
+            return 0; // Triangle index of collision
+        };
+
+        imports.env.CollisionSurface = (entityId, index) => {
+            return 0; // Surface ID of collision
+        };
         imports.env.Collisions = (srcType, destType, method, response) => {
             this.collisionRules.push({
                 typeA: srcType,
@@ -473,5 +505,7 @@ class Blitz3DPhysics {
     }
 }
 
-window.Blitz3DPhysics = Blitz3DPhysics;
+if (typeof window !== 'undefined') {
+    window.Blitz3DPhysics = Blitz3DPhysics;
+}
 module.exports = Blitz3DPhysics;

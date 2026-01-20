@@ -276,24 +276,182 @@ class Blitz3DGraphics {
         imports.env.Text = (x, y, txtPtr, cx, cy) => {
             const txt = this.core.readString(txtPtr);
             if (this.core.ctx2d) {
-                this.core.ctx2d.fillText(txt, x, y);
+                this.core.ctx2d.font = `${this.currentFontSize}px ${this.currentFont}`;
+                this.core.ctx2d.textBaseline = 'top';
+                
+                // Handle centering
+                let finalX = x;
+                let finalY = y;
+                
+                if (cx) {
+                    const metrics = this.core.ctx2d.measureText(txt);
+                    finalX -= metrics.width / 2;
+                }
+                
+                if (cy) {
+                    finalY -= this.currentFontSize / 2;
+                }
+                
+                this.core.ctx2d.fillText(txt, finalX, finalY);
             }
         };
 
-        // Image Stubs
-        imports.env.LoadImage = (pathPtr) => 0;
-        imports.env.DrawImage = (img, x, y, frame) => { };
-        imports.env.DrawBlock = (img, x, y, frame) => { };
-        imports.env.TileImage = (img, x, y, frame) => { };
-        imports.env.ImageWidth = (img) => 0;
-        imports.env.ImageHeight = (img) => 0;
-        imports.env.HandleImage = (img, x, y) => { };
-        imports.env.MidHandle = (img) => { };
-        imports.env.AutoMidHandle = (img) => { };
-        imports.env.MaskImage = (img, r, g, b) => { };
-        imports.env.ScaleImage = (img, w, h) => { };
-        imports.env.ResizeImage = (img, w, h) => { };
-        imports.env.FreeImage = (img) => { };
+        // Font Functions
+        imports.env.LoadFont = (namePtr, size, bold, italic, underline) => {
+            const fontName = this.core.readString(namePtr);
+            const id = this.nextImageId++;  // Reuse image ID counter for fonts
+            this.images[id] = {
+                type: 'font',
+                name: fontName,
+                size: size || 12,
+                bold: bold || 0,
+                italic: italic || 0,
+                underline: underline || 0
+            };
+            return id;
+        };
+        
+        imports.env.SetFont = (fontId) => {
+            const font = this.images[fontId];
+            if (font && font.type === 'font') {
+                let fontStyle = '';
+                if (font.italic) fontStyle += 'italic ';
+                if (font.bold) fontStyle += 'bold ';
+                
+                this.currentFont = font.name;
+                this.currentFontSize = font.size;
+                
+                if (this.core.ctx2d) {
+                    this.core.ctx2d.font = `${fontStyle}${font.size}px ${font.name}`;
+                }
+            }
+        };
+        
+        imports.env.FreeFont = (fontId) => {
+            if (this.images[fontId]) {
+                delete this.images[fontId];
+            }
+        };
+        
+        // Image Functions
+        imports.env.LoadImage = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            const img = new Image();
+            const id = this.nextImageId++;
+            
+            this.images[id] = {
+                type: 'image',
+                element: img,
+                width: 0,
+                height: 0,
+                loaded: false,
+                handleX: 0,
+                handleY: 0
+            };
+            
+            img.onload = () => {
+                this.images[id].width = img.width;
+                this.images[id].height = img.height;
+                this.images[id].loaded = true;
+            };
+            
+            img.src = path;
+            return id;
+        };
+        
+        imports.env.DrawImage = (imgId, x, y, frame) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image' && img.loaded && this.core.ctx2d) {
+                this.core.ctx2d.drawImage(
+                    img.element, 
+                    x - img.handleX, 
+                    y - img.handleY
+                );
+            }
+        };
+        
+        imports.env.DrawBlock = (imgId, x, y, frame) => {
+            // Same as DrawImage but ignores alpha
+            const img = this.images[imgId];
+            if (img && img.type === 'image' && img.loaded && this.core.ctx2d) {
+                const oldOp = this.core.ctx2d.globalCompositeOperation;
+                this.core.ctx2d.globalCompositeOperation = 'source-over';
+                this.core.ctx2d.drawImage(
+                    img.element, 
+                    x - img.handleX, 
+                    y - img.handleY
+                );
+                this.core.ctx2d.globalCompositeOperation = oldOp;
+            }
+        };
+        
+        imports.env.TileImage = (imgId, x, y, frame) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image' && img.loaded && this.core.ctx2d) {
+                const pattern = this.core.ctx2d.createPattern(img.element, 'repeat');
+                if (pattern) {
+                    this.core.ctx2d.fillStyle = pattern;
+                    this.core.ctx2d.fillRect(x, y, this.core.canvas.width, this.core.canvas.height);
+                }
+            }
+        };
+        
+        imports.env.ImageWidth = (imgId) => {
+            const img = this.images[imgId];
+            return (img && img.type === 'image') ? img.width : 0;
+        };
+        
+        imports.env.ImageHeight = (imgId) => {
+            const img = this.images[imgId];
+            return (img && img.type === 'image') ? img.height : 0;
+        };
+        
+        imports.env.HandleImage = (imgId, x, y) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image') {
+                img.handleX = x;
+                img.handleY = y;
+            }
+        };
+        
+        imports.env.MidHandle = (imgId) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image') {
+                img.handleX = img.width / 2;
+                img.handleY = img.height / 2;
+            }
+        };
+        
+        imports.env.AutoMidHandle = (enabled) => {
+            // Would set a flag to auto-center all images
+            // Not critical for now
+        };
+        
+        imports.env.MaskImage = (imgId, r, g, b) => {
+            // Color masking - complex, stub for now
+        };
+        
+        imports.env.ScaleImage = (imgId, scaleX, scaleY) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image') {
+                img.scaleX = scaleX;
+                img.scaleY = scaleY;
+            }
+        };
+        
+        imports.env.ResizeImage = (imgId, width, height) => {
+            const img = this.images[imgId];
+            if (img && img.type === 'image') {
+                img.width = width;
+                img.height = height;
+            }
+        };
+        
+        imports.env.FreeImage = (imgId) => {
+            if (this.images[imgId]) {
+                delete this.images[imgId];
+            }
+        };
 
         imports.env.CreateCamera = (parent) => {
             console.log("CreateCamera called with parent: " + parent);
@@ -466,14 +624,135 @@ class Blitz3DGraphics {
             }
         };
 
-        // Extended Entity Stubs
-        imports.env.EntityX = (ent, global) => 0.0;
-        imports.env.EntityY = (ent, global) => 0.0;
-        imports.env.EntityZ = (ent, global) => 0.0;
-        imports.env.EntityPitch = (ent, global) => 0.0;
-        imports.env.EntityYaw = (ent, global) => 0.0;
-        imports.env.EntityRoll = (ent, global) => 0.0;
-        imports.env.EntityDistance = (ent1, ent2) => 0.0;
+        // Entity Property Getters
+        imports.env.EntityX = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            if (global) {
+                const worldPos = new THREE.Vector3();
+                entity.getWorldPosition(worldPos);
+                return worldPos.x;
+            }
+            return entity.position.x;
+        };
+        
+        imports.env.EntityY = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            if (global) {
+                const worldPos = new THREE.Vector3();
+                entity.getWorldPosition(worldPos);
+                return worldPos.y;
+            }
+            return entity.position.y;
+        };
+        
+        imports.env.EntityZ = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            // Convert from Three.js coordinate system back to Blitz3D (negate Z)
+            if (global) {
+                const worldPos = new THREE.Vector3();
+                entity.getWorldPosition(worldPos);
+                return -worldPos.z;
+            }
+            return -entity.position.z;
+        };
+        
+        imports.env.EntityPitch = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            if (global) {
+                const worldRot = new THREE.Euler();
+                entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(entity.matrixWorld);
+                worldRot.setFromQuaternion(entity.quaternion);
+                return worldRot.x * 180 / Math.PI;
+            }
+            return entity.rotation.x * 180 / Math.PI;
+        };
+        
+        imports.env.EntityYaw = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            if (global) {
+                const worldRot = new THREE.Euler();
+                entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(entity.matrixWorld);
+                worldRot.setFromQuaternion(entity.quaternion);
+                return worldRot.y * 180 / Math.PI;
+            }
+            return entity.rotation.y * 180 / Math.PI;
+        };
+        
+        imports.env.EntityRoll = (ent, global) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0.0;
+            if (global) {
+                const worldRot = new THREE.Euler();
+                entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(entity.matrixWorld);
+                worldRot.setFromQuaternion(entity.quaternion);
+                return worldRot.z * 180 / Math.PI;
+            }
+            return entity.rotation.z * 180 / Math.PI;
+        };
+        
+        imports.env.EntityDistance = (ent1, ent2) => {
+            const entity1 = this.entities[ent1];
+            const entity2 = this.entities[ent2];
+            if (!entity1 || !entity2) return 0.0;
+            
+            const pos1 = new THREE.Vector3();
+            const pos2 = new THREE.Vector3();
+            entity1.getWorldPosition(pos1);
+            entity2.getWorldPosition(pos2);
+            
+            return pos1.distanceTo(pos2);
+        };
+        
+        // Entity Hierarchy Queries
+        imports.env.CountChildren = (ent) => {
+            const entity = this.entities[ent];
+            return entity ? entity.children.length : 0;
+        };
+        
+        imports.env.GetChild = (ent, index) => {
+            const entity = this.entities[ent];
+            if (!entity || index < 0 || index >= entity.children.length) return 0;
+            
+            const child = entity.children[index];
+            // Find the entity ID for this child
+            for (const [id, obj] of Object.entries(this.entities)) {
+                if (obj === child) return parseInt(id);
+            }
+            return 0;
+        };
+        
+        imports.env.FindChild = (ent, name) => {
+            const entity = this.entities[ent];
+            if (!entity) return 0;
+            
+            // Search through children for matching name
+            for (const child of entity.children) {
+                if (child.name === name) {
+                    // Find the entity ID for this child
+                    for (const [id, obj] of Object.entries(this.entities)) {
+                        if (obj === child) return parseInt(id);
+                    }
+                }
+            }
+            return 0;
+        };
+        
+        imports.env.GetParent = (ent) => {
+            const entity = this.entities[ent];
+            if (!entity || !entity.parent || entity.parent === this.scene) return 0;
+            
+            // Find the entity ID for the parent
+            for (const [id, obj] of Object.entries(this.entities)) {
+                if (obj === entity.parent) return parseInt(id);
+            }
+            return 0;
+        };
+        
         imports.env.EntityVisible = (src, dest) => 0;
         imports.env.EntityInView = (ent, cam) => 0;
         imports.env.CreatePivot = (parent) => this.imports.env.CreateMesh(parent);
@@ -940,6 +1219,150 @@ class Blitz3DGraphics {
             }
         };
 
+        imports.env.BrushTexture = (brushId, textureId, frame, index) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.texture = textureId;
+                brush.textureFrame = frame || 0;
+                brush.textureIndex = index || 0;
+                console.log("BrushTexture: brushId=" + brushId + " textureId=" + textureId);
+            }
+        };
+
+        imports.env.BrushFX = (brushId, fx) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.fx = fx;
+                console.log("BrushFX: brushId=" + brushId + " fx=" + fx);
+            }
+        };
+
+        imports.env.BrushBlend = (brushId, blend) => {
+            const brush = this.brushes[brushId];
+            if (brush) {
+                brush.blend = blend;
+                console.log("BrushBlend: brushId=" + brushId + " blend=" + blend);
+            }
+        };
+
+        imports.env.FreeBrush = (brushId) => {
+            delete this.brushes[brushId];
+            console.log("FreeBrush: brushId=" + brushId);
+        };
+
+        imports.env.PaintMesh = (meshId, brushId) => {
+            const mesh = this.entities[meshId];
+            if (mesh && mesh.mesh) {
+                // Apply brush properties to mesh material
+                console.log("PaintMesh: meshId=" + meshId + " brushId=" + brushId);
+            }
+        };
+
+        imports.env.PaintSurface = (surfaceId, brushId) => {
+            console.log("PaintSurface: surfaceId=" + surfaceId + " brushId=" + brushId);
+        };
+
+        imports.env.TextureWidth = (textureId) => {
+            const texture = this.textures[textureId];
+            return texture ? (texture.image?.width || 256) : 256;
+        };
+
+        imports.env.TextureHeight = (textureId) => {
+            const texture = this.textures[textureId];
+            return texture ? (texture.image?.height || 256) : 256;
+        };
+
+        imports.env.TextureName = (textureId) => {
+            const texture = this.textures[textureId];
+            return texture ? this.core.allocString(texture.name || "") : 0;
+        };
+
+        imports.env.FreeTexture = (textureId) => {
+            delete this.textures[textureId];
+            console.log("FreeTexture: textureId=" + textureId);
+        };
+
+        imports.env.TextureBlend = (textureId, blend) => {
+            console.log("TextureBlend: textureId=" + textureId + " blend=" + blend);
+        };
+
+        imports.env.TextureCoords = (textureId, coords) => {
+            console.log("TextureCoords: textureId=" + textureId + " coords=" + coords);
+        };
+
+        imports.env.ScaleTexture = (textureId, uScale, vScale) => {
+            console.log("ScaleTexture: textureId=" + textureId + " uScale=" + uScale + " vScale=" + vScale);
+        };
+
+        imports.env.PositionTexture = (textureId, u, v) => {
+            console.log("PositionTexture: textureId=" + textureId + " u=" + u + " v=" + v);
+        };
+
+        imports.env.RotateTexture = (textureId, angle) => {
+            console.log("RotateTexture: textureId=" + textureId + " angle=" + angle);
+        };
+
+        // Store last transformed coordinates
+        this.tformedX = 0;
+        this.tformedY = 0;
+        this.tformedZ = 0;
+
+        imports.env.TFormVector = (x, y, z, srcEntity, destEntity) => {
+            // Transform vector from src to dest coordinate space
+            // For now, just store the input (TODO: proper transformation)
+            this.tformedX = x;
+            this.tformedY = y;
+            this.tformedZ = z;
+        };
+
+        imports.env.TFormPoint = (x, y, z, srcEntity, destEntity) => {
+            // Transform point from src to dest coordinate space
+            // For now, just store the input (TODO: proper transformation)
+            this.tformedX = x;
+            this.tformedY = y;
+            this.tformedZ = z;
+        };
+
+        imports.env.TFormNormal = (x, y, z, srcEntity, destEntity) => {
+            // Transform normal from src to dest coordinate space
+            // For now, just store the input (TODO: proper transformation)
+            this.tformedX = x;
+            this.tformedY = y;
+            this.tformedZ = z;
+        };
+
+        imports.env.TFormedX = () => this.tformedX;
+        imports.env.TFormedY = () => this.tformedY;
+        imports.env.TFormedZ = () => this.tformedZ;
+
+        imports.env.Graphics3D = (width, height, depth, mode) => {
+            console.log(`Graphics3D: ${width}x${height} depth=${depth} mode=${mode}`);
+            // Already initialized in init3D
+        };
+
+        imports.env.AddEntity = (entityId, parentId) => {
+            const entity = this.entities[entityId];
+            const parent = this.entities[parentId];
+            if (entity && parent) {
+                parent.add(entity);
+            }
+        };
+
+        imports.env.CreatePivot = (parentId) => {
+            const pivot = new THREE.Object3D();
+            const id = this.nextEntityId++;
+            this.entities[id] = pivot;
+            
+            if (parentId && this.entities[parentId]) {
+                this.entities[parentId].add(pivot);
+            } else {
+                this.scene.add(pivot);
+            }
+            
+            console.log("CreatePivot: id=" + id + " parent=" + parentId);
+            return id;
+        };
+
         imports.env.PaintEntity = (entityId, brushId) => {
             const entity = this.entities[entityId];
             const brush = this.brushes[brushId];
@@ -1112,5 +1535,7 @@ class Blitz3DGraphics {
     }
 }
 
-window.Blitz3DGraphics = Blitz3DGraphics;
+if (typeof window !== 'undefined') {
+    window.Blitz3DGraphics = Blitz3DGraphics;
+}
 module.exports = Blitz3DGraphics;

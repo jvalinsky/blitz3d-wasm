@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(swift build:*)",
+      "Bash(/usr/bin/env -i HOME=\"$HOME\" PATH=\"/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Xcode.app/Contents/Developer/usr/bin\" TMPDIR=\"$TMPDIR\" swift build:*)",
+      "Bash(/usr/bin/env -i HOME=\"$HOME\" PATH=\"/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Xcode.app/Contents/Developer/usr/bin\" TMPDIR=\"$TMPDIR\" swift test)",
+      "Bash(/usr/bin/env -i HOME=\"$HOME\" PATH=\"/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Xcode.app/Contents/Developer/usr/bin\" TMPDIR=\"$TMPDIR\" swift test:*)",
+      "Bash(bash:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

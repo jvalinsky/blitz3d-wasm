@@ -1520,12 +1520,20 @@ class Blitz3DGraphics {
             };
             this.particles.push(particle);
             
-            // Create a sprite for the particle
-            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffffff }));
+            // Create a sprite for the particle with bright color
+            const material = new THREE.SpriteMaterial({ 
+                color: 0xff0000,  // Bright red so it's visible
+                sizeAttenuation: false,
+                transparent: true,
+                opacity: 0.8
+            });
+            const sprite = new THREE.Sprite(material);
             sprite.position.set(x, y, z);
-            sprite.scale.set(size, size, 1);
+            sprite.scale.set(size * 5, size * 5, 1); // Make it bigger so we can see it
             this.scene.add(sprite);
             this.entities[particle.id] = sprite;
+            
+            console.log(`CreateParticle: id=${particle.id} pos=(${x},${y},${z}) size=${size}`);
             
             return particle.id;
         };

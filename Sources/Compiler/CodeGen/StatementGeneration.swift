@@ -33,7 +33,7 @@ public final class StatementGeneration: ValidatorTypeContext {
     
     // Stack validation
     private var stackValidator: StackValidator?
-    private var enableStackValidation: Bool = false  // Toggle for debugging - DISABLED
+    private var enableStackValidation: Bool = true  // Toggle for debugging - Phase 1 integration
 
     // Type context cache for validator
     private var localTypeCache: [Int: WASMType] = [:]
@@ -91,8 +91,11 @@ public final class StatementGeneration: ValidatorTypeContext {
         case .local(let decl):
             for id in decl.variables {
                 let wasmType = typeHandling.typeInfo(from: id.typeSuffix).wasmType
-                _ = context.variableManagement.registerLocal(id.name, type: wasmType, typeName: id.typeName)
+                let localInfo = context.variableManagement.registerLocal(id.name, type: wasmType, typeName: id.typeName)
                 function.locals.append(wasmType)
+                
+                // Register with stack validator for type tracking
+                registerLocalType(localInfo.index, type: wasmType)
 
                 // Generate assignment for initializer if present
                 if let initializer = decl.initializers[id.name],
@@ -420,8 +423,12 @@ public final class StatementGeneration: ValidatorTypeContext {
             var loopLocal = context.variableManagement.localInfo(for: forNode.variable.name)
             if loopLocal == nil {
                 // Implicit loop variable -> Register as Local Int
-                loopLocal = context.variableManagement.registerLocal(forNode.variable.name, type: .i32)
+                let registered = context.variableManagement.registerLocal(forNode.variable.name, type: .i32)
+                loopLocal = registered
                 function.locals.append(.i32)
+                
+                // Register with stack validator for type tracking
+                registerLocalType(registered.index, type: .i32)
                 print("DEBUG_COMPILER: Auto-registered implicit For-Loop variable '\(forNode.variable.name)' as Local .i32")
             }
             

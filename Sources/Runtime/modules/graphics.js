@@ -1529,7 +1529,7 @@ class Blitz3DGraphics {
             });
             const sprite = new THREE.Sprite(material);
             sprite.position.set(x, y, z);
-            sprite.scale.set(size * 0.3, size * 0.3, 1); // Reasonable size
+            sprite.scale.set(size * 0.05, size * 0.05, 1); // Small particle dots
             this.scene.add(sprite);
             this.entities[particle.id] = sprite;
             

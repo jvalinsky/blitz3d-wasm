@@ -184,45 +184,65 @@
 
         function createTestScene() {
             try {
-                log('Creating test scene...', 'info');
+                log('Creating enhanced test scene...', 'info');
+
+                // Set scene background to dark gray
+                Blitz3D.graphics.scene.background = new THREE.Color(0x1a1a2e);
+                
+                // Add ambient light for base illumination
+                Blitz3D.imports.env.AmbientLight(0.3, 0.3, 0.4);
+                log('✓ Ambient light added', 'success');
 
                 // Create camera
                 const camera = Blitz3D.imports.env.CreateCamera(0);
-                log(`✓ Camera created (ID: ${camera})`, 'success');
+                Blitz3D.imports.env.PositionEntity(camera, 0, 3, -8, 0);
+                log('✓ Camera created at (0, 3, -8)', 'success');
 
-                // Position camera
-                Blitz3D.imports.env.PositionEntity(camera, 0, 5, -10, 0);
-                log('✓ Camera positioned at (0, 5, -10)', 'success');
-
-                // Create a test cube
+                // Create main cube with color
                 const cube = Blitz3D.imports.env.CreateCube(0);
-                log(`✓ Cube created (ID: ${cube})`, 'success');
-
-                // Create a light
-                const light = Blitz3D.imports.env.CreateLight(1);
-                Blitz3D.imports.env.PositionEntity(light, 5, 10, -5, 0);
-                log(`✓ Light created (ID: ${light})`, 'success');
-
-                // Create multiple visible particles around the cube
-                for (let i = 0; i < 10; i++) {
-                    const x = (Math.random() - 0.5) * 6;
-                    const y = Math.random() * 4;
-                    const z = (Math.random() - 0.5) * 6;
-                    const particle = Blitz3D.imports.env.CreateParticle(x, y, z, 0, 2.0, 0.01, 1000);
-                    if (i < 3) { // Only log first 3
-                        log(`✓ Particle ${i+1} created at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`, 'success');
-                    }
+                const cubeEntity = Blitz3D.graphics.entities[cube];
+                if (cubeEntity && cubeEntity.material) {
+                    cubeEntity.material = new THREE.MeshLambertMaterial({ 
+                        color: 0x4a90e2,
+                        emissive: 0x0a1a3a
+                    });
                 }
-                log('✓ 10 particles created total', 'success');
+                log('✓ Blue cube created with Lambert shading', 'success');
 
-                // Check scene
+                // Create a ground plane
+                const ground = Blitz3D.imports.env.CreatePlane(0);
+                Blitz3D.imports.env.PositionEntity(ground, 0, -2, 0, 0);
+                Blitz3D.imports.env.ScaleEntity(ground, 10, 1, 10);
+                const groundEntity = Blitz3D.graphics.entities[ground];
+                if (groundEntity && groundEntity.material) {
+                    groundEntity.material = new THREE.MeshLambertMaterial({ 
+                        color: 0x2a2a3e,
+                        side: THREE.DoubleSide
+                    });
+                }
+                log('✓ Ground plane created', 'success');
+
+                // Create directional light (like sun)
+                const light = Blitz3D.imports.env.CreateLight(1);
+                Blitz3D.imports.env.PositionEntity(light, 10, 15, -10, 0);
+                Blitz3D.imports.env.LightColor(light, 1.0, 0.95, 0.9);
+                log('✓ Directional light created', 'success');
+
+                // Create particles with smaller size
+                for (let i = 0; i < 20; i++) {
+                    const x = (Math.random() - 0.5) * 8;
+                    const y = Math.random() * 5;
+                    const z = (Math.random() - 0.5) * 8;
+                    Blitz3D.imports.env.CreateParticle(x, y, z, 0, 1.0, 0.01, 1000);
+                }
+                log('✓ 20 small particles created', 'success');
+
                 const sceneChildren = Blitz3D.graphics.scene.children.length;
-                log(`Scene now has ${sceneChildren} objects`, 'info');
+                log(`Scene: ${sceneChildren} objects total`, 'info');
 
-                // Force a render
                 Blitz3D.imports.env.RenderWorld(1.0);
                 
-                log('🎮 Scene created! You should see a cube!', 'success');
+                log('🎮 Enhanced scene ready! Blue cube with particles!', 'success');
 
             } catch (err) {
                 log(`ERROR: ${err.message}`, 'error');

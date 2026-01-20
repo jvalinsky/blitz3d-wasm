@@ -6,6 +6,8 @@
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift
+/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StackBalanceTests.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift
+/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeInferenceRegressionTests.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift

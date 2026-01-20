@@ -349,7 +349,7 @@ public struct Parser {
                 }
             } else {
                 // parseTopLevelStatement() returned nil - this is the problem!
-                print("🔴 PARSER ERROR: parseTopLevelStatement() returned nil!")
+                print("ERROR: parseTopLevelStatement() returned nil!")
                 print("  Statement #\(statementCount)")
                 print("  Token: type=\(currentToken.type) text='\(currentToken.text)'")
                 print("  Position: After \(functionCount) functions, \(globalCount) globals")

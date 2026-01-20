@@ -1,0 +1,1666 @@
+================================================================================
+                    BLITZ3D-WASM SCPCB COMPILATION TEST REPORT
+================================================================================
+Date: Tue Jan 20 12:16:52 EST 2026
+Compiler: /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/blitz3d-wasm
+Validator: /opt/homebrew/bin/wasm-validate
+Source: /Users/jack/Software/scp_port/scpcb
+
+----------------------------------------
+File: Dreamfilter.bb
+Status: PASS
+Size: 13741 bytes
+
+----------------------------------------
+File: UpdateEvents.bb
+Status: VALIDATION_ERROR
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0003995: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00039cb: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0003b3d: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0004123: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0004da9: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00051f7: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006043: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006156: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00063f1: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006b67: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00089c4: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008b72: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008c07: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008f64: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00096d1: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00096d5: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00097b8: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000982a: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009afd: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b1a: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b37: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b4d: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b75: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009c02: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009c8b: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d11: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d34: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d57: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d6e: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d82: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009dcd: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009df6: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009e1e: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009e35: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a2e5: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a31e: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a334: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a36d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ab53: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ab8c: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000aba2: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000abdb: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b10a: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b141: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b143: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b151: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b714: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b89b: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b9b4: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000baec: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000bfe4: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000c7cd: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000d3d7: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e487: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e57d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e5ae: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e779: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ed01: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000edec: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000f024: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010212: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00107b2: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010895: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010920: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010936: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010994: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010996: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010e80: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010f11: error: type mismatch at end of `if false` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010f6d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0011390: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0011e42: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0012117: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:001218a: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00121d5: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013819: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a0c: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a48: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a62: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013abc: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00143ac: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0014bea: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0014cab: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:001532e: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0015a2a: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016461: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016c9f: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cb7: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cba: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cd0: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+
+----------------------------------------
+File: CPU_Details.bb
+Status: PASS
+Size: 14116 bytes
+
+----------------------------------------
+File: Map Creator/mapcreator_new.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Error: Error Domain=NSCocoaErrorDomain Code=259 "The file couldn’t be opened because it isn’t in the correct format."
+
+
+----------------------------------------
+File: Map Creator/window3d.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Compiling: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/window3d.wasm
+
+Preprocessed source size: 53168 characters
+Parsed program:
+  - 93 top-level statements
+  - 0 functions
+  - 93 total statements (including functions)
+  - 0 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 57 Internal: createcamera
+DEBUG: Function Main signature='() -> void' typeIdx=2
+DEBUG_TRACE: Generating Call for graphics3d. Expected: void, Actual: void. Final: VOID->I32
+DEBUG_STMT: Dropped return value of type i32 for call statement
+DEBUG_ASSIGN: identifier(Blitz3DCompiler.IdentifierNode(name: "hwnd", typeSuffix: nil, typeName: nil)) = <expr>
+DEBUG_COMPILER: WARNING! Function api_getactivewindow not found in map. Defaulting to 0/0.0.
+DEBUG_TRACE: Generating Call for api_getactivewindow. Expected: i32, Actual: void. Final: i32
+DEBUG_TARGET: Checking type for 'hwnd', suffix: none
+  → DEFAULT: i32
+  Value type: i32, Target type: i32
+
+
+----------------------------------------
+File: FMod.bb
+Status: PASS
+Size: 13195 bytes
+
+----------------------------------------
+File: repro_stack.bb
+Status: PASS
+Size: 13551 bytes
+
+----------------------------------------
+File: LightMapPNG.bb
+Status: PASS
+Size: 18509 bytes
+
+----------------------------------------
+File: Save.bb
+Status: VALIDATION_ERROR
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004868: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004871: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004877: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004880: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004887: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004889: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004892: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004894: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004b68: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c15: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c1e: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c58: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c5a: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c62: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c6b: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cba: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cbc: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cd5: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ce1: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ce7: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cf3: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d06: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d16: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d1b: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d1d: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d26: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d28: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d30: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d39: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d4c: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d51: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d53: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d5f: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d6b: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d71: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d7d: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d88: error: type mismatch in i32.add, expected [i32, i32] but got [... f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d8a: error: type mismatch in local.set, expected [f32] but got [... i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d93: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d95: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dbc: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dc8: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dd3: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ddf: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004def: error: type mismatch in i32.add, expected [i32, i32] but got [... f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004df1: error: type mismatch in local.set, expected [f32] but got [... i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004e02: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004e04: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004eaa: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004eb3: error: type mismatch in i32.lt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004efb: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004f04: error: type mismatch in i32.lt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005039: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000511f: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005799: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00057f7: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005813: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005815: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005838: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005854: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005856: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005859: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058bf: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058d5: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058f7: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000590d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d0e: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d17: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d1d: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d26: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d2d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d2f: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d38: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d3a: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006009: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006098: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060a1: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060db: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060dd: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060e5: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060ee: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000613d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000613f: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006151: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000615d: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006163: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000616f: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006182: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006184: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000618d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000618f: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000619f: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061ab: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061b1: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061bd: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061d0: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e0: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e5: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e7: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061f0: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061f2: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061fa: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006203: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006216: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000621b: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000621d: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006234: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006240: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006246: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006252: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000625f: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006261: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000626a: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000626c: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00065a1: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000694b: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006ad8: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006af2: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006b36: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007755: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007844: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000794b: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007967: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007969: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000798c: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079a8: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079aa: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079ad: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007a7d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007acc: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007adc: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b34: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b36: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b42: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b44: error: type mismatch in local.set, expected [f32] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b67: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+
+----------------------------------------
+File: Update.bb
+Status: PASS
+Size: 25292 bytes
+
+----------------------------------------
+File: DevilParticleSystem.bb
+Status: VALIDATION_ERROR
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/DevilParticleSystem.wasm:0004121: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+
+----------------------------------------
+File: Skybox.bb
+Status: PASS
+Size: 13945 bytes
+
+----------------------------------------
+File: Difficulty.bb
+Status: PASS
+Size: 14256 bytes
+
+----------------------------------------
+File: RMesh_Model_Viewer.bb
+Status: PASS
+Size: 23855 bytes
+
+----------------------------------------
+File: Converter.bb
+Status: PASS
+Size: 21690 bytes
+
+----------------------------------------
+File: Blitz_File_ZipApi.bb
+Status: PASS
+Size: 18765 bytes
+
+----------------------------------------
+File: repro_select.bb
+Status: PASS
+Size: 13300 bytes
+
+----------------------------------------
+File: StrictLoads.bb
+Status: PASS
+Size: 17975 bytes
+
+----------------------------------------
+File: Blitz_File_FileName.bb
+Status: PASS
+Size: 13665 bytes
+
+----------------------------------------
+File: MapSystem.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Compiling: /Users/jack/Software/scp_port/scpcb/MapSystem.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/MapSystem.wasm
+
+Preprocessed source size: 315383 characters
+Parsed program:
+  - 0 top-level statements
+  - 2 functions
+  - 18 total statements (including functions)
+  - 1 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 57 Internal: createcamera
+DEBUG: Function LoadMaterials signature='(i32) -> i32' typeIdx=7
+DEBUG_COMPILER: Dropping extra argument 0 for catcherrors
+DEBUG_TRACE: Generating Call for catcherrors. Expected: void, Actual: void. Final: VOID->I32
+DEBUG_STMT: Dropped return value of type i32 for call statement
+DEBUG_COMPILER: Auto-declaring implicit variable 'Null' as global (read)
+DEBUG_INFERENCE: Scanning for 'Null' type hints...
+DEBUG_INFERENCE: No type hint found for 'Null'
+  → Inferred from name (default): i32
+DEBUG_TRACE: Generating Call for openfile. Expected: i32, Actual: i32. Final: i32
+
+
+----------------------------------------
+File: MusicPlayer.bb
+Status: PASS
+Size: 19991 bytes
+
+----------------------------------------
+File: repro_update_events_min.bb
+Status: PASS
+Size: 13385 bytes
+
+----------------------------------------
+File: BlitzAL.bb
+Status: PASS
+Size: 14863 bytes
+
+----------------------------------------
+File: KeyName.bb
+Status: PASS
+Size: 14310 bytes
+
+----------------------------------------
+File: DrawPortals – Kopio.bb
+Status: PASS
+Size: 14821 bytes
+
+----------------------------------------
+File: Blitz_Basic_Bank.bb
+Status: PASS
+Size: 13744 bytes
+
+----------------------------------------
+File: AAText.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Compiling: /Users/jack/Software/scp_port/scpcb/AAText.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/AAText.wasm
+
+Preprocessed source size: 9115 characters
+Parsed program:
+  - 6 top-level statements
+  - 9 functions
+  - 72 total statements (including functions)
+  - 1 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 57 Internal: createcamera
+DEBUG: Function InitAAFont signature='() -> i32' typeIdx=15
+DEBUG_COMPILER: Generating call to CreateCamera. Index: 57
+DEBUG_TRACE: Generating Call for createcamera. Expected: i32, Actual: i32. Final: i32
+DEBUG_TRACE: Generating Call for cameraviewport. Expected: void, Actual: void. Final: VOID->I32
+DEBUG_STMT: Dropped return value of type i32 for call statement
+DEBUG_TRACE: Generating Call for camerazoom. Expected: void, Actual: void. Final: VOID->I32
+DEBUG_STMT: Dropped return value of type i32 for call statement
+DEBUG_COMPILER: WARNING! Function cameraclsmode not found in map. Defaulting to 0/0.0.
+DEBUG_TRACE: Generating Call for cameraclsmode. Expected: i32, Actual: void. Final: i32
+
+
+----------------------------------------
+File: Particles.bb
+Status: PASS
+Size: 15784 bytes
+
+----------------------------------------
+File: Menu.bb
+Status: PASS
+Size: 56131 bytes
+
+----------------------------------------
+File: NPCs.bb
+Status: VALIDATION_ERROR
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb02: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb15: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb25: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb38: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d175: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d188: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d198: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d1ab: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bc0: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bd6: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017be6: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bfc: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:00183a9: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:00183db: error: type mismatch in call, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0018581: error: type mismatch in call, expected [i32, i32] but got [f32, i32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0018d2e: error: type mismatch in local.set, expected [i32] but got [f32]
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+
+----------------------------------------
+File: Items.bb
+Status: PASS
+Size: 50139 bytes
+
+----------------------------------------
+File: new_tests/test_type_conversion.bb
+Status: PASS
+Size: 13340 bytes
+
+----------------------------------------
+File: new_tests/test_devil_mod.bb
+Status: PASS
+Size: 13329 bytes
+
+----------------------------------------
+File: new_tests/test_particles_min.bb
+Status: PASS
+Size: 13673 bytes
+
+----------------------------------------
+File: new_tests/test_loops.bb
+Status: PASS
+Size: 13434 bytes
+
+----------------------------------------
+File: new_tests/test_fileio.bb
+Status: PASS
+Size: 13306 bytes
+
+----------------------------------------
+File: new_tests/test_custom_types.bb
+Status: PASS
+Size: 13609 bytes
+
+----------------------------------------
+File: new_tests/test_audio.bb
+Status: PASS
+Size: 13361 bytes
+
+----------------------------------------
+File: new_tests/test_2d_graphics.bb
+Status: PASS
+Size: 13680 bytes
+
+----------------------------------------
+File: new_tests/test_entity_getters.bb
+Status: PASS
+Size: 13615 bytes
+
+----------------------------------------
+File: new_tests/test_arrays.bb
+Status: PASS
+Size: 13348 bytes
+
+----------------------------------------
+File: new_tests/test_math.bb
+Status: PASS
+Size: 13378 bytes
+
+----------------------------------------
+File: new_tests/test_if_balance.bb
+Status: PASS
+Size: 13353 bytes
+
+----------------------------------------
+File: new_tests/test_collision_queries.bb
+Status: PASS
+Size: 13645 bytes
+
+----------------------------------------
+File: new_tests/test_strings.bb
+Status: PASS
+Size: 13436 bytes
+
+----------------------------------------
+File: DrawPortals.bb
+Status: PASS
+Size: 14211 bytes
+
+----------------------------------------
+File: fullscreen_window_fix.bb
+Status: PASS
+Size: 13626 bytes
+
+----------------------------------------
+File: Main.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Compiling: /Users/jack/Software/scp_port/scpcb/Main.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Main.wasm
+
+Preprocessed source size: 1669379 characters
+Parsed program:
+  - 129 top-level statements
+  - 55 functions
+  - 486 total statements (including functions)
+  - 5 type declarations
+
+DEBUG_COMPILER: Registered CreateCamera. Index: 57 Internal: createcamera
+DEBUG: Function Main signature='() -> void' typeIdx=2
+DEBUG_TRACE: Generating Call for filesize. Expected: i32, Actual: i32. Final: i32
+DEBUG_ASSIGN: identifier(Blitz3DCompiler.IdentifierNode(name: "InitErrorStr", typeSuffix: nil, typeName: nil)) = <expr>
+DEBUG_TRACE: Generating Call for chr. Expected: i32, Actual: i32. Final: i32
+DEBUG_TRACE: Generating Call for chr. Expected: i32, Actual: i32. Final: i32
+DEBUG_TARGET: Checking type for 'InitErrorStr', suffix: none
+  → From local registry: i32
+  Value type: i32, Target type: i32
+DEBUG_ASSIGN_LOOKUP: Looking up 'InitErrorStr'
+
+
+----------------------------------------
+File: LoadAllSounds.bb
+Status: PASS
+Size: 17664 bytes
+
+----------------------------------------
+File: repro_types.bb
+Status: PASS
+Size: 13346 bytes
+
+----------------------------------------
+File: Achievements.bb
+Status: PASS
+Size: 15424 bytes
+
+----------------------------------------
+File: TestLoadRMesh.bb
+Status: PASS
+Size: 15160 bytes
+
+
+================================================================================
+                              CATEGORY BREAKDOWN                                
+================================================================================
+
+  TYPE_CONVERSION: 243
+
+================================================================================
+                              FILES WITH ERRORS                                 
+================================================================================
+
+  - UpdateEvents.bb
+  - Map Creator/mapcreator_new.bb
+  - Map Creator/window3d.bb
+  - Save.bb
+  - DevilParticleSystem.bb
+  - MapSystem.bb
+  - AAText.bb
+  - NPCs.bb
+  - Main.bb
+
+================================================================================
+                              DETAILED ERROR REPORTS                            
+================================================================================
+
+--- AAText.json ---
+{
+  "file": "AAText.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-20T12:16:59-05:00",
+  "errors": [{"error": "Compiling: /Users/jack/Software/scp_port/scpcb/AAText.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/AAText.wasm  Preprocessed source size: 9115 characters Parsed program: ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+
+--- DevilParticleSystem.json ---
+{
+  "file": "DevilParticleSystem.bb",
+  "status": "validation_failed",
+  "timestamp": "2026-01-20T12:16:58-05:00",
+  "errors": [
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/DevilParticleSystem.wasm:0004121: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."}
+]
+}
+
+--- Main.json ---
+{
+  "file": "Main.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-20T12:17:02-05:00",
+  "errors": [{"error": "Compiling: /Users/jack/Software/scp_port/scpcb/Main.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Main.wasm  Preprocessed source size: 1669379 characters Parsed program: ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+
+--- mapcreator_new.json ---
+{
+  "file": "Map Creator/mapcreator_new.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-20T12:16:55-05:00",
+  "errors": [{"error": "Error: Error Domain=NSCocoaErrorDomain Code=259 \"The file couldn’t be opened because it isn’t in the correct format.\" ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+
+--- MapSystem.json ---
+{
+  "file": "MapSystem.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-20T12:16:59-05:00",
+  "errors": [{"error": "Compiling: /Users/jack/Software/scp_port/scpcb/MapSystem.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/MapSystem.wasm  Preprocessed source size: 315383 characters Parsed program: ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+
+--- NPCs.json ---
+{
+  "file": "NPCs.bb",
+  "status": "validation_failed",
+  "timestamp": "2026-01-20T12:17:00-05:00",
+  "errors": [
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb02: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb15: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb25: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000cb38: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d175: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d188: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d198: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:000d1ab: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bc0: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bd6: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017be6: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0017bfc: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:00183a9: error: type mismatch in i32.gt_s, expected [i32, i32] but got [i32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:00183db: error: type mismatch in call, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0018581: error: type mismatch in call, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/NPCs.wasm:0018d2e: error: type mismatch in local.set, expected [i32] but got [f32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."}
+]
+}
+
+--- Save.json ---
+{
+  "file": "Save.bb",
+  "status": "validation_failed",
+  "timestamp": "2026-01-20T12:16:58-05:00",
+  "errors": [
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004868: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004871: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004877: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004880: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004887: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004889: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004892: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004894: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004b68: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c15: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c1e: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c58: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c5a: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c62: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004c6b: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cba: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cbc: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cd5: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ce1: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ce7: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004cf3: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d06: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d16: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d1b: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d1d: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d26: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d28: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d30: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d39: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d4c: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d51: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d53: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d5f: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d6b: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d71: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d7d: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d88: error: type mismatch in i32.add, expected [i32, i32] but got [... f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d8a: error: type mismatch in local.set, expected [f32] but got [... i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d93: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004d95: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dbc: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dc8: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004dd3: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004ddf: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004def: error: type mismatch in i32.add, expected [i32, i32] but got [... f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004df1: error: type mismatch in local.set, expected [f32] but got [... i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004e02: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004e04: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004eaa: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004eb3: error: type mismatch in i32.lt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.lt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004efb: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0004f04: error: type mismatch in i32.lt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.lt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005039: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000511f: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005799: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00057f7: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005813: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005815: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005838: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005854: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005856: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005859: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058bf: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058d5: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00058f7: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000590d: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d0e: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d17: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d1d: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d26: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d2d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d2f: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d38: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0005d3a: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006009: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006098: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060a1: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060db: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060dd: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060e5: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00060ee: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000613d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000613f: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006151: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000615d: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006163: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000616f: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006182: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006184: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000618d: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000618f: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000619f: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061ab: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061b1: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061bd: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061d0: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e0: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e5: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061e7: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061f0: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061f2: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00061fa: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006203: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006216: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000621b: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000621d: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006234: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006240: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006246: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006252: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000625f: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006261: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000626a: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000626c: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00065a1: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000694b: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006ad8: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006af2: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0006b36: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007755: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007844: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000794b: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007967: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007969: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:000798c: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079a8: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079aa: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:00079ad: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007a7d: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007acc: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007adc: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b34: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b36: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b42: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b44: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/Save.wasm:0007b67: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."}
+]
+}
+
+--- UpdateEvents.json ---
+{
+  "file": "UpdateEvents.bb",
+  "status": "validation_failed",
+  "timestamp": "2026-01-20T12:16:55-05:00",
+  "errors": [
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0003995: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00039cb: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0003b3d: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0004123: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0004da9: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00051f7: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006043: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006156: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00063f1: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0006b67: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00089c4: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008b72: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008c07: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0008f64: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00096d1: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00096d5: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00097b8: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000982a: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009afd: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b1a: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b37: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b4d: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009b75: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009c02: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009c8b: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d11: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d34: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d57: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d6e: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009d82: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009dcd: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009df6: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009e1e: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0009e35: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a2e5: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a31e: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a334: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000a36d: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ab53: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ab8c: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000aba2: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000abdb: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b10a: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b141: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b143: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b151: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b714: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b89b: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000b9b4: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000baec: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000bfe4: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000c7cd: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000d3d7: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e487: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e57d: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e5ae: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000e779: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000ed01: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000edec: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:000f024: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010212: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00107b2: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010895: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010920: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010936: error: type mismatch in i32.gt_s, expected [i32, i32] but got [f32, f32]","category":"TYPE_CONVERSION","context":"i32.gt","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010994: error: type mismatch in i32.add, expected [i32, i32] but got [f32, i32]","category":"TYPE_CONVERSION","context":"i32.add","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010996: error: type mismatch in local.set, expected [f32] but got [i32]","category":"TYPE_CONVERSION","context":"","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010e80: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010f11: error: type mismatch at end of `if false` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if false","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0010f6d: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0011390: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0011e42: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0012117: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:001218a: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00121d5: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013819: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a0c: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a48: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013a62: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0013abc: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:00143ac: error: type mismatch at end of `if true` branch, expected [] but got [... i32, i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0014bea: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0014cab: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:001532e: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0015a2a: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016461: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016c9f: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cb7: error: type mismatch at end of `if true` branch, expected [] but got [i32, i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cba: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."},
+  {"error":"/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/UpdateEvents.wasm:0016cd0: error: type mismatch at end of `if true` branch, expected [] but got [i32]","category":"TYPE_CONVERSION","context":"if true","suggestion":"Add explicit type conversion using Float() or Int() functions before the operation."}
+]
+}
+
+--- window3d.json ---
+{
+  "file": "Map Creator/window3d.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-20T12:16:55-05:00",
+  "errors": [{"error": "Compiling: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.s8Dkw1CzVO/window3d.wasm  Preprocessed source size: 53168 characters Parsed program: ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+

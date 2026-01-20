@@ -778,51 +778,50 @@ final class CompilationIssuesTests: XCTestCase {
             return
         }
 
-        func countStackValues(_ instructions: [WASMInstruction]) -> Int {
-            var count = 0
-            for instr in instructions {
-                switch instr {
-                case .i32Const, .f32Const:
-                    count += 1
-                case .localGet, .globalGet:
-                    count += 1
-                case .localSet, .globalSet, .drop:
-                    count -= 1
-                case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrU, .i32RemS:
-                    count -= 1
-                case .i32EqZ:
-                    count -= 1
-                case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
-                    count -= 1
-                case .call:
-                    count += 1
-                case .block(_, let body):
-                    count += countStackValues(body)
-                case .loop(_, let body):
-                    count += countStackValues(body)
-                case .if(_, let thenBody, let elseBody):
-                    count -= 1
-                    count += countStackValues(thenBody)
-                    if let elseBody = elseBody {
-                        count += countStackValues(elseBody)
-                    }
-                case .return:
-                    break
-                case .br(_):
-                    break
-                case .brIf(_):
-                    count -= 1
-                case .end:
-                    break
-                default:
-                    break
-                }
+        // The actual test: does the WASM validate?
+        // We can't manually count stack values because WASM control flow is complex.
+        // Instead, let's verify the module can be serialized and would pass wasm-validate.
+        
+        // If we got here without crashes, the module structure is valid
+        // The real validation happens when we serialize to binary
+        var encoder = WASMBinaryEncoder()
+        let wasmData = encoder.encode(module)
+        XCTAssertGreaterThan(wasmData.count, 0, "Should produce valid WASM binary")
+        
+        // Write to temp file and validate
+        let tempPath = NSTemporaryDirectory() + "test_complex_\(UUID().uuidString).wasm"
+        let data = Data(wasmData)
+        do {
+            try data.write(to: URL(fileURLWithPath: tempPath))
+            
+            // Find wasm-validate using which
+            let whichProcess = Process()
+            whichProcess.executableURL = URL(fileURLWithPath: "/usr/bin/which")
+            whichProcess.arguments = ["wasm-validate"]
+            let pipe = Pipe()
+            whichProcess.standardOutput = pipe
+            try whichProcess.run()
+            whichProcess.waitUntilExit()
+            
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            guard let wasmValidatePath = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !wasmValidatePath.isEmpty else {
+                try? FileManager.default.removeItem(atPath: tempPath)
+                XCTFail("wasm-validate not found in PATH")
+                return
             }
-            return count
+            
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: wasmValidatePath)
+            process.arguments = [tempPath]
+            try process.run()
+            process.waitUntilExit()
+            
+            try? FileManager.default.removeItem(atPath: tempPath)
+            
+            XCTAssertEqual(process.terminationStatus, 0, "WASM should pass validation")
+        } catch {
+            XCTFail("Failed to write or validate WASM: \(error)")
         }
-
-        let stackDelta = countStackValues(mainFunction.body)
-        // Function Main() returns Int (i32) by default in Blitz3D, so expect 1 value for return
-        XCTAssertEqual(stackDelta, 1, "Function returning i32 should have exactly 1 value on stack at return. Stack delta: \(stackDelta)")
     }
 }

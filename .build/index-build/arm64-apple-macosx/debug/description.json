@@ -64,6 +64,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift"
         },
         {
@@ -116,6 +120,7 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASM.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASMBinaryEncoder.swift.o",
@@ -204,6 +209,7 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASM.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASMBinaryEncoder.swift",
@@ -493,11 +499,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StackBalanceTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeInferenceRegressionTests.swift"
         },
         {
           "kind" : "file",
@@ -528,8 +542,10 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/LexerTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/ParserTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/SCPCBSpecificTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/StackBalanceTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/StringFunctionTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/TypeFieldArrayTests.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/TypeInferenceRegressionTests.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build/WASMValidationTests.swift.o"
       ],
       "otherArguments" : [
@@ -609,8 +625,10 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StackBalanceTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeInferenceRegressionTests.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift"
       ],
       "tempsPath" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/CompilerTests.build",
@@ -740,6 +758,7 @@
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASM.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASMBinaryEncoder.swift",
@@ -977,8 +996,10 @@
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/LexerTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/ParserTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/SCPCBSpecificTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StackBalanceTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeInferenceRegressionTests.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/WASMValidationTests.swift",
       "-I",
       "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Modules",
@@ -1191,6 +1212,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift"
         },
         {
@@ -1317,11 +1342,19 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StackBalanceTests.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/StringFunctionTests.swift"
         },
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeFieldArrayTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/CompilerTests/TypeInferenceRegressionTests.swift"
         },
         {
           "kind" : "file",

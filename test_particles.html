@@ -58,6 +58,7 @@
         <button onclick="createTestScene()">Create Test Scene</button>
         <button onclick="enableControls()">Enable Camera Controls</button>
         <button onclick="addPhysics()">Add Physics</button>
+        <button onclick="useSCPCBParticles()">Use SCPCB Particle Code!</button>
     </div>
     
     <div class="status">
@@ -413,6 +414,38 @@
             }
 
             updatePhysics();
+        }
+
+        // Use actual SCPCB particle code
+        function useSCPCBParticles() {
+            if (!wasmInstance) {
+                log('ERROR: Load Particles.wasm first!', 'error');
+                return;
+            }
+
+            try {
+                log('🎮 Calling ACTUAL SCPCB CreateParticle() from compiled WASM!', 'info');
+
+                // Call the SCPCB CreateParticle function exported from WASM
+                // This is the REAL game code, compiled from Blitz3D!
+                if (wasmInstance.exports.CreateParticle) {
+                    for (let i = 0; i < 10; i++) {
+                        // Call the actual SCPCB function
+                        const particleId = wasmInstance.exports.CreateParticle();
+                        log(`✓ SCPCB CreateParticle() returned ID: ${particleId}`, 'success');
+                    }
+                    
+                    log('🎉 You just ran ACTUAL SCP:CB game code!', 'success');
+                    log('The particles were created by compiled Blitz3D code, not JavaScript!', 'info');
+                } else {
+                    log('CreateParticle not found in exports', 'error');
+                    log('Available exports: ' + Object.keys(wasmInstance.exports).filter(e => e.includes('Particle')).join(', '), 'info');
+                }
+
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                console.error(err);
+            }
         }
 
         // Auto-init on load

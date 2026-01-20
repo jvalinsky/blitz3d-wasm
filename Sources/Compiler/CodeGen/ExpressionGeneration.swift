@@ -268,8 +268,12 @@ public final class ExpressionGeneration {
         
 
         // Determine operation type with strict float promotion
-        var opType = typeHandling.commonType(leftResult.type, rightResult.type)
-        if leftResult.type == .f32 || rightResult.type == .f32 {
+        // Bitwise ops ALWAYS use i32, regardless of operand types
+        let bitwiseOps = ["and", "or", "xor", "shl", "shr"]
+        let isBitwise = bitwiseOps.contains(binop.op.lowercased())
+        
+        var opType = isBitwise ? .i32 : typeHandling.commonType(leftResult.type, rightResult.type)
+        if !isBitwise && (leftResult.type == .f32 || rightResult.type == .f32) {
              if opType != .f64 { opType = .f32 }
         }
 

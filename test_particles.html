@@ -54,6 +54,7 @@
         <button onclick="initRuntime()">Initialize Runtime</button>
         <button onclick="loadParticles()">Load Particles.wasm</button>
         <button onclick="runParticles()">Execute Module</button>
+        <button onclick="createTestScene()">Create Test Scene</button>
     </div>
 
     <div class="status" id="log"></div>
@@ -173,6 +174,46 @@
                 // Check entities created
                 const entityCount = Object.keys(Blitz3D.graphics.entities).length;
                 log(`Entities created: ${entityCount}`, 'info');
+
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        function createTestScene() {
+            try {
+                log('Creating test scene...', 'info');
+
+                // Create camera
+                const camera = Blitz3D.imports.env.CreateCamera(0);
+                log(`✓ Camera created (ID: ${camera})`, 'success');
+
+                // Position camera
+                Blitz3D.imports.env.PositionEntity(camera, 0, 5, -10, 0);
+                log('✓ Camera positioned at (0, 5, -10)', 'success');
+
+                // Create a test cube
+                const cube = Blitz3D.imports.env.CreateCube(0);
+                log(`✓ Cube created (ID: ${cube})`, 'success');
+
+                // Create a light
+                const light = Blitz3D.imports.env.CreateLight(1);
+                Blitz3D.imports.env.PositionEntity(light, 5, 10, -5, 0);
+                log(`✓ Light created (ID: ${light})`, 'success');
+
+                // Create a particle for fun
+                const particle = Blitz3D.imports.env.CreateParticle(0, 2, 0, 0, 1.0, 0.01, 1000);
+                log(`✓ Particle created (ID: ${particle})`, 'success');
+
+                // Check scene
+                const sceneChildren = Blitz3D.graphics.scene.children.length;
+                log(`Scene now has ${sceneChildren} objects`, 'info');
+
+                // Force a render
+                Blitz3D.imports.env.RenderWorld(1.0);
+                
+                log('🎮 Scene created! You should see a cube!', 'success');
 
             } catch (err) {
                 log(`ERROR: ${err.message}`, 'error');

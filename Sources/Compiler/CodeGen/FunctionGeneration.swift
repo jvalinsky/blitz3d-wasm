@@ -51,6 +51,10 @@ public final class FunctionGeneration {
         gotoStateLocalIdx = -1
         hasGotoInCurrentFunction = false
         
+        // Set current function body for type inference
+        context.currentFunctionBody = functionNode.body
+        context.typeInference.clearCache()
+        
         // Check if function uses GOTO/Labels and prepare state machine if needed
         let (labels, hasGoto, _) = collectLabelsAndGotos(functionNode.body)
         hasGotoInCurrentFunction = hasGoto

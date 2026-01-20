@@ -56,16 +56,27 @@ public final class ExpressionGeneration {
             // Auto-declare implicit variable as global (Blitz3D behavior)
             print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
             
-            // CRITICAL FIX: Check type suffix FIRST to get correct type
-            // This ensures variables like ScrollMenuHeight# are correctly inferred as f32
-            // even when first accessed without suffix (ScrollMenuHeight)
+            // CRITICAL FIX: Infer type using forward scanning first
+            // This handles cases like: ScrollMenuHeight used without suffix, then ScrollMenuHeight# = ...
             let wasmType: WASMType
-            if let suffix = id.typeSuffix {
+            
+            // Strategy 1: Try forward scanning for type hints
+            if let inferredType = context.typeInference.inferVariableType(
+                name: id.name,
+                fromStatements: context.currentFunctionBody
+            ) {
+                wasmType = inferredType
+                print("  → Inferred from forward scan: \(wasmType)")
+            }
+            // Strategy 2: Check type suffix on current use
+            else if let suffix = id.typeSuffix {
                 wasmType = typeHandling.wasmType(from: suffix)
                 print("  → Inferred from suffix: \(wasmType)")
-            } else {
+            }
+            // Strategy 3: Default to i32
+            else {
                 wasmType = typeHandling.typeInfo(from: id.name).wasmType
-                print("  → Inferred from name: \(wasmType)")
+                print("  → Inferred from name (default): \(wasmType)")
             }
             
             let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)

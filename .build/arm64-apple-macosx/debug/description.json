@@ -64,6 +64,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift"
         },
         {
@@ -116,6 +120,7 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASM.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/WASMBinaryEncoder.swift.o",
@@ -220,6 +225,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.swift.o"
         },
         {
@@ -266,6 +275,7 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASM.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASMBinaryEncoder.swift",
@@ -858,6 +868,7 @@
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASM.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/WASMBinaryEncoder.swift",
@@ -1289,6 +1300,10 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift"
         },
         {
@@ -1394,6 +1409,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o"
         },
         {
           "kind" : "file",
@@ -1626,6 +1645,10 @@
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o"
         },
         {
           "kind" : "file",

@@ -263,6 +263,12 @@ public final class ModuleContext {
     public var fieldOffsets: [String: [String: Int]]
     public var fieldDimensions: [String: [String: [Int]]]  // typeName -> [fieldName: dimensions]
     
+    // Type inference for auto-declared variables
+    public var typeInference: TypeInference
+    
+    // Current function body (for type inference during auto-declaration)
+    public var currentFunctionBody: [StatementNode] = []
+    
     // Internal WASM Global indices
     public var heapPointerIdx: Int = -1
     public var dataPtrIdx: Int = -1
@@ -290,6 +296,9 @@ public final class ModuleContext {
         self.userTypes = userTypes
         self.fieldOffsets = fieldOffsets
         self.fieldDimensions = fieldDimensions
+        
+        // Initialize type inference with TypeHandling
+        self.typeInference = TypeInference(typeHandling: TypeHandling())
     }
 
     /// Register a WASM global and return its index

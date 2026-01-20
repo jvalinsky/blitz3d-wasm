@@ -65,6 +65,13 @@
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swiftdeps",
     "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.dia"
   },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeInference.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeInference.dia"
+  },
   "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift": {
     "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.d",
     "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.swift.o",

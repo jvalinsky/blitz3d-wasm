@@ -29422,3 +29422,2647 @@
   Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ac9: error: type mismatch in drop, expected [any] but got []
   Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
 
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aca: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025acb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025acc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025acd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ace: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025acf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ad9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ada: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025adb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025adc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025add: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ade: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025adf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ae9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aea: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aeb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aec: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aed: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aee: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aef: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025af9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025afa: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025afb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025afc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025afd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025afe: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025aff: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b00: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b01: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b02: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b03: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b04: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b05: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b06: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b07: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b08: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b09: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b0f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b10: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b11: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b12: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b13: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b14: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b15: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b16: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b17: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b18: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b19: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b1f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b20: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b21: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b22: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b23: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b24: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b25: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b26: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b27: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b28: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b29: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b2f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b30: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b31: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b32: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b33: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b34: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b35: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b36: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b37: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b38: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b39: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b3f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b40: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b41: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b42: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b43: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b44: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b45: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b46: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b47: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b48: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b49: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b4f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b50: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b51: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b52: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b53: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b54: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b55: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b56: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b57: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b58: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b59: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b5f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b60: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b61: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b62: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b63: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b64: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b65: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b66: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b67: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b68: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b69: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b6f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b70: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b71: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b72: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b73: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b74: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b75: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b76: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b77: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b78: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b79: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b7f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b80: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b81: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b82: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b83: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b84: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b85: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b86: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b87: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b88: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b89: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b8f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b90: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b91: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b92: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b93: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b94: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b95: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b96: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b97: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b98: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b99: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025b9f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ba9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025baa: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bab: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bac: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bad: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bae: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025baf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bb9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bba: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bbb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bbc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bbd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bbe: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bbf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bc9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bca: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bcb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bcc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bcd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bce: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bcf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bd9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bda: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bdb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bdc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bdd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bde: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bdf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025be9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bea: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025beb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bec: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bed: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bee: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bef: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bf9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bfa: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bfb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bfc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bfd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bfe: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025bff: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c00: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c01: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c02: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c03: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c04: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c05: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c06: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c07: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c08: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c09: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c0f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c10: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c11: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c12: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c13: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c14: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c15: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c16: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c17: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c18: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c19: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c1f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c20: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c21: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c22: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c23: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c24: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c25: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c26: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c27: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c28: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c29: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c2f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c30: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c31: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c32: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c33: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c34: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c35: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c36: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c37: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c38: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c39: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c3f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c40: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c41: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c42: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c43: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c44: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c45: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c46: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c47: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c48: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c49: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c4f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c50: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c51: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c52: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c53: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c54: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c55: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c56: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c57: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c58: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c59: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c5a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c5b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c6b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c6c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c6d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c6e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c6f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c70: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c71: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c72: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c73: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c74: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c75: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c76: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c77: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c78: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c79: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c7f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c80: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c81: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c82: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c83: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c84: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c85: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c86: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c87: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c88: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c89: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c8f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c90: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c91: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c92: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c93: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c94: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c95: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c96: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c97: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c98: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c99: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025c9f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ca9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025caa: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cab: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cac: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cad: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cae: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025caf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cb9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cba: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cbb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cbc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cbd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cbe: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cbf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cc9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cca: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ccb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ccc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ccd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cce: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ccf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cd9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cda: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cdb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cdc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cdd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cde: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cdf: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ce9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cea: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ceb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cec: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025ced: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cee: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cef: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf0: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf1: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf2: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf3: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf4: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf5: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf6: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf7: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf8: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cf9: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cfa: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cfb: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cfc: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cfd: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cfe: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025cff: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d00: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d01: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d02: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d03: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d04: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d05: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d06: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d07: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d08: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d09: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d0f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d10: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d11: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d12: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d13: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d14: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d15: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d16: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d17: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d18: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d19: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d1f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d20: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d21: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d22: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d23: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d24: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d25: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d26: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d27: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d28: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d29: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d2f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d30: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d31: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d32: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d33: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d34: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d35: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d36: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d37: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d38: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d39: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d3f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d40: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d41: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d42: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d43: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d44: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d45: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d46: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d47: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d48: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d49: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d4f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d50: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d51: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d52: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d53: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d54: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d55: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d56: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d57: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d58: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d59: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5e: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d5f: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d60: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d61: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d62: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d63: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d64: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d65: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d66: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d67: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d68: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d69: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d6a: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d6b: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d6c: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+
+  Category: TYPE_CONVERSION
+  Error: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.uPniCLBRpK/UpdateEvents.wasm:0025d6d: error: type mismatch in drop, expected [any] but got []
+  Suggestion: Add explicit type conversion using Float() or Int() functions before the operation.
+

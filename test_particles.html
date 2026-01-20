@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
     <title>Particles.wasm Test - SCP:CB Particle System</title>
     <style>
         body {
@@ -202,14 +203,17 @@
                 Blitz3D.imports.env.PositionEntity(light, 5, 10, -5, 0);
                 log(`✓ Light created (ID: ${light})`, 'success');
 
-                // Create multiple visible particles
-                for (let i = 0; i < 5; i++) {
-                    const x = (Math.random() - 0.5) * 4;
-                    const y = 1 + Math.random() * 3;
-                    const z = (Math.random() - 0.5) * 4;
-                    const particle = Blitz3D.imports.env.CreateParticle(x, y, z, 0, 1.0, 0.01, 1000);
-                    log(`✓ Particle ${i+1} created at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`, 'success');
+                // Create multiple visible particles around the cube
+                for (let i = 0; i < 10; i++) {
+                    const x = (Math.random() - 0.5) * 6;
+                    const y = Math.random() * 4;
+                    const z = (Math.random() - 0.5) * 6;
+                    const particle = Blitz3D.imports.env.CreateParticle(x, y, z, 0, 2.0, 0.01, 1000);
+                    if (i < 3) { // Only log first 3
+                        log(`✓ Particle ${i+1} created at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`, 'success');
+                    }
                 }
+                log('✓ 10 particles created total', 'success');
 
                 // Check scene
                 const sceneChildren = Blitz3D.graphics.scene.children.length;

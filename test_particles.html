@@ -163,8 +163,12 @@
                 log(`Particles created: ${particleCount}`, 'info');
 
                 // Check scene children
-                const sceneChildren = Blitz3D.graphics.scene.children.length;
+                const sceneChildren = Blitz3D.graphics.scene ? Blitz3D.graphics.scene.children.length : 0;
                 log(`Scene objects: ${sceneChildren}`, 'info');
+                
+                // Check entities created
+                const entityCount = Object.keys(Blitz3D.graphics.entities).length;
+                log(`Entities created: ${entityCount}`, 'info');
 
             } catch (err) {
                 log(`ERROR: ${err.message}`, 'error');

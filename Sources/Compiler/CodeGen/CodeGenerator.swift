@@ -198,6 +198,56 @@ public struct CodeGenerator {
             ("FindChild", "FindChild", [.i32, .i32], [.i32], "env"),
             ("GetParent", "GetParent", [.i32], [.i32], "env"),
             
+            // Sprite Functions
+            ("CreateSprite", "CreateSprite", [.i32], [.i32], "env"),
+            ("ScaleSprite", "ScaleSprite", [.i32, .f32, .f32], [], "env"),
+            ("SpriteViewMode", "SpriteViewMode", [.i32, .i32], [], "env"),
+            
+            // Entity Functions (extended)
+            ("TranslateEntity", "TranslateEntity", [.i32, .f32, .f32, .f32], [], "env"),
+            ("EntityAlpha", "EntityAlpha", [.i32, .f32], [], "env"),
+            ("EntityColor", "EntityColor", [.i32, .f32, .f32, .f32], [], "env"),
+            ("EntityShininess", "EntityShininess", [.i32, .f32], [], "env"),
+            ("EntityFX", "EntityFX", [.i32, .i32], [], "env"),
+            ("EntityBlend", "EntityBlend", [.i32, .i32], [], "env"),
+            ("EntityParent", "EntityParent", [.i32, .i32, .i32], [], "env"),
+            ("HideEntity", "HideEntity", [.i32], [], "env"),
+            ("ShowEntity", "ShowEntity", [.i32], [], "env"),
+            ("EntityVisible", "EntityVisible", [.i32, .i32], [.i32], "env"),
+            ("EntityInView", "EntityInView", [.i32, .i32], [.i32], "env"),
+            ("EntityPick", "EntityPick", [.i32, .f32], [.i32], "env"),
+            ("EntityPickMode", "EntityPickMode", [.i32, .i32, .i32], [], "env"),
+            ("EntityCollided", "EntityCollided", [.i32, .i32], [.i32], "env"),
+            ("CopyEntity", "CopyEntity", [.i32, .i32], [.i32], "env"),
+            ("NameEntity", "NameEntity", [.i32, .i32], [], "env"),
+            ("Kill", "Kill", [.i32], [], "env"),
+            
+            // Picking Functions
+            ("LinePick", "LinePick", [.f32, .f32, .f32, .f32, .f32, .f32, .f32], [.i32], "env"),
+            ("PickedX", "PickedX", [], [.f32], "env"),
+            ("PickedY", "PickedY", [], [.f32], "env"),
+            ("PickedZ", "PickedZ", [], [.f32], "env"),
+            
+            // Asset Loading (_Strict versions)
+            ("LoadMesh_Strict", "LoadMesh_Strict", [.i32], [.i32], "env"),
+            ("LoadAnimMesh_Strict", "LoadAnimMesh_Strict", [.i32], [.i32], "env"),
+            ("LoadTexture_Strict", "LoadTexture_Strict", [.i32, .i32], [.i32], "env"),
+            ("LoadSound_Strict", "LoadSound_Strict", [.i32], [.i32], "env"),
+            ("LoadImage_Strict", "LoadImage_Strict", [.i32], [.i32], "env"),
+            ("FreeSound_Strict", "FreeSound_Strict", [.i32], [], "env"),
+            ("LoadTempSound", "LoadTempSound", [.i32], [.i32], "env"),
+            
+            // Sound Functions  
+            ("PlaySound_Strict", "PlaySound_Strict", [.i32], [.i32], "env"),
+            ("LoopSound2", "LoopSound2", [.i32, .i32, .f32, .f32], [.i32], "env"),
+            
+            // Debug/Utility
+            ("DebugLog", "DebugLog", [.i32], [], "env"),
+            ("RuntimeError", "RuntimeError", [.i32], [], "env"),
+            ("CatchErrors", "CatchErrors", [], [], "env"),
+            ("MilliSecs2", "MilliSecs2", [], [.i32], "env"),
+            ("CurrentDate", "CurrentDate", [], [.i32], "env"),
+            
             ("RenderWorld", "RenderWorld", [.f32], [], "env"),
             ("Flip", "Flip", [.i32], [], "env"),
             ("LoadTexture", "LoadTexture", [.i32, .i32], [.i32], "env"),
@@ -443,7 +493,44 @@ public struct CodeGenerator {
             ("TFormNormal", "TFormNormal", [.f32, .f32, .f32, .i32, .i32], [], "env"),
             ("TFormedX", "TFormedX", [], [.f32], "env"),
             ("TFormedY", "TFormedY", [], [.f32], "env"),
-            ("TFormedZ", "TFormedZ", [], [.f32], "env")
+            ("TFormedZ", "TFormedZ", [], [.f32], "env"),
+            
+            // Particle System
+            ("CreateParticle", "CreateParticle", [.i32, .f32, .f32, .f32, .i32, .f32, .i32, .i32], [.i32], "env"),
+            ("UpdateParticles", "UpdateParticles", [], [], "env"),
+            ("RemoveParticle", "RemoveParticle", [.i32], [], "env"),
+            ("ParticleTextures", "ParticleTextures", [.i32, .i32, .i32], [.i32], "env"),
+            
+            // Devil Particle System (DLL)
+            ("SetEmitter", "SetEmitter", [.i32, .i32], [.i32], "env"),
+            ("UpdateEmitters", "UpdateEmitters", [.i32], [], "env"),
+            ("DeleteDevilEmitters", "DeleteDevilEmitters", [], [], "env"),
+            ("UpdateDevilEmitters", "UpdateDevilEmitters", [], [], "env"),
+            
+            // Decal System
+            ("CreateDecal", "CreateDecal", [.i32, .f32, .f32, .f32, .f32, .f32, .f32, .f32, .i32], [.i32], "env"),
+            ("UpdateDecals", "UpdateDecals", [], [], "env"),
+            
+            // Game-Specific Functions
+            ("GiveAchievement", "GiveAchievement", [.i32], [], "env"),
+            ("Update294", "Update294", [], [], "env"),
+            ("UpdateItems", "UpdateItems", [], [], "env"),
+            ("PickItem", "PickItem", [.i32], [], "env"),
+            ("DropItem", "DropItem", [.i32], [], "env"),
+            ("AnimateNPC", "AnimateNPC", [.i32, .f32, .f32, .f32, .f32, .i32], [], "env"),
+            ("Animate2", "Animate2", [.i32, .i32, .i32, .f32, .f32, .f32], [], "env"),
+            ("ChangeNPCTextureID", "ChangeNPCTextureID", [.i32, .i32], [], "env"),
+            ("CheckForNPCInFacility", "CheckForNPCInFacility", [.i32], [.i32], "env"),
+            ("Console_SpawnNPC", "Console_SpawnNPC", [.i32], [], "env"),
+            ("CreateConsoleMsg", "CreateConsoleMsg", [.i32], [], "env"),
+            ("ChangeAngleValueForCorrectBoneAssigning", "ChangeAngleValueForCorrectBoneAssigning", [.f32], [.f32], "env"),
+            
+            // Geometry/Math Helpers
+            ("AlignToVector", "AlignToVector", [.i32, .f32, .f32, .f32, .i32, .f32], [], "env"),
+            ("CurveAngle", "CurveAngle", [.f32, .f32, .f32], [.f32], "env"),
+            
+            // Camera Functions
+            ("CameraProject", "CameraProject", [.i32, .f32, .f32, .f32], [], "env")
         ]
         
         for (name, internalName, params, results, moduleName) in imports {

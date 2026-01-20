@@ -8,7 +8,12 @@
       "Bash(/usr/bin/swift test:*)",
       "Bash(swift build:*)",
       "Bash(wc:*)",
-      "Bash(.build/debug/blitz3d-wasm:*)"
+      "Bash(.build/debug/blitz3d-wasm:*)",
+      "Bash(find:*)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:users.ece.cmu.edu)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:troubles.md)"
     ]
   }
 }

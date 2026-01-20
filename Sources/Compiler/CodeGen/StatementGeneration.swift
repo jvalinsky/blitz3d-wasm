@@ -8,7 +8,7 @@
 import Foundation
 
 /// Manages statement compilation and code generation
-public final class StatementGeneration {
+public final class StatementGeneration: ValidatorTypeContext {
     private var context: ModuleContext
 
     // Type handling
@@ -30,9 +30,37 @@ public final class StatementGeneration {
     // GOSUB support
     private var gosubReturnCounter: Int = 0
     private var gosubReturnMap: [Int: [WASMInstruction]] = [:]
+    
+    // Stack validation
+    private var stackValidator: StackValidator?
+    private var enableStackValidation: Bool = false  // Toggle for debugging - DISABLED
+
+    // Type context cache for validator
+    private var localTypeCache: [Int: WASMType] = [:]
+    private var globalTypeCache: [Int: WASMType] = [:]
 
     public init(context: ModuleContext) {
         self.context = context
+        let validator = StackValidator()
+        validator.typeContext = nil  // Will be set after self is initialized
+        self.stackValidator = validator
+    }
+    
+    /// Configure stack validator with type context (call after init)
+    private func configureStackValidator() {
+        stackValidator?.typeContext = self
+    }
+
+    /// Register a local variable type for stack validation
+    public func registerLocalType(_ index: Int, type: WASMType) {
+        localTypeCache[index] = type
+        stackValidator?.setLocalType(index, type: type)
+    }
+
+    /// Register a global variable type for stack validation
+    public func registerGlobalType(_ index: Int, type: WASMType) {
+        globalTypeCache[index] = type
+        stackValidator?.setGlobalType(index, type: type)
     }
 
     /// Configure dependencies
@@ -307,8 +335,45 @@ public final class StatementGeneration {
                     elseBody = elseBranchBody
                 }
                 
-                // Balance if/else branches to have same stack effect
-                let (balancedThen, balancedElse) = balanceIfBranches(then: thenBody, else: elseBody)
+                // Validate and balance if/else branches using stack validator
+                var balancedThen = thenBody
+                var balancedElse = elseBody
+
+                if enableStackValidation {
+                    // Use the improved static balance method with type context
+                    let (thenDrops, elseDrops) = StackValidator.balanceBranches(
+                        thenBranch: thenBody,
+                        elseBranch: elseBody ?? [],
+                        localTypes: localTypeCache,
+                        globalTypes: globalTypeCache
+                    )
+
+                    // Add drops to then branch
+                    if thenDrops > 0 {
+                        print("DEBUG_STACK: If branch has \(thenDrops) excess value(s), adding drops")
+                        for _ in 0..<thenDrops {
+                            balancedThen.append(.drop)
+                        }
+                    }
+
+                    // Add drops to else branch
+                    if elseDrops > 0 {
+                        print("DEBUG_STACK: Else branch has \(elseDrops) excess value(s), adding drops")
+                        if balancedElse == nil {
+                            balancedElse = []
+                        }
+                        for _ in 0..<elseDrops {
+                            balancedElse!.append(.drop)
+                        }
+                    }
+
+                    // If no else branch but then has excess, we need an else with drops
+                    if thenDrops > 0 && elseBody == nil {
+                        // The then branch leaves values, but there's no else
+                        // Need to drop in then to match the implicit empty else
+                        // (already handled above)
+                    }
+                }
 
                 result.append(.if(.void, balancedThen, balancedElse))
                 return result
@@ -337,7 +402,9 @@ public final class StatementGeneration {
             
             var bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
             // Balance loop body: must leave stack empty before br
-            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
+            if enableStackValidation {
+                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
+            }
             loopInstrs.append(contentsOf: bodyInstrs)
             loopInstrs.append(.br(0))
             
@@ -442,7 +509,9 @@ public final class StatementGeneration {
 
                 var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
                 // Balance loop body: must leave stack empty before increment
-                bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
+                if enableStackValidation {
+                    StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
+                }
                 loopInstrs.append(contentsOf: bodyInstrs)
 
                 loopInstrs.append(.localGet(local.index))
@@ -486,7 +555,9 @@ public final class StatementGeneration {
             // body
             var bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
             // Balance loop body
-            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
+            if enableStackValidation {
+                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
+            }
             loopInstrs.append(contentsOf: bodyInstrs)
             
             // it = it.next
@@ -512,7 +583,9 @@ public final class StatementGeneration {
             var loopInstrs: [WASMInstruction] = []
             var bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
             // Balance loop body
-            bodyInstrs = balanceStack(bodyInstrs, targetDelta: 0)
+            if enableStackValidation {
+                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
+            }
             loopInstrs.append(contentsOf: bodyInstrs)
             
             let condResult = expressionGenerator?.generateWithInfo(repeatNode.condition) ?? ([], .i32)
@@ -1206,5 +1279,93 @@ public final class StatementGeneration {
         default:
             return 4
         }
+    }
+    
+    // MARK: - Stack Validation
+
+    /// Validate a sequence of instructions and insert drops as needed
+    private func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMInstruction] {
+        guard enableStackValidation else {
+            return instructions
+        }
+
+        // Use the static method for balance calculation with type context
+        var balanced = instructions
+        let dropsAdded = StackValidator.balanceToTarget(
+            &balanced,
+            targetDelta: 0,  // Loop bodies should have net zero stack effect
+            localTypes: localTypeCache,
+            globalTypes: globalTypeCache
+        )
+
+        if dropsAdded > 0 {
+            print("DEBUG_STACK: Inserting \(dropsAdded) drop(s) to balance loop body")
+        }
+
+        return balanced
+    }
+
+    /// Validate and balance a block of instructions to a specific target
+    private func validateAndBalance(_ instructions: [WASMInstruction], targetDelta: Int = 0) -> [WASMInstruction] {
+        guard enableStackValidation else {
+            return instructions
+        }
+
+        var balanced = instructions
+        let dropsAdded = StackValidator.balanceToTarget(
+            &balanced,
+            targetDelta: targetDelta,
+            localTypes: localTypeCache,
+            globalTypes: globalTypeCache
+        )
+
+        if dropsAdded > 0 {
+            print("DEBUG_STACK: Inserting \(dropsAdded) drop(s) to achieve target delta \(targetDelta)")
+        }
+
+        return balanced
+    }
+
+    /// Reset stack validator for new function
+    public func resetStackValidator(returnType: WASMType = .void) {
+        localTypeCache.removeAll()
+        globalTypeCache.removeAll()
+
+        let returnTypes: [WASMType] = returnType == .void ? [] : [returnType]
+        stackValidator?.reset(returnTypes: returnTypes)
+    }
+
+    /// Get stack validation report
+    public func getStackValidationReport() -> [String] {
+        return stackValidator?.errors ?? []
+    }
+
+    /// Check if stack validation passed
+    public func isStackValid() -> Bool {
+        return stackValidator?.isValid ?? true
+    }
+    
+    // MARK: - ValidatorTypeContext
+    
+    func localType(at index: Int) -> WASMType? {
+        // Check cache first
+        if let cached = localTypeCache[index] {
+            return cached
+        }
+        return nil
+    }
+    
+    func globalType(at index: Int) -> WASMType? {
+        // Check cache first
+        if let cached = globalTypeCache[index] {
+            return cached
+        }
+        return nil
+    }
+    
+    func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])? {
+        // For now, return nil - function signatures would need to be tracked separately
+        // The validator will use a default assumption when signatures aren't available
+        return nil
     }
 }

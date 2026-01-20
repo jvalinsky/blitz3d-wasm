@@ -5,19 +5,51 @@
 import Foundation
 
 /// Value types that can appear on the stack
-enum StackValueType: Equatable {
+enum StackValueType: Equatable, CustomStringConvertible {
     case i32
     case i64
     case f32
     case f64
     case bot  // Bottom type for unreachable code (matches anything)
-    
+
     /// Check if this type matches expected type (with Bot polymorphism)
     func matches(_ expected: StackValueType) -> Bool {
         if self == .bot || expected == .bot {
             return true  // Bot matches anything
         }
         return self == expected
+    }
+
+    /// Convert from WASMType
+    static func from(_ wasmType: WASMType) -> StackValueType {
+        switch wasmType {
+        case .i32: return .i32
+        case .i64: return .i64
+        case .f32: return .f32
+        case .f64: return .f64
+        default: return .i32  // Default to i32 for void/other
+        }
+    }
+
+    /// Convert to WASMType
+    func toWASMType() -> WASMType {
+        switch self {
+        case .i32: return .i32
+        case .i64: return .i64
+        case .f32: return .f32
+        case .f64: return .f64
+        case .bot: return .i32
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .i32: return "i32"
+        case .i64: return "i64"
+        case .f32: return "f32"
+        case .f64: return "f64"
+        case .bot: return "bot"
+        }
     }
 }
 
@@ -36,6 +68,13 @@ struct ControlFrame {
     }
 }
 
+/// Type context for validator - provides local/global types
+protocol ValidatorTypeContext: AnyObject {
+    func localType(at index: Int) -> WASMType?
+    func globalType(at index: Int) -> WASMType?
+    func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])?
+}
+
 /// WASM 3-Stack Validator
 /// Tracks stack state during code generation to ensure valid WASM
 class StackValidator {
@@ -43,20 +82,82 @@ class StackValidator {
     private var vals: [StackValueType] = []        // Value stack (operand types)
     private var ctrls: [ControlFrame] = []         // Control stack (block nesting)
     private var inits: Set<Int> = []               // Initialization stack (local indices)
-    
+
+    // Type context for local/global types
+    weak var typeContext: ValidatorTypeContext?
+
+    // Cached local types (for when we don't have full context)
+    private var localTypes: [Int: StackValueType] = [:]
+    private var globalTypes: [Int: StackValueType] = [:]
+
     // Errors encountered
     private(set) var errors: [String] = []
-    
-    init() {
+
+    // Function return type
+    private var functionReturnTypes: [StackValueType] = []
+
+    init(returnTypes: [WASMType] = []) {
+        self.functionReturnTypes = returnTypes.map { StackValueType.from($0) }
         // Start with implicit function block
         ctrls.append(ControlFrame(
             opcode: "function",
             startTypes: [],
-            endTypes: [],
+            endTypes: functionReturnTypes,
             valHeight: 0,
             initHeight: 0,
             unreachable: false
         ))
+    }
+
+    /// Set local variable type
+    func setLocalType(_ index: Int, type: WASMType) {
+        localTypes[index] = StackValueType.from(type)
+        inits.insert(index)  // Mark as initialized if we're setting its type
+    }
+
+    /// Set global variable type
+    func setGlobalType(_ index: Int, type: WASMType) {
+        globalTypes[index] = StackValueType.from(type)
+    }
+    
+    /// Initialize function locals (params + local vars)
+    /// Call this at the start of function generation
+    func initializeFunctionLocals(_ locals: [(index: Int, type: WASMType)]) {
+        for (index, type) in locals {
+            setLocalType(index, type: type)
+        }
+    }
+
+    /// Get local variable type
+    private func getLocalType(_ index: Int) -> StackValueType {
+        // First check cached types
+        if let cached = localTypes[index] {
+            return cached
+        }
+        // Then check context
+        if let context = typeContext, let type = context.localType(at: index) {
+            let stackType = StackValueType.from(type)
+            localTypes[index] = stackType
+            return stackType
+        }
+        // Default to i32
+        return .i32
+    }
+
+    /// Get global variable type
+    private func getGlobalType(_ index: Int) -> StackValueType {
+        // First check cached types
+        if let cached = globalTypes[index] {
+            return cached
+        }
+        // Then check context
+        if let context = typeContext, let type = context.globalType(at: index) {
+            let stackType = StackValueType.from(type)
+            globalTypes[index] = stackType
+            return stackType
+        }
+        // Default to i32
+        return .i32
     }
     
     // MARK: - Value Stack Operations
@@ -138,28 +239,46 @@ class StackValidator {
     }
     
     /// Pop a control frame (exit block)
+    /// Returns the frame and the number of excess values that need to be dropped
     @discardableResult
-    func popCtrl() -> ControlFrame? {
+    func popCtrl() -> (frame: ControlFrame?, excessValues: Int) {
         guard !ctrls.isEmpty else {
             errors.append("Control stack empty during popCtrl")
-            return nil
+            return (nil, 0)
         }
-        
+
         let frame = ctrls[0]
-        
+
         // Pop expected end types
         popVals(frame.endTypes)
-        
-        // Verify stack height
+
+        // Calculate excess values that need to be dropped
+        let excessValues = max(0, vals.count - frame.valHeight)
+
+        // Verify stack height and record excess
         if vals.count != frame.valHeight {
-            errors.append("Stack height mismatch: expected \(frame.valHeight), got \(vals.count)")
+            errors.append("Stack height mismatch: expected \(frame.valHeight), got \(vals.count) (excess: \(excessValues))")
+            // Clear excess values from tracking
+            while vals.count > frame.valHeight {
+                vals.removeLast()
+            }
         }
-        
+
         // Reset initialization to block start
         resetLocals(to: frame.initHeight)
-        
+
         ctrls.removeFirst()
-        return frame
+        return (frame, excessValues)
+    }
+
+    /// Peek at current control frame without modifying
+    func currentCtrl() -> ControlFrame? {
+        return ctrls.first
+    }
+
+    /// Get number of control frames (block nesting depth)
+    var controlDepth: Int {
+        return ctrls.count
     }
     
     /// Mark current block as unreachable
@@ -185,10 +304,8 @@ class StackValidator {
     
     /// Check if a local is initialized
     func getLocal(_ index: Int) -> Bool {
-        if !inits.contains(index) {
-            errors.append("Local \(index) used before initialization")
-            return false
-        }
+        // Blitz3D defaults all locals to 0, so they're implicitly initialized
+        // Skip initialization checking for Blitz3D compatibility
         return true
     }
     
@@ -318,24 +435,28 @@ class StackValidator {
         // Local operations
         case .localGet(let idx):
             _ = getLocal(idx)
-            // Type would come from context - for now assume i32
-            pushVal(.i32)
-            
-        case .localSet(let idx):
-            popVal()  // Type would be validated from context
-            setLocal(idx)
-            
-        case .localTee(let idx):
-            let type = popVal()
+            let type = getLocalType(idx)
             pushVal(type)
+
+        case .localSet(let idx):
+            let expectedType = getLocalType(idx)
+            popVal(expect: expectedType)
             setLocal(idx)
-            
+
+        case .localTee(let idx):
+            let expectedType = getLocalType(idx)
+            let actualType = popVal(expect: expectedType)
+            pushVal(actualType == .bot ? expectedType : actualType)
+            setLocal(idx)
+
         // Global operations
-        case .globalGet:
-            pushVal(.i32)  // Type from context
-            
-        case .globalSet:
-            popVal()
+        case .globalGet(let idx):
+            let type = getGlobalType(idx)
+            pushVal(type)
+
+        case .globalSet(let idx):
+            let expectedType = getGlobalType(idx)
+            popVal(expect: expectedType)
             
         // Memory operations (using your actual instruction set)
         case .i32Load:
@@ -373,16 +494,63 @@ class StackValidator {
         // Control flow
         case .if(let blockType, let thenBranch, let elseBranch):
             popVal(expect: .i32)  // Condition
-            // Would validate branches - for now simplified
-            
+            let endTypes: [StackValueType] = blockType == .void ? [] : [StackValueType.from(blockType)]
+            pushCtrl(opcode: "if", startTypes: [], endTypes: endTypes)
+
+            // Validate then branch
+            for instr in thenBranch {
+                validateInstruction(instr)
+            }
+
+            if let elseBranch = elseBranch {
+                // Switch to else - reset stack to frame height but keep types
+                let frame = ctrls[0]
+                while vals.count > frame.valHeight {
+                    vals.removeLast()
+                }
+                ctrls[0].unreachable = false
+
+                // Validate else branch
+                for instr in elseBranch {
+                    validateInstruction(instr)
+                }
+            }
+
+            let (_, excess) = popCtrl()
+            if excess > 0 {
+                errors.append("if: \(excess) excess value(s) need dropping")
+            }
+            pushVals(endTypes)
+
         case .block(let blockType, let body):
-            // Validate block - simplified for now
-            break
-            
+            let endTypes: [StackValueType] = blockType == .void ? [] : [StackValueType.from(blockType)]
+            pushCtrl(opcode: "block", startTypes: [], endTypes: endTypes)
+
+            for instr in body {
+                validateInstruction(instr)
+            }
+
+            let (_, excess) = popCtrl()
+            if excess > 0 {
+                errors.append("block: \(excess) excess value(s) need dropping")
+            }
+            pushVals(endTypes)
+
         case .loop(let blockType, let body):
-            // Validate loop - simplified for now
-            break
-            
+            let endTypes: [StackValueType] = blockType == .void ? [] : [StackValueType.from(blockType)]
+            // Loops branch to start, so startTypes are what you need for br 0
+            pushCtrl(opcode: "loop", startTypes: [], endTypes: endTypes)
+
+            for instr in body {
+                validateInstruction(instr)
+            }
+
+            let (_, excess) = popCtrl()
+            if excess > 0 {
+                errors.append("loop: \(excess) excess value(s) need dropping")
+            }
+            pushVals(endTypes)
+
         case .br(let depth):
             if depth >= ctrls.count {
                 errors.append("br: invalid depth \(depth)")
@@ -391,7 +559,7 @@ class StackValidator {
                 popVals(types)
                 unreachable()
             }
-            
+
         case .brIf(let depth):
             popVal(expect: .i32)
             if depth >= ctrls.count {
@@ -401,19 +569,58 @@ class StackValidator {
                 let popped = popVals(types)
                 pushVals(popped)  // Push back (conditional)
             }
-            
+
         case .return:
-            // Would pop return types from context
+            // Pop function return types
+            popVals(functionReturnTypes)
             unreachable()
-            
+
         case .call(let funcIdx):
-            // Would get function signature from context
-            // For now, simplified
-            break
-            
+            // Get function signature from context
+            if let context = typeContext,
+               let sig = context.functionSignature(at: funcIdx) {
+                // Pop parameters (in reverse order)
+                for param in sig.params.reversed() {
+                    popVal(expect: StackValueType.from(param))
+                }
+                // Push results
+                for result in sig.results {
+                    pushVal(StackValueType.from(result))
+                }
+            } else {
+                // Unknown function - can't validate properly, assume i32 result
+                // This is a fallback for when we don't have full context
+            }
+
+        case .callIndirect(let typeIdx, _):
+            popVal(expect: .i32)  // Table index
+            // Would need type context to validate properly
+
         case .unreachable:
             unreachable()
-            
+
+        case .end:
+            // End of block - handled by parent
+            break
+
+        // Bulk memory operations
+        case .memoryFill:
+            popVal(expect: .i32)  // size
+            popVal(expect: .i32)  // value
+            popVal(expect: .i32)  // dest
+
+        case .memoryCopy:
+            popVal(expect: .i32)  // size
+            popVal(expect: .i32)  // src
+            popVal(expect: .i32)  // dest
+
+        case .memorySize:
+            pushVal(.i32)
+
+        case .memoryGrow:
+            popVal(expect: .i32)  // pages
+            pushVal(.i32)         // previous size
+
         default:
             // Unknown instruction - skip validation
             break
@@ -433,20 +640,104 @@ class StackValidator {
     }
     
     /// Reset validator to initial state
-    func reset() {
+    func reset(returnTypes: [WASMType] = []) {
         vals.removeAll()
         ctrls.removeAll()
         inits.removeAll()
         errors.removeAll()
-        
+        localTypes.removeAll()
+        globalTypes.removeAll()
+        functionReturnTypes = returnTypes.map { StackValueType.from($0) }
+
         // Re-add implicit function block
         ctrls.append(ControlFrame(
             opcode: "function",
             startTypes: [],
-            endTypes: [],
+            endTypes: functionReturnTypes,
             valHeight: 0,
             initHeight: 0,
             unreachable: false
         ))
+    }
+
+    /// Get current stack types (for debugging/analysis)
+    var currentStackTypes: [StackValueType] {
+        return vals
+    }
+
+    /// Get current stack height relative to base frame
+    var stackHeightFromBase: Int {
+        guard let frame = ctrls.last else { return vals.count }
+        return vals.count - frame.valHeight
+    }
+
+    /// Calculate the excess values at current point
+    var currentExcessValues: Int {
+        guard let frame = ctrls.first else { return vals.count }
+        return max(0, vals.count - frame.valHeight)
+    }
+}
+
+// MARK: - Static Balance Checking
+
+extension StackValidator {
+    /// Calculate the net stack delta of an instruction sequence
+    /// Returns (netDelta, errors) where netDelta is the stack height change
+    static func calculateStackDelta(_ instructions: [WASMInstruction],
+                                    localTypes: [Int: WASMType] = [:],
+                                    globalTypes: [Int: WASMType] = [:],
+                                    functionSignatures: [Int: (params: [WASMType], results: [WASMType])] = [:]) -> (delta: Int, errors: [String]) {
+        let validator = StackValidator()
+
+        // Set up type context
+        for (idx, type) in localTypes {
+            validator.setLocalType(idx, type: type)
+        }
+        for (idx, type) in globalTypes {
+            validator.setGlobalType(idx, type: type)
+        }
+
+        // Validate each instruction
+        for instr in instructions {
+            validator.validateInstruction(instr)
+        }
+
+        return (validator.stackDepth, validator.errors)
+    }
+
+    /// Balance two branches to have the same stack effect
+    /// Returns the instructions needed to balance each branch (drops to add)
+    static func balanceBranches(thenBranch: [WASMInstruction],
+                                 elseBranch: [WASMInstruction],
+                                 localTypes: [Int: WASMType] = [:],
+                                 globalTypes: [Int: WASMType] = [:]) -> (thenDrops: Int, elseDrops: Int) {
+        let (thenDelta, _) = calculateStackDelta(thenBranch, localTypes: localTypes, globalTypes: globalTypes)
+        let (elseDelta, _) = calculateStackDelta(elseBranch, localTypes: localTypes, globalTypes: globalTypes)
+
+        // Both branches should have the same stack effect
+        // Add drops to the branch with more values
+        if thenDelta > elseDelta {
+            return (thenDelta - elseDelta, 0)
+        } else if elseDelta > thenDelta {
+            return (0, elseDelta - thenDelta)
+        } else {
+            return (0, 0)
+        }
+    }
+
+    /// Insert drops to balance instructions to a target delta
+    static func balanceToTarget(_ instructions: inout [WASMInstruction],
+                                 targetDelta: Int,
+                                 localTypes: [Int: WASMType] = [:],
+                                 globalTypes: [Int: WASMType] = [:]) -> Int {
+        let (actualDelta, _) = calculateStackDelta(instructions, localTypes: localTypes, globalTypes: globalTypes)
+
+        let excessValues = actualDelta - targetDelta
+        if excessValues > 0 {
+            for _ in 0..<excessValues {
+                instructions.append(.drop)
+            }
+        }
+        return max(0, excessValues)
     }
 }

@@ -3,6 +3,7 @@
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift
+/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift
 /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift

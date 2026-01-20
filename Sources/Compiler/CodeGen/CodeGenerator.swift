@@ -7,18 +7,22 @@
 
 public struct CodeGenerator {
     private var context: ModuleContext
-    
+
     // Module instances
     private var expressionGenerator: ExpressionGeneration
     private var statementGenerator: StatementGeneration
     private var functionGenerator: FunctionGeneration
     private var dataGenerator: DataGeneration
-    
+
+    // Stack optimization (Koopman's algorithm)
+    private var stackScheduler: StackScheduler
+    private var enableStackOptimization: Bool = true  // Toggle for debugging
+
     // Internal state for things not yet moved to context/modules
     private var typeCollectionGlobal: Int = -1
     private var scratchGlobal: Int = -1
     private var scratchGlobal2: Int = -1
-    
+
     public init() {
         let module = WASMModule()
         self.context = ModuleContext(module: module)
@@ -26,7 +30,8 @@ public struct CodeGenerator {
         self.statementGenerator = StatementGeneration(context: context)
         self.functionGenerator = FunctionGeneration(context: context)
         self.dataGenerator = DataGeneration(context: context)
-        
+        self.stackScheduler = StackScheduler()
+
         // Link generators
         self.statementGenerator.configure(expressionGenerator: expressionGenerator, dataGenerator: dataGenerator)
         self.functionGenerator.configure(statementGenerator: statementGenerator)
@@ -70,8 +75,33 @@ public struct CodeGenerator {
         for functionNode in program.functions {
             generateFunction(functionNode)
         }
-        
+
+        // Post-processing: Apply Koopman stack scheduling optimization
+        if enableStackOptimization {
+            applyStackOptimizations()
+        }
+
         return context.module
+    }
+
+    /// Apply Koopman-style stack scheduling optimization to all function bodies
+    private mutating func applyStackOptimizations() {
+        var totalOptimized = 0
+
+        for i in 0..<context.module.code.count {
+            let originalBody = context.module.code[i].body
+            let optimizedBody = stackScheduler.optimizeFunction(originalBody)
+
+            if optimizedBody.count != originalBody.count {
+                totalOptimized += 1
+            }
+
+            context.module.code[i].body = optimizedBody
+        }
+
+        if totalOptimized > 0 {
+            print("DEBUG_SCHEDULER: Optimized \(totalOptimized) function(s) with stack scheduling")
+        }
     }
     
     private mutating func addImports() {

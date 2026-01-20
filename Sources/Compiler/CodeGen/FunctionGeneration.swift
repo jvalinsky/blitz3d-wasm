@@ -87,7 +87,7 @@ public final class FunctionGeneration {
         
         // Configure statement generator
         statementGenerator?.configureGotos(labelStateMap: labelStateMap, gotoStateLocalIdx: gotoStateLocalIdx)
-        
+
         // Propagate return type
         let returnWasmType: WASMType
         if let typeAnnot = functionNode.returnType {
@@ -96,6 +96,20 @@ public final class FunctionGeneration {
             returnWasmType = typeHandling.wasmType(from: "Int")
         }
         statementGenerator?.setCurrentReturnType(returnWasmType)
+
+        // Reset stack validator for new function with return type
+        statementGenerator?.resetStackValidator(returnType: returnWasmType)
+
+        // Register parameter types with stack validator
+        for (index, param) in functionNode.parameters.enumerated() {
+            let paramType = typeHandling.typeInfo(from: param.type?.rawValue ?? "Int")
+            statementGenerator?.registerLocalType(index, type: paramType.wasmType)
+        }
+
+        // Register goto state local type if present
+        if gotoStateLocalIdx >= 0 {
+            statementGenerator?.registerLocalType(gotoStateLocalIdx, type: .i32)
+        }
         
         if hasGotoInCurrentFunction {
             // Initial state: 0 (start of function)

@@ -290,8 +290,16 @@ public struct Parser {
 
     public mutating func parse() -> ProgramNode {
         var program = ProgramNode()
+        var globalCount = 0
+        var functionCount = 0
 
+        var statementCount = 0
         while currentToken.type != .endOfFile {
+            statementCount += 1
+            if statementCount <= 50 || statementCount % 50 == 0 {
+                print("DEBUG_PARSER: Item #\(statementCount) token=\(currentToken.type) text='\(currentToken.text)'")
+            }
+            
             if currentToken.type == .newline {
                 advance()
                 continue
@@ -300,12 +308,17 @@ public struct Parser {
             if let statement = parseTopLevelStatement() {
                 switch statement {
                 case .function(let funcNode):
+                    functionCount += 1
                     program.functions.append(funcNode)
                 case .typeDeclaration(let typeDecl):
                     let typeNode = TypeNode(name: typeDecl.typeName, fields: typeDecl.fields)
                     program.types.append(typeNode)
                 case .empty:
                     break
+                case .global:
+                    globalCount += 1
+                    print("DEBUG_PARSER: Found Global statement #\(globalCount) (after \(functionCount) functions)")
+                    program.statements.append(statement)
                 default:
                     program.statements.append(statement)
                 }

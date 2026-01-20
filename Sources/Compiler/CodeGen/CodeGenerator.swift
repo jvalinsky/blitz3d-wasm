@@ -812,16 +812,22 @@ public struct CodeGenerator {
     
     private mutating func processGlobalDeclarations(_ statements: [StatementNode]) {
         let typeHandling = TypeHandling()
+        print("DEBUG_GLOBAL_PROC: Processing \(statements.count) statements for Global declarations")
+        var globalCount = 0
         for statement in statements {
             if case .global(let decl) = statement {
+                globalCount += 1
+                print("DEBUG_GLOBAL_PROC: Found Global statement #\(globalCount) with \(decl.variables.count) variable(s)")
                 for variable in decl.variables {
                     let wasmType = typeHandling.typeInfo(from: variable.typeSuffix).wasmType
+                    print("DEBUG_GLOBAL: Registering global '\(variable.name)' with suffix=\(variable.typeSuffix?.rawValue ?? "none") → wasmType=\(wasmType)")
                     let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
                     _ = context.variableManagement.registerGlobalWithIndex(variable.name, type: wasmType, typeName: variable.typeName, wasmIndex: actualGlobalIdx)
                     context.module.exports.append(WASMExport(name: variable.name, kind: .global, index: actualGlobalIdx))
                 }
             }
         }
+        print("DEBUG_GLOBAL_PROC: Finished processing. Found \(globalCount) Global statements")
     }
     
     private func extractTopLevelStatements(_ statements: [StatementNode]) -> [StatementNode] {

@@ -154,6 +154,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             switch assign.target {
             case .identifier(let id):
+                print("DEBUG_ASSIGN: Assigning to '\(id.name)' suffix=\(id.typeSuffix?.rawValue ?? "none") targetType=\(targetType) valueType=\(valueResult.type)")
                 
                 if let local = context.variableManagement.localInfo(for: id.name) {
                     print("  → Found as local[\(local.index)] type=\(local.type)")

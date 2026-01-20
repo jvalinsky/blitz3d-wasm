@@ -295,10 +295,8 @@ public struct Parser {
 
         var statementCount = 0
         while currentToken.type != .endOfFile {
+            let startToken = currentToken
             statementCount += 1
-            if statementCount <= 50 || statementCount % 50 == 0 {
-                print("DEBUG_PARSER: Item #\(statementCount) token=\(currentToken.type) text='\(currentToken.text)'")
-            }
             
             if currentToken.type == .newline {
                 advance()
@@ -350,13 +348,29 @@ public struct Parser {
                     }
                 }
             } else {
+                // parseTopLevelStatement() returned nil - this is the problem!
+                print("🔴 PARSER ERROR: parseTopLevelStatement() returned nil!")
+                print("  Statement #\(statementCount)")
+                print("  Token: type=\(currentToken.type) text='\(currentToken.text)'")
+                print("  Position: After \(functionCount) functions, \(globalCount) globals")
+                print("  Started at: type=\(startToken.type) text='\(startToken.text)'")
+                
                 // Report error and attempt recovery
                 if currentToken.type != .endOfFile {
                     reportError("Unexpected token '\(currentToken.text)'")
                     synchronize()
+                } else {
+                    print("  Reason: EOF reached")
+                    break  // Normal termination
                 }
             }
         }
+
+        print("DEBUG_PARSER: === PARSING COMPLETE ===")
+        print("  Total items processed: \(statementCount)")
+        print("  Functions found: \(functionCount)")
+        print("  Globals found: \(globalCount)")
+        print("  Final token: type=\(currentToken.type) text='\(currentToken.text)'")
 
         return program
     }

@@ -96,10 +96,18 @@
                     return;
                 }
 
-                await Blitz3D.init();
+                // Get canvas element
+                const canvas = document.getElementById('canvas');
+                if (!canvas) {
+                    log('ERROR: Canvas element not found', 'error');
+                    return;
+                }
+
+                await Blitz3D.init(canvas);
                 log('✓ Runtime initialized', 'success');
+                log(`  Canvas: ${canvas.width}x${canvas.height}`, 'info');
                 log(`  Functions: ${Object.keys(Blitz3D.imports.env).length} env`, 'info');
-                log(`  Entities: ${Object.keys(Blitz3D.graphics.entities).length}`, 'info');
+                log(`  Scene objects: ${Blitz3D.graphics.scene.children.length}`, 'info');
 
             } catch (err) {
                 log(`ERROR: ${err.message}`, 'error');

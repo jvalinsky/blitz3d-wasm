@@ -1,9 +1,0 @@
-{
-  "name": "blitz3d-wasm",
-  "version": "1.0.0",
-  "description": "Blitz3D WASM Compiler Tests",
-  "scripts": {
-    "test:wasm": "node validate_wasm.js Sources/Runtime/input_test.wasm",
-    "test:all": "swift test && node validate_wasm.js Sources/Runtime/input_test.wasm"
-  }
-}

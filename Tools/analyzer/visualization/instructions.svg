@@ -2,6 +2,66 @@
       .bar { fill: #2ecc71; }
       .bar-label { font-size: 10px; }
       .count-label { font-size: 10px; }
-    </style><text x="390" y="20" text-anchor="middle" font-weight="bold">
+    </style><g>
+        <text class="bar-label" x="95" y="52" text-anchor="end">get_local</text>
+        <rect class="bar" x="100" y="42" width="580" height="16"/>
+        <text class="count-label" x="685" y="54">22</text>
+      </g><g>
+        <text class="bar-label" x="95" y="72" text-anchor="end">add</text>
+        <rect class="bar" x="100" y="62" width="263.6363636363636" height="16"/>
+        <text class="count-label" x="368.6363636363636" y="74">10</text>
+      </g><g>
+        <text class="bar-label" x="95" y="92" text-anchor="end">const</text>
+        <rect class="bar" x="100" y="82" width="184.54545454545453" height="16"/>
+        <text class="count-label" x="289.5454545454545" y="94">7</text>
+      </g><g>
+        <text class="bar-label" x="95" y="112" text-anchor="end">set_local</text>
+        <rect class="bar" x="100" y="102" width="131.8181818181818" height="16"/>
+        <text class="count-label" x="236.8181818181818" y="114">5</text>
+      </g><g>
+        <text class="bar-label" x="95" y="132" text-anchor="end">end</text>
+        <rect class="bar" x="100" y="122" width="131.8181818181818" height="16"/>
+        <text class="count-label" x="236.8181818181818" y="134">5</text>
+      </g><g>
+        <text class="bar-label" x="95" y="152" text-anchor="end">local</text>
+        <rect class="bar" x="100" y="142" width="105.45454545454545" height="16"/>
+        <text class="count-label" x="210.45454545454544" y="154">4</text>
+      </g><g>
+        <text class="bar-label" x="95" y="172" text-anchor="end">unreachable</text>
+        <rect class="bar" x="100" y="162" width="105.45454545454545" height="16"/>
+        <text class="count-label" x="210.45454545454544" y="174">4</text>
+      </g><g>
+        <text class="bar-label" x="95" y="192" text-anchor="end">get_global</text>
+        <rect class="bar" x="100" y="182" width="52.72727272727273" height="16"/>
+        <text class="count-label" x="157.72727272727272" y="194">2</text>
+      </g><g>
+        <text class="bar-label" x="95" y="212" text-anchor="end">set_global</text>
+        <rect class="bar" x="100" y="202" width="52.72727272727273" height="16"/>
+        <text class="count-label" x="157.72727272727272" y="214">2</text>
+      </g><g>
+        <text class="bar-label" x="95" y="232" text-anchor="end">load</text>
+        <rect class="bar" x="100" y="222" width="52.72727272727273" height="16"/>
+        <text class="count-label" x="157.72727272727272" y="234">2</text>
+      </g><g>
+        <text class="bar-label" x="95" y="252" text-anchor="end">memory.copy</text>
+        <rect class="bar" x="100" y="242" width="52.72727272727273" height="16"/>
+        <text class="count-label" x="157.72727272727272" y="254">2</text>
+      </g><g>
+        <text class="bar-label" x="95" y="272" text-anchor="end">return</text>
+        <rect class="bar" x="100" y="262" width="52.72727272727273" height="16"/>
+        <text class="count-label" x="157.72727272727272" y="274">2</text>
+      </g><g>
+        <text class="bar-label" x="95" y="292" text-anchor="end">call</text>
+        <rect class="bar" x="100" y="282" width="26.363636363636363" height="16"/>
+        <text class="count-label" x="131.36363636363637" y="294">1</text>
+      </g><g>
+        <text class="bar-label" x="95" y="312" text-anchor="end">store</text>
+        <rect class="bar" x="100" y="302" width="26.363636363636363" height="16"/>
+        <text class="count-label" x="131.36363636363637" y="314">1</text>
+      </g><g>
+        <text class="bar-label" x="95" y="332" text-anchor="end">if</text>
+        <rect class="bar" x="100" y="322" width="26.363636363636363" height="16"/>
+        <text class="count-label" x="131.36363636363637" y="334">1</text>
+      </g><text x="390" y="20" text-anchor="middle" font-weight="bold">
       Top 15 Instructions by Frequency
     </text></svg>

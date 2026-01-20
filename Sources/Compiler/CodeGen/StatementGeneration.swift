@@ -138,11 +138,18 @@ public final class StatementGeneration: ValidatorTypeContext {
             
         case .assignment(let assign):
             guard let expressionGenerator = expressionGenerator else { break }
+            
+            // DEBUG: Track assignments to identify type mismatches
+            print("DEBUG_ASSIGN: \(assign.target) = <expr>")
+            
             let valueResult = expressionGenerator.generateWithInfo(assign.value)
             let targetType = getTargetType(from: assign.target)
             
+            print("  Value type: \(valueResult.type), Target type: \(targetType)")
+            
             var finalInstrs = valueResult.instrs
             if valueResult.type != targetType {
+                print("  CONVERTING: \(valueResult.type) → \(targetType)")
                 finalInstrs.append(contentsOf: convert(from: valueResult.type, to: targetType))
             }
             
@@ -153,15 +160,19 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             switch assign.target {
             case .identifier(let id):
+                print("DEBUG_ASSIGN_LOOKUP: Looking up '\(id.name)'")
+                
                 if let local = context.variableManagement.localInfo(for: id.name) {
+                    print("  → Found as local[\(local.index)] type=\(local.type)")
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.localSet(local.index))
                 } else if let global = context.variableManagement.globalInfo(for: id.name) {
+                    print("  → Found as global[\(global.index)] type=\(global.type)")
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.globalSet(global.index))
                 } else {
                     // Auto-declare implicit variable as global (Blitz3D behavior)
-                    print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global")
+                    print("  → NOT FOUND, auto-declaring as global")
                     let wasmType = targetType
                     
                     // Register actual WASM global and track in VariableManagement
@@ -1031,19 +1042,26 @@ public final class StatementGeneration: ValidatorTypeContext {
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
         case .identifier(let id):
+            print("DEBUG_TARGET: Checking type for '\(id.name)', suffix: \(id.typeSuffix?.rawValue ?? "none")")
+            
             // CRITICAL FIX: Check type suffix FIRST before registry lookup
             // This ensures float variables (x#) are recognized as f32 even during initial assignment
             if let suffix = id.typeSuffix {
-                return typeHandling.wasmType(from: suffix)
+                let type = typeHandling.wasmType(from: suffix)
+                print("  → From suffix: \(type)")
+                return type
             }
             
             // Then check if variable is already registered
             if let local = context.variableManagement.localInfo(for: id.name) {
+                print("  → From local registry: \(local.type)")
                 return local.type
             }
             if let global = context.variableManagement.globalInfo(for: id.name) {
+                print("  → From global registry: \(global.type)")
                 return global.type
             }
+            print("  → DEFAULT: i32")
         case .arrayAccess(let access):
             if case .identifier(let arrayId) = access.array,
                let array = context.variableManagement.arrayInfo(for: arrayId.name) {

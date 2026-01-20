@@ -55,7 +55,19 @@ public final class ExpressionGeneration {
             }
             // Auto-declare implicit variable as global (Blitz3D behavior)
             print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
-            let wasmType = typeHandling.typeInfo(from: id.name).wasmType // Guess type from name/suffix
+            
+            // CRITICAL FIX: Check type suffix FIRST to get correct type
+            // This ensures variables like ScrollMenuHeight# are correctly inferred as f32
+            // even when first accessed without suffix (ScrollMenuHeight)
+            let wasmType: WASMType
+            if let suffix = id.typeSuffix {
+                wasmType = typeHandling.wasmType(from: suffix)
+                print("  → Inferred from suffix: \(wasmType)")
+            } else {
+                wasmType = typeHandling.typeInfo(from: id.name).wasmType
+                print("  → Inferred from name: \(wasmType)")
+            }
+            
             let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
             _ = context.variableManagement.registerGlobalWithIndex(id.name, type: wasmType, typeName: nil, wasmIndex: actualGlobalIdx)
             return ([.globalGet(actualGlobalIdx)], wasmType)

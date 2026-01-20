@@ -48,6 +48,14 @@
         },
         {
           "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift"
+        },
+        {
+          "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift"
         },
         {
@@ -104,6 +112,8 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/DataGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/ExpressionGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/FunctionGeneration.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler.swift.o",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/TypeHandling.swift.o",
         "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/VariableManagement.swift.o",
@@ -190,6 +200,8 @@
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift",
+        "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
         "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
@@ -724,6 +736,8 @@
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/DataGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/ExpressionGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift",
+      "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/TypeHandling.swift",
       "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/VariableManagement.swift",
@@ -1158,6 +1172,14 @@
         {
           "kind" : "file",
           "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/FunctionGeneration.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift"
         },
         {
           "kind" : "file",

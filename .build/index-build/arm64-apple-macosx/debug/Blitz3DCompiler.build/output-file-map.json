@@ -37,6 +37,20 @@
     "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/FunctionGeneration.swiftdeps",
     "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/FunctionGeneration.dia"
   },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackScheduler.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackScheduler.dia"
+  },
+  "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StackValidator.swift": {
+    "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.d",
+    "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.swift.o",
+    "swiftmodule": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator~partial.swiftmodule",
+    "swift-dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.swiftdeps",
+    "diagnostics": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StackValidator.dia"
+  },
   "/Users/jack/Software/scp_port/blitz3d-wasm/Sources/Compiler/CodeGen/StatementGeneration.swift": {
     "dependencies": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.d",
     "object": "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/StatementGeneration.swift.o",

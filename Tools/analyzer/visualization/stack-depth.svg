@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><style>
+      .bar { fill: #3498db; }
+      .bar:hover { fill: #2980b9; }
+      .axis { font-size: 10px; }
+      .label { font-size: 12px; }
+    </style><text class="label" x="415" y="20" text-anchor="middle">
+      Maximum Stack Depth per Function
+    </text><text class="label" x="15" y="190" transform="rotate(-90, 15, 190)" 
+      text-anchor="middle">Stack Depth</text></svg>

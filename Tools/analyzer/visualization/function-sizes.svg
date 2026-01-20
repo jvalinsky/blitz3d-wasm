@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><style>
+      .bar { fill: #9b59b6; }
+      .axis { font-size: 9px; }
+    </style><text x="415" y="20" text-anchor="middle" font-weight="bold">
+      Function Size Distribution (Top 20)
+    </text></svg>

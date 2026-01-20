@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-01-20T14:47:54.411Z",
+  "summary": {
+    "totalFunctions": 0,
+    "totalTypes": 0,
+    "totalGlobals": 0,
+    "totalInstructions": 0,
+    "stackValid": true,
+    "typeValid": true,
+    "controlFlowValid": true
+  },
+  "stackBalance": {
+    "valid": true,
+    "functionResults": [],
+    "errors": []
+  },
+  "typeConsistency": {
+    "valid": true,
+    "issues": []
+  },
+  "controlFlow": {
+    "valid": true,
+    "results": [],
+    "loopHeaders": []
+  },
+  "metrics": {
+    "totalInstructions": 0,
+    "instructionCounts": {},
+    "functionSizes": [],
+    "stackDepths": [],
+    "localCounts": [],
+    "branchCounts": [],
+    "callCounts": [],
+    "maxStackObserved": 0
+  },
+  "errors": [],
+  "warnings": []
+}

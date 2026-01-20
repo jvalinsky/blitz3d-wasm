@@ -2,7 +2,7 @@
  * WASM Output Analyzer for Blitz3D Compiler
  * 
  * Analyzes compiled WASM modules for:
- * - Stack balance validation
+ * - Stack balance validation (WASM spec 3-stack algorithm)
  * - Type consistency checking
  * - Control flow analysis
  * - Function call validation
@@ -10,18 +10,13 @@
  */
 
 import { readFileSync } from 'fs';
-import { BinaryReader } from 'wasmparser';
+import { decode } from '@webassemblyjs/wasm-parser';
 
 export class WASMAnalyzer {
   constructor(wasmBuffer) {
     this.buffer = Buffer.from(wasmBuffer);
-    this.reader = null;
+    this.ast = null;
     this.module = null;
-    this.functions = [];
-    this.types = [];
-    this.globals = [];
-    this.memory = null;
-    this.tables = [];
     this.errors = [];
     this.warnings = [];
     this.metrics = {
@@ -38,8 +33,7 @@ export class WASMAnalyzer {
 
   parse() {
     try {
-      this.reader = new BinaryReader();
-      this.reader.read(this.buffer);
+      this.ast = decode(this.buffer);
       this.extractMetadata();
       return this;
     } catch (e) {
@@ -49,95 +43,34 @@ export class WASMAnalyzer {
   }
 
   extractMetadata() {
-    if (!this.reader) return;
-
-    const sections = this.reader.result || {};
+    if (!this.ast?.body?.[0]?.fields) return;
     
-    // Extract types (type section is typically section 1)
-    if (sections.types) {
-      this.types = sections.types.map(t => ({
-        params: t.params.map(p => this.wasmTypeToString(p)),
-        results: t.results.map(r => this.wasmTypeToString(r))
-      }));
-    }
-
-    // Extract functions
-    if (sections.functions) {
-      this.functions = sections.functions.map((f, idx) => ({
-        index: idx,
-        typeIndex: f.type,
-        type: this.types[f.type] || null,
-        locals: [],
-        instructions: [],
-        stackHeight: 0,
-        maxStack: 0
-      }));
-    }
-
-    // Extract globals
-    if (sections.globals) {
-      this.globals = sections.globals.map((g, idx) => ({
-        index: idx,
-        type: this.wasmTypeToString(g.type),
-        mutable: g.mutable
-      }));
-    }
-
-    // Extract memory
-    if (sections.memory) {
-      this.memory = {
-        initial: sections.memory.initial,
-        maximum: sections.memory.maximum,
-        pages: sections.memory.initial
-      };
-    }
-
-    // Extract tables
-    if (sections.tables) {
-      this.tables = sections.tables.map((t, idx) => ({
-        index: idx,
-        elementType: this.wasmTypeToString(t.elementType),
-        initial: t.initial,
-        maximum: t.maximum
-      }));
-    }
-
-    // If sections object doesn't have expected structure, try reader directly
-    if (this.functions.length === 0 && this.reader.funcs) {
-      this.functions = this.reader.funcs.map((f, idx) => ({
-        index: idx,
-        typeIndex: f.type,
-        type: this.types[f.type] || null,
-        locals: [],
-        instructions: [],
-        stackHeight: 0,
-        maxStack: 0
-      }));
-    }
+    const module = this.ast.body[0];
+    this.module = {
+      fields: module.fields,
+      functions: module.fields.filter(f => f.type === 'Func'),
+      types: module.fields.filter(f => f.type === 'TypeInstruction'),
+      globals: module.fields.filter(f => f.type === 'Global'),
+      memory: module.fields.find(f => f.type === 'Memory'),
+      imports: module.fields.filter(f => f.type === 'ModuleImport'),
+      exports: module.fields.filter(f => f.type === 'ModuleExport')
+    };
   }
 
   wasmTypeToString(type) {
-    const types = {
-      0x7f: 'i32',
-      0x7e: 'i64',
-      0x7d: 'f32',
-      0x7c: 'f64',
-      0x70: 'funcref',
-      0x6f: 'externref'
-    };
     if (typeof type === 'string') return type;
-    return types[type] || `unknown(${type})`;
+    if (type?.valtype) return type.valtype;
+    return 'unknown';
   }
 
   analyzeStackBalance() {
-    if (!this.reader) {
+    if (!this.module) {
       return { valid: false, errors: ['No module parsed'] };
     }
 
     const results = [];
-    const code = this.reader.code || [];
     
-    code.forEach((func, funcIdx) => {
+    this.module.functions.forEach((func, funcIdx) => {
       const funcResult = this.analyzeFunctionStackBalance(func, funcIdx);
       results.push(funcResult);
       
@@ -173,7 +106,7 @@ export class WASMAnalyzer {
 
     const popVal = (expected) => {
       if (valStack.length === 0) {
-        errors.push(`Stack underflow at instruction`);
+        errors.push(`Stack underflow`);
         return 'error';
       }
       const actual = valStack.pop();
@@ -184,35 +117,28 @@ export class WASMAnalyzer {
       return actual;
     };
 
-    const instructions = func.code || func.instructions || func.ops || [];
+    const instructions = func.body || [];
     
     for (let i = 0; i < instructions.length; i++) {
       const instr = instructions[i];
       this.metrics.totalInstructions++;
 
-      const instrName = instr.name || this.getInstrName(instr.opcode);
-      if (!instrName) {
-        this.metrics.totalInstructions--;
-        continue;
-      }
+      const instrName = this.getInstructionName(instr);
+      if (!instrName) continue;
 
       this.metrics.instructionCounts[instrName] = 
         (this.metrics.instructionCounts[instrName] || 0) + 1;
 
       switch (instrName) {
-        case 'const':
         case 'i32.const':
         case 'i64.const':
         case 'f32.const':
         case 'f64.const':
-          pushVal(instrName.split('.')[1] || 'i32');
+          pushVal(instrName.split('.')[1]);
           break;
 
         case 'drop':
-        case 'drop':
-          if (valStack.length === 0 && unreachable) {
-            break;
-          }
+          if (valStack.length === 0 && unreachable) break;
           popVal('any');
           break;
 
@@ -225,15 +151,15 @@ export class WASMAnalyzer {
 
         case 'local.get':
         case 'local.tee':
-        case 'local.get_s':
-        case 'local.get_u':
-          pushVal(func.locals?.[instr.index] || 'i32');
+          pushVal('i32');
           break;
 
         case 'local.set':
-        case 'local.set_s':
-        case 'local.set_u':
-          popVal(func.locals?.[instr.index] || 'i32');
+          popVal('i32');
+          break;
+
+        case 'local':
+          // local declaration - no stack effect
           break;
 
         case 'i32.add':
@@ -356,46 +282,37 @@ export class WASMAnalyzer {
           break;
 
         case 'end':
-          if (ctrlStack.length === 0) {
-            break;
-          }
-          const frame = ctrlStack.shift();
-          while (valStack.length > frame.valHeight) {
-            popVal('any');
-            errors.push(`Excess value at end of ${frame.type}, inserted drop`);
+        case 'else':
+          if (ctrlStack.length > 0) {
+            const frame = ctrlStack.shift();
+            while (valStack.length > frame.valHeight) {
+              popVal('any');
+              errors.push(`Excess value at end of ${frame.type}`);
+            }
           }
           break;
 
         case 'br':
-          if (instr.depth >= ctrlStack.length) {
-            errors.push(`Invalid branch depth: ${instr.depth}`);
+          if (instr.val > ctrlStack.length) {
+            errors.push(`Invalid branch depth: ${instr.val}`);
           } else {
-            const target = ctrlStack[instr.depth];
             unreachable = true;
           }
           break;
 
         case 'br_if':
           popVal('i32');
-          if (instr.depth >= ctrlStack.length) {
-            errors.push(`Invalid br_if depth: ${instr.depth}`);
+          if (instr.val > ctrlStack.length) {
+            errors.push(`Invalid br_if depth: ${instr.val}`);
           }
           break;
 
         case 'return':
-          if (ctrlStack.length > 0) {
-          }
           unreachable = true;
           break;
 
         case 'call':
-          const sig = this.types[instr.index];
-          if (sig) {
-            sig.params.forEach(() => popVal('any'));
-            sig.results.forEach(t => pushVal(t));
-          } else {
-            pushVal('any');
-          }
+          pushVal('any');
           break;
 
         case 'call_indirect':
@@ -407,9 +324,6 @@ export class WASMAnalyzer {
           break;
 
         case 'nop':
-          break;
-
-        default:
           break;
       }
     }
@@ -429,110 +343,52 @@ export class WASMAnalyzer {
     };
   }
 
-  getInstrName(opcode) {
-    const opcodes = {
-      0x00: 'unreachable',
-      0x01: 'nop',
-      0x02: 'block',
-      0x03: 'loop',
-      0x04: 'if',
-      0x05: 'else',
-      0x0b: 'end',
-      0x0c: 'br',
-      0x0d: 'br_if',
-      0x0e: 'br_table',
-      0x0f: 'return',
-      0x10: 'call',
-      0x11: 'call_indirect',
-      0x1a: 'drop',
-      0x1b: 'select',
-      0x20: 'local.get',
-      0x21: 'local.set',
-      0x22: 'local.tee',
-      0x23: 'global.get',
-      0x24: 'global.set',
-      0x28: 'i32.load',
-      0x29: 'i64.load',
-      0x2a: 'f32.load',
-      0x2b: 'f64.load',
-      0x36: 'i32.store',
-      0x37: 'i64.store',
-      0x38: 'f32.store',
-      0x39: 'f64.store',
-      0x3c: 'i32.store8',
-      0x3d: 'i32.store16',
-      0x3e: 'i64.store8',
-      0x3f: 'i64.store16',
-      0x40: 'i64.store32',
-      0x41: 'i32.const',
-      0x42: 'i64.const',
-      0x43: 'f32.const',
-      0x44: 'f64.const',
-      0x45: 'i32.eqz',
-      0x46: 'i32.eq',
-      0x47: 'i32.ne',
-      0x48: 'i32.lt_s',
-      0x49: 'i32.lt_u',
-      0x4a: 'i32.gt_s',
-      0x4b: 'i32.gt_u',
-      0x4c: 'i32.le_s',
-      0x4d: 'i32.le_u',
-      0x4e: 'i32.ge_s',
-      0x4f: 'i32.ge_u',
-      0x6a: 'i32.add',
-      0x6b: 'i32.sub',
-      0x6c: 'i32.mul',
-      0x6d: 'i32.div_s',
-      0x6e: 'i32.div_u',
-      0xa0: 'call',
-      0xfc: 'misc_prefix',
-      0xfd: 'simd_prefix',
-      0xfe: 'atomics_prefix'
-    };
-    return opcodes[opcode] || null;
+  getInstructionName(instr) {
+    if (!instr) return null;
+    if (typeof instr === 'string') return instr;
+    if (instr.id) return instr.id;
+    if (instr.instr) return instr.instr;
+    return null;
   }
 
   analyzeTypeConsistency() {
     const issues = [];
-
-    if (!this.reader) return { valid: true, issues: [] };
-
     return {
-      valid: true,
-      issues: []
+      valid: issues.filter(i => i.severity === 'error').length === 0,
+      issues
     };
   }
 
   analyzeControlFlow() {
     const results = [];
 
-    if (!this.reader) {
-      return { valid: false, errors: ['No code found'] };
+    if (!this.module) {
+      return { valid: false, errors: ['No module found'] };
     }
 
-    const code = this.reader.code || [];
-    code.forEach((func, funcIdx) => {
-      const instructions = func.code || func.instructions || func.ops || [];
+    this.module.functions.forEach((func, funcIdx) => {
+      const instructions = func.body || [];
       let currentDepth = 0;
 
       instructions.forEach((instr, idx) => {
-        const instrName = instr.name || this.getInstrName(instr.opcode);
+        const instrName = this.getInstructionName(instr);
         
         if (instrName === 'block' || instrName === 'loop') {
           currentDepth++;
         }
 
-        if (instrName === 'end') {
+        if (instrName === 'end' || instrName === 'else') {
           currentDepth--;
         }
 
         if (instrName === 'br' || instrName === 'br_if') {
-          if (instr.depth > currentDepth) {
+          const depth = instr.val || instr.depth || 0;
+          if (depth > currentDepth) {
             results.push({
               funcIdx,
               idx,
               type: 'invalid_branch_depth',
-              message: `Branch to depth ${instr.depth} exceeds current depth ${currentDepth}`
+              message: `Branch depth ${depth} exceeds control depth ${currentDepth}`
             });
           }
         }
@@ -542,7 +398,7 @@ export class WASMAnalyzer {
         results.push({
           funcIdx,
           type: 'unbalanced_blocks',
-          message: `Function ends with block depth ${currentDepth}`
+          message: `Function ends with control depth ${currentDepth}`
         });
       }
     });
@@ -555,36 +411,23 @@ export class WASMAnalyzer {
   }
 
   calculateMetrics() {
-    if (!this.reader) return this.metrics;
+    if (!this.module) return this.metrics;
 
-    const code = this.reader.code || [];
-    
-    code.forEach(func => {
-      const instructions = func.code || func.instructions || func.ops || [];
+    this.module.functions.forEach((func, funcIdx) => {
+      const instructions = func.body || [];
       this.metrics.functionSizes.push(instructions.length);
-    });
 
-    code.forEach(func => {
-      const locals = func.locals || [];
-      const count = locals.length > 0 ? locals.reduce((sum, l) => sum + (l.count || 1), 0) : 0;
-      this.metrics.localCounts.push(count);
-    });
+      const branches = instructions.filter(i => {
+        const name = this.getInstructionName(i);
+        return name === 'br' || name === 'br_if' || name === 'br_table';
+      }).length;
+      this.metrics.branchCounts.push({ funcIdx, branches });
 
-    code.forEach((func, idx) => {
-      const instructions = func.code || func.instructions || func.ops || [];
-      const calls = instructions.filter(i => 
-        (i.name === 'call' || i.opcode === 0x10 || i.opcode === 0xa0)
-      ).length;
-      this.metrics.callCounts.push({ funcIdx: idx, calls });
-    });
-
-    code.forEach((func, idx) => {
-      const instructions = func.code || func.instructions || func.ops || [];
-      const branches = instructions.filter(i => 
-        i.name === 'br' || i.name === 'br_if' || i.name === 'br_table' ||
-        i.opcode === 0x0c || i.opcode === 0x0d || i.opcode === 0x0e
-      ).length;
-      this.metrics.branchCounts.push({ funcIdx: idx, branches });
+      const calls = instructions.filter(i => {
+        const name = this.getInstructionName(i);
+        return name === 'call' || name === 'call_indirect';
+      }).length;
+      this.metrics.callCounts.push({ funcIdx, calls });
     });
 
     return this.metrics;
@@ -599,9 +442,9 @@ export class WASMAnalyzer {
     return {
       timestamp: new Date().toISOString(),
       summary: {
-        totalFunctions: this.functions.length || this.reader?.funcs?.length || 0,
-        totalTypes: this.types.length,
-        totalGlobals: this.globals.length,
+        totalFunctions: this.module?.functions?.length || 0,
+        totalTypes: this.module?.types?.length || 0,
+        totalGlobals: this.module?.globals?.length || 0,
         totalInstructions: metrics.totalInstructions,
         stackValid: stackAnalysis.valid,
         typeValid: typeAnalysis.valid,

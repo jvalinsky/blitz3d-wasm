@@ -1,0 +1,54 @@
+# Analyze WASM Compilation for LLM
+
+Use this skill to analyze WASM compilation output and get structured insights optimized for AI consumption.
+
+## When to Use
+
+After compiling a `.bb` file to WASM, when debugging compilation errors, when you need to understand what's happening in compiled code, or before and after making compiler changes to compare.
+
+## Pre-conditions
+
+WASM file must exist at the provided path. Optionally, provide the original `.bb` source file for correlation.
+
+## Action
+
+Run the LLM-optimized analyzer on the WASM file and extract structured insights about overall compilation status, prioritized issues, function-level breakdown, and optimization opportunities.
+
+## Output Format
+
+The analyzer returns JSON with:
+- **summary**: Overall status, function/instruction counts, validation results
+- **issues**: Prioritized list of problems with severity, category, message, and suggestion
+- **functions**: Per-function breakdown showing which pass/fail
+- **optimization**: Insights about code patterns and potential improvements
+
+## Interpretation
+
+**Status values:**
+- healthy: All checks pass
+- issues (N checks failed): Compilation has problems
+
+**Severity levels:**
+- critical: Blocks compilation
+- high: Likely runtime errors
+- medium: Could cause issues
+
+**Categories:**
+- stack_balance: Stack underflow/overflow
+- control_flow: Block/branch structure
+- type_consistency: Type mismatches
+- warning: Non-critical issues
+
+## Next Steps
+
+1. If critical issues: Focus on stack balance first
+2. If high issues: Check type conversions
+3. If passing: Review optimization insights
+4. Check the suggestion field for fix guidance
+
+## Example
+
+```
+/analyze-wasm /path/to/compiled.wasm
+/analyze-wasm /path/to/compiled.wasm --source /path/to/original.bb
+```

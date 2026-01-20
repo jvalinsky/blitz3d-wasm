@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400"><style>
+      .bar { fill: #2ecc71; }
+      .bar-label { font-size: 10px; }
+      .count-label { font-size: 10px; }
+    </style><text x="390" y="20" text-anchor="middle" font-weight="bold">
+      Top 15 Instructions by Frequency
+    </text></svg>

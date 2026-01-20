@@ -12,7 +12,7 @@
  */
 
 import { readFileSync, existsSync, mkdirSync, writeFileSync, watch } from 'fs';
-import { WASMAnalyzer } from './index.js';
+import { WASMAnalyzer } from './core.js';
 import { visualizeAnalysis } from './visualize.js';
 
 class AnalyzerCLI {

@@ -1,0 +1,160 @@
+{
+  "timestamp": "2026-01-20T14:54:34.206Z",
+  "summary": {
+    "totalFunctions": 4,
+    "totalTypes": 50,
+    "totalGlobals": 8,
+    "totalInstructions": 66,
+    "stackValid": true,
+    "typeValid": true,
+    "controlFlowValid": true
+  },
+  "stackBalance": {
+    "valid": true,
+    "functionResults": [
+      {
+        "funcIdx": 0,
+        "valid": true,
+        "errors": [],
+        "maxStack": 0,
+        "finalStackSize": 0
+      },
+      {
+        "funcIdx": 1,
+        "valid": true,
+        "errors": [],
+        "maxStack": 0,
+        "finalStackSize": 0
+      },
+      {
+        "funcIdx": 2,
+        "valid": true,
+        "errors": [],
+        "maxStack": 1,
+        "finalStackSize": 1
+      },
+      {
+        "funcIdx": 3,
+        "valid": true,
+        "errors": [],
+        "maxStack": 0,
+        "finalStackSize": 0
+      }
+    ],
+    "errors": []
+  },
+  "typeConsistency": {
+    "valid": true,
+    "issues": []
+  },
+  "controlFlow": {
+    "valid": true,
+    "results": [
+      {
+        "funcIdx": 0,
+        "type": "unbalanced_blocks",
+        "message": "Function ends with control depth -1"
+      },
+      {
+        "funcIdx": 1,
+        "type": "unbalanced_blocks",
+        "message": "Function ends with control depth -1"
+      },
+      {
+        "funcIdx": 2,
+        "type": "unbalanced_blocks",
+        "message": "Function ends with control depth -1"
+      },
+      {
+        "funcIdx": 3,
+        "type": "unbalanced_blocks",
+        "message": "Function ends with control depth -1"
+      }
+    ],
+    "loopHeaders": []
+  },
+  "metrics": {
+    "totalInstructions": 66,
+    "instructionCounts": {
+      "local": 3,
+      "get_global": 2,
+      "set_local": 5,
+      "get_local": 21,
+      "add": 10,
+      "set_global": 2,
+      "end": 4,
+      "const": 7,
+      "load": 2,
+      "call": 1,
+      "memory.copy": 2,
+      "unreachable": 4,
+      "store": 1,
+      "if": 1,
+      "return": 1
+    },
+    "functionSizes": [
+      9,
+      11,
+      41,
+      5
+    ],
+    "stackDepths": [
+      {
+        "funcIdx": 0,
+        "max": 0
+      },
+      {
+        "funcIdx": 1,
+        "max": 0
+      },
+      {
+        "funcIdx": 2,
+        "max": 1
+      },
+      {
+        "funcIdx": 3,
+        "max": 0
+      }
+    ],
+    "localCounts": [],
+    "branchCounts": [
+      {
+        "funcIdx": 0,
+        "branches": 0
+      },
+      {
+        "funcIdx": 1,
+        "branches": 0
+      },
+      {
+        "funcIdx": 2,
+        "branches": 0
+      },
+      {
+        "funcIdx": 3,
+        "branches": 0
+      }
+    ],
+    "callCounts": [
+      {
+        "funcIdx": 0,
+        "calls": 0
+      },
+      {
+        "funcIdx": 1,
+        "calls": 0
+      },
+      {
+        "funcIdx": 2,
+        "calls": 1
+      },
+      {
+        "funcIdx": 3,
+        "calls": 0
+      }
+    ],
+    "maxStackObserved": 1
+  },
+  "errors": [],
+  "warnings": []
+}

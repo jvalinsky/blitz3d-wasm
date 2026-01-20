@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><style>
+      .bar { fill: #9b59b6; }
+      .axis { font-size: 9px; }
+    </style><rect class="bar" x="50" y="40" width="25" height="300"/><text class="axis" x="62.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 62.5, 355)">
+        Func 2
+      </text><text class="axis" x="62.5" y="37" text-anchor="middle" font-size="8">
+        41
+      </text><rect class="bar" x="77" y="259.5121951219512" width="25" height="80.48780487804879"/><text class="axis" x="89.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 89.5, 355)">
+        Func 1
+      </text><text class="axis" x="89.5" y="256.5121951219512" text-anchor="middle" font-size="8">
+        11
+      </text><rect class="bar" x="104" y="274.1463414634146" width="25" height="65.85365853658537"/><text class="axis" x="116.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 116.5, 355)">
+        Func 0
+      </text><text class="axis" x="116.5" y="271.1463414634146" text-anchor="middle" font-size="8">
+        9
+      </text><rect class="bar" x="131" y="303.4146341463415" width="25" height="36.58536585365854"/><text class="axis" x="143.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 143.5, 355)">
+        Func 3
+      </text><text class="axis" x="143.5" y="300.4146341463415" text-anchor="middle" font-size="8">
+        5
+      </text><text x="415" y="20" text-anchor="middle" font-weight="bold">
+      Function Size Distribution (Top 20)
+    </text></svg>

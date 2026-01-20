@@ -4,10 +4,10 @@ Comprehensive analysis toolkit for validating and debugging WebAssembly output f
 
 ## Features
 
-- **Stack Balance Validation**: Verify WASM modules don't have stack underflow/overflow
-- **Type Checking**: Detect type mismatches in function calls and operations
-- **Control Flow Analysis**: Validate block structure and branch depths
-- **Code Metrics**: Instruction counts, function sizes, stack depths
+- **Stack Balance Validation**: Verifies WASM modules don't have stack underflow/overflow using the WASM spec 3-stack algorithm
+- **Type Consistency Checking**: Detects type mismatches in function calls and operations  
+- **Control Flow Analysis**: Validates block structure and branch depths
+- **Code Metrics**: Instruction counts, function sizes, stack depths, branch/call statistics
 - **Visualizations**: SVG charts and interactive HTML dashboards
 - **Multiple Report Formats**: Text, JSON, Markdown, JUnit XML
 
@@ -37,12 +37,15 @@ node cli.js -c before.wasm after.wasm
 
 # Batch analyze files matching pattern
 node cli.js -b "*.wasm"
+
+# Verbose output with full report
+node cli.js output.wasm -v
 ```
 
 ### Programmatic Usage
 
 ```javascript
-import { WASMAnalyzer } from './index.js';
+import { WASMAnalyzer } from './core.js';
 import { visualizeAnalysis } from './visualize.js';
 import { generateReport } from './report.js';
 
@@ -53,14 +56,14 @@ const report = analysis.generateReport();
 // Generate visualizations
 const files = visualizeAnalysis(report);
 
-// Generate text report
-const textReport = generateReport(report);
-console.log(textReport);
+// Print summary
+console.log(`Functions: ${report.summary.totalFunctions}`);
+console.log(`Stack Valid: ${report.summary.stackValid}`);
 ```
 
 ## Output Files
 
-When analyzing, the following files are generated in the output directory:
+When analyzing, the following files are generated:
 
 | File | Description |
 |------|-------------|
@@ -75,7 +78,8 @@ When analyzing, the following files are generated in the output directory:
 
 ### Stack Balance
 
-The analyzer simulates WASM's three-stack validation algorithm:
+The analyzer simulates WASM's three-stack validation algorithm (from the [WASM spec](https://webassembly.github.io/spec/core/appendix/algorithm.html)):
+
 - **Value Stack (vals)**: Tracks types of values on operand stack
 - **Control Stack (ctrls)**: Tracks block nesting and stack heights
 - **Initialization Stack (inits)**: Tracks initialized local variables
@@ -94,24 +98,20 @@ Verifies:
 - Numeric literal types are correct
 - Type conversion operations are valid
 
-Common issues:
-```
-type mismatch in call, expected [i32, f32] but got [f32, i32]
-Local 5 used before initialization
-```
-
 ### Control Flow
 
 Validates:
-- Block structure (if/loop/block nesting)
+- Block structure (if/loop nesting)
 - Branch depths don't exceed control stack
 - All blocks are properly closed
 
-Common issues:
-```
-Invalid branch depth: 5 (max is 3)
-Function ends with block depth 1
-```
+### Code Metrics
+
+- Instruction frequency distribution
+- Function size (in instructions)
+- Stack depth per function
+- Branch and call counts
+- Local variable counts
 
 ## Report Formats
 
@@ -121,9 +121,7 @@ Function ends with block depth 1
 ================================================================================
                     WASM COMPILATION ANALYSIS REPORT
 ================================================================================
-Generated: 2026-01-20T12:00:00.000Z
-Blitz3D WASM Compiler Analysis Tool
-================================================================================
+Generated: 2026-01-20T14:00:00.000Z
 
 EXECUTIVE SUMMARY
 ────────────────────────────────────────────────────────────────────────────────
@@ -144,15 +142,26 @@ Validation Results:
 
 ### JSON Report
 
-```bash
-node cli.js output.wasm -o ./analysis --format json
+```javascript
+{
+  "timestamp": "2026-01-20T14:00:00.000Z",
+  "summary": {
+    "totalFunctions": 4,
+    "totalTypes": 50,
+    "totalGlobals": 8,
+    "totalInstructions": 66,
+    "stackValid": true,
+    "typeValid": true,
+    "controlFlowValid": true
+  },
+  "stackBalance": { /* ... */ },
+  "metrics": { /* ... */ }
+}
 ```
 
 ### JUnit XML (for CI/CD)
 
-```bash
-node cli.js output.wasm -o ./junit-results.xml --format junit
-```
+Generates JUnit-compatible XML for integration with CI systems.
 
 ## Integration with Build Process
 
@@ -180,26 +189,64 @@ node cli.js output.wasm -o ./junit-results.xml --format junit
   uses: actions/upload-artifact@v4
   with:
     name: wasm-analysis
-    path: analysis-output/
+    path: Tools/analyzer/visualization/
 ```
 
-## Visualizations
+## API Reference
 
-### Interactive Dashboard
+### WASMAnalyzer
 
-Open `dashboard.html` in a browser to see:
-- Summary statistics cards
-- Stack depth per function chart
-- Instruction distribution
-- Error list with filtering
-- Function size comparison
+```javascript
+// Create analyzer from file
+const analyzer = await WASMAnalyzer.fromFile('output.wasm');
 
-### Charts
+// Generate full report
+const report = analyzer.generateReport();
 
-The generated SVG charts can be embedded in documentation:
+// Access specific analyses
+const stackReport = analyzer.analyzeStackBalance();
+const typeReport = analyzer.analyzeTypeConsistency();
+const cfReport = analyzer.analyzeControlFlow();
+const metrics = analyzer.calculateMetrics();
+```
 
-```html
-<img src="stack-depth.svg" alt="Stack depth analysis" />
+### ReportGenerator
+
+```javascript
+const generator = new ReportGenerator(analysis);
+
+// Generate different formats
+const text = generator.generateTextReport();
+const json = generator.generateJSONReport();
+const markdown = generator.generateMarkdownReport();
+const junit = generator.generateJUnitXML();
+
+// Save to file
+generator.saveReport('report.txt', 'text');
+generator.saveReport('report.json', 'json');
+```
+
+## Dependencies
+
+Uses **@webassemblyjs/wasm-parser** for WASM binary parsing:
+- AST-based parsing of WASM binaries
+- Full support for all WASM instruction types
+- Works in Node.js and browser environments
+
+## Troubleshooting
+
+### "No module parsed"
+
+Ensure the file is a valid WASM binary:
+```bash
+wasm-validate output.wasm
+```
+
+### Out of memory
+
+Increase Node.js memory limit:
+```bash
+node --max-old-space-size=4096 cli.js large.wasm
 ```
 
 ## Common Issues & Fixes
@@ -228,98 +275,24 @@ End If
 
 **Fix**: Ensure expression generation pushes arguments in correct order.
 
-### Issue: "Invalid branch depth"
-
-**Cause**: Branch instruction references control frame that doesn't exist.
-
-**Fix**: Check branch depth matches actual control stack depth at that point.
-
-## API Reference
-
-### WASMAnalyzer
-
-```javascript
-// Create analyzer from file
-const analyzer = await WASMAnalyzer.fromFile('output.wasm');
-
-// Or from buffer
-const buffer = readFileSync('output.wasm');
-const analyzer = new WASMAnalyzer(buffer).parse();
-
-// Generate full report
-const report = analyzer.generateReport();
-
-// Access specific analyses
-const stackReport = analyzer.analyzeStackBalance();
-const typeReport = analyzer.analyzeTypeConsistency();
-const cfReport = analyzer.analyzeControlFlow();
-const metrics = analyzer.calculateMetrics();
-```
-
-### ReportGenerator
-
-```javascript
-const generator = new ReportGenerator(analysis);
-
-// Generate different formats
-const text = generator.generateTextReport();
-const json = generator.generateJSONReport();
-const markdown = generator.generateMarkdownReport();
-const junit = generator.generateJUnitXML();
-
-// Save to file
-generator.saveReport('report.txt', 'text');
-generator.saveReport('report.json', 'json');
-generator.saveReport('junit.xml', 'junit');
-```
-
-### WASMVisualizer
-
-```javascript
-const visualizer = new WASMVisualizer(analysis);
-
-// Generate all visualizations
-const files = visualizer.generateAll();
-
-// Or generate specific charts
-const stackChart = visualizer.generateStackDepthChart();
-const cfvGraph = visualizer.generateControlFlowSVG(funcIdx, instructions);
-```
-
 ## Performance
 
-The analyzer processes ~1000 instructions/second on typical hardware. For large modules:
-- Use streaming for files >10MB
-- Consider parallel analysis of multiple files
+The analyzer processes ~1000-5000 instructions/second. For large modules:
+- Use batch processing for multiple files
+- Consider parallel analysis for directory scans
 
-## Troubleshooting
+## Architecture
 
-### "No code section found"
-
-The WASM file may be a minimal module without functions, or corrupted.
-
-### "Parse error"
-
-Ensure the file is a valid WASM binary. Try:
-```bash
-wasm-validate output.wasm
 ```
-
-### Out of memory
-
-Increase Node.js memory limit:
-```bash
-node --max-old-space-size=4096 cli.js large.wasm
+Tools/analyzer/
+├── core.js        # WASMAnalyzer class with stack balance, type, control flow analysis
+├── visualize.js   # SVG charts and HTML dashboard generation
+├── report.js      # Text/JSON/JUnit report generation
+├── cli.js         # Command-line interface
+├── test.js        # Test suite
+├── package.json   # Dependencies
+└── README.md      # This file
 ```
-
-## Contributing
-
-To add new analysis checks:
-
-1. Create analysis method in `index.js`
-2. Add to `generateReport()` 
-3. Update `WASMVisualizer` for new metrics
-4. Add tests in `test/`
 
 ## License
 

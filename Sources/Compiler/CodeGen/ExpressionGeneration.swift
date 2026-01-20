@@ -167,20 +167,28 @@ public final class ExpressionGeneration {
                     let fieldTypeStr = typeInfo.fieldTypes[fieldName] ?? "Int"
                     let fieldType = typeHandling.wasmType(from: fieldTypeStr)
                     
-                    // Generate default value expression
-                    let valueInstrs = generate(defaultExpr)
-                    instrs.append(contentsOf: valueInstrs)
+                    // Generate default value expression with type info
+                    let valueResult = generateWithInfo(defaultExpr)
+                    instrs.append(contentsOf: valueResult.instrs)
                     
-                    // Store value in scratch global 2
-                    instrs.append(.globalSet(context.scratchGlobal2Idx))
+                    // Convert to field type if needed
+                    if valueResult.type != fieldType {
+                        instrs.append(contentsOf: convert(from: valueResult.type, to: fieldType))
+                    }
+                    
+                    // Store value in appropriate scratch global based on type
+                    let scratchIdx = (fieldType == .f32 || fieldType == .f64) 
+                        ? context.scratchGlobalFloatIdx 
+                        : context.scratchGlobal2Idx
+                    instrs.append(.globalSet(scratchIdx))
                     
                     // Compute field address: obj + offset
                     instrs.append(.globalGet(context.scratchGlobalIdx))
                     instrs.append(.i32Const(Int32(fieldOffset)))
                     instrs.append(.i32Add)
                     
-                    // Load value from scratch global 2
-                    instrs.append(.globalGet(context.scratchGlobal2Idx))
+                    // Load value from appropriate scratch global
+                    instrs.append(.globalGet(scratchIdx))
                     
                     // Store the value
                     switch fieldType {

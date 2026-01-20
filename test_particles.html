@@ -56,6 +56,13 @@
         <button onclick="loadParticles()">Load Particles.wasm</button>
         <button onclick="runParticles()">Execute Module</button>
         <button onclick="createTestScene()">Create Test Scene</button>
+        <button onclick="enableControls()">Enable Camera Controls</button>
+        <button onclick="addPhysics()">Add Physics</button>
+    </div>
+    
+    <div class="status">
+        <h3>Camera Controls</h3>
+        <p><strong>WASD</strong> - Move camera | <strong>Arrow Keys</strong> - Look around | <strong>Mouse Drag</strong> - Rotate view</p>
     </div>
 
     <div class="status" id="log"></div>
@@ -248,6 +255,164 @@
                 log(`ERROR: ${err.message}`, 'error');
                 console.error(err);
             }
+        }
+
+        // Camera controls
+        let cameraControls = {
+            enabled: false,
+            velocity: { x: 0, y: 0, z: 0 },
+            rotation: { pitch: 0, yaw: 0 },
+            speed: 0.1,
+            mouseDown: false,
+            lastMouseX: 0,
+            lastMouseY: 0
+        };
+
+        function enableControls() {
+            if (cameraControls.enabled) {
+                log('Camera controls already enabled', 'warn');
+                return;
+            }
+
+            cameraControls.enabled = true;
+            log('✓ Camera controls enabled!', 'success');
+            log('Use WASD to move, Arrow keys to look, or drag mouse', 'info');
+
+            const canvas = document.getElementById('canvas');
+
+            // Keyboard controls
+            const keys = {};
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+            });
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+
+            // Mouse controls
+            canvas.addEventListener('mousedown', (e) => {
+                cameraControls.mouseDown = true;
+                cameraControls.lastMouseX = e.clientX;
+                cameraControls.lastMouseY = e.clientY;
+            });
+            canvas.addEventListener('mouseup', () => {
+                cameraControls.mouseDown = false;
+            });
+            canvas.addEventListener('mousemove', (e) => {
+                if (cameraControls.mouseDown) {
+                    const dx = e.clientX - cameraControls.lastMouseX;
+                    const dy = e.clientY - cameraControls.lastMouseY;
+                    cameraControls.rotation.yaw += dx * 0.3;
+                    cameraControls.rotation.pitch += dy * 0.3;
+                    cameraControls.lastMouseX = e.clientX;
+                    cameraControls.lastMouseY = e.clientY;
+                }
+            });
+
+            // Update loop
+            function updateCamera() {
+                if (!cameraControls.enabled) return;
+
+                const camera = Blitz3D.graphics.camera;
+                if (!camera) return;
+
+                // Movement (WASD)
+                if (keys['w']) cameraControls.velocity.z += 0.01;
+                if (keys['s']) cameraControls.velocity.z -= 0.01;
+                if (keys['a']) cameraControls.velocity.x += 0.01;
+                if (keys['d']) cameraControls.velocity.x -= 0.01;
+                if (keys['q']) cameraControls.velocity.y += 0.01;
+                if (keys['e']) cameraControls.velocity.y -= 0.01;
+
+                // Rotation (Arrow keys)
+                if (keys['arrowleft']) cameraControls.rotation.yaw += 2;
+                if (keys['arrowright']) cameraControls.rotation.yaw -= 2;
+                if (keys['arrowup']) cameraControls.rotation.pitch += 2;
+                if (keys['arrowdown']) cameraControls.rotation.pitch -= 2;
+
+                // Apply movement
+                camera.position.x += cameraControls.velocity.x * cameraControls.speed;
+                camera.position.y += cameraControls.velocity.y * cameraControls.speed;
+                camera.position.z += cameraControls.velocity.z * cameraControls.speed;
+
+                // Apply rotation
+                camera.rotation.y = cameraControls.rotation.yaw * Math.PI / 180;
+                camera.rotation.x = cameraControls.rotation.pitch * Math.PI / 180;
+
+                // Damping
+                cameraControls.velocity.x *= 0.9;
+                cameraControls.velocity.y *= 0.9;
+                cameraControls.velocity.z *= 0.9;
+
+                requestAnimationFrame(updateCamera);
+            }
+
+            updateCamera();
+        }
+
+        // Physics system
+        let physicsEnabled = false;
+        const physicsObjects = [];
+
+        function addPhysics() {
+            if (physicsEnabled) {
+                log('Physics already enabled', 'warn');
+                return;
+            }
+
+            physicsEnabled = true;
+            log('✓ Physics enabled!', 'success');
+            log('Particles and objects now have gravity and velocity', 'info');
+
+            // Add physics to all particles
+            Blitz3D.graphics.particles.forEach(p => {
+                const sprite = Blitz3D.graphics.entities[p.id];
+                if (sprite) {
+                    physicsObjects.push({
+                        object: sprite,
+                        velocity: { 
+                            x: (Math.random() - 0.5) * 0.02, 
+                            y: Math.random() * 0.01, 
+                            z: (Math.random() - 0.5) * 0.02 
+                        },
+                        gravity: 0.001,
+                        bounce: 0.7
+                    });
+                }
+            });
+
+            log(`Physics added to ${physicsObjects.length} objects`, 'info');
+
+            // Physics update loop
+            function updatePhysics() {
+                if (!physicsEnabled) return;
+
+                physicsObjects.forEach(po => {
+                    // Apply gravity
+                    po.velocity.y -= po.gravity;
+
+                    // Apply velocity
+                    po.object.position.x += po.velocity.x;
+                    po.object.position.y += po.velocity.y;
+                    po.object.position.z += po.velocity.z;
+
+                    // Bounce off ground
+                    if (po.object.position.y < -1.5) {
+                        po.object.position.y = -1.5;
+                        po.velocity.y *= -po.bounce;
+                        po.velocity.x *= 0.95; // Friction
+                        po.velocity.z *= 0.95;
+                    }
+
+                    // Keep in bounds
+                    if (Math.abs(po.object.position.x) > 10) po.velocity.x *= -0.8;
+                    if (Math.abs(po.object.position.z) > 10) po.velocity.z *= -0.8;
+                });
+
+                requestAnimationFrame(updatePhysics);
+            }
+
+            updatePhysics();
         }
 
         // Auto-init on load

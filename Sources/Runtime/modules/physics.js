@@ -53,6 +53,63 @@ class Blitz3DPhysics {
         imports.env.CollisionSurface = (entityId, index) => {
             return 0; // Surface ID of collision
         };
+
+        // Picking Functions
+        this.lastPickX = 0;
+        this.lastPickY = 0;
+        this.lastPickZ = 0;
+
+        imports.env.EntityPick = (entityId, range) => {
+            const entity = this.graphics.entities[entityId];
+            if (entity && this.graphics.camera) {
+                const raycaster = new THREE.Raycaster();
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(entity.quaternion);
+                raycaster.set(entity.position, dir);
+                raycaster.far = range;
+
+                const intersects = raycaster.intersectObjects(this.graphics.scene.children, true);
+                if (intersects.length > 0) {
+                    this.lastPickX = intersects[0].point.x;
+                    this.lastPickY = intersects[0].point.y;
+                    this.lastPickZ = intersects[0].point.z;
+                    return 1;
+                }
+            }
+            return 0;
+        };
+
+        imports.env.LinePick = (x1, y1, z1, x2, y2, z2, radius) => {
+            const raycaster = new THREE.Raycaster();
+            const origin = new THREE.Vector3(x1, y1, z1);
+            const dest = new THREE.Vector3(x2, y2, z2);
+            const direction = dest.sub(origin).normalize();
+            
+            raycaster.set(origin, direction);
+            raycaster.far = origin.distanceTo(new THREE.Vector3(x2, y2, z2));
+            
+            const intersects = raycaster.intersectObjects(this.graphics.scene.children, true);
+            if (intersects.length > 0) {
+                this.lastPickX = intersects[0].point.x;
+                this.lastPickY = intersects[0].point.y;
+                this.lastPickZ = intersects[0].point.z;
+                return 1;
+            }
+            return 0;
+        };
+
+        imports.env.PickedX = () => this.lastPickX;
+        imports.env.PickedY = () => this.lastPickY;
+        imports.env.PickedZ = () => this.lastPickZ;
+
+        imports.env.EntityPickMode = (entityId, mode, obscure) => {
+            // Set entity picking mode
+            console.log(`EntityPickMode: entity=${entityId} mode=${mode}`);
+        };
+
+        imports.env.EntityCollided = (entityId, typeId) => {
+            // Check if entity collided with entities of given type
+            return 0; // Stub
+        };
         imports.env.Collisions = (srcType, destType, method, response) => {
             this.collisionRules.push({
                 typeA: srcType,

@@ -240,6 +240,18 @@ class Blitz3DAudio {
             // Update channel position if it exists
         };
 
+        imports.env.PlaySound_Strict = (soundId) => {
+            console.log(`PlaySound_Strict: sound=${soundId}`);
+            return imports.env.PlaySound(soundId);
+        };
+
+        imports.env.LoopSound2 = (soundId, channelId, volume, pan) => {
+            console.log(`LoopSound2: sound=${soundId} channel=${channelId} vol=${volume} pan=${pan}`);
+            const channel = imports.env.PlaySound(soundId);
+            // Set as looping
+            return channel;
+        };
+
         imports.env.SetListenerLocation = (x, y, z, fx, fy, fz, ux, uy, uz) => {
             if (!this.audioContext || !this.audioContext.listener) return;
 

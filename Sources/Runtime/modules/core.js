@@ -194,6 +194,20 @@ class Blitz3DCore {
             throw new Error(msg);
         };
 
+        imports.env.CatchErrors = () => {
+            console.log("[Blitz3D] CatchErrors enabled");
+        };
+
+        imports.env.MilliSecs2 = () => {
+            return Date.now() & 0x7FFFFFFF; // Keep as signed 32-bit int
+        };
+
+        imports.env.CurrentDate = () => {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString();
+            return this.allocString(dateStr);
+        };
+
         // Math utilities
         imports.env.Min = (a, b) => Math.min(a, b);
         imports.env.Max = (a, b) => Math.max(a, b);

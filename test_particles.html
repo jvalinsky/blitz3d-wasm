@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Particles.wasm Test - SCP:CB Particle System</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+        }
+        #canvas {
+            border: 2px solid #0f0;
+            display: block;
+            margin: 20px auto;
+        }
+        .status {
+            background: #111;
+            padding: 15px;
+            border: 1px solid #0f0;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        button {
+            background: #0e639c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #0a4d7a;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .info { color: #0af; }
+        .warn { color: #fa0; }
+    </style>
+</head>
+<body>
+    <h1>🎮 Particles.wasm Test</h1>
+    <div class="status">
+        <h2>SCP: Containment Breach - Particle System Test</h2>
+        <p>Testing compiled Particles.bb module with 62 new runtime functions</p>
+    </div>
+
+    <canvas id="canvas" width="800" height="600"></canvas>
+
+    <div class="status">
+        <h3>Controls</h3>
+        <button onclick="initRuntime()">Initialize Runtime</button>
+        <button onclick="loadParticles()">Load Particles.wasm</button>
+        <button onclick="runParticles()">Execute Module</button>
+    </div>
+
+    <div class="status" id="log"></div>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- JSZip for virtual FS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+
+    <!-- Runtime modules -->
+    <script src="Sources/Runtime/browser_compat.js"></script>
+    <script src="Sources/Runtime/modules/core.js"></script>
+    <script src="Sources/Runtime/modules/animation.js"></script>
+    <script src="Sources/Runtime/modules/b3d.js"></script>
+    <script src="Sources/Runtime/modules/graphics.js?v=4"></script>
+    <script src="Sources/Runtime/modules/mesh.js"></script>
+    <script src="Sources/Runtime/modules/physics.js?v=4"></script>
+    <script src="Sources/Runtime/modules/input.js"></script>
+    <script src="Sources/Runtime/modules/audio.js?v=4"></script>
+    <script src="Sources/Runtime/modules/vfs_zip.js?v=4"></script>
+    <script src="Sources/Runtime/modules/runtime.js"></script>
+
+    <script>
+        let wasmInstance = null;
+
+        function log(msg, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warn' ? 'warn' : 'info';
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div class="${className}">[${time}] ${msg}</div>`;
+            console.log(`[${type}] ${msg}`);
+        }
+
+        async function initRuntime() {
+            try {
+                log('Initializing Blitz3D Runtime...', 'info');
+                
+                if (!window.Blitz3D) {
+                    log('ERROR: Blitz3D runtime not loaded', 'error');
+                    return;
+                }
+
+                await Blitz3D.init();
+                log('✓ Runtime initialized', 'success');
+                log(`  Functions: ${Object.keys(Blitz3D.imports.env).length} env`, 'info');
+                log(`  Entities: ${Object.keys(Blitz3D.graphics.entities).length}`, 'info');
+
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        async function loadParticles() {
+            try {
+                log('Loading Particles.wasm...', 'info');
+                
+                const response = await fetch('Particles.wasm');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const buffer = await response.arrayBuffer();
+                log(`✓ Loaded ${buffer.byteLength} bytes`, 'success');
+                
+                log('Instantiating WASM module...', 'info');
+                const result = await WebAssembly.instantiate(buffer, Blitz3D.imports);
+                
+                wasmInstance = result.instance;
+                log('✓ WASM module instantiated', 'success');
+                log(`  Exports: ${Object.keys(wasmInstance.exports).length}`, 'info');
+                
+                // List some key exports
+                const exports = Object.keys(wasmInstance.exports);
+                const functions = exports.filter(e => typeof wasmInstance.exports[e] === 'function');
+                log(`  Functions: ${functions.length}`, 'info');
+                
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        async function runParticles() {
+            try {
+                if (!wasmInstance) {
+                    log('ERROR: Load WASM first!', 'error');
+                    return;
+                }
+
+                log('Calling main()...', 'info');
+                
+                // Call the main function
+                if (wasmInstance.exports.main) {
+                    wasmInstance.exports.main();
+                    log('✓ main() executed', 'success');
+                } else if (wasmInstance.exports._start) {
+                    wasmInstance.exports._start();
+                    log('✓ _start() executed', 'success');
+                } else {
+                    log('No main() or _start() found', 'warn');
+                    log('Available exports: ' + Object.keys(wasmInstance.exports).join(', '), 'info');
+                }
+
+                // Check if particles were created
+                const particleCount = Blitz3D.graphics.particles?.length || 0;
+                log(`Particles created: ${particleCount}`, 'info');
+
+                // Check scene children
+                const sceneChildren = Blitz3D.graphics.scene.children.length;
+                log(`Scene objects: ${sceneChildren}`, 'info');
+
+            } catch (err) {
+                log(`ERROR: ${err.message}`, 'error');
+                console.error(err);
+            }
+        }
+
+        // Auto-init on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('Page loaded - click Initialize Runtime to begin', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

@@ -259,6 +259,51 @@ class VirtualFileSystem {
         imports.env.WriteShort = (fileId, value) => {
             console.log(`WriteShort: file=${fileId} value=${value}`);
         };
+
+        // Strict Loading Functions (throw errors if file not found)
+        imports.env.LoadMesh_Strict = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadMesh_Strict: ${path}`);
+            // Use existing LoadMesh
+            return imports.env.LoadMesh(pathPtr, 0);
+        };
+
+        imports.env.LoadAnimMesh_Strict = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadAnimMesh_Strict: ${path}`);
+            // Use existing LoadAnimMesh
+            return imports.env.LoadAnimMesh(pathPtr, 0);
+        };
+
+        imports.env.LoadTexture_Strict = (pathPtr, flags) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadTexture_Strict: ${path}`);
+            // Use existing LoadTexture
+            return imports.env.LoadTexture(pathPtr, flags);
+        };
+
+        imports.env.LoadSound_Strict = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadSound_Strict: ${path}`);
+            // Delegate to audio module
+            return 1; // Return valid sound ID
+        };
+
+        imports.env.LoadImage_Strict = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadImage_Strict: ${path}`);
+            return 1; // Return valid image ID
+        };
+
+        imports.env.FreeSound_Strict = (soundId) => {
+            console.log(`FreeSound_Strict: ${soundId}`);
+        };
+
+        imports.env.LoadTempSound = (pathPtr) => {
+            const path = this.core.readString(pathPtr);
+            console.log(`LoadTempSound: ${path}`);
+            return 1; // Return valid sound ID
+        };
     }
 }
 

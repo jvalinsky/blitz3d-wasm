@@ -1363,6 +1363,328 @@ class Blitz3DGraphics {
             return id;
         };
 
+        // Sprite Functions
+        imports.env.CreateSprite = (parentId) => {
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffffff }));
+            const id = this.nextEntityId++;
+            this.entities[id] = sprite;
+            
+            if (parentId && this.entities[parentId]) {
+                this.entities[parentId].add(sprite);
+            } else {
+                this.scene.add(sprite);
+            }
+            
+            return id;
+        };
+
+        imports.env.ScaleSprite = (spriteId, xScale, yScale) => {
+            const sprite = this.entities[spriteId];
+            if (sprite) {
+                sprite.scale.set(xScale, yScale, 1);
+            }
+        };
+
+        imports.env.SpriteViewMode = (spriteId, mode) => {
+            // Mode: 1=fixed, 2=free, 3=billboard
+            console.log(`SpriteViewMode: sprite=${spriteId} mode=${mode}`);
+        };
+
+        // Extended Entity Functions
+        imports.env.TranslateEntity = (entityId, x, y, z) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                entity.translateX(x);
+                entity.translateY(y);
+                entity.translateZ(z);
+            }
+        };
+
+        imports.env.EntityAlpha = (entityId, alpha) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.material) {
+                entity.material.opacity = alpha;
+                entity.material.transparent = alpha < 1.0;
+            }
+        };
+
+        imports.env.EntityColor = (entityId, r, g, b) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.material) {
+                entity.material.color.setRGB(r / 255, g / 255, b / 255);
+            }
+        };
+
+        imports.env.EntityShininess = (entityId, shininess) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.material) {
+                entity.material.shininess = shininess;
+            }
+        };
+
+        imports.env.EntityFX = (entityId, fx) => {
+            // FX flags: 1=full-bright, 2=vertical gradient, etc.
+            console.log(`EntityFX: entity=${entityId} fx=${fx}`);
+        };
+
+        imports.env.EntityBlend = (entityId, blend) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.material) {
+                // 0=solid, 1=alpha, 2=multiply, 3=add
+                if (blend === 3) {
+                    entity.material.blending = THREE.AdditiveBlending;
+                } else if (blend === 2) {
+                    entity.material.blending = THREE.MultiplyBlending;
+                } else {
+                    entity.material.blending = THREE.NormalBlending;
+                }
+            }
+        };
+
+        imports.env.EntityParent = (entityId, parentId, global) => {
+            const entity = this.entities[entityId];
+            const parent = this.entities[parentId];
+            if (entity && parent) {
+                parent.add(entity);
+            }
+        };
+
+        imports.env.HideEntity = (entityId) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                entity.visible = false;
+            }
+        };
+
+        imports.env.ShowEntity = (entityId) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                entity.visible = true;
+            }
+        };
+
+        imports.env.EntityVisible = (entityId, targetId) => {
+            // Check if entity is visible from target (basic frustum check)
+            return 1; // Stub: always visible
+        };
+
+        imports.env.EntityInView = (entityId, cameraId) => {
+            // Check if entity is in camera view
+            return 1; // Stub: always in view
+        };
+
+        imports.env.CopyEntity = (entityId, parentId) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                const clone = entity.clone();
+                const id = this.nextEntityId++;
+                this.entities[id] = clone;
+                
+                if (parentId && this.entities[parentId]) {
+                    this.entities[parentId].add(clone);
+                } else {
+                    this.scene.add(clone);
+                }
+                
+                return id;
+            }
+            return 0;
+        };
+
+        imports.env.NameEntity = (entityId, namePtr) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                entity.name = this.core.readString(namePtr);
+            }
+        };
+
+        imports.env.Kill = (entityId) => {
+            const entity = this.entities[entityId];
+            if (entity) {
+                if (entity.parent) {
+                    entity.parent.remove(entity);
+                }
+                delete this.entities[entityId];
+            }
+        };
+
+        // Particle System
+        this.particles = [];
+
+        imports.env.CreateParticle = (x, y, z, image, size, gravity, lifetime) => {
+            const particle = {
+                id: this.nextEntityId++,
+                x, y, z,
+                image, size, gravity, lifetime,
+                timer: 0
+            };
+            this.particles.push(particle);
+            
+            // Create a sprite for the particle
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffffff }));
+            sprite.position.set(x, y, z);
+            sprite.scale.set(size, size, 1);
+            this.scene.add(sprite);
+            this.entities[particle.id] = sprite;
+            
+            return particle.id;
+        };
+
+        imports.env.UpdateParticles = () => {
+            // Update all particles
+            this.particles = this.particles.filter(p => {
+                p.timer += 1;
+                if (p.timer > p.lifetime) return false;
+                
+                const sprite = this.entities[p.id];
+                if (sprite) {
+                    sprite.position.y -= p.gravity;
+                }
+                return true;
+            });
+        };
+
+        imports.env.RemoveParticle = (particleId) => {
+            const index = this.particles.findIndex(p => p.id === particleId);
+            if (index !== -1) {
+                this.particles.splice(index, 1);
+                const sprite = this.entities[particleId];
+                if (sprite) {
+                    this.scene.remove(sprite);
+                    delete this.entities[particleId];
+                }
+            }
+        };
+
+        imports.env.ParticleTextures = (minImage, maxImage, flags) => {
+            console.log(`ParticleTextures: min=${minImage} max=${maxImage} flags=${flags}`);
+            return 1;
+        };
+
+        // Devil Particle System (DLL wrapper)
+        this.emitters = {};
+
+        imports.env.SetEmitter = (entityId, emitterId) => {
+            console.log(`SetEmitter: entity=${entityId} emitter=${emitterId}`);
+            this.emitters[emitterId] = { entity: entityId };
+            return emitterId;
+        };
+
+        imports.env.UpdateEmitters = (roomId) => {
+            // Update all emitters
+            console.log(`UpdateEmitters: room=${roomId}`);
+        };
+
+        imports.env.DeleteDevilEmitters = () => {
+            this.emitters = {};
+        };
+
+        imports.env.UpdateDevilEmitters = () => {
+            // Update devil particle emitters
+        };
+
+        // Decal System
+        this.decals = [];
+
+        imports.env.CreateDecal = (id, x, y, z, pitch, yaw, roll, scale, meshId) => {
+            const decal = {
+                id: this.nextEntityId++,
+                type: id,
+                x, y, z,
+                pitch, yaw, roll,
+                scale,
+                mesh: meshId
+            };
+            this.decals.push(decal);
+            
+            // Create a plane mesh for the decal
+            const geometry = new THREE.PlaneGeometry(scale, scale);
+            const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.rotation.set(pitch * Math.PI / 180, yaw * Math.PI / 180, roll * Math.PI / 180);
+            this.scene.add(mesh);
+            this.entities[decal.id] = mesh;
+            
+            return decal.id;
+        };
+
+        imports.env.UpdateDecals = () => {
+            // Update/fade decals over time
+        };
+
+        // Game-Specific Functions
+        imports.env.GiveAchievement = (achievementId) => {
+            console.log(`[Achievement] Unlocked: ${achievementId}`);
+        };
+
+        imports.env.Update294 = () => {
+            // Update SCP-294 (coffee machine) logic
+        };
+
+        imports.env.UpdateItems = () => {
+            // Update all items in the game
+        };
+
+        imports.env.PickItem = (itemId) => {
+            console.log(`PickItem: ${itemId}`);
+        };
+
+        imports.env.DropItem = (itemId) => {
+            console.log(`DropItem: ${itemId}`);
+        };
+
+        imports.env.AnimateNPC = (npcId, startFrame, endFrame, speed, loop, transition) => {
+            console.log(`AnimateNPC: ${npcId} frames=${startFrame}-${endFrame}`);
+        };
+
+        imports.env.Animate2 = (entityId, mode, speed, sequence, transition, retain) => {
+            console.log(`Animate2: entity=${entityId} mode=${mode} seq=${sequence}`);
+        };
+
+        imports.env.ChangeNPCTextureID = (npcId, textureId) => {
+            console.log(`ChangeNPCTextureID: npc=${npcId} texture=${textureId}`);
+        };
+
+        imports.env.CheckForNPCInFacility = (npcType) => {
+            console.log(`CheckForNPCInFacility: type=${npcType}`);
+            return 0; // No NPC found
+        };
+
+        imports.env.Console_SpawnNPC = (npcType) => {
+            console.log(`Console_SpawnNPC: type=${npcType}`);
+        };
+
+        imports.env.CreateConsoleMsg = (msgPtr) => {
+            const msg = this.core.readString(msgPtr);
+            console.log(`[Console] ${msg}`);
+        };
+
+        imports.env.ChangeAngleValueForCorrectBoneAssigning = (angle) => {
+            // Adjust angle for bone animations
+            return angle;
+        };
+
+        // Geometry/Math Helpers
+        imports.env.AlignToVector = (entityId, vx, vy, vz, axis, rate) => {
+            // Align entity to vector over time
+            console.log(`AlignToVector: entity=${entityId} vec=(${vx},${vy},${vz})`);
+        };
+
+        imports.env.CurveAngle = (currentAngle, targetAngle, speed) => {
+            // Smooth angle interpolation (already in core.js)
+            let delta = targetAngle - currentAngle;
+            while (delta > 180) delta -= 360;
+            while (delta < -180) delta += 360;
+            return currentAngle + delta * speed;
+        };
+
+        // Camera Functions
+        imports.env.CameraProject = (cameraId, x, y, z) => {
+            // Project 3D position to 2D screen coordinates
+            console.log(`CameraProject: camera=${cameraId} pos=(${x},${y},${z})`);
+        };
+
         imports.env.PaintEntity = (entityId, brushId) => {
             const entity = this.entities[entityId];
             const brush = this.brushes[brushId];

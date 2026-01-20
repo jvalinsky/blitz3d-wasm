@@ -259,6 +259,10 @@ public final class ModuleContext {
     public var functionIndexMap: [String: Int]
     public var functionDefinitions: [String: FunctionDefinition]
     public var functionDefinitionsByIndex: [Int: FunctionDefinition] = [:]
+    /// Maps lowercase function name to original name (preserves case for exports)
+    public var functionOriginalNames: [String: String] = [:]
+    /// Tracks which functions had explicit type suffix in source (for export names)
+    public var functionExplicitSuffixes: [String: TypeAnnotation?] = [:]
     public var userTypes: [String: UserTypeInfo]
     public var fieldOffsets: [String: [String: Int]]
     public var fieldDimensions: [String: [String: [Int]]]  // typeName -> [fieldName: dimensions]

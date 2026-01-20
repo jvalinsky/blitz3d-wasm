@@ -185,6 +185,7 @@ public final class FunctionGeneration {
         self.context.module.functions.append(typeIdx)
 
         self.context.functionIndexMap[functionNode.name.lowercased()] = globalFuncIdx
+        self.context.functionOriginalNames[functionNode.name.lowercased()] = functionNode.name
 
         // Note: Function export is handled by CodeGenerator to avoid duplicates
         // CodeGenerator exports all functions from functionIndexMap

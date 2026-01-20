@@ -139,17 +139,11 @@ public final class StatementGeneration: ValidatorTypeContext {
         case .assignment(let assign):
             guard let expressionGenerator = expressionGenerator else { break }
             
-            // DEBUG: Track assignments to identify type mismatches
-            print("DEBUG_ASSIGN: \(assign.target) = <expr>")
-            
             let valueResult = expressionGenerator.generateWithInfo(assign.value)
             let targetType = getTargetType(from: assign.target)
             
-            print("  Value type: \(valueResult.type), Target type: \(targetType)")
-            
             var finalInstrs = valueResult.instrs
             if valueResult.type != targetType {
-                print("  CONVERTING: \(valueResult.type) → \(targetType)")
                 finalInstrs.append(contentsOf: convert(from: valueResult.type, to: targetType))
             }
             
@@ -160,7 +154,6 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             switch assign.target {
             case .identifier(let id):
-                print("DEBUG_ASSIGN_LOOKUP: Looking up '\(id.name)'")
                 
                 if let local = context.variableManagement.localInfo(for: id.name) {
                     print("  → Found as local[\(local.index)] type=\(local.type)")
@@ -266,6 +259,11 @@ public final class StatementGeneration: ValidatorTypeContext {
                         case .f64: function.body.append(.f64Store(2, 0))
                         default:   function.body.append(.i32Store(2, 0))
                         }
+                    } else {
+                        // Field array resolution failed - drop object pointer and value to balance stack
+                        function.body.append(.drop) // Drop object pointer
+                        function.body.append(contentsOf: finalInstrs)
+                        function.body.append(.drop) // Drop value
                     }
                 }
             case .fieldAccess(let access):
@@ -293,11 +291,57 @@ public final class StatementGeneration: ValidatorTypeContext {
                         function.body.append(.i32Store(2, 0))
                     }
                 } else {
-                    // Type resolution failed, but we pushed the object pointer. Drop it to safe stack.
-                    print("DEBUG_COMPILER: WARNING! Failed to resolve field access for assignment: \(access.field). Dropping object pointer.")
+                    // Type resolution failed - drop object pointer and value to balance stack
+                    function.body.append(.drop) // Drop object pointer
+                    function.body.append(contentsOf: finalInstrs)
+                    function.body.append(.drop) // Drop value
+                }
+            case .functionCall(let call):
+                // In Blitz3D, array access uses function call syntax: ArrayName(index)
+                // Treat function calls in assignment position as array access
+                
+                // Look up the array
+                var internalName = call.name.lowercased()
+                if internalName.hasSuffix("$") || internalName.hasSuffix("#") || internalName.hasSuffix("%") {
+                    internalName = String(internalName.dropLast())
+                }
+                
+                if let array = context.variableManagement.arrayInfo(for: internalName) {
+                    // Generate array element assignment
+                    function.body.append(.i32Const(Int32(array.baseAddress)))
+                    
+                    // Calculate offset from first argument (the index)
+                    if !call.arguments.isEmpty {
+                        let indexInstrs = expressionGenerator.generate(call.arguments[0])
+                        function.body.append(contentsOf: indexInstrs)
+                        function.body.append(.i32Const(Int32(array.elementSize)))
+                        function.body.append(.i32Mul)
+                    } else {
+                        function.body.append(.i32Const(0))
+                    }
+                    
+                    function.body.append(.i32Add)
+                    function.body.append(contentsOf: finalInstrs)
+                    
+                    // Store
+                    switch array.elementType {
+                    case .i32: function.body.append(.i32Store(2, 0))
+                    case .f32: function.body.append(.f32Store(2, 0))
+                    case .i64: function.body.append(.i64Store(2, 0))
+                    case .f64: function.body.append(.f64Store(2, 0))
+                    default: function.body.append(.i32Store(2, 0))
+                    }
+                } else {
+                    // Not found as array - drop the value to balance stack
+                    function.body.append(contentsOf: finalInstrs)
                     function.body.append(.drop)
                 }
+                
             default:
+                // Assignment target type not directly handled
+                // Drop the RHS value to balance the stack
+                function.body.append(contentsOf: finalInstrs)
+                function.body.append(.drop)
                 break
             }
             
@@ -310,9 +354,6 @@ public final class StatementGeneration: ValidatorTypeContext {
             // ExpressionGeneration ensures void functions return a dummy 0 (i32)
             if type != .void {
                 function.body.append(.drop)
-                print("DEBUG_STMT: Dropped return value of type \(type) for call statement")
-            } else {
-                print("DEBUG_STMT: No drop needed (void) for call statement")
             }
             
         case .ifStatement(let ifNode):
@@ -353,36 +394,9 @@ public final class StatementGeneration: ValidatorTypeContext {
                 var balancedThen = thenBody
                 var balancedElse = elseBody
 
-                // DISABLED: Stack validation for if/else branches
-                // Issue: calculateStackDelta doesn't have function signatures,
-                // so it can't accurately track stack effects of function calls.
-                // This causes spurious drop instructions.
-                // TODO: Pass function signatures to calculateStackDelta
-                if false && enableStackValidation {
-                    let (thenDrops, elseDrops) = StackValidator.balanceBranches(
-                        thenBranch: thenBody,
-                        elseBranch: elseBody ?? [],
-                        localTypes: localTypeCache,
-                        globalTypes: globalTypeCache
-                    )
-
-                    if thenDrops > 0 {
-                        print("DEBUG_STACK: If branch has \(thenDrops) excess value(s), adding drops")
-                        for _ in 0..<thenDrops {
-                            balancedThen.append(.drop)
-                        }
-                    }
-
-                    if elseDrops > 0 {
-                        print("DEBUG_STACK: Else branch has \(elseDrops) excess value(s), adding drops")
-                        if balancedElse == nil {
-                            balancedElse = []
-                        }
-                        for _ in 0..<elseDrops {
-                            balancedElse!.append(.drop)
-                        }
-                    }
-                }
+                // DO NOT auto-balance branches - this papers over bugs in statement generation
+                // If statements are truly statements (net-zero stack effect), branches will naturally balance
+                // Let WASM validation catch any issues - that's what the validator is for
 
                 result.append(.if(.void, balancedThen, balancedElse))
                 return result
@@ -433,7 +447,6 @@ public final class StatementGeneration: ValidatorTypeContext {
                 
                 // Register with stack validator for type tracking
                 registerLocalType(registered.index, type: .i32)
-                print("DEBUG_COMPILER: Auto-registered implicit For-Loop variable '\(forNode.variable.name)' as Local .i32")
             }
             
             if let local = loopLocal {
@@ -1042,7 +1055,6 @@ public final class StatementGeneration: ValidatorTypeContext {
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
         case .identifier(let id):
-            print("DEBUG_TARGET: Checking type for '\(id.name)', suffix: \(id.typeSuffix?.rawValue ?? "none")")
             
             // CRITICAL FIX: Check type suffix FIRST before registry lookup
             // This ensures float variables (x#) are recognized as f32 even during initial assignment
@@ -1081,9 +1093,11 @@ public final class StatementGeneration: ValidatorTypeContext {
     private func generateStatementBlock(_ statements: [StatementNode], function: inout WASMFunction) -> [WASMInstruction] {
         let savedBody = function.body
         function.body = []
+        
         for statement in statements {
             generateStatement(statement, function: &function)
         }
+        
         let blockBody = function.body
         function.body = savedBody
         return blockBody
@@ -1194,24 +1208,39 @@ public final class StatementGeneration: ValidatorTypeContext {
             // Control flow
             case .if(let blockType, let thenBody, let elseBody):
                 delta -= 1  // condition consumed
-                // Both branches should have same effect after balancing
-                let thenDelta = calculateStackDelta(thenBody)
-                if let elseBody = elseBody {
-                    let elseDelta = calculateStackDelta(elseBody)
-                    // Use the minimum (safer estimate)
-                    delta += min(thenDelta, elseDelta)
-                } else {
-                    // No else branch - then must be balanced to 0
+                // If/else blocks have a type signature - they produce results matching blockType
+                // The branches MUST be balanced internally, so we don't recurse into them
+                switch blockType {
+                case .void:
+                    delta += 0  // No result
+                case .i32, .f32, .i64, .f64:
+                    delta += 1  // Produces one result
+                default:
                     delta += 0
                 }
                 
             case .block(let blockType, let body):
-                let bodyDelta = calculateStackDelta(body)
-                delta += bodyDelta
+                // Blocks are self-contained - body must match block type
+                // Net effect is determined by block type, not body
+                switch blockType {
+                case .void:
+                    delta += 0
+                case .i32, .f32, .i64, .f64:
+                    delta += 1
+                default:
+                    delta += 0
+                }
                 
             case .loop(let blockType, let body):
-                let bodyDelta = calculateStackDelta(body)
-                delta += bodyDelta
+                // Loops are self-contained - body must match loop type
+                switch blockType {
+                case .void:
+                    delta += 0
+                case .i32, .f32, .i64, .f64:
+                    delta += 1
+                default:
+                    delta += 0
+                }
                 
             case .br:
                 // br doesn't consume from stack (unconditional branch)
@@ -1221,8 +1250,11 @@ public final class StatementGeneration: ValidatorTypeContext {
                 delta -= 1
                 
             case .return:
-                // return ends the function, stack doesn't matter after
-                break
+                // Return consumes the return value (if any) from the stack
+                // For void functions, this is 0. For typed functions, this is 1.
+                // Since we don't track function context here, we conservatively assume it consumes 1
+                // This prevents false positives when statements end with `return value`
+                delta -= 1
                 
             // Memory ops
             case .i32Load, .i64Load, .f32Load, .f64Load:
@@ -1308,7 +1340,6 @@ public final class StatementGeneration: ValidatorTypeContext {
         )
 
         if dropsAdded > 0 {
-            print("DEBUG_STACK: Inserting \(dropsAdded) drop(s) to balance loop body")
         }
 
         return balanced
@@ -1329,7 +1360,6 @@ public final class StatementGeneration: ValidatorTypeContext {
         )
 
         if dropsAdded > 0 {
-            print("DEBUG_STACK: Inserting \(dropsAdded) drop(s) to achieve target delta \(targetDelta)")
         }
 
         return balanced

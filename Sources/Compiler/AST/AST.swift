@@ -337,12 +337,14 @@ public struct FunctionNode {
     public var parameters: [ParameterNode]
     public var body: [StatementNode]
     public var returnType: TypeAnnotation?
+    public var explicitReturnTypeSuffix: Bool  // true if suffix was explicitly written
     
-    public init(name: String, parameters: [ParameterNode] = [], body: [StatementNode] = [], returnType: TypeAnnotation? = nil) {
+    public init(name: String, parameters: [ParameterNode] = [], body: [StatementNode] = [], returnType: TypeAnnotation? = nil, explicitReturnTypeSuffix: Bool = false) {
         self.name = name
         self.parameters = parameters
         self.body = body
         self.returnType = returnType
+        self.explicitReturnTypeSuffix = explicitReturnTypeSuffix
     }
 }
 

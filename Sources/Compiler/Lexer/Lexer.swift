@@ -70,7 +70,16 @@ public struct Lexer {
         if ch == "$" {
             return readHexLiteral(startLine: startLine, startColumn: startColumn)
         }
-        
+
+        // Binary literals (%10101)
+        if ch == "%" {
+            // Check if followed by binary digits (0 or 1)
+            if let next = peek(offset: 1), next == "0" || next == "1" {
+                return readBinaryLiteral(startLine: startLine, startColumn: startColumn)
+            }
+            // Otherwise fall through - % will be handled as type suffix or error
+        }
+
         // Identifiers and keywords
         if ch.isASCII && (ch.isLetter || ch == "_") {
             return readIdentifierOrKeyword(startLine: startLine, startColumn: startColumn)
@@ -202,7 +211,7 @@ public struct Lexer {
     
     private mutating func readHexLiteral(startLine: Int, startColumn: Int) -> Token {
         advance() // Skip $
-        
+
         var text = ""
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
@@ -213,13 +222,35 @@ public struct Lexer {
                 break
             }
         }
-        
+
         // Convert to integer
         if let value = Int(text, radix: 16) {
             return Token(type: .integerLiteral, text: String(value), line: startLine, column: startColumn, sourceFile: sourceFile)
         }
-        
+
         return Token(type: .error, text: "$" + text, line: startLine, column: startColumn, sourceFile: sourceFile)
+    }
+
+    private mutating func readBinaryLiteral(startLine: Int, startColumn: Int) -> Token {
+        advance() // Skip %
+
+        var text = ""
+        while currentIndex < source.endIndex {
+            let ch = source[currentIndex]
+            if ch == "0" || ch == "1" {
+                text.append(ch)
+                advance()
+            } else {
+                break
+            }
+        }
+
+        // Convert to integer
+        if let value = Int(text, radix: 2) {
+            return Token(type: .integerLiteral, text: String(value), line: startLine, column: startColumn, sourceFile: sourceFile)
+        }
+
+        return Token(type: .error, text: "%" + text, line: startLine, column: startColumn, sourceFile: sourceFile)
     }
     
     private mutating func readIdentifierOrKeyword(startLine: Int, startColumn: Int) -> Token {

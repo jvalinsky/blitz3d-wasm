@@ -588,8 +588,9 @@ class StackValidator {
                     pushVal(StackValueType.from(result))
                 }
             } else {
-                // Unknown function - can't validate properly, assume i32 result
-                // This is a fallback for when we don't have full context
+                // Unknown function - can't validate properly
+                // For now, assume no stack effect (conservative)
+                // This is a known limitation - proper fix requires passing function signatures
             }
 
         case .callIndirect(let typeIdx, _):

@@ -342,8 +342,12 @@ public final class StatementGeneration: ValidatorTypeContext {
                 var balancedThen = thenBody
                 var balancedElse = elseBody
 
-                if enableStackValidation {
-                    // Use the improved static balance method with type context
+                // DISABLED: Stack validation for if/else branches
+                // Issue: calculateStackDelta doesn't have function signatures,
+                // so it can't accurately track stack effects of function calls.
+                // This causes spurious drop instructions.
+                // TODO: Pass function signatures to calculateStackDelta
+                if false && enableStackValidation {
                     let (thenDrops, elseDrops) = StackValidator.balanceBranches(
                         thenBranch: thenBody,
                         elseBranch: elseBody ?? [],
@@ -351,7 +355,6 @@ public final class StatementGeneration: ValidatorTypeContext {
                         globalTypes: globalTypeCache
                     )
 
-                    // Add drops to then branch
                     if thenDrops > 0 {
                         print("DEBUG_STACK: If branch has \(thenDrops) excess value(s), adding drops")
                         for _ in 0..<thenDrops {
@@ -359,7 +362,6 @@ public final class StatementGeneration: ValidatorTypeContext {
                         }
                     }
 
-                    // Add drops to else branch
                     if elseDrops > 0 {
                         print("DEBUG_STACK: Else branch has \(elseDrops) excess value(s), adding drops")
                         if balancedElse == nil {
@@ -368,13 +370,6 @@ public final class StatementGeneration: ValidatorTypeContext {
                         for _ in 0..<elseDrops {
                             balancedElse!.append(.drop)
                         }
-                    }
-
-                    // If no else branch but then has excess, we need an else with drops
-                    if thenDrops > 0 && elseBody == nil {
-                        // The then branch leaves values, but there's no else
-                        // Need to drop in then to match the implicit empty else
-                        // (already handled above)
                     }
                 }
 
@@ -404,10 +399,8 @@ public final class StatementGeneration: ValidatorTypeContext {
             loopInstrs.append(.brIf(1))
             
             var bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
-            // Balance loop body: must leave stack empty before br
-            if enableStackValidation {
-                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
-            }
+            // DISABLED: Balance loop body
+            // Same issue as if/else - no function signatures
             loopInstrs.append(contentsOf: bodyInstrs)
             loopInstrs.append(.br(0))
             
@@ -515,10 +508,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 }
 
                 var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
-                // Balance loop body: must leave stack empty before increment
-                if enableStackValidation {
-                    StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
-                }
+                // DISABLED: Balance loop body  
                 loopInstrs.append(contentsOf: bodyInstrs)
 
                 loopInstrs.append(.localGet(local.index))
@@ -561,10 +551,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             // body
             var bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
-            // Balance loop body
-            if enableStackValidation {
-                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
-            }
+            // DISABLED: Balance loop body
             loopInstrs.append(contentsOf: bodyInstrs)
             
             // it = it.next
@@ -589,10 +576,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             var loopInstrs: [WASMInstruction] = []
             var bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
-            // Balance loop body
-            if enableStackValidation {
-                StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, localTypes: localTypeCache, globalTypes: globalTypeCache)
-            }
+            // DISABLED: Balance loop body
             loopInstrs.append(contentsOf: bodyInstrs)
             
             let condResult = expressionGenerator?.generateWithInfo(repeatNode.condition) ?? ([], .i32)

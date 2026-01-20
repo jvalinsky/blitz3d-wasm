@@ -131,9 +131,9 @@ public final class StatementGeneration: ValidatorTypeContext {
             let info = context.variableManagement.registerArray(decl.name, elementType: wasmType, dimensions: dims)
             
             // Initialize array memory to zero using memory.fill
-            function.body.append(.i32Const(Int32(info.baseAddress))) // dest
+            function.body.append(.i32Const(Int32(truncatingIfNeeded: info.baseAddress))) // dest
             function.body.append(.i32Const(0))                      // value
-            function.body.append(.i32Const(Int32(totalElements * info.elementSize))) // size
+            function.body.append(.i32Const(Int32(truncatingIfNeeded: totalElements * info.elementSize))) // size
             function.body.append(.memoryFill(0))                    // memory 0
             
         case .assignment(let assign):
@@ -179,7 +179,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 if case .identifier(let arrayId) = access.array,
                    let array = context.variableManagement.arrayInfo(for: arrayId.name) {
                     // Start with base address
-                    function.body.append(.i32Const(Int32(array.baseAddress)))
+                    function.body.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
 
                     // Calculate index offset
                     for (i, indexExpr) in access.indices.enumerated() {
@@ -192,10 +192,10 @@ public final class StatementGeneration: ValidatorTypeContext {
                             for j in 0..<i {
                                 stride *= (array.dimensions[j] + 1)
                             }
-                            function.body.append(.i32Const(Int32(stride)))
+                            function.body.append(.i32Const(Int32(truncatingIfNeeded: stride)))
                             function.body.append(.i32Mul)
                         } else {
-                            function.body.append(.i32Const(Int32(array.elementSize)))
+                            function.body.append(.i32Const(Int32(truncatingIfNeeded: array.elementSize)))
                             function.body.append(.i32Mul)
                         }
 
@@ -228,7 +228,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                     if let typeName = getTypeName(from: fieldAccess.object),
                        let fieldOffset = context.fieldOffsets[typeName]?[fieldAccess.field] {
                         
-                        function.body.append(.i32Const(Int32(fieldOffset)))
+                        function.body.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
                         function.body.append(.i32Add) // [fieldBaseAddr]
                         
                         let fieldTypeStr = context.userTypes[typeName]?.fieldTypes[fieldAccess.field] ?? "Int"
@@ -241,7 +241,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                             function.body.append(contentsOf: indexInstrs) // [addr, index]
                             
                             if elementSize > 1 {
-                                function.body.append(.i32Const(Int32(elementSize)))
+                                function.body.append(.i32Const(Int32(truncatingIfNeeded: elementSize)))
                                 function.body.append(.i32Mul)
                             }
                             
@@ -271,7 +271,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(contentsOf: objInstrs)
                 if let typeName = getTypeName(from: access.object),
                    let fieldOffset = context.fieldOffsets[typeName]?[access.field] {
-                    function.body.append(.i32Const(Int32(fieldOffset)))
+                    function.body.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
                     function.body.append(.i32Add)
                     function.body.append(contentsOf: finalInstrs)
 
@@ -308,13 +308,13 @@ public final class StatementGeneration: ValidatorTypeContext {
                 
                 if let array = context.variableManagement.arrayInfo(for: internalName) {
                     // Generate array element assignment
-                    function.body.append(.i32Const(Int32(array.baseAddress)))
+                    function.body.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
                     
                     // Calculate offset from first argument (the index)
                     if !call.arguments.isEmpty {
                         let indexInstrs = expressionGenerator.generate(call.arguments[0])
                         function.body.append(contentsOf: indexInstrs)
-                        function.body.append(.i32Const(Int32(array.elementSize)))
+                        function.body.append(.i32Const(Int32(truncatingIfNeeded: array.elementSize)))
                         function.body.append(.i32Mul)
                     } else {
                         function.body.append(.i32Const(0))
@@ -360,45 +360,72 @@ public final class StatementGeneration: ValidatorTypeContext {
             guard let expressionGenerator = expressionGenerator else { break }
 
             // Handle elseIfs by converting them to nested if-else statements
+            // ITERATIVE implementation to prevent stack overflow on deeply nested if-else chains
+            // (Main.bb has 372 levels of nesting!)
             func buildIfChain(condition: ExpressionNode,
                              thenBranch: [StatementNode],
                              elseIfs: [(ExpressionNode, [StatementNode])],
                              elseBranch: [StatementNode]) -> [WASMInstruction] {
                 var result: [WASMInstruction] = []
 
+                // Generate first condition
                 let condResult = expressionGenerator.generateWithInfo(condition)
                 result.append(contentsOf: condResult.instrs)
                 if condResult.type == .f32 {
                     result.append(.i32TruncF32S)
                 }
 
+                // Generate first then branch
                 currentDepth += 1
                 var thenBody = generateStatementBlock(thenBranch, function: &function)
                 currentDepth -= 1
 
+                // Build else-if chain ITERATIVELY (not recursively)
+                // Build from LAST to FIRST to create proper nesting
                 var elseBody: [WASMInstruction]? = nil
-                if let (nextCondition, nextThenBranch) = elseIfs.first {
-                    var elseBranch = buildIfChain(condition: nextCondition,
-                                           thenBranch: nextThenBranch,
-                                           elseIfs: Array(elseIfs.dropFirst()),
-                                           elseBranch: elseBranch)
-                    elseBody = elseBranch
+                
+                if !elseIfs.isEmpty {
+                    // Start with the final else (if any)
+                    if !elseBranch.isEmpty {
+                        currentDepth += 1
+                        elseBody = generateStatementBlock(elseBranch, function: &function)
+                        currentDepth -= 1
+                    }
+                    
+                    // Process else-ifs in REVERSE order to build nesting from inside out
+                    for (elseIfCondition, elseIfThen) in elseIfs.reversed() {
+                        // Generate else-if condition
+                        let elseIfCondResult = expressionGenerator.generateWithInfo(elseIfCondition)
+                        var ifInstrs: [WASMInstruction] = []
+                        ifInstrs.append(contentsOf: elseIfCondResult.instrs)
+                        if elseIfCondResult.type == .f32 {
+                            ifInstrs.append(.i32TruncF32S)
+                        }
+                        
+                        // Generate else-if body
+                        currentDepth += 1
+                        let elseIfBody = generateStatementBlock(elseIfThen, function: &function)
+                        currentDepth -= 1
+                        
+                        // Build the if instruction with current elseBody as the else branch
+                        ifInstrs.append(.if(.void, elseIfBody, elseBody))
+                        
+                        // This becomes the new elseBody for the next level up
+                        elseBody = ifInstrs
+                    }
+                    
                 } else if !elseBranch.isEmpty {
+                    // No else-ifs, just a final else
                     currentDepth += 1
-                    var elseBranchBody = generateStatementBlock(elseBranch, function: &function)
+                    elseBody = generateStatementBlock(elseBranch, function: &function)
                     currentDepth -= 1
-                    elseBody = elseBranchBody
                 }
                 
-                // Validate and balance if/else branches using stack validator
-                var balancedThen = thenBody
-                var balancedElse = elseBody
-
                 // DO NOT auto-balance branches - this papers over bugs in statement generation
                 // If statements are truly statements (net-zero stack effect), branches will naturally balance
                 // Let WASM validation catch any issues - that's what the validator is for
 
-                result.append(.if(.void, balancedThen, balancedElse))
+                result.append(.if(.void, thenBody, elseBody))
                 return result
             }
 
@@ -760,7 +787,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
         case .goto(let labelName):
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
-                function.body.append(.i32Const(Int32(stateNum)))
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
                 function.body.append(.br(0)) // Branch to loop start to re-evaluate state
             } else {
@@ -775,7 +802,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 
                 // 2. Push returnID to stack
                 function.body.append(.globalGet(context.gosubStackPtrIdx))
-                function.body.append(.i32Const(Int32(returnID)))
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: returnID)))
                 function.body.append(.i32Store(2, 0))
                 
                 function.body.append(.globalGet(context.gosubStackPtrIdx))
@@ -784,7 +811,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.globalSet(context.gosubStackPtrIdx))
                 
                 // 3. Set target state and jump
-                function.body.append(.i32Const(Int32(stateNum)))
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
                 function.body.append(.br(0)) // Branch to loop start
                 
@@ -849,7 +876,7 @@ public final class StatementGeneration: ValidatorTypeContext {
         case .restore(let label):
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             if let labelName = label, let offset = dataGenerator?.getDataOffset(for: labelName) {
-                function.body.append(.i32Const(Int32(offset)))
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: offset)))
                 function.body.append(.globalSet(dataPtrIdx))
             } else {
                 function.body.append(.i32Const(256))

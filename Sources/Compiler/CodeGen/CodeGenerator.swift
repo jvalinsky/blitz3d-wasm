@@ -66,9 +66,29 @@ public struct CodeGenerator {
         
         addAllocFunction()
         
-        context.functionIndexMap.forEach { name, idx in
-            if name != "_main" && name != "__Alloc" && name != "Main" {
-                context.module.exports.append(WASMExport(name: name, kind: .function, index: idx))
+        context.functionIndexMap.forEach { lowerName, idx in
+            var exportName = context.functionOriginalNames[lowerName] ?? lowerName
+            
+            // Reconstruct function name with type suffix if it was explicit in source
+            if let originalReturnType = context.functionExplicitSuffixes[lowerName] {
+                // Add type suffix based on original TypeAnnotation
+                if let returnType = originalReturnType {
+                    switch returnType {
+                    case .integer:
+                        exportName += "%"
+                    case .float:
+                        exportName += "#"
+                    case .string:
+                        exportName += "$"
+                    case .void:
+                        break  // No suffix for void
+                    }
+                }
+            }
+            
+            // Filter out internal functions only (_main is internal entry point alias, __alloc/__stringalloc/__stringconcat are internal allocators)
+            if lowerName != "_main" && lowerName != "__alloc" && lowerName != "__stringalloc" && lowerName != "__stringconcat" {
+                context.module.exports.append(WASMExport(name: exportName, kind: .function, index: idx))
             }
         }
         
@@ -778,6 +798,11 @@ public struct CodeGenerator {
                 context.functionIndexMap[lowerName] = nextFuncIdx
             }
             context.functionDefinitionsByIndex[funcIdx] = def
+
+            // Store original name for exports (preserves case)
+            context.functionOriginalNames[lowerName] = function.name
+            // Store original return type if suffix was explicit in source
+            context.functionExplicitSuffixes[lowerName] = function.explicitReturnTypeSuffix ? function.returnType : nil
             
             // Always increment nextFuncIdx because this function WILL be generated in the module code section,
             // consuming a function index slot, regardless of whether it shadows an import or not.

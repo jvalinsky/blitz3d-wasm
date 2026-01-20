@@ -20,7 +20,10 @@ let package = Package(
         .executableTarget(
             name: "blitz3d-wasm",
             dependencies: ["Blitz3DCompiler"],
-            path: "Tools/wasm-cli"
+            path: "Tools/wasm-cli",
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "-stack_size", "-Xlinker", "0x10000000"])  // 256MB stack for deep recursion
+            ]
         ),
         .target(
             name: "Blitz3DEngine",

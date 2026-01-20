@@ -12,6 +12,10 @@ public class TypeInference {
     private var cache: [String: WASMType] = [:]
     private let typeHandling: TypeHandling
     
+    /// Maximum recursion depth to prevent stack overflow
+    /// Set very low because multiple parallel paths (if/select/for) multiply the depth
+    private static let maxRecursionDepth = 20
+    
     public init(typeHandling: TypeHandling) {
         self.typeHandling = typeHandling
     }
@@ -45,16 +49,22 @@ public class TypeInference {
     
     // MARK: - Private Scanning Methods
     
-    private func scanForTypeHint(variableName: String, in statements: [StatementNode]) -> WASMType? {
+    private func scanForTypeHint(variableName: String, in statements: [StatementNode], depth: Int = 0) -> WASMType? {
+        // Prevent stack overflow from deeply nested control flow
+        guard depth < Self.maxRecursionDepth else {
+            print("DEBUG_INFERENCE: Max recursion depth reached for '\\(variableName)', stopping scan")
+            return nil
+        }
+        
         for statement in statements {
-            if let type = scanStatement(statement, forVariable: variableName) {
+            if let type = scanStatement(statement, forVariable: variableName, depth: depth) {
                 return type
             }
         }
         return nil
     }
     
-    private func scanStatement(_ statement: StatementNode, forVariable name: String) -> WASMType? {
+    private func scanStatement(_ statement: StatementNode, forVariable name: String, depth: Int) -> WASMType? {
         switch statement {
         case .assignment(let assign):
             // Check if this is an assignment to our variable
@@ -83,18 +93,18 @@ public class TypeInference {
             
         case .ifStatement(let ifNode):
             // Scan then branch
-            if let type = scanForTypeHint(variableName: name, in: ifNode.thenBranch) {
+            if let type = scanForTypeHint(variableName: name, in: ifNode.thenBranch, depth: depth + 1) {
                 return type
             }
             // Scan else branch (elseBranch is [StatementNode], not optional)
             if !ifNode.elseBranch.isEmpty {
-                if let type = scanForTypeHint(variableName: name, in: ifNode.elseBranch) {
+                if let type = scanForTypeHint(variableName: name, in: ifNode.elseBranch, depth: depth + 1) {
                     return type
                 }
             }
             
         case .whileLoop(let whileNode):
-            if let type = scanForTypeHint(variableName: name, in: whileNode.body) {
+            if let type = scanForTypeHint(variableName: name, in: whileNode.body, depth: depth + 1) {
                 return type
             }
             
@@ -103,7 +113,7 @@ public class TypeInference {
             if forNode.variable.name == name, let suffix = forNode.variable.typeSuffix {
                 return typeHandling.wasmType(from: suffix)
             }
-            if let type = scanForTypeHint(variableName: name, in: forNode.body) {
+            if let type = scanForTypeHint(variableName: name, in: forNode.body, depth: depth + 1) {
                 return type
             }
             
@@ -113,19 +123,19 @@ public class TypeInference {
             break
             
         case .repeatLoop(let repeatNode):
-            if let type = scanForTypeHint(variableName: name, in: repeatNode.body) {
+            if let type = scanForTypeHint(variableName: name, in: repeatNode.body, depth: depth + 1) {
                 return type
             }
             
         case .select(let selectNode):
             // Scan all cases
             for caseNode in selectNode.cases {
-                if let type = scanForTypeHint(variableName: name, in: caseNode.body) {
+                if let type = scanForTypeHint(variableName: name, in: caseNode.body, depth: depth + 1) {
                     return type
                 }
             }
             if let defaultCase = selectNode.defaultCase {
-                if let type = scanForTypeHint(variableName: name, in: defaultCase) {
+                if let type = scanForTypeHint(variableName: name, in: defaultCase, depth: depth + 1) {
                     return type
                 }
             }

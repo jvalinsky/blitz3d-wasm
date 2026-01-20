@@ -37,14 +37,14 @@ public final class ExpressionGeneration {
     public func generateWithInfo(_ expr: ExpressionNode) -> (instrs: [WASMInstruction], type: WASMType) {
         switch expr {
         case .integerLiteral(let value):
-            return ([.i32Const(Int32(value))], .i32)
+            return ([.i32Const(Int32(truncatingIfNeeded: value))], .i32)
             
         case .floatLiteral(let value):
             return ([.f32Const(Float(value))], .f32)
             
         case .stringLiteral(let value):
             let offset = addStringData(value)
-            return ([.i32Const(Int32(offset))], .i32)
+            return ([.i32Const(Int32(truncatingIfNeeded: offset))], .i32)
             
         case .identifier(let id):
             if let local = context.variableManagement.localInfo(for: id.name) {
@@ -133,7 +133,7 @@ public final class ExpressionGeneration {
                 .globalGet(context.heapPointerIdx),
                 .globalSet(context.scratchGlobalIdx),  // obj = heapPointer
                 .globalGet(context.scratchGlobalIdx),
-                .i32Const(Int32(typeInfo.instanceSize)),
+                .i32Const(Int32(truncatingIfNeeded: typeInfo.instanceSize)),
                 .i32Add,
                 .globalSet(context.heapPointerIdx),  // heapPointer += size
                 .globalGet(context.scratchGlobalIdx)  // result
@@ -152,7 +152,7 @@ public final class ExpressionGeneration {
             
             // obj.typeID = typeID
             instrs.append(.globalGet(context.scratchGlobalIdx))
-            instrs.append(.i32Const(Int32(typeInfo.typeID)))
+            instrs.append(.i32Const(Int32(truncatingIfNeeded: typeInfo.typeID)))
             instrs.append(.i32Store(2, 8)) // offset 8
             
             // 2b. Initialize fields with default values
@@ -184,7 +184,7 @@ public final class ExpressionGeneration {
                     
                     // Compute field address: obj + offset
                     instrs.append(.globalGet(context.scratchGlobalIdx))
-                    instrs.append(.i32Const(Int32(fieldOffset)))
+                    instrs.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
                     instrs.append(.i32Add)
                     
                     // Load value from appropriate scratch global
@@ -276,7 +276,7 @@ public final class ExpressionGeneration {
             
             // Check if typeID matches
             if let typeInfo = context.userTypes[typeName] {
-                instrs.append(.i32Const(Int32(typeInfo.typeID)))
+                instrs.append(.i32Const(Int32(truncatingIfNeeded: typeInfo.typeID)))
                 instrs.append(.i32Eq)
                 instrs.append(.if(.i32, [
                     .globalGet(context.scratchGlobalIdx)  // Return original handle if valid
@@ -755,7 +755,7 @@ public final class ExpressionGeneration {
         // Case 1: Regular array variable (Dim array[10])
         if case .identifier(let arrayId) = access.array,
            let array = context.variableManagement.arrayInfo(for: arrayId.name) {
-            instrs.append(.i32Const(Int32(array.baseAddress)))
+            instrs.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
             
             // Calculate offset
             for (index, indexExpr) in access.indices.enumerated() {
@@ -764,7 +764,7 @@ public final class ExpressionGeneration {
                 
                 if index > 0 {
                     // Multiply by stride
-                    instrs.append(.i32Const(Int32(array.strides[index])))
+                    instrs.append(.i32Const(Int32(truncatingIfNeeded: array.strides[index])))
                     instrs.append(.i32Mul)
                 }
             }
@@ -811,7 +811,7 @@ public final class ExpressionGeneration {
                     instrs.append(contentsOf: indexInstrs)
                     
                     if elementSize > 1 {
-                        instrs.append(.i32Const(Int32(elementSize)))
+                        instrs.append(.i32Const(Int32(truncatingIfNeeded: elementSize)))
                         instrs.append(.i32Mul)
                     }
                     
@@ -851,7 +851,7 @@ public final class ExpressionGeneration {
         // Add field offset
         if let typeName = getTypeName(from: access.object),
            let fieldOffset = context.fieldOffsets[typeName]?[access.field] {
-            instrs.append(.i32Const(Int32(fieldOffset)))
+            instrs.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
             instrs.append(.i32Add)
             
             // Check if this field is an array
@@ -956,7 +956,7 @@ public final class ExpressionGeneration {
         
         // 2. Add Length (4 bytes)
         let utf8Bytes = Array(str.utf8)
-        let len = Int32(utf8Bytes.count)
+        let len = Int32(truncatingIfNeeded: utf8Bytes.count)
         bytes.append(UInt8(len & 0xFF))
         bytes.append(UInt8((len >> 8) & 0xFF))
         bytes.append(UInt8((len >> 16) & 0xFF))
@@ -973,7 +973,7 @@ public final class ExpressionGeneration {
             offset += segment.bytes.count
         }
 
-        let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(offset)), bytes: bytes)
+        let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(truncatingIfNeeded: offset)), bytes: bytes)
         context.module.data.append(data)
 
         return offset

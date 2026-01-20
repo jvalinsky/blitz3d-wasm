@@ -91,12 +91,12 @@ public final class DataGeneration {
                 switch value {
                 case .integer(let intVal):
                     let bytes = intVal.toBytes()
-                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(dataOffset)), bytes: bytes)
+                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(truncatingIfNeeded: dataOffset)), bytes: bytes)
                     context.module.data.append(data)
                     dataOffset += 4
                 case .float(let floatVal):
                     let bytes = floatVal.toBytes()
-                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(dataOffset)), bytes: bytes)
+                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(truncatingIfNeeded: dataOffset)), bytes: bytes)
                     context.module.data.append(data)
                     dataOffset += 4
                 case .string(let str):
@@ -105,7 +105,7 @@ public final class DataGeneration {
                         bytes.append(char)
                     }
                     bytes.append(0)
-                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(dataOffset)), bytes: bytes)
+                    let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(truncatingIfNeeded: dataOffset)), bytes: bytes)
                     context.module.data.append(data)
                     dataOffset += bytes.count
                 }

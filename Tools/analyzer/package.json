@@ -1,0 +1,30 @@
+{
+  "name": "wasm-analyzer",
+  "version": "1.0.0",
+  "description": "WASM output analysis toolkit for Blitz3D compiler",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "wasm-analyze": "./cli.js"
+  },
+  "scripts": {
+    "analyze": "node cli.js",
+    "visualize": "node visualize.js",
+    "report": "node report.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "glob": "^10.3.10",
+    "wasmparser": "^5.11.1"
+  },
+  "keywords": [
+    "wasm",
+    "webassembly",
+    "blitz3d",
+    "compiler",
+    "analysis",
+    "visualization"
+  ],
+  "author": "",
+  "license": "MIT"
+}

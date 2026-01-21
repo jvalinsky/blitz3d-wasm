@@ -9,6 +9,7 @@ const statusEl = document.getElementById('status');
 const debugPanel = document.getElementById('debug-panel');
 const debugStatsEl = document.getElementById('debug-stats');
 const debugLogEl = document.getElementById('debug-log');
+const debugToggleBtn = document.getElementById('debug-toggle');
 
 const ctx = canvas.getContext('2d');
 
@@ -89,8 +90,13 @@ function toggleDebugPanel() {
     }
 }
 
+if (debugToggleBtn) {
+    debugToggleBtn.addEventListener('click', () => toggleDebugPanel());
+}
+
 window.addEventListener('keydown', (e) => {
-    if (e.key === '`') {
+    // Some keyboard layouts don't report ` as e.key; use e.code too.
+    if (e.code === 'Backquote' || e.key === '`' || e.key === 'Dead' || e.key === '~' || e.key === 'F2') {
         toggleDebugPanel();
     }
 });

@@ -29,6 +29,31 @@ html, body {
     font-size: 18px;
 }
 
+.controls {
+    display: flex;
+    gap: 10px;
+    margin: 0 0 10px 0;
+}
+
+.controls button {
+    appearance: none;
+    background: #0b2a33;
+    color: #d7ffff;
+    border: 1px solid #3cf;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.controls button:hover {
+    background: #0f3b48;
+}
+
+.controls button:active {
+    transform: translateY(1px);
+}
+
 .instructions ul {
     margin: 0;
     padding-left: 18px;

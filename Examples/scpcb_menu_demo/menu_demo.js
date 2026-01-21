@@ -162,8 +162,23 @@ async function loadFonts() {
         { family: 'Journal', url: 'assets/fonts/journal.ttf' },
     ];
     const faces = fontDefs.map(def => new FontFace(def.family, `url(${def.url})`));
-    await Promise.all(faces.map(face => face.load()));
-    faces.forEach(face => document.fonts.add(face));
+
+    const loadPromise = Promise.all(faces.map(face => face.load()))
+        .then(() => {
+            faces.forEach(face => document.fonts.add(face));
+            console.log('[fonts] Loaded menu fonts');
+        })
+        .catch((err) => {
+            console.warn('[fonts] Failed to load one or more fonts, continuing with fallbacks', err);
+        });
+
+    // Avoid hanging forever on slow/blocked font loads.
+    const timeoutPromise = new Promise((resolve) => setTimeout(() => {
+        console.warn('[fonts] Timeout waiting for fonts; continuing with system fallbacks');
+        resolve();
+    }, 2000));
+
+    await Promise.race([loadPromise, timeoutPromise]);
 }
 
 function makeFontHandle(family, sizePx) {

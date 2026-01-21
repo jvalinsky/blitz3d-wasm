@@ -14,13 +14,17 @@ html, body {
     width: 100vw;
     height: 100vh;
     background: #000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
 }
 
 #overlay {
     position: absolute;
     top: 12px;
     left: 12px;
-    z-index: 10;
+    z-index: 20;
     background: rgba(0,0,0,0.5);
     padding: 8px 12px;
     border: 1px solid #333;
@@ -41,7 +45,7 @@ html, body {
     position: absolute;
     bottom: 12px;
     left: 12px;
-    z-index: 20;
+    z-index: 30;
     width: min(420px, 90vw);
     max-height: 45vh;
     padding: 8px 10px;
@@ -77,7 +81,7 @@ html, body {
     position: absolute;
     top: 12px;
     right: 12px;
-    z-index: 30;
+    z-index: 40;
     padding: 8px 10px;
     background: rgba(255, 255, 255, 0.15);
     color: #fff;

@@ -72,3 +72,17 @@ html, body {
     overflow: auto;
     white-space: pre-wrap;
 }
+
+#context-zone {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 30;
+    padding: 8px 10px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px dashed #888;
+    font-size: 12px;
+    user-select: none;
+    cursor: context-menu;
+}

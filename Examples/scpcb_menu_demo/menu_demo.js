@@ -63,7 +63,18 @@ function pushLog(line) {
     const original = console[level];
     console[level] = (...args) => {
         try {
-            pushLog(`[${level}] ${args.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ')}`);
+            const rendered = args.map((a) => {
+                if (a instanceof Error) {
+                    const msg = a.stack || a.message || String(a);
+                    return msg.length > 2000 ? (msg.slice(0, 2000) + '…') : msg;
+                }
+                if (typeof a === 'string') return a.length > 2000 ? (a.slice(0, 2000) + '…') : a;
+                if (typeof a === 'number' || typeof a === 'boolean' || a == null) return String(a);
+                // Avoid JSON-stringifying large/recursive objects into the log buffer.
+                const tag = Object.prototype.toString.call(a);
+                return tag;
+            }).join(' ');
+            pushLog(`[${level}] ${rendered}`);
         } catch {
             // ignore formatting issues
         }
@@ -145,15 +156,24 @@ function readString(memory, ptr) {
 
 function writeString(memory, ptr, str, maxBytes = Infinity) {
     const buffer = getSafeBuffer(memory.buffer);
-    const view = new DataView(buffer);
-    view.setInt32(ptr, 0, true);
-    const safe = (str ?? '').slice(0, Math.max(0, Math.min((str ?? '').length, maxBytes)));
-    view.setInt32(ptr + 4, safe.length, true);
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < safe.length; i++) {
-        bytes[ptr + 8 + i] = safe.charCodeAt(i);
+    const byteLength = buffer.byteLength >>> 0;
+    const offset = ptr >>> 0;
+    if (offset + 8 >= byteLength) {
+        console.error('[writeString] OOB write', { ptr, byteLength });
+        return false;
     }
-    bytes[ptr + 8 + safe.length] = 0;
+
+    const view = new DataView(buffer);
+    view.setInt32(offset, 0, true);
+    const safe = (str ?? '').slice(0, Math.max(0, Math.min((str ?? '').length, maxBytes)));
+    view.setInt32(offset + 4, safe.length, true);
+    const bytes = new Uint8Array(buffer);
+    const maxCopy = Math.max(0, Math.min(safe.length, byteLength - (offset + 9)));
+    for (let i = 0; i < maxCopy; i++) {
+        bytes[offset + 8 + i] = safe.charCodeAt(i);
+    }
+    bytes[offset + 8 + maxCopy] = 0;
+    return true;
 }
 
 const heapPointers = new Map();
@@ -164,15 +184,29 @@ function allocString(memory, str) {
     // Prefer the module's string heap allocator when available so we don't
     // scribble over unrelated heap regions.
     if (gameExports && typeof gameExports.__StringAlloc === 'function') {
-        const ptr = gameExports.__StringAlloc(s.length) | 0;
-        const end = ptr + 9 + s.length; // header + NUL
-        if (end > memory.buffer.byteLength) {
-            const neededPages = Math.ceil((end - memory.buffer.byteLength) / (64 * 1024));
+        // WebAssembly i32 results are sign-extended; normalize to a uint32 offset.
+        const ptr = (gameExports.__StringAlloc(s.length) >>> 0);
+        const end = (ptr + 9 + s.length) >>> 0; // header + NUL
+        const pageSize = 64 * 1024;
+        if (end > (memory.buffer.byteLength >>> 0)) {
+            const neededPages = Math.ceil((end - (memory.buffer.byteLength >>> 0)) / pageSize);
             if (neededPages > 0) {
                 try { memory.grow(neededPages); wasmMemoryGrows += neededPages; } catch { /* ignore */ }
             }
         }
-        writeString(memory, ptr, s);
+        // If we still can't fit, bail out safely instead of crashing the page.
+        const byteLength = memory.buffer.byteLength >>> 0;
+        if (ptr + 9 > byteLength) {
+            console.error('[allocString] OOB ptr from __StringAlloc', { ptr, byteLength, len: s.length });
+            return 0;
+        }
+
+        const maxChars = Math.max(0, byteLength - (ptr + 9));
+        if (s.length > maxChars) {
+            console.warn('[allocString] Truncating string to fit memory', { requested: s.length, maxChars });
+        }
+
+        writeString(memory, ptr, s, maxChars);
         jsToWasmStringAllocs += 1;
         jsToWasmStringBytes += s.length;
         return ptr;

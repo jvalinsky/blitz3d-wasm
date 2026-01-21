@@ -41,7 +41,6 @@ public final class FunctionGeneration {
         // Determine function type signature
         let typeSignature = functionSignature(for: functionNode)
         let typeIdx = context.typeIndexMap[typeSignature] ?? 0
-        print("DEBUG: Function \(functionNode.name) signature='\(typeSignature)' typeIdx=\(typeIdx)")
         
         // Create new function
         var function = WASMFunction(typeIndex: typeIdx)
@@ -136,7 +135,7 @@ public final class FunctionGeneration {
             
             for statement in functionNode.body {
                 switch statement {
-                case .label(let name):
+                case .label(let name, _):
                     if let stateNum = labelStateMap[name] {
                         loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: stateNum, statements: currentChunk, function: &function))
                         currentChunk = []
@@ -231,7 +230,6 @@ public final class FunctionGeneration {
             returnWasmType = typeHandling.wasmType(from: "Int")
         }
         
-        print("Ensuring return for \(returnType?.rawValue ?? "nil") -> \(returnWasmType)")
         switch returnWasmType {
         case .i32, .i64: function.body.append(.i32Const(0))
         case .f32: function.body.append(.f32Const(0))
@@ -292,10 +290,10 @@ public final class FunctionGeneration {
         var gosubCount = 0
         for statement in statements {
             switch statement {
-            case .label(let name): labels.insert(name)
+            case .label(let name, _): labels.insert(name)
             case .goto: hasGoto = true
             case .gosub: hasGoto = true; gosubCount += 1
-            case .ifStatement(let ifNode):
+            case .ifStatement(let ifNode, _):
                 let thenLabels = collectLabelsAndGotos(ifNode.thenBranch)
                 labels.formUnion(thenLabels.labels); hasGoto = hasGoto || thenLabels.hasGoto; gosubCount += thenLabels.gosubCount
                 for (_, elseIfBranch) in ifNode.elseIfs {
@@ -306,19 +304,19 @@ public final class FunctionGeneration {
                     let elseLabels = collectLabelsAndGotos(ifNode.elseBranch)
                     labels.formUnion(elseLabels.labels); hasGoto = hasGoto || elseLabels.hasGoto; gosubCount += elseLabels.gosubCount
                 }
-            case .whileLoop(let whileNode):
+            case .whileLoop(let whileNode, _):
                 let loopLabels = collectLabelsAndGotos(whileNode.body)
                 labels.formUnion(loopLabels.labels); hasGoto = hasGoto || loopLabels.hasGoto; gosubCount += loopLabels.gosubCount
-            case .forLoop(let forNode):
+            case .forLoop(let forNode, _):
                 let forLabels = collectLabelsAndGotos(forNode.body)
                 labels.formUnion(forLabels.labels); hasGoto = hasGoto || forLabels.hasGoto; gosubCount += forLabels.gosubCount
-            case .repeatLoop(let repeatNode):
+            case .repeatLoop(let repeatNode, _):
                 let repeatLabels = collectLabelsAndGotos(repeatNode.body)
                 labels.formUnion(repeatLabels.labels); hasGoto = hasGoto || repeatLabels.hasGoto; gosubCount += repeatLabels.gosubCount
-            case .forEach(let eachNode):
+            case .forEach(let eachNode, _):
                 let eachLabels = collectLabelsAndGotos(eachNode.body)
                 labels.formUnion(eachLabels.labels); hasGoto = hasGoto || eachLabels.hasGoto; gosubCount += eachLabels.gosubCount
-            case .select(let selectNode):
+            case .select(let selectNode, _):
                 for caseNode in selectNode.cases {
                     let caseLabels = collectLabelsAndGotos(caseNode.body)
                     labels.formUnion(caseLabels.labels); hasGoto = hasGoto || caseLabels.hasGoto; gosubCount += caseLabels.gosubCount

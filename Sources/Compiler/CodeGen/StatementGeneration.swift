@@ -88,7 +88,7 @@ public final class StatementGeneration: ValidatorTypeContext {
     /// Generate code for a statement
     public func generateStatement(_ statement: StatementNode, function: inout WASMFunction) {
         switch statement {
-        case .local(let decl):
+        case .local(let decl, _):
             for id in decl.variables {
                 let wasmType = typeHandling.typeInfo(from: id.typeSuffix).wasmType
                 let localInfo = context.variableManagement.registerLocal(id.name, type: wasmType, typeName: id.typeName)
@@ -118,11 +118,11 @@ public final class StatementGeneration: ValidatorTypeContext {
         case .constant, .constants:
             break
             
-        case .dim(let decl):
+        case .dim(let decl, _):
             var dims: [Int] = []
             var totalElements = 1
             for dimExpr in decl.dimensions {
-                if case .integerLiteral(let value) = dimExpr {
+                if case .integerLiteral(let value, _) = dimExpr {
                     dims.append(value)
                     totalElements *= (value + 1) // Blitz3D arrays are 0..N
                 }
@@ -136,7 +136,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             function.body.append(.i32Const(Int32(truncatingIfNeeded: totalElements * info.elementSize))) // size
             function.body.append(.memoryFill(0))                    // memory 0
             
-        case .assignment(let assign):
+        case .assignment(let assign, _):
             guard let expressionGenerator = expressionGenerator else { break }
             
             let valueResult = expressionGenerator.generateWithInfo(assign.value)
@@ -153,7 +153,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
             
             switch assign.target {
-            case .identifier(let id):
+            case .identifier(let id, _):
                 print("DEBUG_ASSIGN: Assigning to '\(id.name)' suffix=\(id.typeSuffix?.rawValue ?? "none") targetType=\(targetType) valueType=\(valueResult.type)")
                 
                 if let local = context.variableManagement.localInfo(for: id.name) {
@@ -176,8 +176,8 @@ public final class StatementGeneration: ValidatorTypeContext {
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.globalSet(actualGlobalIdx))
                 }
-            case .arrayAccess(let access):
-                if case .identifier(let arrayId) = access.array,
+            case .arrayAccess(let access, _):
+                if case .identifier(let arrayId, _) = access.array,
                    let array = context.variableManagement.arrayInfo(for: arrayId.name) {
                     // Start with base address
                     function.body.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
@@ -220,7 +220,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                     default:
                         function.body.append(.i32Store(2, 0))
                     }
-                } else if case .fieldAccess(let fieldAccess) = access.array {
+                } else if case .fieldAccess(let fieldAccess, _) = access.array {
                     // Assignment to Field Array: obj.field[index] = value
                     // 1. Generate Field Access (returns instrs for base address)
                     let objInstrs = expressionGenerator.generate(fieldAccess.object)
@@ -267,7 +267,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                         function.body.append(.drop) // Drop value
                     }
                 }
-            case .fieldAccess(let access):
+            case .fieldAccess(let access, _):
                 let objInstrs = expressionGenerator.generate(access.object)
                 function.body.append(contentsOf: objInstrs)
                 if let typeName = getTypeName(from: access.object),
@@ -297,7 +297,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.drop) // Drop value
                 }
-            case .functionCall(let call):
+            case .functionCall(let call, _):
                 // In Blitz3D, array access uses function call syntax: ArrayName(index)
                 // Treat function calls in assignment position as array access
                 
@@ -346,18 +346,18 @@ public final class StatementGeneration: ValidatorTypeContext {
                 break
             }
             
-        case .functionCall(let call):
+        case .functionCall(let call, _):
             guard let expressionGenerator = expressionGenerator else { break }
-            let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call))
+            let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call, call.span))
             function.body.append(contentsOf: instrs)
             
             // Should always drop the result as we are in a statement context
             // ExpressionGeneration ensures void functions return a dummy 0 (i32)
-            if type != .void {
+            if type != WASMType.void {
                 function.body.append(.drop)
             }
             
-        case .ifStatement(let ifNode):
+        case .ifStatement(let ifNode, _):
             guard let expressionGenerator = expressionGenerator else { break }
 
             // Handle elseIfs by converting them to nested if-else statements
@@ -435,7 +435,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                                                          elseIfs: ifNode.elseIfs,
                                                          elseBranch: ifNode.elseBranch))
             
-        case .whileLoop(let whileNode):
+        case .whileLoop(let whileNode, _):
             guard let expressionGenerator = expressionGenerator else { break }
             
             currentDepth += 1 // block
@@ -464,7 +464,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 .loop(.void, loopInstrs)
             ]))
             
-        case .forLoop(let forNode):
+        case .forLoop(let forNode, _):
             guard let expressionGenerator = expressionGenerator else { break }
             var loopLocal = context.variableManagement.localInfo(for: forNode.variable.name)
             if loopLocal == nil {
@@ -495,12 +495,12 @@ public final class StatementGeneration: ValidatorTypeContext {
 
                 if let stepExpr = forNode.stepValue {
                     // Try to evaluate step as constant
-                    if case .integerLiteral(let v) = stepExpr {
+                    if case .integerLiteral(let v, _) = stepExpr {
                         stepValue = v
                         stepIsConstant = true
                         stepIsNegative = v < 0
-                    } else if case .unary(let unary) = stepExpr, unary.op == "-" {
-                        if case .integerLiteral(let v) = unary.expression {
+                    } else if case .unary(let unary, _) = stepExpr, unary.op == "-" {
+                        if case .integerLiteral(let v, _) = unary.expression {
                             stepValue = -v
                             stepIsConstant = true
                             stepIsNegative = true
@@ -582,7 +582,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 ]))
             }
             
-        case .forEach(let forEachNode):
+        case .forEach(let forEachNode, _):
             guard let typeInfo = context.userTypes[forEachNode.typeName],
                   let iterator = context.variableManagement.localInfo(for: forEachNode.iteratorName) else { break }
             
@@ -621,7 +621,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 .loop(.void, loopInstrs)
             ]))
             
-        case .repeatLoop(let repeatNode):
+        case .repeatLoop(let repeatNode, _):
             currentDepth += 1 // block
             loopExitDepths.append(currentDepth)
             currentDepth += 1 // loop
@@ -646,7 +646,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 .loop(.void, loopInstrs)
             ]))
             
-        case .select(let selectNode):
+        case .select(let selectNode, _):
             // Generate: block { if (cond) { body; br 1 } ... default }
             currentDepth += 1
             
@@ -750,7 +750,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             function.body.append(.block(.void, blockInstrs))
             currentDepth -= 1
             
-        case .returnStatement(let expr):
+        case .returnStatement(let expr, _):
             // Check if we are in a GOSUB return context (stack not empty)
             if gotoStateLocalIdx >= 0 {
                 function.body.append(.globalGet(context.gosubStackPtrIdx))
@@ -779,14 +779,14 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
             function.body.append(.return)
             
-        case .exit:
+        case .exit(_):
             if let targetDepth = loopExitDepths.last {
                 function.body.append(.br(currentDepth - targetDepth))
             } else {
                 function.body.append(.nop)
             }
             
-        case .goto(let labelName):
+        case .goto(let labelName, _):
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
                 function.body.append(.i32Const(Int32(truncatingIfNeeded: stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
@@ -795,7 +795,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.nop)
             }
             
-        case .gosub(let labelName):
+        case .gosub(let labelName, _):
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
                 // 1. Assign unique return ID
                 gosubReturnCounter += 1
@@ -822,7 +822,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.nop)
             }
             
-        case .label(let name):
+        case .label(let name, _):
             // The label itself is just a state ID check point
             if labelStateMap[name] != nil {
                 // We'll wrap segments in checks:
@@ -832,7 +832,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.nop)
             }
             
-        case .typeDeclaration(let typeNode):
+        case .typeDeclaration(let typeNode, _):
             var offsets: [String: Int] = [:]
             var currentOffset = 8
             var fieldTypes: [String: String] = [:]
@@ -856,7 +856,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             )
             context.fieldOffsets[typeNode.typeName] = offsets
             
-        case .read(let identifiers):
+        case .read(let identifiers, _):
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             for id in identifiers {
                 function.body.append(.globalGet(dataPtrIdx))
@@ -874,7 +874,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.globalSet(dataPtrIdx))
             }
             
-        case .restore(let label):
+        case .restore(let label, _):
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             if let labelName = label, let offset = dataGenerator?.getDataOffset(for: labelName) {
                 function.body.append(.i32Const(Int32(truncatingIfNeeded: offset)))
@@ -884,7 +884,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.globalSet(dataPtrIdx))
             }
             
-        case .delete(let expr):
+        case .delete(let expr, _):
             guard let typeName = getTypeName(from: expr),
                   let typeInfo = context.userTypes[typeName],
                   let expressionGenerator = expressionGenerator else { break }
@@ -941,7 +941,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             function.body.append(.i32Const(0))
             function.body.append(.i32Store(2, 8))
             
-        case .insert(let objExpr, let position):
+        case .insert(let objExpr, let position, _):
             // Insert a Before b  OR  Insert a After b
             // Moves 'a' in the linked list to be before/after 'b'
             guard let typeName = getTypeName(from: objExpr),
@@ -1082,7 +1082,7 @@ public final class StatementGeneration: ValidatorTypeContext {
 
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
-        case .identifier(let id):
+        case .identifier(let id, _):
             
             // CRITICAL FIX: Check type suffix FIRST before registry lookup
             // This ensures float variables (x#) are recognized as f32 even during initial assignment
@@ -1102,12 +1102,12 @@ public final class StatementGeneration: ValidatorTypeContext {
                 return global.type
             }
             print("  → DEFAULT: i32")
-        case .arrayAccess(let access):
-            if case .identifier(let arrayId) = access.array,
+        case .arrayAccess(let access, _):
+            if case .identifier(let arrayId, _) = access.array,
                let array = context.variableManagement.arrayInfo(for: arrayId.name) {
                 return array.elementType
             }
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             if let typeName = getTypeName(from: access.object),
                let fieldType = context.userTypes[typeName]?.fieldTypes[access.field] {
                 return typeHandling.wasmType(from: fieldType)
@@ -1300,38 +1300,38 @@ public final class StatementGeneration: ValidatorTypeContext {
     
     private func getTypeName(from expr: ExpressionNode) -> String? {
         switch expr {
-        case .identifier(let id):
+        case .identifier(let id, _):
             if let local = context.variableManagement.localInfo(for: id.name) {
                 return local.typeName
             }
             if let global = context.variableManagement.globalInfo(for: id.name) {
                 return global.typeName
             }
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             if let objType = getTypeName(from: access.object),
                let fieldType = context.userTypes[objType]?.fieldTypes[access.field] {
                 return fieldType
             }
-        case .new(let type):
+        case .new(let type, _):
             return type
-        case .first(let type):
+        case .first(let type, _):
             return type
-        case .last(let type):
+        case .last(let type, _):
             return type
-        case .before(let subExpr):
+        case .before(let subExpr, _):
             return getTypeName(from: subExpr)
-        case .after(let subExpr):
+        case .after(let subExpr, _):
             return getTypeName(from: subExpr)
-        case .arrayAccess(let access):
+        case .arrayAccess(let access, _):
             // Check if it's a field array access: obj.field[index]
-            if case .fieldAccess(let fieldAccess) = access.array,
+            if case .fieldAccess(let fieldAccess, _) = access.array,
                let objType = getTypeName(from: fieldAccess.object),
                let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
                 // If the field is an array of CustomType, return CustomType
                 // fieldType is "CustomType" or "Int" etc.
                 return fieldType
             }
-        case .objectCast(let type, _):
+        case .objectCast(let type, _, _):
             return type
         default:
             break

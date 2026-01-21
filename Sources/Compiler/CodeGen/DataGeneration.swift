@@ -40,9 +40,9 @@ public final class DataGeneration {
         var currentLabel = label
         for statement in statements {
             switch statement {
-            case .label(let name):
+            case .label(let name, _):
                 currentLabel = name
-            case .data(let values):
+            case .data(let values, _):
                 let block = DataBlock(label: currentLabel, values: values, offset: currentDataOffset)
                 dataStatements.append(block)
                 if let lbl = currentLabel {
@@ -55,23 +55,23 @@ public final class DataGeneration {
                     case .string(let str): currentDataOffset += str.utf8.count + 1
                     }
                 }
-            case .function(let funcNode):
+            case .function(let funcNode, _):
                 collectDataStatements(funcNode.body, label: nil)
-            case .ifStatement(let ifNode):
+            case .ifStatement(let ifNode, _):
                 collectDataStatements(ifNode.thenBranch, label: currentLabel)
                 for (_, elseBranch) in ifNode.elseIfs {
                     collectDataStatements(elseBranch, label: currentLabel)
                 }
                 collectDataStatements(ifNode.elseBranch, label: currentLabel)
-            case .whileLoop(let whileNode):
+            case .whileLoop(let whileNode, _):
                 collectDataStatements(whileNode.body, label: currentLabel)
-            case .forLoop(let forNode):
+            case .forLoop(let forNode, _):
                 collectDataStatements(forNode.body, label: currentLabel)
-            case .forEach(let forEachNode):
+            case .forEach(let forEachNode, _):
                 collectDataStatements(forEachNode.body, label: currentLabel)
-            case .repeatLoop(let repeatNode):
+            case .repeatLoop(let repeatNode, _):
                 collectDataStatements(repeatNode.body, label: currentLabel)
-            case .select(let selectNode):
+            case .select(let selectNode, _):
                 for caseNode in selectNode.cases {
                     collectDataStatements(caseNode.body, label: currentLabel)
                 }

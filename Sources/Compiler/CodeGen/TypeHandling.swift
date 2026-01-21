@@ -65,16 +65,16 @@ public struct TypeHandling {
         switch expr {
         case .stringLiteral:
             return true
-        case .identifier(let id):
+        case .identifier(let id, _):
             return id.typeSuffix == .string || id.typeName?.lowercased() == "string"
-        case .functionCall(let call):
+        case .functionCall(let call, _):
             return call.name.hasSuffix("$")
-        case .binary(let binaryOp):
+        case .binary(let binaryOp, _):
             if binaryOp.op == "+" {
                 return isString(from: binaryOp.left) || isString(from: binaryOp.right)
             }
             return false
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             // Need to check field type... simplified for now
             return access.field.hasSuffix("$")
         default:
@@ -94,28 +94,28 @@ public struct TypeHandling {
         case .stringLiteral:
             return .i32
             
-        case .identifier(let identifier):
+        case .identifier(let identifier, _):
             return wasmType(from: identifier.typeSuffix)
             
-        case .binary(let binaryOp):
+        case .binary(let binaryOp, _):
             return resultType(for: binaryOp.op, leftType: wasmType(from: binaryOp.left), rightType: wasmType(from: binaryOp.right))
             
-        case .unary(let unaryOp):
+        case .unary(let unaryOp, _):
             return resultType(for: unaryOp.op, operandType: wasmType(from: unaryOp.expression))
             
-        case .functionCall(let call):
+        case .functionCall(let call, _):
             // Function call return type - simplified, assumes i32
             return defaultType
             
-        case .arrayAccess(let access):
+        case .arrayAccess(let access, _):
             // Array access returns i32 by default
             return .i32
             
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             // Field access - simplified, assumes i32
             return .i32
             
-        case .typeCast(let cast):
+        case .typeCast(let cast, _):
             return wasmType(from: cast.targetType.rawValue)
             
         case .new:

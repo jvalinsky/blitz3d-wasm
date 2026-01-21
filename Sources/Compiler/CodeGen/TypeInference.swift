@@ -66,16 +66,16 @@ public class TypeInference {
     
     private func scanStatement(_ statement: StatementNode, forVariable name: String, depth: Int) -> WASMType? {
         switch statement {
-        case .assignment(let assign):
+        case .assignment(let assign, _):
             // Check if this is an assignment to our variable
-            if case .identifier(let id) = assign.target, id.name == name {
+            if case .identifier(let id, _) = assign.target, id.name == name {
                 // If it has a type suffix, we found our hint!
                 if let suffix = id.typeSuffix {
                     return typeHandling.wasmType(from: suffix)
                 }
             }
             
-        case .local(let decl):
+        case .local(let decl, _):
             // Check if variable is declared with type suffix
             for id in decl.variables {
                 if id.name == name, let suffix = id.typeSuffix {
@@ -83,7 +83,7 @@ public class TypeInference {
                 }
             }
             
-        case .global(let decl):
+        case .global(let decl, _):
             // Check if variable is declared with type suffix
             for id in decl.variables {
                 if id.name == name, let suffix = id.typeSuffix {
@@ -91,7 +91,7 @@ public class TypeInference {
                 }
             }
             
-        case .ifStatement(let ifNode):
+        case .ifStatement(let ifNode, _):
             // Scan then branch
             if let type = scanForTypeHint(variableName: name, in: ifNode.thenBranch, depth: depth + 1) {
                 return type
@@ -103,12 +103,12 @@ public class TypeInference {
                 }
             }
             
-        case .whileLoop(let whileNode):
+        case .whileLoop(let whileNode, _):
             if let type = scanForTypeHint(variableName: name, in: whileNode.body, depth: depth + 1) {
                 return type
             }
             
-        case .forLoop(let forNode):
+        case .forLoop(let forNode, _):
             // Check if loop variable matches
             if forNode.variable.name == name, let suffix = forNode.variable.typeSuffix {
                 return typeHandling.wasmType(from: suffix)
@@ -117,17 +117,17 @@ public class TypeInference {
                 return type
             }
             
-        case .forEach(let forEachNode):
+        case .forEach(let forEachNode, _):
             // ForEach loops don't declare the variable, they iterate over existing types
             // So we can't infer type from forEach loop
             break
             
-        case .repeatLoop(let repeatNode):
+        case .repeatLoop(let repeatNode, _):
             if let type = scanForTypeHint(variableName: name, in: repeatNode.body, depth: depth + 1) {
                 return type
             }
             
-        case .select(let selectNode):
+        case .select(let selectNode, _):
             // Scan all cases
             for caseNode in selectNode.cases {
                 if let type = scanForTypeHint(variableName: name, in: caseNode.body, depth: depth + 1) {

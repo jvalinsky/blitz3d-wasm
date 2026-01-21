@@ -627,9 +627,9 @@ public struct CodeGenerator {
     
     private func evaluateIntExpression(_ expr: ExpressionNode) -> Int? {
         switch expr {
-        case .integerLiteral(let value):
+        case .integerLiteral(let value, _):
             return value
-        case .binary(let binop):
+        case .binary(let binop, _):
             if let left = evaluateIntExpression(binop.left),
                let right = evaluateIntExpression(binop.right) {
                 switch binop.op {
@@ -640,7 +640,7 @@ public struct CodeGenerator {
                 default: return nil
                 }
             }
-        case .unary(let unop):
+        case .unary(let unop, _):
             if let val = evaluateIntExpression(unop.expression) {
                 switch unop.op {
                 case "-": return -val
@@ -815,7 +815,7 @@ public struct CodeGenerator {
         print("DEBUG_GLOBAL_PROC: Processing \(statements.count) statements for Global declarations")
         var globalCount = 0
         for statement in statements {
-            if case .global(let decl) = statement {
+            if case .global(let decl, _) = statement {
                 globalCount += 1
                 print("DEBUG_GLOBAL_PROC: Found Global statement #\(globalCount) with \(decl.variables.count) variable(s)")
                 for variable in decl.variables {

@@ -36,17 +36,17 @@ public final class ExpressionGeneration {
     /// Generate WASM instructions along with type information
     public func generateWithInfo(_ expr: ExpressionNode) -> (instrs: [WASMInstruction], type: WASMType) {
         switch expr {
-        case .integerLiteral(let value):
+        case .integerLiteral(let value, _):
             return ([.i32Const(Int32(truncatingIfNeeded: value))], .i32)
             
-        case .floatLiteral(let value):
+        case .floatLiteral(let value, _):
             return ([.f32Const(Float(value))], .f32)
             
-        case .stringLiteral(let value):
+        case .stringLiteral(let value, _):
             let offset = addStringData(value)
             return ([.i32Const(Int32(truncatingIfNeeded: offset))], .i32)
             
-        case .identifier(let id):
+        case .identifier(let id, _):
             if let local = context.variableManagement.localInfo(for: id.name) {
                 return ([.localGet(local.index)], local.type)
             }
@@ -83,25 +83,25 @@ public final class ExpressionGeneration {
             _ = context.variableManagement.registerGlobalWithIndex(id.name, type: wasmType, typeName: nil, wasmIndex: actualGlobalIdx)
             return ([.globalGet(actualGlobalIdx)], wasmType)
             
-        case .binary(let binop):
+        case .binary(let binop, _):
             return generateBinaryOp(binop)
             
-        case .unary(let unaryOp):
+        case .unary(let unaryOp, _):
             return generateUnaryOp(unaryOp)
             
-        case .functionCall(let call):
+        case .functionCall(let call, _):
             return generateFunctionCall(call)
             
-        case .arrayAccess(let access):
+        case .arrayAccess(let access, _):
             return generateArrayAccess(access)
             
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             return generateFieldAccess(access)
             
-        case .typeCast(let cast):
+        case .typeCast(let cast, _):
             return generateTypeCast(cast)
             
-        case .new(let typeName):
+        case .new(let typeName, _):
             // new TypeName() - allocate instance
             guard let typeInfo = context.userTypes[typeName] else {
                 return ([.i32Const(0)], .i32)
@@ -231,37 +231,37 @@ public final class ExpressionGeneration {
             
             return (instrs, .i32)
             
-        case .first(let typeName):
+        case .first(let typeName, _):
             // First TypeName - get first instance
             if let typeInfo = context.userTypes[typeName] {
                 return ([.globalGet(typeInfo.firstGlobalIdx)], .i32)
             }
             return ([.i32Const(0)], .i32)
             
-        case .last(let typeName):
+        case .last(let typeName, _):
             // Last TypeName - get last instance
             if let typeInfo = context.userTypes[typeName] {
                 return ([.globalGet(typeInfo.lastGlobalIdx)], .i32)
             }
             return ([.i32Const(0)], .i32)
             
-        case .before(let expr):
+        case .before(let expr, _):
             // Before expr - get previous instance (offset 0)
             let exprInstrs = generate(expr)
             return (exprInstrs + [.i32Load(2, 0)], .i32)
             
-        case .after(let expr):
+        case .after(let expr, _):
             // After expr - get next instance (offset 4)
             let exprInstrs = generate(expr)
             return (exprInstrs + [.i32Load(2, 4)], .i32)
             
-        case .handle(let expr):
+        case .handle(let expr, _):
             // Handle(expr) - convert instance to handle
             // In linear memory, instance pointer IS the handle
             let exprInstrs = generate(expr)
             return (exprInstrs, .i32)
             
-        case .objectCast(let typeName, let expr):
+        case .objectCast(let typeName, let expr, _):
             // Object.TypeName(handle) - convert handle to instance
             // We should add type safety check here using offset 8 (typeID)
             let exprInstrs = generate(expr)
@@ -753,7 +753,7 @@ public final class ExpressionGeneration {
         var instrs: [WASMInstruction] = []
         
         // Case 1: Regular array variable (Dim array[10])
-        if case .identifier(let arrayId) = access.array,
+        if case .identifier(let arrayId, _) = access.array,
            let array = context.variableManagement.arrayInfo(for: arrayId.name) {
             instrs.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
             
@@ -789,13 +789,13 @@ public final class ExpressionGeneration {
         }
         
         // Case 2: Field array access (obj.field[index])
-        if case .fieldAccess(let fieldAccess) = access.array {
+        if case .fieldAccess(let fieldAccess, _) = access.array {
             if let typeName = getTypeName(from: fieldAccess.object),
                let dimensions = context.fieldDimensions[typeName]?[fieldAccess.field],
                !dimensions.isEmpty {
                 
                 // Generate the field access to get base pointer
-                let baseInstrs = generate(.fieldAccess(fieldAccess))
+                let baseInstrs = generate(.fieldAccess(fieldAccess, fieldAccess.span))
                 instrs.append(contentsOf: baseInstrs)
                 
                 // Get element type and size
@@ -911,36 +911,36 @@ public final class ExpressionGeneration {
     
     private func getTypeName(from expr: ExpressionNode) -> String? {
         switch expr {
-        case .identifier(let id):
+        case .identifier(let id, _):
             if let local = context.variableManagement.localInfo(for: id.name) {
                 return local.typeName
             }
             if let global = context.variableManagement.globalInfo(for: id.name) {
                 return global.typeName
             }
-        case .fieldAccess(let access):
+        case .fieldAccess(let access, _):
             if let objType = getTypeName(from: access.object),
                let fieldType = context.userTypes[objType]?.fieldTypes[access.field] {
                 return fieldType
             }
-        case .new(let type):
+        case .new(let type, _):
             return type
-        case .first(let type):
+        case .first(let type, _):
             return type
-        case .last(let type):
+        case .last(let type, _):
             return type
-        case .before(let subExpr):
+        case .before(let subExpr, _):
             return getTypeName(from: subExpr)
-        case .after(let subExpr):
+        case .after(let subExpr, _):
             return getTypeName(from: subExpr)
-        case .arrayAccess(let access):
+        case .arrayAccess(let access, _):
             // Check if it's a field array access: obj.field[index]
-            if case .fieldAccess(let fieldAccess) = access.array,
+            if case .fieldAccess(let fieldAccess, _) = access.array,
                let objType = getTypeName(from: fieldAccess.object),
                let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
                 return fieldType
             }
-        case .objectCast(let type, _):
+        case .objectCast(let type, _, _):
             return type
         default:
             break

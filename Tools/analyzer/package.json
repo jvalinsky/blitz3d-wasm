@@ -11,7 +11,8 @@
     "analyze": "node cli.js",
     "visualize": "node visualize.js",
     "report": "node report.js",
-    "test": "node test.js"
+    "test": "node test.js",
+    "scoreboard": "node scoreboard.js"
   },
   "dependencies": {
     "@webassemblyjs/wasm-parser": "^1.14.1",

@@ -21,6 +21,8 @@ public struct Lexer {
         self.currentColumn = 1
         self.lineStarts = [source.startIndex]
         
+        print("DEBUG_LEXER: Initialized with source length: \(source.count) characters")
+        
         // Pre-compute line starts for error reporting
         var idx = source.startIndex
         while idx < source.endIndex {
@@ -29,6 +31,8 @@ public struct Lexer {
             }
             idx = source.index(after: idx)
         }
+        
+        print("DEBUG_LEXER: Found \(lineStarts.count) lines")
     }
     
     public mutating func nextToken() -> Token {
@@ -38,6 +42,7 @@ public struct Lexer {
         let startColumn = currentColumn
         
         guard currentIndex < source.endIndex else {
+            print("DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
             return Token(type: .endOfFile, text: "", line: currentLine, column: currentColumn, sourceFile: sourceFile)
         }
         
@@ -272,8 +277,58 @@ public struct Lexer {
             advance()
         }
         
+        let lowercase = text.lowercased()
+        
+        // Look ahead for multi-word keywords
+        if lowercase == "end" || lowercase == "else" {
+            // Save current position
+            let savedIndex = currentIndex
+            let savedLine = currentLine
+            let savedColumn = currentColumn
+            
+            // Skip whitespace
+            while currentIndex < source.endIndex {
+                let ch = source[currentIndex]
+                if ch.isWhitespace && ch != "\n" && ch != "\r" {
+                    advance()
+                } else {
+                    break
+                }
+            }
+            
+            // Try to read next word
+            var nextWord = ""
+            while currentIndex < source.endIndex {
+                let ch = source[currentIndex]
+                if ch.isASCII && (ch.isLetter || ch.isNumber || ch == "_") {
+                    nextWord.append(ch)
+                    advance()
+                } else {
+                    break
+                }
+            }
+            
+            // Check if the combined phrase is a keyword
+            if !nextWord.isEmpty {
+                let combined = text + " " + nextWord
+                if let keywordType = keywordMap[combined.lowercased()] {
+                    print("DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)")
+                    return Token(type: keywordType, text: combined, line: startLine, column: startColumn, sourceFile: sourceFile)
+                }
+            }
+            
+            // Not a multi-word keyword - rewind to saved position
+            print("DEBUG_LEXER: No multi-word match for '\(text)' + '\(nextWord)', rewinding")
+            currentIndex = savedIndex
+            currentLine = savedLine
+            currentColumn = savedColumn
+        }
+        
         // Check if it's a keyword
-        if let keywordType = keywordMap[text.lowercased()] {
+        if let keywordType = keywordMap[lowercase] {
+            if keywordType == .keywordFunction {
+                print("DEBUG_LEXER: Producing .keywordFunction at line \(startLine)")
+            }
             return Token(type: keywordType, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
         }
         

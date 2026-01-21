@@ -307,6 +307,7 @@ public struct Parser {
                 switch statement {
                 case .function(let funcNode):
                     functionCount += 1
+                    print("DEBUG_PARSER: Added function '\(funcNode.name)' (#\(functionCount))")
                     program.functions.append(funcNode)
                 case .typeDeclaration(let typeDecl):
                     let typeNode = TypeNode(name: typeDecl.typeName, fields: typeDecl.fields)
@@ -376,7 +377,11 @@ public struct Parser {
     }
     
     private mutating func advance() {
+        let prevToken = currentToken
         currentToken = lexer.nextToken()
+        if currentToken.line >= 1310 && currentToken.line <= 1325 {
+            print("DEBUG_ADVANCE: Line \(currentToken.line): \(prevToken.type) -> \(currentToken.type) '\(currentToken.text)'")
+        }
     }
     
     private func expect(_ type: TokenType) -> Bool {
@@ -392,6 +397,10 @@ public struct Parser {
     }
     
     private mutating func parseTopLevelStatement() -> StatementNode? {
+        if currentToken.type == .keywordFunction {
+            print("DEBUG: parseTopLevelStatement() sees Function keyword")
+        }
+        
         switch currentToken.type {
         case .keywordFunction:
             return parseFunction()
@@ -489,8 +498,25 @@ public struct Parser {
         }
         
         var body: [StatementNode] = []
+        print("DEBUG: Parsing function '\(name)' body...")
+        var iterationCount = 0
         while !isEndFunction() && !expect(.endOfFile) {
+            iterationCount += 1
+            if iterationCount > 1000 {
+                print("ERROR: Function body loop exceeded 1000 iterations!")
+                break
+            }
+            
+            // Skip newlines in function body
+            if currentToken.type == .newline {
+                advance()
+                continue
+            }
+            
             if let stmt = parseStatement() {
+                if name == "UpdateLauncher" && body.count >= 15 {
+                    print("  Statement #\(body.count + 1): \(stmt), currentToken now at line \(currentToken.line)")
+                }
                 body.append(stmt)
                 
                 // Handle colon-separated statements on the same line
@@ -515,24 +541,23 @@ public struct Parser {
                     }
                 }
             } else {
+                // Unknown statement - report error and try to recover
+                reportError("Unexpected token '\(currentToken.text)' in function body")
                 advance()
             }
         }
         
         // Consume "End Function"
-        if expect(.identifier) && currentToken.text == "End" {
-            advance()
-            _ = consume(.keywordFunction)
-        }
+        _ = consume(.keywordEndFunction)
+        print("DEBUG: Finished parsing function '\(name)', found \(body.count) statements in body")
+        print("DEBUG: Current token after End Function: type=\(currentToken.type) text='\(currentToken.text)'")
         
         return .function(FunctionNode(name: name, parameters: parameters, body: body, returnType: returnType, explicitReturnTypeSuffix: explicitReturnTypeSuffix))
     }
     
     private func isEndFunction() -> Bool {
-        guard expect(.identifier) && currentToken.text == "End" else {
-            return false
-        }
-        return true
+        let result = currentToken.type == .keywordEndFunction
+        return result
     }
     
     private mutating func parseTypeDeclaration() -> StatementNode? {

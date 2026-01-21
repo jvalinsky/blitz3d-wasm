@@ -251,6 +251,19 @@ function Blitz3DMesh(graphics) {
             imports.env.AddCollisionTriangle = (surfaceId, v0, v1, v2) => {
                 return 0; // Return triangle index
             };
+
+            // Simple mesh clone helper (geometry/material duplication is shallow)
+            imports.env.CopyMesh = (meshId) => {
+                const mesh = graphics.entities[meshId];
+                if (mesh && mesh.clone) {
+                    const clone = mesh.clone(true);
+                    const id = graphics.nextEntityId++;
+                    graphics.entities[id] = clone;
+                    graphics.scene.add(clone);
+                    return id;
+                }
+                return 0;
+            };
         }
     };
 }

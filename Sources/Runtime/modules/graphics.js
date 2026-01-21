@@ -24,6 +24,8 @@ class Blitz3DGraphics {
         this.nextTextureId = 1;
         this.brushes = {};
         this.nextBrushId = 1;
+        this.aaFonts = {};
+        this.currentAAFont = null;
         this.currentFont = "arial";
         this.currentFontSize = 12;
         this.currentColor = [255, 255, 255, 255];
@@ -248,7 +250,39 @@ class Blitz3DGraphics {
             }
         };
 
-        imports.env.GetColor = (x, y) => { };
+        // Helpers for buffer-backed pixel operations (ImageBuffer/TextureBuffer/etc).
+        const getBufferContext = (bufferId) => {
+            // BackBuffer/front buffer use the shared text canvas
+            if (!bufferId || bufferId === -1) {
+                return this.core.ctx2d || null;
+            }
+
+            const img = this.images[bufferId];
+            if (!img) return null;
+
+            // Lazily create an offscreen canvas for writable images
+            if (!img.canvas) {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width || img.element?.width || 1;
+                canvas.height = img.height || img.element?.height || 1;
+                const ctx = canvas.getContext('2d');
+                if (img.element && img.loaded) {
+                    ctx.drawImage(img.element, 0, 0);
+                }
+                img.canvas = canvas;
+                img.canvasCtx = ctx;
+            }
+            return img.canvasCtx || null;
+        };
+
+        imports.env.GetColor = (x, y) => { return 0; };
+        imports.env.ColorRed = () => this.currentColor[0] || 0;
+        imports.env.ColorGreen = () => this.currentColor[1] || 0;
+        imports.env.ColorBlue = () => this.currentColor[2] || 0;
+
+        // Bitwise helpers that sometimes get imported as functions
+        imports.env.And = (a, b) => (a | 0) & (b | 0);
+        imports.env.Or = (a, b) => (a | 0) | (b | 0);
 
         // 2D Primitives Stubs
         imports.env.Rect = (x, y, w, h, solid) => {
@@ -296,6 +330,29 @@ class Blitz3DGraphics {
             }
         };
 
+        // Text metrics helpers for UI positioning
+        const measureText = (txt) => {
+            if (!this.core.ctx2d) return { width: 0, height: this.currentFontSize };
+            this.core.ctx2d.font = `${this.currentFontSize}px ${this.currentFont}`;
+            const metrics = this.core.ctx2d.measureText(txt);
+            const height = (metrics.actualBoundingBoxAscent || this.currentFontSize * 0.8) +
+                (metrics.actualBoundingBoxDescent || this.currentFontSize * 0.2);
+            return { width: metrics.width || 0, height };
+        };
+
+        imports.env.StringWidth = (txtPtr) => {
+            const txt = this.core.readString(txtPtr);
+            return Math.floor(measureText(txt).width);
+        };
+
+        imports.env.StringHeight = (txtPtr) => {
+            const txt = this.core.readString(txtPtr);
+            return Math.floor(measureText(txt).height);
+        };
+
+        imports.env.FontWidth = () => Math.floor(this.currentFontSize * 0.6);
+        imports.env.FontHeight = () => Math.floor(this.currentFontSize);
+
         // Font Functions
         imports.env.LoadFont = (namePtr, size, bold, italic, underline) => {
             const fontName = this.core.readString(namePtr);
@@ -332,6 +389,44 @@ class Blitz3DGraphics {
                 delete this.images[fontId];
             }
         };
+
+        // AAText compatibility (minimal rendering shim)
+        imports.env.InitAAFont = (fontId) => {
+            this.currentAAFont = fontId;
+            this.aaFonts[fontId] = { id: fontId };
+            return fontId;
+        };
+
+        imports.env.AAFont = (fontId) => {
+            this.currentAAFont = fontId;
+            return fontId;
+        };
+
+        imports.env.AASetFont = (fontId) => {
+            this.currentAAFont = fontId;
+            imports.env.SetFont(fontId);
+        };
+
+        imports.env.ReloadAAFont = (fontId) => {
+            // No-op placeholder – real implementation would reload atlas textures.
+            return fontId;
+        };
+
+        imports.env.AAText = (x, y, txtPtr, centerX, centerY) => {
+            // Delegate to Text to keep behavior consistent
+            imports.env.Text(x, y, txtPtr, centerX, centerY);
+        };
+
+        imports.env.AAStringWidth = (txtPtr) => imports.env.StringWidth(txtPtr);
+        imports.env.AAStringHeight = (txtPtr) => imports.env.StringHeight(txtPtr);
+        imports.env.AASpritePosition = (spriteId, x, y) => {
+            const sprite = this.entities[spriteId];
+            if (sprite) sprite.position.set(x, y, sprite.position.z);
+        };
+        imports.env.AASpriteScale = (spriteId, sx, sy) => {
+            const sprite = this.entities[spriteId];
+            if (sprite) sprite.scale.set(sx, sy, sprite.scale.z || 1);
+        };
         
         // Image Functions
         imports.env.LoadImage = (pathPtr) => {
@@ -356,6 +451,36 @@ class Blitz3DGraphics {
             };
             
             img.src = path;
+            return id;
+        };
+
+        imports.env.CreateImage = (width, height, frames) => {
+            const id = this.nextImageId++;
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.max(1, width);
+            canvas.height = Math.max(1, height);
+            this.images[id] = {
+                type: 'image',
+                element: canvas,
+                canvas,
+                canvasCtx: canvas.getContext('2d'),
+                width: canvas.width,
+                height: canvas.height,
+                loaded: true,
+                handleX: 0,
+                handleY: 0
+            };
+            return id;
+        };
+
+        imports.env.CreateTexture = (width, height, flags) => {
+            const data = new Uint8Array((width || 1) * (height || 1) * 4).fill(255);
+            const tex = new THREE.DataTexture(data, width || 1, height || 1);
+            tex.needsUpdate = true;
+            tex.image = { width: width || 1, height: height || 1 };
+            tex.name = `runtime_texture_${this.nextTextureId}`;
+            const id = this.nextTextureId++;
+            this.textures[id] = tex;
             return id;
         };
         
@@ -451,6 +576,43 @@ class Blitz3DGraphics {
             if (this.images[imgId]) {
                 delete this.images[imgId];
             }
+        };
+
+        imports.env.Handle = (imgId) => {
+            const img = this.images[imgId];
+            if (img) {
+                // Blitz3D exposes handleX/handleY; here we pack X in low 16 bits, Y in high 16 bits.
+                return ((img.handleY & 0xffff) << 16) | (img.handleX & 0xffff);
+            }
+            return 0;
+        };
+
+        // Buffer accessors (used by SetBuffer/CopyRect/etc.)
+        imports.env.BackBuffer = () => -1;
+        imports.env.GraphicsBuffer = () => -1;
+        imports.env.ImageBuffer = (imgId, frame) => imgId || -1;
+        imports.env.TextureBuffer = (texId) => texId || -1;
+
+        imports.env.WritePixelFast = (x, y, color, bufferId) => {
+            const ctx = getBufferContext(bufferId);
+            if (!ctx) return;
+            const r = (color >> 16) & 0xFF;
+            const g = (color >> 8) & 0xFF;
+            const b = color & 0xFF;
+            const a = (color >>> 24) & 0xFF || 0xFF;
+            const imgData = ctx.createImageData(1, 1);
+            imgData.data[0] = r;
+            imgData.data[1] = g;
+            imgData.data[2] = b;
+            imgData.data[3] = a;
+            ctx.putImageData(imgData, x, y);
+        };
+
+        imports.env.ReadPixelFast = (x, y, bufferId) => {
+            const ctx = getBufferContext(bufferId);
+            if (!ctx) return 0;
+            const data = ctx.getImageData(x, y, 1, 1).data;
+            return ((data[3] || 0) << 24) | (data[0] << 16) | (data[1] << 8) | data[2];
         };
 
         imports.env.CreateCamera = (parent) => {

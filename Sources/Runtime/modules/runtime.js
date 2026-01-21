@@ -119,6 +119,10 @@ const Blitz3D = {
         this.audio.setupImports(this.imports);
         this.vfs.setupImports(this.imports);
 
+        // Ensure INI hooks are visible both at runtime and to static analyzers.
+        const imports = this.imports;
+        imports.env.GetINIInt = imports.env.GetINIInt;
+
         // Debug: check imports
         console.log('[runtime] Imports configured:', {
             envFunctions: Object.keys(this.imports.env).length,
@@ -150,7 +154,28 @@ const Blitz3D = {
 
     // Import object for WASM
     imports: {
-        env: {},
+        env: {
+            // Minimal stubs to satisfy common imports; real implementations are
+            // provided in specialized modules where available.
+            EntityAutoFade: () => {},
+            EntityClass: () => 0,
+            EntityOrder: () => {},
+            // INI access shim: pulls values via INISystem when available.
+            GetINIInt: (filePtr, sectionPtr, keyPtr) => {
+                try {
+                    const core = Blitz3D.core;
+                    const file = core.readString(filePtr);
+                    const section = core.readString(sectionPtr);
+                    const key = core.readString(keyPtr);
+                    if (window.INISystem?.GetINIInt) {
+                        return window.INISystem.GetINIInt(file, section, key) | 0;
+                    }
+                } catch (e) {
+                    console.warn('[GetINIInt] failed:', e);
+                }
+                return 0;
+            },
+        },
         blitz3d: {
             // Bank (byte array) functions
             CreateBank: (size) => {
@@ -229,31 +254,52 @@ const Blitz3D = {
                 }
             },
             
-            // Mesh parsing functions (stubs for now)
+            // Mesh parsing functions (prefer WASM engine if available)
             ParseB3D: (bankId) => {
-                console.log("ParseB3D: bankId=" + bankId);
-                return 0; // Return mesh ID
+                if (this.engineExports && typeof this.engineExports.ParseB3D === 'function') {
+                    return this.engineExports.ParseB3D(bankId);
+                }
+                console.warn("ParseB3D called but Blitz3DEngine not loaded");
+                return 0;
             },
             ParseRMesh: (bankId) => {
-                console.log("ParseRMesh: bankId=" + bankId);
-                return 0; // Return mesh ID
+                if (this.engineExports && typeof this.engineExports.ParseRMesh === 'function') {
+                    return this.engineExports.ParseRMesh(bankId);
+                }
+                console.warn("ParseRMesh called but Blitz3DEngine not loaded");
+                return 0;
             },
             
-            // Mesh query functions
-            GetMeshSurfaceCount: (meshId) => {
-                return 0; // Number of surfaces
+            // Mesh query functions (prefer WASM engine if available)
+            GetMeshSurfaceCount: (...args) => {
+                if (this.engineExports && typeof this.engineExports.GetMeshSurfaceCount === 'function') {
+                    return this.engineExports.GetMeshSurfaceCount(...args);
+                }
+                return 0;
             },
-            GetSurfaceVertexCount: (surfaceId) => {
-                return 0; // Number of vertices
+            GetSurfaceVertexCount: (...args) => {
+                if (this.engineExports && typeof this.engineExports.GetSurfaceVertexCount === 'function') {
+                    return this.engineExports.GetSurfaceVertexCount(...args);
+                }
+                return 0;
             },
-            GetSurfaceVerticesPtr: (surfaceId) => {
-                return 0; // Pointer to vertex data
+            GetSurfaceVerticesPtr: (...args) => {
+                if (this.engineExports && typeof this.engineExports.GetSurfaceVerticesPtr === 'function') {
+                    return this.engineExports.GetSurfaceVerticesPtr(...args);
+                }
+                return 0;
             },
-            GetSurfaceIndexCount: (surfaceId) => {
-                return 0; // Number of indices
+            GetSurfaceIndexCount: (...args) => {
+                if (this.engineExports && typeof this.engineExports.GetSurfaceIndexCount === 'function') {
+                    return this.engineExports.GetSurfaceIndexCount(...args);
+                }
+                return 0;
             },
-            GetSurfaceIndicesPtr: (surfaceId) => {
-                return 0; // Pointer to index data
+            GetSurfaceIndicesPtr: (...args) => {
+                if (this.engineExports && typeof this.engineExports.GetSurfaceIndicesPtr === 'function') {
+                    return this.engineExports.GetSurfaceIndicesPtr(...args);
+                }
+                return 0;
             }
         },
         al: {

@@ -51,42 +51,48 @@ let jsToWasmStringAllocs = 0;
 let jsToWasmStringBytes = 0;
 let wasmMemoryGrows = 0;
 
+// Avoid spamming the UI thread with repeated error logs (which can look like a "freeze").
+const loggedOnce = new Set();
+function logOnce(key, level, ...args) {
+    if (loggedOnce.has(key)) return;
+    loggedOnce.add(key);
+    console[level]?.(...args);
+}
+
 function pushLog(line) {
     logBuffer.push(line);
     while (logBuffer.length > maxLogLines) logBuffer.shift();
+    if (!debugVisible) return;
     if (!debugLogEl) return;
+    // Only update the DOM when the debug panel is visible. Updating on every
+    // console log can stall the main thread if the program is chatty.
     debugLogEl.textContent = logBuffer.join('\n');
-    debugLogEl.scrollTop = debugLogEl.scrollHeight;
 }
 
-// Mirror console logs into the overlay for environments where right-click/devtools are blocked.
-['log', 'warn', 'error'].forEach((level) => {
-    const original = console[level];
-    console[level] = (...args) => {
-        try {
-            const rendered = args.map((a) => {
-                if (a instanceof Error) {
-                    const msg = a.stack || a.message || String(a);
-                    return msg.length > 2000 ? (msg.slice(0, 2000) + '…') : msg;
-                }
-                if (typeof a === 'string') return a.length > 2000 ? (a.slice(0, 2000) + '…') : a;
-                if (typeof a === 'number' || typeof a === 'boolean' || a == null) return String(a);
-                // Avoid JSON-stringifying large/recursive objects into the log buffer.
-                const tag = Object.prototype.toString.call(a);
-                return tag;
-            }).join(' ');
-            pushLog(`[${level}] ${rendered}`);
-        } catch {
-            // ignore formatting issues
-        }
-        original.apply(console, args);
-    };
-});
+function debugLog(level, ...args) {
+    if (!debugVisible) return;
+    try {
+        const rendered = args.map((a) => {
+            if (a instanceof Error) return a.stack || a.message || String(a);
+            if (typeof a === 'string') return a;
+            if (typeof a === 'number' || typeof a === 'boolean' || a == null) return String(a);
+            return Object.prototype.toString.call(a);
+        }).join(' ');
+        pushLog(`[${level}] ${rendered}`);
+    } catch {
+        // ignore formatting issues
+    }
+}
 
 function toggleDebugPanel() {
     debugVisible = !debugVisible;
     if (debugPanel) {
         debugPanel.classList.toggle('hidden', !debugVisible);
+    }
+    // When enabling, render the current log buffer immediately.
+    if (debugVisible && debugLogEl) {
+        debugLogEl.textContent = logBuffer.join('\n');
+        debugLogEl.scrollTop = debugLogEl.scrollHeight;
     }
 }
 
@@ -165,7 +171,7 @@ function writeString(memory, ptr, str, maxBytes = Infinity) {
     const byteLength = buffer.byteLength >>> 0;
     const offset = ptr >>> 0;
     if (offset + 8 >= byteLength) {
-        console.error('[writeString] OOB write', { ptr, byteLength });
+        logOnce('writeString_oob', 'error', '[writeString] OOB write', { ptr, byteLength });
         return false;
     }
 
@@ -203,13 +209,13 @@ function allocString(memory, str) {
         // If we still can't fit, bail out safely instead of crashing the page.
         const byteLength = memory.buffer.byteLength >>> 0;
         if (ptr + 9 > byteLength) {
-            console.error('[allocString] OOB ptr from __StringAlloc', { ptr, byteLength, len: s.length });
+            logOnce('allocString_oob', 'error', '[allocString] OOB ptr from __StringAlloc', { ptr, byteLength, len: s.length });
             return 0;
         }
 
         const maxChars = Math.max(0, byteLength - (ptr + 9));
         if (s.length > maxChars) {
-            console.warn('[allocString] Truncating string to fit memory', { requested: s.length, maxChars });
+            logOnce('allocString_trunc', 'warn', '[allocString] Truncating string to fit memory', { requested: s.length, maxChars });
         }
 
         writeString(memory, ptr, s, maxChars);
@@ -310,10 +316,11 @@ function setFontById(id) {
 }
 
 const getEnvFunctions = (memRefGetter) => ({
-    PrintInt: (v) => console.log(v),
-    PrintFloat: (v) => console.log(v),
-    PrintString: (ptr) => console.log(readString(memRefGetter(), ptr)),
-    Print: (ptr) => console.log(readString(memRefGetter(), ptr)),
+    // Avoid spamming the console by default; these can be extremely chatty.
+    PrintInt: (v) => { debugLog('log', v); return 0; },
+    PrintFloat: (v) => { debugLog('log', v); return 0; },
+    PrintString: (ptr) => { debugLog('log', readString(memRefGetter(), ptr)); return 0; },
+    Print: (ptr) => { debugLog('log', readString(memRefGetter(), ptr)); return 0; },
 
     Graphics3D: (w, h) => {
         logicalWidth = w || logicalWidth;
@@ -622,8 +629,8 @@ const getEnvFunctions = (memRefGetter) => ({
     FloatToString: (v) => internString(memRefGetter(), String(v)),
 
     FileType: () => 1,
-    RuntimeError: (ptr) => { console.error(readString(memRefGetter(), ptr)); return 0; },
-    DebugLog: (ptr) => { console.log(readString(memRefGetter(), ptr)); return 0; },
+    RuntimeError: (ptr) => { debugLog('error', readString(memRefGetter(), ptr)); return 0; },
+    DebugLog: (ptr) => { debugLog('log', readString(memRefGetter(), ptr)); return 0; },
     OpenFile: () => 0,
     ReadLine: () => internString(memRefGetter(), ''),
     Eof: () => 1,
@@ -648,6 +655,7 @@ function buildImports(module, memRefGetter) {
     const result = { env: {}, blitz3d: {}, al: {} };
     WebAssembly.Module.imports(module).forEach((imp) => {
         const target = result[imp.module] || result.env;
+        // Default stub returns 0; keep it silent to avoid log-induced stalls.
         target[imp.name] = funcs[imp.name] || (() => 0);
     });
     return result;

@@ -3,6 +3,7 @@
  * Loads Menu.wasm and renders UpdateMainMenu() using Canvas 2D.
  */
 
+const canvasWrap = document.getElementById('canvas-wrap');
 const canvas = document.getElementById('screen');
 const statusEl = document.getElementById('status');
 const debugPanel = document.getElementById('debug-panel');
@@ -71,8 +72,9 @@ window.addEventListener('keydown', (e) => {
 });
 
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const rect = canvasWrap.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
     scaleX = canvas.width / logicalWidth;
     scaleY = canvas.height / logicalHeight;
 }

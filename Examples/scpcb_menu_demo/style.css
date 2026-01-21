@@ -9,12 +9,51 @@ html, body {
     color: #fff;
 }
 
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+}
+
+.instructions {
+    background: #0f0f0f;
+    border: 1px solid #333;
+    padding: 12px;
+    border-radius: 6px;
+    max-width: 960px;
+}
+
+.instructions h1 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.instructions ul {
+    margin: 0;
+    padding-left: 18px;
+    line-height: 1.5;
+    color: #ddd;
+    font-size: 14px;
+}
+
+#canvas-wrap {
+    position: relative;
+    width: min(1200px, 92vw);
+    height: min(720px, 70vh);
+    min-height: 480px;
+    border: 2px solid #3cf;
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.35);
+    background: #000;
+    overflow: hidden;
+}
+
 #screen {
     display: block;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: #000;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     z-index: 1;

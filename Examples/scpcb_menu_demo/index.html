@@ -7,19 +7,31 @@
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div id="overlay">
-        <div id="status">Loading...</div>
-        <div id="hint">Click to focus. Esc releases mouse.</div>
-        <div id="debug-hint">Press ` (backtick) to toggle debug overlay.</div>
+    <div class="page">
+        <section class="instructions">
+            <h1>SCP:CB Menu Demo</h1>
+            <ul>
+                <li>Left click on the canvas to focus; Esc releases mouse.</li>
+                <li>Right-click the “Right-click” box to open devtools.</li>
+                <li>Press backtick (`) to toggle the debug overlay (logs + memory stats).</li>
+            </ul>
+        </section>
+        <div id="canvas-wrap">
+            <div id="overlay">
+                <div id="status">Loading...</div>
+                <div id="hint">Click to focus. Esc releases mouse.</div>
+                <div id="debug-hint">Press ` (backtick) to toggle debug overlay.</div>
+            </div>
+            <div id="context-zone" title="Right-click here to open devtools/inspect">
+                Right-click
+            </div>
+            <div id="debug-panel" class="hidden">
+                <div id="debug-stats"></div>
+                <pre id="debug-log"></pre>
+            </div>
+            <canvas id="screen"></canvas>
+        </div>
     </div>
-    <div id="context-zone" title="Right-click here to open devtools/inspect">
-        Right-click
-    </div>
-    <div id="debug-panel" class="hidden">
-        <div id="debug-stats"></div>
-        <pre id="debug-log"></pre>
-    </div>
-    <canvas id="screen"></canvas>
     <script src="menu_demo.js"></script>
 </body>
 </html>

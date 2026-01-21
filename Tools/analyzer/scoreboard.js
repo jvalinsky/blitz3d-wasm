@@ -20,13 +20,13 @@
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
-import glob from "glob";
+import { globSync } from "glob";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function loadRuns(pattern) {
-  const files = glob.sync(pattern, { cwd: __dirname, absolute: true });
+  const files = globSync(pattern, { cwd: __dirname, absolute: true });
   if (!files.length) {
     throw new Error(`No files matched pattern '${pattern}' (cwd=${__dirname})`);
   }

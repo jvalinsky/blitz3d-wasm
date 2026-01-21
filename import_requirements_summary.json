@@ -1,0 +1,192 @@
+[
+  {
+    "name": "ImageBuffer",
+    "calls": 10,
+    "fileCount": 1
+  },
+  {
+    "name": "TextureBuffer",
+    "calls": 8,
+    "fileCount": 1
+  },
+  {
+    "name": "Len",
+    "calls": 5,
+    "fileCount": 1
+  },
+  {
+    "name": "FontHeight",
+    "calls": 5,
+    "fileCount": 1
+  },
+  {
+    "name": "WritePixelFast",
+    "calls": 4,
+    "fileCount": 1
+  },
+  {
+    "name": "AAFont",
+    "calls": 4,
+    "fileCount": 1
+  },
+  {
+    "name": "GetSurface",
+    "calls": 4,
+    "fileCount": 1
+  },
+  {
+    "name": "ReadPixelFast",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "Asc",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "Mid",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "StringWidth",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "FontWidth",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "Chr",
+    "calls": 3,
+    "fileCount": 1
+  },
+  {
+    "name": "InitAAFont",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "AASpritePosition",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "AASpriteScale",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "CreateTexture",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "And",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "BackBuffer",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "Or",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "ColorRed",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "ColorGreen",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "ColorBlue",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "AAStringHeight",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "LoadFont",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "CreateImage",
+    "calls": 2,
+    "fileCount": 1
+  },
+  {
+    "name": "GetINIInt",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "CreateCamera",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "CreateMesh",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "CreateSurface",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "CopyMesh",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "ReloadAAFont",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "AASetFont",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "StringHeight",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "AAText",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "GraphicsBuffer",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "AAStringWidth",
+    "calls": 1,
+    "fileCount": 1
+  },
+  {
+    "name": "Handle",
+    "calls": 1,
+    "fileCount": 1
+  }
+]

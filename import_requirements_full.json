@@ -1,0 +1,9070 @@
+{
+  "updateeventsrepo": {
+    "name": "UpdateEventsRepo",
+    "calls": 1,
+    "files": [
+      "../scpcb/repro_update_events_min.bb"
+    ]
+  },
+  "entitydistance": {
+    "name": "EntityDistance",
+    "calls": 280,
+    "files": [
+      "../scpcb/repro_update_events_min.bb",
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/new_tests/test_entity_getters.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "min": {
+    "name": "Min",
+    "calls": 346,
+    "files": [
+      "../scpcb/repro_update_events_min.bb",
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "playsound2": {
+    "name": "PlaySound2",
+    "calls": 185,
+    "files": [
+      "../scpcb/repro_update_events_min.bb",
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadtempsound": {
+    "name": "LoadTempSound",
+    "calls": 158,
+    "files": [
+      "../scpcb/repro_update_events_min.bb",
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "testfunc": {
+    "name": "TestFunc",
+    "calls": 3,
+    "files": [
+      "../scpcb/repro_types.bb"
+    ]
+  },
+  "backbuffer": {
+    "name": "BackBuffer",
+    "calls": 69,
+    "files": [
+      "../scpcb/repro_stack.bb",
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/CPU_Details.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "arr_int": {
+    "name": "arr_int",
+    "calls": 1,
+    "files": [
+      "../scpcb/repro_stack.bb"
+    ]
+  },
+  "arr_float": {
+    "name": "arr_float",
+    "calls": 1,
+    "files": [
+      "../scpcb/repro_stack.bb"
+    ]
+  },
+  "myfunc": {
+    "name": "MyFunc",
+    "calls": 5,
+    "files": [
+      "../scpcb/repro_stack.bb",
+      "../scpcb/repro_select.bb"
+    ]
+  },
+  "folder": {
+    "name": "folder",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "files": {
+    "name": "Files",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "getdesktopsize": {
+    "name": "GetDesktopSize",
+    "calls": 2,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "systemproperty": {
+    "name": "SystemProperty",
+    "calls": 5,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "windowed3d": {
+    "name": "Windowed3D",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "api_setwindowlong": {
+    "name": "api_SetWindowLong",
+    "calls": 4,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "api_setwindowpos": {
+    "name": "api_SetWindowPos",
+    "calls": 5,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createbank": {
+    "name": "CreateBank",
+    "calls": 31,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "api_getclientrect": {
+    "name": "api_GetClientRect",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "api_getdesktopwindow": {
+    "name": "api_GetDesktopWindow",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "peekint": {
+    "name": "PeekInt",
+    "calls": 56,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "syncgame": {
+    "name": "SyncGame",
+    "calls": 1,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb"
+    ]
+  },
+  "mousexspeed": {
+    "name": "MouseXSpeed",
+    "calls": 17,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "mouseyspeed": {
+    "name": "MouseYSpeed",
+    "calls": 18,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "mousehit": {
+    "name": "MouseHit",
+    "calls": 17,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "millisecs": {
+    "name": "Millisecs",
+    "calls": 34,
+    "files": [
+      "../scpcb/fullscreen_window_fix.bb",
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "updateevents": {
+    "name": "UpdateEvents",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "catcherrors": {
+    "name": "CatchErrors",
+    "calls": 74,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "uncaught": {
+    "name": "Uncaught",
+    "calls": 34,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "updaterooms": {
+    "name": "UpdateRooms",
+    "calls": 18,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateelevators": {
+    "name": "UpdateElevators",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "update096elevatorevent": {
+    "name": "Update096ElevatorEvent",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "camerafogrange": {
+    "name": "CameraFogRange",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "camerafogmode": {
+    "name": "CameraFogMode",
+    "calls": 7,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "keyname": {
+    "name": "KeyName",
+    "calls": 92,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/KeyName.bb"
+    ]
+  },
+  "setsavemsg": {
+    "name": "SetSaveMSG",
+    "calls": 11,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "moveentity": {
+    "name": "MoveEntity",
+    "calls": 68,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "sin": {
+    "name": "Sin",
+    "calls": 187,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "setnpcframe": {
+    "name": "SetNPCFrame",
+    "calls": 66,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createnpc": {
+    "name": "CreateNPC",
+    "calls": 117,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "changenpctextureid": {
+    "name": "ChangeNPCTextureID",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadtexture_strict": {
+    "name": "LoadTexture_Strict",
+    "calls": 102,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "entityx": {
+    "name": "EntityX",
+    "calls": 1058,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "entityy": {
+    "name": "EntityY",
+    "calls": 799,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "entityz": {
+    "name": "EntityZ",
+    "calls": 1058,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "pointentity": {
+    "name": "PointEntity",
+    "calls": 39,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "positionentity": {
+    "name": "PositionEntity",
+    "calls": 514,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "resetentity": {
+    "name": "ResetEntity",
+    "calls": 55,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "animatenpc": {
+    "name": "AnimateNPC",
+    "calls": 228,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "checktriggers": {
+    "name": "CheckTriggers",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "max": {
+    "name": "Max",
+    "calls": 394,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "loadsound_strict": {
+    "name": "LoadSound_Strict",
+    "calls": 258,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "curvevalue": {
+    "name": "CurveValue",
+    "calls": 159,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "curveangle": {
+    "name": "CurveAngle",
+    "calls": 141,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "entityyaw": {
+    "name": "EntityYaw",
+    "calls": 564,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "playsound_strict": {
+    "name": "PlaySound_Strict",
+    "calls": 268,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "introsfx": {
+    "name": "IntroSFX",
+    "calls": 50,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "entityvisible": {
+    "name": "EntityVisible",
+    "calls": 72,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "and": {
+    "name": "And",
+    "calls": 232,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "removenpc": {
+    "name": "RemoveNPC",
+    "calls": 38,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "rand": {
+    "name": "Rand",
+    "calls": 662,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "decaysfx": {
+    "name": "DecaySFX",
+    "calls": 10,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "alarmsfx": {
+    "name": "AlarmSFX",
+    "calls": 11,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "channelplaying": {
+    "name": "ChannelPlaying",
+    "calls": 138,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "freesound_strict": {
+    "name": "FreeSound_Strict",
+    "calls": 37,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "floor": {
+    "name": "Floor",
+    "calls": 116,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "commotionstate": {
+    "name": "CommotionState",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "removeevent": {
+    "name": "RemoveEvent",
+    "calls": 52,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "stopstream_strict": {
+    "name": "StopStream_Strict",
+    "calls": 34,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "streamsound_strict": {
+    "name": "StreamSound_Strict",
+    "calls": 21,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "music": {
+    "name": "Music",
+    "calls": 55,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "entityalpha": {
+    "name": "EntityAlpha",
+    "calls": 47,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "stepsfx": {
+    "name": "StepSFX",
+    "calls": 36,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "inventory": {
+    "name": "Inventory",
+    "calls": 144,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "updatesoundorigin": {
+    "name": "UpdateSoundOrigin",
+    "calls": 21,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "usedoor": {
+    "name": "UseDoor",
+    "calls": 46,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "distance": {
+    "name": "Distance",
+    "calls": 71,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "findpath": {
+    "name": "FindPath",
+    "calls": 53,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createemitter": {
+    "name": "CreateEmitter",
+    "calls": 13,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "turnentity": {
+    "name": "TurnEntity",
+    "calls": 110,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "loopsound2": {
+    "name": "LoopSound2",
+    "calls": 55,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "left": {
+    "name": "Left",
+    "calls": 97,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_File_FileName.bb",
+      "../scpcb/new_tests/test_strings.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "instr": {
+    "name": "Instr",
+    "calls": 145,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "right": {
+    "name": "Right",
+    "calls": 91,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_File_FileName.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/new_tests/test_strings.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "len": {
+    "name": "Len",
+    "calls": 191,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_FileName.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "stopchannel": {
+    "name": "StopChannel",
+    "calls": 36,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "freeentity": {
+    "name": "FreeEntity",
+    "calls": 54,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "entityinview": {
+    "name": "EntityInView",
+    "calls": 44,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createitem": {
+    "name": "CreateItem",
+    "calls": 263,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "pickitem": {
+    "name": "PickItem",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "millisecs2": {
+    "name": "MilliSecs2",
+    "calls": 101,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "rnd": {
+    "name": "Rnd",
+    "calls": 430,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "createpivot": {
+    "name": "CreatePivot",
+    "calls": 299,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/new_tests/test_entity_getters.bb",
+      "../scpcb/new_tests/test_collision_queries.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "pickedentity": {
+    "name": "PickedEntity",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "pickedx": {
+    "name": "PickedX",
+    "calls": 14,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "pickedy": {
+    "name": "PickedY",
+    "calls": 16,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "pickedz": {
+    "name": "PickedZ",
+    "calls": 14,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "pickednx": {
+    "name": "PickedNX",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "pickedny": {
+    "name": "PickedNY",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "pickednz": {
+    "name": "PickedNZ",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "animtime": {
+    "name": "AnimTime",
+    "calls": 152,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "animate2": {
+    "name": "Animate2",
+    "calls": 97,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "rotateentity": {
+    "name": "RotateEntity",
+    "calls": 178,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "npc": {
+    "name": "npc",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "entitypitch": {
+    "name": "EntityPitch",
+    "calls": 128,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "necksnapsfx": {
+    "name": "NeckSnapSFX",
+    "calls": 9,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "removedoor": {
+    "name": "RemoveDoor",
+    "calls": 6,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadeventsound": {
+    "name": "LoadEventSound",
+    "calls": 36,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "camerarange": {
+    "name": "CameraRange",
+    "calls": 10,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ambientlight": {
+    "name": "AmbientLight",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "hideentity": {
+    "name": "HideEntity",
+    "calls": 56,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "giveachievement": {
+    "name": "GiveAchievement",
+    "calls": 50,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "loadanimmesh_strict": {
+    "name": "LoadAnimMesh_Strict",
+    "calls": 43,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "wrapangle": {
+    "name": "WrapAngle",
+    "calls": 56,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "deltayaw": {
+    "name": "DeltaYaw",
+    "calls": 45,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "turncheckpointmonitorsoff": {
+    "name": "TurnCheckpointMonitorsOff",
+    "calls": 7,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updatecheckpointmonitors": {
+    "name": "UpdateCheckpointMonitors",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createdecal": {
+    "name": "CreateDecal",
+    "calls": 96,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "updatedecals": {
+    "name": "UpdateDecals",
+    "calls": 14,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "point_direction": {
+    "name": "point_direction",
+    "calls": 17,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "cos": {
+    "name": "Cos",
+    "calls": 88,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "scalesprite": {
+    "name": "ScaleSprite",
+    "calls": 80,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "or": {
+    "name": "Or",
+    "calls": 88,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "angledist": {
+    "name": "angleDist",
+    "calls": 9,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "point_distance": {
+    "name": "point_distance",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "chr": {
+    "name": "Chr",
+    "calls": 404,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/new_tests/test_strings.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "entitytexture": {
+    "name": "EntityTexture",
+    "calls": 54,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "kill": {
+    "name": "Kill",
+    "calls": 41,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "gorepics": {
+    "name": "GorePics",
+    "calls": 5,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "horrorsfx": {
+    "name": "HorrorSFX",
+    "calls": 37,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "entitycolor": {
+    "name": "EntityColor",
+    "calls": 9,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "updatelever": {
+    "name": "UpdateLever",
+    "calls": 26,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "entityblend": {
+    "name": "EntityBlend",
+    "calls": 26,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "closedoorsfx": {
+    "name": "CloseDoorSFX",
+    "calls": 10,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "oldmansfx": {
+    "name": "OldManSFX",
+    "calls": 18,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "rustlesfx": {
+    "name": "RustleSFX",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "scaleentity": {
+    "name": "ScaleEntity",
+    "calls": 55,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "sinkhole": {
+    "name": "sinkhole",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "teleportentity": {
+    "name": "TeleportEntity",
+    "calls": 18,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatedoors": {
+    "name": "UpdateDoors",
+    "calls": 19,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createparticle": {
+    "name": "CreateParticle",
+    "calls": 33,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_particles_min.bb"
+    ]
+  },
+  "entityfx": {
+    "name": "EntityFX",
+    "calls": 22,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "removeitem": {
+    "name": "RemoveItem",
+    "calls": 76,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "entitypick": {
+    "name": "EntityPick",
+    "calls": 23,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "spawning": {
+    "name": "spawning",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "entitytype": {
+    "name": "EntityType",
+    "calls": 30,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "translateentity": {
+    "name": "TranslateEntity",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb"
+    ]
+  },
+  "playmtfsound": {
+    "name": "PlayMTFSound",
+    "calls": 32,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "playannouncement": {
+    "name": "PlayAnnouncement",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "dripsfx": {
+    "name": "DripSFX",
+    "calls": 5,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "updateworld": {
+    "name": "UpdateWorld",
+    "calls": 6,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "placegrid_mapcreator": {
+    "name": "PlaceGrid_MapCreator",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "rndseed": {
+    "name": "RndSeed",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "generateseednumber": {
+    "name": "GenerateSeedNumber",
+    "calls": 6,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "runtimeerror": {
+    "name": "RuntimeError",
+    "calls": 13,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "copyentity": {
+    "name": "CopyEntity",
+    "calls": 151,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "objtunnel": {
+    "name": "OBJTunnel",
+    "calls": 38,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadrmesh": {
+    "name": "LoadRMesh",
+    "calls": 34,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createdoor": {
+    "name": "CreateDoor",
+    "calls": 181,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createwaypoint": {
+    "name": "CreateWaypoint",
+    "calls": 11,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "getchild": {
+    "name": "GetChild",
+    "calls": 21,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_entity_getters.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "to": {
+    "name": "To",
+    "calls": 10,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "debuglog": {
+    "name": "DebugLog",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadmesh_strict": {
+    "name": "LoadMesh_Strict",
+    "calls": 88,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "setanimtime": {
+    "name": "SetAnimTime",
+    "calls": 36,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadimage_strict": {
+    "name": "LoadImage_Strict",
+    "calls": 59,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "maskimage": {
+    "name": "MaskImage",
+    "calls": 11,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "loadbrush_strict": {
+    "name": "LoadBrush_Strict",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Skybox.bb"
+    ]
+  },
+  "countsurfaces": {
+    "name": "CountSurfaces",
+    "calls": 26,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getsurface": {
+    "name": "GetSurface",
+    "calls": 30,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getsurfacebrush": {
+    "name": "GetSurfaceBrush",
+    "calls": 18,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "getbrushtexture": {
+    "name": "GetBrushTexture",
+    "calls": 23,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "strippath": {
+    "name": "StripPath",
+    "calls": 32,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "texturename": {
+    "name": "TextureName",
+    "calls": 30,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "lower": {
+    "name": "Lower",
+    "calls": 134,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "tformedx": {
+    "name": "TFormedX",
+    "calls": 59,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "tformedy": {
+    "name": "TFormedY",
+    "calls": 37,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "tformedz": {
+    "name": "TFormedZ",
+    "calls": 54,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/BlitzAL.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "loadtexture": {
+    "name": "LoadTexture",
+    "calls": 24,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "ambientsfx": {
+    "name": "AmbientSFX",
+    "calls": 13,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ambientsfxamount": {
+    "name": "AmbientSFXAmount",
+    "calls": 16,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "not": {
+    "name": "Not",
+    "calls": 15,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "tformvector": {
+    "name": "TFormVector",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "room": {
+    "name": "room",
+    "calls": 8,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "valves": {
+    "name": "valves",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "meshwidth": {
+    "name": "MeshWidth",
+    "calls": 39,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "entityroll": {
+    "name": "EntityRoll",
+    "calls": 52,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "isstreamplaying_strict": {
+    "name": "IsStreamPlaying_Strict",
+    "calls": 5,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "oldaipics": {
+    "name": "OldAiPics",
+    "calls": 10,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "showentity": {
+    "name": "ShowEntity",
+    "calls": 38,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "tformpoint": {
+    "name": "TFormPoint",
+    "calls": 8,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "updatebutton": {
+    "name": "UpdateButton",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "damagesfx": {
+    "name": "DamageSFX",
+    "calls": 9,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "updateforest": {
+    "name": "UpdateForest",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "keyhit": {
+    "name": "KeyHit",
+    "calls": 36,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "drawportal": {
+    "name": "DrawPortal",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb"
+    ]
+  },
+  "the": {
+    "name": "the",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updateitems": {
+    "name": "UpdateItems",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "entityparent": {
+    "name": "entityParent",
+    "calls": 272,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "ceil": {
+    "name": "Ceil",
+    "calls": 17,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "createsprite": {
+    "name": "CreateSprite",
+    "calls": 33,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "spriteviewmode": {
+    "name": "SpriteViewMode",
+    "calls": 14,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Particles.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawarrowicon": {
+    "name": "DrawArrowIcon",
+    "calls": 9,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadsound": {
+    "name": "LoadSound",
+    "calls": 11,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "movetopocketdimension": {
+    "name": "MoveToPocketDimension",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "use914": {
+    "name": "Use914",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ntf_bodytextures": {
+    "name": "NTF_BodyTextures",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "item": {
+    "name": "item",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "injuries": {
+    "name": "injuries",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "isitemgoodfor1162": {
+    "name": "IsItemGoodFor1162",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "sucessful": {
+    "name": "sucessful",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "opendoorsfx": {
+    "name": "OpenDoorSFX",
+    "calls": 17,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "menpcseesplayer": {
+    "name": "MeNPCSeesPlayer",
+    "calls": 7,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "minute": {
+    "name": "minute",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "locking": {
+    "name": "locking",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "hidechunks": {
+    "name": "HideChunks",
+    "calls": 4,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updatedimension1499": {
+    "name": "UpdateDimension1499",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "dimension": {
+    "name": "dimension",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "getinifloat": {
+    "name": "GetINIFloat",
+    "calls": 38,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "updatechunks": {
+    "name": "UpdateChunks",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "update1499sky": {
+    "name": "Update1499Sky",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb"
+    ]
+  },
+  "havemercyonme": {
+    "name": "HaveMercyOnMe",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "updatestreamsoundorigin": {
+    "name": "UpdateStreamSoundOrigin",
+    "calls": 6,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "updateendings": {
+    "name": "UpdateEndings",
+    "calls": 2,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawloading": {
+    "name": "DrawLoading",
+    "calls": 48,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "sky_createsky": {
+    "name": "sky_CreateSky",
+    "calls": 5,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatesky": {
+    "name": "UpdateSky",
+    "calls": 3,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Skybox.bb"
+    ]
+  },
+  "loadsprite": {
+    "name": "LoadSprite",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "camerafogcolor": {
+    "name": "CameraFogColor",
+    "calls": 8,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "cameraclscolor": {
+    "name": "CameraClsColor",
+    "calls": 7,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createconsolemsg": {
+    "name": "CreateConsoleMsg",
+    "calls": 267,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "scalemesh": {
+    "name": "ScaleMesh",
+    "calls": 1,
+    "files": [
+      "../scpcb/UpdateEvents.bb"
+    ]
+  },
+  "camerazoom": {
+    "name": "CameraZoom",
+    "calls": 5,
+    "files": [
+      "../scpcb/UpdateEvents.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getiniint": {
+    "name": "GetINIInt",
+    "calls": 111,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "opentcpstream": {
+    "name": "OpenTCPStream",
+    "calls": 4,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "writeline": {
+    "name": "WriteLine",
+    "calls": 12,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "readavail": {
+    "name": "ReadAvail",
+    "calls": 6,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "pokeint": {
+    "name": "PokeInt",
+    "calls": 13,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "sectors": {
+    "name": "Sectors",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "readline": {
+    "name": "ReadLine",
+    "calls": 43,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "sector": {
+    "name": "Sector",
+    "calls": 8,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "closeremotefile": {
+    "name": "CloseRemoteFile",
+    "calls": 3,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "banksize": {
+    "name": "BankSize",
+    "calls": 50,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_Basic_Bank.bb"
+    ]
+  },
+  "eorf": {
+    "name": "EORF",
+    "calls": 3,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "eof": {
+    "name": "Eof",
+    "calls": 41,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_fileio.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "updateremotefile": {
+    "name": "UpdateRemoteFile",
+    "calls": 8,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "peekbyte": {
+    "name": "PeekByte",
+    "calls": 9,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_Basic_Bank.bb"
+    ]
+  },
+  "resizeremotebank": {
+    "name": "ResizeRemoteBank",
+    "calls": 7,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "peekshort": {
+    "name": "PeekShort",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "writeremotebytes": {
+    "name": "WriteRemoteBytes",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "writebytes": {
+    "name": "WriteBytes",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "remotereadavail": {
+    "name": "RemoteReadAvail",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "resizebank": {
+    "name": "ResizeBank",
+    "calls": 5,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "readbytes": {
+    "name": "ReadBytes",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "copybank": {
+    "name": "CopyBank",
+    "calls": 3,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "download": {
+    "name": "Download",
+    "calls": 4,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "trim": {
+    "name": "Trim",
+    "calls": 57,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mid": {
+    "name": "Mid",
+    "calls": 35,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_File_FileName.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/new_tests/test_strings.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "writefile": {
+    "name": "WriteFile",
+    "calls": 18,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "drawimage": {
+    "name": "DrawImage",
+    "calls": 61,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "drawbutton2": {
+    "name": "DrawButton2",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "closetcpstream": {
+    "name": "CloseTCPStream",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "upper": {
+    "name": "Upper",
+    "calls": 5,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readshort": {
+    "name": "ReadShort",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "checkforupdates": {
+    "name": "CheckForUpdates",
+    "calls": 3,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "getinistring": {
+    "name": "GetINIString",
+    "calls": 35,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "filesize": {
+    "name": "FileSize",
+    "calls": 10,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "putinivalue": {
+    "name": "PutINIValue",
+    "calls": 69,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "openremotefile": {
+    "name": "OpenRemoteFile",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "readremoteline": {
+    "name": "ReadRemoteLine",
+    "calls": 4,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "replace": {
+    "name": "Replace",
+    "calls": 49,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_FileName.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "filetype": {
+    "name": "FileType",
+    "calls": 38,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/new_tests/test_fileio.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createimage": {
+    "name": "CreateImage",
+    "calls": 8,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "openfile": {
+    "name": "OpenFile",
+    "calls": 14,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_fileio.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "closefile": {
+    "name": "CloseFile",
+    "calls": 7,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/new_tests/test_fileio.bb"
+    ]
+  },
+  "deletefile": {
+    "name": "DeleteFile",
+    "calls": 7,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "loadfont": {
+    "name": "LoadFont",
+    "calls": 6,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/new_tests/test_2d_graphics.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "mousedown": {
+    "name": "MouseDown",
+    "calls": 7,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setbuffer": {
+    "name": "SetBuffer",
+    "calls": 17,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "imagebuffer": {
+    "name": "ImageBuffer",
+    "calls": 27,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "rowtext2": {
+    "name": "RowText2",
+    "calls": 6,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "getlineamount2": {
+    "name": "GetLineAmount2",
+    "calls": 9,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "drawscrollbar": {
+    "name": "DrawScrollBar",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "rect": {
+    "name": "Rect",
+    "calls": 119,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "drawbutton": {
+    "name": "DrawButton",
+    "calls": 49,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "execfile": {
+    "name": "ExecFile",
+    "calls": 3,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "zipapi_open": {
+    "name": "ZipApi_Open",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "zipapi_gotofirstfile": {
+    "name": "ZipApi_GotoFirstFile",
+    "calls": 6,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_getcurrentfileinfo": {
+    "name": "ZipApi_GetCurrentFileInfo",
+    "calls": 8,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_unzfileinfo_dispose": {
+    "name": "ZIPAPI_UnzFileInfo_Dispose",
+    "calls": 8,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_extractfile": {
+    "name": "ZipApi_ExtractFile",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "zipapi_gotonextfile": {
+    "name": "ZipApi_GotoNextFile",
+    "calls": 4,
+    "files": [
+      "../scpcb/Update.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_close": {
+    "name": "ZipApi_Close",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "getselfexename": {
+    "name": "GetSelfEXEName",
+    "calls": 2,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "api_getmodulefilename": {
+    "name": "api_GetModuleFileName",
+    "calls": 1,
+    "files": [
+      "../scpcb/Update.bb"
+    ]
+  },
+  "createcamera": {
+    "name": "CreateCamera",
+    "calls": 13,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createlight": {
+    "name": "CreateLight",
+    "calls": 4,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "keydown": {
+    "name": "KeyDown",
+    "calls": 41,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readfile": {
+    "name": "ReadFile",
+    "calls": 37,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "readstring": {
+    "name": "ReadString",
+    "calls": 92,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "rmesh": {
+    "name": "RMESH",
+    "calls": 4,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readint": {
+    "name": "ReadInt",
+    "calls": 194,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/new_tests/test_fileio.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createmesh": {
+    "name": "CreateMesh",
+    "calls": 36,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/new_tests/test_collision_queries.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createsurface": {
+    "name": "CreateSurface",
+    "calls": 28,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Skybox.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createbrush": {
+    "name": "CreateBrush",
+    "calls": 6,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readbyte": {
+    "name": "ReadByte",
+    "calls": 189,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createtexture": {
+    "name": "CreateTexture",
+    "calls": 26,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readfloat": {
+    "name": "ReadFloat",
+    "calls": 376,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/Save.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/new_tests/test_fileio.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "addvertex": {
+    "name": "AddVertex",
+    "calls": 41,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "addtriangle": {
+    "name": "AddTriangle",
+    "calls": 19,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "test": {
+    "name": "test",
+    "calls": 1,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb"
+    ]
+  },
+  "addtemplight": {
+    "name": "AddTempLight",
+    "calls": 7,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "createpropobj": {
+    "name": "CreatePropObj",
+    "calls": 5,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "texturebumpenvmat": {
+    "name": "TextureBumpEnvMat",
+    "calls": 1,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb"
+    ]
+  },
+  "texturebumpenvoffset": {
+    "name": "TextureBumpEnvOffset",
+    "calls": 1,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb"
+    ]
+  },
+  "texturebumpenvscale": {
+    "name": "TextureBumpEnvScale",
+    "calls": 1,
+    "files": [
+      "../scpcb/TestLoadRMesh.bb"
+    ]
+  },
+  "loads": {
+    "name": "Loads",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "loadimage": {
+    "name": "LoadImage",
+    "calls": 23,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/new_tests/test_2d_graphics.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "autoreleasesounds": {
+    "name": "AutoReleaseSounds",
+    "calls": 2,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "sound": {
+    "name": "Sound",
+    "calls": 4,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "playsound": {
+    "name": "PlaySound",
+    "calls": 8,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "handle": {
+    "name": "Handle",
+    "calls": 8,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/DevilParticleSystem.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "fsound_stream_open": {
+    "name": "FSOUND_Stream_Open",
+    "calls": 2,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "fsound_stream_play": {
+    "name": "FSOUND_Stream_Play",
+    "calls": 2,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "fsound_setvolume": {
+    "name": "FSOUND_SetVolume",
+    "calls": 3,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "fsound_setpaused": {
+    "name": "FSOUND_SetPaused",
+    "calls": 3,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "stream": {
+    "name": "Stream",
+    "calls": 7,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "fsound_stopsound": {
+    "name": "FSOUND_StopSound",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "fsound_stream_stop": {
+    "name": "FSOUND_Stream_Stop",
+    "calls": 3,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fsound_stream_close": {
+    "name": "FSOUND_Stream_Close",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "setstreamvolume_strict": {
+    "name": "SetStreamVolume_Strict",
+    "calls": 11,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "setstreampaused_strict": {
+    "name": "SetStreamPaused_Strict",
+    "calls": 11,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fsound_isplaying": {
+    "name": "FSOUND_IsPlaying",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "setstreampan_strict": {
+    "name": "SetStreamPan_Strict",
+    "calls": 2,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "fsound_setpan": {
+    "name": "FSOUND_SetPan",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "loadmesh": {
+    "name": "LoadMesh",
+    "calls": 13,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "loadanimmesh": {
+    "name": "LoadAnimMesh",
+    "calls": 4,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "loadbrush": {
+    "name": "LoadBrush",
+    "calls": 1,
+    "files": [
+      "../scpcb/StrictLoads.bb"
+    ]
+  },
+  "loadfont_strict": {
+    "name": "LoadFont_Strict",
+    "calls": 4,
+    "files": [
+      "../scpcb/StrictLoads.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "savegame": {
+    "name": "SaveGame",
+    "calls": 4,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createdir": {
+    "name": "CreateDir",
+    "calls": 5,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "currenttime": {
+    "name": "CurrentTime",
+    "calls": 6,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "currentdate": {
+    "name": "CurrentDate",
+    "calls": 7,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "difficulties": {
+    "name": "difficulties",
+    "calls": 54,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Difficulty.bb"
+    ]
+  },
+  "achievements": {
+    "name": "Achievements",
+    "calls": 14,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "maptemp": {
+    "name": "MapTemp",
+    "calls": 189,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "mapfound": {
+    "name": "MapFound",
+    "calls": 13,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "writebyte": {
+    "name": "WriteByte",
+    "calls": 15,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "loadgame": {
+    "name": "LoadGame",
+    "calls": 2,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "corrupted": {
+    "name": "corrupted",
+    "calls": 10,
+    "files": [
+      "../scpcb/Save.bb"
+    ]
+  },
+  "forcesetnpcid": {
+    "name": "ForceSetNPCID",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "createroom": {
+    "name": "CreateRoom",
+    "calls": 26,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "removewaypoint": {
+    "name": "RemoveWaypoint",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "destroyforest": {
+    "name": "DestroyForest",
+    "calls": 4,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "placeforest": {
+    "name": "PlaceForest",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "placeforest_mapcreator": {
+    "name": "PlaceForest_MapCreator",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "initwaypoints": {
+    "name": "InitWayPoints",
+    "calls": 5,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "deletechunks": {
+    "name": "DeleteChunks",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadgamequick": {
+    "name": "LoadGameQuick",
+    "calls": 3,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "leaks": {
+    "name": "leaks",
+    "calls": 1,
+    "files": [
+      "../scpcb/Save.bb"
+    ]
+  },
+  "stuff": {
+    "name": "stuff",
+    "calls": 1,
+    "files": [
+      "../scpcb/Save.bb"
+    ]
+  },
+  "loadsavegames": {
+    "name": "LoadSaveGames",
+    "calls": 5,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "readdir": {
+    "name": "ReadDir",
+    "calls": 8,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "savegames": {
+    "name": "SaveGames",
+    "calls": 8,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "savegametime": {
+    "name": "SaveGameTime",
+    "calls": 2,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "savegamedate": {
+    "name": "SaveGameDate",
+    "calls": 2,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "savegameversion": {
+    "name": "SaveGameVersion",
+    "calls": 8,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "loadsavedmaps": {
+    "name": "LoadSavedMaps",
+    "calls": 2,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "savedmaps": {
+    "name": "SavedMaps",
+    "calls": 7,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "savedmapsauthor": {
+    "name": "SavedMapsAuthor",
+    "calls": 2,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "currentdir": {
+    "name": "CurrentDir",
+    "calls": 7,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadmap": {
+    "name": "LoadMap",
+    "calls": 4,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createevent": {
+    "name": "CreateEvent",
+    "calls": 108,
+    "files": [
+      "../scpcb/Save.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "writemesh": {
+    "name": "writemesh",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "but": {
+    "name": "but",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "recursiveaddmaterial": {
+    "name": "RecursiveAddMaterial",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "entityname": {
+    "name": "EntityName",
+    "calls": 7,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "recursiveaddmesh": {
+    "name": "RecursiveAddMesh",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "usv": {
+    "name": "USV",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "messagebox": {
+    "name": "messagebox",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "countchildren": {
+    "name": "CountChildren",
+    "calls": 10,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "strip_path": {
+    "name": "strip_path",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "getmatelement": {
+    "name": "GetMatElement",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "getstringofmatelement": {
+    "name": "GetStringofMatElement",
+    "calls": 12,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "countvertices": {
+    "name": "CountVertices",
+    "calls": 10,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "counttriangles": {
+    "name": "CountTriangles",
+    "calls": 7,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexx": {
+    "name": "VertexX",
+    "calls": 10,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "vertexy": {
+    "name": "VertexY",
+    "calls": 6,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "vertexz": {
+    "name": "VertexZ",
+    "calls": 10,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "trianglevertex": {
+    "name": "TriangleVertex",
+    "calls": 15,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "lookuptindex": {
+    "name": "LookUpTindex",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "vertexnx": {
+    "name": "VertexNX",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "vertexny": {
+    "name": "VertexNY",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "vertexnz": {
+    "name": "VertexNZ",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "vertexu": {
+    "name": "VertexU",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexv": {
+    "name": "VertexV",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexred": {
+    "name": "VertexRed",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexgreen": {
+    "name": "VertexGreen",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexblue": {
+    "name": "VertexBlue",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "vertexalpha": {
+    "name": "VertexAlpha",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "full": {
+    "name": "Full",
+    "calls": 1,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb"
+    ]
+  },
+  "piece": {
+    "name": "Piece",
+    "calls": 43,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "materials": {
+    "name": "Materials",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "addtexturetocache": {
+    "name": "AddTextureToCache",
+    "calls": 7,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getcache": {
+    "name": "GetCache",
+    "calls": 6,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "cleartexturecache": {
+    "name": "ClearTextureCache",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "freetexturecache": {
+    "name": "FreeTextureCache",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "texturebuffer": {
+    "name": "TextureBuffer",
+    "calls": 64,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "stripfilename": {
+    "name": "StripFilename",
+    "calls": 4,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "gettexturefromcache": {
+    "name": "GetTextureFromCache",
+    "calls": 4,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "copymesh": {
+    "name": "CopyMesh",
+    "calls": 10,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "flipmesh": {
+    "name": "FlipMesh",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "input": {
+    "name": "Input",
+    "calls": 3,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "createsphere": {
+    "name": "CreateSphere",
+    "calls": 2,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mousex": {
+    "name": "MouseX",
+    "calls": 43,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "graphicswidth": {
+    "name": "GraphicsWidth",
+    "calls": 21,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mousey": {
+    "name": "MouseY",
+    "calls": 42,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "graphicsheight": {
+    "name": "GraphicsHeight",
+    "calls": 15,
+    "files": [
+      "../scpcb/RMesh_Model_Viewer.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Dreamfilter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "particles": {
+    "name": "Particles",
+    "calls": 1,
+    "files": [
+      "../scpcb/Particles.bb"
+    ]
+  },
+  "particletextures": {
+    "name": "ParticleTextures",
+    "calls": 11,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateparticles": {
+    "name": "UpdateParticles",
+    "calls": 4,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_particles_min.bb"
+    ]
+  },
+  "removeparticle": {
+    "name": "RemoveParticle",
+    "calls": 2,
+    "files": [
+      "../scpcb/Particles.bb"
+    ]
+  },
+  "updateemitters": {
+    "name": "UpdateEmitters",
+    "calls": 2,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "coughsfx": {
+    "name": "CoughSFX",
+    "calls": 12,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "emitters": {
+    "name": "Emitters",
+    "calls": 1,
+    "files": [
+      "../scpcb/Particles.bb"
+    ]
+  },
+  "devilemitters": {
+    "name": "DevilEmitters",
+    "calls": 1,
+    "files": [
+      "../scpcb/Particles.bb"
+    ]
+  },
+  "updatedevilemitters": {
+    "name": "UpdateDevilEmitters",
+    "calls": 2,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "setemitter": {
+    "name": "SetEmitter",
+    "calls": 5,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "deletedevilemitters": {
+    "name": "DeleteDevilEmitters",
+    "calls": 2,
+    "files": [
+      "../scpcb/Particles.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "npcs": {
+    "name": "NPCs",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "meshdepth": {
+    "name": "MeshDepth",
+    "calls": 24,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "meshcullbox": {
+    "name": "MeshCullBox",
+    "calls": 9,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "meshheight": {
+    "name": "MeshHeight",
+    "calls": 30,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "mtfsfx": {
+    "name": "MTFSFX",
+    "calls": 19,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "lightrange": {
+    "name": "LightRange",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "lightcolor": {
+    "name": "LightColor",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "lightspritetex": {
+    "name": "LightSpriteTex",
+    "calls": 12,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "findfreenpcid": {
+    "name": "FindFreeNPCID",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "npcspeedchange": {
+    "name": "NPCSpeedChange",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "updatenpcs": {
+    "name": "UpdateNPCs",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "checkfornpcinfacility": {
+    "name": "CheckForNPCInFacility",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "scp173sfx": {
+    "name": "Scp173SFX",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "teleportcloser": {
+    "name": "TeleportCloser",
+    "calls": 7,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "aligntovector": {
+    "name": "AlignToVector",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "step2sfx": {
+    "name": "Step2SFX",
+    "calls": 17,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "projectedx": {
+    "name": "ProjectedX",
+    "calls": 4,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "projectedy": {
+    "name": "ProjectedY",
+    "calls": 6,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "channelvolume": {
+    "name": "ChannelVolume",
+    "calls": 8,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "playerinreachableroom": {
+    "name": "PlayerInReachableRoom",
+    "calls": 11,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "nothing": {
+    "name": "nothing",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "three": {
+    "name": "Three",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "found": {
+    "name": "found",
+    "calls": 4,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "shoot": {
+    "name": "Shoot",
+    "calls": 6,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "vectoryaw": {
+    "name": "VectorYaw",
+    "calls": 8,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "updatemtfunit": {
+    "name": "UpdateMTFUnit",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "getstepsound": {
+    "name": "GetStepSound",
+    "calls": 7,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "forest": {
+    "name": "Forest",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "idle": {
+    "name": "idle",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "cell": {
+    "name": "cell",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "find860angle": {
+    "name": "Find860Angle",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "four": {
+    "name": "four",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "updatesoundorigin2": {
+    "name": "UpdateSoundOrigin2",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "state": {
+    "name": "state",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "variable": {
+    "name": "variable",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "countcollisions": {
+    "name": "CountCollisions",
+    "calls": 4,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisiony": {
+    "name": "CollisionY",
+    "calls": 4,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "linepick": {
+    "name": "LinePick",
+    "calls": 4,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "isroomadjacent": {
+    "name": "IsRoomAdjacent",
+    "calls": 5,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "false": {
+    "name": "False",
+    "calls": 9,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "true": {
+    "name": "True",
+    "calls": 9,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "camera": {
+    "name": "camera",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "teleportmtfgroup": {
+    "name": "TeleportMTFGroup",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "group": {
+    "name": "Group",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "othernpcseesmenpc": {
+    "name": "OtherNPCSeesMeNPC",
+    "calls": 13,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "finishwalking": {
+    "name": "FinishWalking",
+    "calls": 17,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "seconds": {
+    "name": "seconds",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "placeholder": {
+    "name": "Placeholder",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "radiochn": {
+    "name": "RadioCHN",
+    "calls": 64,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "tile": {
+    "name": "tile",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "console_spawnnpc": {
+    "name": "Console_SpawnNPC",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "manipulatenpcbones": {
+    "name": "ManipulateNPCBones",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getnpcmanipulationvalue": {
+    "name": "GetNPCManipulationValue",
+    "calls": 14,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "findchild": {
+    "name": "FindChild",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "deltapitch": {
+    "name": "DeltaPitch",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "changeanglevalueforcorrectboneassigning": {
+    "name": "ChangeAngleValueForCorrectBoneAssigning",
+    "calls": 3,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "facility": {
+    "name": "facility",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "tunnels": {
+    "name": "tunnels",
+    "calls": 2,
+    "files": [
+      "../scpcb/NPCs.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "findnextelevator": {
+    "name": "FindNextElevator",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "gotoelevator": {
+    "name": "GoToElevator",
+    "calls": 1,
+    "files": [
+      "../scpcb/NPCs.bb"
+    ]
+  },
+  "alinitialise": {
+    "name": "alInitialise",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "nextfile": {
+    "name": "NextFile",
+    "calls": 4,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "alupdate": {
+    "name": "alUpdate",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "button": {
+    "name": "Button",
+    "calls": 16,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "shortline": {
+    "name": "ShortLine",
+    "calls": 8,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "text": {
+    "name": "Text",
+    "calls": 36,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "file": {
+    "name": "file",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "songs": {
+    "name": "songs",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourceisplaying": {
+    "name": "alSourceIsPlaying",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourcegetaudiotime": {
+    "name": "alSourceGetAudioTime",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourcegetlenght": {
+    "name": "alSourceGetLenght",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "gettime": {
+    "name": "GetTime",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourcepause": {
+    "name": "alSourcePause",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourceresume": {
+    "name": "alSourceResume",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourcestop": {
+    "name": "alSourceStop",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourceseek": {
+    "name": "alSourceSeek",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourceplay_": {
+    "name": "alSourcePlay_",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alfreesource": {
+    "name": "alFreeSource",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "slidebar": {
+    "name": "SlideBar",
+    "calls": 17,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "aldestroy": {
+    "name": "alDestroy",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "updatemusic": {
+    "name": "UpdateMusic",
+    "calls": 5,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "line": {
+    "name": "Line",
+    "calls": 7,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "alcreatesource_": {
+    "name": "alCreateSource_",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alsourceplay2d_": {
+    "name": "alSourcePlay2D_",
+    "calls": 2,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alsourcesetloop": {
+    "name": "alSourceSetLoop",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "alsourcesetvolume": {
+    "name": "alSourceSetVolume",
+    "calls": 3,
+    "files": [
+      "../scpcb/MusicPlayer.bb",
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alsourcesetpitch": {
+    "name": "alSourceSetPitch",
+    "calls": 1,
+    "files": [
+      "../scpcb/MusicPlayer.bb"
+    ]
+  },
+  "resizeimage": {
+    "name": "ResizeImage",
+    "calls": 5,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "imagewidth": {
+    "name": "ImageWidth",
+    "calls": 53,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/new_tests/test_2d_graphics.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "imageheight": {
+    "name": "ImageHeight",
+    "calls": 51,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/new_tests/test_2d_graphics.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "arrowimg": {
+    "name": "ArrowIMG",
+    "calls": 10,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "rotateimage": {
+    "name": "RotateImage",
+    "calls": 5,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "handleimage": {
+    "name": "HandleImage",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "updatemainmenu": {
+    "name": "UpdateMainMenu",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "showpointer": {
+    "name": "ShowPointer",
+    "calls": 5,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "menublinktimer": {
+    "name": "MenuBlinkTimer",
+    "calls": 7,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "menublinkduration": {
+    "name": "MenuBlinkDuration",
+    "calls": 4,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "color": {
+    "name": "Color",
+    "calls": 50,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "aatext": {
+    "name": "AAText",
+    "calls": 178,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "drawtiledimagerect": {
+    "name": "DrawTiledImageRect",
+    "calls": 8,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "mouseon": {
+    "name": "MouseOn",
+    "calls": 64,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fmod_pause": {
+    "name": "FMOD_Pause",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fmod_closestream": {
+    "name": "FMOD_CloseStream",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "fmod_close": {
+    "name": "FMOD_Close",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "fmod_stopstream": {
+    "name": "FMOD_StopStream",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "fsound_close": {
+    "name": "FSOUND_Close",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "drawframe": {
+    "name": "DrawFrame",
+    "calls": 33,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "saveoptionsini": {
+    "name": "SaveOptionsINI",
+    "calls": 4,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "inputbox": {
+    "name": "InputBox",
+    "calls": 23,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawtick": {
+    "name": "DrawTick",
+    "calls": 42,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "imagerectoverlap": {
+    "name": "ImageRectOverlap",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "scaledmousex": {
+    "name": "ScaledMouseX",
+    "calls": 76,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "scaledmousey": {
+    "name": "ScaledMouseY",
+    "calls": 49,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "rowtext": {
+    "name": "RowText",
+    "calls": 11,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "loadentities": {
+    "name": "LoadEntities",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadallsounds": {
+    "name": "LoadAllSounds",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "initnewgame": {
+    "name": "InitNewGame",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "flushkeys": {
+    "name": "FlushKeys",
+    "calls": 16,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "flushmouse": {
+    "name": "FlushMouse",
+    "calls": 6,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "initloadgame": {
+    "name": "InitLoadGame",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "deletedir": {
+    "name": "DeleteDir",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawoptionstooltip": {
+    "name": "DrawOptionsTooltip",
+    "calls": 54,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawtooltip": {
+    "name": "DrawTooltip",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "slider3": {
+    "name": "Slider3",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "slider5": {
+    "name": "Slider5",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "playtestsound": {
+    "name": "PlayTestSound",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "initaafont": {
+    "name": "InitAAFont",
+    "calls": 5,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "aaloadfont": {
+    "name": "AALoadFont",
+    "calls": 18,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "reloadaafont": {
+    "name": "ReloadAAFont",
+    "calls": 4,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "drawmapcreatortooltip": {
+    "name": "DrawMapCreatorTooltip",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "updatelauncher": {
+    "name": "UpdateLauncher",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "graphics3dext": {
+    "name": "Graphics3DExt",
+    "calls": 5,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "gfxmodewidths": {
+    "name": "GfxModeWidths",
+    "calls": 13,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "gfxmodewidth": {
+    "name": "GfxModeWidth",
+    "calls": 6,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "gfxmodeheights": {
+    "name": "GfxModeHeights",
+    "calls": 11,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "gfxmodeheight": {
+    "name": "GfxModeHeight",
+    "calls": 6,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "countgfxdrivers": {
+    "name": "CountGfxDrivers",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "bbgfxdrivername": {
+    "name": "bbGfxDriverName",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "limittext": {
+    "name": "LimitText",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "gfxdrivername": {
+    "name": "GfxDriverName",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "drawimagerect": {
+    "name": "DrawImageRect",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "initloadingscreens": {
+    "name": "InitLoadingScreens",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "cls": {
+    "name": "Cls",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "scalerender": {
+    "name": "ScaleRender",
+    "calls": 12,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getkey": {
+    "name": "GetKey",
+    "calls": 6,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "textbox": {
+    "name": "TextBox",
+    "calls": 3,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "rinput": {
+    "name": "rInput",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "aastringwidth": {
+    "name": "AAStringWidth",
+    "calls": 16,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "h": {
+    "name": "H",
+    "calls": 4,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "aastringheight": {
+    "name": "AAStringHeight",
+    "calls": 21,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "stringheight": {
+    "name": "StringHeight",
+    "calls": 11,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "stringwidth": {
+    "name": "StringWidth",
+    "calls": 22,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getlineamount": {
+    "name": "GetLineAmount",
+    "calls": 4,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "drawquickloading": {
+    "name": "DrawQuickLoading",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "quickloadevents": {
+    "name": "QuickLoadEvents",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "changemenu_testimg": {
+    "name": "ChangeMenu_TestIMG",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "create3dicon": {
+    "name": "Create3DIcon",
+    "calls": 2,
+    "files": [
+      "../scpcb/Menu.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "slider4": {
+    "name": "Slider4",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "slider7": {
+    "name": "Slider7",
+    "calls": 1,
+    "files": [
+      "../scpcb/Menu.bb"
+    ]
+  },
+  "loadmaterials": {
+    "name": "LoadMaterials",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "loadworld": {
+    "name": "LoadWorld",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "keyvalue": {
+    "name": "KeyValue",
+    "calls": 35,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "getbumpfromcache": {
+    "name": "GetBumpFromCache",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "genforestgrid": {
+    "name": "GenForestGrid",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "chance": {
+    "name": "chance",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "turn_if_deviating": {
+    "name": "turn_if_deviating",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "move_forward": {
+    "name": "move_forward",
+    "calls": 10,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "s": {
+    "name": "s",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "load_terrain": {
+    "name": "load_terrain",
+    "calls": 10,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "colorred": {
+    "name": "ColorRed",
+    "calls": 12,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "entityautofade": {
+    "name": "EntityAutoFade",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "roomtemplates": {
+    "name": "RoomTemplates",
+    "calls": 6,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "loadroomtemplates": {
+    "name": "LoadRoomTemplates",
+    "calls": 6,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createroomtemplate": {
+    "name": "CreateRoomTemplate",
+    "calls": 16,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "loadroommesh": {
+    "name": "LoadRoomMesh",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "calculateroomtemplateextents": {
+    "name": "CalculateRoomTemplateExtents",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "loadroommeshes": {
+    "name": "LoadRoomMeshes",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "itself": {
+    "name": "itself",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updategrid": {
+    "name": "UpdateGrid",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "rooms": {
+    "name": "Rooms",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "entitypickmode": {
+    "name": "EntityPickMode",
+    "calls": 13,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fillroom": {
+    "name": "FillRoom",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "addlightcones": {
+    "name": "AddLightCones",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "calculateroomextents": {
+    "name": "CalculateRoomExtents",
+    "calls": 9,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createdrawportal": {
+    "name": "CreateDrawPortal",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createsecuritycam": {
+    "name": "CreateSecurityCam",
+    "calls": 29,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createdevilemitter": {
+    "name": "CreateDevilEmitter",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createbutton": {
+    "name": "CreateButton",
+    "calls": 15,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "makecollbox": {
+    "name": "makecollbox",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "chamber": {
+    "name": "chamber",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "assignelevatorobj": {
+    "name": "AssignElevatorObj",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "addlight": {
+    "name": "AddLight",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "texture": {
+    "name": "texture",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "loadanimtexture": {
+    "name": "LoadAnimTexture",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "lightconeangles": {
+    "name": "LightConeAngles",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createscreen": {
+    "name": "CreateScreen",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "ez": {
+    "name": "EZ",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "lcz": {
+    "name": "LCZ",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "entityorder": {
+    "name": "EntityOrder",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "lighttemplates": {
+    "name": "LightTemplates",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "waypoints": {
+    "name": "WayPoints",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "after": {
+    "name": "After",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "sqr": {
+    "name": "Sqr",
+    "calls": 16,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/new_tests/test_math.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createline": {
+    "name": "CreateLine",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mapf": {
+    "name": "MapF",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mapg": {
+    "name": "MapG",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "maph": {
+    "name": "MapH",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mapstate": {
+    "name": "MapState",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mapparent": {
+    "name": "MapParent",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "videocards": {
+    "name": "videocards",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "screens": {
+    "name": "Screens",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updatescreens": {
+    "name": "UpdateScreens",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "resizeimage2": {
+    "name": "ResizeImage2",
+    "calls": 9,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "securitycams": {
+    "name": "SecurityCams",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "cameraviewport": {
+    "name": "CameraViewport",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatesecuritycams": {
+    "name": "UpdateSecurityCams",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateroomlights": {
+    "name": "UpdateRoomLights",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatesecuritycameras": {
+    "name": "UpdateSecurityCameras",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "updatemonitorsaving": {
+    "name": "UpdateMonitorSaving",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createmap": {
+    "name": "CreateMap",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getzone": {
+    "name": "GetZone",
+    "calls": 17,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "room1s": {
+    "name": "room1s",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "slot": {
+    "name": "slot",
+    "calls": 9,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "maproom": {
+    "name": "MapRoom",
+    "calls": 38,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "setroom": {
+    "name": "SetRoom",
+    "calls": 34,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "maproomid": {
+    "name": "MapRoomID",
+    "calls": 38,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "mapname": {
+    "name": "MapName",
+    "calls": 22,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "preventroomoverlap": {
+    "name": "PreventRoomOverlap",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "texturewidth": {
+    "name": "TextureWidth",
+    "calls": 9,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "textureheight": {
+    "name": "TextureHeight",
+    "calls": 11,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "readpixelfast": {
+    "name": "ReadPixelFast",
+    "calls": 14,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "inverse": {
+    "name": "Inverse",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "timecheckpointmonitors": {
+    "name": "TimeCheckpointMonitors",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ambientlightrooms": {
+    "name": "AmbientLightRooms",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getbuffer": {
+    "name": "GetBuffer",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "chunkdata": {
+    "name": "CHUNKDATA",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "setchunkdatavalues": {
+    "name": "SetChunkDataValues",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createchunkparts": {
+    "name": "CreateChunkParts",
+    "calls": 3,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getinisectionlocation": {
+    "name": "GetINISectionLocation",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "getinistring2": {
+    "name": "GetINIString2",
+    "calls": 23,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "before": {
+    "name": "Before",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "chunk": {
+    "name": "Chunk",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "createcube": {
+    "name": "CreateCube",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/DrawPortals.bb"
+    ]
+  },
+  "createchunk": {
+    "name": "CreateChunk",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "elevatorobj": {
+    "name": "ElevatorObj",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "deleteelevatorobjects": {
+    "name": "DeleteElevatorObjects",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "validroom2slcamroom": {
+    "name": "ValidRoom2slCamRoom",
+    "calls": 2,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "findanddeletefakemonitor": {
+    "name": "FindAndDeleteFakeMonitor",
+    "calls": 1,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "getmeshextents": {
+    "name": "GetMeshExtents",
+    "calls": 4,
+    "files": [
+      "../scpcb/MapSystem.bb",
+      "../scpcb/Main.bb"
+    ]
+  },
+  "checkroomoverlap": {
+    "name": "CheckRoomOverlap",
+    "calls": 5,
+    "files": [
+      "../scpcb/MapSystem.bb"
+    ]
+  },
+  "community": {
+    "name": "community",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "countgfxmodes3d": {
+    "name": "CountGfxModes3D",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatescreengamma": {
+    "name": "UpdateScreenGamma",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "playstartupvideos": {
+    "name": "PlayStartupVideos",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "direction": {
+    "name": "direction",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "pixels": {
+    "name": "pixels",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "effects": {
+    "name": "effects",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateconsole": {
+    "name": "UpdateConsole",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "mousezspeed": {
+    "name": "MouseZSpeed",
+    "calls": 12,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "specified": {
+    "name": "specified",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "camerapick": {
+    "name": "CameraPick",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "coordinates": {
+    "name": "coordinates",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "achievementstrings": {
+    "name": "AchievementStrings",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "radiosfx": {
+    "name": "RadioSFX",
+    "calls": 9,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb"
+    ]
+  },
+  "breathsfx": {
+    "name": "BreathSFX",
+    "calls": 8,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "seen": {
+    "name": "seen",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "loadanimimage": {
+    "name": "LoadAnimImage",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "navimages": {
+    "name": "NavImages",
+    "calls": 13,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "bigdoorobj": {
+    "name": "BigDoorOBJ",
+    "calls": 10,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "heavydoorobj": {
+    "name": "HeavyDoorObj",
+    "calls": 7,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "doors": {
+    "name": "Doors",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "events": {
+    "name": "Events",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "initevents": {
+    "name": "InitEvents",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "first": {
+    "name": "first",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "freesound": {
+    "name": "FreeSound",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatestreamsounds": {
+    "name": "UpdateStreamSounds",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updatedeafplayer": {
+    "name": "UpdateDeafPlayer",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "mouselook": {
+    "name": "MouseLook",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "moveplayer": {
+    "name": "MovePlayer",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "checkforplayerinfacility": {
+    "name": "CheckForPlayerInFacility",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateleave1499": {
+    "name": "UpdateLeave1499",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "update294": {
+    "name": "Update294",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "updatemtf": {
+    "name": "UpdateMTF",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "use427": {
+    "name": "Use427",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "fpsfactor": {
+    "name": "FPSFactor",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateparticles_devil": {
+    "name": "UpdateParticles_Devil",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "renderworld2": {
+    "name": "RenderWorld2",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateblur": {
+    "name": "UpdateBlur",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Dreamfilter.bb"
+    ]
+  },
+  "dropitem": {
+    "name": "DropItem",
+    "calls": 11,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "resumesounds": {
+    "name": "ResumeSounds",
+    "calls": 7,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "pausesounds": {
+    "name": "PauseSounds",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawgui": {
+    "name": "DrawGUI",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawending": {
+    "name": "DrawEnding",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawmenu": {
+    "name": "DrawMenu",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateachievementmsg": {
+    "name": "UpdateAchievementMsg",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "updatesavemsg": {
+    "name": "UpdateSaveMSG",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "nullgame": {
+    "name": "NullGame",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "initcredits": {
+    "name": "InitCredits",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawcredits": {
+    "name": "DrawCredits",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateinfect": {
+    "name": "UpdateInfect",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "y": {
+    "name": "Y",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "hidepointer": {
+    "name": "HidePointer",
+    "calls": 8,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "use294": {
+    "name": "Use294",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "f2s": {
+    "name": "f2s",
+    "calls": 33,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "position": {
+    "name": "Position",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "mb": {
+    "name": "MB",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "activetextures": {
+    "name": "ActiveTextures",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "cameraproject": {
+    "name": "CameraProject",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "picksfx": {
+    "name": "PickSFX",
+    "calls": 17,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LoadAllSounds.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "canuseitem": {
+    "name": "CanUseItem",
+    "calls": 16,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getiniint2": {
+    "name": "GetINIInt2",
+    "calls": 11,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "radiostate": {
+    "name": "radiostate",
+    "calls": 97,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "yet": {
+    "name": "yet",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "resumechannel": {
+    "name": "ResumeChannel",
+    "calls": 18,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "radiostate3": {
+    "name": "RadioState3",
+    "calls": 14,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "radiostate4": {
+    "name": "RadioState4",
+    "calls": 19,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "pausechannel": {
+    "name": "PauseChannel",
+    "calls": 10,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "oval": {
+    "name": "Oval",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "freeimage": {
+    "name": "FreeImage",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "api_getfocus": {
+    "name": "api_GetFocus",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "drawachvimg": {
+    "name": "DrawAchvIMG",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "achievementtooltip": {
+    "name": "AchievementTooltip",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "resetinput": {
+    "name": "ResetInput",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createblurimage": {
+    "name": "CreateBlurImage",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Dreamfilter.bb"
+    ]
+  },
+  "createlistener": {
+    "name": "CreateListener",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "apaches": {
+    "name": "Apaches",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "decaltextures": {
+    "name": "DecalTextures",
+    "calls": 11,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "inititemtemplates": {
+    "name": "InitItemTemplates",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Items.bb"
+    ]
+  },
+  "textures": {
+    "name": "textures",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "initparticles": {
+    "name": "InitParticles",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "effect": {
+    "name": "Effect",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "createtemplate": {
+    "name": "CreateTemplate",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateemitterblend": {
+    "name": "SetTemplateEmitterBlend",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateinterval": {
+    "name": "SetTemplateInterval",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateparticlesperinterval": {
+    "name": "SetTemplateParticlesPerInterval",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateemitterlifetime": {
+    "name": "SetTemplateEmitterLifeTime",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateparticlelifetime": {
+    "name": "SetTemplateParticleLifeTime",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatetexture": {
+    "name": "SetTemplateTexture",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateoffset": {
+    "name": "SetTemplateOffset",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatevelocity": {
+    "name": "SetTemplateVelocity",
+    "calls": 6,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatealigntofall": {
+    "name": "SetTemplateAlignToFall",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplategravity": {
+    "name": "SetTemplateGravity",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatealphavel": {
+    "name": "SetTemplateAlphaVel",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatesize": {
+    "name": "SetTemplateSize",
+    "calls": 8,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatecolors": {
+    "name": "SetTemplateColors",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatefloor": {
+    "name": "SetTemplateFloor",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatesizevel": {
+    "name": "SetTemplateSizeVel",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatesubtemplate": {
+    "name": "SetTemplateSubTemplate",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "createplane": {
+    "name": "CreatePlane",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "killsounds": {
+    "name": "KillSounds",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "freeparticles": {
+    "name": "FreeParticles",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "initfastresize": {
+    "name": "InitFastResize",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "channelpan": {
+    "name": "ChannelPan",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "getentitytype": {
+    "name": "GetEntityType",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "freetexture": {
+    "name": "FreeTexture",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "freebrush": {
+    "name": "FreeBrush",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "xor": {
+    "name": "Xor",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "asc": {
+    "name": "Asc",
+    "calls": 7,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/AAText.bb",
+      "../scpcb/new_tests/test_strings.bb",
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "atan2": {
+    "name": "ATan2",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "pisteiden": {
+    "name": "pisteiden",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ja": {
+    "name": "ja",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "vektorit": {
+    "name": "Vektorit",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "leikkaavat": {
+    "name": "leikkaavat",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "decals": {
+    "name": "Decals",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "pokebyte": {
+    "name": "PokeByte",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "updateinifile": {
+    "name": "UpdateINIFile",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "readiniline": {
+    "name": "ReadINILine",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "data": {
+    "name": "Data",
+    "calls": 7,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_Basic_Bank.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "ini_filetostring": {
+    "name": "INI_FileToString",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "ini_createkey": {
+    "name": "INI_CreateKey",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "ini_createsection": {
+    "name": "INI_CreateSection",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "filepos": {
+    "name": "FilePos",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb",
+      "../scpcb/Map Creator/window3d.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "entityscalex": {
+    "name": "EntityScaleX",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "entityscaley": {
+    "name": "EntityScaleY",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "entityscalez": {
+    "name": "EntityScaleZ",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "getparent": {
+    "name": "GetParent",
+    "calls": 9,
+    "files": [
+      "../scpcb/Main.bb",
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "deinitext": {
+    "name": "DeInitExt",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "initext": {
+    "name": "InitExt",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "renderworld": {
+    "name": "RenderWorld",
+    "calls": 5,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "trisrendered": {
+    "name": "TrisRendered",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "textureanisotropy": {
+    "name": "TextureAnisotropy",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "controlsoundvolume": {
+    "name": "ControlSoundVolume",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "errorlog": {
+    "name": "ErrorLog",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "memory": {
+    "name": "memory",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "totalvidmem": {
+    "name": "TotalVidMem",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "availvidmem": {
+    "name": "AvailVidMem",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "error": {
+    "name": "Error",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "ceiling": {
+    "name": "ceiling",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "createquad": {
+    "name": "CreateQuad",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_open": {
+    "name": "BlitzMovie_Open",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_getwidth": {
+    "name": "BlitzMovie_GetWidth",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_getheight": {
+    "name": "BlitzMovie_GetHeight",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_close": {
+    "name": "BlitzMovie_Close",
+    "calls": 4,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_opendecodetoimage": {
+    "name": "BlitzMovie_OpenDecodeToImage",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_play": {
+    "name": "BlitzMovie_Play",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "projectimage": {
+    "name": "ProjectImage",
+    "calls": 3,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "blitzmovie_stop": {
+    "name": "BlitzMovie_Stop",
+    "calls": 2,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "rotateentity90degreeangles": {
+    "name": "RotateEntity90DegreeAngles",
+    "calls": 1,
+    "files": [
+      "../scpcb/Main.bb"
+    ]
+  },
+  "lightmaps": {
+    "name": "lightmaps",
+    "calls": 1,
+    "files": [
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "fi_load": {
+    "name": "FI_Load",
+    "calls": 1,
+    "files": [
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "copyfile": {
+    "name": "CopyFile",
+    "calls": 1,
+    "files": [
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "fi_save": {
+    "name": "FI_Save",
+    "calls": 1,
+    "files": [
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "fi_unload": {
+    "name": "FI_Unload",
+    "calls": 1,
+    "files": [
+      "../scpcb/LightMapPNG.bb"
+    ]
+  },
+  "saveroommesh": {
+    "name": "SaveRoomMesh",
+    "calls": 4,
+    "files": [
+      "../scpcb/LightMapPNG.bb",
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "items": {
+    "name": "Items",
+    "calls": 2,
+    "files": [
+      "../scpcb/Items.bb"
+    ]
+  },
+  "itemtemplates": {
+    "name": "ItemTemplates",
+    "calls": 1,
+    "files": [
+      "../scpcb/Items.bb"
+    ]
+  },
+  "copyimage": {
+    "name": "CopyImage",
+    "calls": 6,
+    "files": [
+      "../scpcb/Items.bb",
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createitemtemplate": {
+    "name": "CreateItemTemplate",
+    "calls": 133,
+    "files": [
+      "../scpcb/Items.bb"
+    ]
+  },
+  "entitycollided": {
+    "name": "EntityCollided",
+    "calls": 1,
+    "files": [
+      "../scpcb/Items.bb"
+    ]
+  },
+  "takeoffstuff": {
+    "name": "TakeOffStuff",
+    "calls": 2,
+    "files": [
+      "../scpcb/Items.bb"
+    ]
+  },
+  "fsound_init": {
+    "name": "FSOUND_Init",
+    "calls": 2,
+    "files": [
+      "../scpcb/FMod.bb",
+      "../scpcb/new_tests/test_audio.bb"
+    ]
+  },
+  "destroydrawportal": {
+    "name": "DestroyDrawPortal",
+    "calls": 2,
+    "files": [
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb"
+    ]
+  },
+  "updatedrawportal": {
+    "name": "UpdateDrawPortal",
+    "calls": 2,
+    "files": [
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb"
+    ]
+  },
+  "brushtexture": {
+    "name": "BrushTexture",
+    "calls": 2,
+    "files": [
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb"
+    ]
+  },
+  "paintsurface": {
+    "name": "PaintSurface",
+    "calls": 2,
+    "files": [
+      "../scpcb/DrawPortals.bb",
+      "../scpcb/DrawPortals – Kopio.bb"
+    ]
+  },
+  "difficulty": {
+    "name": "Difficulty",
+    "calls": 1,
+    "files": [
+      "../scpcb/Difficulty.bb"
+    ]
+  },
+  "freetemplate": {
+    "name": "FreeTemplate",
+    "calls": 3,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "freeemitter": {
+    "name": "FreeEmitter",
+    "calls": 2,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatemaxparticles": {
+    "name": "SetTemplateMaxParticles",
+    "calls": 2,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatealpha": {
+    "name": "SetTemplateAlpha",
+    "calls": 2,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatebrightness": {
+    "name": "SetTemplateBrightness",
+    "calls": 2,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplatefixangles": {
+    "name": "SetTemplateFixAngles",
+    "calls": 2,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "template": {
+    "name": "Template",
+    "calls": 26,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateanimtexture": {
+    "name": "SetTemplateAnimTexture",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplaterotation": {
+    "name": "SetTemplateRotation",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "nameentity": {
+    "name": "NameEntity",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "freezeemitter": {
+    "name": "FreezeEmitter",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "unfreezeemitter": {
+    "name": "UnfreezeEmitter",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "settemplateyaw": {
+    "name": "SetTemplateYaw",
+    "calls": 1,
+    "files": [
+      "../scpcb/DevilParticleSystem.bb"
+    ]
+  },
+  "lockbuffer": {
+    "name": "LockBuffer",
+    "calls": 1,
+    "files": [
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "unlockbuffer": {
+    "name": "UnlockBuffer",
+    "calls": 2,
+    "files": [
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "string": {
+    "name": "String",
+    "calls": 1,
+    "files": [
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "isalpha": {
+    "name": "isAlpha",
+    "calls": 2,
+    "files": [
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "b3d": {
+    "name": "B3D",
+    "calls": 2,
+    "files": [
+      "../scpcb/Converter.bb"
+    ]
+  },
+  "details": {
+    "name": "details",
+    "calls": 1,
+    "files": [
+      "../scpcb/CPU_Details.bb"
+    ]
+  },
+  "waitkey": {
+    "name": "WaitKey",
+    "calls": 2,
+    "files": [
+      "../scpcb/CPU_Details.bb"
+    ]
+  },
+  "lset": {
+    "name": "LSet",
+    "calls": 6,
+    "files": [
+      "../scpcb/CPU_Details.bb"
+    ]
+  },
+  "banks": {
+    "name": "banks",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_compress": {
+    "name": "ZipApi_Compress",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "inputs": {
+    "name": "inputs",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_uncompress": {
+    "name": "ZipApi_UnCompress",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_compressbound": {
+    "name": "ZlibWapi_CompressBound",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_compress2": {
+    "name": "ZlibWapi_Compress2",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_uncompress": {
+    "name": "ZlibWapi_UnCompress",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzopen": {
+    "name": "ZlibWapi_UnzOpen",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "file_getfilename": {
+    "name": "File_GetFileName",
+    "calls": 5,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_File_FileName.bb"
+    ]
+  },
+  "zlibwapi_unzclose": {
+    "name": "ZlibWapi_UnzClose",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzlocatefile": {
+    "name": "ZlibWapi_UnzLocateFile",
+    "calls": 8,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "file_convertslashes": {
+    "name": "File_ConvertSlashes",
+    "calls": 4,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb",
+      "../scpcb/Blitz_File_FileName.bb"
+    ]
+  },
+  "zlibwapi_unzopencurrentfilepassword": {
+    "name": "ZlibWapi_UnzOpenCurrentFilePassword",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzopencurrentfile": {
+    "name": "ZlibWapi_UnzOpenCurrentFile",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "bytes": {
+    "name": "bytes",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzclosecurrentfile": {
+    "name": "ZlibWapi_UnzCloseCurrentFile",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_getcurrentfileinfofast": {
+    "name": "ZipApi_GetCurrentFileInfoFast",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_unzfileinfo": {
+    "name": "ZIPAPI_UnzFileInfo",
+    "calls": 4,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "here": {
+    "name": "here",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzgotofirstfile": {
+    "name": "ZlibWapi_UnzGoToFirstFile",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzgotonextfile": {
+    "name": "ZlibWapi_UnzGoToNextFile",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzgetcurrentfileinfo": {
+    "name": "ZlibWapi_UnzGetCurrentFileInfo",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "peekstring": {
+    "name": "PeekString",
+    "calls": 4,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_globalinfo": {
+    "name": "ZIPAPI_GlobalInfo",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzgetglobalinfo": {
+    "name": "ZlibWapi_UnzGetGlobalInfo",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_globalinfo_frombank": {
+    "name": "ZIPAPI_GlobalInfo_FromBank",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_unzgetglobalcomment": {
+    "name": "ZlibWapi_UnzGetGlobalComment",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_verifyzipfileheader": {
+    "name": "ZipApi_VerifyZipFileHeader",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_createzip": {
+    "name": "ZipApi_CreateZip",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_zipopen": {
+    "name": "ZlibWapi_ZipOpen",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zip": {
+    "name": "zip",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_zipopenfileinzip": {
+    "name": "ZipApi_ZipOpenFileInZip",
+    "calls": 4,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date_fromfile": {
+    "name": "ZIPAPI_Date_FromFile",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_crc32": {
+    "name": "ZipApi_Crc32",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_zipclosefileinzip": {
+    "name": "ZlibWapi_ZipCloseFileInZip",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date_create": {
+    "name": "ZIPAPI_Date_Create",
+    "calls": 3,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_closezip": {
+    "name": "ZipApi_CloseZip",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_zipclose": {
+    "name": "ZlibWapi_ZipClose",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_crc32": {
+    "name": "ZlibWapi_Crc32",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_adler32": {
+    "name": "ZlibWapi_Adler32",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date_tobank": {
+    "name": "ZipApi_Date_ToBank",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "fields": {
+    "name": "fields",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_zipopennewfileinzip": {
+    "name": "ZlibWapi_ZipOpenNewFileInZip",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zlibwapi_zipopennewfileinzip3": {
+    "name": "ZlibWapi_ZipOpenNewFileInZip3",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "freebank": {
+    "name": "FreeBank",
+    "calls": 3,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_unzfileinfo_frombank": {
+    "name": "ZIPAPI_UnzFileInfo_FromBank",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date_frombank": {
+    "name": "ZipApi_Date_FromBank",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date_dispose": {
+    "name": "ZIPAPI_Date_Dispose",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_globalinfo_dispose": {
+    "name": "ZIPAPI_GlobalInfo_Dispose",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "zipapi_date": {
+    "name": "ZIPAPI_Date",
+    "calls": 3,
+    "files": [
+      "../scpcb/Blitz_File_ZipApi.bb"
+    ]
+  },
+  "newton": {
+    "name": "Newton",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_File_FileName.bb"
+    ]
+  },
+  "file_splitafterchar": {
+    "name": "File_SplitAfterChar",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_File_FileName.bb"
+    ]
+  },
+  "dumpbank": {
+    "name": "DumpBank",
+    "calls": 2,
+    "files": [
+      "../scpcb/Blitz_Basic_Bank.bb"
+    ]
+  },
+  "pokestring": {
+    "name": "PokeString",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_Basic_Bank.bb"
+    ]
+  },
+  "hex": {
+    "name": "Hex",
+    "calls": 1,
+    "files": [
+      "../scpcb/Blitz_Basic_Bank.bb"
+    ]
+  },
+  "alinit": {
+    "name": "alInit",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aldeviceinit": {
+    "name": "alDeviceInit",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "allistenerupdate": {
+    "name": "alListenerUpdate",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "allistenersetposition": {
+    "name": "alListenerSetPosition",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "allistenersetdirection": {
+    "name": "alListenerSetDirection",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "allistenersetup": {
+    "name": "alListenerSetUp",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alupdatesoundvolume": {
+    "name": "alUpdateSoundVolume",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alsourceplay": {
+    "name": "alSourcePlay",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "alsourceplay3d_": {
+    "name": "alSourcePlay3D_",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectseteaxreverbparam": {
+    "name": "alEffectSetEAXReverbParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectseteaxreverb": {
+    "name": "alEffectSetEAXReverb",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetreverbparam": {
+    "name": "alEffectSetReverbParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetreverb": {
+    "name": "alEffectSetReverb",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetautowahparam": {
+    "name": "alEffectSetAutowahParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetautowah": {
+    "name": "alEffectSetAutowah",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetchorusparam": {
+    "name": "alEffectSetChorusParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetchorus": {
+    "name": "alEffectSetChorus",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetdistortionparam": {
+    "name": "alEffectSetDistortionParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetdistortion": {
+    "name": "alEffectSetDistortion",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetechoparam": {
+    "name": "alEffectSetEchoParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetecho": {
+    "name": "alEffectSetEcho",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetflangerparam": {
+    "name": "alEffectSetFlangerParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetflanger": {
+    "name": "alEffectSetFlanger",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetequalizerparam": {
+    "name": "alEffectSetEqualizerParam",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "aleffectsetequalizer": {
+    "name": "alEffectSetEqualizer",
+    "calls": 1,
+    "files": [
+      "../scpcb/BlitzAL.bb"
+    ]
+  },
+  "achievementdescs": {
+    "name": "AchievementDescs",
+    "calls": 4,
+    "files": [
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "achvimg": {
+    "name": "AchvIMG",
+    "calls": 7,
+    "files": [
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "createachievementmsg": {
+    "name": "CreateAchievementMsg",
+    "calls": 1,
+    "files": [
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "achievementmsg": {
+    "name": "AchievementMsg",
+    "calls": 1,
+    "files": [
+      "../scpcb/Achievements.bb"
+    ]
+  },
+  "aaspriteposition": {
+    "name": "AASpritePosition",
+    "calls": 2,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "aaspritescale": {
+    "name": "AASpriteScale",
+    "calls": 2,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "writepixelfast": {
+    "name": "WritePixelFast",
+    "calls": 4,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "aasetfont": {
+    "name": "AASetFont",
+    "calls": 1,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "aafont": {
+    "name": "AAFont",
+    "calls": 4,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "graphicsbuffer": {
+    "name": "GraphicsBuffer",
+    "calls": 1,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "colorgreen": {
+    "name": "ColorGreen",
+    "calls": 2,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "colorblue": {
+    "name": "ColorBlue",
+    "calls": 2,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "fontwidth": {
+    "name": "FontWidth",
+    "calls": 3,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "fontheight": {
+    "name": "FontHeight",
+    "calls": 5,
+    "files": [
+      "../scpcb/AAText.bb"
+    ]
+  },
+  "getfloat": {
+    "name": "GetFloat",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_type_conversion.bb"
+    ]
+  },
+  "getint": {
+    "name": "GetInt",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_type_conversion.bb"
+    ]
+  },
+  "teststrings": {
+    "name": "TestStrings",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_strings.bb"
+    ]
+  },
+  "particle": {
+    "name": "Particle",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_particles_min.bb"
+    ]
+  },
+  "testparticlesystem": {
+    "name": "TestParticleSystem",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_particles_min.bb"
+    ]
+  },
+  "testmath": {
+    "name": "TestMath",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "tan": {
+    "name": "Tan",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "sqrt": {
+    "name": "Sqrt",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "seedrnd": {
+    "name": "SeedRnd",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_math.bb"
+    ]
+  },
+  "testloops": {
+    "name": "TestLoops",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_loops.bb"
+    ]
+  },
+  "noreturn": {
+    "name": "NoReturn",
+    "calls": 2,
+    "files": [
+      "../scpcb/new_tests/test_if_balance.bb"
+    ]
+  },
+  "returnvalue": {
+    "name": "ReturnValue",
+    "calls": 3,
+    "files": [
+      "../scpcb/new_tests/test_if_balance.bb"
+    ]
+  },
+  "opening": {
+    "name": "opening",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_fileio.bb"
+    ]
+  },
+  "getters": {
+    "name": "getters",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_entity_getters.bb"
+    ]
+  },
+  "testmod": {
+    "name": "TestMod",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_devil_mod.bb"
+    ]
+  },
+  "testtypehierarchies": {
+    "name": "TestTypeHierarchies",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_custom_types.bb"
+    ]
+  },
+  "player": {
+    "name": "Player",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "physics": {
+    "name": "physics",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionentity": {
+    "name": "CollisionEntity",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionx": {
+    "name": "CollisionX",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionz": {
+    "name": "CollisionZ",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionnx": {
+    "name": "CollisionNX",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionny": {
+    "name": "CollisionNY",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "collisionnz": {
+    "name": "CollisionNZ",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_collision_queries.bb"
+    ]
+  },
+  "myarray": {
+    "name": "MyArray",
+    "calls": 3,
+    "files": [
+      "../scpcb/new_tests/test_arrays.bb"
+    ]
+  },
+  "matrix": {
+    "name": "Matrix",
+    "calls": 3,
+    "files": [
+      "../scpcb/new_tests/test_arrays.bb"
+    ]
+  },
+  "cube": {
+    "name": "Cube",
+    "calls": 2,
+    "files": [
+      "../scpcb/new_tests/test_arrays.bb"
+    ]
+  },
+  "testarrays": {
+    "name": "TestArrays",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_arrays.bb"
+    ]
+  },
+  "floatarr": {
+    "name": "FloatArr",
+    "calls": 4,
+    "files": [
+      "../scpcb/new_tests/test_arrays.bb"
+    ]
+  },
+  "setfont": {
+    "name": "SetFont",
+    "calls": 1,
+    "files": [
+      "../scpcb/new_tests/test_2d_graphics.bb"
+    ]
+  },
+  "api_getactivewindow": {
+    "name": "api_GetActiveWindow",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "meshes": {
+    "name": "meshes",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "loadroomtemplatemeshes": {
+    "name": "LoadRoomTemplateMeshes",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "placeroom": {
+    "name": "PlaceRoom",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "placeadjacentdoors": {
+    "name": "PlaceAdjacentDoors",
+    "calls": 3,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "api_findwindow": {
+    "name": "api_FindWindow",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "getmeshextents2": {
+    "name": "GetMeshExtents2",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createoverlapbox": {
+    "name": "CreateOverLapBox",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/window3d.bb"
+    ]
+  },
+  "createwindow": {
+    "name": "CreateWindow",
+    "calls": 5,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createpanel": {
+    "name": "CreatePanel",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setpanelimage": {
+    "name": "SetPanelImage",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "getactivewindow": {
+    "name": "GetActiveWindow",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createlistbox": {
+    "name": "CreateListBox",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "addevents": {
+    "name": "AddEvents",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createlabel": {
+    "name": "CreateLabel",
+    "calls": 22,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createslider": {
+    "name": "CreateSlider",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "windowmenu": {
+    "name": "WindowMenu",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createcombobox": {
+    "name": "CreateComboBox",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createtextfield": {
+    "name": "CreateTextField",
+    "calls": 6,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createcanvas": {
+    "name": "CreateCanvas",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mapicons": {
+    "name": "MapIcons",
+    "calls": 15,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "midhandle": {
+    "name": "MidHandle",
+    "calls": 7,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "foresticons": {
+    "name": "ForestIcons",
+    "calls": 14,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "specialicons": {
+    "name": "SpecialIcons",
+    "calls": 12,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "map": {
+    "name": "Map",
+    "calls": 31,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mapevent": {
+    "name": "MapEvent",
+    "calls": 37,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mapangle": {
+    "name": "MapAngle",
+    "calls": 25,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "arrows": {
+    "name": "Arrows",
+    "calls": 14,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createtabber": {
+    "name": "CreateTabber",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "insertgadgetitem": {
+    "name": "InsertGadgetItem",
+    "calls": 5,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setstatustext": {
+    "name": "SetStatusText",
+    "calls": 8,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createmenu": {
+    "name": "CreateMenu",
+    "calls": 7,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "createtextarea": {
+    "name": "CreateTextArea",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "findwindow": {
+    "name": "FindWindow",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setparent": {
+    "name": "SetParent",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "canvasbuffer": {
+    "name": "CanvasBuffer",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setgadgettext": {
+    "name": "SetGadgetText",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "textfieldtext": {
+    "name": "TextFieldText",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "author": {
+    "name": "author",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "textareatext": {
+    "name": "TextAreaText",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "description": {
+    "name": "Description",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mapeventprob": {
+    "name": "MapEventProb",
+    "calls": 21,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "countgadgetitems": {
+    "name": "CountGadgetItems",
+    "calls": 3,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgetitemtext": {
+    "name": "GadgetItemText",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "forestplace": {
+    "name": "ForestPlace",
+    "calls": 20,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "forestplaceangle": {
+    "name": "ForestPlaceAngle",
+    "calls": 16,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mtroom": {
+    "name": "MTRoom",
+    "calls": 19,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "mtroomangle": {
+    "name": "MTRoomAngle",
+    "calls": 16,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgetwidth": {
+    "name": "GadgetWidth",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgetheight": {
+    "name": "GadgetHeight",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgetx": {
+    "name": "GadgetX",
+    "calls": 40,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgety": {
+    "name": "GadgetY",
+    "calls": 40,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "selectedgadgetitem": {
+    "name": "SelectedGadgetItem",
+    "calls": 12,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "slidervalue": {
+    "name": "SliderValue",
+    "calls": 9,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setslidervalue": {
+    "name": "SetSliderValue",
+    "calls": 8,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "gadgettext": {
+    "name": "GadgetText",
+    "calls": 3,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "waitevent": {
+    "name": "WaitEvent",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "eventsource": {
+    "name": "EventSource",
+    "calls": 19,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "eventdata": {
+    "name": "EventData",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "proceed": {
+    "name": "Proceed",
+    "calls": 1,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "requestfile": {
+    "name": "RequestFile",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "savemap": {
+    "name": "SaveMap",
+    "calls": 10,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "erasemap": {
+    "name": "EraseMap",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "confirm": {
+    "name": "Confirm",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "menuchecked": {
+    "name": "MenuChecked",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "checkmenu": {
+    "name": "CheckMenu",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "uncheckmenu": {
+    "name": "UncheckMenu",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "writeoptions": {
+    "name": "WriteOptions",
+    "calls": 3,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "setgadgetshape": {
+    "name": "SetGadgetShape",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "requestcolor": {
+    "name": "RequestColor",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "requestedred": {
+    "name": "RequestedRed",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "requestedgreen": {
+    "name": "RequestedGreen",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "requestedblue": {
+    "name": "RequestedBlue",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "buttonstate": {
+    "name": "ButtonState",
+    "calls": 4,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  },
+  "assigneventtoroomtemplate": {
+    "name": "AssignEventToRoomTemplate",
+    "calls": 2,
+    "files": [
+      "../scpcb/Map Creator/mapcreator_new.bb"
+    ]
+  }
+}

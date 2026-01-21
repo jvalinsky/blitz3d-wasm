@@ -12,7 +12,8 @@
     "visualize": "node visualize.js",
     "report": "node report.js",
     "test": "node test.js",
-    "scoreboard": "node scoreboard.js"
+    "scoreboard": "node scoreboard.js",
+    "imports-scan": "node imports-scan.js"
   },
   "dependencies": {
     "@webassemblyjs/wasm-parser": "^1.14.1",

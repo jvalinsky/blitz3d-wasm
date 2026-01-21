@@ -10,6 +10,7 @@ const debugPanel = document.getElementById('debug-panel');
 const debugStatsEl = document.getElementById('debug-stats');
 const debugLogEl = document.getElementById('debug-log');
 const debugToggleBtn = document.getElementById('debug-toggle');
+const startBtn = document.getElementById('start-btn');
 
 const ctx = canvas.getContext('2d');
 
@@ -50,6 +51,9 @@ const internedStrings = new Map(); // JS string -> WASM string pointer
 let jsToWasmStringAllocs = 0;
 let jsToWasmStringBytes = 0;
 let wasmMemoryGrows = 0;
+
+let started = false;
+let running = false;
 
 // Avoid spamming the UI thread with repeated error logs (which can look like a "freeze").
 const loggedOnce = new Set();
@@ -672,10 +676,12 @@ async function start() {
     const instance = await WebAssembly.instantiate(wasmModule, buildImports(wasmModule, () => gameExports?.memory));
     gameExports = instance.exports;
 
-    statusEl.textContent = 'Running...';
+    // Enable the start button after WASM is instantiated. This prevents the UI
+    // from freezing on page-load if initialization hits a tight loop.
+    statusEl.textContent = 'Ready. Click Start.';
+    if (startBtn) startBtn.disabled = false;
 
     const updateMenu = gameExports.UpdateMainMenu || gameExports.updatemainmenu;
-    const initMenu = gameExports.InitLoadingScreens || gameExports.initloadingscreens;
     const mainFunc = gameExports.Main || gameExports.main;
 
     const setGlobal = (name, value) => {
@@ -687,30 +693,48 @@ async function start() {
         return false;
     };
 
-    setGlobal('MenuScale', 1);
-    setGlobal('GraphicWidth', logicalWidth);
-    setGlobal('GraphicHeight', logicalHeight);
-    setGlobal('RealGraphicWidth', logicalWidth);
-    setGlobal('RealGraphicHeight', logicalHeight);
-
-    if (mainFunc) {
-        mainFunc();
-    }
-
     const ensureFont = (name, family, sizePx) => {
         const g = gameExports[name] || gameExports[name.toLowerCase()];
         if (g instanceof WebAssembly.Global && g.value === 0) {
             g.value = makeFontHandle(family, sizePx);
         }
     };
-    ensureFont('Font1', 'CourierNew', 18);
-    ensureFont('Font2', 'CourierNewBold', 48);
-    ensureFont('ConsoleFont', 'CourierNew', 20);
+    const initAndRun = () => {
+        if (started) return;
+        started = true;
 
-    if (initMenu) {
-        const mem = gameExports.memory;
-        const iniPath = allocString(mem, 'Loadingscreens/LoadingScreens.ini');
-        initMenu(iniPath);
+        setGlobal('MenuScale', 1);
+        setGlobal('GraphicWidth', logicalWidth);
+        setGlobal('GraphicHeight', logicalHeight);
+        setGlobal('RealGraphicWidth', logicalWidth);
+        setGlobal('RealGraphicHeight', logicalHeight);
+
+        ensureFont('Font1', 'CourierNew', 18);
+        ensureFont('Font2', 'CourierNewBold', 48);
+        ensureFont('ConsoleFont', 'CourierNew', 20);
+
+        // Run top-level init. We intentionally DO NOT call InitLoadingScreens
+        // here because the demo currently stubs file I/O and INI reads; that
+        // path can loop or allocate aggressively in some failure modes.
+        try {
+            statusEl.textContent = 'Initializing...';
+            if (mainFunc) mainFunc();
+        } catch (e) {
+            debugLog('error', e);
+            statusEl.textContent = 'Init failed (see debug overlay).';
+            return;
+        }
+
+        statusEl.textContent = 'Running...';
+        running = true;
+        requestAnimationFrame(frame);
+    };
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => initAndRun());
+    } else {
+        // Fallback: auto-start if the button isn't present.
+        initAndRun();
     }
 
 let lastStatsTime = performance.now();
@@ -718,6 +742,7 @@ let lastWasmBytes = 0;
 let lastJsHeap = 0;
 
 function frame() {
+        if (!running) return;
         if (updateMenu) {
             updateMenu();
         }
@@ -752,10 +777,9 @@ function frame() {
 
         requestAnimationFrame(frame);
     }
-    frame();
 }
 
 start().catch((err) => {
-    console.error(err);
-    statusEl.textContent = 'Failed to start.';
+    debugLog('error', err);
+    statusEl.textContent = 'Failed to start (see debug overlay).';
 });

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SCP: Containment Breach - Menu Demo</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="overlay">
+        <div id="status">Loading...</div>
+        <div id="hint">Click to focus. Esc releases mouse.</div>
+        <div id="debug-hint">Press ` (backtick) to toggle debug overlay.</div>
+    </div>
+    <div id="debug-panel" class="hidden">
+        <div id="debug-stats"></div>
+        <pre id="debug-log"></pre>
+    </div>
+    <canvas id="screen"></canvas>
+    <script src="menu_demo.js"></script>
+</body>
+</html>

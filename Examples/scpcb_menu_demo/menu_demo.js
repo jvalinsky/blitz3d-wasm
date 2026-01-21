@@ -27,6 +27,7 @@ let mouseHit = { 1: 0, 2: 0, 3: 0 };
 let mouseDown = { 1: false, 2: false, 3: false };
 
 const images = new Map();
+const imagePathToId = new Map();
 let nextImageId = 1;
 
 const fonts = new Map();
@@ -36,6 +37,18 @@ let gameExports = null;
 let debugVisible = false;
 const logBuffer = [];
 const maxLogLines = 80;
+const textDecoder = new TextDecoder();
+
+// A small, reusable arena for JS->WASM strings returned by runtime stubs.
+// Without this, a bump allocator makes the demo "leak" WASM memory as the game
+// repeatedly calls functions like GetINIString/ReadLine/etc.
+const stringArenas = new Map(); // WebAssembly.Memory -> { base, slotSize, slots, index }
+const internedStrings = new Map(); // JS string -> WASM string pointer
+
+// Debug counters to help track memory pressure without devtools.
+let jsToWasmStringAllocs = 0;
+let jsToWasmStringBytes = 0;
+let wasmMemoryGrows = 0;
 
 function pushLog(line) {
     logBuffer.push(line);
@@ -124,35 +137,96 @@ function readString(memory, ptr) {
         const length = view.getInt32(ptr + 4, true);
         if (length <= 0 || length > 100000) return '';
         const bytes = new Uint8Array(buffer, ptr + 8, length);
-        return new TextDecoder().decode(bytes);
+        return textDecoder.decode(bytes);
     } catch {
         return '';
     }
 }
 
-function writeString(memory, ptr, str) {
+function writeString(memory, ptr, str, maxBytes = Infinity) {
     const buffer = getSafeBuffer(memory.buffer);
     const view = new DataView(buffer);
     view.setInt32(ptr, 0, true);
-    view.setInt32(ptr + 4, str.length, true);
+    const safe = (str ?? '').slice(0, Math.max(0, Math.min((str ?? '').length, maxBytes)));
+    view.setInt32(ptr + 4, safe.length, true);
     const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < str.length; i++) {
-        bytes[ptr + 8 + i] = str.charCodeAt(i);
+    for (let i = 0; i < safe.length; i++) {
+        bytes[ptr + 8 + i] = safe.charCodeAt(i);
     }
-    bytes[ptr + 8 + str.length] = 0;
+    bytes[ptr + 8 + safe.length] = 0;
 }
 
 const heapPointers = new Map();
 function allocString(memory, str) {
     if (!memory) return 0;
+    const s = String(str ?? '');
+
+    // Prefer the module's string heap allocator when available so we don't
+    // scribble over unrelated heap regions.
+    if (gameExports && typeof gameExports.__StringAlloc === 'function') {
+        const ptr = gameExports.__StringAlloc(s.length) | 0;
+        const end = ptr + 9 + s.length; // header + NUL
+        if (end > memory.buffer.byteLength) {
+            const neededPages = Math.ceil((end - memory.buffer.byteLength) / (64 * 1024));
+            if (neededPages > 0) {
+                try { memory.grow(neededPages); wasmMemoryGrows += neededPages; } catch { /* ignore */ }
+            }
+        }
+        writeString(memory, ptr, s);
+        jsToWasmStringAllocs += 1;
+        jsToWasmStringBytes += s.length;
+        return ptr;
+    }
+
     if (!heapPointers.has(memory)) heapPointers.set(memory, 1024 * 1024);
     let ptr = heapPointers.get(memory);
-    const size = 8 + str.length + 4;
+    const size = 8 + s.length + 4;
     if (ptr + size > memory.buffer.byteLength) {
-        try { memory.grow(1); } catch { return 0; }
+        try { memory.grow(1); wasmMemoryGrows += 1; } catch { return 0; }
     }
-    writeString(memory, ptr, str);
+    writeString(memory, ptr, s);
     heapPointers.set(memory, (ptr + size + 3) & ~3);
+    jsToWasmStringAllocs += 1;
+    jsToWasmStringBytes += s.length;
+    return ptr;
+}
+
+function allocTempString(memory, str) {
+    if (!memory) return 0;
+
+    let arena = stringArenas.get(memory);
+    if (!arena) {
+        const slots = 64;
+        const slotSize = 4096; // bytes per slot (incl. header)
+        const totalBytes = slots * slotSize;
+
+        if (!heapPointers.has(memory)) heapPointers.set(memory, 1024 * 1024);
+        const arenaBase = heapPointers.get(memory);
+        const end = arenaBase + totalBytes;
+        if (end > memory.buffer.byteLength) {
+            const neededPages = Math.ceil((end - memory.buffer.byteLength) / (64 * 1024));
+            try { memory.grow(neededPages); } catch { /* ignore */ }
+        }
+        heapPointers.set(memory, (arenaBase + totalBytes + 3) & ~3);
+
+        arena = { base: arenaBase, slotSize, slots, index: 0 };
+        stringArenas.set(memory, arena);
+        console.log(`[strings] Initialized temp string arena: ${slots} slots @ ${slotSize} bytes`);
+    }
+
+    const slotPtr = arena.base + arena.index * arena.slotSize;
+    arena.index = (arena.index + 1) % arena.slots;
+    const maxChars = arena.slotSize - 9; // 8-byte header + trailing NUL
+    writeString(memory, slotPtr, str ?? '', maxChars);
+    return slotPtr;
+}
+
+function internString(memory, str) {
+    const s = String(str ?? '');
+    const cached = internedStrings.get(s);
+    if (cached) return cached;
+    const ptr = allocString(memory, s);
+    if (ptr) internedStrings.set(s, ptr);
     return ptr;
 }
 
@@ -369,10 +443,14 @@ const getEnvFunctions = (memRefGetter) => ({
     LoadImage: (pathPtr) => {
         const path = readString(memRefGetter(), pathPtr);
         const filename = normalizePath(path);
+        const cacheKey = filename.toLowerCase();
+        const cached = imagePathToId.get(cacheKey);
+        if (cached) return cached;
         const id = nextImageId++;
         const img = new Image();
         const entry = { img, width: 0, height: 0, handleX: 0, handleY: 0, rotation: 0 };
         images.set(id, entry);
+        imagePathToId.set(cacheKey, id);
         img.onload = () => {
             entry.width = img.naturalWidth;
             entry.height = img.naturalHeight;
@@ -396,9 +474,12 @@ const getEnvFunctions = (memRefGetter) => ({
     ResizeImage: (id, w, h) => {
         const entry = images.get(id);
         if (!entry || !entry.img) return 0;
+        const targetW = Math.max(1, w | 0);
+        const targetH = Math.max(1, h | 0);
+        if (entry.width === targetW && entry.height === targetH) return 0;
         const off = document.createElement('canvas');
-        off.width = Math.max(1, w | 0);
-        off.height = Math.max(1, h | 0);
+        off.width = targetW;
+        off.height = targetH;
         const octx = off.getContext('2d');
         octx.drawImage(entry.img, 0, 0, off.width, off.height);
         entry.img = off;
@@ -481,26 +562,33 @@ const getEnvFunctions = (memRefGetter) => ({
         const s = readString(memRefGetter(), ptr);
         return allocString(memRefGetter(), s.substr(Math.max(0, start - 1), len));
     },
-    Lower: (ptr) => allocString(memRefGetter(), readString(memRefGetter(), ptr).toLowerCase()),
-    Upper: (ptr) => allocString(memRefGetter(), readString(memRefGetter(), ptr).toUpperCase()),
-    Trim: (ptr) => allocString(memRefGetter(), readString(memRefGetter(), ptr).trim()),
+    Lower: (ptr) => internString(memRefGetter(), readString(memRefGetter(), ptr).toLowerCase()),
+    Upper: (ptr) => internString(memRefGetter(), readString(memRefGetter(), ptr).toUpperCase()),
+    Trim: (ptr) => internString(memRefGetter(), readString(memRefGetter(), ptr).trim()),
     Replace: (ptr, findPtr, replPtr) => {
         const s = readString(memRefGetter(), ptr);
         const f = readString(memRefGetter(), findPtr);
         const r = readString(memRefGetter(), replPtr);
-        return allocString(memRefGetter(), s.split(f).join(r));
+        return internString(memRefGetter(), s.split(f).join(r));
     },
-    Chr: (v) => allocString(memRefGetter(), String.fromCharCode(v)),
+    Chr: (v) => internString(memRefGetter(), String.fromCharCode(v)),
     StringEqual: (p1, p2) => readString(memRefGetter(), p1) === readString(memRefGetter(), p2) ? 1 : 0,
+    StringConcat: (p1, p2) => {
+        const s1 = readString(memRefGetter(), p1);
+        const s2 = readString(memRefGetter(), p2);
+        return internString(memRefGetter(), s1 + s2);
+    },
+    IntToString: (v) => internString(memRefGetter(), (v | 0).toString()),
+    FloatToString: (v) => internString(memRefGetter(), String(v)),
 
     FileType: () => 1,
     RuntimeError: (ptr) => { console.error(readString(memRefGetter(), ptr)); return 0; },
     DebugLog: (ptr) => { console.log(readString(memRefGetter(), ptr)); return 0; },
     OpenFile: () => 0,
-    ReadLine: () => allocString(memRefGetter(), ''),
+    ReadLine: () => internString(memRefGetter(), ''),
     Eof: () => 1,
     CloseFile: () => 0,
-    GetINIString: () => allocString(memRefGetter(), ''),
+    GetINIString: () => internString(memRefGetter(), ''),
     GetINIInt: () => 0,
     PutINIValue: () => 0,
 
@@ -526,12 +614,13 @@ function buildImports(module, memRefGetter) {
 }
 
 async function start() {
-    statusEl.textContent = 'Loading fonts...';
-    await loadFonts();
+    statusEl.textContent = 'Loading fonts + WASM...';
+    const fontsPromise = loadFonts();
+    const wasmBytesPromise = fetch('Menu.wasm').then((r) => r.arrayBuffer());
+    const [, wasmBytes] = await Promise.all([fontsPromise, wasmBytesPromise]);
 
-    statusEl.textContent = 'Loading WASM...';
-    const wasmRes = await fetch('Menu.wasm');
-    const wasmModule = await WebAssembly.compile(await wasmRes.arrayBuffer());
+    statusEl.textContent = 'Compiling WASM...';
+    const wasmModule = await WebAssembly.compile(wasmBytes);
     const instance = await WebAssembly.instantiate(wasmModule, buildImports(wasmModule, () => gameExports?.memory));
     gameExports = instance.exports;
 
@@ -576,6 +665,10 @@ async function start() {
         initMenu(iniPath);
     }
 
+let lastStatsTime = performance.now();
+let lastWasmBytes = 0;
+let lastJsHeap = 0;
+
 function frame() {
         if (updateMenu) {
             updateMenu();
@@ -587,7 +680,26 @@ function frame() {
             const wasmBytes = mem ? mem.buffer.byteLength : 0;
             const jsHeap = performance?.memory?.usedJSHeapSize || 0;
             const imgCount = images.size;
-            debugStatsEl.textContent = `WASM ${(wasmBytes / 1024 / 1024).toFixed(2)} MB | JS ${(jsHeap / 1024 / 1024).toFixed(2)} MB | Images ${imgCount}`;
+
+            const now = performance.now();
+            const dt = now - lastStatsTime;
+            // Smooth rates by sampling a few times per second.
+            let wasmRate = 0;
+            let jsRate = 0;
+            if (dt >= 250) {
+                wasmRate = ((wasmBytes - lastWasmBytes) / dt) * 1000; // bytes/sec
+                jsRate = ((jsHeap - lastJsHeap) / dt) * 1000; // bytes/sec
+                lastStatsTime = now;
+                lastWasmBytes = wasmBytes;
+                lastJsHeap = jsHeap;
+            }
+
+            debugStatsEl.textContent =
+                `WASM ${(wasmBytes / 1024 / 1024).toFixed(2)} MB (${(wasmRate / 1024 / 1024).toFixed(2)} MB/s)` +
+                ` | JS ${(jsHeap / 1024 / 1024).toFixed(2)} MB (${(jsRate / 1024 / 1024).toFixed(2)} MB/s)` +
+                ` | Images ${imgCount}` +
+                ` | StringAllocs ${jsToWasmStringAllocs} (${(jsToWasmStringBytes / 1024).toFixed(1)} KB)` +
+                ` | MemGrow ${wasmMemoryGrows}`;
         }
 
         requestAnimationFrame(frame);

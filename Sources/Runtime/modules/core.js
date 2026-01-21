@@ -278,6 +278,7 @@ class Blitz3DCore {
         imports.env.Abs = Math.abs;
         imports.env.Sgn = Math.sign;
         imports.env.Mod = (a, b) => a % b;
+        imports.env.Pow = (a, b) => Math.pow(a, b);
         imports.env.Rnd = (min, max) => this.rndFloat(min, max);
         imports.env.Rand = (min, max) => this.rndInt(min, max);
         imports.env.SeedRnd = (seed) => {

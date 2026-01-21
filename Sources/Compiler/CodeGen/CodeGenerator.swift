@@ -578,6 +578,8 @@ public struct CodeGenerator {
             // Geometry/Math Helpers
             ("AlignToVector", "AlignToVector", [.i32, .f32, .f32, .f32, .i32, .f32], [], "env"),
             ("CurveAngle", "CurveAngle", [.f32, .f32, .f32], [.f32], "env"),
+            // Math helpers
+            ("Pow", "pow", [.f32, .f32], [.f32], "env"),
             
             // Camera Functions
             ("CameraProject", "CameraProject", [.i32, .f32, .f32, .f32], [], "env")

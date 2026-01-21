@@ -307,6 +307,10 @@ public final class ExpressionGeneration {
         if !isBitwise && (leftResult.type == .f32 || rightResult.type == .f32) {
              if opType != .f64 { opType = .f32 }
         }
+        if binop.op.lowercased() == "pow" {
+            // Force pow to operate in f32 to match runtime import signature
+            opType = .f32
+        }
 
         let comparisonOps = ["=", "<>", "<", ">", "<=", ">="]
         let isComparison = comparisonOps.contains(binop.op)
@@ -519,9 +523,13 @@ public final class ExpressionGeneration {
             instrs.append(.i32ShrU)
             
         case "pow":
-            // Power operation - simplified, no direct WASM instruction
-            // Would need runtime function call
-            instrs.append(.call(0)) // pow function placeholder
+            if let powIdx = context.functionIndexMap["pow"] {
+                instrs.append(.call(powIdx))
+            } else {
+                // Fallback: preserve stack validity even if pow is missing
+                instrs.append(.drop) // drop right
+            }
+            return (instrs, .f32)
             
         default:
             break

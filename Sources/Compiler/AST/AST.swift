@@ -456,11 +456,13 @@ public struct FunctionNode {
 public struct ParameterNode {
     public var name: String
     public var type: TypeAnnotation?
+    public var defaultValue: ExpressionNode?
     public var span: SourceSpan
     
-    public init(name: String, type: TypeAnnotation? = nil, span: SourceSpan = .unknown) {
+    public init(name: String, type: TypeAnnotation? = nil, defaultValue: ExpressionNode? = nil, span: SourceSpan = .unknown) {
         self.name = name
         self.type = type
+        self.defaultValue = defaultValue
         self.span = span
     }
 }

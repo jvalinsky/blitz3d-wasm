@@ -365,7 +365,10 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         print("")
         
         // Generate WASM
-        let module: WASMModule
+        var module: WASMModule
+        var sourceMapGenerator: SourceMapGenerator?
+        var debugGenerator: DebugGenerator?
+        
         if useIR {
             print("Using Typed IR pipeline (experimental)")
             print("")
@@ -377,8 +380,6 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
                 let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
                 codeGen.enableAutoImports(autoImportNames, arities: arities)
             }
-            var sourceMapGenerator: SourceMapGenerator?
-            var debugGenerator: DebugGenerator?
             
             if generateSourceMap {
                 sourceMapGenerator = SourceMapGenerator()
@@ -400,10 +401,6 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
                 exit(1)
             }
         }
-        
-        var mutatableModule = module
-
-        var module = mutatableModule
         
         if generateSourceMap {
             let mapFileName = URL(fileURLWithPath: outputPath).lastPathComponent + ".map"
@@ -434,7 +431,7 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             let watOutput = writer.write(module)
             
             let watPath = outputPath.replacingOccurrences(of: ".wasm", with: ".wat")
-            try watOutput.write(toFile: watPath, atomically: true, encoding: .utf8)
+            try watOutput.write(toFile: watPath, atomically: true, encoding: String.Encoding.utf8)
             print("Wrote WAT file: \(watPath)")
             print("")
         }
@@ -450,14 +447,14 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
              let mapOutputPath = outputPath + ".map"
              let wasmFileName = URL(fileURLWithPath: outputPath).lastPathComponent
              let mapJSON = generator.generateJSON(wasmFile: wasmFileName)
-             try mapJSON.write(to: URL(fileURLWithPath: mapOutputPath), atomically: true, encoding: .utf8)
+             try mapJSON.write(to: URL(fileURLWithPath: mapOutputPath), atomically: true, encoding: String.Encoding.utf8)
              print("Wrote Source Map: \(mapOutputPath)")
         }
         
         if let generator = debugGenerator, generateDebug {
             let debugOutputPath = outputPath.replacingOccurrences(of: ".wasm", with: ".bbdbg.json")
             let debugJSON = generator.generateJSON()
-            try debugJSON.write(to: URL(fileURLWithPath: debugOutputPath), atomically: true, encoding: .utf8)
+            try debugJSON.write(to: URL(fileURLWithPath: debugOutputPath), atomically: true, encoding: String.Encoding.utf8)
             print("Wrote Debug Metadata: \(debugOutputPath)")
         }
         

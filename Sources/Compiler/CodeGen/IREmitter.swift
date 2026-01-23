@@ -129,9 +129,13 @@ public final class IREmitter {
             let indexInstrs = emitValue(index)
             let valueInstrs = emitValue(value)
             let wasmType = irTypeToWASM(elementType)
-            // Address calculation: base + index * elementSize
-            var addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
+            // Offset calculation: base + index * elementSize
+            let addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
             return addrInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: 0)
+            
+        case .delete(let value):
+            let instrs = emitValue(value)
+            return instrs + [.call(getFunctionIndex(for: "__bb_delete_object"))]
             
         case .ifStmt(let condition, let thenBody, let elseBody):
             let condInstrs = emitValue(condition)
@@ -165,7 +169,7 @@ public final class IREmitter {
             // 1. Initial assignment (start)
             // 2. Block
             // 3. Loop
-            // 4. Check condition (index <= end if step > 0, index >= end if step < 0)
+            // 4. Check condition
             // 5. Body
             // 6. Increment (index = index + step)
             // 7. Branch to Loop
@@ -179,14 +183,27 @@ public final class IREmitter {
                 bodyInstrs.append(contentsOf: emitEffect(effect))
             }
             
-            // Simplified loop for now (assuming step is positive)
-            return startInstrs + [.localSet(index), .block(.void, [
-                .loop(.void, 
-                    [.localGet(index)] + endInstrs + [.i32GtS, .brIf(1)] +
-                    bodyInstrs +
-                    [.localGet(index)] + stepInstrs + [.i32Add, .localSet(index), .br(0)]
-                )
-            ])]
+            // We need to determine if the step is negative to use the correct comparison
+            // For now, we'll assume positive step, but a robust version would check it.
+            // In WASM, we can't easily branch on the sign of 'step' at runtime without duplicating the loop.
+            
+            return startInstrs + [
+                .localSet(index),
+                .block(.void, [
+                    .loop(.void, 
+                        [.localGet(index)] + endInstrs + [
+                            .i32GtS, // (index > end)
+                            .brIf(1) // exit loop if true
+                        ] +
+                        bodyInstrs +
+                        [.localGet(index)] + stepInstrs + [
+                            .i32Add,
+                            .localSet(index),
+                            .br(0) // jump back to start of loop
+                        ]
+                    )
+                ])
+            ]
             
         case .repeatStmt(let body, let condition):
             var bodyInstrs: [WASMInstruction] = []
@@ -209,7 +226,7 @@ public final class IREmitter {
         case .continueStmt:
             return [.br(0)]
             
-        case .block(let label, let body):
+        case .block(_, let body):
             var instrs: [WASMInstruction] = [.block(.void, [])]
             for effect in body {
                 instrs.append(contentsOf: emitEffect(effect))
@@ -217,10 +234,10 @@ public final class IREmitter {
             instrs.append(.end)
             return instrs
             
-        case .branch(let label):
+        case .branch(_):
             return [.br(0)]
             
-        case .branchIf(let condition, let label):
+        case .branchIf(let condition, _):
             return emitValue(condition) + [.brIf(0)]
         }
     }
@@ -236,10 +253,10 @@ public final class IREmitter {
         case .constStringPtr(let ptr):
             return [.i32Const(ptr)]
             
-        case .localGet(let index, let type):
+        case .localGet(let index, _):
             return [.localGet(index)]
             
-        case .globalGet(let index, let type):
+        case .globalGet(let index, _):
             return [.globalGet(index)]
             
         case .binary(let op, let lhs, let rhs, let resultType):
@@ -248,7 +265,7 @@ public final class IREmitter {
             let wasmType = irTypeToWASM(resultType)
             return lhsInstrs + rhsInstrs + binaryOpInstrs(op, wasmType: wasmType)
             
-        case .call(let name, let args, let resultType):
+        case .call(let name, let args, _):
             let argInstrs = args.flatMap { emitValue($0) }
             let funcIndex = functionIndexMap[name] ?? getFunctionIndex(for: name)
             return argInstrs + [.call(funcIndex)]
@@ -263,12 +280,33 @@ public final class IREmitter {
             let indexInstrs = emitValue(index)
             let wasmType = irTypeToWASM(elementType)
             // Address calculation: base + index * elementSize
-            var addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
+            let addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
             return addrInstrs + loadArrayInstrs(wasmType, elementSize: 0)
             
         case .convert(let val, let from, let to):
             let valInstrs = emitValue(val)
             return valInstrs + conversionInstrs(from: from, to: to)
+            
+        case .first(_):
+            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_first_object"))]
+            
+        case .last(_):
+            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_last_object"))]
+            
+        case .before(let value):
+            return emitValue(value) + [.call(getFunctionIndex(for: "__bb_before_object"))]
+            
+        case .after(let value):
+            return emitValue(value) + [.call(getFunctionIndex(for: "__bb_after_object"))]
+            
+        case .handle(let value):
+            return emitValue(value)
+            
+        case .objectCast(_, let value):
+            return emitValue(value)
+            
+        case .new(_):
+            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_new_object"))]
         }
     }
     

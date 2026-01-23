@@ -18,6 +18,15 @@ public indirect enum IRValue {
     
     case convert(value: IRValue, from: IRType, to: IRType)
     
+    // Type collection operations
+    case first(typeName: String)
+    case last(typeName: String)
+    case before(value: IRValue)
+    case after(value: IRValue)
+    case handle(value: IRValue)
+    case objectCast(typeName: String, value: IRValue)
+    case new(typeName: String)
+    
     public var type: IRType {
         switch self {
         case .constI32: return .i32
@@ -30,6 +39,7 @@ public indirect enum IRValue {
         case .loadField(_, _, let fieldType): return fieldType
         case .loadArray(_, _, _, let elementType): return elementType
         case .convert(_, _, let to): return to
+        case .first, .last, .before, .after, .handle, .objectCast, .new: return .i32
         }
     }
 }
@@ -42,6 +52,7 @@ public indirect enum IREffect {
     case assignGlobal(index: Int, value: IRValue)
     case assignField(base: IRValue, fieldOffset: Int, fieldType: IRType, value: IRValue)
     case assignArray(base: IRValue, index: IRValue, elementSize: Int, elementType: IRType, value: IRValue)
+    case delete(value: IRValue)
     
     case ifStmt(condition: IRValue, then: [IREffect], else: [IREffect]?)
     case whileStmt(condition: IRValue, body: [IREffect])
@@ -83,11 +94,36 @@ public struct IRModule {
     public var globals: [(String, IRType, Bool)]
     public var imports: [(String, String, IRType)]
     public var data: [IRDataSegment] = []
+    public var types: [String: IRTypeInfo] = [:]
     
     public init(functions: [IRFunction] = [], globals: [(String, IRType, Bool)] = [], imports: [(String, String, IRType)] = []) {
         self.functions = functions
         self.globals = globals
         self.imports = imports
+    }
+}
+
+public struct IRTypeInfo {
+    public let fieldOffsets: [String: Int]
+    public let fieldTypes: [String: IRType]
+    
+    public init(fieldOffsets: [String: Int], fieldTypes: [String: IRType]) {
+        self.fieldOffsets = fieldOffsets
+        self.fieldTypes = fieldTypes
+    }
+}
+
+public struct IRArrayInfo {
+    public let baseAddress: Int
+    public let elementSize: Int
+    public let dimensions: [Int]
+    public let elementType: IRType
+    
+    public init(baseAddress: Int, elementSize: Int, dimensions: [Int], elementType: IRType) {
+        self.baseAddress = baseAddress
+        self.elementSize = elementSize
+        self.dimensions = dimensions
+        self.elementType = elementType
     }
 }
 

@@ -10,6 +10,7 @@ public final class ASTLowering {
     private var irModuleData: [IRDataSegment] = []
     private var nextStringOffset: Int32 = 1024
     private var nextArrayOffset: Int32 = 65536
+    private var stringLiteralMap: [String: Int32] = [:]
     
     public init(context: ModuleContext) {
         self.builder = IRBuilder()
@@ -22,16 +23,129 @@ public final class ASTLowering {
         var irModule = IRModule()
         irModuleData = []
         nextStringOffset = 1024
+        stringLiteralMap.removeAll()
         
+        // 1. Register all Types first
+        for typeNode in program.types {
+            lowerTypeDeclaration(typeNode, to: &irModule)
+        }
+        
+        // 2. Pre-pass: register all function signatures
+        for function in program.functions {
+            registerFunctionSignature(function)
+        }
+        
+        // 3. Register Globals from statements
+        for stmt in program.statements {
+            if case .global(let decl, _) = stmt {
+                for variable in decl.variables {
+                    let irType = lowerTypeSuffix(from: variable.typeSuffix)
+                    symbolTable.addVariable(variable.name, type: irType, isLocal: false)
+                    irModule.globals.append((variable.name, irType, true))
+                }
+            }
+        }
+        
+        // 4. Lower all functions
         for function in program.functions {
             lowerFunction(function, to: &irModule)
         }
+        
+        // 5. Lower top-level code into _start
+        lowerTopLevel(program.statements, to: &irModule)
         
         irModule.data = irModuleData
         return irModule
     }
     
+    private func lowerTypeDeclaration(_ typeNode: TypeNode, to module: inout IRModule) {
+        var fieldOffsets: [String: Int] = [:]
+        var fieldTypes: [String: IRType] = [:]
+        var currentOffset = 12 // Header: prev(4), next(4), typeID(4)
+        
+        for field in typeNode.fields {
+            let type = lowerType(from: field.type)
+            fieldOffsets[field.name.lowercased()] = currentOffset
+            fieldTypes[field.name.lowercased()] = type
+            currentOffset += 4 // Everything 4 bytes for now in WASM32
+        }
+        
+        let typeInfo = IRTypeInfo(fieldOffsets: fieldOffsets, fieldTypes: fieldTypes)
+        symbolTable.addType(typeNode.name, info: typeInfo)
+        module.types[typeNode.name.lowercased()] = typeInfo
+    }
+    
+    private func lowerTopLevel(_ statements: [StatementNode], to module: inout IRModule) {
+        builder.enterFunction(name: "_start", parameters: [], returnType: .void)
+        
+        var irBody: [IREffect] = []
+        for statement in statements {
+            switch statement {
+            case .global(let decl, _):
+                // Lower global initializers into _start
+                for variable in decl.variables {
+                    if let initializer = decl.initializers[variable.name] {
+                        let value = lowerExpression(initializer)
+                        if let globalIdx = symbolTable.globalIndex(for: variable.name) {
+                            irBody.append(.assignGlobal(index: globalIdx, value: value))
+                        }
+                    }
+                }
+            case .typeDeclaration, .function, .constant, .constants:
+                continue
+            default:
+                lowerStatement(statement, into: &irBody)
+            }
+        }
+        
+        for effect in irBody {
+            builder.append(effect)
+        }
+        
+        if let startFunc = builder.exitFunction() {
+            module.functions.append(startFunc)
+        }
+    }
+    
+    private func registerFunctionSignature(_ function: FunctionNode) {
+        let paramTypes = function.parameters.map { lowerType(from: $0.type) }
+        let resultType = lowerType(from: function.returnType)
+        let wasmParams = paramTypes.map { irTypeToWASM($0) }
+        let wasmResults = resultType == .void ? [] : [irTypeToWASM(resultType)]
+        
+        var defaults: [Int: IRDefaultValue] = [:]
+        for (i, param) in function.parameters.enumerated() {
+            if let defaultValue = param.defaultValue {
+                defaults[i] = constantToDefaultValue(defaultValue)
+            }
+        }
+        
+        let def = FunctionDefinition(
+            params: wasmParams,
+            results: wasmResults,
+            defaults: defaults.isEmpty ? nil : defaults
+        )
+        context.functionDefinitions[function.name.lowercased()] = def
+    }
+    
+    private func constantToDefaultValue(_ expr: ExpressionNode) -> IRDefaultValue {
+        switch expr {
+        case .integerLiteral(let val, _):
+            return .i32(Int32(truncatingIfNeeded: val))
+        case .floatLiteral(let val, _):
+            return .f32(Float(val))
+        case .stringLiteral(let val, _):
+            return .string(val)
+        default:
+            return .none
+        }
+    }
+    
     private func allocateString(_ value: String) -> Int32 {
+        if let existingOffset = stringLiteralMap[value] {
+            return existingOffset
+        }
+        
         var bytes = Array(value.utf8)
         bytes.append(0) // Null terminator
         
@@ -39,6 +153,7 @@ public final class ASTLowering {
         let data = IRDataSegment(offset: offset, data: Data(bytes))
         irModuleData.append(data)
         
+        stringLiteralMap[value] = offset
         nextStringOffset += Int32(bytes.count)
         return offset
     }
@@ -89,19 +204,18 @@ public final class ASTLowering {
             break
             
         case .dim(let decl, _):
-            let irType: IRType = .i32 // Default to i32 for now
+            let irType: IRType = .i32 
             let elementSize = 4
             
-            // For simplicity, assume dimensions are constant integers
             var dimSizes: [Int] = []
             var totalElements = 1
             for dimExpr in decl.dimensions {
                 if case .integerLiteral(let val, _) = dimExpr {
-                    let size = val + 1 // Blitz3D arrays are 0...val
+                    let size = val + 1
                     dimSizes.append(size)
                     totalElements *= size
                 } else {
-                    dimSizes.append(11) // Fallback for dynamic
+                    dimSizes.append(11)
                     totalElements *= 11
                 }
             }
@@ -266,7 +380,11 @@ public final class ASTLowering {
         case .read, .restore:
             break
             
-        case .delete, .insert:
+        case .delete(let expr, _):
+            let value = lowerExpression(expr)
+            body.append(.delete(value: value))
+            
+        case .insert(_, _, _):
             break
             
         case .select:
@@ -343,15 +461,71 @@ public final class ASTLowering {
             }
             return builder.buildConstI32(0)
             
-        case .typeCast, .new, .first, .last, .before, .after, .handle, .objectCast:
+        case .new(let typeName, _):
+            return .new(typeName: typeName)
+            
+        case .first(let typeName, _):
+            return .first(typeName: typeName)
+            
+        case .last(let typeName, _):
+            return .last(typeName: typeName)
+            
+        case .before(let expr, _):
+            return .before(value: lowerExpression(expr))
+            
+        case .after(let expr, _):
+            return .after(value: lowerExpression(expr))
+            
+        case .handle(let expr, _):
+            return .handle(value: lowerExpression(expr))
+            
+        case .objectCast(let typeName, let expr, _):
+            return .objectCast(typeName: typeName, value: lowerExpression(expr))
+            
+        case .typeCast:
             return builder.buildConstI32(0)
         }
     }
     
-    private func flattenIndex(indices: [ExpressionNode], dimensions: [Int]) -> IRValue {
-        // Formula for flat index: idx0 * (d1 * d2 * ...) + idx1 * (d2 * ...) + ...
-        // Assuming row-major layout
+    private func lowerCall(_ call: FunctionCallNode) -> IRValue {
+        if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
+            let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+            let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
+            return .loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
+        }
         
+        var args = call.arguments.map { lowerExpression($0) }
+        let resolver = SignatureResolver(context: context)
+        
+        if let def = resolver.definition(forName: call.name) {
+            let expectedCount = def.params.count
+            if args.count < expectedCount {
+                for i in args.count..<expectedCount {
+                    if let defaultValue = def.defaults?[i] {
+                        args.append(lowerDefaultValue(defaultValue))
+                    } else {
+                        args.append(.constI32(0))
+                    }
+                }
+            }
+            
+            let irResult = irType(from: def.results.first ?? .void)
+            return .call(name: call.name.lowercased(), args: args, resultType: irResult)
+        }
+        
+        return .call(name: call.name.lowercased(), args: args, resultType: .i32)
+    }
+    
+    private func lowerDefaultValue(_ defaultValue: IRDefaultValue) -> IRValue {
+        switch defaultValue {
+        case .i32(let val): return .constI32(val)
+        case .f32(let val): return .constF32(val)
+        case .string(let val): return .constStringPtr(allocateString(val))
+        case .none: return .constI32(0)
+        }
+    }
+    
+    private func flattenIndex(indices: [ExpressionNode], dimensions: [Int]) -> IRValue {
         var flatIndex = lowerExpression(indices[0])
         for i in 1..<indices.count {
             let dimSize = i < dimensions.count ? dimensions[i] : 1
@@ -384,50 +558,17 @@ public final class ASTLowering {
         }
     }
     
-    private func lowerCall(_ call: FunctionCallNode) -> IRValue {
-        // First check if it's an array access (Blitz3D uses () for both)
-        if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
-            let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
-            let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
-            return .loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
-        }
-        
-        var args = call.arguments.map { lowerExpression($0) }
-        let resolver = SignatureResolver(context: context)
-        
-        if let def = resolver.definition(forName: call.name) {
-            let expectedCount = def.params.count
-            if args.count < expectedCount {
-                // Synthesize default arguments
-                for i in args.count..<expectedCount {
-                    if let defaultValue = def.defaults?[i] {
-                        args.append(lowerDefaultValue(defaultValue))
-                    } else {
-                        // Fallback to 0 if no default specified but we are under-arity
-                        args.append(.constI32(0))
-                    }
-                }
-            }
-            
-            let irParams = def.params.map { irType(from: $0) }
-            let irResult = def.results.isEmpty ? .void : irType(from: def.results[0])
-            return .call(name: call.name.lowercased(), args: args, resultType: irResult)
-        }
-        
-        // Fallback for unknown functions
-        return .call(name: call.name.lowercased(), args: args, resultType: .i32)
-    }
-    
-    private func lowerDefaultValue(_ defaultValue: IRDefaultValue) -> IRValue {
-        switch defaultValue {
-        case .i32(let val): return .constI32(val)
-        case .f32(let val): return .constF32(val)
-        case .string(let val): return .constStringPtr(allocateString(val))
-        case .none: return .constI32(0)
-        }
-    }
-    
     private func lowerFunctionSignature(_ name: String) -> (params: [IRType], resultType: IRType) {
+        let module = WASMModule()
+        let context = ModuleContext(module: module)
+        let builtInImports: [(String, [WASMType], [WASMType])] = [
+            ("PrintInt", [.i32], []),
+            ("PrintString", [.i32], []),
+            ("Graphics3D", [.i32, .i32, .i32, .i32], []),
+        ]
+        for (name, params, results) in builtInImports {
+            _ = context.registerAutoImport(name: name, params: params, results: results)
+        }
         let resolver = SignatureResolver(context: context)
         if let def = resolver.definition(forName: name.lowercased()) {
             let params = def.params.map { irType(from: $0) }
@@ -443,6 +584,14 @@ public final class ASTLowering {
         case .f32: return .f32
         case .void: return .void
         default: return .i32
+        }
+    }
+    
+    private func irTypeToWASM(_ irType: IRType) -> WASMType {
+        switch irType {
+        case .i32: return .i32
+        case .f32: return .f32
+        case .void: return .void
         }
     }
     
@@ -508,28 +657,16 @@ private class IRSymbolTable {
     }
     
     func addType(_ name: String, info: IRTypeInfo) {
-        types[name] = info
+        types[name.lowercased()] = info
     }
     
     func fieldOffset(type: String, field: String) -> Int? {
-        return types[type]?.fieldOffsets[field]
+        return types[type.lowercased()]?.fieldOffsets[field.lowercased()]
     }
     
     func fieldType(type: String, field: String) -> IRType? {
-        guard let fieldTypes = types[type]?.fieldTypes else { return nil }
-        guard let _ = fieldTypes[field] else { return nil }
-        return .i32
+        guard let fieldTypes = types[type.lowercased()]?.fieldTypes else { return nil }
+        guard let type = fieldTypes[field.lowercased()] else { return nil }
+        return type
     }
-}
-
-private struct IRArrayInfo {
-    let baseAddress: Int
-    let elementSize: Int
-    let dimensions: [Int]
-    let elementType: IRType
-}
-
-private struct IRTypeInfo {
-    let fieldOffsets: [String: Int]
-    let fieldTypes: [String: String]
 }

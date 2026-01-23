@@ -507,13 +507,12 @@ public struct Parser {
                         }
                         
                         // Check for default value (param = defaultValue)
+                        var defaultValue: ExpressionNode? = nil
                         if consume(.equals) {
-                            // Parse and discard the default value expression
-                            // Default values are handled at call sites, not in function signature
-                            _ = parseExpression()
+                            defaultValue = parseExpression()
                         }
 
-                        parameters.append(ParameterNode(name: paramName, type: paramType, span: endSpan(from: paramStart)))
+                        parameters.append(ParameterNode(name: paramName, type: paramType, defaultValue: defaultValue, span: endSpan(from: paramStart)))
                         if consume(.comma) {
                             continue
                         }

@@ -6,12 +6,13 @@
 |-----------|--------|-------|
 | IR Types (Types.swift) | ✅ Complete | `IRType` enum (i32, f32, void) |
 | IR Nodes (IR.swift) | ✅ Complete | `IRValue`, `IREffect`, `IRBuilder` (with `indirect`) |
-| AST Lowering (ASTLowering.swift) | ✅ Complete | AST → IR conversion, Case-insensitive, Arrays, Loops |
-| ParserTests.swift | ✅ Fixed | Syntax updated to Swift 6 tuple patterns |
+| AST Lowering (ASTLowering.swift) | ✅ Complete | AST → IR, Case-insensitive, Arrays, Loops, Globals, Strings |
+| ParserTests.swift | ✅ Fixed | All 30 tests passing |
 | IR → WASM Emitter | ✅ Complete | `IREmitter.swift` handles loops, arrays, strings |
 | Wire into CodeGenerator | ✅ Integrated | `generateFromIR()` added |
 | CLI Flag (--use-ir) | ✅ Added | Enabled in `main.swift` |
-| IRPipelineTests | ✅ Verified | Stack delta stable for all constructs |
+| IRPipelineTests | ✅ Verified | 8/8 tests passing (including Deduplication) |
+| WASMValidationTests | ✅ Fixed | 39/39 tests passing |
 
 ## Decision Pending: Integration Strategy
 

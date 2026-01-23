@@ -1,3 +1,0 @@
-module Blitz3DCompiler {
-    header "/Users/jack/Software/scp_port/blitz3d-wasm/.build/index-build/arm64-apple-macosx/debug/Blitz3DCompiler.build/include/Blitz3DCompiler-Swift.h"
-}

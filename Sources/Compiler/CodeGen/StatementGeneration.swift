@@ -87,6 +87,24 @@ public final class StatementGeneration: ValidatorTypeContext {
     
     /// Generate code for a statement
     public func generateStatement(_ statement: StatementNode, function: inout WASMFunction) {
+        let startIndex = function.body.count
+        generateStatementImpl(statement, function: &function)
+        
+        if function.body.count > startIndex {
+            // Debug: Inject 'stmt' hook if code was generated
+            if let indices = context.debugIndices, let gen = context.debugGenerator {
+                 let fileId = gen.registerFile(statement.span.start.sourceFile)
+                 // Insert at startIndex (reverse order of insertion effectively or just 3 inserts)
+                 function.body.insert(.call(indices.stmt), at: startIndex)
+                 function.body.insert(.i32Const(Int32(statement.span.start.line)), at: startIndex)
+                 function.body.insert(.i32Const(Int32(fileId)), at: startIndex)
+            }
+            
+            function.body[startIndex] = .sourceLocation(statement.span, function.body[startIndex])
+        }
+    }
+    
+    private func generateStatementImpl(_ statement: StatementNode, function: inout WASMFunction) {
         switch statement {
         case .local(let decl, _):
             for id in decl.variables {
@@ -136,6 +154,27 @@ public final class StatementGeneration: ValidatorTypeContext {
             function.body.append(.i32Const(Int32(truncatingIfNeeded: totalElements * info.elementSize))) // size
             function.body.append(.memoryFill(0))                    // memory 0
             
+        case .dims(let declarations, _):
+            // Multiple Dim declarations in one statement: Dim a(10), b(20)
+            for decl in declarations {
+                var dims: [Int] = []
+                var totalElements = 1
+                for dimExpr in decl.dimensions {
+                    if case .integerLiteral(let value, _) = dimExpr {
+                        dims.append(value)
+                        totalElements *= (value + 1) // Blitz3D arrays are 0..N
+                    }
+                }
+                let wasmType = typeHandling.typeInfo(from: decl.typeName ?? "Int").wasmType
+                let info = context.variableManagement.registerArray(decl.name, elementType: wasmType, dimensions: dims)
+                
+                // Initialize array memory to zero using memory.fill
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: info.baseAddress))) // dest
+                function.body.append(.i32Const(0))                      // value
+                function.body.append(.i32Const(Int32(truncatingIfNeeded: totalElements * info.elementSize))) // size
+                function.body.append(.memoryFill(0))                    // memory 0
+            }
+            
         case .assignment(let assign, _):
             guard let expressionGenerator = expressionGenerator else { break }
             
@@ -184,8 +223,9 @@ public final class StatementGeneration: ValidatorTypeContext {
 
                     // Calculate index offset
                     for (i, indexExpr) in access.indices.enumerated() {
-                        let indexInstrs = expressionGenerator.generate(indexExpr)
-                        function.body.append(contentsOf: indexInstrs)
+                        let indexResult = expressionGenerator.generateWithInfo(indexExpr)
+                        function.body.append(contentsOf: indexResult.instrs)
+                        function.body.append(contentsOf: convert(from: indexResult.type, to: .i32))
 
                         // Multiply by stride for multi-dimensional arrays
                         if i > 0 && i < array.dimensions.count {
@@ -238,8 +278,9 @@ public final class StatementGeneration: ValidatorTypeContext {
                         
                         // Calculate offset: index * size
                         if access.indices.count >= 1 {
-                            let indexInstrs = expressionGenerator.generate(access.indices[0])
-                            function.body.append(contentsOf: indexInstrs) // [addr, index]
+                            let indexResult = expressionGenerator.generateWithInfo(access.indices[0])
+                            function.body.append(contentsOf: indexResult.instrs) // [addr, index]
+                            function.body.append(contentsOf: convert(from: indexResult.type, to: .i32))
                             
                             if elementSize > 1 {
                                 function.body.append(.i32Const(Int32(truncatingIfNeeded: elementSize)))
@@ -313,8 +354,9 @@ public final class StatementGeneration: ValidatorTypeContext {
                     
                     // Calculate offset from first argument (the index)
                     if !call.arguments.isEmpty {
-                        let indexInstrs = expressionGenerator.generate(call.arguments[0])
-                        function.body.append(contentsOf: indexInstrs)
+                        let indexResult = expressionGenerator.generateWithInfo(call.arguments[0])
+                        function.body.append(contentsOf: indexResult.instrs)
+                        function.body.append(contentsOf: convert(from: indexResult.type, to: .i32))
                         function.body.append(.i32Const(Int32(truncatingIfNeeded: array.elementSize)))
                         function.body.append(.i32Mul)
                     } else {
@@ -348,12 +390,26 @@ public final class StatementGeneration: ValidatorTypeContext {
             
         case .functionCall(let call, _):
             guard let expressionGenerator = expressionGenerator else { break }
-            let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call, call.span))
+            let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call, call.span), allowVoidAsValue: true)
             function.body.append(contentsOf: instrs)
             
-            // Should always drop the result as we are in a statement context
-            // ExpressionGeneration ensures void functions return a dummy 0 (i32)
-            if type != WASMType.void {
+            // Drop only when the resolved signature reports a result (or, if unknown, when the generated value is non-void)
+            var shouldDrop = false
+            var internalName = call.name.lowercased()
+            if internalName.hasSuffix("$") || internalName.hasSuffix("#") || internalName.hasSuffix("%") {
+                internalName = String(internalName.dropLast())
+            }
+            let signatureResolver = SignatureResolver(context: context)
+            if let def = signatureResolver.definition(forName: internalName) {
+                shouldDrop = !def.results.isEmpty
+            } else {
+                // Fallback: use generated type info if signature is unknown
+                shouldDrop = (type != WASMType.void)
+            }
+            // Note: auto-import allowlists may include real void-returning built-ins, so never force-drop
+            // just because a name is auto-importable.
+            
+            if shouldDrop {
                 function.body.append(.drop)
             }
             
@@ -466,121 +522,121 @@ public final class StatementGeneration: ValidatorTypeContext {
             
         case .forLoop(let forNode, _):
             guard let expressionGenerator = expressionGenerator else { break }
+            
+            // Determine loop variable type
             var loopLocal = context.variableManagement.localInfo(for: forNode.variable.name)
-            if loopLocal == nil {
-                // Implicit loop variable -> Register as Local Int
-                let registered = context.variableManagement.registerLocal(forNode.variable.name, type: .i32)
-                loopLocal = registered
-                function.locals.append(.i32)
-                
-                // Register with stack validator for type tracking
-                registerLocalType(registered.index, type: .i32)
+            let startInfo = expressionGenerator.generateWithInfo(forNode.startValue)
+            let endInfo = expressionGenerator.generateWithInfo(forNode.endValue)
+            let stepInfo = forNode.stepValue.map { expressionGenerator.generateWithInfo($0) }
+            
+            var loopType: WASMType = loopLocal?.type ?? .i32
+            if let suffix = forNode.variable.typeSuffix {
+                loopType = typeHandling.wasmType(from: suffix)
+            } else if loopLocal == nil {
+                // Infer from operands (prefer float if any operand is float)
+                loopType = typeHandling.commonType(startInfo.type, endInfo.type)
+                if let step = stepInfo {
+                    loopType = typeHandling.commonType(loopType, step.type)
+                }
+                if loopType == .void { loopType = .i32 }
             }
             
-            if let local = loopLocal {
-                let startInstrs = expressionGenerator.generate(forNode.startValue)
-                function.body.append(contentsOf: startInstrs)
-                function.body.append(.localSet(local.index))
+            if loopLocal == nil {
+                let registered = context.variableManagement.registerLocal(forNode.variable.name, type: loopType)
+                loopLocal = registered
+                function.locals.append(loopType)
+                registerLocalType(registered.index, type: loopType)
+            }
+            
+            guard let local = loopLocal else { break }
+            registerLocalType(local.index, type: loopType)
+            
+            // Initialize loop variable
+            var startInstrs = startInfo.instrs
+            startInstrs.append(contentsOf: convert(from: startInfo.type, to: loopType))
+            function.body.append(contentsOf: startInstrs)
+            function.body.append(.localSet(local.index))
 
-                currentDepth += 1 // block
-                loopExitDepths.append(currentDepth)
-                currentDepth += 1 // loop
+            currentDepth += 1 // block
+            loopExitDepths.append(currentDepth)
+            currentDepth += 1 // loop
 
-                var loopInstrs: [WASMInstruction] = []
+            var loopInstrs: [WASMInstruction] = []
 
-                // Determine step direction at compile time if possible
-                var stepIsNegative = false
-                var stepIsConstant = false
-                var stepValue: Int = 1
+            // Precompute end/step and store into scratch globals for reuse
+            let endScratch = (loopType == .f32) ? context.scratchGlobalFloatIdx : context.scratchGlobal2Idx
+            let stepScratch = (loopType == .f32) ? context.scratchGlobalFloat2Idx : context.scratchGlobalIdx
 
-                if let stepExpr = forNode.stepValue {
-                    // Try to evaluate step as constant
-                    if case .integerLiteral(let v, _) = stepExpr {
-                        stepValue = v
-                        stepIsConstant = true
-                        stepIsNegative = v < 0
-                    } else if case .unary(let unary, _) = stepExpr, unary.op == "-" {
-                        if case .integerLiteral(let v, _) = unary.expression {
-                            stepValue = -v
-                            stepIsConstant = true
-                            stepIsNegative = true
-                        }
-                    }
-                } else {
-                    // No step provided, default to 1 (constant)
-                    stepIsConstant = true
-                    stepIsNegative = false
-                }
+            loopInstrs.append(contentsOf: endInfo.instrs)
+            loopInstrs.append(contentsOf: convert(from: endInfo.type, to: loopType))
+            loopInstrs.append(.globalSet(endScratch))
 
-                // Loop condition check
-                loopInstrs.append(.localGet(local.index))
-                let endInstrs = expressionGenerator.generate(forNode.endValue)
-                loopInstrs.append(contentsOf: endInstrs)
-
-                if stepIsConstant {
-                    // Use appropriate comparison based on step direction
-                    if stepIsNegative {
-                        // For negative step: exit when i < end
-                        loopInstrs.append(.i32LtS)
-                    } else {
-                        // For positive step: exit when i > end
-                        loopInstrs.append(.i32GtS)
-                    }
-                    loopInstrs.append(.brIf(1))
-                } else {
-                    // Runtime step direction check
-                    // Save end value to scratch global 2
-                    loopInstrs.append(.globalSet(context.scratchGlobal2Idx))
-
-                    // Generate step and check sign (use default 1 if not provided)
-                    if let stepExpr = forNode.stepValue {
-                        let stepInstrs = expressionGenerator.generate(stepExpr)
-                        loopInstrs.append(contentsOf: stepInstrs)
-                    } else {
-                        loopInstrs.append(.i32Const(1))
-                    }
-                    loopInstrs.append(.i32Const(0))
-                    loopInstrs.append(.i32LtS) // step < 0 ?
-
-                    // if (step < 0) { exit if i < end } else { exit if i > end }
-                    // Use select to choose the right comparison without leaving a value on stack
-                    loopInstrs.append(.if(.i32, [
-                        // Negative step: check i < end
-                        .localGet(local.index),
-                        .globalGet(context.scratchGlobal2Idx),
-                        .i32LtS
-                    ], [
-                        // Positive step: check i > end
-                        .localGet(local.index),
-                        .globalGet(context.scratchGlobal2Idx),
-                        .i32GtS
-                    ]))
-                    loopInstrs.append(.drop) // Drop the comparison result from if
-                    loopInstrs.append(.brIf(1))
-                }
-
-                var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
-                // DISABLED: Balance loop body  
-                loopInstrs.append(contentsOf: bodyInstrs)
-
-                loopInstrs.append(.localGet(local.index))
-                if let stepExpr = forNode.stepValue {
-                    let stepInstrs = expressionGenerator.generate(stepExpr)
-                    loopInstrs.append(contentsOf: stepInstrs)
+            if let step = stepInfo {
+                loopInstrs.append(contentsOf: step.instrs)
+                loopInstrs.append(contentsOf: convert(from: step.type, to: loopType))
+            } else {
+                if loopType == .f32 {
+                    loopInstrs.append(.f32Const(1.0))
                 } else {
                     loopInstrs.append(.i32Const(1))
                 }
-                loopInstrs.append(.i32Add)
-                loopInstrs.append(.localSet(local.index))
-                loopInstrs.append(.br(0))
+            }
+            loopInstrs.append(.globalSet(stepScratch))
 
-                currentDepth -= 2
-                loopExitDepths.removeLast()
-
-                function.body.append(.block(.void, [
-                    .loop(.void, loopInstrs)
+            // Loop condition: exit when (step < 0 ? i < end : i > end)
+            if loopType == .f32 {
+                loopInstrs.append(.globalGet(stepScratch))
+                loopInstrs.append(.f32Const(0))
+                loopInstrs.append(.f32Lt)
+                loopInstrs.append(.if(.void, [
+                    .localGet(local.index),
+                    .globalGet(endScratch),
+                    .f32Lt,
+                    .brIf(1)
+                ], [
+                    .localGet(local.index),
+                    .globalGet(endScratch),
+                    .f32Gt,
+                    .brIf(1)
+                ]))
+            } else {
+                loopInstrs.append(.globalGet(stepScratch))
+                loopInstrs.append(.i32Const(0))
+                loopInstrs.append(.i32LtS)
+                loopInstrs.append(.if(.void, [
+                    .localGet(local.index),
+                    .globalGet(endScratch),
+                    .i32LtS,
+                    .brIf(1)
+                ], [
+                    .localGet(local.index),
+                    .globalGet(endScratch),
+                    .i32GtS,
+                    .brIf(1)
                 ]))
             }
+
+            var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
+            // DISABLED: Balance loop body  
+            loopInstrs.append(contentsOf: bodyInstrs)
+
+            // Increment: i = i + step
+            loopInstrs.append(.localGet(local.index))
+            loopInstrs.append(.globalGet(stepScratch))
+            if loopType == .f32 {
+                loopInstrs.append(.f32Add)
+            } else {
+                loopInstrs.append(.i32Add)
+            }
+            loopInstrs.append(.localSet(local.index))
+            loopInstrs.append(.br(0))
+
+            currentDepth -= 2
+            loopExitDepths.removeLast()
+
+            function.body.append(.block(.void, [
+                .loop(.void, loopInstrs)
+            ]))
             
         case .forEach(let forEachNode, _):
             guard let typeInfo = context.userTypes[forEachNode.typeName],
@@ -860,8 +916,27 @@ public final class StatementGeneration: ValidatorTypeContext {
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             for id in identifiers {
                 function.body.append(.globalGet(dataPtrIdx))
-                function.body.append(.i32Load(2, 0))
-                
+
+                // Read DATA as the destination variable's WASM type.
+                // (Blitz READ is type-directed; keeping the stack types consistent is required for wasm-validate.)
+                let destType: WASMType
+                if let local = context.variableManagement.localInfo(for: id.name) {
+                    destType = local.type
+                } else if let global = context.variableManagement.globalInfo(for: id.name) {
+                    destType = global.type
+                } else if let suffix = id.typeSuffix {
+                    destType = typeHandling.wasmType(from: suffix)
+                } else {
+                    destType = .i32
+                }
+
+                switch destType {
+                case .f32:
+                    function.body.append(.f32Load(2, 0))
+                default:
+                    function.body.append(.i32Load(2, 0))
+                }
+
                 if let local = context.variableManagement.localInfo(for: id.name) {
                     function.body.append(.localSet(local.index))
                 } else if let global = context.variableManagement.globalInfo(for: id.name) {
@@ -1083,16 +1158,8 @@ public final class StatementGeneration: ValidatorTypeContext {
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
         case .identifier(let id, _):
-            
-            // CRITICAL FIX: Check type suffix FIRST before registry lookup
-            // This ensures float variables (x#) are recognized as f32 even during initial assignment
-            if let suffix = id.typeSuffix {
-                let type = typeHandling.wasmType(from: suffix)
-                print("  → From suffix: \(type)")
-                return type
-            }
-            
-            // Then check if variable is already registered
+            // If the variable already exists, trust the registry type to keep the module consistent.
+            // (We can't change an already-declared WASM local/global's type after the fact.)
             if let local = context.variableManagement.localInfo(for: id.name) {
                 print("  → From local registry: \(local.type)")
                 return local.type
@@ -1101,10 +1168,26 @@ public final class StatementGeneration: ValidatorTypeContext {
                 print("  → From global registry: \(global.type)")
                 return global.type
             }
+
+            // Otherwise, use an explicit suffix if provided (Blitz3D typing).
+            if let suffix = id.typeSuffix {
+                let type = typeHandling.wasmType(from: suffix)
+                print("  → From suffix: \(type)")
+                return type
+            }
             print("  → DEFAULT: i32")
         case .arrayAccess(let access, _):
             if case .identifier(let arrayId, _) = access.array,
                let array = context.variableManagement.arrayInfo(for: arrayId.name) {
+                return array.elementType
+            }
+        case .functionCall(let call, _):
+            // Check if this is actually an array access (Blitz3D uses parentheses for both)
+            var internalName = call.name.lowercased()
+            if internalName.hasSuffix("$") || internalName.hasSuffix("#") || internalName.hasSuffix("%") {
+                internalName = String(internalName.dropLast())
+            }
+            if let array = context.variableManagement.arrayInfo(for: internalName) {
                 return array.elementType
             }
         case .fieldAccess(let access, _):

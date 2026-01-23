@@ -39,3 +39,59 @@
 - [06_game_state_debugging.md](notes/06_game_state_debugging.md)
 - [07_scpcb_compilation_gap_analysis.md](notes/07_scpcb_compilation_gap_analysis.md)
 - [compilation_error_analysis_20260119.md](notes/compilation_error_analysis_20260119.md)
+
+## Deciduous (Decision Graphs)
+
+**THIS SUBPROJECT USES DECIDUOUS FOR DECISION TRACKING.**
+
+This subproject has its own decision graph, separate from the root project.
+
+### Workflow
+
+**BEFORE EVERY ACTION**, log it:
+```bash
+deciduous add action "Implementing IR types" -c 85
+deciduous link <parent_goal_id> <action_id> -r "Implementing the type system"
+```
+
+**AFTER EVERY ACTION**, log the outcome:
+```bash
+deciduous add outcome "IR types implemented" -c 90
+deciduous link <action_id> <outcome_id> -r "Completed type definitions"
+```
+
+**CRITICAL**: Log failed approaches with outcomes:
+```bash
+deciduous add outcome "Auto-import experiment FAILED" -c 100
+deciduous link <action_id> <outcome_id> -r "Validation failed due to arity conflicts"
+# Note: also add an 'observation' node explaining WHY it failed
+```
+
+### Session Start
+
+```bash
+/recover  # Restore context from decision graph
+deciduous nodes  # See current state
+deciduous edges  # Check connections
+```
+
+### Before Push
+
+```bash
+deciduous sync  # Exports graph to docs/ for GitHub Pages
+git add docs/ .github/
+git push
+```
+
+### Update Generated Files
+
+After upgrading deciduous:
+```bash
+deciduous update
+```
+
+### Documentation
+
+- Decision graph auto-deploys to GitHub Pages
+- View at: `https://<user>.github.io/<repo>/`
+- Optional: `brew install graphviz` enables `deciduous dot --png` for PNG exports

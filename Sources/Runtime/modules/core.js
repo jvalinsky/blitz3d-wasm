@@ -188,6 +188,10 @@ class Blitz3DCore {
             console.log(`[Blitz3D Debug] ${msg}`);
         };
 
+        imports.env.RemoveEvent = (eventPtr) => {
+            console.log(`RemoveEvent: event=${eventPtr}`);
+        };
+
         imports.env.RuntimeError = (msgPtr) => {
             const msg = this.readString(msgPtr);
             console.error(`[Blitz3D Error] ${msg}`);
@@ -283,6 +287,9 @@ class Blitz3DCore {
         imports.env.Rand = (min, max) => this.rndInt(min, max);
         imports.env.SeedRnd = (seed) => {
             this.seedRnd(seed);
+        };
+        imports.env.RndSeed = () => {
+            return this.randomSeed | 0;
         };
 
         // Strings

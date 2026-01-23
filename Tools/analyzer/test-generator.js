@@ -1,33 +1,22 @@
-/**
- * LLM Test Case Generator
- * 
- * Generates minimal test cases for reproducing and verifying fixes
- * for specific compiler issues.
- */
-
-import { writeFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
-import path from 'path';
+import { writeFileSync, existsSync, readFileSync, mkdirSync, readDirSync } from "node:fs";
+import { join, basename } from "node:path";
 
 export class LLMTestGenerator {
-  constructor(outputDir = '/Users/jack/Software/scp_port/blitz3d-wasm/Tests/Generated') {
+  constructor(outputDir = "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/Generated") {
     this.outputDir = outputDir;
-    this.testDir = '/Users/jack/Software/scp_port/blitz3d-wasm/Tests';
+    this.testDir = "/Users/jack/Software/scp_port/blitz3d-wasm/Tests";
     this.ensureOutputDir();
   }
 
   ensureOutputDir() {
     if (!existsSync(this.outputDir)) {
-      mkdirSync(this.targetDir, { recursive: true });
+      mkdirSync(this.outputDir, { recursive: true });
     }
   }
 
-  /**
-   * Generate a minimal test case for a specific error pattern
-   */
   generateStackImbalanceTest(errorDetails) {
     const testName = `test_stack_${Date.now()}`;
-    
-    // Common patterns from stack balancing research
+
     const templates = {
       if_branch_mismatch: `
 ' Test: if/else branch stack mismatch
@@ -84,20 +73,17 @@ Function TestFunc(cond1, cond2)
     
     Return result
 End Function
-`
+`,
     };
 
     const template = templates[errorDetails.pattern] || templates.if_branch_mismatch;
-    
+
     return this.writeTest(testName, template, errorDetails);
   }
 
-  /**
-   * Generate test for type mismatch errors
-   */
   generateTypeMismatchTest(errorDetails) {
     const testName = `test_type_${Date.now()}`;
-    
+
     const templates = {
       argument_order: `
 ' Test: function argument type/order mismatch
@@ -139,20 +125,17 @@ End Function
 Function TestFunc():Int
     Return 3.14  ' Float literal where Int expected
 End Function
-`
+`,
     };
 
     const template = templates[errorDetails.pattern] || templates.argument_order;
-    
+
     return this.writeTest(testName, template, errorDetails);
   }
 
-  /**
-   * Generate test for control flow issues
-   */
   generateControlFlowTest(errorDetails) {
     const testName = `test_cf_${Date.now()}`;
-    
+
     const templates = {
       branch_depth: `
 ' Test: branch depth validation
@@ -190,29 +173,25 @@ Function TestFunc(cond)
     
     Return result
 End Function
-`
+`,
     };
 
     const template = templates[errorDetails.pattern] || templates.branch_depth;
-    
+
     return this.writeTest(testName, template, errorDetails);
   }
 
-  /**
-   * Generate a comprehensive test file for a specific file that was failing
-   */
   generateFileTest(originalFilePath, analysis) {
-    const fileName = path.basename(originalFilePath, '.bb');
+    const fileName = basename(originalFilePath, ".bb");
     const testName = `test_${fileName}_${Date.now()}`;
-    
-    // Create a simplified version focusing on the problematic areas
+
     const testContent = `' Generated test for ${fileName}
 ' Based on analysis: ${JSON.stringify(analysis.summary, null, 2)}
 
 ' Focus areas:
-' - Stack balance: ${analysis.summary.stackValid ? 'OK' : 'ISSUES'}
-' - Type consistency: ${analysis.summary.typeValid ? 'OK' : 'ISSUES'}  
-' - Control flow: ${analysis.summary.controlFlowValid ? 'OK' : 'ISSUES'}
+' - Stack balance: ${analysis.summary.stackValid ? "OK" : "ISSUES"}
+' - Type consistency: ${analysis.summary.typeValid ? "OK" : "ISSUES"}
+' - Control flow: ${analysis.summary.controlFlowValid ? "OK" : "ISSUES"}
 
 Function TestGenerated()
     ' Placeholder for ${fileName} test
@@ -223,19 +202,16 @@ End Function
     return this.writeTest(testName, testContent, { originalPath: originalFilePath });
   }
 
-  /**
-   * Generate a test that compares before/after compilation
-   */
   generateComparisonTest(beforeWasm, afterWasm, description) {
     const testName = `test_compare_${Date.now()}`;
-    
+
     const content = `' Generated comparison test
 ' Before: ${beforeWasm}
 ' After: ${afterWasm}
 ' Description: ${description}
 
 ' This test file documents the comparison between two compilations
-' Run: node ../analyzer/cli.js -c ${beforeWasm} ${afterWasm}
+' Run: deno run -A ../analyzer/cli.js -c ${beforeWasm} ${afterWasm}
 
 Function TestPlaceholder()
     Return 0
@@ -247,33 +223,30 @@ End Function
 
   writeTest(name, content, metadata = {}) {
     const filePath = `${this.outputDir}/${name}.bb`;
-    
+
     try {
       writeFileSync(filePath, content);
       return {
         success: true,
         testFile: filePath,
         name,
-        metadata
+        metadata,
       };
     } catch (e) {
       return {
         success: false,
         error: e.message,
-        name
+        name,
       };
     }
   }
 
-  /**
-   * Generate test runner for all generated tests
-   */
   generateTestRunner() {
     const testFiles = [];
-    
+
     if (existsSync(this.outputDir)) {
-      const files = require('fs').readdirSync(this.outputDir);
-      testFiles.push(...files.filter(f => f.endsWith('.bb')));
+      const files = readDirSync(this.outputDir);
+      testFiles.push(...files.filter((f) => f.endsWith(".bb")));
     }
 
     const runnerContent = `' Auto-generated test runner
@@ -296,25 +269,22 @@ End
     return {
       runnerFile: runnerPath,
       testCount: testFiles.length,
-      tests: testFiles
+      tests: testFiles,
     };
   }
 
-  /**
-   * Get list of all generated tests
-   */
   listTests() {
     const tests = [];
-    
+
     if (existsSync(this.outputDir)) {
-      const files = readdirSync(this.outputDir);
+      const files = readDirSync(this.outputDir);
       for (const file of files) {
-        if (file.endsWith('.bb')) {
-          const content = readFileSync(`${this.outputDir}/${file}`, 'utf-8');
+        if (file.endsWith(".bb")) {
+          const content = readFileSync(`${this.outputDir}/${file}`, "utf-8");
           tests.push({
             name: file,
             path: `${this.outputDir}/${file}`,
-            lines: content.split('\n').length
+            lines: content.split("\n").length,
           });
         }
       }

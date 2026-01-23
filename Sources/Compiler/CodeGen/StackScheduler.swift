@@ -135,7 +135,6 @@ public final class StackScheduler {
         }
 
         if optimizationsMade > 0 {
-            print("DEBUG_SCHEDULER: Optimized \(optimizationsMade) set-get pair(s) to tee")
         }
 
         return result

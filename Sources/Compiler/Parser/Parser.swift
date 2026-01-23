@@ -36,11 +36,13 @@ public struct Parser {
     private var currentToken: Token
     private var previousToken: Token
     private var sourceFile: String
+    private var lineMap: [Int: (file: String, line: Int)]?
     private(set) public var errors: [ParseError] = []
 
-    public init(source: String, sourceFile: String = "unknown") {
-        self.lexer = Lexer(source: source, sourceFile: sourceFile)
+    public init(source: String, sourceFile: String = "unknown", lineMap: [Int: (file: String, line: Int)]? = nil) {
+        self.lexer = Lexer(source: source, sourceFile: sourceFile, lineMap: lineMap)
         self.sourceFile = sourceFile
+        self.lineMap = lineMap
         self.currentToken = Token(type: .endOfFile, text: "", line: 1, column: 1, sourceFile: sourceFile)
         self.previousToken = self.currentToken
         self.currentToken = self.lexer.nextToken()
@@ -457,6 +459,18 @@ public struct Parser {
             name = String(name.dropLast())
         }
         advance()
+        
+        // Check for .TypeName return type (e.g., Function CreateDoorEntity.Doors(...))
+        // This means the function returns a custom Type instance
+        if consume(.period) {
+            if expect(.identifier) {
+                // Type name for return value - treat as returning i32 (pointer to type instance)
+                _ = currentToken.text // typeName - could be stored if needed
+                advance()
+                returnType = .integer // Type instances are i32 pointers
+                explicitReturnTypeSuffix = true
+            }
+        }
 
         var parameters: [ParameterNode] = []
         if consume(.leftParen) {
@@ -490,6 +504,13 @@ public struct Parser {
                                 }
                                 advance()
                             }
+                        }
+                        
+                        // Check for default value (param = defaultValue)
+                        if consume(.equals) {
+                            // Parse and discard the default value expression
+                            // Default values are handled at call sites, not in function signature
+                            _ = parseExpression()
                         }
 
                         parameters.append(ParameterNode(name: paramName, type: paramType, span: endSpan(from: paramStart)))
@@ -785,32 +806,71 @@ public struct Parser {
         let start = startSpan()
         advance() // consume 'Dim'
 
-        guard expect(.identifier) else {
-            reportError("Expected array name after 'Dim'")
-            return nil
+        func splitNameAndSuffix(_ raw: String) -> (base: String, suffix: Character?) {
+            guard let last = raw.last else { return (raw, nil) }
+            if last == "%" || last == "#" || last == "$" {
+                return (String(raw.dropLast()), last)
+            }
+            return (raw, nil)
         }
-        let name = currentToken.text
-        advance()
 
-        var typeName: String? = nil
-        if consume(.period) {
-            if expect(.identifier) {
-                typeName = currentToken.text
-                advance()
+        func typeNameFromSuffix(_ suffix: Character?) -> String? {
+            switch suffix {
+            case "%": return "Int"
+            case "#": return "Float"
+            case "$": return "String"
+            default: return nil
             }
         }
 
-        guard consume(.leftParen) else {
-            reportError("Expected '(' after array name in Dim")
-            return nil
-        }
-        var dimensions: [ExpressionNode] = []
+        var decls: [DimDeclaration] = []
+
         repeat {
-            dimensions.append(parseExpression())
+            let itemStart = startSpan()
+            guard expect(.identifier) else {
+                reportError("Expected array name after 'Dim'")
+                return nil
+            }
+
+            let rawName = currentToken.text
+            advance()
+
+            var explicitTypeName: String? = nil
+            if consume(.period) {
+                if expect(.identifier) {
+                    explicitTypeName = currentToken.text
+                    advance()
+                }
+            }
+
+            let (baseName, suffix) = splitNameAndSuffix(rawName)
+            let inferredTypeName = typeNameFromSuffix(suffix)
+            let finalTypeName = explicitTypeName ?? inferredTypeName
+
+            guard consume(.leftParen) else {
+                reportError("Expected '(' after array name in Dim")
+                return nil
+            }
+
+            var dimensions: [ExpressionNode] = []
+            repeat {
+                dimensions.append(parseExpression())
+            } while consume(.comma)
+            _ = consume(.rightParen)
+
+            decls.append(DimDeclaration(
+                name: baseName,
+                typeName: finalTypeName,
+                dimensions: dimensions,
+                span: endSpan(from: itemStart)
+            ))
         } while consume(.comma)
-        _ = consume(.rightParen)
-        
-        return .dim(DimDeclaration(name: name, typeName: typeName, dimensions: dimensions, span: endSpan(from: start)), endSpan(from: start))
+
+        let stmtSpan = endSpan(from: start)
+        if decls.count == 1 {
+            return .dim(decls[0], stmtSpan)
+        }
+        return .dims(decls, stmtSpan)
     }
     
     private mutating func parseStatement() -> StatementNode? {

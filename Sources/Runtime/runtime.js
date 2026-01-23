@@ -14,6 +14,7 @@ window.Blitz3DPhysics = require('./modules/physics');
 window.Blitz3DInput = require('./modules/input');
 window.Blitz3DAudio = require('./modules/audio');
 window.VirtualFileSystem = require('./modules/vfs_zip');
+window.Blitz3DDebug = require('./modules/bbdbg');
 
 // The main runtime is loaded from the modular version
 // but we need to make sure it's available
@@ -26,7 +27,7 @@ console.log("Blitz3D Runtime (Modular) loaded successfully");
 console.log("Available modules: core, graphics, physics, input, audio, vfs");
 
 // Debug helper
-window.debugBlitz3D = function() {
+window.debugBlitz3D = function () {
     return {
         core: Blitz3D.core ? 'initialized' : 'not initialized',
         graphics: Blitz3D.graphics ? 'initialized' : 'not initialized',

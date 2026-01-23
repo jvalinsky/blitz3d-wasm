@@ -7,6 +7,32 @@
 
 import Foundation
 
+public struct CompilerDiagnostic: CustomStringConvertible {
+    public enum Severity: String {
+        case error
+        case warning
+    }
+
+    public let severity: Severity
+    public let message: String
+    public let span: SourceSpan
+
+    public init(severity: Severity = .error, message: String, span: SourceSpan) {
+        self.severity = severity
+        self.message = message
+        self.span = span
+    }
+
+    public var description: String {
+        let location = span.start
+        let hasLocation = location.line > 0 && location.column > 0
+        if hasLocation {
+            return "\(location.sourceFile):\(location.line):\(location.column): \(severity.rawValue): \(message)"
+        }
+        return "\(location.sourceFile): \(severity.rawValue): \(message)"
+    }
+}
+
 /// Information about a local variable
 public struct LocalInfo {
     public let index: Int
@@ -59,7 +85,7 @@ public struct VariableManagement {
     
     private var nextLocalIndex: Int = 0
     private var nextGlobalIndex: Int = 0
-    private var nextArrayAddress: Int = 256 // Start arrays after reserved data
+    private var nextArrayAddress: Int = 32768 // Start arrays at 32KB, after data section (256-32767)
     
     public init() {}
     
@@ -162,19 +188,19 @@ public struct VariableManagement {
             elementType: elementType,
             dimensions: dimensions
         )
-        arrayVariables[name] = info
+        arrayVariables[name.lowercased()] = info
         nextArrayAddress += totalSize
         return info
     }
     
     /// Get array variable info
     public func arrayInfo(for name: String) -> ArrayInfo? {
-        return arrayVariables[name]
+        return arrayVariables[name.lowercased()]
     }
     
     /// Check if array variable exists
     public func hasArray(_ name: String) -> Bool {
-        return arrayVariables[name] != nil
+        return arrayVariables[name.lowercased()] != nil
     }
     
     // MARK: - String Literals
@@ -216,7 +242,7 @@ public struct VariableManagement {
         stringLiterals.removeAll()
         nextLocalIndex = 0
         nextGlobalIndex = 0
-        nextArrayAddress = 256
+        nextArrayAddress = 32768
     }
     
     /// Get total count of local variables
@@ -284,6 +310,21 @@ public final class ModuleContext {
     public var scratchGlobalFloatIdx: Int = -1 // For temporary float storage
     public var scratchGlobalFloat2Idx: Int = -1 // For temporary float storage
     
+    // Source map generator for debug information
+    public var sourceMapGenerator: SourceMapGenerator?
+    
+    // Debug generator and runtime hooks
+    public var debugGenerator: DebugGenerator?
+    public var debugIndices: (enter: Int, leave: Int, stmt: Int)?
+
+    // Diagnostics collected during code generation
+    public var diagnostics: [CompilerDiagnostic] = []
+    
+    // Auto-import support (filled from CLI-provided map)
+    public var autoImportNames: Set<String> = []
+    /// Auto-import inferred maximum arity by function name (lowercased, suffix-stripped).
+    public var autoImportArities: [String: Int] = [:]
+    
     public init(module: WASMModule,
                 variableManagement: VariableManagement = VariableManagement(),
                 typeIndexMap: [String: Int] = [:],
@@ -303,6 +344,10 @@ public final class ModuleContext {
         
         // Initialize type inference with TypeHandling
         self.typeInference = TypeInference(typeHandling: TypeHandling())
+    }
+
+    public func reportDiagnostic(_ message: String, span: SourceSpan, severity: CompilerDiagnostic.Severity = .error) {
+        diagnostics.append(CompilerDiagnostic(severity: severity, message: message, span: span))
     }
 
     /// Register a WASM global and return its index
@@ -356,5 +401,43 @@ public final class ModuleContext {
         default:
             return 4
         }
+    }
+
+    // MARK: - Auto-import helpers
+
+    /// Check whether a name is allowed to be auto-imported
+    public func canAutoImport(_ name: String) -> Bool {
+        return autoImportNames.contains(name.lowercased())
+    }
+
+    /// Dynamically register an import with the given signature if it does not already exist.
+    /// Returns the function index (import index).
+    @discardableResult
+    public func registerAutoImport(name: String, params: [WASMType], results: [WASMType]) -> Int {
+        let lower = name.lowercased()
+        if let existing = functionIndexMap[lower] {
+            return existing
+        }
+
+        let sig = "(" + params.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (results.first?.rawValue ?? "void")
+        let typeIdx: Int
+        if let existingType = typeIndexMap[sig] {
+            typeIdx = existingType
+        } else {
+            typeIdx = module.types.count
+            module.types.append(WASMFunctionType(parameters: params, results: results))
+            typeIndexMap[sig] = typeIdx
+        }
+
+        let importIdx = module.imports.count
+        module.imports.append(WASMImport(module: "env", name: name, kind: .function, index: typeIdx))
+
+        functionIndexMap[lower] = importIdx
+        let def = FunctionDefinition(params: params, results: results)
+        functionDefinitions[lower] = def
+        functionDefinitionsByIndex[importIdx] = def
+        functionOriginalNames[lower] = name
+
+        return importIdx
     }
 }

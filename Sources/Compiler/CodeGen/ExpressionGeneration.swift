@@ -34,7 +34,7 @@ public final class ExpressionGeneration {
     }
     
     /// Generate WASM instructions along with type information
-    public func generateWithInfo(_ expr: ExpressionNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    public func generateWithInfo(_ expr: ExpressionNode, allowVoidAsValue: Bool = false) -> (instrs: [WASMInstruction], type: WASMType) {
         switch expr {
         case .integerLiteral(let value, _):
             return ([.i32Const(Int32(truncatingIfNeeded: value))], .i32)
@@ -90,7 +90,7 @@ public final class ExpressionGeneration {
             return generateUnaryOp(unaryOp)
             
         case .functionCall(let call, _):
-            return generateFunctionCall(call)
+            return generateFunctionCall(call, allowVoidAsValue: allowVoidAsValue)
             
         case .arrayAccess(let access, _):
             return generateArrayAccess(access)
@@ -570,7 +570,7 @@ public final class ExpressionGeneration {
     
     // MARK: - Function Calls
     
-    private func generateFunctionCall(_ call: FunctionCallNode) -> (instrs: [WASMInstruction], type: WASMType) {
+    private func generateFunctionCall(_ call: FunctionCallNode, allowVoidAsValue: Bool) -> (instrs: [WASMInstruction], type: WASMType) {
         var instrs: [WASMInstruction] = []
         
         // Map Blitz3D names to internal names
@@ -583,7 +583,51 @@ public final class ExpressionGeneration {
             internalName = String(internalName.dropLast())
         }
         
-        let def = context.functionDefinitions[internalName]
+        // Check if this is actually an array access (Blitz3D uses parentheses for both)
+        // Arrays are declared with Dim and tracked in variableManagement
+        if let array = context.variableManagement.arrayInfo(for: internalName) {
+            // This is an array access, not a function call
+            // Generate array read using the arguments as indices
+            instrs.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
+            
+            let strides = array.strides
+            for (index, indexExpr) in call.arguments.enumerated() {
+                let indexResult = generateWithInfo(indexExpr)
+                instrs.append(contentsOf: indexResult.instrs)
+                instrs.append(contentsOf: convert(from: indexResult.type, to: .i32))
+                
+                // Multiply by stride for this dimension
+                let stride = index < strides.count ? strides[index] : array.elementSize
+                instrs.append(.i32Const(Int32(truncatingIfNeeded: stride)))
+                instrs.append(.i32Mul)
+                
+                // Add to running offset
+                if index > 0 {
+                    instrs.append(.i32Add)
+                }
+            }
+            
+            instrs.append(.i32Add)
+            
+            // Load value
+            switch array.elementType {
+            case .i32:
+                instrs.append(.i32Load(2, 0))
+            case .f32:
+                instrs.append(.f32Load(2, 0))
+            case .i64:
+                instrs.append(.i64Load(2, 0))
+            case .f64:
+                instrs.append(.f64Load(2, 0))
+            default:
+                instrs.append(.i32Load(2, 0))
+            }
+            
+            return (instrs, array.elementType)
+        }
+        
+        let signatureResolver = SignatureResolver(context: context)
+        let def = signatureResolver.definition(forName: internalName)
         
         // Generate argument instructions
         // Call function
@@ -619,10 +663,12 @@ public final class ExpressionGeneration {
                  }
             }
             
-            if let def = def {
-                expectedArgCount = def.params.count
-            } else if let wasmCount = paramCountFromWasm {
+            // Always trust the module's function type for arity when available.
+            // (SignatureResolver definitions can drift; the module type is the validation source of truth.)
+            if let wasmCount = paramCountFromWasm {
                 expectedArgCount = wasmCount
+            } else if let def = def {
+                expectedArgCount = def.params.count
             }
 
             // Re-implement argument generation loop to be safer
@@ -650,21 +696,20 @@ public final class ExpressionGeneration {
                 instrs.append(.drop)
             }
             
-            // Push defaults for missing args (Only if def known - if relying on WASM signature, we can't easily guess default values without types)
-            // But we can try to zero-fill if needed.
-            // For now, assume if def is missing, we don't need to pad? Or pad with i32 0?
-            if let def = def, call.arguments.count < def.params.count {
-                 for i in call.arguments.count..<def.params.count {
-                     switch def.params[i] {
-                     case .f32: instrs.append(.f32Const(0))
-                     default: instrs.append(.i32Const(0))
-                     }
-                 }
-            } else if let wasmCount = paramCountFromWasm, call.arguments.count < wasmCount {
-                 // Pad with 0s based on WASM signature types
-                // We need the type index again...
-                // Redundant lookup, but safer.
-                // Optimally we'd store the 'typeFn' earlier.
+            // Pad missing args to match signature for imports (auto-imports rely on this)
+            let targetParamCount = paramCountFromWasm ?? def?.params.count ?? call.arguments.count
+            if call.arguments.count < targetParamCount {
+                let padCount = targetParamCount - call.arguments.count
+                for i in 0..<padCount {
+                    if let def = def, call.arguments.count + i < def.params.count {
+                        switch def.params[call.arguments.count + i] {
+                        case .f32: instrs.append(.f32Const(0))
+                        default: instrs.append(.i32Const(0))
+                        }
+                    } else {
+                        instrs.append(.i32Const(0))
+                    }
+                }
             }
 
             instrs.append(.call(Int(funcIdx)))
@@ -695,21 +740,21 @@ public final class ExpressionGeneration {
                  }
             }
             
-            // Determine EXPECTED return type (from definition or heuristic)
+            // Determine EXPECTED return type (prefer resolved signature, fall back to actual, minimal heuristics)
             if let def = def {
                 returnType = def.results.first ?? .void
+            } else if actualWasmReturnType != .void {
+                returnType = actualWasmReturnType
             } else if call.name.hasSuffix("#") {
                 returnType = .f32
-            } else if ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "sqr", "rnd", "entityx", "entityy", "entityz", "entitypitch", "entityyaw", "entityroll", "entitydistance", "collisionx", "collisiony", "collisionz", "collisionnx", "collisionny", "collisionnz"].contains(internalName) {
-                returnType = .f32
             } else {
-                returnType = actualWasmReturnType // Fallback to truth
+                returnType = actualWasmReturnType // Fallback to truth (likely .void here)
             }
             
-            // If truth != expected, convert
-            if actualWasmReturnType != returnType {
-                 instrs.append(contentsOf: convert(from: actualWasmReturnType, to: returnType))
-            }
+        // If truth != expected, convert
+        if actualWasmReturnType != returnType {
+             instrs.append(contentsOf: convert(from: actualWasmReturnType, to: returnType))
+        }
 
         } else {
             // Function not found - same fallback logic
@@ -738,21 +783,19 @@ public final class ExpressionGeneration {
             }
         }
         
-        // Final void fix: if statement expects value but we have void (after conversion/truth)
-        // But generateFunctionCall returns (instrs, type). 
-        // Statement calls it. If type==void, no drop.
-        // If type!=void, drop.
-        // So we don't need to push dummy 0 if type is void.
-        // BUT if it's used in expression?
-            print("DEBUG_TRACE: Generating Call for \(internalName). Expected: \(returnType), Actual: \(actualWasmReturnType). Final: \(returnType == .void ? "VOID->I32" : returnType.rawValue)")
-
-            // If the function returns void but is used in an expression, push a dummy 0
-        if returnType == .void {
+        // If a void-returning call is used in a value context, coerce with a warning to keep stack sane
+        var finalType = returnType
+        if finalType == .void && !allowVoidAsValue {
+            context.reportDiagnostic(
+                "Function '\(call.name)' returns void but is used in a value context",
+                span: call.span
+            )
+            // Preserve stack safety so later codegen can continue, but mark as an error.
             instrs.append(.i32Const(0))
-            returnType = .i32
+            finalType = .i32
         }
         
-        return (instrs, returnType)
+        return (instrs, finalType)
     }
     
     // MARK: - Array Access
@@ -765,15 +808,23 @@ public final class ExpressionGeneration {
            let array = context.variableManagement.arrayInfo(for: arrayId.name) {
             instrs.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
             
-            // Calculate offset
+            // Calculate offset: sum of (index * stride) for each dimension
+            let strides = array.strides
             for (index, indexExpr) in access.indices.enumerated() {
-                let indexInstrs = generate(indexExpr)
-                instrs.append(contentsOf: indexInstrs)
+                let indexResult = generateWithInfo(indexExpr)
+                instrs.append(contentsOf: indexResult.instrs)
+                instrs.append(contentsOf: convert(from: indexResult.type, to: .i32))
                 
+                // Multiply by stride for this dimension
+                // For 1D arrays: stride[0] = elementSize
+                // For multi-dimensional: stride[i] = product of previous dimensions * elementSize
+                let stride = index < strides.count ? strides[index] : array.elementSize
+                instrs.append(.i32Const(Int32(truncatingIfNeeded: stride)))
+                instrs.append(.i32Mul)
+                
+                // Add to running offset
                 if index > 0 {
-                    // Multiply by stride
-                    instrs.append(.i32Const(Int32(truncatingIfNeeded: array.strides[index])))
-                    instrs.append(.i32Mul)
+                    instrs.append(.i32Add)
                 }
             }
             
@@ -815,8 +866,9 @@ public final class ExpressionGeneration {
                 // For multi-dimensional, we'd need strides
                 // Simplified: assume 1D or row-major for now
                 if access.indices.count >= 1 {
-                    let indexInstrs = generate(access.indices[0])
-                    instrs.append(contentsOf: indexInstrs)
+                    let indexResult = generateWithInfo(access.indices[0])
+                    instrs.append(contentsOf: indexResult.instrs)
+                    instrs.append(contentsOf: convert(from: indexResult.type, to: .i32))
                     
                     if elementSize > 1 {
                         instrs.append(.i32Const(Int32(truncatingIfNeeded: elementSize)))

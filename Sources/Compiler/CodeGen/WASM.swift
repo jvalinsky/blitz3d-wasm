@@ -35,6 +35,10 @@ public enum WASMInstruction: Equatable {
     case `return`
     case call(Int)
     case callIndirect(Int, Int)
+    
+    // Debug info
+    indirect case sourceLocation(SourceSpan, WASMInstruction)
+    
     case block(WASMType, [WASMInstruction])
     case loop(WASMType, [WASMInstruction])
     case br(Int)
@@ -219,6 +223,8 @@ public struct WASMFunction {
     public var locals: [WASMType]
     public var body: [WASMInstruction]
     
+    public var debugLocations: [(instructionIndex: Int, span: SourceSpan)] = []
+    
     public init(typeIndex: Int, locals: [WASMType] = [], body: [WASMInstruction] = []) {
         self.typeIndex = typeIndex
         self.locals = locals
@@ -299,6 +305,8 @@ public struct WASMModule {
     public var exports: [WASMExport]
     public var code: [WASMFunction]
     public var data: [WASMData]
+    public var functionNames: [String]  // For WASM name section (debug info)
+    public var sourceMapURL: String?     // URL for source map (embedded in WASM)
     
     public init() {
         self.types = []
@@ -310,6 +318,7 @@ public struct WASMModule {
         self.exports = []
         self.code = []
         self.data = []
+        self.functionNames = []
     }
 }
 

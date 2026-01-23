@@ -11,6 +11,7 @@ public indirect enum StatementNode {
     case constant(ConstantDeclaration, SourceSpan)
     case constants([ConstantDeclaration], SourceSpan)
     case dim(DimDeclaration, SourceSpan)
+    case dims([DimDeclaration], SourceSpan)
     case function(FunctionNode, SourceSpan)
     case assignment(AssignmentNode, SourceSpan)
     case ifStatement(IfNode, SourceSpan)
@@ -40,6 +41,7 @@ public indirect enum StatementNode {
              .constant(_, let s),
              .constants(_, let s),
              .dim(_, let s),
+             .dims(_, let s),
              .function(_, let s),
              .assignment(_, let s),
              .ifStatement(_, let s),

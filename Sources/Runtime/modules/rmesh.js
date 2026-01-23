@@ -43,7 +43,40 @@ class RMeshParser {
             // Extract base path for texture loading
             const basePath = filePath.substring(0, filePath.lastIndexOf('/') + 1);
 
-            // Parse mesh sections
+            // Fast path: parse in WASM engine and build render geometry from pointers.
+            // This avoids per-vertex callbacks and keeps parsing deterministic.
+            const engine = (typeof window !== 'undefined' && window.Blitz3D && window.Blitz3D.engineExports)
+                ? window.Blitz3D.engineExports
+                : null;
+
+            if (engine && typeof engine.ParseRMesh === 'function' && typeof engine.CreateBank === 'function' && typeof engine.GetBankPtr === 'function') {
+                // Rewind file and read full contents in one go
+                if (typeof this.fileIO.seek === 'function') {
+                    this.fileIO.seek(handle, 0);
+                }
+
+                const data = typeof this.fileIO.readRemaining === 'function'
+                    ? this.fileIO.readRemaining(handle)
+                    : this.readAllBytesSlow(handle);
+
+                const meshId = this.parseRMeshWithEngine(engine, data);
+
+                const parseTime = performance.now() - startTime;
+                this.log(`  Parsed (WASM) in ${parseTime.toFixed(2)}ms`);
+
+                return {
+                    wasmMeshId: meshId,
+                    opaque: [],
+                    alpha: [],
+                    collision: [],
+                    triggerBoxes: [],
+                    entities: [],
+                    basePath,
+                    hasTriggerBox,
+                };
+            }
+
+            // Fallback path: JS parser
             const opaqueMeshes = this.parseDrawnMeshes(handle, basePath, false);
             const alphaMeshes = this.parseDrawnMeshes(handle, basePath, true);
             const collisionMeshes = this.parseCollisionMeshes(handle, basePath);
@@ -69,6 +102,92 @@ class RMeshParser {
         } finally {
             this.fileIO.closeFile(handle);
         }
+    }
+
+    parseRMeshWithEngine(engine, data) {
+        // Create a bank in engine memory and copy bytes in one shot.
+        const bankId = engine.CreateBank(data.length);
+        const ptr = engine.GetBankPtr(bankId);
+        const dest = new Uint8Array(engine.memory.buffer, ptr, data.length);
+        dest.set(data);
+
+        const meshId = engine.ParseRMesh(bankId);
+        engine.FreeBank(bankId);
+
+        if (!meshId) {
+            throw new Error('WASM ParseRMesh failed');
+        }
+
+        return meshId;
+    }
+
+    readAllBytesSlow(handle) {
+        const out = [];
+        while (this.fileIO.eof(handle) === 0) {
+            const b = this.fileIO.readByte(handle);
+            if (b < 0) break;
+            out.push(b);
+        }
+        return new Uint8Array(out);
+    }
+
+    createThreeJSGroupFromWasm(engine, meshId) {
+        const group = new THREE.Group();
+
+        const surfaceCount = engine.GetMeshSurfaceCount(meshId);
+        if (!surfaceCount) {
+            return group;
+        }
+
+        const memory = engine.memory.buffer;
+        const vertexStride = 11;
+
+        for (let surfaceIdx = 0; surfaceIdx < surfaceCount; surfaceIdx++) {
+            const vertexCount = engine.GetSurfaceVertexCount(meshId, surfaceIdx);
+            const indexCount = engine.GetSurfaceIndexCount(meshId, surfaceIdx);
+            const vertexPtr = engine.GetSurfaceVerticesPtr(meshId, surfaceIdx);
+            const indexPtr = engine.GetSurfaceIndicesPtr(meshId, surfaceIdx);
+
+            if (!vertexPtr || !indexPtr || !vertexCount || !indexCount) continue;
+
+            // Clone into JS-owned buffers so future WASM memory growth doesn't invalidate geometry.
+            const vertexView = new Float32Array(memory, vertexPtr, vertexCount * vertexStride);
+            const vertices = new Float32Array(vertexView);
+
+            // Normalize vertex colors in-place (engine stores 0-255).
+            for (let i = 0; i < vertexCount; i++) {
+                const base = i * vertexStride;
+                vertices[base + 8] = vertices[base + 8] / 255.0;
+                vertices[base + 9] = vertices[base + 9] / 255.0;
+                vertices[base + 10] = vertices[base + 10] / 255.0;
+            }
+
+            const indexView = new Int32Array(memory, indexPtr, indexCount);
+            const indices = new Uint32Array(indexCount);
+            for (let i = 0; i < indexCount; i++) indices[i] = indexView[i];
+
+            const geometry = new THREE.BufferGeometry();
+            const interleaved = new THREE.InterleavedBuffer(vertices, vertexStride);
+
+            geometry.setAttribute('position', new THREE.InterleavedBufferAttribute(interleaved, 3, 0));
+            geometry.setAttribute('normal', new THREE.InterleavedBufferAttribute(interleaved, 3, 3));
+            geometry.setAttribute('uv', new THREE.InterleavedBufferAttribute(interleaved, 2, 6));
+            geometry.setAttribute('color', new THREE.InterleavedBufferAttribute(interleaved, 3, 8));
+            geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+
+            // If normals are missing/zeroed, compute them.
+            geometry.computeVertexNormals();
+
+            const material = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                vertexColors: true,
+                side: THREE.DoubleSide,
+            });
+
+            group.add(new THREE.Mesh(geometry, material));
+        }
+
+        return group;
     }
 
     /**
@@ -328,6 +447,20 @@ class RMeshParser {
             triggerBoxes: [],
             entityObjects: []
         };
+
+        // WASM-backed mesh path: build geometry from engine memory pointers.
+        if (roomData.wasmMeshId) {
+            const engine = (typeof window !== 'undefined' && window.Blitz3D && window.Blitz3D.engineExports)
+                ? window.Blitz3D.engineExports
+                : null;
+            if (!engine) {
+                throw new Error('roomData.wasmMeshId set but Blitz3D engine not available');
+            }
+
+            const group = this.createThreeJSGroupFromWasm(engine, roomData.wasmMeshId);
+            result.opaqueGroup.add(group);
+            return result;
+        }
 
         // Create meshes from parsed data
         for (const meshData of roomData.opaque) {

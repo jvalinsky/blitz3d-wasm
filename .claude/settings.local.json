@@ -13,7 +13,9 @@
       "WebFetch(domain:gist.github.com)",
       "WebFetch(domain:users.ece.cmu.edu)",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:troubles.md)"
+      "WebFetch(domain:troubles.md)",
+      "Bash(wasm-objdump:*)",
+      "Bash(node -e:*)"
     ]
   }
 }

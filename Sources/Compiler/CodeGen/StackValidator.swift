@@ -621,6 +621,9 @@ class StackValidator {
         case .memoryGrow:
             popVal(expect: .i32)  // pages
             pushVal(.i32)         // previous size
+            
+        case .sourceLocation(_, let inner):
+            validateInstruction(inner)
 
         default:
             // Unknown instruction - skip validation

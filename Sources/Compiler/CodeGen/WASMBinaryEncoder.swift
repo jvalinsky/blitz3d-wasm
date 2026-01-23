@@ -12,7 +12,7 @@ public struct WASMBinaryEncoder {
     
     public init() {}
     
-    public mutating func encode(_ module: WASMModule) -> [UInt8] {
+    public mutating func encode(_ module: WASMModule, sourceMapGenerator: SourceMapGenerator? = nil) -> [UInt8] {
         bytes = []
         
         // Magic number and version
@@ -56,12 +56,22 @@ public struct WASMBinaryEncoder {
         
         // Code section
         if !module.code.isEmpty {
-            encodeCodeSection(module.code)
+            encodeCodeSection(module.code, sourceMapGenerator: sourceMapGenerator)
         }
         
         // Data section
         if !module.data.isEmpty {
             encodeDataSection(module.data)
+        }
+        
+        // Name section (custom section for debug info)
+        if !module.functionNames.isEmpty {
+            encodeNameSection(module.functionNames, importCount: module.imports.count)
+        }
+        
+        // Source Map section (custom section)
+        if let sourceMapURL = module.sourceMapURL {
+            encodeSourceMappingURLSection(sourceMapURL)
         }
         
         return bytes
@@ -204,8 +214,17 @@ public struct WASMBinaryEncoder {
         writeSection(id: 7, content: content)
     }
     
-    private mutating func encodeCodeSection(_ functions: [WASMFunction]) {
-        let content: [UInt8] = encodeVector(functions) { function -> [UInt8] in
+    private mutating func encodeCodeSection(_ functions: [WASMFunction], sourceMapGenerator: SourceMapGenerator?) {
+        var sectionContent: [UInt8] = []
+        
+        // Function count
+        sectionContent.append(contentsOf: encodeVarUInt(functions.count))
+        
+        // Track relative mappings
+        var relativeMappings: [(Int, SourceSpan)] = []
+        var currentOffset = sectionContent.count
+        
+        for function in functions {
             var funcBody: [UInt8] = []
             
             // Local declarations
@@ -225,14 +244,171 @@ public struct WASMBinaryEncoder {
                 funcBody.append(typeByte)
             }
             
+            let localsSize = funcBody.count
+            
             // Function body instructions
-            funcBody.append(contentsOf: encodeInstructions(function.body))
+            let (instrBytes, instrMappings) = encodeInstructionsWithMap(function.body)
+            funcBody.append(contentsOf: instrBytes)
             funcBody.append(0x0B) // end
             
             // Prefix with size of function body
-            return encodeVarUInt(funcBody.count) + funcBody
+            let sizeBytes = encodeVarUInt(funcBody.count)
+            sectionContent.append(contentsOf: sizeBytes)
+            currentOffset += sizeBytes.count
+            
+            sectionContent.append(contentsOf: funcBody)
+            
+            // Record mappings shifted by proper offsets
+            // Mapping offset = currentOffset (start of function content) + localsSize + instrOffset
+            for (offset, span) in instrMappings {
+                relativeMappings.append((currentOffset + localsSize + offset, span))
+            }
+            currentOffset += funcBody.count
         }
-        writeSection(id: 10, content: content)
+        
+        // Calculate absolute start offset of the code section content in the final binary
+        // Current bytes + ID(1) + VarUInt(size)
+        // writeSection(id, content) does: id + encodeVarUInt(content.count) + content
+        let sectionHeaderSize = 1 + encodeVarUInt(sectionContent.count).count
+        let absoluteSectionStart = bytes.count + sectionHeaderSize
+        
+        if let generator = sourceMapGenerator {
+            for (offset, span) in relativeMappings {
+                generator.addMapping(wasmOffset: absoluteSectionStart + offset, span: span)
+            }
+        }
+        
+        writeSection(id: 10, content: sectionContent)
+    }
+    
+    // Returns bytes and mappings relative to start of returned bytes
+    private mutating func encodeInstructionsWithMap(_ instructions: [WASMInstruction]) -> ([UInt8], [(Int, SourceSpan)]) {
+        var bytes: [UInt8] = []
+        var mappings: [(Int, SourceSpan)] = []
+        var currentOffset = 0
+        
+        for instr in instructions {
+            if case .sourceLocation(let span, let inner) = instr {
+                // Record mapping for this instruction start
+                mappings.append((currentOffset, span))
+                
+                // Encode inner instruction recursively
+                let (innerBytes, innerMappings) = encodeInstructionWithMap(inner)
+                bytes.append(contentsOf: innerBytes)
+                
+                // Add inner mappings shifted by current offset
+                for (mOffset, mSpan) in innerMappings {
+                    mappings.append((currentOffset + mOffset, mSpan))
+                }
+                currentOffset += innerBytes.count
+            } else {
+                let (instrBytes, instrMappings) = encodeInstructionWithMap(instr)
+                bytes.append(contentsOf: instrBytes)
+                for (mOffset, mSpan) in instrMappings {
+                    mappings.append((currentOffset + mOffset, mSpan))
+                }
+                currentOffset += instrBytes.count
+            }
+        }
+        
+        return (bytes, mappings)
+    }
+    
+    // Helper to handle single instruction recursion
+    private mutating func encodeInstructionWithMap(_ instr: WASMInstruction) -> ([UInt8], [(Int, SourceSpan)]) {
+        switch instr {
+        case .block(let type, let instrs):
+            var blockBytes: [UInt8] = [0x02] // block
+            
+            let typeByte: UInt8
+            switch type {
+            case .void: typeByte = 0x40
+            case .i32: typeByte = 0x7F
+            case .i64: typeByte = 0x7E
+            case .f32: typeByte = 0x7D
+            case .f64: typeByte = 0x7C
+            default: typeByte = 0x40
+            }
+            blockBytes.append(typeByte)
+            
+            let headerSize = blockBytes.count
+            let (innerBytes, innerMappings) = encodeInstructionsWithMap(instrs)
+            
+            blockBytes.append(contentsOf: innerBytes)
+            blockBytes.append(0x0B) // end
+            
+            // Shift inner mappings
+            let shiftedMappings = innerMappings.map { ($0.0 + headerSize, $0.1) }
+            return (blockBytes, shiftedMappings)
+            
+        case .loop(let type, let instrs):
+            var loopBytes: [UInt8] = [0x03] // loop
+            
+            let typeByte: UInt8
+            switch type {
+            case .void: typeByte = 0x40
+            case .i32: typeByte = 0x7F
+            case .i64: typeByte = 0x7E
+            case .f32: typeByte = 0x7D
+            case .f64: typeByte = 0x7C
+            default: typeByte = 0x40
+            }
+            loopBytes.append(typeByte)
+            
+            let headerSize = loopBytes.count
+            let (innerBytes, innerMappings) = encodeInstructionsWithMap(instrs)
+            
+            loopBytes.append(contentsOf: innerBytes)
+            loopBytes.append(0x0B) // end
+            
+            let shiftedMappings = innerMappings.map { ($0.0 + headerSize, $0.1) }
+            return (loopBytes, shiftedMappings)
+            
+        case .if(let type, let thenInstrs, let elseInstrs):
+            var ifBytes: [UInt8] = [0x04] // if
+            
+            let typeByte: UInt8
+            switch type {
+            case .void: typeByte = 0x40
+            case .i32: typeByte = 0x7F
+            case .i64: typeByte = 0x7E
+            case .f32: typeByte = 0x7D
+            case .f64: typeByte = 0x7C
+            default: typeByte = 0x40
+            }
+            ifBytes.append(typeByte)
+            
+            var mappings: [(Int, SourceSpan)] = []
+            var currentLen = ifBytes.count
+            
+            // Then branch
+            let (thenBytes, thenMappings) = encodeInstructionsWithMap(thenInstrs)
+            ifBytes.append(contentsOf: thenBytes)
+            mappings.append(contentsOf: thenMappings.map { ($0.0 + currentLen, $0.1) })
+            currentLen += thenBytes.count
+            
+            // Else branch
+            if let elseInstrs = elseInstrs {
+                ifBytes.append(0x05) // else
+                currentLen += 1
+                
+                let (elseBytes, elseMappings) = encodeInstructionsWithMap(elseInstrs)
+                ifBytes.append(contentsOf: elseBytes)
+                mappings.append(contentsOf: elseMappings.map { ($0.0 + currentLen, $0.1) })
+                currentLen += elseBytes.count
+            }
+            
+            ifBytes.append(0x0B) // end
+            return (ifBytes, mappings)
+            
+        case .sourceLocation(_, _):
+            // Should be handled by encodeInstructionsWithMap loop, but if called directly:
+            return encodeInstructionsWithMap([instr])
+            
+        default:
+            // Leaf instruction - no mappings inside
+            return (encodeInstruction(instr), [])
+        }
     }
     
     private mutating func encodeDataSection(_ data: [WASMData]) {
@@ -248,6 +424,44 @@ public struct WASMBinaryEncoder {
         writeSection(id: 11, content: content)
     }
     
+    /// Encode the custom "name" section for debuggable stack traces
+    private mutating func encodeNameSection(_ names: [String], importCount: Int) {
+        var content: [UInt8] = []
+        
+        // Custom section name: "name"
+        let nameBytes = [UInt8]("name".utf8)
+        content.append(contentsOf: encodeVarUInt(nameBytes.count))
+        content.append(contentsOf: nameBytes)
+        
+        // Subsection 1: Function names
+        var funcSubsection: [UInt8] = []
+        var nameMap: [(Int, String)] = []
+        
+        // Build name map - function indices start after imports
+        for (i, name) in names.enumerated() {
+            if !name.isEmpty {
+                nameMap.append((importCount + i, name))
+            }
+        }
+        
+        // Encode name map as vec(idx, name)
+        funcSubsection.append(contentsOf: encodeVarUInt(nameMap.count))
+        for (idx, name) in nameMap {
+            funcSubsection.append(contentsOf: encodeVarUInt(idx))
+            let nameBytes = [UInt8](name.utf8)
+            funcSubsection.append(contentsOf: encodeVarUInt(nameBytes.count))
+            funcSubsection.append(contentsOf: nameBytes)
+        }
+        
+        // Append function names subsection (id=1)
+        content.append(0x01) // Function names subsection id
+        content.append(contentsOf: encodeVarUInt(funcSubsection.count))
+        content.append(contentsOf: funcSubsection)
+        
+        // Write as custom section (id=0)
+        writeSection(id: 0, content: content)
+    }
+    
     private mutating func encodeInstructions(_ instructions: [WASMInstruction]) -> [UInt8] {
         var bytes: [UInt8] = []
         
@@ -260,6 +474,8 @@ public struct WASMBinaryEncoder {
     
     private mutating func encodeInstruction(_ instruction: WASMInstruction) -> [UInt8] {
         switch instruction {
+        case .sourceLocation(_, let inner):
+             return encodeInstruction(inner)
         case .unreachable:
             return [0x00]
         case .nop:
@@ -735,6 +951,24 @@ public struct WASMBinaryEncoder {
             UInt8((uintValue >> 48) & 0xFF),
             UInt8((uintValue >> 56) & 0xFF)
         ]
+    }
+    
+    private mutating func encodeSourceMappingURLSection(_ url: String) {
+        var content: [UInt8] = []
+        
+        // Custom section name "sourceMappingURL"
+        let sectionName = "sourceMappingURL"
+        content.append(contentsOf: encodeVarUInt(sectionName.count))
+        content.append(contentsOf: sectionName.utf8)
+        
+        // Content: URL
+        // Currently treating as raw bytes (no length prefix for the content itself, 
+        // as the section size determines end)
+        content.append(contentsOf: url.utf8)
+        
+        writeBytes([0]) // Custom section ID
+        writeVarUInt(content.count)
+        writeBytes(content)
     }
     
     private mutating func encodeString(_ str: String) {

@@ -29,7 +29,7 @@ final class TypeFieldArrayTests: XCTestCase {
         
         // Verify dimension is an integer literal
         if let dim = program.types[0].fields[0].dimensions.first {
-            if case .integerLiteral(let value) = dim {
+            if case .integerLiteral(let value, _) = dim {
                 XCTAssertEqual(value, 12)
             } else {
                 XCTFail("Dimension should be an integer literal")
@@ -97,7 +97,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertNotNil(program.types[0].fields[0].defaultValue)
         
         if let defaultVal = program.types[0].fields[0].defaultValue {
-            if case .integerLiteral(let value) = defaultVal {
+            if case .integerLiteral(let value, _) = defaultVal {
                 XCTAssertEqual(value, 100)
             } else {
                 XCTFail("Default value should be an integer literal")
@@ -188,7 +188,7 @@ final class TypeFieldArrayTests: XCTestCase {
         let dim = program.types[0].fields[0].dimensions.first
         XCTAssertNotNil(dim)
         
-        if case .binary(let binop) = dim {
+        if case .binary(let binop, _) = dim {
             XCTAssertEqual(binop.op, "*")
         } else {
             XCTFail("Dimension should be a binary expression")

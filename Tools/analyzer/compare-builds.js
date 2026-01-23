@@ -1,17 +1,7 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S deno run --allow-read
 
-/**
- * LLM-Optimized WASM Comparator
- * 
- * Compares two WASM files and outputs structured comparison for AI consumption.
- * 
- * Usage:
- *   node compare-builds.js before.wasm after.wasm
- *   node compare-builds.js before.wasm after.wasm --verbose
- */
-
-import { WASMAnalyzer } from './core.js';
-import { readFileSync, existsSync } from 'fs';
+import { existsSync } from "jsr:@std/fs";
+import { WASMAnalyzer } from "./core.js";
 
 class BuildComparator {
   constructor() {
@@ -32,7 +22,7 @@ class BuildComparator {
     try {
       const [analyzerA, analyzerB] = await Promise.all([
         WASMAnalyzer.fromFile(fileA),
-        WASMAnalyzer.fromFile(fileB)
+        WASMAnalyzer.fromFile(fileB),
       ]);
 
       this.beforeAnalysis = analyzerA.generateReport();
@@ -56,7 +46,7 @@ class BuildComparator {
         stackValid: before.summary.stackValid,
         typeValid: before.summary.typeValid,
         controlFlowValid: before.summary.controlFlowValid,
-        errors: before.errors.length
+        errors: before.errors.length,
       },
       after: {
         functions: after.summary.totalFunctions,
@@ -65,8 +55,8 @@ class BuildComparator {
         stackValid: after.summary.stackValid,
         typeValid: after.summary.typeValid,
         controlFlowValid: after.summary.controlFlowValid,
-        errors: after.errors.length
-      }
+        errors: after.errors.length,
+      },
     };
 
     const changes = {
@@ -74,7 +64,7 @@ class BuildComparator {
       errors: after.errors.length - before.errors.length,
       stackIssues: !before.summary.stackValid !== !after.summary.stackValid,
       typeIssues: !before.summary.typeValid !== !after.summary.typeValid,
-      controlIssues: !before.summary.controlFlowValid !== !after.summary.controlFlowValid
+      controlIssues: !before.summary.controlFlowValid !== !after.summary.controlFlowValid,
     };
 
     const improvements = [];
@@ -87,15 +77,15 @@ class BuildComparator {
     }
 
     if (!before.summary.stackValid && after.summary.stackValid) {
-      improvements.push('Stack balance: FIXED');
+      improvements.push("Stack balance: FIXED");
     } else if (before.summary.stackValid && !after.summary.stackValid) {
-      regressions.push('Stack balance: BROKEN');
+      regressions.push("Stack balance: BROKEN");
     }
 
     if (!before.summary.typeValid && after.summary.typeValid) {
-      improvements.push('Type consistency: FIXED');
+      improvements.push("Type consistency: FIXED");
     } else if (before.summary.typeValid && !after.summary.typeValid) {
-      regressions.push('Type consistency: BROKEN');
+      regressions.push("Type consistency: BROKEN");
     }
 
     if (changes.instructions < 0) {
@@ -114,8 +104,8 @@ class BuildComparator {
       verdict,
       metrics: {
         before: before.metrics,
-        after: after.metrics
-      }
+        after: after.metrics,
+      },
     };
 
     if (verbose) {
@@ -128,15 +118,15 @@ class BuildComparator {
 
   getVerdict(improvements, regressions) {
     if (regressions.length === 0 && improvements.length > 0) {
-      return 'success';
+      return "success";
     }
     if (improvements.length === 0 && regressions.length > 0) {
-      return 'failure';
+      return "failure";
     }
     if (improvements.length > regressions.length) {
-      return 'partial';
+      return "partial";
     }
-    return 'no_change';
+    return "no_change";
   }
 
   printResult(result) {
@@ -145,83 +135,89 @@ class BuildComparator {
       return;
     }
 
-    console.log('═'.repeat(60));
-    console.log('BUILD COMPARISON RESULT');
-    console.log('═'.repeat(60));
+    console.log("═".repeat(60));
+    console.log("BUILD COMPARISON RESULT");
+    console.log("═".repeat(60));
 
-    // Verdict
     const verdictColors = {
-      success: '✓ SUCCESS',
-      partial: '⚠ PARTIAL',
-      failure: '✗ FAILURE',
-      no_change: '○ NO CHANGE'
+      success: "✓ SUCCESS",
+      partial: "⚠ PARTIAL",
+      failure: "✗ FAILURE",
+      no_change: "○ NO CHANGE",
     };
     console.log(`\nVerdict: ${verdictColors[result.verdict]}`);
 
-    // Summary table
-    console.log('\n┌──────────────────────┬──────────┬──────────┬────────┐');
-    console.log('│ Metric               │ Before   │ After    │ Change │');
-    console.log('├──────────────────────┼──────────┼──────────┼────────┤');
-    console.log(`│ Functions            │ ${String(result.summary.before.functions).padEnd(8)} │ ${String(result.summary.after.functions).padEnd(8)} │ ${String(result.changes.instructions === 0 ? '-' : '').padEnd(6)} │`);
-    console.log(`│ Instructions         │ ${String(result.summary.before.instructions).padEnd(8)} │ ${String(result.summary.after.instructions).padEnd(8)} │ ${String(result.changes.instructions).padEnd(6)} │`);
-    console.log(`│ Errors               │ ${String(result.summary.before.errors).padEnd(8)} │ ${String(result.summary.after.errors).padEnd(8)} │ ${String(result.changes.errors).padEnd(6)} │`);
-    console.log('├──────────────────────┼──────────┼──────────┼────────┤');
-    console.log(`│ Stack Valid          │ ${result.summary.before.stackValid ? '    ✓   ' : '    ✗   '} │ ${result.summary.after.stackValid ? '    ✓   ' : '    ✗   '} │        │`);
-    console.log(`│ Type Valid           │ ${result.summary.before.typeValid ? '    ✓   ' : '    ✗   '} │ ${result.summary.after.typeValid ? '    ✓   ' : '    ✗   '} │        │`);
-    console.log(`│ Control Flow Valid   │ ${result.summary.before.controlFlowValid ? '    ✓   ' : '    ✗   '} │ ${result.summary.after.controlFlowValid ? '    ✓   ' : '    ✗   '} │        │`);
-    console.log('└──────────────────────┴──────────┴──────────┴────────┘');
+    console.log("\n┌──────────────────────┬──────────┬──────────┬────────┐");
+    console.log("│ Metric               │ Before   │ After    │ Change │");
+    console.log("├──────────────────────┼──────────┼──────────┼────────┤");
+    console.log(
+      `│ Functions            │ ${String(result.summary.before.functions).padEnd(8)} │ ${String(result.summary.after.functions).padEnd(8)} │ ${String(result.changes.instructions === 0 ? "-" : "").padEnd(6)} │`,
+    );
+    console.log(
+      `│ Instructions         │ ${String(result.summary.before.instructions).padEnd(8)} │ ${String(result.summary.after.instructions).padEnd(8)} │ ${String(result.changes.instructions).padEnd(6)} │`,
+    );
+    console.log(
+      `│ Errors               │ ${String(result.summary.before.errors).padEnd(8)} │ ${String(result.summary.after.errors).padEnd(8)} │ ${String(result.changes.errors).padEnd(6)} │`,
+    );
+    console.log("├──────────────────────┼──────────┼──────────┼────────┤");
+    console.log(
+      `│ Stack Valid          │ ${result.summary.before.stackValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.stackValid ? "    ✓   " : "    ✗   "} │        │`,
+    );
+    console.log(
+      `│ Type Valid           │ ${result.summary.before.typeValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.typeValid ? "    ✓   " : "    ✗   "} │        │`,
+    );
+    console.log(
+      `│ Control Flow Valid   │ ${result.summary.before.controlFlowValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.controlFlowValid ? "    ✓   " : "    ✗   "} │        │`,
+    );
+    console.log("└──────────────────────┴──────────┴──────────┴────────┘");
 
-    // Improvements
     if (result.improvements.length > 0) {
-      console.log('\n✓ Improvements:');
-      result.improvements.forEach(i => console.log(`  • ${i}`));
+      console.log("\n✓ Improvements:");
+      result.improvements.forEach((i) => console.log(`  • ${i}`));
     }
 
-    // Regressions
     if (result.regressions.length > 0) {
-      console.log('\n✗ Regressions:');
-      result.regressions.forEach(r => console.log(`  • ${r}`));
+      console.log("\n✗ Regressions:");
+      result.regressions.forEach((r) => console.log(`  • ${r}`));
     }
 
-    // Recommendations
-    console.log('\n' + '─'.repeat(60));
-    if (result.verdict === 'success') {
-      console.log('✓ Fix validated - no regressions detected');
-    } else if (result.verdict === 'failure') {
-      console.log('✗ Regressions detected - review changes');
-    } else if (result.verdict === 'partial') {
-      console.log('⚠ Mixed results - some improvements, some regressions');
+    console.log("\n" + "─".repeat(60));
+    if (result.verdict === "success") {
+      console.log("✓ Fix validated - no regressions detected");
+    } else if (result.verdict === "failure") {
+      console.log("✗ Regressions detected - review changes");
+    } else if (result.verdict === "partial") {
+      console.log("⚠ Mixed results - some improvements, some regressions");
     } else {
-      console.log('○ No significant changes detected');
+      console.log("○ No significant changes detected");
     }
 
-    console.log('');
+    console.log("");
   }
 }
 
 async function main() {
-  const args = process.argv.slice(2);
-  
+  const args = Deno.args.filter((a) => !a.startsWith("-"));
+
   if (args.length < 2) {
     console.log(`
 WASM Build Comparator for LLM
 
 Usage:
-  node compare-builds.js <before.wasm> <after.wasm>
-  node compare-builds.js <before.wasm> <after.wasm> --verbose
+  deno run -A compare-builds.js <before.wasm> <after.wasm>
+  deno run -A compare-builds.js <before.wasm> <after.wasm> --verbose
 
 Examples:
-  node compare-builds.js before.wasm after.wasm
-  node compare-builds.js old.wasm new.wasm -v
+  deno run -A compare-builds.js before.wasm after.wasm
+  deno run -A compare-builds.js old.wasm new.wasm -v
 `);
-    process.exit(1);
+    Deno.exit(1);
   }
 
-  const verbose = args.includes('--verbose') || args.includes('-v');
-  const files = args.filter(a => !a.startsWith('-'));
+  const verbose = Deno.args.includes("--verbose") || Deno.args.includes("-v");
 
   const comparator = new BuildComparator();
-  const result = await comparator.compare(files[0], files[1], verbose);
+  const result = await comparator.compare(args[0], args[1], verbose);
   comparator.printResult(result);
 }
 

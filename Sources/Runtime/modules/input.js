@@ -34,6 +34,13 @@ class Blitz3DInput {
         imports.env.MoveMouse = (x, y) => { /* Hardware cursor move not possible in browser */ };
         imports.env.HidePointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'none'; };
         imports.env.ShowPointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'default'; };
+        imports.env.KeyName = (key) => {
+            const name = this.keyNameForCode(key);
+            if (this.core && this.core.allocString) {
+                return this.core.allocString(name);
+            }
+            return 0;
+        };
 
         imports.env.WaitKey = () => {
             return new Promise((resolve) => {
@@ -101,6 +108,47 @@ class Blitz3DInput {
         this.mouseButtonHits = {};
         this.mouseXSpeed = 0;
         this.mouseYSpeed = 0;
+    }
+
+    keyNameForCode(key) {
+        const specials = {
+            8: 'Backspace',
+            9: 'Tab',
+            13: 'Enter',
+            16: 'Shift',
+            17: 'Ctrl',
+            18: 'Alt',
+            19: 'Pause',
+            20: 'CapsLock',
+            27: 'Escape',
+            32: 'Space',
+            33: 'PageUp',
+            34: 'PageDown',
+            35: 'End',
+            36: 'Home',
+            37: 'Left',
+            38: 'Up',
+            39: 'Right',
+            40: 'Down',
+            45: 'Insert',
+            46: 'Delete'
+        };
+
+        if (specials[key]) return specials[key];
+
+        if (key >= 65 && key <= 90) {
+            return String.fromCharCode(key);
+        }
+        if (key >= 48 && key <= 57) {
+            return String.fromCharCode(key);
+        }
+        if (key >= 96 && key <= 105) {
+            return `Num${key - 96}`;
+        }
+        if (key >= 112 && key <= 123) {
+            return `F${key - 111}`;
+        }
+        return `Key${key}`;
     }
 }
 

@@ -234,6 +234,65 @@ class Blitz3DAudio {
             return (ch && ch.playing) ? 1 : 0;
         };
 
+        // SCPCB-specific positional helpers (lightweight stubs)
+        imports.env.PlaySound2 = (soundId, _cam, _entity, _range = 10.0, volume = 1.0) => {
+            const ch = imports.env.PlaySound(soundId);
+            imports.env.ChannelVolume(ch, volume);
+            return ch;
+        };
+
+        imports.env.LoopSound2 = (soundId, chn, _cam, _entity, _range = 10.0, volume = 1.0) => {
+            let channel = chn;
+            if (!channel || !imports.env.ChannelPlaying(channel)) {
+                channel = imports.env.PlaySound(soundId);
+            }
+            imports.env.ChannelVolume(channel, volume);
+            return channel;
+        };
+
+        imports.env.UpdateSoundOrigin = (chn, _cam, _entity, _range = 10.0, volume = 1.0) => {
+            if (chn) {
+                imports.env.ChannelVolume(chn, volume);
+            }
+        };
+
+        imports.env.UpdateSoundOrigin2 = (chn, _cam, _entity, _range = 10.0, volume = 1.0) => {
+            if (chn) {
+                imports.env.ChannelVolume(chn, volume);
+            }
+        };
+
+        imports.env.LoadEventSound = (eventPtr, filePtr, num = 0) => {
+            const path = this.core.readString(filePtr);
+            console.log(`LoadEventSound: event=${eventPtr} file=${path} num=${num}`);
+            return imports.env.LoadSound(filePtr);
+        };
+
+        imports.env.StreamSound_Strict = (filePtr, volume = 1.0, _mode = 0) => {
+            const path = this.core.readString(filePtr);
+            console.log(`StreamSound_Strict: ${path} vol=${volume}`);
+            const ch = imports.env.PlaySound(filePtr); // reuse load/play
+            imports.env.ChannelVolume(ch, volume);
+            return ch;
+        };
+
+        imports.env.StopStream_Strict = (chn) => {
+            console.log(`StopStream_Strict: chn=${chn}`);
+            imports.env.StopChannel(chn);
+        };
+
+        imports.env.SetStreamVolume_Strict = (chn, volume = 1.0) => {
+            imports.env.ChannelVolume(chn, volume);
+        };
+
+        imports.env.PlayAnnouncement = (filePtr) => {
+            const path = this.core.readString(filePtr);
+            console.log(`PlayAnnouncement: ${path}`);
+            const ch = imports.env.StreamSound_Strict(filePtr, 1.0, 0);
+            // Store channel if desired; for now, return channel id
+            return ch;
+        };
+
         // 3D Audio
         imports.env.Sound3D = (channelId, x, y, z) => {
             console.log(`Sound3D: channel=${channelId} pos=(${x},${y},${z})`);
@@ -243,13 +302,6 @@ class Blitz3DAudio {
         imports.env.PlaySound_Strict = (soundId) => {
             console.log(`PlaySound_Strict: sound=${soundId}`);
             return imports.env.PlaySound(soundId);
-        };
-
-        imports.env.LoopSound2 = (soundId, channelId, volume, pan) => {
-            console.log(`LoopSound2: sound=${soundId} channel=${channelId} vol=${volume} pan=${pan}`);
-            const channel = imports.env.PlaySound(soundId);
-            // Set as looping
-            return channel;
         };
 
         imports.env.SetListenerLocation = (x, y, z, fx, fy, fz, ux, uy, uz) => {

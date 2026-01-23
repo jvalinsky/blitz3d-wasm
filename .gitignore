@@ -2,3 +2,6 @@
 *.xcuserstate
 *.xcuserdata/
 .DS_Store
+
+# Deciduous database (local)
+.deciduous/

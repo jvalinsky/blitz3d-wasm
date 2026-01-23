@@ -13,7 +13,8 @@ console.log('[runtime.js] Module references available:', {
     Blitz3DPhysics: typeof window.Blitz3DPhysics !== 'undefined',
     Blitz3DInput: typeof window.Blitz3DInput !== 'undefined',
     Blitz3DAudio: typeof window.Blitz3DAudio !== 'undefined',
-    VirtualFileSystem: typeof window.VirtualFileSystem !== 'undefined'
+    VirtualFileSystem: typeof window.VirtualFileSystem !== 'undefined',
+    Blitz3DDebug: typeof window.Blitz3DDebug !== 'undefined'
 });
 
 const Blitz3D = {
@@ -25,6 +26,7 @@ const Blitz3D = {
     input: null,
     audio: null,
     vfs: null,
+    debug: null, // Debugger module
 
     // Asset management
     assets: {},
@@ -107,6 +109,11 @@ const Blitz3D = {
         // Initialize virtual file system
         this.vfs = new window.VirtualFileSystem(this.core);
 
+        // Initialize debug
+        if (typeof window.Blitz3DDebug !== 'undefined') {
+            this.debug = new window.Blitz3DDebug(this.core);
+        }
+
         // Expose input test globally
         window.testBlitz3DInput = () => this.input.testInput();
 
@@ -118,6 +125,10 @@ const Blitz3D = {
         this.input.setupImports(this.imports);
         this.audio.setupImports(this.imports);
         this.vfs.setupImports(this.imports);
+
+        if (this.debug) {
+            this.debug.setupImports(this.imports);
+        }
 
         // Ensure INI hooks are visible both at runtime and to static analyzers.
         const imports = this.imports;
@@ -157,9 +168,9 @@ const Blitz3D = {
         env: {
             // Minimal stubs to satisfy common imports; real implementations are
             // provided in specialized modules where available.
-            EntityAutoFade: () => {},
+            EntityAutoFade: () => { },
             EntityClass: () => 0,
-            EntityOrder: () => {},
+            EntityOrder: () => { },
             // INI access shim: pulls values via INISystem when available.
             GetINIInt: (filePtr, sectionPtr, keyPtr) => {
                 try {
@@ -211,7 +222,7 @@ const Blitz3D = {
             PeekInt: (bankId, offset) => {
                 const bank = this.banks[bankId];
                 if (bank) {
-                    return bank[offset] | (bank[offset+1] << 8) | (bank[offset+2] << 16) | (bank[offset+3] << 24);
+                    return bank[offset] | (bank[offset + 1] << 8) | (bank[offset + 2] << 16) | (bank[offset + 3] << 24);
                 }
                 return 0;
             },
@@ -219,9 +230,9 @@ const Blitz3D = {
                 const bank = this.banks[bankId];
                 if (bank) {
                     bank[offset] = value & 0xFF;
-                    bank[offset+1] = (value >> 8) & 0xFF;
-                    bank[offset+2] = (value >> 16) & 0xFF;
-                    bank[offset+3] = (value >> 24) & 0xFF;
+                    bank[offset + 1] = (value >> 8) & 0xFF;
+                    bank[offset + 2] = (value >> 16) & 0xFF;
+                    bank[offset + 3] = (value >> 24) & 0xFF;
                 }
             },
             PeekFloat: (bankId, offset) => {
@@ -242,7 +253,7 @@ const Blitz3D = {
             PeekShort: (bankId, offset) => {
                 const bank = this.banks[bankId];
                 if (bank) {
-                    return bank[offset] | (bank[offset+1] << 8);
+                    return bank[offset] | (bank[offset + 1] << 8);
                 }
                 return 0;
             },
@@ -250,10 +261,10 @@ const Blitz3D = {
                 const bank = this.banks[bankId];
                 if (bank) {
                     bank[offset] = value & 0xFF;
-                    bank[offset+1] = (value >> 8) & 0xFF;
+                    bank[offset + 1] = (value >> 8) & 0xFF;
                 }
             },
-            
+
             // Mesh parsing functions (prefer WASM engine if available)
             ParseB3D: (bankId) => {
                 if (this.engineExports && typeof this.engineExports.ParseB3D === 'function') {
@@ -269,7 +280,7 @@ const Blitz3D = {
                 console.warn("ParseRMesh called but Blitz3DEngine not loaded");
                 return 0;
             },
-            
+
             // Mesh query functions (prefer WASM engine if available)
             GetMeshSurfaceCount: (...args) => {
                 if (this.engineExports && typeof this.engineExports.GetMeshSurfaceCount === 'function') {
@@ -306,62 +317,62 @@ const Blitz3D = {
             // OpenAL (custom wrapper) stubs
             alInit: () => { console.log("OpenAL initialized"); return 1; },
             alDeviceInit: () => 1,
-            alDestroy: () => {},
-            alUpdate: () => {},
+            alDestroy: () => { },
+            alUpdate: () => { },
             alGetNumSources: () => 0,
             alGetAvailableDeviceCount: () => 1,
             alGetAvailableDeviceName: () => 0,
-            
+
             // Buffer management
             alCreateBuffer: () => 1,
-            alFreeBuffer: () => {},
-            
+            alFreeBuffer: () => { },
+
             // Source management  
             alCreateSource: () => 1,
             alCreateSource_: () => 1,
-            alFreeSource: () => {},
-            
+            alFreeSource: () => { },
+
             // Source playback
-            alSourcePlay: () => {},
-            alSourcePlay_: () => {},
-            alSourcePlay2D: () => {},
-            alSourcePlay2D_: () => {},
-            alSourcePlay3D: () => {},
-            alSourcePlay3D_: () => {},
-            alSourceStop: () => {},
-            alSourcePause: () => {},
-            alSourceResume: () => {},
-            alSourceSeek: () => {},
-            
+            alSourcePlay: () => { },
+            alSourcePlay_: () => { },
+            alSourcePlay2D: () => { },
+            alSourcePlay2D_: () => { },
+            alSourcePlay3D: () => { },
+            alSourcePlay3D_: () => { },
+            alSourceStop: () => { },
+            alSourcePause: () => { },
+            alSourceResume: () => { },
+            alSourceSeek: () => { },
+
             // Source state queries
             alSourceIsPlaying: () => 0,
             alSourceIsPaused: () => 0,
             alSourceIsStopped: () => 1,
             alSourceGetAudioTime: () => 0.0,
             alSourceGetLenght: () => 0.0,
-            
+
             // Source properties
-            alSourceSetVolume: () => {},
-            alSourceSetPitch: () => {},
-            alSourceSetLoop: () => {},
-            alSourceSet3DPosition: () => {},
-            alSourceSetRolloffFactor: () => {},
-            
+            alSourceSetVolume: () => { },
+            alSourceSetPitch: () => { },
+            alSourceSetLoop: () => { },
+            alSourceSet3DPosition: () => { },
+            alSourceSetRolloffFactor: () => { },
+
             // Listener properties
-            alListenerSetPosition: () => {},
-            alListenerSetDirection: () => {},
-            alListenerSetUp: () => {},
-            alListenerSetVelocity: () => {},
-            alListenerSetMasterVolume: () => {},
-            
+            alListenerSetPosition: () => { },
+            alListenerSetDirection: () => { },
+            alListenerSetUp: () => { },
+            alListenerSetVelocity: () => { },
+            alListenerSetMasterVolume: () => { },
+
             // Effects
             alCreateEffect: () => 1,
-            alFreeEffect: () => {},
-            alEffectSetEAXReverb: () => {}
+            alFreeEffect: () => { },
+            alEffectSetEAXReverb: () => { }
         }
     },
 
-    loadEngine: async function() {
+    loadEngine: async function () {
         console.log("Loading Blitz3DEngine.wasm...");
         try {
             const response = await fetch('dist/Blitz3DEngine.wasm');
@@ -373,20 +384,20 @@ const Blitz3D = {
             });
             this.engineInstance = result.instance;
             this.engineExports = result.instance.exports;
-            
+
             // Populate blitz3d imports for game WASM
             for (const key in this.engineExports) {
                 if (typeof this.engineExports[key] === 'function') {
                     this.imports.blitz3d[key] = this.engineExports[key];
                 }
             }
-            
+
             // Enable WASM collision if available
             if (this.physics) {
                 this.physics.setWasmEngineReady(true);
                 this.physics.enableWasmCollision(true);
             }
-            
+
             console.log("Blitz3DEngine loaded and linked.");
         } catch (e) {
             console.warn("Blitz3DEngine not available, using JS fallback:", e.message);
@@ -404,6 +415,16 @@ const Blitz3D = {
         }
 
         await this.loadEngine();
+
+        // Load debug metadata if debugger is present
+        if (this.debug) {
+            try {
+                // Infer metadata path from WASM URL (e.g. game.wasm -> game.bbdbg.json)
+                await this.debug.loadMetadata(wasmUrl);
+            } catch (e) {
+                console.warn("[runtime] Failed to load debug metadata", e);
+            }
+        }
 
         this.setupInput();
         console.log(`Loading WASM from ${wasmUrl}...`);

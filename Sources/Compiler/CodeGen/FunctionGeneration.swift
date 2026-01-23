@@ -61,6 +61,16 @@ public final class FunctionGeneration {
         // Initialize local variables tracking
         context.variableManagement.clearLocals()
         
+        // Debug: Register function and inject 'enter'
+        var debugFuncId: Int?
+        if let gen = context.debugGenerator, let indices = context.debugIndices {
+            let funcId = gen.registerFunction(name: functionNode.name, signature: typeSignature, span: functionNode.span)
+            debugFuncId = funcId
+            
+            function.body.append(.i32Const(Int32(funcId)))
+            function.body.append(.call(indices.enter))
+        }
+        
         var sortedLabels: [String] = []
         
         // 1. Register Parameters (indices 0..N-1)
@@ -167,6 +177,11 @@ public final class FunctionGeneration {
 
         // Ensure return at end
         ensureReturn(function: &function, returnType: functionNode.returnType)
+        
+        // Debug: Inject 'leave' hook before returns
+        if let funcId = debugFuncId, let indices = context.debugIndices {
+             function.body = injectDebugLeave(function.body, leaveIdx: indices.leave, funcId: funcId)
+        }
 
         // Validate local variable indices
         let paramCount = functionNode.parameters.count + (gotoStateLocalIdx >= 0 ? 1 : 0)
@@ -182,6 +197,7 @@ public final class FunctionGeneration {
 
         self.context.module.code.append(function)
         self.context.module.functions.append(typeIdx)
+        self.context.module.functionNames.append(functionNode.name)  // For WASM name section
 
         self.context.functionIndexMap[functionNode.name.lowercased()] = globalFuncIdx
         self.context.functionOriginalNames[functionNode.name.lowercased()] = functionNode.name
@@ -329,5 +345,36 @@ public final class FunctionGeneration {
             }
         }
         return (labels, hasGoto, gosubCount)
+    }
+
+    private func injectDebugLeave(_ instrs: [WASMInstruction], leaveIdx: Int, funcId: Int) -> [WASMInstruction] {
+        var result: [WASMInstruction] = []
+        for instr in instrs {
+            switch instr {
+            case .return:
+                result.append(.i32Const(Int32(funcId)))
+                result.append(.call(leaveIdx))
+                result.append(.return)
+            case .block(let type, let inner):
+                result.append(.block(type, injectDebugLeave(inner, leaveIdx: leaveIdx, funcId: funcId)))
+            case .loop(let type, let inner):
+                result.append(.loop(type, injectDebugLeave(inner, leaveIdx: leaveIdx, funcId: funcId)))
+            case .if(let type, let thenBody, let elseBody):
+                let newThen = injectDebugLeave(thenBody, leaveIdx: leaveIdx, funcId: funcId)
+                let newElse = elseBody.map { injectDebugLeave($0, leaveIdx: leaveIdx, funcId: funcId) }
+                result.append(.if(type, newThen, newElse))
+            case .sourceLocation(let span, let inner):
+                 let processed = injectDebugLeave([inner], leaveIdx: leaveIdx, funcId: funcId)
+                 if processed.count == 1 {
+                     result.append(.sourceLocation(span, processed[0]))
+                 } else {
+                     // Wrap expanded instructions in a block to preserve source mapping
+                     result.append(.sourceLocation(span, .block(.void, processed)))
+                 }
+            default:
+                result.append(instr)
+            }
+        }
+        return result
     }
 }

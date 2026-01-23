@@ -12,9 +12,8 @@ public class TypeInference {
     private var cache: [String: WASMType] = [:]
     private let typeHandling: TypeHandling
     
-    /// Maximum recursion depth to prevent stack overflow
-    /// Set very low because multiple parallel paths (if/select/for) multiply the depth
-    private static let maxRecursionDepth = 20
+    /// Cap work per inference to avoid pathological scans on very large functions.
+    private static let maxStatementsVisited = 20_000
     
     public init(typeHandling: TypeHandling) {
         self.typeHandling = typeHandling
@@ -49,102 +48,81 @@ public class TypeInference {
     
     // MARK: - Private Scanning Methods
     
-    private func scanForTypeHint(variableName: String, in statements: [StatementNode], depth: Int = 0) -> WASMType? {
-        // Prevent stack overflow from deeply nested control flow
-        guard depth < Self.maxRecursionDepth else {
-            print("DEBUG_INFERENCE: Max recursion depth reached for '\\(variableName)', stopping scan")
-            return nil
-        }
-        
-        for statement in statements {
-            if let type = scanStatement(statement, forVariable: variableName, depth: depth) {
+    private func scanForTypeHint(variableName: String, in statements: [StatementNode]) -> WASMType? {
+        // Iterative traversal avoids recursion-depth failure on huge nested if/elseIf chains (e.g. Main.bb).
+        var stack = Array(statements.reversed())
+        var visited = 0
+
+        while let statement = stack.popLast() {
+            visited += 1
+            if visited > Self.maxStatementsVisited { return nil }
+
+            if let type = scanStatementShallow(statement, forVariable: variableName) {
                 return type
             }
+
+            // Push nested statement blocks for traversal.
+            switch statement {
+            case .ifStatement(let ifNode, _):
+                if !ifNode.elseBranch.isEmpty {
+                    stack.append(contentsOf: ifNode.elseBranch.reversed())
+                }
+                // elseIf bodies (in order)
+                for (_, body) in ifNode.elseIfs.reversed() {
+                    stack.append(contentsOf: body.reversed())
+                }
+                stack.append(contentsOf: ifNode.thenBranch.reversed())
+
+            case .whileLoop(let whileNode, _):
+                stack.append(contentsOf: whileNode.body.reversed())
+
+            case .forLoop(let forNode, _):
+                stack.append(contentsOf: forNode.body.reversed())
+
+            case .repeatLoop(let repeatNode, _):
+                stack.append(contentsOf: repeatNode.body.reversed())
+
+            case .select(let selectNode, _):
+                if let defaultCase = selectNode.defaultCase {
+                    stack.append(contentsOf: defaultCase.reversed())
+                }
+                for caseNode in selectNode.cases.reversed() {
+                    stack.append(contentsOf: caseNode.body.reversed())
+                }
+
+            default:
+                break
+            }
         }
+
         return nil
     }
-    
-    private func scanStatement(_ statement: StatementNode, forVariable name: String, depth: Int) -> WASMType? {
+
+    private func scanStatementShallow(_ statement: StatementNode, forVariable name: String) -> WASMType? {
         switch statement {
         case .assignment(let assign, _):
-            // Check if this is an assignment to our variable
-            if case .identifier(let id, _) = assign.target, id.name == name {
-                // If it has a type suffix, we found our hint!
-                if let suffix = id.typeSuffix {
-                    return typeHandling.wasmType(from: suffix)
-                }
+            if case .identifier(let id, _) = assign.target, id.name == name, let suffix = id.typeSuffix {
+                return typeHandling.wasmType(from: suffix)
             }
-            
         case .local(let decl, _):
-            // Check if variable is declared with type suffix
             for id in decl.variables {
                 if id.name == name, let suffix = id.typeSuffix {
                     return typeHandling.wasmType(from: suffix)
                 }
             }
-            
         case .global(let decl, _):
-            // Check if variable is declared with type suffix
             for id in decl.variables {
                 if id.name == name, let suffix = id.typeSuffix {
                     return typeHandling.wasmType(from: suffix)
                 }
             }
-            
-        case .ifStatement(let ifNode, _):
-            // Scan then branch
-            if let type = scanForTypeHint(variableName: name, in: ifNode.thenBranch, depth: depth + 1) {
-                return type
-            }
-            // Scan else branch (elseBranch is [StatementNode], not optional)
-            if !ifNode.elseBranch.isEmpty {
-                if let type = scanForTypeHint(variableName: name, in: ifNode.elseBranch, depth: depth + 1) {
-                    return type
-                }
-            }
-            
-        case .whileLoop(let whileNode, _):
-            if let type = scanForTypeHint(variableName: name, in: whileNode.body, depth: depth + 1) {
-                return type
-            }
-            
         case .forLoop(let forNode, _):
-            // Check if loop variable matches
             if forNode.variable.name == name, let suffix = forNode.variable.typeSuffix {
                 return typeHandling.wasmType(from: suffix)
             }
-            if let type = scanForTypeHint(variableName: name, in: forNode.body, depth: depth + 1) {
-                return type
-            }
-            
-        case .forEach(let forEachNode, _):
-            // ForEach loops don't declare the variable, they iterate over existing types
-            // So we can't infer type from forEach loop
-            break
-            
-        case .repeatLoop(let repeatNode, _):
-            if let type = scanForTypeHint(variableName: name, in: repeatNode.body, depth: depth + 1) {
-                return type
-            }
-            
-        case .select(let selectNode, _):
-            // Scan all cases
-            for caseNode in selectNode.cases {
-                if let type = scanForTypeHint(variableName: name, in: caseNode.body, depth: depth + 1) {
-                    return type
-                }
-            }
-            if let defaultCase = selectNode.defaultCase {
-                if let type = scanForTypeHint(variableName: name, in: defaultCase, depth: depth + 1) {
-                    return type
-                }
-            }
-            
         default:
-            // For other statement types, no type inference possible
             break
         }
-        
         return nil
     }
 }

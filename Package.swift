@@ -34,7 +34,7 @@ let package = Package(
             name: "Blitz3DCompiler",
             dependencies: [],
             path: "Sources/Compiler",
-            exclude: ["CodeGen/REFACTORING_PLAN.md"]
+            exclude: ["CodeGen/REFACTORING_PLAN.md", "IR/PLACEHOLDER.md"]
         ),
         .testTarget(
             name: "CompilerTests",

@@ -11,11 +11,13 @@ public struct Lexer {
     private var currentLine: Int
     private var currentColumn: Int
     private let sourceFile: String
+    private let lineMap: [Int: (file: String, line: Int)]?
     private var lineStarts: [String.Index]  // For line lookup
     
-    public init(source: String, sourceFile: String = "unknown") {
+    public init(source: String, sourceFile: String = "unknown", lineMap: [Int: (file: String, line: Int)]? = nil) {
         self.source = source
         self.sourceFile = sourceFile
+        self.lineMap = lineMap
         self.currentIndex = source.startIndex
         self.currentLine = 1
         self.currentColumn = 1
@@ -43,7 +45,7 @@ public struct Lexer {
         
         guard currentIndex < source.endIndex else {
             print("DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
-            return Token(type: .endOfFile, text: "", line: currentLine, column: currentColumn, sourceFile: sourceFile)
+            return makeToken(.endOfFile, text: "", line: currentLine, column: currentColumn)
         }
         
         let ch = source[currentIndex]
@@ -52,7 +54,7 @@ public struct Lexer {
             advance()
             currentLine += 1
             currentColumn = 1
-            return Token(type: .newline, text: "\n", line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.newline, text: "\n", line: startLine, column: startColumn)
         }
         
         // Comments
@@ -172,7 +174,7 @@ public struct Lexer {
             }
         }
         
-        return Token(type: .stringLiteral, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
+        return makeToken(.stringLiteral, text: text, line: startLine, column: startColumn)
     }
     
     private mutating func readNumber(startLine: Int, startColumn: Int) -> Token {
@@ -208,9 +210,9 @@ public struct Lexer {
         }
         
         if hasDecimal || text.contains("e") || text.contains("E") {
-            return Token(type: .floatLiteral, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.floatLiteral, text: text, line: startLine, column: startColumn)
         } else {
-            return Token(type: .integerLiteral, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.integerLiteral, text: text, line: startLine, column: startColumn)
         }
     }
     
@@ -230,10 +232,10 @@ public struct Lexer {
 
         // Convert to integer
         if let value = Int(text, radix: 16) {
-            return Token(type: .integerLiteral, text: String(value), line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.integerLiteral, text: String(value), line: startLine, column: startColumn)
         }
 
-        return Token(type: .error, text: "$" + text, line: startLine, column: startColumn, sourceFile: sourceFile)
+        return makeToken(.error, text: "$" + text, line: startLine, column: startColumn)
     }
 
     private mutating func readBinaryLiteral(startLine: Int, startColumn: Int) -> Token {
@@ -252,10 +254,10 @@ public struct Lexer {
 
         // Convert to integer
         if let value = Int(text, radix: 2) {
-            return Token(type: .integerLiteral, text: String(value), line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.integerLiteral, text: String(value), line: startLine, column: startColumn)
         }
-
-        return Token(type: .error, text: "%" + text, line: startLine, column: startColumn, sourceFile: sourceFile)
+        
+        return makeToken(.error, text: "%" + text, line: startLine, column: startColumn)
     }
     
     private mutating func readIdentifierOrKeyword(startLine: Int, startColumn: Int) -> Token {
@@ -313,7 +315,7 @@ public struct Lexer {
                 let combined = text + " " + nextWord
                 if let keywordType = keywordMap[combined.lowercased()] {
                     print("DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)")
-                    return Token(type: keywordType, text: combined, line: startLine, column: startColumn, sourceFile: sourceFile)
+                    return makeToken(keywordType, text: combined, line: startLine, column: startColumn)
                 }
             }
             
@@ -329,10 +331,10 @@ public struct Lexer {
             if keywordType == .keywordFunction {
                 print("DEBUG_LEXER: Producing .keywordFunction at line \(startLine)")
             }
-            return Token(type: keywordType, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(keywordType, text: text, line: startLine, column: startColumn)
         }
         
-        return Token(type: .identifier, text: text, line: startLine, column: startColumn, sourceFile: sourceFile)
+        return makeToken(.identifier, text: text, line: startLine, column: startColumn)
     }
     
     private mutating func readOperatorOrPunctuation(startLine: Int, startColumn: Int) -> Token {
@@ -346,13 +348,13 @@ public struct Lexer {
             switch twoChar {
             case "<>":
                 advance()
-                return Token(type: .notEquals, text: twoChar, line: startLine, column: startColumn, sourceFile: sourceFile)
+                return makeToken(.notEquals, text: twoChar, line: startLine, column: startColumn)
             case "<=":
                 advance()
-                return Token(type: .lessThanOrEqual, text: twoChar, line: startLine, column: startColumn, sourceFile: sourceFile)
+                return makeToken(.lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             case ">=":
                 advance()
-                return Token(type: .greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn, sourceFile: sourceFile)
+                return makeToken(.greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             default:
                 break
             }
@@ -360,24 +362,31 @@ public struct Lexer {
         
         // Single character
         switch ch {
-        case "+": return Token(type: .plus, text: "+", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "-": return Token(type: .minus, text: "-", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "*": return Token(type: .multiply, text: "*", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "/": return Token(type: .divide, text: "/", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "=": return Token(type: .equals, text: "=", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "<": return Token(type: .lessThan, text: "<", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case ">": return Token(type: .greaterThan, text: ">", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "(": return Token(type: .leftParen, text: "(", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case ")": return Token(type: .rightParen, text: ")", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "[": return Token(type: .leftBracket, text: "[", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "]": return Token(type: .rightBracket, text: "]", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case ",": return Token(type: .comma, text: ",", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case "\\": return Token(type: .backslash, text: "\\", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case ":": return Token(type: .colon, text: ":", line: startLine, column: startColumn, sourceFile: sourceFile)
-        case ".": return Token(type: .period, text: ".", line: startLine, column: startColumn, sourceFile: sourceFile)
+        case "+": return makeToken(.plus, text: "+", line: startLine, column: startColumn)
+        case "-": return makeToken(.minus, text: "-", line: startLine, column: startColumn)
+        case "*": return makeToken(.multiply, text: "*", line: startLine, column: startColumn)
+        case "/": return makeToken(.divide, text: "/", line: startLine, column: startColumn)
+        case "=": return makeToken(.equals, text: "=", line: startLine, column: startColumn)
+        case "<": return makeToken(.lessThan, text: "<", line: startLine, column: startColumn)
+        case ">": return makeToken(.greaterThan, text: ">", line: startLine, column: startColumn)
+        case "(": return makeToken(.leftParen, text: "(", line: startLine, column: startColumn)
+        case ")": return makeToken(.rightParen, text: ")", line: startLine, column: startColumn)
+        case "[": return makeToken(.leftBracket, text: "[", line: startLine, column: startColumn)
+        case "]": return makeToken(.rightBracket, text: "]", line: startLine, column: startColumn)
+        case ",": return makeToken(.comma, text: ",", line: startLine, column: startColumn)
+        case "\\": return makeToken(.backslash, text: "\\", line: startLine, column: startColumn)
+        case ":": return makeToken(.colon, text: ":", line: startLine, column: startColumn)
+        case ".": return makeToken(.period, text: ".", line: startLine, column: startColumn)
         default:
-            return Token(type: .error, text: String(ch), line: startLine, column: startColumn, sourceFile: sourceFile)
+            return makeToken(.error, text: String(ch), line: startLine, column: startColumn)
         }
+    }
+
+    private func makeToken(_ type: TokenType, text: String, line: Int, column: Int) -> Token {
+        if let map = lineMap, let entry = map[line] {
+            return Token(type: type, text: text, line: entry.line, column: column, sourceFile: entry.file)
+        }
+        return Token(type: type, text: text, line: line, column: column, sourceFile: sourceFile)
     }
     
     // Keyword lookup table (case-insensitive)

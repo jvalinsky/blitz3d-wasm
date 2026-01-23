@@ -24,7 +24,6 @@ final class IRPipelineTests: XCTestCase {
     private func calculateStackDelta(_ instructions: [WASMInstruction], trace: inout String) -> Int {
         var count = 0
         for instr in instructions {
-            // Unwrap sourceLocation if present
             let actualInstr: WASMInstruction
             if case .sourceLocation(_, let inner) = instr {
                 actualInstr = inner
@@ -34,22 +33,29 @@ final class IRPipelineTests: XCTestCase {
 
             let prevCount = count
             switch actualInstr {
-            case .i32Const, .f32Const, .localGet, .globalGet:
+            case .i32Const(_), .f32Const(_), .localGet(_), .globalGet(_):
                 count += 1
-            case .localSet, .globalSet, .drop, .brIf:
+            case .localSet(_), .globalSet(_), .localTee(_), .drop:
                 count -= 1
-            case .brTable(let targets, let defaultTarget):
+            case .brIf(_):
+                count -= 1
+            case .brTable(_, _):
                 count -= 1
             case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrS, .i32RemS:
-                count -= 1 // 2 in, 1 out
+                count -= 1 
             case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge:
-                count -= 1 // 2 in, 1 out
+                count -= 1
+            case .i32EqZ, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
+                break 
+            case .i32Load(_, _), .f32Load(_, _):
+                break 
+            case .i32Store(_, _), .f32Store(_, _):
+                count -= 2
             case .call(let idx):
                 if idx == 0 { count -= 1 } else { count += 1 }
             case .block(let type, let body), .loop(let type, let body):
                 var innerTrace = ""
                 let inner = calculateStackDelta(body, trace: &innerTrace)
-                trace += "  Sub-trace:\n\(innerTrace)"
                 count += inner
                 if type != .void && inner == 0 { count += 1 }
             case .if(let type, let thenBody, let elseBody):
@@ -59,7 +65,7 @@ final class IRPipelineTests: XCTestCase {
                 count += thenDelta
             case .return:
                 trace += "  [RET] \(actualInstr): \(prevCount) -> \(count)\n"
-                return count // stop here
+                return count
             default:
                 break
             }
@@ -150,7 +156,6 @@ final class IRPipelineTests: XCTestCase {
             return
         }
 
-        // Check if f32Add is used
         let hasF32Add = main.body.contains { instr in
             let actual: WASMInstruction
             if case .sourceLocation(_, let inner) = instr { actual = inner } else { actual = instr }
@@ -180,13 +185,9 @@ final class IRPipelineTests: XCTestCase {
         
         let bodyStr = "\(main.body)"
         if !bodyStr.contains("i32Mul") || !bodyStr.contains("i32Add") {
-            var msg = "Missing indexing instructions. Instructions:\n"
-            for (i, instr) in main.body.enumerated() {
-                msg += "  [\(i)] \(instr)\n"
-            }
-            XCTFail(msg)
+            XCTFail("Missing indexing instructions. Trace:\n\(trace)")
         }
         
-        XCTAssertEqual(delta, 1, "Should return 1 value (x)")
+        XCTAssertEqual(delta, 1, "Should return 1 value (x). Trace:\n\(trace)")
     }
 }

@@ -270,10 +270,12 @@ public struct VariableManagement {
 public struct FunctionDefinition {
     public let params: [WASMType]
     public let results: [WASMType]
+    public let defaults: [Int: IRDefaultValue]?
     
-    public init(params: [WASMType], results: [WASMType]) {
+    public init(params: [WASMType], results: [WASMType], defaults: [Int: IRDefaultValue]? = nil) {
         self.params = params
         self.results = results
+        self.defaults = defaults
     }
 }
 
@@ -413,7 +415,7 @@ public final class ModuleContext {
     /// Dynamically register an import with the given signature if it does not already exist.
     /// Returns the function index (import index).
     @discardableResult
-    public func registerAutoImport(name: String, params: [WASMType], results: [WASMType]) -> Int {
+    public func registerAutoImport(name: String, params: [WASMType], results: [WASMType], defaults: [Int: IRDefaultValue]? = nil) -> Int {
         let lower = name.lowercased()
         if let existing = functionIndexMap[lower] {
             return existing
@@ -433,11 +435,40 @@ public final class ModuleContext {
         module.imports.append(WASMImport(module: "env", name: name, kind: .function, index: typeIdx))
 
         functionIndexMap[lower] = importIdx
-        let def = FunctionDefinition(params: params, results: results)
+        let def = FunctionDefinition(params: params, results: results, defaults: defaults)
         functionDefinitions[lower] = def
         functionDefinitionsByIndex[importIdx] = def
         functionOriginalNames[lower] = name
 
+        return importIdx
+    }
+    
+    /// Register a specific import from a specific module
+    @discardableResult
+    public func registerImport(name: String, internalName: String, params: [WASMType], results: [WASMType], module moduleName: String, defaults: [Int: IRDefaultValue]? = nil) -> Int {
+        let lowerInternal = internalName.lowercased()
+        
+        let resStr = results.map { $0.rawValue }.joined(separator: ", ")
+        let sig = "(" + params.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
+        
+        let typeIdx: Int
+        if let existingIdx = typeIndexMap[sig] {
+            typeIdx = existingIdx
+        } else {
+            typeIdx = module.types.count
+            module.types.append(WASMFunctionType(parameters: params, results: results))
+            typeIndexMap[sig] = typeIdx
+        }
+        
+        let importIdx = module.imports.count
+        module.imports.append(WASMImport(module: moduleName, name: name, kind: .function, index: typeIdx))
+        
+        functionIndexMap[lowerInternal] = importIdx
+        let def = FunctionDefinition(params: params, results: results, defaults: defaults)
+        functionDefinitions[lowerInternal] = def
+        functionDefinitionsByIndex[importIdx] = def
+        functionOriginalNames[lowerInternal] = internalName
+        
         return importIdx
     }
 }

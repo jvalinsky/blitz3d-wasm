@@ -691,34 +691,35 @@ public struct CodeGenerator {
         }
 
         for (name, internalName, params, results, moduleName) in imports {
-            let resStr = results.map { $0.rawValue }.joined(separator: ", ")
-            let sig = "(" + params.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
+            var defaults: [Int: IRDefaultValue]? = nil
             
-            let typeIdx: Int
-            if let existingIdx = context.typeIndexMap[sig] {
-                typeIdx = existingIdx
-            } else {
-                typeIdx = context.module.types.count
-                context.module.types.append(WASMFunctionType(parameters: params, results: results))
-                context.typeIndexMap[sig] = typeIdx
+            // Add some common defaults
+            if name == "Graphics" || name == "Graphics3D" {
+                defaults = [2: .i32(0), 3: .i32(0)]
+            } else if name == "CreateCamera" {
+                defaults = [0: .i32(0)]
+            } else if name == "CreateLight" {
+                defaults = [0: .i32(1), 1: .i32(0)]
+            } else if name == "Flip" {
+                defaults = [0: .i32(1)]
+            } else if name == "VWait" {
+                defaults = [0: .i32(1)]
+            } else if name == "Text" {
+                defaults = [3: .i32(0), 4: .i32(0)]
             }
             
-            let importIdx = context.module.imports.count
-            context.module.imports.append(WASMImport(module: moduleName, name: name, kind: .function, index: typeIdx))
-            
-            let lowerInternalName = internalName.lowercased()
-            context.functionIndexMap[lowerInternalName] = importIdx
-            let def = FunctionDefinition(params: params, results: results)
-            context.functionDefinitions[lowerInternalName] = def
-            context.functionDefinitionsByIndex[importIdx] = def
-            
-            if name == "CreateCamera" {
-                print("DEBUG_COMPILER: Registered CreateCamera. Index: \(importIdx) Internal: \(lowerInternalName)")
-            }
+            let importIdx = context.registerImport(
+                name: name,
+                internalName: internalName,
+                params: params,
+                results: results,
+                module: moduleName,
+                defaults: defaults
+            )
             
             if name == "PrintInt" {
                 context.functionIndexMap["print"] = importIdx
-                context.functionDefinitions["print"] = FunctionDefinition(params: params, results: results)
+                context.functionDefinitions["print"] = FunctionDefinition(params: params, results: results, defaults: defaults)
             }
         }
 
@@ -1107,7 +1108,8 @@ public struct CodeGenerator {
     }
     
     public mutating func generateFromIR(_ program: ProgramNode) -> WASMModule {
-        let lowering = ASTLowering()
+        addImports()
+        let lowering = ASTLowering(context: context)
         let irModule = lowering.lower(program)
         
         let emitter = IREmitter()

@@ -18,3 +18,10 @@ public enum IRType: Hashable, CustomStringConvertible {
         return self != .void
     }
 }
+
+public enum IRDefaultValue: Hashable {
+    case i32(Int32)
+    case f32(Float)
+    case string(String)
+    case none
+}

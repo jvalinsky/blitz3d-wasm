@@ -129,9 +129,9 @@ public final class IREmitter {
             let indexInstrs = emitValue(index)
             let valueInstrs = emitValue(value)
             let wasmType = irTypeToWASM(elementType)
-            // Offset calculation: base + index * elementSize
-            var offsetInstrs: [WASMInstruction] = indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
-            return baseInstrs + offsetInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: 0)
+            // Address calculation: base + index * elementSize
+            var addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
+            return addrInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: 0)
             
         case .ifStmt(let condition, let thenBody, let elseBody):
             let condInstrs = emitValue(condition)
@@ -262,7 +262,9 @@ public final class IREmitter {
             let baseInstrs = emitValue(base)
             let indexInstrs = emitValue(index)
             let wasmType = irTypeToWASM(elementType)
-            return baseInstrs + indexInstrs + loadArrayInstrs(wasmType, elementSize: elementSize)
+            // Address calculation: base + index * elementSize
+            var addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
+            return addrInstrs + loadArrayInstrs(wasmType, elementSize: 0)
             
         case .convert(let val, let from, let to):
             let valInstrs = emitValue(val)

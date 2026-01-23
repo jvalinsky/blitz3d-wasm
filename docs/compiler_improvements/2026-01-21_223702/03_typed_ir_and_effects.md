@@ -51,10 +51,12 @@ This plan has been elevated to the highest priority following the failure of heu
 | IR Type System | ✅ Complete |
 | IR Nodes & Builder | ✅ Complete |
 | AST → IR Lowering | ✅ Complete |
-| IR → WASM Emitter | ✅ Complete (Initial) |
+| IR → WASM Emitter | ✅ Complete |
 | Wire into CodeGenerator | ✅ Complete |
 | Test Integration | ✅ CLI Flag Added |
 | ParserTests.swift | ✅ Fixed Syntax |
+| Multi-dim Arrays | ✅ Complete |
+| String Allocation | ✅ Complete |
 
 ## Goal
 

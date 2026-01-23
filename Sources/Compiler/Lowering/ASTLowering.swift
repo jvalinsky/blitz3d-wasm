@@ -5,15 +5,17 @@ public final class ASTLowering {
     private let builder: IRBuilder
     private var symbolTable: IRSymbolTable
     private var typeHandling: TypeHandling
+    private let context: ModuleContext
     
     private var irModuleData: [IRDataSegment] = []
     private var nextStringOffset: Int32 = 1024
     private var nextArrayOffset: Int32 = 65536
     
-    public init() {
+    public init(context: ModuleContext) {
         self.builder = IRBuilder()
         self.symbolTable = IRSymbolTable()
         self.typeHandling = TypeHandling()
+        self.context = context
     }
     
     public func lower(_ program: ProgramNode) -> IRModule {
@@ -159,14 +161,25 @@ public final class ASTLowering {
                     ))
                 }
                 
+            case .functionCall(let call, _):
+                if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
+                    let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+                    let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
+                    body.append(.assignArray(
+                        base: baseAddr,
+                        index: flatIndex,
+                        elementSize: arrayInfo.elementSize,
+                        elementType: arrayInfo.elementType,
+                        value: value
+                    ))
+                }
+                
             default:
                 break
             }
             
         case .functionCall(let call, _):
-            let args = call.arguments.map { lowerExpression($0) }
-            let resultType = lowerFunctionSignature(call.name).resultType
-            let callValue = IRValue.call(name: call.name.lowercased(), args: args, resultType: resultType)
+            let callValue = lowerCall(call)
             body.append(.discard(callValue))
             
         case .ifStatement(let ifNode, _):
@@ -310,9 +323,7 @@ public final class ASTLowering {
             }
             
         case .functionCall(let call, _):
-            let args = call.arguments.map { lowerExpression($0) }
-            let signature = lowerFunctionSignature(call.name)
-            return IRValue.call(name: call.name.lowercased(), args: args, resultType: signature.resultType)
+            return lowerCall(call)
             
         case .fieldAccess(let access, _):
             if let typeName = getTypeName(from: access.object),
@@ -373,22 +384,50 @@ public final class ASTLowering {
         }
     }
     
-    private func lowerFunctionSignature(_ name: String) -> (params: [IRType], resultType: IRType) {
-        // Create a minimal context for signature resolution
-        let module = WASMModule()
-        let context = ModuleContext(module: module)
-        
-        // Register built-in imports so they can be resolved
-        let builtInImports: [(String, [WASMType], [WASMType])] = [
-            ("PrintInt", [.i32], []),
-            ("PrintString", [.i32], []),
-            ("Graphics3D", [.i32, .i32, .i32, .i32], []),
-        ]
-        
-        for (name, params, results) in builtInImports {
-            _ = context.registerAutoImport(name: name, params: params, results: results)
+    private func lowerCall(_ call: FunctionCallNode) -> IRValue {
+        // First check if it's an array access (Blitz3D uses () for both)
+        if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
+            let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+            let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
+            return .loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
         }
         
+        var args = call.arguments.map { lowerExpression($0) }
+        let resolver = SignatureResolver(context: context)
+        
+        if let def = resolver.definition(forName: call.name) {
+            let expectedCount = def.params.count
+            if args.count < expectedCount {
+                // Synthesize default arguments
+                for i in args.count..<expectedCount {
+                    if let defaultValue = def.defaults?[i] {
+                        args.append(lowerDefaultValue(defaultValue))
+                    } else {
+                        // Fallback to 0 if no default specified but we are under-arity
+                        args.append(.constI32(0))
+                    }
+                }
+            }
+            
+            let irParams = def.params.map { irType(from: $0) }
+            let irResult = def.results.isEmpty ? .void : irType(from: def.results[0])
+            return .call(name: call.name.lowercased(), args: args, resultType: irResult)
+        }
+        
+        // Fallback for unknown functions
+        return .call(name: call.name.lowercased(), args: args, resultType: .i32)
+    }
+    
+    private func lowerDefaultValue(_ defaultValue: IRDefaultValue) -> IRValue {
+        switch defaultValue {
+        case .i32(let val): return .constI32(val)
+        case .f32(let val): return .constF32(val)
+        case .string(let val): return .constStringPtr(allocateString(val))
+        case .none: return .constI32(0)
+        }
+    }
+    
+    private func lowerFunctionSignature(_ name: String) -> (params: [IRType], resultType: IRType) {
         let resolver = SignatureResolver(context: context)
         if let def = resolver.definition(forName: name.lowercased()) {
             let params = def.params.map { irType(from: $0) }

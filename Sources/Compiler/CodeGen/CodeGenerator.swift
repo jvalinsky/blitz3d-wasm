@@ -32,9 +32,45 @@ public struct CodeGenerator {
         self.dataGenerator = DataGeneration(context: context)
         self.stackScheduler = StackScheduler()
 
-        // Link generators
         self.statementGenerator.configure(expressionGenerator: expressionGenerator, dataGenerator: dataGenerator)
         self.functionGenerator.configure(statementGenerator: statementGenerator)
+    }
+
+    public var diagnostics: [CompilerDiagnostic] {
+        context.diagnostics
+    }
+
+    public var hasDiagnostics: Bool {
+        !context.diagnostics.isEmpty
+    }
+    
+    public mutating func enableAutoImports(_ names: Set<String>, arities: [String: Int] = [:]) {
+        context.autoImportNames = names
+        context.autoImportArities = arities
+        expressionGenerator.updateContext(context)
+        statementGenerator.updateContext(context)
+        functionGenerator.updateContext(context)
+    }
+
+    /// Pre-register an auto-import with a fixed signature so later calls can pad to it.
+    /// Deprecated: prefer arity-based registration at first call site to avoid clobbering user-defined functions.
+    public mutating func preRegisterAutoImport(name: String, params: [WASMType], results: [WASMType]) {
+        _ = context.registerAutoImport(name: name, params: params, results: results)
+        expressionGenerator.updateContext(context)
+        statementGenerator.updateContext(context)
+        functionGenerator.updateContext(context)
+    }
+    
+    public mutating func enableSourceMapping(_ generator: SourceMapGenerator) {
+        context.sourceMapGenerator = generator
+        // Disable optimization to preserve source mapping structure and order
+        enableStackOptimization = false
+    }
+    
+    public mutating func enableDebugging(_ generator: DebugGenerator) {
+        context.debugGenerator = generator
+        // Disable optimization for debugging accuracy
+        enableStackOptimization = false
     }
     
     public mutating func generate(from program: ProgramNode) -> WASMModule {
@@ -46,6 +82,10 @@ public struct CodeGenerator {
         dataGenerator.setup()
         
         addImports()
+
+        // IMPORTANT: finalize any auto-imported stubs before we assign/emit any local function indices.
+        // Adding imports later would shift all local function indices and invalidate previously emitted calls.
+        preRegisterAutoImportsIfNeeded()
         
         processTypeDeclarations(program.types)
         setupUserTypeGlobals(program.types)
@@ -104,6 +144,20 @@ public struct CodeGenerator {
         return context.module
     }
 
+    private mutating func preRegisterAutoImportsIfNeeded() {
+        guard !context.autoImportNames.isEmpty, !context.autoImportArities.isEmpty else { return }
+
+        // Deterministic ordering keeps import indices stable across builds.
+        for (name, arity) in context.autoImportArities.sorted(by: { $0.key < $1.key }) {
+            let lower = name.lowercased()
+            if context.functionIndexMap[lower] != nil { continue } // already known (built-in import or pre-registered)
+
+            let targetArity = max(0, arity)
+            let params = Array(repeating: WASMType.i32, count: targetArity)
+            _ = context.registerAutoImport(name: lower, params: params, results: [.i32])
+        }
+    }
+
     /// Apply Koopman-style stack scheduling optimization to all function bodies
     private mutating func applyStackOptimizations() {
         var totalOptimized = 0
@@ -125,7 +179,7 @@ public struct CodeGenerator {
     }
     
     private mutating func addImports() {
-        let imports: [(String, String, [WASMType], [WASMType], String)] = [
+        var imports: [(String, String, [WASMType], [WASMType], String)] = [
             ("PrintInt", "PrintInt", [.i32], [], "env"),
             ("PrintString", "PrintString", [.i32], [], "env"),
             ("Graphics3D", "Graphics3D", [.i32, .i32, .i32, .i32], [], "env"),
@@ -568,12 +622,39 @@ public struct CodeGenerator {
             ("PickItem", "PickItem", [.i32], [], "env"),
             ("DropItem", "DropItem", [.i32], [], "env"),
             ("AnimateNPC", "AnimateNPC", [.i32, .f32, .f32, .f32, .f32, .i32], [], "env"),
-            ("Animate2", "Animate2", [.i32, .i32, .i32, .f32, .f32, .f32], [], "env"),
+            // Animate2 mirrors Blitz3D Animate2 semantics: entity, currentFrame, start, end, speed, loopFlag -> returns new frame (f32)
+            ("Animate2", "Animate2", [.i32, .f32, .f32, .f32, .f32, .i32], [.f32], "env"),
             ("ChangeNPCTextureID", "ChangeNPCTextureID", [.i32, .i32], [], "env"),
             ("CheckForNPCInFacility", "CheckForNPCInFacility", [.i32], [.i32], "env"),
             ("Console_SpawnNPC", "Console_SpawnNPC", [.i32], [], "env"),
             ("CreateConsoleMsg", "CreateConsoleMsg", [.i32], [], "env"),
             ("ChangeAngleValueForCorrectBoneAssigning", "ChangeAngleValueForCorrectBoneAssigning", [.f32], [.f32], "env"),
+            ("UseDoor", "UseDoor", [.i32, .i32, .i32], [], "env"),
+            ("PlaySound2", "PlaySound2", [.i32, .i32, .i32, .f32, .f32], [.i32], "env"),
+            ("LoopSound2", "LoopSound2", [.i32, .i32, .i32, .i32, .f32, .f32], [.i32], "env"),
+            ("UpdateSoundOrigin", "UpdateSoundOrigin", [.i32, .i32, .i32, .f32, .f32], [], "env"),
+            ("UpdateSoundOrigin2", "UpdateSoundOrigin2", [.i32, .i32, .i32, .f32, .f32], [], "env"),
+            ("SetNPCFrame", "SetNPCFrame", [.i32, .f32], [], "env"),
+            ("CreateNPC", "CreateNPC", [.i32, .f32, .f32, .f32], [.i32], "env"),
+            ("RemoveNPC", "RemoveNPC", [.i32], [], "env"),
+            ("FindPath", "FindPath", [.i32, .f32, .f32, .f32], [.i32], "env"),
+            ("PointEntity", "PointEntity", [.i32, .i32], [], "env"),
+            ("CreateEmitter", "CreateEmitter", [.f32, .f32, .f32, .i32], [.i32], "env"),
+            ("RemoveEvent", "RemoveEvent", [.i32], [], "env"),
+            ("LoadEventSound", "LoadEventSound", [.i32, .i32, .i32], [.i32], "env"),
+            ("DrawLoading", "DrawLoading", [.i32, .i32], [], "env"),
+            ("sky_CreateSky", "sky_CreateSky", [.i32, .i32], [.i32], "env"),
+            ("UpdateSky", "UpdateSky", [], [], "env"),
+            ("CameraFogMode", "CameraFogMode", [.i32, .i32], [], "env"),
+            ("CameraFogColor", "CameraFogColor", [.i32, .i32, .i32, .i32], [], "env"),
+            ("LoadSprite", "LoadSprite", [.i32, .i32], [.i32], "env"),
+            ("ScaleMesh", "ScaleMesh", [.i32, .f32, .f32, .f32], [], "env"),
+            ("StreamSound_Strict", "StreamSound_Strict", [.i32, .f32, .i32], [.i32], "env"),
+            ("StopStream_Strict", "StopStream_Strict", [.i32], [], "env"),
+            ("SetStreamVolume_Strict", "SetStreamVolume_Strict", [.i32, .f32], [], "env"),
+            ("PlayAnnouncement", "PlayAnnouncement", [.i32], [], "env"),
+            ("HideChunks", "HideChunks", [], [], "env"),
+            ("UpdateEndings", "UpdateEndings", [], [], "env"),
             
             // Geometry/Math Helpers
             ("AlignToVector", "AlignToVector", [.i32, .f32, .f32, .f32, .i32, .f32], [], "env"),
@@ -582,9 +663,33 @@ public struct CodeGenerator {
             ("Pow", "pow", [.f32, .f32], [.f32], "env"),
             
             // Camera Functions
-            ("CameraProject", "CameraProject", [.i32, .f32, .f32, .f32], [], "env")
+            ("CameraProject", "CameraProject", [.i32, .f32, .f32, .f32], [], "env"),
+            ("CameraFogRange", "CameraFogRange", [.i32, .f32, .f32], [], "env"),
+            
+            // Additional runtime helpers
+            ("DeltaYaw", "DeltaYaw", [.i32, .i32], [.f32], "env"),
+            ("EntityAutoFade", "EntityAutoFade", [.i32, .f32, .f32], [], "env"),
+            ("GetBrushTexture", "GetBrushTexture", [.i32, .i32], [.i32], "env"),
+            ("GetSurfaceBrush", "GetSurfaceBrush", [.i32], [.i32], "env"),
+            ("KeyName", "KeyName", [.i32], [.i32], "env"),
+            ("MeshWidth", "MeshWidth", [.i32], [.f32], "env"),
+            ("MeshHeight", "MeshHeight", [.i32], [.f32], "env"),
+            ("MeshDepth", "MeshDepth", [.i32], [.f32], "env"),
+            ("PickedEntity", "PickedEntity", [], [.i32], "env"),
+            ("PickedNX", "PickedNX", [], [.f32], "env"),
+            ("PickedNY", "PickedNY", [], [.f32], "env"),
+            ("PickedNZ", "PickedNZ", [], [.f32], "env"),
+            ("TextureName", "TextureName", [.i32], [.i32], "env"),
+            ("RndSeed", "RndSeed", [], [.i32], "env")
         ]
         
+        // Add debug helper imports if debugging is enabled
+        if context.debugGenerator != nil {
+            imports.append(("enter", "__bbdbg_enter", [.i32], [], "bbdbg"))
+            imports.append(("leave", "__bbdbg_leave", [.i32], [], "bbdbg"))
+            imports.append(("stmt", "__bbdbg_stmt", [.i32, .i32], [], "bbdbg"))
+        }
+
         for (name, internalName, params, results, moduleName) in imports {
             let resStr = results.map { $0.rawValue }.joined(separator: ", ")
             let sig = "(" + params.map { $0.rawValue }.joined(separator: ", ") + ") -> " + (resStr.isEmpty ? "void" : resStr)
@@ -625,6 +730,15 @@ public struct CodeGenerator {
             }
         }
         #endif
+        
+        // Capture debug function indices
+        if context.debugGenerator != nil {
+            if let enter = context.functionIndexMap["__bbdbg_enter"],
+               let leave = context.functionIndexMap["__bbdbg_leave"],
+               let stmt = context.functionIndexMap["__bbdbg_stmt"] {
+                context.debugIndices = (enter, leave, stmt)
+            }
+        }
     }
     
     private func evaluateIntExpression(_ expr: ExpressionNode) -> Int? {
@@ -895,6 +1009,7 @@ public struct CodeGenerator {
         let funcIdx = context.module.imports.count + context.module.functions.count
         context.module.code.append(allocFunc)
         context.module.functions.append(allocIdx)
+        context.module.functionNames.append("__Alloc")  // For WASM name section
         context.functionIndexMap["__alloc"] = funcIdx
         context.module.exports.append(WASMExport(name: "__Alloc", kind: .function, index: funcIdx))
         
@@ -922,6 +1037,7 @@ public struct CodeGenerator {
         let strFuncIdx = context.module.imports.count + context.module.functions.count
         context.module.code.append(strAllocFunc)
         context.module.functions.append(strAllocTypeIdx)
+        context.module.functionNames.append("__StringAlloc")  // For WASM name section
         context.functionIndexMap["__stringalloc"] = strFuncIdx
         context.module.exports.append(WASMExport(name: "__StringAlloc", kind: .function, index: strFuncIdx))
         
@@ -985,7 +1101,18 @@ public struct CodeGenerator {
         let strConcatIdx = context.module.imports.count + context.module.functions.count
         context.module.code.append(strConcatFunc)
         context.module.functions.append(strConcatTypeIdx)
+        context.module.functionNames.append("__StringConcat")  // For WASM name section
         context.functionIndexMap["__stringconcat"] = strConcatIdx
         context.module.exports.append(WASMExport(name: "__StringConcat", kind: .function, index: strConcatIdx))
+    }
+    
+    public mutating func generateFromIR(_ program: ProgramNode) -> WASMModule {
+        let lowering = ASTLowering()
+        let irModule = lowering.lower(program)
+        
+        let emitter = IREmitter()
+        let wasmModule = emitter.emit(module: irModule)
+        
+        return wasmModule
     }
 }

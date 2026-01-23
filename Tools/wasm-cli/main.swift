@@ -14,6 +14,8 @@ func printUsage() {
     print("")
     print("Options:")
     print("  -o, --output <file>     Output WASM file (default: input.wasm)")
+    print("  -g, --source-map        Generate source map (.wasm.map)")
+    print("  -d, --debug             Instrument with live debug hooks")
     print("  -h, --help              Show this help")
     print("  -t, --tokens            Show tokens only (debug)")
     print("  -w, --wat               Output WebAssembly text format (.wat)")
@@ -22,6 +24,7 @@ func printUsage() {
     print("  -p, --project <file>    Project file (JSON) specifying sources and assets")
     print("  --embed-assets          Embed assets into WASM data sections")
     print("  --manifest              Generate asset manifest JSON")
+    print("  --use-ir                Use new Typed IR pipeline (experimental)")
     print("")
     print("Examples:")
     print("  blitz3d-wasm game.bb -o game.wasm")
@@ -190,7 +193,134 @@ func tokenizeAndPrint(source: String, sourceFile: String) {
     }
 }
 
-func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false) {
+func collectAutoImportArities(program: ProgramNode, allowlist: Set<String>) -> [String: Int] {
+    var arities: [String: Int] = [:]
+    
+    var definedFunctions: Set<String> = Set(program.functions.map { fn in
+        var n = fn.name.lowercased()
+        if let last = n.last, last == "#" || last == "$" || last == "%" {
+            n = String(n.dropLast())
+        }
+        return n
+    })
+    // `_main` isn't in source but is generated; exclude anyway.
+    definedFunctions.insert("_main")
+
+    func normalizeName(_ name: String) -> String {
+        var lower = name.lowercased()
+        if let last = lower.last, last == "#" || last == "$" || last == "%" {
+            lower = String(lower.dropLast())
+        }
+        return lower
+    }
+
+    func recordCall(_ name: String, args: [ExpressionNode]) {
+        let lower = normalizeName(name)
+        guard allowlist.contains(lower) else { return }
+        // Don't auto-import functions defined in the current program (includes already merged).
+        guard !definedFunctions.contains(lower) else { return }
+        let count = args.count
+        if let existing = arities[lower] {
+            if count > existing { arities[lower] = count }
+        } else {
+            arities[lower] = count
+        }
+    }
+    
+    func walkExpr(_ expr: ExpressionNode) {
+        switch expr {
+        case .binary(let node, _):
+            walkExpr(node.left); walkExpr(node.right)
+        case .unary(let node, _):
+            walkExpr(node.expression)
+        case .functionCall(let call, _):
+            recordCall(call.name, args: call.arguments)
+            call.arguments.forEach(walkExpr)
+        case .arrayAccess(let acc, _):
+            acc.indices.forEach(walkExpr)
+        case .fieldAccess(let f, _):
+            walkExpr(f.object)
+        case .typeCast(let tc, _):
+            walkExpr(tc.expression)
+        case .before(let e, _), .after(let e, _), .handle(let e, _):
+            walkExpr(e)
+        case .objectCast(_, let e, _):
+            walkExpr(e)
+        default:
+            break
+        }
+    }
+    
+    func walkStmt(_ stmt: StatementNode) {
+        switch stmt {
+        case .assignment(let assign, _):
+            walkExpr(assign.value)
+        case .ifStatement(let node, _):
+            walkExpr(node.condition)
+            node.thenBranch.forEach(walkStmt)
+            node.elseIfs.forEach { walkExpr($0.0); $0.1.forEach(walkStmt) }
+            node.elseBranch.forEach(walkStmt)
+        case .whileLoop(let node, _):
+            walkExpr(node.condition)
+            node.body.forEach(walkStmt)
+        case .forLoop(let node, _):
+            walkExpr(node.startValue)
+            walkExpr(node.endValue)
+            if let step = node.stepValue { walkExpr(step) }
+            node.body.forEach(walkStmt)
+        case .forEach(let node, _):
+            node.body.forEach(walkStmt)
+        case .repeatLoop(let node, _):
+            node.body.forEach(walkStmt)
+            walkExpr(node.condition)
+        case .functionCall(let call, _):
+            recordCall(call.name, args: call.arguments)
+            call.arguments.forEach(walkExpr)
+        case .select(let node, _):
+            walkExpr(node.expression)
+            node.cases.forEach { c in
+                c.values.forEach {
+                    if case .single(let e) = $0 { walkExpr(e) }
+                    if case .range(let a, let b) = $0 { walkExpr(a); walkExpr(b) }
+                }
+                c.body.forEach(walkStmt)
+            }
+            node.defaultCase?.forEach(walkStmt)
+        case .returnStatement(let expr, _):
+            if let e = expr { walkExpr(e) }
+        case .read(let ids, _):
+            ids.forEach { _ in }
+        case .function(let fn, _):
+            fn.body.forEach(walkStmt)
+        case .typeDeclaration(let td, _):
+            td.fields.forEach { f in
+                f.dimensions.forEach(walkExpr)
+                if let def = f.defaultValue { walkExpr(def) }
+            }
+        default:
+            break
+        }
+    }
+    
+    program.statements.forEach(walkStmt)
+    program.functions.forEach { fn in fn.body.forEach(walkStmt) }
+    return arities
+}
+
+func loadAutoImportNames(from path: String?) -> Set<String> {
+    guard let path = path else { return [] }
+    do {
+        let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            return Set(json.keys.map { $0.lowercased() })
+        }
+    } catch {
+        print("Warning: Failed to load auto-import map from \(path): \(error)")
+    }
+    return []
+}
+
+func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false, generateSourceMap: Bool = false, generateDebug: Bool = false, autoImportNames: Set<String> = [], useIR: Bool = false) {
     do {
         print("Compiling: \(inputPath)")
         print("Output: \(outputPath)")
@@ -205,12 +335,21 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         
         // Preprocess
         var preprocessor = Preprocessor()
-        let source = try preprocessor.process(file: inputPath)
-        print("Preprocessed source size: \(source.count) characters")
+        let preprocessed = try preprocessor.processWithMap(file: inputPath)
+        print("Preprocessed source size: \(preprocessed.source.count) characters")
         
         // Parse
-        var parser = Parser(source: source, sourceFile: inputPath)
+        var parser = Parser(source: preprocessed.source, sourceFile: inputPath, lineMap: preprocessed.lineMap)
         let program = parser.parse()
+        
+        if parser.hasErrors {
+            print("Parser errors found:")
+            for error in parser.errors {
+                print(error)
+            }
+            // Decide whether to stop or continue. For now, stop to be safe.
+            exit(1)
+        }
         
         print("Parsed program:")
         print("  - \(program.statements.count) top-level statements")
@@ -226,9 +365,50 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         print("")
         
         // Generate WASM
-        var codeGen = CodeGenerator()
-        let mutatableModule = codeGen.generate(from: program)
+        let module: WASMModule
+        if useIR {
+            print("Using Typed IR pipeline (experimental)")
+            print("")
+            var codeGen = CodeGenerator()
+            module = codeGen.generateFromIR(program)
+        } else {
+            var codeGen = CodeGenerator()
+            if !autoImportNames.isEmpty {
+                let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                codeGen.enableAutoImports(autoImportNames, arities: arities)
+            }
+            var sourceMapGenerator: SourceMapGenerator?
+            var debugGenerator: DebugGenerator?
+            
+            if generateSourceMap {
+                sourceMapGenerator = SourceMapGenerator()
+                codeGen.enableSourceMapping(sourceMapGenerator!)
+            }
+            
+            if generateDebug {
+                debugGenerator = DebugGenerator()
+                codeGen.enableDebugging(debugGenerator!)
+            }
+            
+            module = codeGen.generate(from: program)
+            
+            if codeGen.hasDiagnostics {
+                print("Code generation errors found:")
+                for diagnostic in codeGen.diagnostics {
+                    print(diagnostic)
+                }
+                exit(1)
+            }
+        }
+        
+        var mutatableModule = module
+
         var module = mutatableModule
+        
+        if generateSourceMap {
+            let mapFileName = URL(fileURLWithPath: outputPath).lastPathComponent + ".map"
+            module.sourceMapURL = mapFileName
+        }
         
         // Embed assets if requested
         var assetManifest: [(path: String, offset: Int, size: Int)] = []
@@ -261,10 +441,25 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         
         // Generate WASM (binary format)
         var encoder = WASMBinaryEncoder()
-        let wasmBytes = encoder.encode(module)
+        let wasmBytes = encoder.encode(module, sourceMapGenerator: sourceMapGenerator)
         
         try Data(wasmBytes).write(to: URL(fileURLWithPath: outputPath))
         print("Wrote WASM file: \(outputPath) (\(wasmBytes.count) bytes)")
+        
+        if let generator = sourceMapGenerator, generateSourceMap {
+             let mapOutputPath = outputPath + ".map"
+             let wasmFileName = URL(fileURLWithPath: outputPath).lastPathComponent
+             let mapJSON = generator.generateJSON(wasmFile: wasmFileName)
+             try mapJSON.write(to: URL(fileURLWithPath: mapOutputPath), atomically: true, encoding: .utf8)
+             print("Wrote Source Map: \(mapOutputPath)")
+        }
+        
+        if let generator = debugGenerator, generateDebug {
+            let debugOutputPath = outputPath.replacingOccurrences(of: ".wasm", with: ".bbdbg.json")
+            let debugJSON = generator.generateJSON()
+            try debugJSON.write(to: URL(fileURLWithPath: debugOutputPath), atomically: true, encoding: .utf8)
+            print("Wrote Debug Metadata: \(debugOutputPath)")
+        }
         
         // Generate manifest if requested
         if generateManifest {
@@ -296,6 +491,10 @@ func main() {
     var inputDir: String = ""
     var embedAssets = false
     var generateManifest = false
+    var generateSourceMap = false
+    var generateDebug = false
+    var autoImportMapPath: String?
+    var useIR = false
     
     var i = 1
     while i < args.count {
@@ -342,6 +541,28 @@ func main() {
             generateManifest = true
             i += 1
             
+        case "-g", "--source-map":
+            generateSourceMap = true
+            i += 1
+            
+        case "-d", "--debug":
+            generateDebug = true
+            i += 1
+        
+        case "--auto-import-map":
+            i += 1
+            if i < args.count {
+                autoImportMapPath = args[i]
+            } else {
+                print("Error: --auto-import-map requires a file path")
+                exit(1)
+            }
+            i += 1
+            
+        case "--use-ir":
+            useIR = true
+            i += 1
+            
         case "-o", "--output":
             i += 1
             if i < args.count {
@@ -371,6 +592,7 @@ func main() {
     // Check if input is a project file
     if input.hasSuffix(".json") {
         do {
+            let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
             let projectConfig = try parseProjectFile(at: input)
             
             let projectDir = URL(fileURLWithPath: input).deletingLastPathComponent()
@@ -389,7 +611,7 @@ func main() {
                 assets = collectAssets(from: projectConfig.assets)
             }
             
-            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest)
+            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR)
             exit(0)
         } catch {
             print("Error parsing project file: \(error)")
@@ -400,6 +622,7 @@ func main() {
     do {
         // Handle single file
         let inputURL = URL(fileURLWithPath: input)
+        let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
         let inputDirURL = inputDir.isEmpty ? inputURL.deletingLastPathComponent() : URL(fileURLWithPath: inputDir)
         let finalInputURL = inputDirURL.appendingPathComponent(inputURL.lastPathComponent)
         var finalOutputURL: URL
@@ -419,7 +642,7 @@ func main() {
         if showTokens {
             tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
         } else {
-            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest)
+            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR)
         }
         
     } catch {

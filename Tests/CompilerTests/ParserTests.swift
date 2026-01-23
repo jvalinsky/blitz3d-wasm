@@ -13,8 +13,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .integerLiteral(let value) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .integerLiteral(let (value, _)) = decl.value {
                 XCTAssertEqual(value, 42)
             } else {
                 XCTFail("Expected integer literal")
@@ -29,8 +29,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .floatLiteral(let value) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .floatLiteral(let (value, _)) = decl.value {
                 XCTAssertEqual(value, 3.14, accuracy: 0.01)
             } else {
                 XCTFail("Expected float literal")
@@ -45,8 +45,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .stringLiteral(let value) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .stringLiteral(let (value, _)) = decl.value {
                 XCTAssertEqual(value, "hello")
             } else {
                 XCTFail("Expected string literal")
@@ -61,8 +61,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .identifier(let id) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .identifier(let (id, _)) = decl.value {
                 XCTAssertEqual(id.name, "myVar")
             } else {
                 XCTFail("Expected identifier")
@@ -77,8 +77,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .binary(let binop) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .binary(let (binop, _)) = decl.value {
                 XCTAssertEqual(binop.op, "+")
             } else {
                 XCTFail("Expected binary expression")
@@ -93,8 +93,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .assignment(let assign) = program.statements[0] {
-            if case .identifier(let id) = assign.target {
+        if case .assignment(let (assign, _)) = program.statements[0] {
+            if case .identifier(let (id, _)) = assign.target {
                 XCTAssertEqual(id.name, "x")
             } else {
                 XCTFail("Expected identifier target")
@@ -109,7 +109,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .local(let decl) = program.statements[0] {
+        if case .local(let (decl, _)) = program.statements[0] {
             XCTAssertEqual(decl.variables.count, 2)
             XCTAssertEqual(decl.variables[0].name, "x")
             XCTAssertEqual(decl.variables[1].name, "y")
@@ -123,7 +123,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .global(let decl) = program.statements[0] {
+        if case .global(let (decl, _)) = program.statements[0] {
             XCTAssertEqual(decl.variables.count, 1)
             XCTAssertEqual(decl.variables[0].name, "count")
             XCTAssertEqual(decl.variables[0].typeSuffix, .integer)
@@ -137,7 +137,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
+        if case .constant(let (decl, _)) = program.statements[0] {
             XCTAssertEqual(decl.name, "MAX")
         } else {
             XCTFail("Expected constant declaration")
@@ -149,8 +149,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .ifStatement(let ifNode) = program.statements[0] {
-            if case .binary(let cond) = ifNode.condition {
+        if case .ifStatement(let (ifNode, _)) = program.statements[0] {
+            if case .binary(let (cond, _)) = ifNode.condition {
                 XCTAssertEqual(cond.op, "=")
             } else {
                 XCTFail("Expected binary condition")
@@ -166,7 +166,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .whileLoop(let whileNode) = program.statements[0] {
+        if case .whileLoop(let (whileNode, _)) = program.statements[0] {
             XCTAssertEqual(whileNode.body.count, 0)
         } else {
             XCTFail("Expected while loop")
@@ -178,7 +178,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .forLoop(let forNode) = program.statements[0] {
+        if case .forLoop(let (forNode, _)) = program.statements[0] {
             XCTAssertEqual(forNode.variable.name, "i")
             XCTAssertNil(forNode.stepValue)
         } else {
@@ -191,7 +191,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .forLoop(let forNode) = program.statements[0] {
+        if case .forLoop(let (forNode, _)) = program.statements[0] {
             XCTAssertNotNil(forNode.stepValue)
         } else {
             XCTFail("Expected for loop")
@@ -203,7 +203,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .repeatLoop(let repeatNode) = program.statements[0] {
+        if case .repeatLoop(let (repeatNode, _)) = program.statements[0] {
             XCTAssertEqual(repeatNode.body.count, 0)
         } else {
             XCTFail("Expected repeat loop")
@@ -226,7 +226,7 @@ final class ParserTests: XCTestCase {
         
         XCTAssertEqual(program.functions.count, 1)
         XCTAssertEqual(program.functions[0].body.count, 1)
-        if case .returnStatement(let expr) = program.functions[0].body[0] {
+        if case .returnStatement(let (expr, _)) = program.functions[0].body[0] {
             XCTAssertNotNil(expr)
         } else {
             XCTFail("Expected return statement")
@@ -246,8 +246,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .fieldAccess(let access) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .fieldAccess(let (access, _)) = decl.value {
                 XCTAssertEqual(access.field, "field")
             } else {
                 XCTFail("Expected field access")
@@ -262,7 +262,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .functionCall(let call) = program.statements[0] {
+        if case .functionCall(let (call, _)) = program.statements[0] {
             XCTAssertEqual(call.name, "Print")
             XCTAssertEqual(call.arguments.count, 1)
         } else {
@@ -275,8 +275,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .arrayAccess(let access) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .arrayAccess(let (access, _)) = decl.value {
                 XCTAssertEqual(access.indices.count, 1)
             } else {
                 XCTFail("Expected array access")
@@ -291,8 +291,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.functions.count, 1)
-        if case .returnStatement(let expr) = program.functions[0].body[0] {
-            if case .integerLiteral(let value) = expr {
+        if case .returnStatement(let (expr, _)) = program.functions[0].body[0] {
+            if case .integerLiteral(let (value, _)) = expr {
                 XCTAssertEqual(value, 42)
             } else {
                 XCTFail("Expected integer literal")
@@ -307,7 +307,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.functions.count, 1)
-        if case .returnStatement(let expr) = program.functions[0].body[0] {
+        if case .returnStatement(let (expr, _)) = program.functions[0].body[0] {
             XCTAssertNil(expr)
         } else {
             XCTFail("Expected return statement")
@@ -331,8 +331,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .binary(let binop) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .binary(let (binop, _)) = decl.value {
                 XCTAssertEqual(binop.op, "-")
             } else {
                 XCTFail("Expected binary expression")
@@ -347,8 +347,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .binary(let outer) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .binary(let (outer, _)) = decl.value {
                 XCTAssertEqual(outer.op, "And")
             } else {
                 XCTFail("Expected binary And expression")
@@ -370,8 +370,8 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .constant(let decl) = program.statements[0] {
-            if case .unary(let unary) = decl.value {
+        if case .constant(let (decl, _)) = program.statements[0] {
+            if case .unary(let (unary, _)) = decl.value {
                 XCTAssertEqual(unary.op, "Not")
             } else {
                 XCTFail("Expected unary expression")
@@ -393,7 +393,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .goto(let label) = program.statements[0] {
+        if case .goto(let (label, _)) = program.statements[0] {
             XCTAssertEqual(label, "label")
         } else {
             XCTFail("Expected goto statement")
@@ -405,7 +405,7 @@ final class ParserTests: XCTestCase {
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
-        if case .gosub(let label) = program.statements[0] {
+        if case .gosub(let (label, _)) = program.statements[0] {
             XCTAssertEqual(label, "subroutine")
         } else {
             XCTFail("Expected gosub statement")

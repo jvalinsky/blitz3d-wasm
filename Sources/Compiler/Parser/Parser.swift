@@ -896,6 +896,7 @@ public struct Parser {
             advance()
             // Check if this is a bare Return (followed by statement-ending keywords)
             if currentToken.type == .endOfFile ||
+               currentToken.type == .newline ||
                currentToken.type == .colon ||
                currentToken.type == .keywordEndIf ||
                currentToken.type == .keywordElse ||

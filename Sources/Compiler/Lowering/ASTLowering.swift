@@ -6,6 +6,9 @@ public final class ASTLowering {
     private var symbolTable: IRSymbolTable
     private var typeHandling: TypeHandling
     
+    private var irModuleData: [IRDataSegment] = []
+    private var nextStringOffset: Int32 = 1024
+    
     public init() {
         self.builder = IRBuilder()
         self.symbolTable = IRSymbolTable()
@@ -14,12 +17,27 @@ public final class ASTLowering {
     
     public func lower(_ program: ProgramNode) -> IRModule {
         var irModule = IRModule()
+        irModuleData = []
+        nextStringOffset = 1024
         
         for function in program.functions {
             lowerFunction(function, to: &irModule)
         }
         
+        irModule.data = irModuleData
         return irModule
+    }
+    
+    private func allocateString(_ value: String) -> Int32 {
+        var bytes = Array(value.utf8)
+        bytes.append(0) // Null terminator
+        
+        let offset = nextStringOffset
+        let data = IRDataSegment(offset: offset, data: Data(bytes))
+        irModuleData.append(data)
+        
+        nextStringOffset += Int32(bytes.count)
+        return offset
     }
     
     private func lowerFunction(_ function: FunctionNode, to module: inout IRModule) {
@@ -30,7 +48,6 @@ public final class ASTLowering {
         
         for param in function.parameters {
             let irType = lowerType(from: param.type)
-            builder.addLocal(name: param.name, type: irType)
             symbolTable.addVariable(param.name, type: irType, isLocal: true)
         }
         
@@ -52,7 +69,7 @@ public final class ASTLowering {
         switch statement {
         case .local(let decl, _):
             for variable in decl.variables {
-                let irType = lowerType(from: variable.typeSuffix)
+                let irType = lowerTypeSuffix(from: variable.typeSuffix)
                 builder.addLocal(name: variable.name, type: irType)
                 symbolTable.addVariable(variable.name, type: irType, isLocal: true)
                 
@@ -153,14 +170,16 @@ public final class ASTLowering {
             let end = lowerExpression(forNode.endValue)
             let step = forNode.stepValue.map { lowerExpression($0) } ?? builder.buildConstI32(1)
             
-            let loopVarType = lowerType(from: forNode.variable.type)
+            let loopVarType = lowerTypeSuffix(from: forNode.variable.typeSuffix)
             builder.addLocal(name: forNode.variable.name, type: loopVarType)
             symbolTable.addVariable(forNode.variable.name, type: loopVarType, isLocal: true)
             
-            let initialValue = lowerExpression(forNode.startValue)
-            if let localIdx = symbolTable.localIndex(for: forNode.variable.name) {
-                body.append(.assignLocal(index: localIdx, value: initialValue))
+            guard let localIdx = symbolTable.localIndex(for: forNode.variable.name) else {
+                return
             }
+            
+            let initialValue = lowerExpression(forNode.startValue)
+            body.append(.assignLocal(index: localIdx, value: initialValue))
             
             var loopBody: [IREffect] = []
             for stmt in forNode.body {
@@ -168,7 +187,7 @@ public final class ASTLowering {
             }
             
             body.append(.forStmt(
-                variable: forNode.variable.name,
+                index: localIdx,
                 start: start,
                 end: end,
                 step: step,
@@ -291,6 +310,15 @@ public final class ASTLowering {
         }
     }
     
+    private func lowerTypeSuffix(from typeSuffix: TypeSuffix?) -> IRType {
+        guard let suffix = typeSuffix else { return .i32 }
+        switch suffix {
+        case .integer: return .i32
+        case .float: return .f32
+        case .string: return .i32
+        }
+    }
+    
     private func lowerType(from typeAnnotation: TypeAnnotation?) -> IRType {
         guard let annotation = typeAnnotation else { return .i32 }
         switch annotation {
@@ -306,13 +334,37 @@ public final class ASTLowering {
     }
     
     private func lowerFunctionSignature(_ name: String) -> (params: [IRType], resultType: IRType) {
-        let resolver = SignatureResolver(context: ModuleContext())
+        // Create a minimal context for signature resolution
+        let module = WASMModule()
+        let context = ModuleContext(module: module)
+        
+        // Register built-in imports so they can be resolved
+        let builtInImports: [(String, [WASMType], [WASMType])] = [
+            ("PrintInt", [.i32], []),
+            ("PrintString", [.i32], []),
+            ("Graphics3D", [.i32, .i32, .i32, .i32], []),
+        ]
+        
+        for (name, params, results) in builtInImports {
+            _ = context.registerAutoImport(name: name, params: params, results: results)
+        }
+        
+        let resolver = SignatureResolver(context: context)
         if let def = resolver.definition(forName: name.lowercased()) {
-            let params = def.parameters.map { lowerType(from: $0.type) }
-            let resultType = def.results.isEmpty ? .void : lowerType(from: def.results.first?.type)
+            let params = def.params.map { irType(from: $0) }
+            let resultType = def.results.isEmpty ? .void : irType(from: def.results[0])
             return (params, resultType)
         }
         return ([], .i32)
+    }
+    
+    private func irType(from wasmType: WASMType) -> IRType {
+        switch wasmType {
+        case .i32: return .i32
+        case .f32: return .f32
+        case .void: return .void
+        default: return .i32
+        }
     }
     
     private func commonType(_ lhs: IRType, _ rhs: IRType) -> IRType {
@@ -320,10 +372,6 @@ public final class ASTLowering {
             return .f32
         }
         return .i32
-    }
-    
-    private func allocateString(_ value: String) -> Int32 {
-        return 0
     }
     
     private func getTypeName(from expression: ExpressionNode) -> String? {

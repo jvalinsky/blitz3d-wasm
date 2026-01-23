@@ -45,7 +45,7 @@ public indirect enum IREffect {
     
     case ifStmt(condition: IRValue, then: [IREffect], else: [IREffect]?)
     case whileStmt(condition: IRValue, body: [IREffect])
-    case forStmt(variable: String, start: IRValue, end: IRValue, step: IRValue?, body: [IREffect])
+    case forStmt(index: Int, start: IRValue, end: IRValue, step: IRValue?, body: [IREffect])
     case repeatStmt(body: [IREffect], condition: IRValue)
     
     case returnStmt(value: IRValue?)
@@ -73,10 +73,16 @@ public struct IRFunction {
     }
 }
 
+public struct IRDataSegment {
+    public let offset: Int32
+    public let data: Data
+}
+
 public struct IRModule {
     public var functions: [IRFunction]
     public var globals: [(String, IRType, Bool)]
     public var imports: [(String, String, IRType)]
+    public var data: [IRDataSegment] = []
     
     public init(functions: [IRFunction] = [], globals: [(String, IRType, Bool)] = [], imports: [(String, String, IRType)] = []) {
         self.functions = functions
@@ -96,6 +102,12 @@ public class IRBuilder {
         currentFunction = IRFunction(name: name, parameters: parameters, returnType: returnType)
         localIndexMap.removeAll()
         nextLocalIndex = 0
+        
+        // Add parameters to local index map
+        for param in parameters {
+            localIndexMap[param.0] = nextLocalIndex
+            nextLocalIndex += 1
+        }
     }
     
     public func exitFunction() -> IRFunction? {

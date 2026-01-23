@@ -34,7 +34,14 @@ public final class IREmitter {
     public func emit(module irModule: IRModule) -> WASMModule {
         emitGlobals(from: irModule)
         emitFunctions(from: irModule)
+        emitData(from: irModule)
         return wasmModule
+    }
+    
+    private func emitData(from irModule: IRModule) {
+        for dataSegment in irModule.data {
+            wasmModule.data.append(WASMData(memoryIndex: 0, offset: .i32Const(dataSegment.offset), bytes: Array(dataSegment.data)))
+        }
     }
     
     private func emitGlobals(from irModule: IRModule) {
@@ -65,15 +72,17 @@ public final class IREmitter {
     private func emitFunction(_ irFunc: IRFunction) -> WASMFunction {
         let paramTypes = irFunc.parameters.map { irTypeToWASM($0.1) }
         let returnType = irTypeToWASM(irFunc.returnType)
+        let results = returnType == .void ? [] : [returnType]
         
-        let typeIndex = getOrCreateFunctionType(parameters: paramTypes, results: [returnType])
-        wasmModule.types.append(WASMFunctionType(parameters: paramTypes, results: [returnType]))
-        let newTypeIndex = wasmModule.types.count - 1
-        wasmModule.functions.append(newTypeIndex)
+        let typeIndex = getOrCreateFunctionType(parameters: paramTypes, results: results)
+        wasmModule.functions.append(typeIndex)
         
         var locals: [WASMType] = []
-        for (_, type) in irFunc.locals {
-            locals.append(irTypeToWASM(type))
+        // irFunc.locals includes parameters at the beginning, so we skip them for WASMFunction locals
+        if irFunc.locals.count > irFunc.parameters.count {
+            for i in irFunc.parameters.count..<irFunc.locals.count {
+                locals.append(irTypeToWASM(irFunc.locals[i].1))
+            }
         }
         
         var body: [WASMInstruction] = []
@@ -85,7 +94,7 @@ public final class IREmitter {
             body.append(.return)
         }
         
-        return WASMFunction(typeIndex: newTypeIndex, locals: locals, body: body)
+        return WASMFunction(typeIndex: typeIndex, locals: locals, body: body)
     }
     
     private func emitEffect(_ effect: IREffect) -> [WASMInstruction] {
@@ -95,7 +104,9 @@ public final class IREmitter {
             
         case .discard(let value):
             var instructions = emitValue(value)
-            instructions.append(.drop)
+            if value.type != .void {
+                instructions.append(.drop)
+            }
             return instructions
             
         case .assign(let target, let value):
@@ -118,7 +129,9 @@ public final class IREmitter {
             let indexInstrs = emitValue(index)
             let valueInstrs = emitValue(value)
             let wasmType = irTypeToWASM(elementType)
-            return baseInstrs + indexInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: elementSize)
+            // Offset calculation: base + index * elementSize
+            var offsetInstrs: [WASMInstruction] = indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
+            return baseInstrs + offsetInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: 0)
             
         case .ifStmt(let condition, let thenBody, let elseBody):
             let condInstrs = emitValue(condition)
@@ -147,23 +160,33 @@ public final class IREmitter {
                 .loop(.void, condInstrs + [.i32EqZ, .brIf(1)] + bodyInstrs + [.br(0)])
             ])]
             
-        case .forStmt(let variable, let start, let end, let step, let body):
-            // Simplified for now - assuming loop variable is a local
-            // In a real implementation, we'd need to lookup the local index for the variable
-            var instrs: [WASMInstruction] = []
-            instrs.append(contentsOf: emitValue(start))
-            // instrs.append(.localSet(idx))
+        case .forStmt(let index, let start, let end, let step, let body):
+            // For loops:
+            // 1. Initial assignment (start)
+            // 2. Block
+            // 3. Loop
+            // 4. Check condition (index <= end if step > 0, index >= end if step < 0)
+            // 5. Body
+            // 6. Increment (index = index + step)
+            // 7. Branch to Loop
             
-            // Loop structure:
-            // (block
-            //   (loop
-            //     (br_if 1 (condition_failed))
-            //     <body>
-            //     (local.set var (add var step))
-            //     (br 0)
-            //   )
-            // )
-            return instrs
+            let startInstrs = emitValue(start)
+            let endInstrs = emitValue(end)
+            let stepInstrs = step.map { emitValue($0) } ?? [.i32Const(1)]
+            
+            var bodyInstrs: [WASMInstruction] = []
+            for effect in body {
+                bodyInstrs.append(contentsOf: emitEffect(effect))
+            }
+            
+            // Simplified loop for now (assuming step is positive)
+            return startInstrs + [.localSet(index), .block(.void, [
+                .loop(.void, 
+                    [.localGet(index)] + endInstrs + [.i32GtS, .brIf(1)] +
+                    bodyInstrs +
+                    [.localGet(index)] + stepInstrs + [.i32Add, .localSet(index), .br(0)]
+                )
+            ])]
             
         case .repeatStmt(let body, let condition):
             var bodyInstrs: [WASMInstruction] = []

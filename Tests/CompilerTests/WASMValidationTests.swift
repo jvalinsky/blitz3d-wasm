@@ -79,8 +79,10 @@ final class WASMValidationTests: XCTestCase {
 
         while i < bytes.count {
             let sectionId = bytes[i]
-            if sectionId >= 1 && sectionId <= 11 {
-                sectionPositions[sectionId] = i
+            if sectionId >= 0 && sectionId <= 11 {
+                if sectionId > 0 {
+                    sectionPositions[sectionId] = i
+                }
 
                 // Read section size (LEB128)
                 i += 1

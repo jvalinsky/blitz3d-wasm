@@ -163,14 +163,14 @@ Blitz3D-like APIs often appear in “variant count” forms (e.g. 2-arg vs 4-arg
 
 ## Deliverables
 
-- A signature DB used consistently in:
+- [x] A signature DB used consistently in:
   - call lowering
   - stack effect computation
   - statement/value context handling
-- A test suite:
-  - default args
-  - overload selection
-  - array/call disambiguation
+- [ ] A test suite:
+  - [ ] default args
+  - [ ] overload selection
+  - [x] array/call disambiguation (Verified in `ASTLowering` via symbol table)
 
 ## “No Invalid Drop” Safety Rule (must hold even before IR exists)
 

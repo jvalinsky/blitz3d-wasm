@@ -8,6 +8,7 @@ public final class ASTLowering {
     
     private var irModuleData: [IRDataSegment] = []
     private var nextStringOffset: Int32 = 1024
+    private var nextArrayOffset: Int32 = 65536
     
     public init() {
         self.builder = IRBuilder()
@@ -85,6 +86,38 @@ public final class ASTLowering {
         case .constant, .constants:
             break
             
+        case .dim(let decl, _):
+            let irType: IRType = .i32 // Default to i32 for now
+            let elementSize = 4
+            
+            // For simplicity, assume dimensions are constant integers
+            var dimSizes: [Int] = []
+            var totalElements = 1
+            for dimExpr in decl.dimensions {
+                if case .integerLiteral(let val, _) = dimExpr {
+                    let size = val + 1 // Blitz3D arrays are 0...val
+                    dimSizes.append(size)
+                    totalElements *= size
+                } else {
+                    dimSizes.append(11) // Fallback for dynamic
+                    totalElements *= 11
+                }
+            }
+            
+            let arrayInfo = IRArrayInfo(
+                baseAddress: Int(nextArrayOffset),
+                elementSize: elementSize,
+                dimensions: dimSizes,
+                elementType: irType
+            )
+            symbolTable.addArray(decl.name, info: arrayInfo)
+            nextArrayOffset += Int32(totalElements * elementSize)
+            
+        case .dims(let decls, _):
+            for decl in decls {
+                lowerStatement(.dim(decl, .unknown), into: &body)
+            }
+            
         case .assignment(let assign, _):
             let value = lowerExpression(assign.value)
             
@@ -102,11 +135,11 @@ public final class ASTLowering {
                 if case .identifier(let arrayId, _) = access.array,
                    let arrayInfo = symbolTable.arrayInfo(for: arrayId.name) {
                     let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
-                    let indexValue = lowerExpression(access.indices[0])
+                    let flatIndex = flattenIndex(indices: access.indices, dimensions: arrayInfo.dimensions)
                     
                     body.append(.assignArray(
                         base: baseAddr,
-                        index: indexValue,
+                        index: flatIndex,
                         elementSize: arrayInfo.elementSize,
                         elementType: arrayInfo.elementType,
                         value: value
@@ -178,9 +211,6 @@ public final class ASTLowering {
                 return
             }
             
-            let initialValue = lowerExpression(forNode.startValue)
-            body.append(.assignLocal(index: localIdx, value: initialValue))
-            
             var loopBody: [IREffect] = []
             for stmt in forNode.body {
                 lowerStatement(stmt, into: &loopBody)
@@ -218,9 +248,6 @@ public final class ASTLowering {
             break
             
         case .typeDeclaration:
-            break
-            
-        case .dim, .dims:
             break
             
         case .read, .restore:
@@ -300,14 +327,27 @@ public final class ASTLowering {
             if case .identifier(let arrayId, _) = access.array,
                let arrayInfo = symbolTable.arrayInfo(for: arrayId.name) {
                 let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
-                let indexValue = lowerExpression(access.indices[0])
-                return IRValue.loadArray(base: baseAddr, index: indexValue, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
+                let flatIndex = flattenIndex(indices: access.indices, dimensions: arrayInfo.dimensions)
+                return IRValue.loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
             }
             return builder.buildConstI32(0)
             
         case .typeCast, .new, .first, .last, .before, .after, .handle, .objectCast:
             return builder.buildConstI32(0)
         }
+    }
+    
+    private func flattenIndex(indices: [ExpressionNode], dimensions: [Int]) -> IRValue {
+        // Formula for flat index: idx0 * (d1 * d2 * ...) + idx1 * (d2 * ...) + ...
+        // Assuming row-major layout
+        
+        var flatIndex = lowerExpression(indices[0])
+        for i in 1..<indices.count {
+            let dimSize = i < dimensions.count ? dimensions[i] : 1
+            flatIndex = builder.buildBinary("*", lhs: flatIndex, rhs: builder.buildConstI32(Int32(dimSize)), resultType: .i32)
+            flatIndex = builder.buildBinary("+", lhs: flatIndex, rhs: lowerExpression(indices[i]), resultType: .i32)
+        }
+        return flatIndex
     }
     
     private func lowerTypeSuffix(from typeSuffix: TypeSuffix?) -> IRType {
@@ -393,25 +433,27 @@ private class IRSymbolTable {
     private var nextGlobalIndex: Int = 0
     
     func addVariable(_ name: String, type: IRType, isLocal: Bool) {
+        let key = name.lowercased()
         if isLocal {
-            locals[name] = (nextLocalIndex, type)
+            locals[key] = (nextLocalIndex, type)
             nextLocalIndex += 1
         } else {
-            globals[name] = (nextGlobalIndex, type)
+            globals[key] = (nextGlobalIndex, type)
             nextGlobalIndex += 1
         }
     }
     
     func localIndex(for name: String) -> Int? {
-        return locals[name]?.index
+        return locals[name.lowercased()]?.index
     }
     
     func globalIndex(for name: String) -> Int? {
-        return globals[name]?.index
+        return globals[name.lowercased()]?.index
     }
     
     func type(of name: String) -> IRType? {
-        return locals[name]?.type ?? globals[name]?.type
+        let key = name.lowercased()
+        return locals[key]?.type ?? globals[key]?.type
     }
     
     func typeName(for name: String) -> String? {
@@ -419,11 +461,11 @@ private class IRSymbolTable {
     }
     
     func addArray(_ name: String, info: IRArrayInfo) {
-        arrays[name] = info
+        arrays[name.lowercased()] = info
     }
     
     func arrayInfo(for name: String) -> IRArrayInfo? {
-        return arrays[name]
+        return arrays[name.lowercased()]
     }
     
     func addType(_ name: String, info: IRTypeInfo) {

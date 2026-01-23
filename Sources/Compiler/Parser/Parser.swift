@@ -904,6 +904,7 @@ public struct Parser {
                currentToken.type == .keywordWend ||
                currentToken.type == .keywordNext ||
                currentToken.type == .keywordUntil ||
+               currentToken.type == .keywordEndFunction ||
                (currentToken.type == .identifier && currentToken.text == "End") {
                 return .returnStatement(nil, endSpan(from: start))
             }

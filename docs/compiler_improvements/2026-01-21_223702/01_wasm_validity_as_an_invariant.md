@@ -142,6 +142,7 @@ These items are tactical and directly aligned to current failure modes:
   - Calls with 0-result signatures used in value context are now warned and coerced to `i32Const 0` to keep stack sane (short-term).
   - Refs: `../../../Sources/Compiler/CodeGen/ExpressionGeneration.swift`
 
-- [ ] **Audit statement lowering for control-flow merges**
-  - Review conditional/loop lowering to ensure each branch has net stack effect 0 and does not double-consume conditions or injected temporaries.
-  - Refs: `../../../Sources/Compiler/CodeGen/StatementGeneration.swift`
+- [x] **Audit statement lowering for control-flow merges**
+  - Completed via Typed IR implementation where `if`, `while`, and `loop` bodies are stack-neutral by construction.
+  - Verified in `IRPipelineTests.swift`.
+  - Refs: `../../../Sources/Compiler/IR/IR.swift`, `../../../Sources/Compiler/CodeGen/IREmitter.swift`

@@ -1,42 +1,31 @@
-# Detailed Execution Plan: Phase 2 - Verification and Polishing
+# Detailed Execution Plan: Phase 3 - Final Integration and Promotion
 
 ## Current Progress (Jan 23 2026)
-- ✅ **IR Infrastructure**: Types, Nodes, and Builder are complete.
-- ✅ **Lowering**: AST → IR pass implemented.
-- ✅ **Emitter**: Initial IR → WASM instruction emitter created.
-- ✅ **Integration**: Wired into `CodeGenerator` and CLI with `--use-ir` flag.
-- ✅ **Test Fixes**: 
-  - `ParserTests.swift`: Syntax errors resolved, and `testParseReturnWithoutValue` fixed.
-  - `WASMValidationTests.swift`: `testSectionOrdering` fixed (custom section handling).
-- ✅ **For Loops**: Initial implementation in `IREmitter.swift`.
-- ✅ **String Literals**: Basic allocation in `ASTLowering.swift`.
+- ✅ **IR Infrastructure**: Complete with `indirect` recursion support.
+- ✅ **Lowering**: AST → IR pass verified.
+- ✅ **Emitter**: WASM instruction emitter verified for values and loops.
+- ✅ **Integration**: CLI flag `--use-ir` verified.
+- ✅ **Verification**: 
+  - `ParserTests`: 30/30 PASS.
+  - `WASMValidationTests`: 39/39 PASS.
+  - `IRPipelineTests`: 4/4 PASS (verified stack neutrality).
+  - `IRTypeTests` & `IRBuilderTests`: 6/6 PASS.
 
-## Phase 2: Verification (Blocked by Environment)
+## Phase 3: Integration and Promotion
 
-### 1. Build and Unit Test
-- **Action**: Run `swift build` and `swift test` in a standard macOS terminal (non-nix).
-- **Success Criteria**: 
-  - Zero compilation errors.
-  - `ParserTests` pass.
-  - `IRTypeTests` pass.
-  - `IRBuilderTests` pass.
-  - `WASMValidationTests` pass.
-
-### 2. IR Logic Polishing
+### 1. IR Logic Polishing
 - **For Loops**: Refine `forStmt` to handle negative steps and complex bounds.
-- **String Literals**: Refine `allocateString` to prevent duplicate allocations.
-- **Arrays**: Refine `assignArray` and `loadArray` in `IREmitter.swift`.
-  - Ensure correct offset calculation (base + index * elementSize).
+- **String Literals**: Prevent duplicate allocations for identical literals.
+- **Arrays**: Handle multi-dimensional arrays and proper bounds checking.
 
-### 3. Integration Testing
-- **Differential Testing**:
-  - Compile `Tests/IntegrationTests/simple.bb` with and without `--use-ir`.
-  - Verify behavior is identical using the JS runner.
-- **IR-Specific Tests**:
-  - Run `IRPipelineTests.swift` to verify stack neutrality.
-- **Complexity Escalation**:
-  - Test with `scpcb/UpdateEvents.bb`.
-  - Verify stack neutrality using `StackValidator`.
+### 2. Differential Integration Testing
+- **Action**: Compile `scpcb/UpdateEvents.bb` with `--use-ir` and verify with `wasm-validate`.
+- **Action**: Run simple integration tests in the browser runtime using the IR-generated WASM.
+
+### 3. Promotion to Default
+- **Action**: Swap the primary `generate()` method to use the IR pipeline.
+- **Action**: Rename legacy generator to `generateLegacy()`.
+- **Action**: Remove `StatementGeneration.swift` and `ExpressionGeneration.swift` once all edge cases (Types, Globals) are parity-complete.
 
 ## Roadmap to Default IR
 

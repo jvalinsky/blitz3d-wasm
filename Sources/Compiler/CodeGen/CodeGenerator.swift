@@ -348,6 +348,7 @@ public struct CodeGenerator {
             // Debug/Utility
             ("DebugLog", "DebugLog", [.i32], [], "env"),
             ("RuntimeError", "RuntimeError", [.i32], [], "env"),
+            ("End", "End", [], [], "env"),
             ("CatchErrors", "CatchErrors", [], [], "env"),
             ("MilliSecs2", "MilliSecs2", [], [.i32], "env"),
             ("CurrentDate", "CurrentDate", [], [.i32], "env"),
@@ -706,6 +707,24 @@ public struct CodeGenerator {
                 defaults = [0: .i32(1)]
             } else if name == "Text" {
                 defaults = [3: .i32(0), 4: .i32(0)]
+            } else if name == "Cls" {
+                defaults = [0: .i32(1), 1: .i32(1)]
+            } else if name == "Graphics" || name == "Graphics3D" {
+                defaults = [2: .i32(0), 3: .i32(0)]
+            } else if name == "EntityX" || name == "EntityY" || name == "EntityZ" {
+                defaults = [1: .i32(0)]
+            } else if name == "EntityPitch" || name == "EntityYaw" || name == "EntityRoll" {
+                defaults = [1: .i32(0)]
+            } else if name == "LoadMesh" || name == "LoadAnimMesh" || name == "LoadTexture" || name == "LoadImage" || name == "LoadSound" || name == "LoadFont" {
+                defaults = [1: .i32(0)]
+            } else if name == "ScaleEntity" || name == "PositionEntity" || name == "RotateEntity" || name == "MoveEntity" || name == "TurnEntity" || name == "TranslateEntity" {
+                defaults = [4: .i32(0)]
+            } else if name == "EntityPick" || name == "LinePick" {
+                defaults = [4: .f32(0.0)]
+            } else if name == "CameraRange" || name == "CameraZoom" {
+                defaults = [1: .f32(1.0)]
+            } else if name == "CameraFogColor" || name == "EntityColor" || name == "Color" || name == "ClsColor" || name == "AmbientLight" {
+                // These often take 3 components, but let's check
             }
             
             let importIdx = context.registerImport(

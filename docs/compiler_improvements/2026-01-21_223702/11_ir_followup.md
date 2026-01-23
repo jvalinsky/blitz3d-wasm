@@ -11,15 +11,16 @@
   - `IRPipelineTests`: 4/4 PASS (verified stack neutrality).
   - `IRTypeTests` & `IRBuilderTests`: 6/6 PASS.
 - ✅ **Multi-dimensional Arrays**: Support for flattened indexing implemented and verified.
+- ✅ **Phase 1 Verification**: `wasm-validate` passed on compiled `test_hello.bb`, `test_flow.bb`, and `test_arrays.bb`.
 
 ## Phase 3: Integration and Promotion
 
 ### 1. IR Logic Polishing
 - **For Loops**: Refine `forStmt` to handle negative steps and complex bounds.
-- **String Literals**: Prevent duplicate allocations for identical literals.
+- **String Literals**: Prevent duplicate allocations for identical literals (Deduplication implemented).
 - **Arrays**: Handle proper bounds checking.
 
-### 2. Multi-File Symbol Resolution (NEW)
+### 2. Multi-File Symbol Resolution
 - **Goal**: Treat `Include` files as part of a single compilation unit.
 - **Action**: 
     - Aggregate all `TypeNode`s and `GlobalNode`s from all files into the `IRModule`.

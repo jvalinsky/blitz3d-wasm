@@ -54,10 +54,12 @@ This plan has been elevated to the highest priority following the failure of heu
 | IR → WASM Emitter | ✅ Complete |
 | Wire into CodeGenerator | ✅ Complete |
 | Test Integration | ✅ CLI Flag Added |
-| ParserTests.swift | ✅ Fixed & Passing |
+| ParserTests.swift | ✅ Fixed Syntax |
 | Multi-dim Arrays | ✅ Complete & Verified |
 | String Allocation | ✅ Complete & Deduplicated |
 | Global Initialization | ✅ Complete & Verified |
+| User-Defined Types (Objects) | ⏳ In Progress |
+| Default Argument Synthesis | ✅ Basic Coverage Added |
 
 ## Goal
 

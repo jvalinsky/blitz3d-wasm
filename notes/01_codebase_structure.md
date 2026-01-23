@@ -1,53 +1,92 @@
-# SCPB Codebase Structure Analysis
+# Blitz3D-to-WebAssembly Compiler Structure
 
 ## Overview
 
-This document provides a comprehensive analysis of the SCPB (SCP - Containment Breach) codebase as found in the blitz3d-wasm repository. SCPB is a survival horror game based on SCP Foundation fiction, originally written in BlitzBasic and being ported to WebAssembly.
+This document provides a comprehensive analysis of the Blitz3D-to-WebAssembly compiler infrastructure. This repository contains a complete Swift-based compiler that translates BlitzBasic code to WebAssembly, with a JavaScript runtime for browser execution. The compiler has been tested extensively against SCP: Containment Breach source code.
 
 ## Project Summary
 
 | Attribute | Value |
 |-----------|-------|
-| Language | BlitzBasic (Blitz3D v1.108) |
-| Original Lines of Code | ~52,000 across 35 .bb files |
-| Port Status | WASM compilation infrastructure in place |
-| License | CC BY-SA 3.0 |
-| Original Author | Joonas Rikkonen (Regalis) |
+| **Project Type** | BlitzBasic-to-WebAssembly Compiler |
+| **Compiler Language** | Swift 5.x |
+| **Runtime Language** | JavaScript (ES6+) with Three.js |
+| **Target Format** | WebAssembly + JavaScript |
+| **Test Case** | SCP: Containment Breach (~52K lines BlitzBasic) |
+| **Compilation Success** | ~75% of SCPB codebase |
+| **License** | MIT (compiler), CC BY-SA 3.0 (SCPB test case) |
 
 ## Directory Structure
 
 ```
 blitz3d-wasm/
 ├── Sources/
-│   ├── Compiler/              # Swift-based Blitz3D compiler
-│   │   ├── Lexer/             # Tokenization (Lexer.swift, Token.swift)
-│   │   ├── Parser/            # AST construction (Parser.swift)
-│   │   ├── AST/               # Node definitions (AST.swift)
-│   │   ├── Preprocessor/      # Include handling (Preprocessor.swift)
-│   │   └── CodeGen/           # WASM generation
-│   │       ├── CodeGenerator.swift
-│   │       ├── ExpressionGeneration.swift
-│   │       ├── FunctionGeneration.swift
-│   │       ├── StatementGeneration.swift
-│   │       ├── VariableManagement.swift
-│   │       ├── TypeHandling.swift
-│   │       ├── WASM.swift
-│   │       ├── WASMBinaryEncoder.swift
-│   │       └── WASMTextWriter.swift
-│   └── Runtime/               # JavaScript browser runtime
+│   ├── Compiler/              # Swift compiler implementation (~30 files)
+│   │   ├── Lexer/             # Tokenization (4 files)
+│   │   │   ├── Lexer.swift    # Main lexer
+│   │   │   ├── Token.swift    # Token definitions
+│   │   │   ├── SourceLocation.swift # Position tracking
+│   │   │   └── Keywords.swift # BlitzBasic keywords
+│   │   ├── Parser/            # Syntax parsing (1 file)
+│   │   │   └── Parser.swift   # Recursive descent parser
+│   │   ├── AST/               # Abstract syntax tree (2 files)
+│   │   │   ├── AST.swift      # Node definitions
+│   │   │   └── ASTLowering.swift # AST transformations
+│   │   ├── IR/                # Intermediate representation (1 file)
+│   │   │   └── Types.swift    # IR type system
+│   │   ├── Preprocessor/      # Include handling (1 file)
+│   │   │   └── Preprocessor.swift
+│   │   └── CodeGen/           # WebAssembly generation (15+ files)
+│   │       ├── CodeGenerator.swift     # Main code generation
+│   │       ├── IREmitter.swift         # IR emission
+│   │       ├── WASMBinaryEncoder.swift # Binary WASM output
+│   │       ├── WASMTextWriter.swift    # Text WASM output
+│   │       ├── TypeHandling.swift      # Type management
+│   │       ├── VariableManagement.swift # Variable allocation
+│   │       ├── FunctionGeneration.swift # Function compilation
+│   │       ├── StatementGeneration.swift # Statement compilation
+│   │       ├── ExpressionGeneration.swift # Expression compilation
+│   │       ├── StackScheduler.swift    # Stack frame management
+│   │       ├── StackValidator.swift    # Stack validation
+│   │       ├── SignatureResolver.swift # Function signatures
+│   │       ├── TypeInference.swift     # Type inference
+│   │       ├── DataGeneration.swift    # Data segment generation
+│   │       ├── DebugGenerator.swift    # Debug information
+│   │       └── SourceMapGenerator.swift # Source maps
+│   └── Runtime/               # JavaScript browser runtime (~25+ files)
 │       ├── runtime.js         # Main entry point
-│       ├── modules/
-│       │   ├── core.js        # Core functionality
-│       │   ├── graphics.js    # Three.js 3D integration
+│       ├── browser_compat.js  # Browser compatibility
+│       ├── server.js          # Development server
+│       ├── package.json       # Node.js configuration
+│       ├── index.html         # Demo page
+│       ├── modules/           # Runtime modules (18 files)
+│       │   ├── core.js        # Core Blitz3D API
+│       │   ├── graphics.js    # Three.js 3D graphics
 │       │   ├── physics.js     # Collision detection
-│       │   ├── input.js       # Keyboard/mouse handling
-│       │   └── runtime.js     # Integration module
-│       ├── particles.js       # Particle system
-│       ├── collision.js       # Collision utilities
-│       ├── bank.js            # Memory bank handling
-│       ├── ini.js             # INI file parsing
-│       ├── vfs.js             # Virtual file system
-│       ├── video.js           # Video playback
+│       │   ├── input.js       # Keyboard/mouse input
+│       │   ├── audio.js       # Web Audio API
+│       │   ├── mesh.js        # 3D model loading
+│       │   ├── texture.js     # Texture management
+│       │   ├── material.js    # Material properties
+│       │   ├── animation.js   # Animation system
+│       │   ├── xloader.js     # DirectX model loading
+│       │   ├── rmesh.js       # Room mesh format
+│       │   ├── b3d.js         # Blitz3D format
+│       │   ├── xfile.js       # X file format
+│       │   ├── room.js        # Room management
+│       │   ├── vfs_zip.js     # ZIP archive support
+│       │   ├── fileio.js      # File I/O operations
+│       │   ├── asset.js       # Asset management
+│       │   └── bbdbg.js       # Debug utilities
+│       ├── examples/          # Demo applications
+│       │   ├── scpcb_asset_viewer.html
+│       │   ├── room_viewer.html
+│       │   ├── b3d_parser.js
+│       │   ├── rmesh_parser.js
+│       │   └── helpers.js
+│       ├── docs/              # Runtime documentation
+│       ├── tools/             # Development tools
+│       └── *.wasm/*.wat       # Compiled test outputs
 │       ├── debug.js           # Debug utilities
 │       └── scpcb.wasm         # Compiled SCPB WASM module
 ├── Tools/

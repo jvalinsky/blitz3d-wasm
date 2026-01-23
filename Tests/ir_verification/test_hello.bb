@@ -1,0 +1,1 @@
+Print "Hello, Typed IR!"

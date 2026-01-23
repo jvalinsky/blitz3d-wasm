@@ -129,44 +129,120 @@ public final class FunctionGeneration {
             function.body.append(.i32Const(0))
             function.body.append(.localSet(gotoStateLocalIdx))
             
-            var loopInstrs: [WASMInstruction] = []
-            
-            // 1. Check for termination state
-            // if (gotoState == -1) br 2 (exit state machine block)
-            loopInstrs.append(.localGet(gotoStateLocalIdx))
-            loopInstrs.append(.i32Const(-1))
-            loopInstrs.append(.i32Eq)
-            loopInstrs.append(.if(.void, [.br(2)], nil))
-            
-            // Divide body into chunks by labels and GOSUBs
+            // Pre-build all state chunks
+            var stateChunks: [(Int, [StatementNode])] = []
             var currentChunk: [StatementNode] = []
             var currentState = 0
             var gosubCounter = 0
+            var maxState = 0
             
             for statement in functionNode.body {
                 switch statement {
                 case .label(let name, _):
                     if let stateNum = labelStateMap[name] {
-                        loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: stateNum, statements: currentChunk, function: &function))
+                        stateChunks.append((currentState, currentChunk))
                         currentChunk = []
                         currentState = stateNum
+                        maxState = max(maxState, stateNum)
                     }
                 case .gosub:
                     gosubCounter += 1
                     let returnState = 1000 + gosubCounter
                     currentChunk.append(statement)
-                    loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: returnState, statements: currentChunk, function: &function))
+                    stateChunks.append((currentState, currentChunk))
                     currentChunk = []
                     currentState = returnState
+                    maxState = max(maxState, returnState)
                 default:
                     currentChunk.append(statement)
                 }
             }
-            // Flush final chunk
-            loopInstrs.append(contentsOf: generateChunk(state: currentState, nextState: -1, statements: currentChunk, function: &function))
+            // Flush final chunk with special termination state
+            stateChunks.append((currentState, currentChunk))
             
+            // Build br_table dispatch using nested blocks
+            // Structure:
+            //   block $exit {
+            //     loop $dispatch {
+            //       block $default { block $0 { block $1 { ... gotoState, br_table ... } chunk_n } ... chunk_0 } default
+            //       br $dispatch  ; continue loop
+            //     }
+            //   }
+            
+            let numStates = stateChunks.count
+            
+            // Build target array for br_table
+            // state → depth offset to reach its block
+            var stateToBlockIndex: [Int: Int] = [:]
+            for (i, (state, _)) in stateChunks.enumerated() {
+                stateToBlockIndex[state] = i
+            }
+            
+            // Build contiguous target array (0..maxState+1)
+            var targets: [Int] = []
+            for i in 0...max(maxState, 0) {
+                if let blockIdx = stateToBlockIndex[i] {
+                    // Depth to break to: innermost block is numStates-blockIdx
+                    targets.append(numStates - blockIdx)
+                } else {
+                    targets.append(0) // Unknown state → default (terminate)
+                }
+            }
+            
+            // Handle -1 (termination) by exiting outer block
+            let terminationCheck: [WASMInstruction] = [
+                .localGet(gotoStateLocalIdx),
+                .i32Const(-1),
+                .i32Eq,
+                .if(.void, [.br(numStates + 1)], nil)  // Break to $exit
+            ]
+            
+            // br_table dispatch
+            let brTableDispatch: [WASMInstruction] = [
+                .localGet(gotoStateLocalIdx)
+            ] + [.brTable(targets, 0)]
+            
+            // Build from inside out: innermost is br_table + termination check
+            var innermost: [WASMInstruction] = terminationCheck + brTableDispatch
+            
+            // Wrap each state chunk in a block, from last to first
+            for (stateIdx, (state, statements)) in stateChunks.enumerated().reversed() {
+                // Generate this chunk's body
+                var chunkBody: [WASMInstruction] = []
+                var tempFunc = WASMFunction(typeIndex: function.typeIndex, locals: function.locals)
+                for stmt in statements {
+                    statementGenerator?.generateStatement(stmt, function: &tempFunc)
+                }
+                chunkBody.append(contentsOf: tempFunc.body)
+                
+                // Determine next state for fall-through
+                let nextStateIdx = stateIdx + 1
+                if nextStateIdx < stateChunks.count {
+                    let nextState = stateChunks[nextStateIdx].0
+                    // Fall through: if we didn't GOTO, set next state
+                    chunkBody.append(.localGet(gotoStateLocalIdx))
+                    chunkBody.append(.i32EqZ)
+                    chunkBody.append(.if(.void, [
+                        .i32Const(Int32(nextState)),
+                        .localSet(gotoStateLocalIdx)
+                    ], nil))
+                } else {
+                    // End of function: set termination state
+                    chunkBody.append(.i32Const(-1))
+                    chunkBody.append(.localSet(gotoStateLocalIdx))
+                }
+                
+                // Continue loop
+                let depthToLoop = numStates - stateIdx
+                chunkBody.append(.br(depthToLoop))
+                
+                // Wrap previous in block, then add this chunk's body
+                innermost = [.block(.void, innermost)] + chunkBody
+            }
+            
+            // Wrap in loop and exit block
             function.body.append(.block(.void, [
-                .loop(.void, loopInstrs)
+                .loop(.void, innermost)
             ]))
         } else {
             // Generate body statements normally

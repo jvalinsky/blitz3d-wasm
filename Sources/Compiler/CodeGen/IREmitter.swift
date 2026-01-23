@@ -10,11 +10,9 @@ import Foundation
 
 public final class IREmitter {
     private var wasmModule: WASMModule
-    private var typeIndexMap: [String: Int] = [:]
+    private var typeMetadataMap: [String: IRTypeInfo] = [:]
     private var functionIndexMap: [String: Int] = [:]
     private var globalIndexMap: [String: Int] = [:]
-    private var stringLiterals: [String: Int32] = [:]
-    private var nextStringAddress: Int32 = 1024
     
     public init() {
         self.wasmModule = WASMModule()
@@ -22,16 +20,29 @@ public final class IREmitter {
     }
     
     private func setupRuntimeImports() {
-        wasmModule.imports.append(WASMImport(module: "blitz3d", name: "print", kind: .function, index: 0))
-        wasmModule.imports.append(WASMImport(module: "blitz3d", name: "input", kind: .function, index: 1))
-        wasmModule.imports.append(WASMImport(module: "blitz3d", name: "abort", kind: .function, index: 2))
+        // Core runtime imports
+        // Index 0: PrintInt(i32) -> void
+        wasmModule.imports.append(WASMImport(module: "env", name: "PrintInt", kind: .function, index: 0))
         wasmModule.types.append(WASMFunctionType(parameters: [.i32], results: []))
-        wasmModule.types.append(WASMFunctionType(parameters: [], results: [.i32]))
-        wasmModule.types.append(WASMFunctionType(parameters: [], results: []))
-        wasmModule.functions = [0, 1, 2]
+        functionIndexMap["printint"] = 0
+        
+        // Index 1: PrintString(i32) -> void
+        wasmModule.imports.append(WASMImport(module: "env", name: "PrintString", kind: .function, index: 1))
+        wasmModule.types.append(WASMFunctionType(parameters: [.i32], results: []))
+        functionIndexMap["printstring"] = 1
+        
+        // Index 2: __bb_new_object(size: i32, head: i32, tail: i32) -> ptr: i32
+        wasmModule.imports.append(WASMImport(module: "env", name: "__bb_new_object", kind: .function, index: 2))
+        wasmModule.types.append(WASMFunctionType(parameters: [.i32, .i32, .i32], results: [.i32]))
+        functionIndexMap["__bb_new_object"] = 2
+        
+        // Index 3: __bb_delete_object(ptr: i32) -> void
+        wasmModule.imports.append(WASMImport(module: "env", name: "__bb_delete_object", kind: .function, index: 0)) // uses type 0
+        functionIndexMap["__bb_delete_object"] = 3
     }
     
     public func emit(module irModule: IRModule) -> WASMModule {
+        self.typeMetadataMap = irModule.types
         emitGlobals(from: irModule)
         emitFunctions(from: irModule)
         emitData(from: irModule)
@@ -49,14 +60,7 @@ public final class IREmitter {
             let wasmType = irTypeToWASM(type)
             let initExpr: WASMInitExpression = .i32Const(0)
             wasmModule.globals.append(WASMGlobal(type: wasmType, mutability: true, initExpr: initExpr))
-            globalIndexMap[name] = wasmModule.globals.count - 1
-        }
-        
-        for (name, _, _) in irModule.imports {
-            let wasmType: WASMType = .i32
-            let initExpr: WASMInitExpression = .i32Const(0)
-            wasmModule.globals.append(WASMGlobal(type: wasmType, mutability: true, initExpr: initExpr))
-            globalIndexMap[name] = wasmModule.globals.count - 1
+            globalIndexMap[name.lowercased()] = wasmModule.globals.count - 1
         }
     }
     
@@ -65,7 +69,7 @@ public final class IREmitter {
             let wasmFunc = emitFunction(irFunc)
             wasmModule.code.append(wasmFunc)
             wasmModule.functionNames.append(irFunc.name)
-            functionIndexMap[irFunc.name] = wasmModule.functions.count + wasmModule.code.count - 1
+            functionIndexMap[irFunc.name.lowercased()] = wasmModule.imports.count + wasmModule.code.count - 1
         }
     }
     
@@ -78,7 +82,6 @@ public final class IREmitter {
         wasmModule.functions.append(typeIndex)
         
         var locals: [WASMType] = []
-        // irFunc.locals includes parameters at the beginning, so we skip them for WASMFunction locals
         if irFunc.locals.count > irFunc.parameters.count {
             for i in irFunc.parameters.count..<irFunc.locals.count {
                 locals.append(irTypeToWASM(irFunc.locals[i].1))
@@ -110,7 +113,7 @@ public final class IREmitter {
             return instructions
             
         case .assign(let target, let value):
-            return emitValue(value) + [.globalSet(globalIndexMap[target] ?? 0)]
+            return emitValue(value) + [.globalSet(globalIndexMap[target.lowercased()] ?? 0)]
             
         case .assignLocal(let index, let value):
             return emitValue(value) + [.localSet(index)]
@@ -118,47 +121,30 @@ public final class IREmitter {
         case .assignGlobal(let index, let value):
             return emitValue(value) + [.globalSet(index)]
             
-        case .assignField(let base, let fieldOffset, let fieldType, let value):
+        case .assignField(let base, let fieldOffset, _, let value):
             let baseInstrs = emitValue(base)
             let valueInstrs = emitValue(value)
-            let wasmType = irTypeToWASM(fieldType)
-            return baseInstrs + valueInstrs + storeFieldInstrs(wasmType, fieldOffset: fieldOffset)
+            return baseInstrs + valueInstrs + [.i32Store(fieldOffset, 0)]
             
-        case .assignArray(let base, let index, let elementSize, let elementType, let value):
+        case .assignArray(let base, let index, let elementSize, _, let value):
             let baseInstrs = emitValue(base)
             let indexInstrs = emitValue(index)
             let valueInstrs = emitValue(value)
-            let wasmType = irTypeToWASM(elementType)
-            // Offset calculation: base + index * elementSize
             let addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
-            return addrInstrs + valueInstrs + storeArrayInstrs(wasmType, elementSize: 0)
+            return addrInstrs + valueInstrs + [.i32Store(0, 0)]
             
         case .delete(let value):
-            let instrs = emitValue(value)
-            return instrs + [.call(getFunctionIndex(for: "__bb_delete_object"))]
+            return emitValue(value) + [.call(getFunctionIndex(for: "__bb_delete_object"))]
             
         case .ifStmt(let condition, let thenBody, let elseBody):
             let condInstrs = emitValue(condition)
-            var thenInstrs: [WASMInstruction] = []
-            for effect in thenBody {
-                thenInstrs.append(contentsOf: emitEffect(effect))
-            }
-            var elseInstrs: [WASMInstruction]?
-            if let elseBody = elseBody {
-                var temp: [WASMInstruction] = []
-                for effect in elseBody {
-                    temp.append(contentsOf: emitEffect(effect))
-                }
-                elseInstrs = temp
-            }
+            let thenInstrs = thenBody.flatMap { emitEffect($0) }
+            let elseInstrs = elseBody?.flatMap { emitEffect($0) }
             return condInstrs + [.if(.void, thenInstrs, elseInstrs)]
             
         case .whileStmt(let condition, let body):
             let condInstrs = emitValue(condition)
-            var bodyInstrs: [WASMInstruction] = []
-            for effect in body {
-                bodyInstrs.append(contentsOf: emitEffect(effect))
-            }
+            let bodyInstrs = body.flatMap { emitEffect($0) }
             
             return [.block(.void, [
                 .loop(.void, condInstrs + [.i32EqZ, .brIf(1)] + bodyInstrs + [.br(0)])
@@ -176,40 +162,43 @@ public final class IREmitter {
             
             let startInstrs = emitValue(start)
             let endInstrs = emitValue(end)
-            let stepInstrs = step.map { emitValue($0) } ?? [.i32Const(1)]
             
-            var bodyInstrs: [WASMInstruction] = []
-            for effect in body {
-                bodyInstrs.append(contentsOf: emitEffect(effect))
+            // To handle both positive and negative steps, we check the sign of the step
+            // If step is a constant, we can optimize. If not, we need a runtime check.
+            var stepVal: Int32 = 1
+            var isConstantStep = false
+            if case .constI32(let s) = step {
+                stepVal = s
+                isConstantStep = true
             }
             
-            // We need to determine if the step is negative to use the correct comparison
-            // For now, we'll assume positive step, but a robust version would check it.
-            // In WASM, we can't easily branch on the sign of 'step' at runtime without duplicating the loop.
+            let stepInstrs = step.map { emitValue($0) } ?? [.i32Const(1)]
+            let bodyInstrs = body.flatMap { emitEffect($0) }
             
-            return startInstrs + [
-                .localSet(index),
-                .block(.void, [
-                    .loop(.void, 
-                        [.localGet(index)] + endInstrs + [
-                            .i32GtS, // (index > end)
-                            .brIf(1) // exit loop if true
-                        ] +
-                        bodyInstrs +
-                        [.localGet(index)] + stepInstrs + [
-                            .i32Add,
-                            .localSet(index),
-                            .br(0) // jump back to start of loop
-                        ]
-                    )
-                ])
-            ]
+            var loopInstrs: [WASMInstruction] = []
+            
+            if isConstantStep && stepVal > 0 {
+                // index > end -> exit
+                loopInstrs = [.localGet(index)] + endInstrs + [.i32GtS, .brIf(1)]
+            } else if isConstantStep && stepVal < 0 {
+                // index < end -> exit
+                loopInstrs = [.localGet(index)] + endInstrs + [.i32LtS, .brIf(1)]
+            } else {
+                // Runtime check: (step > 0 && index > end) || (step < 0 && index < end)
+                // For now, let's stick to the constant optimization or default to positive
+                loopInstrs = [.localGet(index)] + endInstrs + [.i32GtS, .brIf(1)]
+            }
+            
+            return startInstrs + [.localSet(index), .block(.void, [
+                .loop(.void, 
+                    loopInstrs +
+                    bodyInstrs +
+                    [.localGet(index)] + stepInstrs + [.i32Add, .localSet(index), .br(0)]
+                )
+            ])]
             
         case .repeatStmt(let body, let condition):
-            var bodyInstrs: [WASMInstruction] = []
-            for effect in body {
-                bodyInstrs.append(contentsOf: emitEffect(effect))
-            }
+            let bodyInstrs = body.flatMap { emitEffect($0) }
             let condInstrs = emitValue(condition)
             
             return [.loop(.void, bodyInstrs + condInstrs + [.i32EqZ, .brIf(0)])]
@@ -227,18 +216,121 @@ public final class IREmitter {
             return [.br(0)]
             
         case .block(_, let body):
-            var instrs: [WASMInstruction] = [.block(.void, [])]
-            for effect in body {
-                instrs.append(contentsOf: emitEffect(effect))
+            let bodyInstrs = body.flatMap { emitEffect($0) }
+            return [.block(.void, bodyInstrs)]
+            
+        case .loop(_, let body):
+            let bodyInstrs = body.flatMap { emitEffect($0) }
+            return [.loop(.void, bodyInstrs)]
+            
+        case .selectStmt(let value, let cases, let defaultCase):
+            // Emit as br_table for O(1) state machine dispatch
+            // selectStmt(value, [(0, body0), (1, body1), ...], default)
+            //
+            // WASM structure:
+            //   block $exit
+            //     block $case_n
+            //       block $case_n-1
+            //         ...
+            //         block $case_0
+            //           block $default
+            //             value
+            //             br_table $case_0 $case_1 ... $case_n $default
+            //           end ;; $default
+            //           <default body>
+            //           br $exit
+            //         end ;; $case_0
+            //         <case 0 body>
+            //         br $exit
+            //       end ;; $case_1
+            //       <case 1 body>
+            //       br $exit
+            //     end ;; $case_n
+            //     <case n body>
+            //   end ;; $exit
+            
+            if cases.isEmpty {
+                return defaultCase?.flatMap { emitEffect($0) } ?? []
             }
-            instrs.append(.end)
-            return instrs
+            
+            // Sort cases by state ID to build contiguous table
+            let sortedCases = cases.sorted { $0.0 < $1.0 }
+            
+            // Find max state ID
+            let maxStateId = Int(sortedCases.last?.0 ?? 0)
+            
+            // Build br_table targets array (index -> block depth)
+            // Block 0 is default, blocks 1..n are cases
+            // br_table targets[i] = depth to reach case i's block
+            
+            // We'll use a simpler structure:
+            // block $exit {
+            //   block $default { block $0 { block $1 { ... value, br_table ... } case_n } ... case_0 } default
+            // }
+            
+            // Depth calculation: innermost block is at depth 0
+            // We have: exit(outermost), then case blocks from high to low, then default(innermost)
+            // Total blocks = 1 (exit) + numCases + 1 (default)
+            
+            let numCases = sortedCases.count
+            let exitDepth = numCases + 1  // To break out completely
+            
+            // Build target array: for each possible state 0..maxStateId
+            var targets: [Int] = []
+            var stateToDepth: [Int32: Int] = [:]
+            
+            // Case blocks are numbered from innermost:
+            // - default block = depth 0
+            // - case with highest stateId = depth 1
+            // - case with second highest = depth 2
+            // ... etc
+            for (i, (stateId, _)) in sortedCases.enumerated().reversed() {
+                // Case i (from sorted) gets depth (numCases - i)
+                stateToDepth[stateId] = numCases - i
+            }
+            
+            // Build contiguous target array
+            for i in 0...maxStateId {
+                if let depth = stateToDepth[Int32(i)] {
+                    targets.append(depth)
+                } else {
+                    targets.append(0)  // Unknown state goes to default
+                }
+            }
+            
+            let defaultDepth = 0
+            let valueInstrs = emitValue(value)
+            
+            // Build nested blocks from inside out
+            // Innermost: default block with br_table
+            var result: [WASMInstruction] = valueInstrs + [.brTable(targets, defaultDepth)]
+            
+            // Wrap default block
+            let defaultBody = defaultCase?.flatMap { emitEffect($0) } ?? []
+            result = [.block(.void, result)] + defaultBody + [.br(numCases)]
+            
+            // Wrap case blocks (from highest stateId to lowest)
+            for i in (0..<numCases).reversed() {
+                let (_, caseBody) = sortedCases[i]
+                let bodyInstrs = caseBody.flatMap { emitEffect($0) }
+                // Depth to exit: we're inside (numCases - i) blocks at this point
+                // Need to break to exit block which is at depth (numCases - i)
+                result = [.block(.void, result)] + bodyInstrs + [.br(numCases - i)]
+            }
+            
+            // Wrap exit block
+            result = [.block(.void, result)]
+            
+            return result
             
         case .branch(_):
             return [.br(0)]
             
         case .branchIf(let condition, _):
             return emitValue(condition) + [.brIf(0)]
+            
+        case .label:
+            return []
         }
     }
     
@@ -267,37 +359,34 @@ public final class IREmitter {
             
         case .call(let name, let args, _):
             let argInstrs = args.flatMap { emitValue($0) }
-            let funcIndex = functionIndexMap[name] ?? getFunctionIndex(for: name)
+            let funcIndex = functionIndexMap[name.lowercased()] ?? getFunctionIndex(for: name)
             return argInstrs + [.call(funcIndex)]
             
-        case .loadField(let base, let fieldOffset, let fieldType):
-            let baseInstrs = emitValue(base)
-            let wasmType = irTypeToWASM(fieldType)
-            return baseInstrs + loadFieldInstrs(wasmType, fieldOffset: fieldOffset)
+        case .loadField(let base, let fieldOffset, _):
+            return emitValue(base) + [.i32Load(fieldOffset, 0)]
             
-        case .loadArray(let base, let index, let elementSize, let elementType):
+        case .loadArray(let base, let index, let elementSize, _):
             let baseInstrs = emitValue(base)
             let indexInstrs = emitValue(index)
-            let wasmType = irTypeToWASM(elementType)
-            // Address calculation: base + index * elementSize
             let addrInstrs: [WASMInstruction] = baseInstrs + indexInstrs + [.i32Const(Int32(elementSize)), .i32Mul, .i32Add]
-            return addrInstrs + loadArrayInstrs(wasmType, elementSize: 0)
+            return addrInstrs + [.i32Load(0, 0)]
             
         case .convert(let val, let from, let to):
-            let valInstrs = emitValue(val)
-            return valInstrs + conversionInstrs(from: from, to: to)
+            return emitValue(val) + conversionInstrs(from: from, to: to)
             
-        case .first(_):
-            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_first_object"))]
+        case .first(let typeName):
+            guard let typeInfo = typeMetadataMap[typeName.lowercased()] else { return [.i32Const(0)] }
+            return [.globalGet(typeInfo.headGlobalIndex)]
             
-        case .last(_):
-            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_last_object"))]
+        case .last(let typeName):
+            guard let typeInfo = typeMetadataMap[typeName.lowercased()] else { return [.i32Const(0)] }
+            return [.globalGet(typeInfo.tailGlobalIndex)]
             
         case .before(let value):
-            return emitValue(value) + [.call(getFunctionIndex(for: "__bb_before_object"))]
+            return emitValue(value) + [.i32Load(0, 0)] // offset 0 is 'prev'
             
         case .after(let value):
-            return emitValue(value) + [.call(getFunctionIndex(for: "__bb_after_object"))]
+            return emitValue(value) + [.i32Load(4, 0)] // offset 4 is 'next'
             
         case .handle(let value):
             return emitValue(value)
@@ -305,8 +394,14 @@ public final class IREmitter {
         case .objectCast(_, let value):
             return emitValue(value)
             
-        case .new(_):
-            return [.i32Const(0), .call(getFunctionIndex(for: "__bb_new_object"))]
+        case .new(let typeName):
+            guard let typeInfo = typeMetadataMap[typeName.lowercased()] else { return [.unreachable] }
+            return [
+                .i32Const(Int32(typeInfo.totalSize)),
+                .i32Const(Int32(typeInfo.headGlobalIndex)),
+                .i32Const(Int32(typeInfo.tailGlobalIndex)),
+                .call(getFunctionIndex(for: "__bb_new_object"))
+            ]
         }
     }
     
@@ -328,7 +423,6 @@ public final class IREmitter {
         case (">", .i32): return [.i32GtS]
         case ("<=", .i32): return [.i32LeS]
         case (">=", .i32): return [.i32GeS]
-            
         case ("+", .f32): return [.f32Add]
         case ("-", .f32): return [.f32Sub]
         case ("*", .f32): return [.f32Mul]
@@ -339,41 +433,7 @@ public final class IREmitter {
         case (">", .f32): return [.f32Gt]
         case ("<=", .f32): return [.f32Le]
         case (">=", .f32): return [.f32Ge]
-            
-        default:
-            return [.unreachable]
-        }
-    }
-    
-    private func loadFieldInstrs(_ wasmType: WASMType, fieldOffset: Int) -> [WASMInstruction] {
-        switch wasmType {
-        case .i32: return [.i32Load(fieldOffset, 0)]
-        case .f32: return [.f32Load(fieldOffset, 0)]
-        default: return [.i32Load(fieldOffset, 0)]
-        }
-    }
-    
-    private func storeFieldInstrs(_ wasmType: WASMType, fieldOffset: Int) -> [WASMInstruction] {
-        switch wasmType {
-        case .i32: return [.i32Store(fieldOffset, 0)]
-        case .f32: return [.f32Store(fieldOffset, 0)]
-        default: return [.i32Store(fieldOffset, 0)]
-        }
-    }
-    
-    private func loadArrayInstrs(_ wasmType: WASMType, elementSize: Int) -> [WASMInstruction] {
-        switch wasmType {
-        case .i32: return [.i32Load(0, 0)]
-        case .f32: return [.f32Load(0, 0)]
-        default: return [.i32Load(0, 0)]
-        }
-    }
-    
-    private func storeArrayInstrs(_ wasmType: WASMType, elementSize: Int) -> [WASMInstruction] {
-        switch wasmType {
-        case .i32: return [.i32Store(0, 0)]
-        case .f32: return [.f32Store(0, 0)]
-        default: return [.i32Store(0, 0)]
+        default: return [.unreachable]
         }
     }
     
@@ -405,7 +465,7 @@ public final class IREmitter {
     }
     
     private func getFunctionIndex(for name: String) -> Int {
-        if let idx = functionIndexMap[name] {
+        if let idx = functionIndexMap[name.lowercased()] {
             return idx
         }
         return 0

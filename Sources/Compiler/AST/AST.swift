@@ -366,6 +366,7 @@ public enum TypeSuffix: String {
     case integer = "%"
     case float = "#"
     case string = "$"
+    case object = "."
 }
 
 public struct FunctionCallNode {

@@ -5,3 +5,4 @@
 
 # Deciduous database (local)
 .deciduous/
+*.wasm

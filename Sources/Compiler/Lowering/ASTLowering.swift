@@ -70,7 +70,25 @@ public final class ASTLowering {
             currentOffset += 4 // Everything 4 bytes for now in WASM32
         }
         
-        let typeInfo = IRTypeInfo(fieldOffsets: fieldOffsets, fieldTypes: fieldTypes)
+        // Register Head/Tail globals for this type
+        let headName = "__bb_type_\(typeNode.name.lowercased())_head"
+        let tailName = "__bb_type_\(typeNode.name.lowercased())_tail"
+        
+        symbolTable.addVariable(headName, type: .i32, isLocal: false)
+        symbolTable.addVariable(tailName, type: .i32, isLocal: false)
+        
+        module.globals.append((headName, .i32, true))
+        module.globals.append((tailName, .i32, true))
+        
+        let typeInfo = IRTypeInfo(
+            typeName: typeNode.name,
+            fieldOffsets: fieldOffsets,
+            fieldTypes: fieldTypes,
+            totalSize: currentOffset,
+            headGlobalIndex: symbolTable.globalIndex(for: headName)!,
+            tailGlobalIndex: symbolTable.globalIndex(for: tailName)!
+        )
+        
         symbolTable.addType(typeNode.name, info: typeInfo)
         module.types[typeNode.name.lowercased()] = typeInfo
     }
@@ -371,8 +389,16 @@ public final class ASTLowering {
         case .exit(_):
             body.append(.breakStmt)
             
-        case .goto, .gosub, .label:
-            break
+        case .label(let name, _):
+            body.append(builder.buildLabel(name))
+            
+        case .goto(let label, _):
+            body.append(builder.buildBranch(label))
+            
+        case .gosub(let label, _):
+            // TODO: Implement true GOSUB semantics (shadow stack or function extraction)
+            // For now, mapping to branch to maintain CFG connectivity
+            body.append(builder.buildBranch(label))
             
         case .typeDeclaration:
             break
@@ -387,8 +413,58 @@ public final class ASTLowering {
         case .insert(_, _, _):
             break
             
-        case .select:
-            break
+        case .select(let selectNode, _):
+            let expr = lowerExpression(selectNode.expression)
+            
+            // Lower Select Case to an If-Else chain in IR
+            // For optimized performance, we could use a switch-like structure,
+            // but If-Else is always safe and supports ranges easily.
+            
+            var currentEffect: IREffect? = nil
+            
+            // Build from bottom up (default case first)
+            var lastElse: [IREffect]? = nil
+            if let defaultBody = selectNode.defaultCase {
+                var irDefaultBody: [IREffect] = []
+                for stmt in defaultBody {
+                    lowerStatement(stmt, into: &irDefaultBody)
+                }
+                lastElse = irDefaultBody
+            }
+            
+            for caseNode in selectNode.cases.reversed() {
+                var condition: IRValue? = nil
+                
+                for value in caseNode.values {
+                    let caseCond: IRValue
+                    switch value {
+                    case .single(let caseExpr):
+                        caseCond = builder.buildBinary("=", lhs: expr, rhs: lowerExpression(caseExpr), resultType: .i32)
+                    case .range(let start, let end):
+                        let low = builder.buildBinary(">=", lhs: expr, rhs: lowerExpression(start), resultType: .i32)
+                        let high = builder.buildBinary("<=", lhs: expr, rhs: lowerExpression(end), resultType: .i32)
+                        caseCond = builder.buildBinary("And", lhs: low, rhs: high, resultType: .i32)
+                    }
+                    
+                    if let existing = condition {
+                        condition = builder.buildBinary("Or", lhs: existing, rhs: caseCond, resultType: .i32)
+                    } else {
+                        condition = caseCond
+                    }
+                }
+                
+                var thenBody: [IREffect] = []
+                for stmt in caseNode.body {
+                    lowerStatement(stmt, into: &thenBody)
+                }
+                
+                let ifStmt = builder.buildIf(condition!, then: thenBody, else: lastElse)
+                lastElse = [ifStmt]
+            }
+            
+            if let firstIf = lastElse?.first {
+                body.append(firstIf)
+            }
             
         case .function, .forEach, .data, .empty:
             break
@@ -541,6 +617,7 @@ public final class ASTLowering {
         case .integer: return .i32
         case .float: return .f32
         case .string: return .i32
+        case .object: return .i32
         }
     }
     
@@ -606,6 +683,12 @@ public final class ASTLowering {
         switch expression {
         case .identifier(let id, _):
             return symbolTable.typeName(for: id.name)
+        case .functionCall(let call, _):
+            // Check if call was an array access or object return
+            if let info = symbolTable.arrayInfo(for: call.name) {
+                // ...
+            }
+            return nil
         default:
             return nil
         }

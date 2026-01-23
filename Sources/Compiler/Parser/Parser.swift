@@ -1453,6 +1453,11 @@ public struct Parser {
         
         // In Blitz3D, a function call can also be without parentheses: Print "Hello"
         if case .identifier(let id, _) = expr {
+            // Special case for 'End' statement which is an identifier but acts as a void function call
+            if id.name.lowercased() == "end" {
+                 return .functionCall(FunctionCallNode(name: "End", arguments: [], span: endSpan(from: start)), endSpan(from: start))
+            }
+
             // Check if there's an expression following it (argument)
             // But be careful not to consume next statement
             if isExpressionStart() {

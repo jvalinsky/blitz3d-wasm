@@ -142,6 +142,8 @@ public struct TypeHandling {
             typeName = "float"
         case .string:
             typeName = "string"
+        case .object:
+            typeName = "object"
         case .none:
             typeName = "int"
             return TypeInfo(wasmType: .i32, typeName: typeName, suffix: nil)

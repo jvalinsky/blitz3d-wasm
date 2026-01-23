@@ -64,6 +64,9 @@ public indirect enum IREffect {
     case continueStmt
     
     case block(label: String, body: [IREffect])
+    case loop(label: String, body: [IREffect])
+    case selectStmt(value: IRValue, cases: [(Int32, [IREffect])], default: [IREffect]?)
+    case label(String)
     case branch(label: String)
     case branchIf(condition: IRValue, label: String)
 }
@@ -104,12 +107,20 @@ public struct IRModule {
 }
 
 public struct IRTypeInfo {
+    public let typeName: String
     public let fieldOffsets: [String: Int]
     public let fieldTypes: [String: IRType]
+    public let totalSize: Int
+    public let headGlobalIndex: Int
+    public let tailGlobalIndex: Int
     
-    public init(fieldOffsets: [String: Int], fieldTypes: [String: IRType]) {
+    public init(typeName: String, fieldOffsets: [String: Int], fieldTypes: [String: IRType], totalSize: Int, headGlobalIndex: Int, tailGlobalIndex: Int) {
+        self.typeName = typeName
         self.fieldOffsets = fieldOffsets
         self.fieldTypes = fieldTypes
+        self.totalSize = totalSize
+        self.headGlobalIndex = headGlobalIndex
+        self.tailGlobalIndex = tailGlobalIndex
     }
 }
 
@@ -200,5 +211,13 @@ public class IRBuilder {
     
     public func buildWhile(_ condition: IRValue, body: [IREffect]) -> IREffect {
         return .whileStmt(condition: condition, body: body)
+    }
+    
+    public func buildLabel(_ name: String) -> IREffect {
+        return .label(name)
+    }
+    
+    public func buildBranch(_ label: String) -> IREffect {
+        return .branch(label: label)
     }
 }

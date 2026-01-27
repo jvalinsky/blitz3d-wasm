@@ -678,20 +678,63 @@ public final class ExpressionGeneration {
                 expectedArgCount = def.params.count
             }
 
+            // Helper to get actual param type from WASM module
+            func getParamTypeFromModule(funcIdx: Int, paramIdx: Int) -> WASMType? {
+                // Get the type index for this function
+                var typeIdx: Int?
+
+                if funcIdx < context.module.imports.count {
+                    // Imported function
+                    let importEntry = context.module.imports[funcIdx]
+                    if importEntry.kind == .function {
+                        typeIdx = importEntry.index
+                    }
+                } else {
+                    // Local function
+                    let localFuncIdx = funcIdx - context.module.imports.count
+                    if localFuncIdx < context.module.functions.count {
+                        typeIdx = context.module.functions[localFuncIdx]
+                    }
+                }
+
+                // Look up the function type
+                if let typeIdx = typeIdx, typeIdx < context.module.types.count {
+                    let funcType = context.module.types[typeIdx]
+                    if paramIdx < funcType.parameters.count {
+                        return funcType.parameters[paramIdx]
+                    }
+                }
+
+                return nil
+            }
+
             // Re-implement argument generation loop to be safer
             instrs = [] // Reset instructions from previous loop
             let argsToPush = min(call.arguments.count, expectedArgCount)
-            
+
             // 1. Generate arguments that WILL be consumed
             for i in 0..<argsToPush {
                 let argResult = generateWithInfo(call.arguments[i])
                 instrs.append(contentsOf: argResult.instrs)
+
+                // CRITICAL FIX: Always attempt type conversion
+                var targetType: WASMType?
+
+                // Strategy 1: Use resolved signature definition (most accurate)
                 if let def = def, i < def.params.count {
-                    instrs.append(contentsOf: convert(from: argResult.type, to: def.params[i]))
-                } else if let wasmCount = paramCountFromWasm, i < wasmCount {
-                    // Logic to convert to WASM param type? 
-                    // We need type lookup again. 
-                    // Simplify: Just push. WASM validation will catch bad types, but stack count will be correct.
+                    targetType = def.params[i]
+                }
+                // Strategy 2: Fall back to WASM module type (handles missing defs)
+                else if let wasmCount = paramCountFromWasm, i < wasmCount {
+                    targetType = getParamTypeFromModule(funcIdx: funcIdx, paramIdx: i)
+                }
+
+                // Apply conversion if we have a target type
+                if let targetType = targetType, argResult.type != targetType {
+                    print("DEBUG_ARG_CONVERT: \(call.name) arg[\(i)] converting \(argResult.type) -> \(targetType)")
+                    instrs.append(contentsOf: convert(from: argResult.type, to: targetType))
+                } else if targetType == nil {
+                    print("DEBUG_ARG_WARNING: \(call.name) arg[\(i)] has unknown target type, passing \(argResult.type) as-is")
                 }
             }
             

@@ -103,7 +103,7 @@ public final class ExpressionGeneration {
             
         case .new(let typeName, _):
             // new TypeName() - allocate instance
-            guard let typeInfo = context.userTypes[typeName] else {
+            guard let typeInfo = context.userTypes[typeName.lowercased()] else {
                 return ([.i32Const(0)], .i32)
             }
             
@@ -118,16 +118,15 @@ public final class ExpressionGeneration {
             //   heapPointer += size;
             // }
             
-            // Store result in scratch global
+            // Store result in scratch global (no stack result needed - we use the global)
             instrs.append(.globalGet(typeInfo.freeHeadGlobalIdx))
-            instrs.append(.if(.i32, [
+            instrs.append(.if(.void, [
                 // Pool Path
                 .globalGet(typeInfo.freeHeadGlobalIdx),
                 .globalSet(context.scratchGlobalIdx),  // obj = freeHead
                 .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 4),  // obj.next
-                .globalSet(typeInfo.freeHeadGlobalIdx),  // freeHead = obj.next
-                .globalGet(context.scratchGlobalIdx)  // result
+                .globalSet(typeInfo.freeHeadGlobalIdx)  // freeHead = obj.next
             ], [
                 // Bump Path
                 .globalGet(context.heapPointerIdx),
@@ -135,8 +134,7 @@ public final class ExpressionGeneration {
                 .globalGet(context.scratchGlobalIdx),
                 .i32Const(Int32(truncatingIfNeeded: typeInfo.instanceSize)),
                 .i32Add,
-                .globalSet(context.heapPointerIdx),  // heapPointer += size
-                .globalGet(context.scratchGlobalIdx)  // result
+                .globalSet(context.heapPointerIdx)  // heapPointer += size
             ]))
             
             // 2. Initialize header
@@ -233,14 +231,14 @@ public final class ExpressionGeneration {
             
         case .first(let typeName, _):
             // First TypeName - get first instance
-            if let typeInfo = context.userTypes[typeName] {
+            if let typeInfo = context.userTypes[typeName.lowercased()] {
                 return ([.globalGet(typeInfo.firstGlobalIdx)], .i32)
             }
             return ([.i32Const(0)], .i32)
             
         case .last(let typeName, _):
             // Last TypeName - get last instance
-            if let typeInfo = context.userTypes[typeName] {
+            if let typeInfo = context.userTypes[typeName.lowercased()] {
                 return ([.globalGet(typeInfo.lastGlobalIdx)], .i32)
             }
             return ([.i32Const(0)], .i32)
@@ -275,7 +273,7 @@ public final class ExpressionGeneration {
             instrs.append(.i32Load(2, 8)) // load typeID from offset 8
             
             // Check if typeID matches
-            if let typeInfo = context.userTypes[typeName] {
+            if let typeInfo = context.userTypes[typeName.lowercased()] {
                 instrs.append(.i32Const(Int32(truncatingIfNeeded: typeInfo.typeID)))
                 instrs.append(.i32Eq)
                 instrs.append(.if(.i32, [
@@ -921,7 +919,7 @@ public final class ExpressionGeneration {
                 instrs.append(contentsOf: baseInstrs)
                 
                 // Get element type and size
-                let fieldType = context.userTypes[typeName]?.fieldTypes[fieldAccess.field] ?? "Int"
+                let fieldType = context.userTypes[typeName.lowercased()]?.fieldTypes[fieldAccess.field] ?? "Int"
                 let elementType = typeHandling.wasmType(from: fieldType)
                 let elementSize = context.typeSize(for: elementType)
                 
@@ -979,7 +977,7 @@ public final class ExpressionGeneration {
             
             // Check if this field is an array
             let fieldDimensions = context.fieldDimensions[typeName]?[access.field]
-            let fieldType = context.userTypes[typeName]?.fieldTypes[access.field] ?? "Int"
+            let fieldType = context.userTypes[typeName.lowercased()]?.fieldTypes[access.field] ?? "Int"
             let wasmType = typeHandling.wasmType(from: fieldType)
             
             // If field is an array, return address (pointer to array base)
@@ -1043,7 +1041,7 @@ public final class ExpressionGeneration {
             }
         case .fieldAccess(let access, _):
             if let objType = getTypeName(from: access.object),
-               let fieldType = context.userTypes[objType]?.fieldTypes[access.field] {
+               let fieldType = context.userTypes[objType.lowercased()]?.fieldTypes[access.field] {
                 return fieldType
             }
         case .new(let type, _):
@@ -1060,7 +1058,7 @@ public final class ExpressionGeneration {
             // Check if it's a field array access: obj.field[index]
             if case .fieldAccess(let fieldAccess, _) = access.array,
                let objType = getTypeName(from: fieldAccess.object),
-               let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
+               let fieldType = context.userTypes[objType.lowercased()]?.fieldTypes[fieldAccess.field] {
                 return fieldType
             }
         case .objectCast(let type, _, _):

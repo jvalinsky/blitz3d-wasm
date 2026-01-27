@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Blitz3D Thin Runtime Test</title>
+    <title>Blitz3D Thin Runtime - BB Particle System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
@@ -20,84 +20,128 @@
         }
         #log {
             width: 800px;
-            height: 200px;
+            height: 120px;
             background: #0a0a1a;
             border: 1px solid #333;
             padding: 10px;
             overflow-y: auto;
             white-space: pre;
             margin-top: 10px;
+            font-size: 11px;
         }
-        .success { color: #4f4; }
-        .error { color: #f44; }
-        .info { color: #ff0; }
+        h1 { color: #4af; margin: 10px; font-size: 18px; }
+        .info { color: #888; }
     </style>
 </head>
 <body>
-    <h1>Blitz3D Thin Runtime Test</h1>
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <h1>Blitz3D WASM - Particle System (BB Logic + JS Rendering)</h1>
+    <canvas id="canvas" width="800" height="500"></canvas>
     <div id="log"></div>
     
     <script src="runtime.js"></script>
     <script>
     const logDiv = document.getElementById('log');
-    const realLog = console.log;
     console.log = (...args) => {
-        realLog(...args);
         logDiv.innerHTML += args.join(' ') + '\n';
         logDiv.scrollTop = logDiv.scrollHeight;
     };
     
     async function main() {
-        console.log('Initializing Thin Runtime...');
+        console.log('Loading WASM particle system...');
         
         const canvas = document.getElementById('canvas');
         const runtime = new Blitz3DThinRuntime(canvas);
         
-        console.log('Loading WASM...');
+        // Load WASM
+        const response = await fetch('particles.wasm');
+        const bytes = await response.arrayBuffer();
+        const imports = runtime.getImports();
+        const { instance } = await WebAssembly.instantiate(bytes, imports);
+        runtime.memory = instance.exports.memory;
         
-        try {
-            const instance = await runtime.loadAndRun('simple.wasm');
-            console.log('WASM loaded and Main() executed!');
-            
-            // List exported functions
-            const exports = Object.keys(instance.exports).filter(k => typeof instance.exports[k] === 'function');
-            console.log(`Exported functions: ${exports.length}`);
-            
-            // Check for key functions
-            const keyFns = ['AddToCounter%', 'SetPosition', 'GetDistance#'];
-            for (const fn of keyFns) {
-                if (instance.exports[fn]) {
-                    console.log(`  Found: ${fn}`);
-                }
-            }
-            
-            // Test AddToCounter
-            if (instance.exports['AddToCounter%']) {
-                console.log('\nTesting AddToCounter...');
-                let result = instance.exports['AddToCounter%'](10);
-                console.log(`AddToCounter(10) = ${result}`);
-                result = instance.exports['AddToCounter%'](5);
-                console.log(`AddToCounter(5) = ${result}`);
-            }
-            
-            // Test GetDistance
-            if (instance.exports['SetPosition'] && instance.exports['GetDistance#']) {
-                console.log('\nTesting Distance...');
-                instance.exports['SetPosition'](3.0, 4.0, 0.0);
-                const dist = instance.exports['GetDistance#']();
-                console.log(`Distance from (3,4,0) to origin = ${dist} (expected: 5)`);
-            }
-            
-            console.log('\n=== TEST COMPLETE ===');
-            
-        } catch (e) {
-            console.log(`Error: ${e.message}`);
-            console.error(e);
+        // Run Main() - this creates 5 particles via BB code
+        // The BB code calls CreateSprite(), PositionEntity(), etc.
+        // which are handled by our thin runtime
+        if (instance.exports.Main) {
+            instance.exports.Main();
         }
+        
+        const initialCount = instance.exports['GetParticleCount%']();
+        console.log(`BB created ${initialCount} particles`);
+        console.log(`Entities in scene: ${runtime.entities.size}`);
+        
+        // Setup camera
+        const camId = imports.env.CreateCamera(0);
+        imports.env.PositionEntity(camId, 0, 2, -6);
+        runtime.activeCamera.lookAt(0, 1, 0);
+        
+        // Add light
+        imports.env.CreateLight(0, 0); // Ambient
+        
+        // Add ground plane for reference
+        const groundGeom = new THREE.PlaneGeometry(10, 10);
+        const groundMat = new THREE.MeshBasicMaterial({ 
+            color: 0x222244, 
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.5
+        });
+        const ground = new THREE.Mesh(groundGeom, groundMat);
+        ground.rotation.x = Math.PI / 2;
+        ground.position.y = -0.5;
+        runtime.scene.add(ground);
+        
+        // Set FPSfactor global (if exported)
+        if (instance.exports.FPSfactor) {
+            // FPSfactor is typically 1.0 at 60fps
+        }
+        
+        console.log('Starting game loop - particles managed by BB code');
+        
+        let frame = 0;
+        let lastSpawn = 0;
+        
+        function gameLoop() {
+            // Update particles - this is the BB function that:
+            // - Applies gravity (BB logic)
+            // - Updates positions (calls PositionEntity -> JS)
+            // - Fades alpha (calls EntityAlpha -> JS)
+            // - Removes expired particles (calls FreeEntity -> JS, Delete -> BB)
+            instance.exports.UpdateParticles();
+            
+            // Spawn new particles periodically via BB
+            if (frame - lastSpawn > 30) {
+                // Call BB function to create particle
+                // The BB code handles all the logic
+                const x = (Math.random() - 0.5) * 3;
+                const z = (Math.random() - 0.5) * 3;
+                instance.exports['CreateParticleAt%'](x, 2.5, z);
+                lastSpawn = frame;
+            }
+            
+            // Slowly rotate camera
+            const angle = frame * 0.003;
+            runtime.activeCamera.position.x = Math.sin(angle) * 6;
+            runtime.activeCamera.position.z = Math.cos(angle) * 6;
+            runtime.activeCamera.lookAt(0, 1, 0);
+            
+            // Render
+            runtime.render();
+            
+            // Stats every 60 frames
+            if (frame % 60 === 0) {
+                const count = instance.exports['GetParticleCount%']();
+                console.log(`Frame ${frame}: ${count} particles, ${runtime.entities.size} entities`);
+            }
+            
+            frame++;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        gameLoop();
     }
     
-    main();
+    main().catch(e => console.log('Error:', e.message));
     </script>
 </body>
 </html>

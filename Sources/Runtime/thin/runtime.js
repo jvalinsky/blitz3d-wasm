@@ -187,11 +187,13 @@ class Blitz3DThinRuntime {
                 },
                 
                 CreateSprite: (parent) => {
-                    const material = new THREE.SpriteMaterial({ color: 0xffffff });
+                    const material = new THREE.SpriteMaterial({ color: 0x00ff00, sizeAttenuation: true });
                     const sprite = new THREE.Sprite(material);
+                    sprite.scale.set(0.5, 0.5, 1); // Make visible
                     const id = self.nextEntityId++;
                     self.entities.set(id, { obj: sprite, type: 'sprite', material });
                     self.scene.add(sprite);
+                    console.log(`CreateSprite() -> id=${id}`);
                     return id;
                 },
                 
@@ -230,7 +232,12 @@ class Blitz3DThinRuntime {
                 //--------------------------------------------------------------
                 PositionEntity: (e, x, y, z, global) => {
                     const ent = self.entities.get(e);
-                    if (ent) ent.obj.position.set(x, y, -z);  // Blitz3D uses -Z forward
+                    if (ent) {
+                        ent.obj.position.set(x, y, -z);  // Blitz3D uses -Z forward
+                        console.log(`PositionEntity(${e}, ${x}, ${y}, ${z})`);
+                    } else {
+                        console.warn(`PositionEntity: entity ${e} not found`);
+                    }
                 },
                 
                 RotateEntity: (e, pitch, yaw, roll, global) => {

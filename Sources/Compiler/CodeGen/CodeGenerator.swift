@@ -130,7 +130,9 @@ public struct CodeGenerator {
             
             // Filter out internal functions only (_main is internal entry point alias, __alloc/__stringalloc/__stringconcat are internal allocators)
             if lowerName != "_main" && lowerName != "__alloc" && lowerName != "__stringalloc" && lowerName != "__stringconcat" {
-                context.module.exports.append(WASMExport(name: exportName, kind: .function, index: idx))
+                // Use user-defined function index if available (overrides imports)
+                let exportIdx = context.userFunctionIndices[lowerName] ?? idx
+                context.module.exports.append(WASMExport(name: exportName, kind: .function, index: exportIdx))
             }
         }
         
@@ -961,6 +963,10 @@ public struct CodeGenerator {
             context.functionOriginalNames[lowerName] = function.name
             // Store original return type if suffix was explicit in source
             context.functionExplicitSuffixes[lowerName] = function.explicitReturnTypeSuffix ? function.returnType : nil
+            
+            // IMPORTANT: Track user-defined function's ACTUAL index for correct exports
+            // This overrides any import with the same name
+            context.userFunctionIndices[lowerName] = nextFuncIdx
             
             // Always increment nextFuncIdx because this function WILL be generated in the module code section,
             // consuming a function index slot, regardless of whether it shadows an import or not.

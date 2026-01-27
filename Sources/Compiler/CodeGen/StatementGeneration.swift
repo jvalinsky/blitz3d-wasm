@@ -694,7 +694,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             ]))
             
         case .forEach(let forEachNode, _):
-            guard let typeInfo = context.userTypes[forEachNode.typeName],
+            guard let typeInfo = context.userTypes[forEachNode.typeName.lowercased()],
                   let iterator = context.variableManagement.localInfo(for: forEachNode.iteratorName) else { break }
             
             currentDepth += 1 // block

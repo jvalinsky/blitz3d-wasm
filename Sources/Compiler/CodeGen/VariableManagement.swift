@@ -291,6 +291,8 @@ public final class ModuleContext {
     public var functionOriginalNames: [String: String] = [:]
     /// Tracks which functions had explicit type suffix in source (for export names)
     public var functionExplicitSuffixes: [String: TypeAnnotation?] = [:]
+    /// Maps user-defined function names to their actual indices (overrides imports)
+    public var userFunctionIndices: [String: Int] = [:]
     public var userTypes: [String: UserTypeInfo]
     public var fieldOffsets: [String: [String: Int]]
     public var fieldDimensions: [String: [String: [Int]]]  // typeName -> [fieldName: dimensions]

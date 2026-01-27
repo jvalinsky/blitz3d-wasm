@@ -969,15 +969,16 @@ public final class ExpressionGeneration {
         let objectInstrs = generate(access.object)
         instrs.append(contentsOf: objectInstrs)
         
-        // Add field offset
+        // Add field offset (use lowercased names for lookup)
         if let typeName = getTypeName(from: access.object),
-           let fieldOffset = context.fieldOffsets[typeName]?[access.field] {
+           let fieldOffset = context.fieldOffsets[typeName.lowercased()]?[access.field.lowercased()] {
+            print("DEBUG_FIELD_ACCESS: type=\(typeName) field=\(access.field) offset=\(fieldOffset)")
             instrs.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
             instrs.append(.i32Add)
             
             // Check if this field is an array
-            let fieldDimensions = context.fieldDimensions[typeName]?[access.field]
-            let fieldType = context.userTypes[typeName.lowercased()]?.fieldTypes[access.field] ?? "Int"
+            let fieldDimensions = context.fieldDimensions[typeName.lowercased()]?[access.field.lowercased()]
+            let fieldType = context.userTypes[typeName.lowercased()]?.fieldTypes[access.field.lowercased()] ?? "Int"
             let wasmType = typeHandling.wasmType(from: fieldType)
             
             // If field is an array, return address (pointer to array base)

@@ -28,7 +28,7 @@ Function CreateParticleAt.Particles(x#, y#, z#)
     p\size = 0.15
     ScaleSprite(p\obj, 0.15, 0.15)
     
-    ; Physics - random velocity
+    ; Physics
     p\vy = 0.02
     p\gravity = 0.008
     
@@ -41,7 +41,12 @@ End Function
 
 Function UpdateParticles()
     Local p.Particles
-    For p.Particles = Each Particles
+    Local pn.Particles  ; Save next before possible delete
+    
+    p = First Particles
+    While p <> Null
+        pn = After p  ; Save next BEFORE any modification
+        
         ; Apply gravity
         p\vy = p\vy - p\gravity * FPSfactor
         
@@ -63,7 +68,9 @@ Function UpdateParticles()
             FreeEntity(p\obj)
             Delete p
         End If
-    Next
+        
+        p = pn  ; Use saved next
+    Wend
 End Function
 
 Function GetParticleCount%()

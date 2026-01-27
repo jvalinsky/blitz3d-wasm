@@ -57,6 +57,7 @@
         const bytes = await response.arrayBuffer();
         const imports = runtime.getImports();
         const { instance } = await WebAssembly.instantiate(bytes, imports);
+        window.wasmInstance = instance;  // For debugging
         runtime.memory = instance.exports.memory;
         
         // Run Main() - this creates 5 particles via BB code

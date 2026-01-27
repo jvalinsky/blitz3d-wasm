@@ -844,6 +844,7 @@ public struct CodeGenerator {
                 
                 context.fieldOffsets[typeNode.name.lowercased()]?[field.name.lowercased()] = offset
                 typeFieldOffsets[field.name.lowercased()] = offset
+                print("DEBUG_FIELD: Type=\(typeNode.name) Field=\(field.name) Offset=\(offset)")
                 typeFieldTypes[field.name.lowercased()] = field.type?.rawValue ?? "Int"
                 
                 // Store dimensions if field is an array

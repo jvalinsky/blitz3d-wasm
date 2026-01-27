@@ -1022,9 +1022,20 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
             
         case .delete(let expr, _):
-            guard let typeName = getTypeName(from: expr),
-                  let typeInfo = context.userTypes[typeName],
-                  let expressionGenerator = expressionGenerator else { break }
+            print("DEBUG_DELETE: expr=\(expr)")
+            guard let typeName = getTypeName(from: expr) else {
+                print("DEBUG_DELETE: typeName is nil!")
+                break
+            }
+            print("DEBUG_DELETE: typeName=\(typeName)")
+            guard let typeInfo = context.userTypes[typeName.lowercased()] else {
+                print("DEBUG_DELETE: typeInfo not found for \(typeName.lowercased())")
+                break
+            }
+            guard let expressionGenerator = expressionGenerator else {
+                print("DEBUG_DELETE: no expressionGenerator")
+                break
+            }
             
             let objInstrs = expressionGenerator.generate(expr)
             function.body.append(contentsOf: objInstrs)

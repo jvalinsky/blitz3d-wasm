@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blitz3D Thin Runtime Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #canvas {
+            border: 1px solid #333;
+            background: #000;
+        }
+        #log {
+            width: 800px;
+            height: 200px;
+            background: #0a0a1a;
+            border: 1px solid #333;
+            padding: 10px;
+            overflow-y: auto;
+            white-space: pre;
+            margin-top: 10px;
+        }
+        .success { color: #4f4; }
+        .error { color: #f44; }
+        .info { color: #ff0; }
+    </style>
+</head>
+<body>
+    <h1>Blitz3D Thin Runtime Test</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="log"></div>
+    
+    <script src="runtime.js"></script>
+    <script>
+    const logDiv = document.getElementById('log');
+    const realLog = console.log;
+    console.log = (...args) => {
+        realLog(...args);
+        logDiv.innerHTML += args.join(' ') + '\n';
+        logDiv.scrollTop = logDiv.scrollHeight;
+    };
+    
+    async function main() {
+        console.log('Initializing Thin Runtime...');
+        
+        const canvas = document.getElementById('canvas');
+        const runtime = new Blitz3DThinRuntime(canvas);
+        
+        console.log('Loading WASM...');
+        
+        try {
+            const instance = await runtime.loadAndRun('particles.wasm');
+            console.log('WASM loaded and Main() executed!');
+            
+            // List exported functions
+            const exports = Object.keys(instance.exports).filter(k => typeof instance.exports[k] === 'function');
+            console.log(`Exported functions: ${exports.length}`);
+            
+            // Check for key functions
+            const keyFns = ['CreateParticle%', 'UpdateParticles', 'RemoveParticle', 'GetParticleCount%'];
+            for (const fn of keyFns) {
+                if (instance.exports[fn]) {
+                    console.log(`  ✓ ${fn}`);
+                }
+            }
+            
+            // Test particle count
+            if (instance.exports['GetParticleCount%']) {
+                const count = instance.exports['GetParticleCount%']();
+                console.log(`Particle count: ${count}`);
+            }
+            
+            // If UpdateParticles exists, run game loop
+            if (instance.exports.UpdateParticles) {
+                console.log('Starting game loop...');
+                let frame = 0;
+                function loop() {
+                    instance.exports.UpdateParticles();
+                    runtime.render();
+                    runtime.clearHitStates();
+                    frame++;
+                    if (frame < 300) {  // Run for 300 frames
+                        requestAnimationFrame(loop);
+                    } else {
+                        console.log('Game loop complete (300 frames)');
+                        if (instance.exports['GetParticleCount%']) {
+                            console.log(`Final particle count: ${instance.exports['GetParticleCount%']()}`);
+                        }
+                    }
+                }
+                loop();
+            }
+            
+        } catch (e) {
+            console.log(`Error: ${e.message}`);
+            console.error(e);
+        }
+    }
+    
+    main();
+    </script>
+</body>
+</html>

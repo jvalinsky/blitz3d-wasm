@@ -94,7 +94,7 @@
         
         // Set FPSfactor global (if exported)
         if (instance.exports.FPSfactor) {
-            // FPSfactor is typically 1.0 at 60fps
+            instance.exports.FPSfactor.value = 1.0;
         }
         
         console.log('Starting game loop - particles managed by BB code');
@@ -120,11 +120,8 @@
                 lastSpawn = frame;
             }
             
-            // Slowly rotate camera
-            const angle = frame * 0.003;
-            runtime.activeCamera.position.x = Math.sin(angle) * 6;
-            runtime.activeCamera.position.z = Math.cos(angle) * 6;
-            runtime.activeCamera.lookAt(0, 1, 0);
+            // Fixed camera looking at spawn point
+            // (no rotation so we can see particles fall)
             
             // Render
             runtime.render();

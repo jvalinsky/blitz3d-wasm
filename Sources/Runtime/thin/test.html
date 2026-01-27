@@ -57,7 +57,7 @@
         console.log('Loading WASM...');
         
         try {
-            const instance = await runtime.loadAndRun('particles.wasm');
+            const instance = await runtime.loadAndRun('simple.wasm');
             console.log('WASM loaded and Main() executed!');
             
             // List exported functions
@@ -65,39 +65,31 @@
             console.log(`Exported functions: ${exports.length}`);
             
             // Check for key functions
-            const keyFns = ['CreateParticle%', 'UpdateParticles', 'RemoveParticle', 'GetParticleCount%'];
+            const keyFns = ['AddToCounter%', 'SetPosition', 'GetDistance#'];
             for (const fn of keyFns) {
                 if (instance.exports[fn]) {
-                    console.log(`  ✓ ${fn}`);
+                    console.log(`  Found: ${fn}`);
                 }
             }
             
-            // Test particle count
-            if (instance.exports['GetParticleCount%']) {
-                const count = instance.exports['GetParticleCount%']();
-                console.log(`Particle count: ${count}`);
+            // Test AddToCounter
+            if (instance.exports['AddToCounter%']) {
+                console.log('\nTesting AddToCounter...');
+                let result = instance.exports['AddToCounter%'](10);
+                console.log(`AddToCounter(10) = ${result}`);
+                result = instance.exports['AddToCounter%'](5);
+                console.log(`AddToCounter(5) = ${result}`);
             }
             
-            // If UpdateParticles exists, run game loop
-            if (instance.exports.UpdateParticles) {
-                console.log('Starting game loop...');
-                let frame = 0;
-                function loop() {
-                    instance.exports.UpdateParticles();
-                    runtime.render();
-                    runtime.clearHitStates();
-                    frame++;
-                    if (frame < 300) {  // Run for 300 frames
-                        requestAnimationFrame(loop);
-                    } else {
-                        console.log('Game loop complete (300 frames)');
-                        if (instance.exports['GetParticleCount%']) {
-                            console.log(`Final particle count: ${instance.exports['GetParticleCount%']()}`);
-                        }
-                    }
-                }
-                loop();
+            // Test GetDistance
+            if (instance.exports['SetPosition'] && instance.exports['GetDistance#']) {
+                console.log('\nTesting Distance...');
+                instance.exports['SetPosition'](3.0, 4.0, 0.0);
+                const dist = instance.exports['GetDistance#']();
+                console.log(`Distance from (3,4,0) to origin = ${dist} (expected: 5)`);
             }
+            
+            console.log('\n=== TEST COMPLETE ===');
             
         } catch (e) {
             console.log(`Error: ${e.message}`);

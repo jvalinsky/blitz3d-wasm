@@ -92,29 +92,32 @@ public final class IREmitter {
     private func emitGlobals(from irModule: IRModule) {
         for (name, type, _) in irModule.globals {
             let wasmType = irTypeToWASM(type)
-            let initExpr: WASMInitExpression = .i32Const(0)
+            let initExpr: WASMInitExpression = (wasmType == .f32) ? .f32Const(0) : .i32Const(0)
             wasmModule.globals.append(WASMGlobal(type: wasmType, mutability: true, initExpr: initExpr))
             globalIndexMap[name.lowercased()] = wasmModule.globals.count - 1
         }
     }
     
     private func emitFunctions(from irModule: IRModule) {
+        // Pre-register all function indices up front so forward calls can be resolved during body emission.
+        // WASM function indices are: [imports...] + [functions in declaration order...]
+        for (i, irFunc) in irModule.functions.enumerated() {
+            let funcIdx = wasmModule.imports.count + i
+            functionIndexMap[irFunc.name.lowercased()] = funcIdx
+
+            // Export the function using its original name.
+            wasmModule.exports.append(WASMExport(name: irFunc.name, kind: .function, index: funcIdx))
+
+            // Also export "main" as "main" if it's named "Main" for consistency.
+            if irFunc.name == "Main" {
+                wasmModule.exports.append(WASMExport(name: "main", kind: .function, index: funcIdx))
+            }
+        }
+
         for irFunc in irModule.functions {
             let wasmFunc = emitFunction(irFunc)
             wasmModule.code.append(wasmFunc)
             wasmModule.functionNames.append(irFunc.name)
-            
-            let funcIdx = wasmModule.imports.count + wasmModule.code.count - 1
-            functionIndexMap[irFunc.name.lowercased()] = funcIdx
-            
-            // Export the function
-            // Use original name for export
-            wasmModule.exports.append(WASMExport(name: irFunc.name, kind: .function, index: funcIdx))
-            
-            // Also export "main" as "main" if it's named "Main" for consistency
-            if irFunc.name == "Main" {
-                 wasmModule.exports.append(WASMExport(name: "main", kind: .function, index: funcIdx))
-            }
         }
     }
     
@@ -259,20 +262,76 @@ public final class IREmitter {
             
         case .discard(let value):
             var instructions = emitValue(value)
-            if value.type != .void {
+            let shouldDrop: Bool
+
+            if case .call(let name, _, _) = value {
+                // Decide drop safety from the *emitted* WASM signature, not the IR annotation or ModuleContext.
+                let lowerName = name.lowercased()
+                let funcIndex = functionIndexMap[lowerName] ?? getFunctionIndex(for: name)
+
+                var hasResults: Bool? = nil
+                if funcIndex < wasmModule.imports.count {
+                    let typeIndex = wasmModule.imports[funcIndex].index
+                    if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                        hasResults = !wasmModule.types[typeIndex].results.isEmpty
+                    }
+                } else {
+                    let localIdx = funcIndex - wasmModule.imports.count
+                    if localIdx >= 0 && localIdx < wasmModule.functions.count {
+                        let typeIndex = wasmModule.functions[localIdx]
+                        if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                            hasResults = !wasmModule.types[typeIndex].results.isEmpty
+                        }
+                    }
+                }
+
+                // Fallback: if we couldn't resolve the signature, fall back to IR typing.
+                shouldDrop = hasResults ?? (value.type != .void)
+            } else {
+                shouldDrop = value.type != .void
+            }
+
+            if shouldDrop {
                 instructions.append(.drop)
             }
             return instructions
-            
+
         case .assign(let target, let value):
             return emitValue(value) + [.globalSet(globalIndexMap[target.lowercased()] ?? 0)]
             
         case .assignLocal(let index, let value):
             validateLocalIndex(index)
-            return emitValue(value) + [.localSet(index)]
+            var instrs = emitValue(value)
+
+            if let f = currentFunc {
+                let expected: IRType
+                if index < f.parameters.count {
+                    expected = f.parameters[index].1
+                } else {
+                    let localIdx = index - f.parameters.count
+                    expected = (localIdx >= 0 && localIdx < f.locals.count) ? f.locals[localIdx].1 : value.type
+                }
+
+                if value.type != .void && expected != .void && value.type != expected {
+                    instrs.append(contentsOf: conversionInstrs(from: value.type, to: expected))
+                }
+            }
+
+            instrs.append(.localSet(index))
+            return instrs
             
         case .assignGlobal(let index, let value):
-            return emitValue(value) + [.globalSet(index)]
+            var instrs = emitValue(value)
+
+            if index >= 0 && index < wasmModule.globals.count {
+                let expected = irType(from: wasmModule.globals[index].type)
+                if value.type != .void && expected != .void && value.type != expected {
+                    instrs.append(contentsOf: conversionInstrs(from: value.type, to: expected))
+                }
+            }
+
+            instrs.append(.globalSet(index))
+            return instrs
             
         case .assignField(let base, let fieldOffset, let fieldType, let value):
             let baseInstrs = emitValue(base)
@@ -422,105 +481,28 @@ public final class IREmitter {
             return [.loop(.void, bodyInstrs)]
             
         case .selectStmt(let value, let cases, let defaultCase):
-            // Emit as br_table for O(1) state machine dispatch
-            // selectStmt(value, [(0, body0), (1, body1), ...], default)
-            //
-            // WASM structure:
-            //   block $exit
-            //     block $case_n
-            //       block $case_n-1
-            //         ...
-            //         block $case_0
-            //           block $default
-            //             value
-            //             br_table $case_0 $case_1 ... $case_n $default
-            //           end ;; $default
-            //           <default body>
-            //           br $exit
-            //         end ;; $case_0
-            //         <case 0 body>
-            //         br $exit
-            //       end ;; $case_1
-            //       <case 1 body>
-            //       br $exit
-            //     end ;; $case_n
-            //     <case n body>
-            //   end ;; $exit
-            
             if cases.isEmpty {
                 return defaultCase?.flatMap { emitEffect($0, labelStack: &labelStack) } ?? []
             }
-            
-            // Sort cases by state ID to build contiguous table
+
+            // Lower to an if-chain for correctness (avoids brittle br_table depth math).
             let sortedCases = cases.sorted { $0.0 < $1.0 }
-            
-            // Find max state ID
-            let maxStateId = Int(sortedCases.last?.0 ?? 0)
-            
-            // Build br_table targets array (index -> block depth)
-            // Block 0 is default, blocks 1..n are cases
-            // br_table targets[i] = depth to reach case i's block
-            
-            // We'll use a simpler structure:
-            // block $exit {
-            //   block $default { block $0 { block $1 { ... value, br_table ... } case_n } ... case_0 } default
-            // }
-            
-            // Depth calculation: innermost block is at depth 0
-            // We have: exit(outermost), then case blocks from high to low, then default(innermost)
-            // Total blocks = 1 (exit) + numCases + 1 (default)
-            
-            let numCases = sortedCases.count
-            let exitDepth = numCases + 1  // To break out completely
-            
-            // Build target array: for each possible state 0..maxStateId
-            var targets: [Int] = []
-            var stateToDepth: [Int32: Int] = [:]
-            
-            // Case blocks are numbered from innermost:
-            // - default block = depth 0
-            // - case with highest stateId = depth 1
-            // - case with second highest = depth 2
-            // ... etc
-            for (i, (stateId, _)) in sortedCases.enumerated().reversed() {
-                // Case i (from sorted) gets depth (numCases - i)
-                stateToDepth[stateId] = numCases - i
+            var bodyInstrs: [WASMInstruction] = []
+
+            for (caseValue, caseBody) in sortedCases {
+                let condInstrs: [WASMInstruction] = emitValue(value) + [.i32Const(caseValue), .i32Eq]
+                var thenInstrs = caseBody.flatMap { emitEffect($0, labelStack: &labelStack) }
+                thenInstrs.append(.br(0))
+                bodyInstrs.append(contentsOf: condInstrs)
+                bodyInstrs.append(.if(.void, thenInstrs, nil))
             }
-            
-            // Build contiguous target array
-            for i in 0...maxStateId {
-                if let depth = stateToDepth[Int32(i)] {
-                    targets.append(depth)
-                } else {
-                    targets.append(0)  // Unknown state goes to default
-                }
+
+            if let defaultCase {
+                bodyInstrs.append(contentsOf: defaultCase.flatMap { emitEffect($0, labelStack: &labelStack) })
             }
-            
-            let defaultDepth = 0
-            let valueInstrs = emitValue(value)
-            
-            // Build nested blocks from inside out
-            // Innermost: default block with br_table
-            var result: [WASMInstruction] = valueInstrs + [.brTable(targets, defaultDepth)]
-            
-            // Wrap default block
-            let defaultBody = defaultCase?.flatMap { emitEffect($0, labelStack: &labelStack) } ?? []
-            result = [.block(.void, result)] + defaultBody + [.br(numCases)]
-            
-            // Wrap case blocks (from highest stateId to lowest)
-            for i in (0..<numCases).reversed() {
-                let (_, caseBody) = sortedCases[i]
-                let bodyInstrs = caseBody.flatMap { emitEffect($0, labelStack: &labelStack) }
-                // Depth to exit: we're inside (numCases - i) blocks at this point
-                // Need to break to exit block which is at depth (numCases - i)
-                result = [.block(.void, result)] + bodyInstrs + [.br(numCases - i)]
-            }
-            
-            // Wrap exit block
-            result = [.block(.void, result)]
-            
-            return result
-            
+
+            return [.block(.void, bodyInstrs)]
+
         case .branch(let label):
             if let depth = depth(toLabel: label, in: labelStack) {
                 return [.br(depth)]
@@ -557,8 +539,6 @@ public final class IREmitter {
             return [.globalGet(index)]
             
         case .binary(let op, let lhs, let rhs, let resultType):
-            let lhsInstrs = emitValue(lhs)
-            let rhsInstrs = emitValue(rhs)
             let isIntegerOnly = op == "And" || op == "Or" || op == "Xor" || op == "Shl" || op == "Shr" || op == "mod"
             let opcodeType: WASMType
             if isIntegerOnly {
@@ -568,14 +548,125 @@ public final class IREmitter {
             } else {
                 opcodeType = .i32
             }
+
+            let expectedIR = irType(from: opcodeType)
+            var instrs: [WASMInstruction] = []
+
+            instrs.append(contentsOf: emitValue(lhs))
+            if lhs.type != .void && expectedIR != .void && lhs.type != expectedIR {
+                instrs.append(contentsOf: conversionInstrs(from: lhs.type, to: expectedIR))
+            }
+
+            instrs.append(contentsOf: emitValue(rhs))
+            if rhs.type != .void && expectedIR != .void && rhs.type != expectedIR {
+                instrs.append(contentsOf: conversionInstrs(from: rhs.type, to: expectedIR))
+            }
+
             _ = resultType // kept for IR typing, but opcode selection depends on operand types
-            return lhsInstrs + rhsInstrs + binaryOpInstrs(op, wasmType: opcodeType)
+            instrs.append(contentsOf: binaryOpInstrs(op, wasmType: opcodeType))
+            return instrs
             
-        case .call(let name, let args, _):
-            let argInstrs = args.flatMap { emitValue($0) }
-            let funcIndex = functionIndexMap[name.lowercased()] ?? getFunctionIndex(for: name)
-            return argInstrs + [.call(funcIndex)]
-            
+        case .call(let name, let args, let resultType):
+            let lowerName = name.lowercased()
+            let funcIndex = functionIndexMap[lowerName] ?? getFunctionIndex(for: name)
+
+            // Resolve expected parameter types (prefer ModuleContext definitions, fall back to WASM type table).
+            var expectedParams: [WASMType]? = nil
+            if let ctx = context {
+                if let def = ctx.functionDefinitions[lowerName] {
+                    expectedParams = def.params
+                } else if let def = ctx.functionDefinitionsByIndex[funcIndex] {
+                    expectedParams = def.params
+                }
+            }
+            if expectedParams == nil {
+                if funcIndex < wasmModule.imports.count {
+                    let typeIndex = wasmModule.imports[funcIndex].index
+                    if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                        expectedParams = wasmModule.types[typeIndex].parameters
+                    }
+                } else {
+                    let localIdx = funcIndex - wasmModule.imports.count
+                    if localIdx >= 0 && localIdx < wasmModule.functions.count {
+                        let typeIndex = wasmModule.functions[localIdx]
+                        if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                            expectedParams = wasmModule.types[typeIndex].parameters
+                        }
+                    }
+                }
+            }
+
+            var instrs: [WASMInstruction] = []
+
+            // If the call-site has more args than the callee expects, eagerly discard the extra leading values.
+            // This preserves evaluation order while keeping the stack well-typed for the eventual call.
+            let expectedCount = expectedParams?.count ?? args.count
+            let excessCount = max(0, args.count - expectedCount)
+
+            for (i, arg) in args.enumerated() {
+                instrs.append(contentsOf: emitValue(arg))
+
+                if i < excessCount {
+                    if arg.type != .void {
+                        instrs.append(.drop)
+                    }
+                    continue
+                }
+
+                if let expectedParams, i - excessCount < expectedParams.count {
+                    let expected = irType(from: expectedParams[i - excessCount])
+                    if arg.type != expected {
+                        instrs.append(contentsOf: conversionInstrs(from: arg.type, to: expected))
+                    }
+                }
+            }
+
+            // If the call-site has fewer args than the callee expects, pad with zeros.
+            if let expectedParams, args.count < expectedParams.count {
+                for i in args.count..<expectedParams.count {
+                    switch expectedParams[i] {
+                    case .f32:
+                        instrs.append(.f32Const(0))
+                    default:
+                        instrs.append(.i32Const(0))
+                    }
+                }
+            }
+
+            // Resolve actual result type and coerce to the IR-expected type.
+            // Prefer the emitted WASM signature, then fall back to ModuleContext definitions.
+            var actualIR: IRType? = nil
+            if funcIndex < wasmModule.imports.count {
+                let typeIndex = wasmModule.imports[funcIndex].index
+                if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                    actualIR = wasmModule.types[typeIndex].results.first.map { irType(from: $0) } ?? .void
+                }
+            } else {
+                let localIdx = funcIndex - wasmModule.imports.count
+                if localIdx >= 0 && localIdx < wasmModule.functions.count {
+                    let typeIndex = wasmModule.functions[localIdx]
+                    if typeIndex >= 0 && typeIndex < wasmModule.types.count {
+                        actualIR = wasmModule.types[typeIndex].results.first.map { irType(from: $0) } ?? .void
+                    }
+                }
+            }
+
+            if actualIR == nil, let ctx = context {
+                if let def = ctx.functionDefinitionsByIndex[funcIndex] {
+                    actualIR = def.results.first.map { irType(from: $0) } ?? .void
+                } else if let def = ctx.functionDefinitions[lowerName] {
+                    actualIR = def.results.first.map { irType(from: $0) } ?? .void
+                }
+            }
+
+            instrs.append(.call(funcIndex))
+
+            if let actualIR, resultType != .void && actualIR != .void && actualIR != resultType {
+                instrs.append(contentsOf: conversionInstrs(from: actualIR, to: resultType))
+            }
+
+            return instrs
+
         case .loadField(let base, let fieldOffset, let fieldType):
             let load = loadInstruction(type: fieldType, align: naturalAlignExponent(for: fieldType), offset: fieldOffset)
             return emitValue(base) + [load]
@@ -711,6 +802,15 @@ public final class IREmitter {
         }
     }
     
+    private func irType(from wasmType: WASMType) -> IRType {
+        switch wasmType {
+        case .i32: return .i32
+        case .f32: return .f32
+        case .void: return .void
+        default: return .i32
+        }
+    }
+
     private func irTypeToWASM(_ irType: IRType) -> WASMType {
         switch irType {
         case .i32: return .i32

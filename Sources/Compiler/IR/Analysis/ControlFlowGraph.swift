@@ -12,289 +12,325 @@ public class BasicBlock: Hashable, Identifiable {
     public var label: String?
     public var instructions: [IREffect] = []
     public var terminator: Terminator = .none
-    
-    // Graph connectivity
+
     public var predecessors: Set<BasicBlock> = []
     public var successors: Set<BasicBlock> = []
-    
+
     public init(id: Int, label: String? = nil) {
         self.id = id
         self.label = label
     }
-    
+
     public func hash(into hasher: inout Hasher) {
         hasher.combine(id)
     }
-    
+
     public static func == (lhs: BasicBlock, rhs: BasicBlock) -> Bool {
-        return lhs.id == rhs.id
+        lhs.id == rhs.id
     }
 }
 
 public enum Terminator {
-    case none // Fallthrough or unfinished
+    case none
     case branch(target: BasicBlock)
     case condBranch(condition: IRValue, trueTarget: BasicBlock, falseTarget: BasicBlock)
     case `return`(value: IRValue?)
-    case trap // unreachable
+    case trap
 }
 
-public class ControlFlowGraph {
+public final class ControlFlowGraph {
     public var blocks: [BasicBlock] = []
     public var entry: BasicBlock?
-    
+
     public init() {}
 }
 
-public class CFGBuilder {
-    private var nextBlockId = 0
-    private var currentBlock: BasicBlock
-    private var blocks: [BasicBlock] = []
-    private var labelMap: [String: BasicBlock] = [:]
-    private var unresolvedBranches: [(BasicBlock, String)] = [] // Block, Label
-    
-    public init() {
-        self.currentBlock = BasicBlock(id: 0, label: "_entry")
-        self.blocks.append(self.currentBlock)
-        self.nextBlockId = 1
+public final class CFGBuilder {
+    private struct LoopContext {
+        let breakTarget: BasicBlock
+        let continueTarget: BasicBlock
     }
-    
+
+    private var nextBlockId: Int = 0
+    private var blocks: [BasicBlock] = []
+    private var labelBlocks: [String: BasicBlock] = [:]
+
+    private var currentBlock: BasicBlock
+
+    public init() {
+        let entry = BasicBlock(id: 0, label: "_entry")
+        self.currentBlock = entry
+        self.blocks = [entry]
+        self.nextBlockId = 1
+        self.labelBlocks["_entry"] = entry
+    }
+
     public func build(from effects: [IREffect]) -> ControlFlowGraph {
-        process(effects)
-        finishCurrentBlock() // Ensure last block falls through or returns
-        resolveBranches()
-        
-        let cfg = ControlFlowGraph()
-        cfg.blocks = self.blocks
-        cfg.entry = self.blocks.first
-        
-        // Populate links
+        // Pass 1: pre-create blocks for all labels (including forward references).
+        preScanLabels(in: effects)
+
+        // Pass 2: build terminators and fallthrough blocks.
+        var loopStack: [LoopContext] = []
+        process(effects, loopStack: &loopStack)
+        finishCurrentBlockIfNeeded()
+
         updateConnectivity()
-        
+
+        let cfg = ControlFlowGraph()
+        cfg.blocks = blocks
+        cfg.entry = blocks.first
         return cfg
     }
-    
-    private func createBlock(label: String? = nil) -> BasicBlock {
-        let block = BasicBlock(id: nextBlockId, label: label)
-        nextBlockId += 1
-        blocks.append(block)
-        if let l = label {
-            labelMap[l.lowercased()] = block
-        }
-        return block
-    }
-    
-    private func process(_ effects: [IREffect]) {
+
+    private func preScanLabels(in effects: [IREffect]) {
         for effect in effects {
             switch effect {
             case .label(let name):
-                // Split: End current with fallthrough, start new
-                let newBlock = createBlock(label: name)
-                if case .none = currentBlock.terminator {
-                    currentBlock.terminator = .branch(target: newBlock)
-                }
-                currentBlock = newBlock
-                
+                _ = getOrCreateLabelBlock(name)
+            case .ifStmt(_, let thenBody, let elseBody):
+                preScanLabels(in: thenBody)
+                if let elseBody { preScanLabels(in: elseBody) }
+            case .whileStmt(_, let body):
+                preScanLabels(in: body)
+            case .forStmt(_, _, _, _, let body):
+                preScanLabels(in: body)
+            case .repeatStmt(let body, _):
+                preScanLabels(in: body)
+            case .block(_, let body):
+                preScanLabels(in: body)
+            case .loop(_, let body):
+                preScanLabels(in: body)
+            case .selectStmt(_, let cases, let `default`):
+                for (_, body) in cases { preScanLabels(in: body) }
+                if let `default` { preScanLabels(in: `default`) }
+            default:
+                break
+            }
+        }
+    }
+
+    private func getOrCreateLabelBlock(_ name: String) -> BasicBlock {
+        let key = name.lowercased()
+        if let existing = labelBlocks[key] {
+            return existing
+        }
+
+        let block = BasicBlock(id: nextBlockId, label: name)
+        nextBlockId += 1
+        blocks.append(block)
+        labelBlocks[key] = block
+        return block
+    }
+
+    private func createBlock() -> BasicBlock {
+        let block = BasicBlock(id: nextBlockId)
+        nextBlockId += 1
+        blocks.append(block)
+        return block
+    }
+
+    private func switchToLabel(_ name: String) {
+        let target = getOrCreateLabelBlock(name)
+
+        if currentBlock !== target {
+            if case .none = currentBlock.terminator {
+                currentBlock.terminator = .branch(target: target)
+            }
+            currentBlock = target
+        }
+    }
+
+    private func terminateWithBranch(to target: BasicBlock) {
+        currentBlock.terminator = .branch(target: target)
+        currentBlock = createBlock()
+    }
+
+    private func terminateWithReturn(_ value: IRValue?) {
+        currentBlock.terminator = .return(value: value)
+        currentBlock = createBlock()
+    }
+
+    private func terminateWithTrap() {
+        currentBlock.terminator = .trap
+        currentBlock = createBlock()
+    }
+
+    private func terminateWithCondBranch(condition: IRValue, trueTarget: BasicBlock, falseTarget: BasicBlock) {
+        currentBlock.terminator = .condBranch(condition: condition, trueTarget: trueTarget, falseTarget: falseTarget)
+        currentBlock = falseTarget
+    }
+
+    private func finishCurrentBlockIfNeeded() {
+        if case .none = currentBlock.terminator {
+            currentBlock.terminator = .return(value: nil)
+        }
+    }
+
+    private func process(_ effects: [IREffect], loopStack: inout [LoopContext]) {
+        for effect in effects {
+            switch effect {
+            case .label(let name):
+                switchToLabel(name)
+
             case .branch(let label):
-                // Record unresolved branch
-                // We don't have the target block yet potentially
-                // We store the label name and resolve later? 
-                // Wait, Terminator needs a BasicBlock reference.
-                // We can use a placeholder or resolve in a second pass.
-                // Better: Terminator.branch(labelString) isn't an option. 
-                // Let's defer adding the specific terminator and just mark it.
-                unresolvedBranches.append((currentBlock, label))
-                // Start a detached block (unreachable unless labeled)
-                currentBlock = createBlock()
-                
-            case .branchIf(let cond, let label):
-                // Conditional branch
-                // True path -> label (unresolved)
-                // False path -> fallthrough (new block)
-                let nextBlock = createBlock()
-                unresolvedBranches.append((currentBlock, label)) // We need to store that this is a condBranch
-                // Store "partial" terminator?
-                // Actually, let's expand Terminator to handle Unresolved for now?
-                // Or just keep track separate.
-                // Hack: store nextBlock as falseTarget, and patch trueTarget later.
-                 // We need a custom way to track this pending resolution.
-                
-                // Let's adapt process to handle this better.
-                // For now, I'll assume we can resolve names.
-                // If I can't resolve immediately, I'll need a mechanism.
-                // Let's use a "Resolve Later" approach.
-                unresolvedBranches.append((currentBlock, label))
-                // The terminator will be set to .condBranch(cond, ?, nextBlock)
-                // We can set the partial data on the block temporarily?
-                // No, swift strong typing.
-                
-                // Workaround: Use a specific "Unresolved" terminator in internal builder state
-                // OR: Pre-scan labels?
-                // Pre-scanning labels is MUCH easier.
-                
-                currentBlock = nextBlock
-                
-            case .ifStmt(let cond, let thenBody, let elseBody):
-                let thenBlock = createBlock()
-                let elseBlock = elseBody != nil ? createBlock() : nil
-                let mergeBlock = createBlock()
-                
-                // Terminate current
-                if let e = elseBlock {
-                    currentBlock.terminator = .condBranch(condition: cond, trueTarget: thenBlock, falseTarget: e)
-                } else {
-                    currentBlock.terminator = .condBranch(condition: cond, trueTarget: thenBlock, falseTarget: mergeBlock)
+                let target = getOrCreateLabelBlock(label)
+                terminateWithBranch(to: target)
+
+            case .branchIf(let condition, let label):
+                let trueTarget = getOrCreateLabelBlock(label)
+                let fallthroughBlock = createBlock()
+                terminateWithCondBranch(condition: condition, trueTarget: trueTarget, falseTarget: fallthroughBlock)
+
+            case .returnStmt(let value):
+                terminateWithReturn(value)
+
+            case .breakStmt:
+                guard let loop = loopStack.last else {
+                    terminateWithTrap()
+                    continue
                 }
-                
-                // Process Then
+                terminateWithBranch(to: loop.breakTarget)
+
+            case .continueStmt:
+                guard let loop = loopStack.last else {
+                    terminateWithTrap()
+                    continue
+                }
+                terminateWithBranch(to: loop.continueTarget)
+
+            case .ifStmt(let condition, let thenBody, let elseBody):
+                let thenBlock = createBlock()
+                let mergeBlock = createBlock()
+                let elseBlock = elseBody != nil ? createBlock() : nil
+
+                if let elseBlock {
+                    currentBlock.terminator = .condBranch(condition: condition, trueTarget: thenBlock, falseTarget: elseBlock)
+                } else {
+                    currentBlock.terminator = .condBranch(condition: condition, trueTarget: thenBlock, falseTarget: mergeBlock)
+                }
+
                 currentBlock = thenBlock
-                process(thenBody)
+                process(thenBody, loopStack: &loopStack)
                 if case .none = currentBlock.terminator {
                     currentBlock.terminator = .branch(target: mergeBlock)
                 }
-                
-                // Process Else
-                if let e = elseBlock {
-                    currentBlock = e
-                    process(elseBody!)
+
+                if let elseBlock, let elseBody {
+                    currentBlock = elseBlock
+                    process(elseBody, loopStack: &loopStack)
                     if case .none = currentBlock.terminator {
                         currentBlock.terminator = .branch(target: mergeBlock)
                     }
                 }
-                
+
                 currentBlock = mergeBlock
-                
-            case .whileStmt(let cond, let body):
+
+            case .whileStmt(let condition, let body):
                 let headerBlock = createBlock()
                 let bodyBlock = createBlock()
                 let exitBlock = createBlock()
-                
-                // Jump to header
+
                 if case .none = currentBlock.terminator {
                     currentBlock.terminator = .branch(target: headerBlock)
                 }
-                
-                // Header decision
-                // NOTE: 'while' loop checks condition first.
-                // header: condBranch(cond, bodyBlock, exitBlock)
-                // Actually, 'headerBlock' just contains the condition check logic?
-                // In IR, 'condition' is an IRValue (expression). 
-                // Ideally this expression is pure. If it has side effects, we might need to emit them.
-                // IRValue is a tree, so it's an expression.
-                headerBlock.terminator = .condBranch(condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
-                
-                // Body
+
+                headerBlock.terminator = .condBranch(condition: condition, trueTarget: bodyBlock, falseTarget: exitBlock)
+
+                let ctx = LoopContext(breakTarget: exitBlock, continueTarget: headerBlock)
+                loopStack.append(ctx)
+
                 currentBlock = bodyBlock
-                process(body)
+                process(body, loopStack: &loopStack)
                 if case .none = currentBlock.terminator {
                     currentBlock.terminator = .branch(target: headerBlock)
                 }
-                
+
+                _ = loopStack.popLast()
+
                 currentBlock = exitBlock
-                
-            case .forStmt(let idx, let start, let end, let step, let body):
-                // Flatten FOR loop
-                // Init: idx = start
-                // Header: if idx <= end (or >= if step < 0) -> Body else Exit
-                // Body: ...
-                // Latch: idx = idx + step; branch Header
-                
-                // 1. Init (append to current)
-                currentBlock.instructions.append(.assignLocal(index: idx, value: start))
-                
+
+            case .repeatStmt(let body, let condition):
+                let bodyBlock = createBlock()
+                let condBlock = createBlock()
+                let exitBlock = createBlock()
+
+                if case .none = currentBlock.terminator {
+                    currentBlock.terminator = .branch(target: bodyBlock)
+                }
+
+                let ctx = LoopContext(breakTarget: exitBlock, continueTarget: condBlock)
+                loopStack.append(ctx)
+
+                currentBlock = bodyBlock
+                process(body, loopStack: &loopStack)
+                if case .none = currentBlock.terminator {
+                    currentBlock.terminator = .branch(target: condBlock)
+                }
+
+                _ = loopStack.popLast()
+
+                condBlock.terminator = .condBranch(condition: condition, trueTarget: exitBlock, falseTarget: bodyBlock)
+                currentBlock = exitBlock
+
+            case .forStmt(let index, let start, let end, let step, let body):
+                // Init in the current block.
+                currentBlock.instructions.append(.assignLocal(index: index, value: start))
+
                 let headerBlock = createBlock()
                 let bodyBlock = createBlock()
+                let latchBlock = createBlock()
                 let exitBlock = createBlock()
-                
+
                 if case .none = currentBlock.terminator {
                     currentBlock.terminator = .branch(target: headerBlock)
                 }
-                
-                // 2. Header Condition
-                // Use the type of the 'start' value for the loop variable.
+
                 let loopVarType = start.type
-                let loopVar = IRValue.localGet(index: idx, type: loopVarType)
-                
-                // Construct the condition based on the type
-                let cond: IRValue
-                if loopVarType == .f32 {
-                    cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
-                } else {
-                    cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
-                }
+                let loopVar = IRValue.localGet(index: index, type: loopVarType)
+                let cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
                 headerBlock.terminator = .condBranch(condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
-                
-                // 3. Body
+
+                let ctx = LoopContext(breakTarget: exitBlock, continueTarget: latchBlock)
+                loopStack.append(ctx)
+
                 currentBlock = bodyBlock
-                process(body)
-                
-                // 4. Latch (Increment)
+                process(body, loopStack: &loopStack)
+                if case .none = currentBlock.terminator {
+                    currentBlock.terminator = .branch(target: latchBlock)
+                }
+
+                _ = loopStack.popLast()
+
+                currentBlock = latchBlock
                 let stepVal = step ?? .constI32(1)
                 let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: stepVal, resultType: loopVarType)
-                currentBlock.instructions.append(.assignLocal(index: idx, value: inc))
-                
-                if case .none = currentBlock.terminator {
-                    currentBlock.terminator = .branch(target: headerBlock)
-                }
-                
+                currentBlock.instructions.append(.assignLocal(index: index, value: inc))
+                currentBlock.terminator = .branch(target: headerBlock)
+
                 currentBlock = exitBlock
 
-            case .returnStmt(let val):
-                currentBlock.terminator = .return(value: val)
-                currentBlock = createBlock()
-                
-            case .breakStmt:
-                // We need to know the current loop exit target.
-                // This implies we need a stack of loop exit blocks.
-                // TODO: Implement loop stack.
-                // For MVP Relooper (Goto support), let's focus on Gotos.
-                // If we are flattening 'while', we must handle 'break'.
-                 unresolvedBranches.append((currentBlock, "__break__")) // Placeholder
-                 currentBlock = createBlock()
-
             default:
-                // Normal instruction
                 currentBlock.instructions.append(effect)
             }
         }
     }
-    
-    private func finishCurrentBlock() {
-        if case .none = currentBlock.terminator {
-            // Implicit return or end of program
-            currentBlock.terminator = .return(value: nil)
-        }
-    }
-    
-    private func resolveBranches() {
-        // Pre-scan pass would have been better, but let's just fix up the array
-        // We need a list of pending patches.
-        // Since I wrote the code above with `unresolvedBranches` as (Block, String),
-        // I need to actually modify the block's terminator.
-        
-        for (block, label) in unresolvedBranches {
-            if let target = labelMap[label.lowercased()] {
-                // If it was a branch
-                if case .none = block.terminator {
-                     block.terminator = .branch(target: target)
-                } 
-                // If it was a condBranch (hacky storage in logic above)
-                // This logic in `process` needs to be robust.
-            }
-        }
-    }
-    
+
     private func updateConnectivity() {
+        for block in blocks {
+            block.predecessors.removeAll()
+            block.successors.removeAll()
+        }
+
         for block in blocks {
             switch block.terminator {
             case .branch(let target):
                 block.successors.insert(target)
                 target.predecessors.insert(block)
-            case .condBranch(_, let trueT, let falseT):
-                block.successors.insert(trueT)
-                block.successors.insert(falseT)
-                trueT.predecessors.insert(block)
-                falseT.predecessors.insert(block)
+            case .condBranch(_, let trueTarget, let falseTarget):
+                block.successors.insert(trueTarget)
+                block.successors.insert(falseTarget)
+                trueTarget.predecessors.insert(block)
+                falseTarget.predecessors.insert(block)
             default:
                 break
             }

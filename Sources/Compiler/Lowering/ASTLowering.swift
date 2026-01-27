@@ -776,10 +776,16 @@ public final class ASTLowering {
             // Calculate size in bytes
             let sizeInBytes = builder.buildBinary("*", lhs: totalSize, rhs: builder.buildConstI32(4), resultType: .i32)
 
-            // Allocate
-            let ptr = IRValue.call(name: "__Alloc", args: [sizeInBytes, builder.buildConstI32(0)], resultType: .i32)
+            // Allocate from `__bb_data_ptr` (simple bump allocator) to avoid depending on CodeGenerator-only helpers.
+            if let dataPtrIdx = dataPtrGlobalIndex {
+                let oldPtr = IRValue.globalGet(index: dataPtrIdx, type: .i32)
+                body.append(.assignGlobal(index: globalIdx, value: oldPtr))
 
-            body.append(.assignGlobal(index: globalIdx, value: ptr))
+                let newPtr = builder.buildBinary("+", lhs: oldPtr, rhs: sizeInBytes, resultType: .i32)
+                body.append(.assignGlobal(index: dataPtrIdx, value: newPtr))
+            } else {
+                body.append(.assignGlobal(index: globalIdx, value: builder.buildConstI32(0)))
+            }
 
             let arrayInfo = IRArrayInfo(
                 baseAddress: 0,
@@ -837,7 +843,7 @@ public final class ASTLowering {
                 // TODO: Handle Int/Float to String conversion if needed. 
                 // Currently assuming strings.
                 
-                return .call(name: "__StringConcat", args: [lhs, rhs], resultType: .i32)
+                return .call(name: "StringConcat", args: [lhs, rhs], resultType: .i32)
             }
             
             let op = binop.op
@@ -961,7 +967,7 @@ public final class ASTLowering {
                 
                 if isString {
                     return .call(name: "printstring", args: [lowerArg], resultType: .void)
-                } else if case .floatLiteral = arg {
+                } else if lowerArg.type == .f32 {
                      return .call(name: "printfloat", args: [lowerArg], resultType: .void)
                 } else {
                     return .call(name: "printint", args: [lowerArg], resultType: .void)
@@ -1009,10 +1015,26 @@ public final class ASTLowering {
         }
 
         if context.canAutoImport(call.name) {
-            let params = Array(repeating: WASMType.i32, count: args.count)
-            _ = context.registerAutoImport(name: call.name, params: params, results: [.i32])
+            // Register an auto-import using the *typed* call-site arguments.
+            // This is critical for WASM validation: the import signature must match what we push.
+            let params = args.map { irTypeToWASM($0.type) }
+            let results: [WASMType]
+            if call.name.hasSuffix("#") {
+                results = [.f32]
+            } else {
+                // Strings and opaque handles are represented as i32 pointers/indices.
+                results = [.i32]
+            }
+            _ = context.registerAutoImport(name: call.name, params: params, results: results)
             if let def = resolver.definition(forName: call.name) {
                 let irResult = irType(from: def.results.first ?? .void)
+                // Coerce arguments to the registered signature types.
+                if !def.params.isEmpty {
+                    for i in 0..<min(args.count, def.params.count) {
+                        let expected = irType(from: def.params[i])
+                        args[i] = coerce(args[i], to: expected)
+                    }
+                }
                 return .call(name: call.name.lowercased(), args: args, resultType: irResult)
             }
         }
@@ -1024,11 +1046,13 @@ public final class ASTLowering {
 
     
     private func flattenIndex(indices: [ExpressionNode], dimensions: [Int]) -> IRValue {
-        var flatIndex = lowerExpression(indices[0])
+        // Array indices are always i32 in the generated WASM.
+        var flatIndex = coerce(lowerExpression(indices[0]), to: .i32)
         for i in 1..<indices.count {
             let dimSize = i < dimensions.count ? dimensions[i] : 1
             flatIndex = builder.buildBinary("*", lhs: flatIndex, rhs: builder.buildConstI32(Int32(dimSize)), resultType: .i32)
-            flatIndex = builder.buildBinary("+", lhs: flatIndex, rhs: lowerExpression(indices[i]), resultType: .i32)
+            let idx = coerce(lowerExpression(indices[i]), to: .i32)
+            flatIndex = builder.buildBinary("+", lhs: flatIndex, rhs: idx, resultType: .i32)
         }
         return flatIndex
     }

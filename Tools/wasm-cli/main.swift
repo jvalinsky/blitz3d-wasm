@@ -398,6 +398,10 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             print("Using Typed IR pipeline (experimental)")
             print("")
             var codeGen = CodeGenerator()
+            if !autoImportNames.isEmpty {
+                let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                codeGen.enableAutoImports(autoImportNames, arities: arities)
+            }
             if generateSourceMap {
                 sourceMapGenerator = SourceMapGenerator()
                 codeGen.enableSourceMapping(sourceMapGenerator!)

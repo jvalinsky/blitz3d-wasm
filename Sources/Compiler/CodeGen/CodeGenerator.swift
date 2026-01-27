@@ -85,7 +85,9 @@ public struct CodeGenerator {
 
         // IMPORTANT: finalize any auto-imported stubs before we assign/emit any local function indices.
         // Adding imports later would shift all local function indices and invalidate previously emitted calls.
-        preRegisterAutoImportsIfNeeded()
+        // NOTE: Do not pre-register auto-imports in the Typed IR pipeline.
+        // Auto-imports must be registered with typed call-site signatures during lowering,
+        // otherwise we pollute the module with incorrect (all-i32) import types and fail wasm-validate.
         
         processTypeDeclarations(program.types)
         setupUserTypeGlobals(program.types)
@@ -1159,7 +1161,6 @@ public struct CodeGenerator {
         }
 
         addImports()
-        preRegisterAutoImportsIfNeeded()
         let lowering = ASTLowering(context: context)
         var irModule = lowering.lower(program)
         

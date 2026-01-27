@@ -68,9 +68,16 @@ public struct Lexer {
             return readStringLiteral(startLine: startLine, startColumn: startColumn)
         }
         
-        // Numbers
+        // Numbers (including floats like .01)
         if ch.isASCII && ch.isNumber {
             return readNumber(startLine: startLine, startColumn: startColumn)
+        }
+        
+        // Floats starting with . (like .01, .5)
+        if ch == "." {
+            if let next = peek(offset: 1), next.isASCII && next.isNumber {
+                return readNumber(startLine: startLine, startColumn: startColumn)
+            }
         }
         
         // Hex literals
@@ -180,6 +187,13 @@ public struct Lexer {
     private mutating func readNumber(startLine: Int, startColumn: Int) -> Token {
         var text = ""
         var hasDecimal = false
+        
+        // Handle numbers starting with . (like .01)
+        if source[currentIndex] == "." {
+            hasDecimal = true
+            text.append(".")
+            advance()
+        }
         
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
@@ -352,7 +366,13 @@ public struct Lexer {
             case "<=":
                 advance()
                 return makeToken(.lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+            case "=<":
+                advance()
+                return makeToken(.lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             case ">=":
+                advance()
+                return makeToken(.greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+            case "=>":
                 advance()
                 return makeToken(.greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             default:
@@ -377,6 +397,7 @@ public struct Lexer {
         case "\\": return makeToken(.backslash, text: "\\", line: startLine, column: startColumn)
         case ":": return makeToken(.colon, text: ":", line: startLine, column: startColumn)
         case ".": return makeToken(.period, text: ".", line: startLine, column: startColumn)
+        case "^": return makeToken(.power, text: "^", line: startLine, column: startColumn)
         default:
             return makeToken(.error, text: String(ch), line: startLine, column: startColumn)
         }

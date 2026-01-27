@@ -119,17 +119,22 @@ public struct CaseNode {
 public struct LocalDeclaration {
     public var variables: [IdentifierNode]
     public var initializers: [String: ExpressionNode]  // variable name -> initializer expression
+    /// Non-standard Blitz3D syntax support: `Local arr[10]` (sugar for a fixed-size array declaration).
+    /// These are lowered similarly to `Dim` declarations.
+    public var arrayDeclarations: [DimDeclaration]
     public var type: TypeAnnotation?
     public var span: SourceSpan
 
     public init(
         variables: [IdentifierNode],
         initializers: [String: ExpressionNode] = [:],
+        arrayDeclarations: [DimDeclaration] = [],
         type: TypeAnnotation? = nil,
         span: SourceSpan = .unknown
     ) {
         self.variables = variables
         self.initializers = initializers
+        self.arrayDeclarations = arrayDeclarations
         self.type = type
         self.span = span
     }
@@ -152,17 +157,22 @@ public struct DimDeclaration {
 public struct GlobalDeclaration {
     public var variables: [IdentifierNode]
     public var initializers: [String: ExpressionNode]
+    /// Non-standard Blitz3D syntax support: `Global arr[10]` (sugar for a fixed-size array declaration).
+    /// These are lowered similarly to `Dim` declarations.
+    public var arrayDeclarations: [DimDeclaration]
     public var type: TypeAnnotation?
     public var span: SourceSpan
     
     public init(
         variables: [IdentifierNode],
         initializers: [String: ExpressionNode] = [:],
+        arrayDeclarations: [DimDeclaration] = [],
         type: TypeAnnotation? = nil,
         span: SourceSpan = .unknown
     ) {
         self.variables = variables
         self.initializers = initializers
+        self.arrayDeclarations = arrayDeclarations
         self.type = type
         self.span = span
     }
@@ -352,12 +362,18 @@ public struct IdentifierNode {
     public var name: String
     public var typeSuffix: TypeSuffix?
     public var typeName: String?
+    public var dimensions: [ExpressionNode]
     public var span: SourceSpan
     
-    public init(name: String, typeSuffix: TypeSuffix? = nil, typeName: String? = nil, span: SourceSpan = .unknown) {
+    public var description: String {
+        return name
+    }
+    
+    public init(name: String, typeSuffix: TypeSuffix? = nil, typeName: String? = nil, dimensions: [ExpressionNode] = [], span: SourceSpan = .unknown) {
         self.name = name
         self.typeSuffix = typeSuffix
         self.typeName = typeName
+        self.dimensions = dimensions
         self.span = span
     }
 }
@@ -441,14 +457,16 @@ public struct FunctionNode {
     public var parameters: [ParameterNode]
     public var body: [StatementNode]
     public var returnType: TypeAnnotation?
+    public var returnTypeName: String?
     public var explicitReturnTypeSuffix: Bool  // true if suffix was explicitly written
     public var span: SourceSpan
     
-    public init(name: String, parameters: [ParameterNode] = [], body: [StatementNode] = [], returnType: TypeAnnotation? = nil, explicitReturnTypeSuffix: Bool = false, span: SourceSpan = .unknown) {
+    public init(name: String, parameters: [ParameterNode] = [], body: [StatementNode] = [], returnType: TypeAnnotation? = nil, returnTypeName: String? = nil, explicitReturnTypeSuffix: Bool = false, span: SourceSpan = .unknown) {
         self.name = name
         self.parameters = parameters
         self.body = body
         self.returnType = returnType
+        self.returnTypeName = returnTypeName
         self.explicitReturnTypeSuffix = explicitReturnTypeSuffix
         self.span = span
     }
@@ -457,12 +475,14 @@ public struct FunctionNode {
 public struct ParameterNode {
     public var name: String
     public var type: TypeAnnotation?
+    public var typeName: String?
     public var defaultValue: ExpressionNode?
     public var span: SourceSpan
     
-    public init(name: String, type: TypeAnnotation? = nil, defaultValue: ExpressionNode? = nil, span: SourceSpan = .unknown) {
+    public init(name: String, type: TypeAnnotation? = nil, typeName: String? = nil, defaultValue: ExpressionNode? = nil, span: SourceSpan = .unknown) {
         self.name = name
         self.type = type
+        self.typeName = typeName
         self.defaultValue = defaultValue
         self.span = span
     }
@@ -483,12 +503,14 @@ public struct TypeNode {
 public struct FieldNode {
     public var name: String
     public var type: TypeAnnotation?
+    public var typeName: String?
     public var dimensions: [ExpressionNode]
     public var defaultValue: ExpressionNode?
     
-    public init(name: String, type: TypeAnnotation? = nil, dimensions: [ExpressionNode] = [], defaultValue: ExpressionNode? = nil) {
+    public init(name: String, type: TypeAnnotation? = nil, typeName: String? = nil, dimensions: [ExpressionNode] = [], defaultValue: ExpressionNode? = nil) {
         self.name = name
         self.type = type
+        self.typeName = typeName
         self.dimensions = dimensions
         self.defaultValue = defaultValue
     }

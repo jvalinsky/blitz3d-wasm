@@ -522,12 +522,19 @@ public final class ExpressionGeneration {
         case "shr":
             instrs.append(.i32ShrU)
             
-        case "pow":
+        case "pow", "^":
+            // Convert both operands to f32 for pow
+            instrs = []
+            instrs.append(contentsOf: leftResult.instrs)
+            instrs.append(contentsOf: convert(from: leftResult.type, to: .f32))
+            instrs.append(contentsOf: rightResult.instrs)
+            instrs.append(contentsOf: convert(from: rightResult.type, to: .f32))
             if let powIdx = context.functionIndexMap["pow"] {
                 instrs.append(.call(powIdx))
             } else {
-                // Fallback: preserve stack validity even if pow is missing
-                instrs.append(.drop) // drop right
+                // Fallback: import pow if available from env
+                let powIdx = context.registerAutoImport(name: "pow", params: [.f32, .f32], results: [.f32])
+                instrs.append(.call(powIdx))
             }
             return (instrs, .f32)
             
@@ -701,10 +708,23 @@ public final class ExpressionGeneration {
             if call.arguments.count < targetParamCount {
                 let padCount = targetParamCount - call.arguments.count
                 for i in 0..<padCount {
-                    if let def = def, call.arguments.count + i < def.params.count {
-                        switch def.params[call.arguments.count + i] {
-                        case .f32: instrs.append(.f32Const(0))
-                        default: instrs.append(.i32Const(0))
+                    let paramIdx = call.arguments.count + i
+                    if let def = def, paramIdx < def.params.count {
+                        if let defaultExpr = def.defaults?[paramIdx] {
+                            // Generate code for the default value
+                            let result = generateWithInfo(defaultExpr)
+                            instrs.append(contentsOf: result.instrs)
+                            
+                            // Coerce to expected parameter type if needed
+                            if result.type != def.params[paramIdx] {
+                                instrs.append(contentsOf: convert(from: result.type, to: def.params[paramIdx]))
+                            }
+                        } else {
+                            // Fallback to zero if no default value provided
+                            switch def.params[paramIdx] {
+                            case .f32: instrs.append(.f32Const(0))
+                            default: instrs.append(.i32Const(0))
+                            }
                         }
                     } else {
                         instrs.append(.i32Const(0))

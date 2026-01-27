@@ -66,39 +66,14 @@ cat reference/blitz3d-ng/src/tools/compiler/tree/func/func.cpp
 
 ### Implementation Phase (4-6 hours)
 
-**Step 1: Extend AST (1 hour)**
+**Step 1: Extend AST (1 hour)** [x] Done
 ```swift
-// In AST.swift
-struct FunctionDeclaration {
-    let name: String
-    let parameters: [Parameter]  // Change from [(String, TypeSuffix)] to Parameter struct
-    let returnType: TypeSuffix?
-    let body: [StatementNode]
-}
-
-struct Parameter {
-    let name: String
-    let type: TypeSuffix
-    let defaultValue: ExpressionNode?  // NEW
-}
+// ... (AST.swift verified)
 ```
 
-**Step 2: Extend Parser (2 hours)**
+**Step 2: Extend Parser (2 hours)** [x] Done
 ```swift
-// In Parser.swift - parseFunctionDeclaration()
-// Handle: Function Foo(a%, b% = 10, c# = 5.5)
-
-func parseParameter() -> Parameter {
-    let name = parseIdentifier()
-    let type = parseTypeSuffix()
-    
-    var defaultValue: ExpressionNode? = nil
-    if match(.equals) {
-        defaultValue = parseExpression()
-    }
-    
-    return Parameter(name: name, type: type, defaultValue: defaultValue)
-}
+// ... (Parser.swift verified)
 ```
 
 **Step 3: Function Resolution (2 hours)**
@@ -119,17 +94,11 @@ if let variants = functionSignatures[funcName] {
 }
 ```
 
-**Step 4: Code Generation (1-2 hours)**
-```swift
-// Generate multiple function definitions if defaults exist
-// Function Foo(a%, b% = 10) generates:
-// - Foo_1(a%) -> calls Foo_2(a, 10)
-// - Foo_2(a%, b%)
+**Step 4: Code Generation (1-2 hours)** [/] Partial
+- Current status: `ExpressionGeneration.swift` pads missing arguments with `0` or `0.0`.
+- Missing: Logic to use `defaultValue` from AST instead of zeros.
 
-// Or: Generate full call with defaults at call site
-```
-
-**Step 5: Runtime Functions (1 hour)**
+**Step 5: Runtime Functions (1 hour)** [ ] Pending
 ```swift
 // Add all EntityTexture variants:
 ("EntityTexture", "EntityTexture", [.i32, .i32], [], "env"),

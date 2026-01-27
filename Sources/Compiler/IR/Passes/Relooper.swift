@@ -10,8 +10,11 @@ import Foundation
 public class Relooper {
     private var cfg: ControlFlowGraph
     
-    public init(cfg: ControlFlowGraph) {
+    private var localAllocator: (() -> Int)?
+    
+    public init(cfg: ControlFlowGraph, localAllocator: (() -> Int)? = nil) {
         self.cfg = cfg
+        self.localAllocator = localAllocator
     }
     
     public func reloop() -> IREffect {
@@ -164,9 +167,11 @@ public class Relooper {
     /// Get or create the state variable index
     private func getStateVariable() -> Int {
         if stateLocalIndex < 0 {
-            // Reserve a high index for the synthetic $state variable
-            // In practice, this should be coordinated with the function's local count
-            stateLocalIndex = 9999 // Placeholder - will be fixed during WASM emission
+            if let allocator = localAllocator {
+                stateLocalIndex = allocator()
+            } else {
+                stateLocalIndex = 9999
+            }
         }
         return stateLocalIndex
     }

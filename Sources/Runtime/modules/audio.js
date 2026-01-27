@@ -46,14 +46,14 @@ class Blitz3DAudio {
         imports.env.FSOUND_Stream_Open = (pathPtr, mode, offset, length) => {
             const path = this.core.readString(pathPtr);
             console.log(`FSOUND_Stream_Open: ${path}, mode=${mode}, offset=${offset}, length=${length}`);
-            
+
             if (!this.audioContext) {
                 console.warn("Audio context not initialized");
                 return 0;
             }
 
             const streamId = this.nextStreamId++;
-            
+
             // Load audio file asynchronously
             fetch(path)
                 .then(response => response.arrayBuffer())
@@ -70,7 +70,7 @@ class Blitz3DAudio {
                     console.error(`Failed to load stream ${path}:`, error);
                     this.streams.delete(streamId);
                 });
-            
+
             // Return immediately (async loading)
             this.streams.set(streamId, { buffer: null, duration: 0, path: path });
             return streamId;
@@ -94,7 +94,7 @@ class Blitz3DAudio {
             // Create audio nodes
             const source = this.audioContext.createBufferSource();
             const gain = this.audioContext.createGain();
-            
+
             source.buffer = stream.buffer;
             source.connect(gain);
             gain.connect(this.masterGain);
@@ -130,6 +130,20 @@ class Blitz3DAudio {
             }
         };
 
+        imports.env.FSOUND_Stream_GetTime = (streamId) => {
+            // Find a channel playing this stream
+            for (const [channelId, channel] of this.channels.entries()) {
+                if (channel.stream === streamId && channel.playing) {
+                    return Math.floor((this.audioContext.currentTime - channel.startTime) * 1000);
+                }
+            }
+            return 0;
+        };
+
+        imports.env.FSOUND_Stream_SetTime = (streamId, ms) => {
+            console.warn("FSOUND_Stream_SetTime not fully implemented (seeking requires source recreation)");
+        };
+
         imports.env.FSOUND_SetVolume = (channel, volume) => {
             const ch = this.channels.get(channel);
             if (ch && ch.gain) {
@@ -155,11 +169,11 @@ class Blitz3DAudio {
         imports.env.LoadSound = (pathPtr) => {
             const path = this.core.readString(pathPtr);
             console.log(`LoadSound: ${path}`);
-            
+
             if (!this.audioContext) this.init();
 
             const soundId = this.nextSoundId++;
-            
+
             fetch(path)
                 .then(response => response.arrayBuffer())
                 .then(arrayBuffer => this.audioContext.decodeAudioData(arrayBuffer))
@@ -171,7 +185,7 @@ class Blitz3DAudio {
                     console.error(`Failed to load sound ${path}:`, error);
                     this.sounds.delete(soundId);
                 });
-            
+
             return soundId;
         };
 
@@ -185,7 +199,7 @@ class Blitz3DAudio {
             const channelId = this.nextChannelId++;
             const source = this.audioContext.createBufferSource();
             const gain = this.audioContext.createGain();
-            
+
             source.buffer = buffer;
             source.connect(gain);
             gain.connect(this.masterGain);

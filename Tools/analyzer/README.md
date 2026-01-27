@@ -40,6 +40,19 @@ node cli.js -b "*.wasm"
 
 # Verbose output with full report
 node cli.js output.wasm -v
+
+# Compact LLM-friendly summary (JSON by default)
+node llm-compact.js output.wasm
+```
+
+### Token-Efficient Debugging
+
+```bash
+# Compact wasm-validate digest with optional source map + bbdbg context
+python3 ../wasm_error_digest.py output.wasm --max 5 --context 1
+
+# One-shot compile (--use-ir) + digest + compact analyzer
+../ir_debug_compact.sh Tests/fixtures/minimal.bb /tmp/minimal.wasm
 ```
 
 ### Programmatic Usage

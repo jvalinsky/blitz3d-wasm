@@ -84,24 +84,29 @@ This function takes a set of blocks and returns a single structured `IREffect` (
 
 ### Step 1: Define CFG Types
 Create `Sources/Compiler/IR/Analysis/ControlFlowGraph.swift`
-- [ ] Define `BasicBlock` class and `Terminator` enum.
-- [ ] Implement `CFGBuilder` to convert `[IREffect]` -> `ControlFlowGraph`.
+- [x] Define `BasicBlock` class and `Terminator` enum.
+- [x] Implement `CFGBuilder` to convert `[IREffect]` -> `ControlFlowGraph`.
 - [ ] Handle implicit fallthroughs (e.g., label following a statement).
 
 ### Step 2: Implement Reachability Analysis
 The Relooper needs to know which blocks can reach which others to identify loops.
-- [ ] Implement `findReachable(from: BasicBlock, strictlyWithin: Set<BasicBlock>) -> Set<BasicBlock>`.
+- [x] Implement `findReachable(from: BasicBlock, strictlyWithin: Set<BasicBlock>) -> Set<BasicBlock>`.
 
 ### Step 3: Implement Relooper Pass
 Create `Sources/Compiler/IR/Passes/Relooper.swift`
-- [ ] Implement the `Relooper` class.
-- [ ] Implement `reloop()` recursive function.
-- [ ] Handle `Multiple` shape using a `Select` (Switch) or `If/Else` chain if WASM `br_table` is tricky to target directly from high-level IR.
+- [x] Implement the `Relooper` class.
+- [x] Implement `reloop()` recursive function.
+- [x] Handle `Multiple` shape using a `Select` (Switch) or `If/Else` chain if WASM `br_table` is tricky to target directly from high-level IR.
 
 ### Step 4: Integrate
-- [ ] Update `ASTLowering` to preserve `Goto` and `Label` as explicit IR nodes (currently ignored or partially handled).
-- [ ] Update `CodeGenerator` to run `RelooperPass` before emission.
+- [x] Update `ASTLowering` to preserve `Goto` and `Label` as explicit IR nodes.
+- [x] Update `CodeGenerator` to run `RelooperPass` before emission.
 - [ ] Verify `reloop` output creates valid `IREffect` trees (no dangling branches).
+
+## Current Status (Jan 26 2026)
+- The pass is integrated and runs during `--use-ir` compilation.
+- Real-world validation is still failing on `scpcb/MapSystem.bb` (`wasm-validate` errors).
+- Next debugging focus: ensure the state-machine lowering (`Select`) and any synthetic locals remain type-correct and stack-neutral through emission.
 
 ## Validation Strategy
 1.  **Diamond Test:** simple `If/Else` flow.

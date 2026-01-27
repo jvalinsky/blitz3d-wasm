@@ -87,6 +87,17 @@ public final class StatementGeneration: ValidatorTypeContext {
     
     /// Generate code for a statement
     public func generateStatement(_ statement: StatementNode, function: inout WASMFunction) {
+        // DEBUG: Verify function map is populated before validation runs
+        #if DEBUG
+        if enableStackValidation {
+            let totalFunctions = context.module.imports.count + context.module.functions.count
+            let mappedFunctions = context.functionDefinitionsByIndex.count
+            if mappedFunctions < totalFunctions && totalFunctions > 0 {
+                print("STACK_VALIDATOR_WARNING: functionDefinitionsByIndex incomplete. Expected \(totalFunctions), got \(mappedFunctions)")
+            }
+        }
+        #endif
+
         let startIndex = function.body.count
         generateStatementImpl(statement, function: &function)
         
@@ -248,17 +259,16 @@ public final class StatementGeneration: ValidatorTypeContext {
                     function.body.append(contentsOf: finalInstrs)
 
                     // Use proper store instruction based on element type
+                    // Convert from targetType to array.elementType if needed
+                    if targetType != array.elementType {
+                        function.body.append(contentsOf: convert(from: targetType, to: array.elementType))
+                    }
                     switch array.elementType {
-                    case .i32:
-                        function.body.append(.i32Store(2, 0))
-                    case .f32:
-                        function.body.append(.f32Store(2, 0))
-                    case .i64:
-                        function.body.append(.i64Store(2, 0))
-                    case .f64:
-                        function.body.append(.f64Store(2, 0))
-                    default:
-                        function.body.append(.i32Store(2, 0))
+                    case .i32: function.body.append(.i32Store(2, 0))
+                    case .f32: function.body.append(.f32Store(2, 0))
+                    case .i64: function.body.append(.i64Store(2, 0))
+                    case .f64: function.body.append(.f64Store(2, 0))
+                    default: function.body.append(.i32Store(2, 0))
                     }
                 } else if case .fieldAccess(let fieldAccess, _) = access.array {
                     // Assignment to Field Array: obj.field[index] = value
@@ -267,12 +277,12 @@ public final class StatementGeneration: ValidatorTypeContext {
                     function.body.append(contentsOf: objInstrs) // [objPtr]
                     
                     if let typeName = getTypeName(from: fieldAccess.object),
-                       let fieldOffset = context.fieldOffsets[typeName]?[fieldAccess.field] {
+                       let fieldOffset = context.fieldOffsets[typeName.lowercased()]?[stripSuffix(fieldAccess.field).lowercased()] {
                         
                         function.body.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
                         function.body.append(.i32Add) // [fieldBaseAddr]
                         
-                        let fieldTypeStr = context.userTypes[typeName]?.fieldTypes[fieldAccess.field] ?? "Int"
+                        let fieldTypeStr = context.userTypes[typeName.lowercased()]?.fieldTypes[stripSuffix(fieldAccess.field).lowercased()] ?? "Int"
                         let elementType = typeHandling.wasmType(from: fieldTypeStr)
                         let elementSize = context.typeSize(for: elementType)
                         
@@ -293,7 +303,10 @@ public final class StatementGeneration: ValidatorTypeContext {
                         // Append Value (RHS)
                         function.body.append(contentsOf: finalInstrs) // [addr, value]
                         
-                        // Store
+                        // Store with conversion if needed
+                        if targetType != elementType {
+                            function.body.append(contentsOf: convert(from: targetType, to: elementType))
+                        }
                         switch elementType {
                         case .i32: function.body.append(.i32Store(2, 0))
                         case .f32: function.body.append(.f32Store(2, 0))
@@ -312,25 +325,23 @@ public final class StatementGeneration: ValidatorTypeContext {
                 let objInstrs = expressionGenerator.generate(access.object)
                 function.body.append(contentsOf: objInstrs)
                 if let typeName = getTypeName(from: access.object),
-                   let fieldOffset = context.fieldOffsets[typeName]?[access.field] {
+                   let fieldOffset = context.fieldOffsets[typeName.lowercased()]?[stripSuffix(access.field).lowercased()] {
                     function.body.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
                     function.body.append(.i32Add)
                     function.body.append(contentsOf: finalInstrs)
 
                     // Use proper store instruction based on field type
-                    let fieldTypeStr = context.userTypes[typeName]?.fieldTypes[access.field] ?? "Int"
+                    let fieldTypeStr = context.userTypes[typeName.lowercased()]?.fieldTypes[stripSuffix(access.field).lowercased()] ?? "Int"
                     let fieldType = typeHandling.wasmType(from: fieldTypeStr)
+                    if targetType != fieldType {
+                        function.body.append(contentsOf: convert(from: targetType, to: fieldType))
+                    }
                     switch fieldType {
-                    case .i32:
-                        function.body.append(.i32Store(2, 0))
-                    case .f32:
-                        function.body.append(.f32Store(2, 0))
-                    case .i64:
-                        function.body.append(.i64Store(2, 0))
-                    case .f64:
-                        function.body.append(.f64Store(2, 0))
-                    default:
-                        function.body.append(.i32Store(2, 0))
+                    case .i32: function.body.append(.i32Store(2, 0))
+                    case .f32: function.body.append(.f32Store(2, 0))
+                    case .i64: function.body.append(.i64Store(2, 0))
+                    case .f64: function.body.append(.f64Store(2, 0))
+                    default: function.body.append(.i32Store(2, 0))
                     }
                 } else {
                     // Type resolution failed - drop object pointer and value to balance stack
@@ -366,7 +377,10 @@ public final class StatementGeneration: ValidatorTypeContext {
                     function.body.append(.i32Add)
                     function.body.append(contentsOf: finalInstrs)
                     
-                    // Store
+                    // Store with conversion if needed
+                    if targetType != array.elementType {
+                        function.body.append(contentsOf: convert(from: targetType, to: array.elementType))
+                    }
                     switch array.elementType {
                     case .i32: function.body.append(.i32Store(2, 0))
                     case .f32: function.body.append(.f32Store(2, 0))
@@ -508,9 +522,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             loopInstrs.append(.brIf(1))
             
             var bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
-            // DISABLED: Balance loop body
-            // Same issue as if/else - no function signatures
-            loopInstrs.append(contentsOf: bodyInstrs)
+            loopInstrs.append(contentsOf: validateInstructions(bodyInstrs))
             loopInstrs.append(.br(0))
             
             currentDepth -= 2
@@ -617,8 +629,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
 
             var bodyInstrs = generateStatementBlock(forNode.body, function: &function)
-            // DISABLED: Balance loop body  
-            loopInstrs.append(contentsOf: bodyInstrs)
+            loopInstrs.append(contentsOf: validateInstructions(bodyInstrs))
 
             // Increment: i = i + step
             loopInstrs.append(.localGet(local.index))
@@ -659,8 +670,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             // body
             var bodyInstrs = generateStatementBlock(forEachNode.body, function: &function)
-            // DISABLED: Balance loop body
-            loopInstrs.append(contentsOf: bodyInstrs)
+            loopInstrs.append(contentsOf: validateInstructions(bodyInstrs))
             
             // it = it.next
             loopInstrs.append(.localGet(iterator.index))
@@ -684,8 +694,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             var loopInstrs: [WASMInstruction] = []
             var bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
-            // DISABLED: Balance loop body
-            loopInstrs.append(contentsOf: bodyInstrs)
+            loopInstrs.append(contentsOf: validateInstructions(bodyInstrs))
             
             let condResult = expressionGenerator?.generateWithInfo(repeatNode.condition) ?? ([], .i32)
             loopInstrs.append(contentsOf: condResult.instrs)
@@ -831,6 +840,15 @@ public final class StatementGeneration: ValidatorTypeContext {
                     if returnInfo.type != currentReturnType {
                         function.body.append(contentsOf: convert(from: returnInfo.type, to: currentReturnType))
                     }
+                }
+            } else if currentReturnType != .void {
+                // Return statement without value in a function that expects a value
+                // Push default value (0)
+                switch currentReturnType {
+                case .i32, .i64: function.body.append(.i32Const(0))
+                case .f32: function.body.append(.f32Const(0))
+                case .f64: function.body.append(.f64Const(0))
+                default: function.body.append(.i32Const(0))
                 }
             }
             function.body.append(.return)
@@ -1155,6 +1173,13 @@ public final class StatementGeneration: ValidatorTypeContext {
         }
     }
 
+    private func stripSuffix(_ name: String) -> String {
+        if name.hasSuffix("%") || name.hasSuffix("#") || name.hasSuffix("$") {
+            return String(name.dropLast())
+        }
+        return name
+    }
+
     private func getTargetType(from expr: ExpressionNode) -> WASMType {
         switch expr {
         case .identifier(let id, _):
@@ -1192,7 +1217,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
         case .fieldAccess(let access, _):
             if let typeName = getTypeName(from: access.object),
-               let fieldType = context.userTypes[typeName]?.fieldTypes[access.field] {
+               let fieldType = context.userTypes[typeName.lowercased()]?.fieldTypes[stripSuffix(access.field).lowercased()] {
                 return typeHandling.wasmType(from: fieldType)
             }
         default:
@@ -1392,7 +1417,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
         case .fieldAccess(let access, _):
             if let objType = getTypeName(from: access.object),
-               let fieldType = context.userTypes[objType]?.fieldTypes[access.field] {
+               let fieldType = context.userTypes[objType.lowercased()]?.fieldTypes[stripSuffix(access.field).lowercased()] {
                 return fieldType
             }
         case .new(let type, _):
@@ -1409,7 +1434,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             // Check if it's a field array access: obj.field[index]
             if case .fieldAccess(let fieldAccess, _) = access.array,
                let objType = getTypeName(from: fieldAccess.object),
-               let fieldType = context.userTypes[objType]?.fieldTypes[fieldAccess.field] {
+               let fieldType = context.userTypes[objType.lowercased()]?.fieldTypes[stripSuffix(fieldAccess.field).lowercased()] {
                 // If the field is an array of CustomType, return CustomType
                 // fieldType is "CustomType" or "Int" etc.
                 return fieldType
@@ -1447,7 +1472,8 @@ public final class StatementGeneration: ValidatorTypeContext {
             &balanced,
             targetDelta: 0,  // Loop bodies should have net zero stack effect
             localTypes: localTypeCache,
-            globalTypes: globalTypeCache
+            globalTypes: globalTypeCache,
+            context: self
         )
 
         if dropsAdded > 0 {
@@ -1467,7 +1493,8 @@ public final class StatementGeneration: ValidatorTypeContext {
             &balanced,
             targetDelta: targetDelta,
             localTypes: localTypeCache,
-            globalTypes: globalTypeCache
+            globalTypes: globalTypeCache,
+            context: self
         )
 
         if dropsAdded > 0 {
@@ -1514,8 +1541,9 @@ public final class StatementGeneration: ValidatorTypeContext {
     }
     
     func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])? {
-        // For now, return nil - function signatures would need to be tracked separately
-        // The validator will use a default assumption when signatures aren't available
+        if let def = context.functionDefinitionsByIndex[index] {
+            return (def.params, def.results)
+        }
         return nil
     }
 }

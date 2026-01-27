@@ -16,7 +16,7 @@ public struct CodeGenerator {
 
     // Stack optimization (Koopman's algorithm)
     private var stackScheduler: StackScheduler
-    private var enableStackOptimization: Bool = true  // Toggle for debugging
+    private var enableStackOptimization: Bool = false  // Toggle for debugging
 
     // Internal state for things not yet moved to context/modules
     private var typeCollectionGlobal: Int = -1
@@ -180,8 +180,9 @@ public struct CodeGenerator {
     
     private mutating func addImports() {
         var imports: [(String, String, [WASMType], [WASMType], String)] = [
-            ("PrintInt", "PrintInt", [.i32], [], "env"),
-            ("PrintString", "PrintString", [.i32], [], "env"),
+            ("PrintInt", "printint", [.i32], [], "env"),
+            ("PrintFloat", "printfloat", [.f32], [], "env"),
+            ("PrintString", "printstring", [.i32], [], "env"),
             ("Graphics3D", "Graphics3D", [.i32, .i32, .i32, .i32], [], "env"),
             ("Cls", "Cls", [], [], "env"),
             ("Flip", "Flip", [], [], "env"),
@@ -227,6 +228,11 @@ public struct CodeGenerator {
             ("FSOUND_Stream_Stop", "FSOUND_Stream_Stop", [.i32], [], "env"),
             ("FSOUND_SetVolume", "FSOUND_SetVolume", [.i32, .f32], [], "env"),
             ("FSOUND_SetPaused", "FSOUND_SetPaused", [.i32, .i32], [], "env"),
+            ("FSOUND_StopSound", "FSOUND_StopSound", [.i32], [], "env"),
+            ("FSOUND_Stream_Close", "FSOUND_Stream_Close", [.i32], [], "env"),
+            ("FSOUND_Stream_Stop", "FSOUND_Stream_Stop", [.i32], [], "env"),
+            ("FSOUND_IsPlaying", "FSOUND_IsPlaying", [.i32], [.i32], "env"),
+            ("FSOUND_SetPan", "FSOUND_SetPan", [.i32, .i32], [], "env"),
             ("Sound3D", "Sound3D", [.i32, .f32, .f32, .f32], [], "env"),
             ("SetListenerLocation", "SetListenerLocation", [.f32, .f32, .f32, .f32, .f32, .f32, .f32, .f32, .f32], [], "env"),
             ("MouseX", "MouseX", [], [.i32], "env"),
@@ -328,6 +334,7 @@ public struct CodeGenerator {
             
             // Picking Functions
             ("LinePick", "LinePick", [.f32, .f32, .f32, .f32, .f32, .f32, .f32], [.i32], "env"),
+            ("LoadBrush", "LoadBrush", [.i32, .f32, .f32, .f32, .f32], [.i32], "env"),
             ("PickedX", "PickedX", [], [.f32], "env"),
             ("PickedY", "PickedY", [], [.f32], "env"),
             ("PickedZ", "PickedZ", [], [.f32], "env"),
@@ -446,6 +453,15 @@ public struct CodeGenerator {
             ("FileType", "FileType", [.i32], [.i32], "env"),
             ("ReadData", "ReadData", [.i32, .i32, .i32], [.i32], "env"),
             ("RestoreData", "RestoreData", [.i32], [], "env"),
+            
+            // System and Window Metrics
+            ("AppTitle", "AppTitle", [.i32, .i32], [], "env"),
+            ("SystemProperty", "SystemProperty", [.i32], [.i32], "env"),
+            ("GraphicsWidth", "GraphicsWidth", [], [.i32], "env"),
+            ("GraphicsHeight", "GraphicsHeight", [], [.i32], "env"),
+            ("WindowWidth", "WindowWidth", [], [.i32], "env"),
+            ("WindowHeight", "WindowHeight", [], [.i32], "env"),
+            ("VWait", "VWait", [.i32], [], "env"),
             
             // Networking (TCP) for SCP:CB multiplayer
             ("OpenTCPStream", "OpenTCPStream", [.i32, .i32], [.i32], "env"),
@@ -692,37 +708,35 @@ public struct CodeGenerator {
         }
 
         for (name, internalName, params, results, moduleName) in imports {
-            var defaults: [Int: IRDefaultValue]? = nil
+            var defaults: [Int: ExpressionNode]? = nil
             
             // Add some common defaults
             if name == "Graphics" || name == "Graphics3D" {
-                defaults = [2: .i32(0), 3: .i32(0)]
+                defaults = [2: .integerLiteral(0, .unknown), 3: .integerLiteral(0, .unknown)]
             } else if name == "CreateCamera" {
-                defaults = [0: .i32(0)]
+                defaults = [0: .integerLiteral(0, .unknown)]
             } else if name == "CreateLight" {
-                defaults = [0: .i32(1), 1: .i32(0)]
+                defaults = [0: .integerLiteral(1, .unknown), 1: .integerLiteral(0, .unknown)]
             } else if name == "Flip" {
-                defaults = [0: .i32(1)]
+                defaults = [0: .integerLiteral(1, .unknown)]
             } else if name == "VWait" {
-                defaults = [0: .i32(1)]
+                defaults = [0: .integerLiteral(1, .unknown)]
             } else if name == "Text" {
-                defaults = [3: .i32(0), 4: .i32(0)]
+                defaults = [3: .integerLiteral(0, .unknown), 4: .integerLiteral(0, .unknown)]
             } else if name == "Cls" {
-                defaults = [0: .i32(1), 1: .i32(1)]
-            } else if name == "Graphics" || name == "Graphics3D" {
-                defaults = [2: .i32(0), 3: .i32(0)]
+                defaults = [0: .integerLiteral(1, .unknown), 1: .integerLiteral(1, .unknown)]
             } else if name == "EntityX" || name == "EntityY" || name == "EntityZ" {
-                defaults = [1: .i32(0)]
+                defaults = [1: .integerLiteral(0, .unknown)]
             } else if name == "EntityPitch" || name == "EntityYaw" || name == "EntityRoll" {
-                defaults = [1: .i32(0)]
+                defaults = [1: .integerLiteral(0, .unknown)]
             } else if name == "LoadMesh" || name == "LoadAnimMesh" || name == "LoadTexture" || name == "LoadImage" || name == "LoadSound" || name == "LoadFont" {
-                defaults = [1: .i32(0)]
+                defaults = [1: .integerLiteral(0, .unknown)]
             } else if name == "ScaleEntity" || name == "PositionEntity" || name == "RotateEntity" || name == "MoveEntity" || name == "TurnEntity" || name == "TranslateEntity" {
-                defaults = [4: .i32(0)]
+                defaults = [4: .integerLiteral(0, .unknown)]
             } else if name == "EntityPick" || name == "LinePick" {
-                defaults = [4: .f32(0.0)]
+                defaults = [4: .floatLiteral(0.0, .unknown)]
             } else if name == "CameraRange" || name == "CameraZoom" {
-                defaults = [1: .f32(1.0)]
+                defaults = [1: .floatLiteral(1.0, .unknown)]
             } else if name == "CameraFogColor" || name == "EntityColor" || name == "Color" || name == "ClsColor" || name == "AmbientLight" {
                 // These often take 3 components, but let's check
             }
@@ -801,8 +815,8 @@ public struct CodeGenerator {
             typeFieldOffsets["__prev"] = 0
             typeFieldOffsets["__next"] = 4
             typeFieldOffsets["__typeID"] = 8
-            context.fieldOffsets[typeNode.name] = [:]
-            context.fieldDimensions[typeNode.name] = [:]
+            context.fieldOffsets[typeNode.name.lowercased()] = [:]
+            context.fieldDimensions[typeNode.name.lowercased()] = [:]
             
             let typeHandling = TypeHandling()
             for field in typeNode.fields {
@@ -824,19 +838,19 @@ public struct CodeGenerator {
                     offset = ((offset / fieldSize) + 1) * fieldSize
                 }
                 
-                context.fieldOffsets[typeNode.name]?[field.name] = offset
-                typeFieldOffsets[field.name] = offset
-                typeFieldTypes[field.name] = field.type?.rawValue ?? "Int"
+                context.fieldOffsets[typeNode.name.lowercased()]?[field.name.lowercased()] = offset
+                typeFieldOffsets[field.name.lowercased()] = offset
+                typeFieldTypes[field.name.lowercased()] = field.type?.rawValue ?? "Int"
                 
                 // Store dimensions if field is an array
                 if !dimensions.isEmpty {
-                    typeFieldDimensions[field.name] = dimensions
-                    context.fieldDimensions[typeNode.name]?[field.name] = dimensions
+                    typeFieldDimensions[field.name.lowercased()] = dimensions
+                    context.fieldDimensions[typeNode.name.lowercased()]?[field.name.lowercased()] = dimensions
                 }
                 
                 // Store default value if present
                 if let defaultValue = field.defaultValue {
-                    typeFieldDefaults[field.name] = defaultValue
+                    typeFieldDefaults[field.name.lowercased()] = defaultValue
                 }
                 
                 // Move offset by fieldSize * arraySize
@@ -853,13 +867,11 @@ public struct CodeGenerator {
             )
             
             // Register globals for this type's management
-            
-            // Register globals for this type's management
             info.firstGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
             info.lastGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
             info.freeHeadGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
             
-            context.userTypes[typeNode.name] = info
+            context.userTypes[typeNode.name.lowercased()] = info
         }
     }
     
@@ -911,7 +923,15 @@ public struct CodeGenerator {
             let lowerName = function.name.lowercased()
 
             let results: [WASMType] = (returnType == .void) ? [] : [returnType]
-            let def = FunctionDefinition(params: paramTypes, results: results)
+            
+            var defaults: [Int: ExpressionNode] = [:]
+            for (i, param) in function.parameters.enumerated() {
+                if let defaultValue = param.defaultValue {
+                    defaults[i] = defaultValue
+                }
+            }
+            
+            let def = FunctionDefinition(params: paramTypes, results: results, defaults: defaults.isEmpty ? nil : defaults)
             
             // Don't overwrite existing definitions (e.g., from imports)
             if context.functionDefinitions[lowerName] == nil {
@@ -1032,6 +1052,7 @@ public struct CodeGenerator {
         context.module.functionNames.append("__Alloc")  // For WASM name section
         context.functionIndexMap["__alloc"] = funcIdx
         context.module.exports.append(WASMExport(name: "__Alloc", kind: .function, index: funcIdx))
+        context.functionDefinitionsByIndex[funcIdx] = FunctionDefinition(params: [.i32], results: [.i32])
         
         // __StringAlloc(length: i32) -> ptr: i32
         let strAllocType = WASMFunctionType(parameters: [.i32], results: [.i32])
@@ -1060,6 +1081,7 @@ public struct CodeGenerator {
         context.module.functionNames.append("__StringAlloc")  // For WASM name section
         context.functionIndexMap["__stringalloc"] = strFuncIdx
         context.module.exports.append(WASMExport(name: "__StringAlloc", kind: .function, index: strFuncIdx))
+        context.functionDefinitionsByIndex[strFuncIdx] = FunctionDefinition(params: [.i32], results: [.i32])
         
         // __StringConcat(a: i32, b: i32) -> ptr: i32
         let strConcatType = WASMFunctionType(parameters: [.i32, .i32], results: [.i32])
@@ -1124,14 +1146,42 @@ public struct CodeGenerator {
         context.module.functionNames.append("__StringConcat")  // For WASM name section
         context.functionIndexMap["__stringconcat"] = strConcatIdx
         context.module.exports.append(WASMExport(name: "__StringConcat", kind: .function, index: strConcatIdx))
+        context.functionDefinitionsByIndex[strConcatIdx] = FunctionDefinition(params: [.i32, .i32], results: [.i32])
     }
     
     public mutating func generateFromIR(_ program: ProgramNode) -> WASMModule {
+        context.debugFunctionSpans.removeAll()
+        for function in program.functions {
+            context.debugFunctionSpans[function.name.lowercased()] = function.span
+        }
+        if let firstStmt = program.statements.first {
+            context.debugFunctionSpans["_start"] = firstStmt.span
+        }
+
         addImports()
+        preRegisterAutoImportsIfNeeded()
         let lowering = ASTLowering(context: context)
-        let irModule = lowering.lower(program)
+        var irModule = lowering.lower(program)
         
-        let emitter = IREmitter()
+        // Relooper Pass: Structure the IR for each function
+        for i in 0..<irModule.functions.count {
+            // Build CFG from Linear IR
+            let cfgBuilder = CFGBuilder()
+            let cfg = cfgBuilder.build(from: irModule.functions[i].body)
+            
+            // Run Relooper to reconstruct structured control flow
+            let relooper = Relooper(cfg: cfg) { [i] in
+                let index = irModule.functions[i].parameters.count + irModule.functions[i].locals.count
+                irModule.functions[i].locals.append(("__relooper_state", .i32, nil))
+                return index
+            }
+            let structuredBody = relooper.reloop()
+            
+            // Replace function body with structured version
+            irModule.functions[i].body = [structuredBody]
+        }
+        
+        let emitter = IREmitter(module: context.module, context: context)
         let wasmModule = emitter.emit(module: irModule)
         
         return wasmModule

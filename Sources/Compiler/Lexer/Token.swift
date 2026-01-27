@@ -89,6 +89,7 @@ public enum TokenType: Equatable, Hashable {
     case greaterThan
     case lessThanOrEqual
     case greaterThanOrEqual
+    case power              // ^ exponent operator
     
     // Punctuation
     case leftParen
@@ -214,6 +215,7 @@ extension TokenType: CustomStringConvertible {
         case .greaterThan: return ">"
         case .lessThanOrEqual: return "<="
         case .greaterThanOrEqual: return ">="
+        case .power: return "^"
         case .leftParen: return "("
         case .rightParen: return ")"
         case .leftBracket: return "["

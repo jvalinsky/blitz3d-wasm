@@ -325,6 +325,17 @@ swift run blitz3d-wasm ../scpcb/UpdateEvents.bb --use-ir -o /tmp/test.wasm
 wasm-validate /tmp/test.wasm
 ```
 
+#### Step 4.4: Test SCPCB MapSystem.bb
+**New Action** | Priority: HIGH | Confidence: 80%
+
+**Verification**:
+```bash
+swift run blitz3d-wasm ../scpcb/MapSystem.bb --use-ir -o /tmp/MapSystem.wasm
+wasm-validate /tmp/MapSystem.wasm
+```
+
+**Current Result (Jan 26 2026)**: `wasm-validate` fails with large clusters of type/stack errors (see `11_ir_followup.md`).
+
 ### Success Criteria
 
 | Criterion | Target | Measurement |
@@ -335,6 +346,7 @@ wasm-validate /tmp/test.wasm
 | Simple Program | Validates | `wasm-validate` passes |
 | Control Flow | Validates | `wasm-validate` passes |
 | SCPCB UpdateEvents | Validates | `wasm-validate` passes |
+| SCPCB MapSystem | Validates | `wasm-validate` passes (currently failing Jan 26 2026) |
 
 ### Risk Mitigation
 

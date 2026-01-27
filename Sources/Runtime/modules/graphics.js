@@ -26,7 +26,9 @@ class Blitz3DGraphics {
         this.nextTextureId = 1;
         this.brushes = {};
         this.nextBrushId = 1;
-        this.lastPick = { entity: 0, nx: 0, ny: 0, nz: 0 };
+        this.nextBrushId = 1;
+        this.lastPick = { entity: 0, x: 0, y: 0, z: 0, nx: 0, ny: 0, nz: 0, surface: 0, triangle: 0 };
+        this.aaFonts = {};
         this.aaFonts = {};
         this.currentAAFont = null;
         this.currentFont = "arial";
@@ -277,7 +279,7 @@ class Blitz3DGraphics {
             }
             return img.canvasCtx || null;
         };
-        
+
         const computeBounds = (entity) => {
             if (!entity) return null;
             try {
@@ -299,6 +301,13 @@ class Blitz3DGraphics {
         // Bitwise helpers that sometimes get imported as functions
         imports.env.And = (a, b) => (a | 0) & (b | 0);
         imports.env.Or = (a, b) => (a | 0) | (b | 0);
+
+        // Graphics Metrics
+        imports.env.GraphicsWidth = () => this.core.canvas ? this.core.canvas.width : 800;
+        imports.env.GraphicsHeight = () => this.core.canvas ? this.core.canvas.height : 600;
+        imports.env.WindowWidth = () => window.innerWidth;
+        imports.env.WindowHeight = () => window.innerHeight;
+        imports.env.VWait = (n) => { }; // No-op
 
         // 2D Primitives Stubs
         imports.env.Rect = (x, y, w, h, solid) => {
@@ -608,6 +617,12 @@ class Blitz3DGraphics {
         imports.env.GraphicsBuffer = () => -1;
         imports.env.ImageBuffer = (imgId, frame) => imgId || -1;
         imports.env.TextureBuffer = (texId) => texId || -1;
+        imports.env.SetBuffer = (bufferId) => {
+            this.currentBuffer = bufferId;
+            if (this.core.ctx2d) {
+                // Future: switch active context if bufferId is an image
+            }
+        };
 
         imports.env.WritePixelFast = (x, y, color, bufferId) => {
             const ctx = getBufferContext(bufferId);
@@ -1023,6 +1038,13 @@ class Blitz3DGraphics {
             const entity = this.entities[ent];
             if (entity) {
                 entity.userData.autoFade = { near, far };
+            }
+        };
+
+        imports.env.EntityOrder = (ent, order) => {
+            const entity = this.entities[ent];
+            if (entity) {
+                entity.renderOrder = order;
             }
         };
 
@@ -1483,7 +1505,7 @@ class Blitz3DGraphics {
                 console.log("BrushTexture: brushId=" + brushId + " textureId=" + textureId);
             }
         };
-        
+
         imports.env.GetBrushTexture = (brushId, index) => {
             const brush = this.brushes[brushId];
             if (brush) {
@@ -1514,6 +1536,11 @@ class Blitz3DGraphics {
         imports.env.FreeBrush = (brushId) => {
             delete this.brushes[brushId];
             console.log("FreeBrush: brushId=" + brushId);
+        };
+
+        imports.env.GetEntityBrush = (ent) => {
+            // Stub: return a default brush
+            return 1;
         };
 
         imports.env.PaintMesh = (meshId, brushId) => {
@@ -1724,6 +1751,19 @@ class Blitz3DGraphics {
             }
         };
 
+        imports.env.EntityClass = (entityId) => {
+            const ent = this.entities[entityId];
+            if (!ent) return 0;
+            let cls = "Object";
+            if (ent.isMesh) cls = "Mesh";
+            else if (ent.isCamera) cls = "Camera";
+            else if (ent.isLight) cls = "Light";
+            else if (ent.isSprite) cls = "Sprite";
+            else if (ent.type === "Object3D") cls = "Pivot";
+
+            return this.core.allocString(cls);
+        };
+
         imports.env.HideEntity = (entityId) => {
             const entity = this.entities[entityId];
             if (entity) {
@@ -1771,6 +1811,55 @@ class Blitz3DGraphics {
             if (entity) {
                 entity.name = this.core.readString(namePtr);
             }
+        };
+
+        imports.env.EntityName = (entityId) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.name) {
+                return this.core.allocString(entity.name);
+            }
+            return 0;
+        };
+
+        imports.env.GetParent = (entityId) => {
+            const entity = this.entities[entityId];
+            if (entity && entity.parent) {
+                // Find ID of parent
+                for (const id in this.entities) {
+                    if (this.entities[id] === entity.parent) return parseInt(id);
+                }
+            }
+            return 0;
+        };
+
+        imports.env.CountChildren = (entityId) => {
+            const entity = this.entities[entityId];
+            return entity ? entity.children.length : 0;
+        };
+
+        imports.env.GetChild = (entityId, index) => {
+            const entity = this.entities[entityId];
+            if (entity && index >= 1 && index <= entity.children.length) {
+                const child = entity.children[index - 1];
+                for (const id in this.entities) {
+                    if (this.entities[id] === child) return parseInt(id);
+                }
+            }
+            return 0;
+        };
+
+        imports.env.FindChild = (entityId, namePtr) => {
+            const entity = this.entities[entityId];
+            const name = this.core.readString(namePtr).toLowerCase();
+            if (entity) {
+                const child = entity.getObjectByName(name);
+                if (child) {
+                    for (const id in this.entities) {
+                        if (this.entities[id] === child) return parseInt(id);
+                    }
+                }
+            }
+            return 0;
         };
 
         imports.env.Kill = (entityId) => {
@@ -2222,6 +2311,7 @@ class Blitz3DGraphics {
             if (originalStreamPlay) return originalStreamPlay(channel, streamId);
             return 0;
         };
+
     }
 
     updateSurfaces() {

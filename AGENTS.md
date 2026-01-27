@@ -40,6 +40,56 @@
 - [07_scpcb_compilation_gap_analysis.md](notes/07_scpcb_compilation_gap_analysis.md)
 - [compilation_error_analysis_20260119.md](notes/compilation_error_analysis_20260119.md)
 
+
+## Debugging & Testing Tools
+
+### Integration Test Harness
+
+Located in `debug_run.sh` and `Tests/IntegrationTests/puppeteer-harness.js`.
+
+- **Purpose**: Automates the build and testing cycle for the compiler and runtime.
+- **Workflow**:
+    1.  Builds the Swift compiler (`swift build`).
+    2.  Compiles a test Blitz3D file (`Tests/IntegrationTests/MeshTest.bb`).
+    3.  Bundles the runtime with Browserify.
+    4.  Starts a local Python HTTP server.
+    5.  Launches a specific Chrome instance via Puppeteer to load the page and check for console success/failure messages.
+- **Key Files**:
+    - `debug_run.sh`: Main entry point script.
+    - `Tests/IntegrationTests/puppeteer-harness.js`: Node script controlling Chrome. **Note**: Hardcoded to use a specific Chrome for Testing path on macOS ARM64.
+
+### Runtime Debug Overlay
+
+Located in `Sources/Runtime/debug.js`.
+
+- **Purpose**: Provides a visual on-screen overlay in the web runtime showing performance metrics.
+- **Metrics**: FPS, Entity Count, Draw Calls, Particle Count, Memory Usage.
+- **Usage**: Initialized by `DebugOverlay.init()` in the runtime. Defaults to `enabled: true`.
+
+### IR Debug Tool
+
+Located in `Tools/ir_debug_compact.sh`.
+
+- **Purpose**: Advanced debugging for compiler IR (Intermediate Representation) issues.
+- **Usage**: `./Tools/ir_debug_compact.sh <input.bb> [output.wasm]`
+- **Features**:
+    - Compiles with IR enabled (`--use-ir -g -d`).
+    - Generates a `wasm-validate` error digest.
+    - Produces an LLM-friendly compact summary of the analysis using `Tools/analyzer/llm-compact.js`.
+- **Env overrides**:
+    - `B3D_DIGEST_MAX`: Max sample errors (default: 5)
+    - `B3D_DIGEST_CONTEXT`: Objdump context lines (default: 1)
+    - `B3D_DIGEST_MAX_MAP_MB`: Skip source maps larger than this size in MB (default: 64)
+    - `B3D_DIGEST_MAX_OBJDUMP_MB`: Skip wasm-objdump when wasm exceeds this size in MB (default: 64)
+    - `B3D_LLM_FORMAT`: Output format for `llm-compact` (default: text)
+
+### WASM Debugger Example
+
+Located in `Examples/wasm-debugger-blitz3d/`.
+
+- **Purpose**: A standalone example demonstrating how to debug the generated WASM in a browser environment.
+- **Contents**: Basic HTML/JS setup to load and run a Blitz3D WASM module with debugging enabled.
+
 ## Deciduous (Decision Graphs)
 
 **THIS SUBPROJECT USES DECIDUOUS FOR DECISION TRACKING.**

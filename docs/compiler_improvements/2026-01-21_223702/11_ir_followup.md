@@ -13,6 +13,22 @@
 - ✅ **Multi-dimensional Arrays**: Support for flattened indexing implemented and verified.
 - ✅ **Phase 1 Verification**: `wasm-validate` passed on compiled `test_hello.bb`, `test_flow.bb`, and `test_arrays.bb`.
 
+## Status Update (Jan 26 2026)
+
+### What We Ran
+- [x] Build compiler: `swift build -c debug`
+- [x] Compile SCPCB `MapSystem.bb` with Typed IR:
+  - `./.build/arm64-apple-macosx/debug/blitz3d-wasm ../scpcb/MapSystem.bb --use-ir -o /tmp/MapSystem.wasm`
+  - Output artifact: `/tmp/MapSystem.wasm` (sha256: `f54e6e992ec8a0f2672bdbff2a4da9aeb909206906cd2f99e07e1817cce3e2d0`)
+- [x] Validate: `wasm-validate /tmp/MapSystem.wasm` **FAILED**
+
+### What Failed (High-Level)
+- Massive `wasm-validate` error output including:
+  - `type mismatch in drop, expected [any] but got []` (dropping when stack is empty / void-value confusion)
+  - `type mismatch in call, expected [...] but got []` (missing arguments due to earlier stack corruption)
+  - `i32.*` fed `f32` / `f32.*` fed `i32` (missing or incorrect coercions, or wrong typed op selection)
+  - `type mismatch ... at end of block` and `type mismatch in return` (inconsistent block results / missing return value)
+
 ## Phase 3: Integration and Promotion
 
 ### 1. IR Logic Polishing

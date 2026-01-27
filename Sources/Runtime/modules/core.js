@@ -15,22 +15,22 @@ class Blitz3DCore {
         this.exports = null;
         this.dataPointer = 256;
         this.allocString = null;
-        
+
         // Seeded random number generator (LCG)
         this.randomSeed = 0;
         this.randomState = 0;
-        
+
         // Performance monitoring
         this.frameCount = 0;
         this.lastFrameTime = 0;
         this.fps = 0;
         this.frameTimes = [];
         this.maxFrameSamples = 60;
-        
+
         // Memory tracking
         this.heapAllocations = 0;
         this.stringAllocations = 0;
-        
+
         // Optimization flags
         this.useBatchRendering = true;
         this.useGeometryInstancing = false;
@@ -76,12 +76,12 @@ class Blitz3DCore {
     rndFloat(min, max) {
         if (min === undefined) min = 0;
         if (max === undefined) max = 1;
-        
+
         // If seed is 0 (uninitialized), use Math.random
         if (this.randomSeed === 0) {
             return Math.random() * (max - min) + min;
         }
-        
+
         // LCG: x_{n+1} = (a * x_n + c) mod m
         // Using parameters from Numerical Recipes
         this.randomState = (1664525 * this.randomState + 1013904223) % 4294967296;
@@ -188,6 +188,23 @@ class Blitz3DCore {
             console.log(`[Blitz3D Debug] ${msg}`);
         };
 
+        imports.env.AppTitle = (titlePtr, closeMsgPtr) => {
+            const title = this.readString(titlePtr);
+            document.title = title;
+            console.log(`[Blitz3D] AppTitle: ${title}`);
+        };
+
+        imports.env.SystemProperty = (propPtr) => {
+            const prop = this.readString(propPtr).toLowerCase();
+            let result = "";
+            if (prop === "os") result = "web";
+            else if (prop === "language") result = "en";
+            else if (prop === "appdir") result = "/";
+
+            if (this.allocString) return this.allocString(result);
+            return 0;
+        };
+
         imports.env.RemoveEvent = (eventPtr) => {
             console.log(`RemoveEvent: event=${eventPtr}`);
         };
@@ -200,6 +217,10 @@ class Blitz3DCore {
 
         imports.env.CatchErrors = () => {
             console.log("[Blitz3D] CatchErrors enabled");
+        };
+
+        imports.env.MilliSecs = () => {
+            return Date.now() & 0x7FFFFFFF;
         };
 
         imports.env.MilliSecs2 = () => {
@@ -262,7 +283,9 @@ class Blitz3DCore {
 
         // Time
         imports.env.MilliCSecs = () => performance.now() | 0;
-        imports.env.Delay = (ms) => { };
+        imports.env.Delay = (ms) => {
+            console.warn(`[Blitz3D] Synchronous Delay(${ms}ms) is not possible in browser. Ignoring.`);
+        };
 
         // Math
         imports.env.Sin = (val) => Math.sin(val * Math.PI / 180);
@@ -402,7 +425,7 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         // Character conversion functions
         imports.env.Asc = (strPtr) => {
             const str = this.readString(strPtr);
@@ -431,7 +454,7 @@ class Blitz3DCore {
         this.fileSystem = new Map();
         this.openFiles = new Map();
         this.nextFileHandle = 1;
-        
+
         // Register a file in the virtual file system
         this.registerFile = (filePath, data) => {
             this.fileSystem.set(filePath, {
@@ -440,7 +463,7 @@ class Blitz3DCore {
                 position: 0
             });
         };
-        
+
         // Open a file and return a handle
         this.openFile = (filePath) => {
             if (this.fileSystem.has(filePath)) {
@@ -456,12 +479,12 @@ class Blitz3DCore {
             }
             return 0; // File not found
         };
-        
+
         // Close a file
         this.closeFile = (handle) => {
             this.openFiles.delete(handle);
         };
-        
+
         // Read a byte
         this.readByte = (handle) => {
             const file = this.openFiles.get(handle);
@@ -471,13 +494,13 @@ class Blitz3DCore {
             }
             return file.data[file.position++];
         };
-        
+
         // Read signed byte
         this.readSignedByte = (handle) => {
             const byte = this.readByte(handle);
             return byte > 127 ? byte - 256 : byte;
         };
-        
+
         // Read short (16-bit, little endian)
         this.readShort = (handle) => {
             const b1 = this.readByte(handle);
@@ -485,7 +508,7 @@ class Blitz3DCore {
             if (b1 < 0 || b2 < 0) return 0;
             return b1 | (b2 << 8);
         };
-        
+
         // Read int (32-bit, little endian)
         this.readInt = (handle) => {
             const b1 = this.readByte(handle);
@@ -495,7 +518,7 @@ class Blitz3DCore {
             if (b1 < 0 || b2 < 0 || b3 < 0 || b4 < 0) return 0;
             return b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
         };
-        
+
         // Read float
         this.readFloat = (handle) => {
             const buffer = new ArrayBuffer(4);
@@ -506,24 +529,24 @@ class Blitz3DCore {
             view.setUint8(3, this.readByte(handle));
             return view.getFloat32(0, true);
         };
-        
+
         // Check EOF
         this.fileEof = (handle) => {
             const file = this.openFiles.get(handle);
             if (!file) return 1;
             return file.position >= file.size ? 1 : 0;
         };
-        
+
         // Read string until newline or max length
         this.readLineFromFile = (handle) => {
             const file = this.openFiles.get(handle);
             if (!file) return 0;
-            
+
             let str = '';
             let byte = this.readByte(handle);
             let count = 0;
             const maxLen = 1024;
-            
+
             while (byte >= 0 && byte !== 10 && count < maxLen) {
                 if (byte !== 13) { // Skip CR
                     str += String.fromCharCode(byte);
@@ -531,18 +554,18 @@ class Blitz3DCore {
                 byte = this.readByte(handle);
                 count++;
             }
-            
+
             if (this.allocString) {
                 return this.allocString(str);
             }
             return 0;
         };
-        
+
         imports.env.ReadFile = (pathPtr) => {
             const path = this.readString(pathPtr);
             return this.openFile(path);
         };
-        
+
         imports.env.WriteFile = (pathPtr) => {
             const path = this.readString(pathPtr);
             // Write support is limited in browser - create a handle for saving
@@ -558,41 +581,41 @@ class Blitz3DCore {
             console.log(`WriteFile: ${path} (handle: ${handle})`);
             return handle;
         };
-        
+
         imports.env.CloseFile = (stream) => {
             this.closeFile(stream);
         };
-        
+
         imports.env.ReadInt = (stream) => {
             return this.readInt(stream);
         };
-        
+
         imports.env.ReadFloat = (stream) => {
             return this.readFloat(stream);
         };
-        
+
         imports.env.ReadString = (stream) => {
             return this.readLineFromFile(stream);
         };
-        
+
         imports.env.ReadByte = (stream) => {
             return this.readByte(stream);
         };
-        
+
         imports.env.ReadShort = (stream) => {
             return this.readShort(stream);
         };
-        
+
         imports.env.Eof = (stream) => {
             return this.fileEof(stream);
         };
-        
+
         imports.env.FileSize = (pathPtr) => {
             const path = this.readString(pathPtr);
             const file = this.fileSystem.get(path);
             return file ? file.size : 0;
         };
-        
+
         imports.env.FileType = (pathPtr) => {
             const path = this.readString(pathPtr);
             const file = this.fileSystem.get(path);
@@ -624,23 +647,23 @@ class Blitz3DCore {
         this.nextStreamId = 1;
         this.nextChannelId = 1;
         this.audioInitialized = false;
-        
+
         // Initialize audio context on user interaction
         this.initAudio = () => {
             if (this.audioInitialized) return true;
-            
+
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) {
                     console.warn("Web Audio API not supported");
                     return false;
                 }
-                
+
                 this.audioContext = new AudioContext();
                 this.audioMaster = this.audioContext.createGain();
                 this.audioMaster.gain.value = 1.0;
                 this.audioMaster.connect(this.audioContext.destination);
-                
+
                 this.audioInitialized = true;
                 console.log("Audio initialized: sample rate=" + this.audioContext.sampleRate);
                 return true;
@@ -649,7 +672,7 @@ class Blitz3DCore {
                 return false;
             }
         };
-        
+
         imports.env.FSOUND_Init = (freq, channels, flags) => {
             const result = this.initAudio() ? 1 : 0;
             if (result && freq > 0) {
@@ -657,7 +680,7 @@ class Blitz3DCore {
             }
             return result;
         };
-        
+
         imports.env.FSOUND_Close = () => {
             if (this.audioContext) {
                 this.audioContext.close();
@@ -665,14 +688,14 @@ class Blitz3DCore {
                 this.audioInitialized = false;
             }
         };
-        
+
         // Load a sound sample into memory
         imports.env.LoadSound = (pathPtr) => {
             if (!this.initAudio()) return 0;
-            
+
             const path = this.readString(pathPtr);
             const id = this.nextSoundId++;
-            
+
             // Store for async loading
             this.sounds.set(id, {
                 path: path,
@@ -681,17 +704,17 @@ class Blitz3DCore {
                 volume: 1.0,
                 pan: 0
             });
-            
+
             // Try to load from virtual file system or fetch
             this.loadSoundBuffer(id, path);
-            
+
             return id;
         };
-        
+
         this.loadSoundBuffer = async (id, path) => {
             try {
                 let audioData;
-                
+
                 // Try virtual file system first
                 if (this.fileSystem && this.fileSystem.has(path)) {
                     const file = this.fileSystem.get(path);
@@ -703,10 +726,10 @@ class Blitz3DCore {
                     const arrayBuffer = await response.arrayBuffer();
                     audioData = new Uint8Array(arrayBuffer);
                 }
-                
+
                 // Decode audio
                 const buffer = await this.audioContext.decodeAudioData(audioData.buffer);
-                
+
                 const sound = this.sounds.get(id);
                 if (sound) {
                     sound.buffer = buffer;
@@ -719,32 +742,32 @@ class Blitz3DCore {
                 if (sound) sound.loading = false;
             }
         };
-        
+
         // Play a one-shot sound
         imports.env.PlaySound = (soundId) => {
             if (!this.initAudio()) return 0;
-            
+
             const sound = this.sounds.get(soundId);
             if (!sound || !sound.buffer) {
                 console.warn("PlaySound: sound " + soundId + " not found or loading");
                 return 0;
             }
-            
+
             const source = this.audioContext.createBufferSource();
             source.buffer = sound.buffer;
-            
+
             const gainNode = this.audioContext.createGain();
             gainNode.gain.value = sound.volume;
-            
+
             const panNode = this.audioContext.createStereoPanner();
             panNode.pan.value = sound.pan;
-            
+
             source.connect(panNode);
             panNode.connect(gainNode);
             gainNode.connect(this.audioMaster);
-            
+
             source.start(0);
-            
+
             const channelId = this.nextChannelId++;
             this.channels.set(channelId, {
                 source: source,
@@ -752,18 +775,18 @@ class Blitz3DCore {
                 pan: panNode,
                 playing: true
             });
-            
+
             source.onended = () => {
                 this.channels.delete(channelId);
             };
-            
+
             return channelId;
         };
-        
+
         imports.env.FreeSound = (soundId) => {
             this.sounds.delete(soundId);
         };
-        
+
         imports.env.StopChannel = (channel) => {
             const ch = this.channels.get(channel);
             if (ch && ch.playing) {
@@ -771,7 +794,7 @@ class Blitz3DCore {
                 ch.playing = false;
             }
         };
-        
+
         imports.env.ChannelVolume = (channel, volume) => {
             const ch = this.channels.get(channel);
             if (ch && ch.gain) {
@@ -783,7 +806,7 @@ class Blitz3DCore {
                 if (sound) sound.volume = volume;
             }
         };
-        
+
         imports.env.ChannelPaused = (channel, paused) => {
             const ch = this.channels.get(channel);
             if (ch && ch.source) {
@@ -795,19 +818,19 @@ class Blitz3DCore {
                 ch.paused = paused;
             }
         };
-        
+
         imports.env.ChannelPlaying = (channel) => {
             const ch = this.channels.get(channel);
             return (ch && ch.playing) ? 1 : 0;
         };
-        
+
         // Stream functions - for longer audio (music, ambient)
         imports.env.FSOUND_Stream_Open = (pathPtr, mode, offset, len) => {
             if (!this.initAudio()) return 0;
-            
+
             const path = this.readString(pathPtr);
             const streamId = this.nextStreamId++;
-            
+
             this.streams.set(streamId, {
                 path: path,
                 element: null,
@@ -817,47 +840,47 @@ class Blitz3DCore {
                 paused: false,
                 volume: 1.0
             });
-            
+
             console.log("Stream opened: " + path + " (id=" + streamId + ")");
             return streamId;
         };
-        
+
         imports.env.FSOUND_Stream_Play = (channel, streamId) => {
             if (!this.initAudio()) return 0;
-            
+
             const stream = this.streams.get(streamId);
             if (!stream) return 0;
-            
+
             if (stream.playing) {
                 return channel; // Already playing
             }
-            
+
             // Create audio element for streaming
             stream.element = new Audio();
             stream.element.src = stream.path;
             stream.element.loop = (channel & 1) !== 0; // Mode 1 = loop
-            
+
             stream.source = this.audioContext.createMediaElementSource(stream.element);
             stream.gain = this.audioContext.createGain();
             stream.gain.gain.value = stream.volume;
-            
+
             stream.source.connect(stream.gain);
             stream.gain.connect(this.audioMaster);
-            
+
             stream.element.play().then(() => {
                 stream.playing = true;
                 console.log("Stream playing: " + stream.path);
             }).catch(e => {
                 console.error("Failed to play stream: " + e);
             });
-            
+
             stream.element.onended = () => {
                 stream.playing = false;
             };
-            
+
             return streamId;
         };
-        
+
         imports.env.FSOUND_Stream_Stop = (streamId) => {
             const stream = this.streams.get(streamId);
             if (stream && stream.element) {
@@ -866,7 +889,7 @@ class Blitz3DCore {
                 stream.playing = false;
             }
         };
-        
+
         imports.env.FSOUND_SetVolume = (channel, volume) => {
             // For streams
             if (channel < 100 && this.streams.has(channel)) {
@@ -882,7 +905,7 @@ class Blitz3DCore {
                 ch.gain.gain.value = volume;
             }
         };
-        
+
         imports.env.FSOUND_SetPaused = (channel, paused) => {
             if (this.streams.has(channel)) {
                 const stream = this.streams.get(channel);
@@ -897,19 +920,19 @@ class Blitz3DCore {
                 }
             }
         };
-        
+
         // 3D Sound functions
         imports.env.Sound3D = (soundId, x, y, z) => {
             const sound = this.sounds.get(soundId);
             if (!sound || !this.audioContext) return;
-            
+
             // Store position for when sound is played
             sound.position = { x, y, z };
         };
-        
+
         imports.env.SetListenerLocation = (x, y, z, forwardX, forwardY, forwardZ, upX, upY, upZ) => {
             if (!this.audioContext) return;
-            
+
             // Web Audio API doesn't have direct listener API, 
             // but we can store this for 3D sound calculations
             this.listenerPosition = { x, y, z };
@@ -919,7 +942,7 @@ class Blitz3DCore {
         // Zip/Archive support for assets.zip
         this.zipArchives = new Map();
         this.nextZipHandle = 1;
-        
+
         this.loadZipArchive = async (path) => {
             try {
                 // Try virtual file system first
@@ -927,30 +950,30 @@ class Blitz3DCore {
                     const file = this.fileSystem.get(path);
                     const zip = await JSZip.loadAsync(file.data);
                     const fileMap = new Map();
-                    
+
                     zip.forEach((relativePath, zipEntry) => {
                         if (!zipEntry.dir) {
                             fileMap.set(relativePath, zipEntry);
                         }
                     });
-                    
+
                     this.zipArchives.set(path, fileMap);
                     return fileMap.size;
                 }
-                
+
                 // Try to fetch
                 const response = await fetch(path);
                 if (!response.ok) throw new Error("HTTP " + response.status);
                 const arrayBuffer = await response.arrayBuffer();
                 const zip = await JSZip.loadAsync(arrayBuffer);
                 const fileMap = new Map();
-                
+
                 zip.forEach((relativePath, zipEntry) => {
                     if (!zipEntry.dir) {
                         fileMap.set(relativePath, zipEntry);
                     }
                 });
-                
+
                 this.zipArchives.set(path, fileMap);
                 console.log("Loaded ZIP: " + path + " (" + fileMap.size + " files)");
                 return fileMap.size;
@@ -959,11 +982,11 @@ class Blitz3DCore {
                 return 0;
             }
         };
-        
+
         imports.env.ZlibWapi_Open = async (pathPtr) => {
             const path = this.readString(pathPtr);
             const handle = this.nextZipHandle++;
-            
+
             const fileCount = await this.loadZipArchive(path);
             if (fileCount > 0) {
                 this.zipArchives.set(handle, {
@@ -977,13 +1000,13 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         imports.env.ZlibWapi_Close = (zip) => {
             if (this.zipArchives.has(zip)) {
                 this.zipArchives.delete(zip);
             }
         };
-        
+
         imports.env.ZlibWapi_GetFileCount = (zip) => {
             const archive = this.zipArchives.get(zip);
             if (archive && archive.files) {
@@ -991,7 +1014,7 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         imports.env.ZlibWapi_GetFileName = (zip, index) => {
             const archive = this.zipArchives.get(zip);
             if (archive && archive.files) {
@@ -1005,7 +1028,7 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         imports.env.ZlibWapi_ExtractFile = async (zip, index, destPtr) => {
             const archive = this.zipArchives.get(zip);
             if (archive && archive.files) {
@@ -1013,15 +1036,15 @@ class Blitz3DCore {
                 if (index >= 0 && index < entries.length) {
                     const filename = entries[index];
                     const zipEntry = archive.files.get(filename);
-                    
+
                     if (zipEntry) {
                         try {
                             const data = await zipEntry.async("uint8array");
                             const destPath = this.readString(destPtr);
-                            
+
                             // Register in virtual file system
                             this.registerFile(destPath, data);
-                            
+
                             console.log("Extracted: " + filename + " -> " + destPath);
                             return 1;
                         } catch (e) {
@@ -1032,21 +1055,21 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         // Networking (TCP) for SCP:CB multiplayer
         this.tcpStreams = new Map();
         this.nextStreamId = 1;
-        
+
         imports.env.OpenTCPStream = async (hostPtr, port) => {
             const host = this.readString(hostPtr);
             const streamId = this.nextStreamId++;
-            
+
             try {
                 // WebSocket as TCP substitute for browser
                 const ws = new WebSocket("ws://" + host + ":" + port);
-                
+
                 ws.binaryType = 'arraybuffer';
-                
+
                 const stream = {
                     ws: ws,
                     sendBuffer: [],
@@ -1055,7 +1078,7 @@ class Blitz3DCore {
                     host: host,
                     port: port
                 };
-                
+
                 ws.onopen = () => {
                     stream.connected = true;
                     console.log("TCPStream connected: " + host + ":" + port);
@@ -1064,7 +1087,7 @@ class Blitz3DCore {
                         ws.send(stream.sendBuffer.shift());
                     }
                 };
-                
+
                 ws.onmessage = (event) => {
                     const data = new Uint8Array(event.data);
                     const newBuffer = new Uint8Array(stream.receiveBuffer.length + data.length);
@@ -1072,16 +1095,16 @@ class Blitz3DCore {
                     newBuffer.set(data, stream.receiveBuffer.length);
                     stream.receiveBuffer = newBuffer;
                 };
-                
+
                 ws.onclose = () => {
                     stream.connected = false;
                     console.log("TCPStream closed: " + host + ":" + port);
                 };
-                
+
                 ws.onerror = (e) => {
                     console.error("TCPStream error: " + host + ":" + port, e);
                 };
-                
+
                 this.tcpStreams.set(streamId, stream);
                 return streamId;
             } catch (e) {
@@ -1089,7 +1112,7 @@ class Blitz3DCore {
                 return 0;
             }
         };
-        
+
         imports.env.CloseTCPStream = (streamId) => {
             const stream = this.tcpStreams.get(streamId);
             if (stream && stream.ws) {
@@ -1097,14 +1120,14 @@ class Blitz3DCore {
                 this.tcpStreams.delete(streamId);
             }
         };
-        
+
         imports.env.WriteLine = (streamId, strPtr) => {
             const stream = this.tcpStreams.get(streamId);
             if (!stream || !stream.ws) return 0;
-            
+
             const str = this.readString(strPtr);
             const data = str + "\n";
-            
+
             if (stream.connected && stream.ws.readyState === WebSocket.OPEN) {
                 stream.ws.send(data);
                 return 1;
@@ -1114,11 +1137,11 @@ class Blitz3DCore {
                 return 1;
             }
         };
-        
+
         imports.env.ReadLine = (streamId) => {
             const stream = this.tcpStreams.get(streamId);
             if (!stream) return 0;
-            
+
             // Look for newline in receive buffer
             let newlineIdx = -1;
             for (let i = 0; i < stream.receiveBuffer.length; i++) {
@@ -1131,28 +1154,28 @@ class Blitz3DCore {
                     break;
                 }
             }
-            
+
             if (newlineIdx >= 0) {
                 const line = stream.receiveBuffer.slice(0, newlineIdx);
                 stream.receiveBuffer = stream.receiveBuffer.slice(newlineIdx + 1);
-                
+
                 // Convert to string
                 let str = '';
                 for (let i = 0; i < line.length; i++) {
                     str += String.fromCharCode(line[i]);
                 }
-                
+
                 if (this.allocString) {
                     return this.allocString(str);
                 }
             }
             return 0;
         };
-        
+
         imports.env.ReadAvail = (streamId) => {
             const stream = this.tcpStreams.get(streamId);
             if (!stream) return 0;
-            
+
             // Count bytes until newline
             let count = 0;
             for (let i = 0; i < stream.receiveBuffer.length; i++) {
@@ -1163,16 +1186,16 @@ class Blitz3DCore {
             }
             return count;
         };
-        
+
         // Performance monitoring functions
         imports.env.MilliSecs = () => {
             return Math.floor(performance.now());
         };
-        
+
         imports.env.CountFPS = () => {
             return Math.floor(this.fps);
         };
-        
+
         imports.env.PerformanceStats = () => {
             const stats = this.getPerformanceStats();
             if (this.allocString) {
@@ -1181,14 +1204,14 @@ class Blitz3DCore {
             }
             return 0;
         };
-        
+
         imports.env.SendNetMsg = (streamId, destId, msgId, data$, reliable) => {
             const stream = this.tcpStreams.get(streamId);
             if (!stream || !stream.ws) return 0;
-            
+
             const data = this.readString(data$);
             const msg = JSON.stringify({ dest: destId, id: msgId, data: data, reliable: reliable });
-            
+
             if (stream.connected && stream.ws.readyState === WebSocket.OPEN) {
                 stream.ws.send(msg);
                 return 1;

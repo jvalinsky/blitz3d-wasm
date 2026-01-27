@@ -73,7 +73,12 @@ public struct Preprocessor {
     private mutating func processFileWithMap(path: String) throws -> (String, [Int: (file: String, line: Int)]) {
         var result = ""
         var lineMap: [Int: (file: String, line: Int)] = [:]
-        let source = try String(contentsOfFile: path, encoding: .utf8)
+        var source = ""
+        do {
+            source = try String(contentsOfFile: path, encoding: .utf8)
+        } catch {
+             source = try String(contentsOfFile: path, encoding: .windowsCP1252)
+        }
         let lines = source.components(separatedBy: .newlines)
         
         for (idx, rawLine) in lines.enumerated() {
@@ -90,13 +95,32 @@ public struct Preprocessor {
                         lineMap[mergedLine] = (file: path, line: lineNumber)
                     } else {
                         // Resolve include file and merge with mapping
-                        let fullPath = (rootDirectory as NSString).appendingPathComponent(includePath)
-                        let canonical = URL(fileURLWithPath: fullPath).standardized.path
+                        var fullPath = (rootDirectory as NSString).appendingPathComponent(includePath)
+                        fullPath = fullPath.replacingOccurrences(of: "\\", with: "/")
+                        
+                        let url = URL(fileURLWithPath: fullPath)
+                        let canonical = url.standardized.path
+                        
                         if includedFiles.contains(canonical) {
                             continue
                         }
                         includedFiles.insert(canonical)
+                        
+                        let oldRoot = rootDirectory
+                        rootDirectory = url.deletingLastPathComponent().path
+                        
+                        // Handle encoding fallback in recursion target?
+                        // Actually processFileWithMap opens the file encoded utf8.
+                        // We need to fix that too.
+                        // Ideally pass a hint or handle inside processFileWithMap.
+                        // But processFileWithMap takes 'path' and opens it.
+                        // Let's modify processFileWithMap to try fallback.
+                        // (We need to edit line 76 separately or let the recursive call handle it)
+                        
                         let (incSrc, incMap) = try processFileWithMap(path: canonical)
+                        
+                        rootDirectory = oldRoot
+                        
                         let currentLineOffset = result.components(separatedBy: .newlines).count - 1
                         result += incSrc
                         // Shift included map lines by current offset
@@ -144,22 +168,41 @@ public struct Preprocessor {
     }
     
     private mutating func includeFile(_ path: String, into result: inout String) throws {
-        let fullPath = (rootDirectory as NSString).appendingPathComponent(path)
+        // Resolve path relative to CURRENT rootDirectory
+        var fullPath = (rootDirectory as NSString).appendingPathComponent(path)
+        
+        // Handle Windows-style backslashes
+        fullPath = fullPath.replacingOccurrences(of: "\\", with: "/")
+        
         let url = URL(fileURLWithPath: fullPath)
         let canonicalPath = url.standardized.path
         
-        // Avoid cycles and duplicates if desired (Blitz3D allows multiple includes? usually yes)
-        // But for safety let's warn or check. SCPCB might include same utility files.
-        // Actually Blitz3D include is copy-paste. If a file defines globals, including it twice causes errors.
-        // We should track included files to prevent double inclusion if that's the semantics, 
-        // OR simply rely on the user code to be correct.
-        // Given SCPCB likely has include guards or structure, simple textual inclusion is safest.
+        if includedFiles.contains(canonicalPath) {
+            print("DEBUG: Skipping already included file: \(path)")
+            return
+        }
+        includedFiles.insert(canonicalPath)
+        print("DEBUG: Including file: \(path) -> \(canonicalPath)")
         
-        // However, if we process recursively:
-        let source = try String(contentsOfFile: canonicalPath, encoding: .utf8)
+        // Try UTF-8 first, fallback to Windows-1252
+        var source = ""
+        do {
+            source = try String(contentsOfFile: canonicalPath, encoding: .utf8)
+        } catch {
+             // Fallback to Windows-1252 (Latin1 equivalent)
+             source = try String(contentsOfFile: canonicalPath, encoding: .windowsCP1252)
+        }
         
-        // Process the included content recursively
+        // Save current root, update for recursion, then restore
+        let oldRoot = rootDirectory
+        print("DEBUG: Included \(path). Switching root from \(oldRoot) to \(url.deletingLastPathComponent().path)")
+        rootDirectory = url.deletingLastPathComponent().path
+        
+        // RECURSION: processSource calls includeFile, which uses the updated rootDirectory
         let processedSource = try processSource(source)
         result += processedSource + "\n"
+        
+        print("DEBUG: Restoring root to \(oldRoot)")
+        rootDirectory = oldRoot
     }
 }

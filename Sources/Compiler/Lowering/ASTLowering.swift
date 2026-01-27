@@ -11,6 +11,18 @@ public final class ASTLowering {
     private var nextStringOffset: Int32 = 1024
     private var nextArrayOffset: Int32 = 65536
     private var stringLiteralMap: [String: Int32] = [:]
+    private var dataPool: [DataValue] = []
+    private var labelDataOffsets: [String: Int] = [:]
+    private var currentDataIndex: Int = 0
+    private var pendingDynamicGlobals: [String] = []
+    
+    // Gosub Support
+    private var gosubReturnLabels: [Int: String] = [:] // ID : LabelName
+    private var nextGosubId: Int = 1
+    private var needsGosubDispatcher = false
+    private let GOSUB_STACK_ADDR: Int32 = 65536 // Shadow stack starts at 64KB
+    private let GOSUB_MAX_DEPTH: Int32 = 1024
+    private var gosubSpGlobalIndex: Int?
     
     public init(context: ModuleContext) {
         self.builder = IRBuilder()
@@ -21,9 +33,49 @@ public final class ASTLowering {
     
     public func lower(_ program: ProgramNode) -> IRModule {
         var irModule = IRModule()
+        
+        // Copy imports from context because IREmitter needs them (though IREmitter rebuilds them now, IRModule strictly doesn't have them)
+        // But let's copy them just in case.
+        
         irModuleData = []
         nextStringOffset = 1024
         stringLiteralMap.removeAll()
+        dataPool.removeAll()
+        labelDataOffsets.removeAll()
+        currentDataIndex = 0
+        
+        // Reserve space for Gosub Shadow Stack
+        // Stack range: [GOSUB_STACK_ADDR, GOSUB_STACK_ADDR + GOSUB_MAX_DEPTH * 4]
+        nextArrayOffset = GOSUB_STACK_ADDR + (GOSUB_MAX_DEPTH * 4)
+        
+        // Register Gosub SP global
+        let spName = "__gosub_sp"
+        symbolTable.addVariable(spName, type: .i32, isLocal: false)
+        gosubSpGlobalIndex = symbolTable.globalIndex(for: spName)
+        irModule.globals.append((spName, .i32, true)) // Mutable global
+        
+        let dataPtrName = "__bb_data_ptr"
+        symbolTable.addVariable(dataPtrName, type: .i32, isLocal: false)
+        dataPtrGlobalIndex = symbolTable.globalIndex(for: dataPtrName)
+        irModule.globals.append((dataPtrName, .i32, true)) 
+        
+        // 0. Pre-pass: Register all Constants
+        for stmt in program.statements {
+            if case .constants(let decls, _) = stmt {
+                for constant in decls {
+                    // Evaluate value
+                    if let val = evaluateConstInt(constant.value) {
+                        symbolTable.addConstant(constant.name, value: val)
+                    }
+                }
+            } else if case .constant(let decl, _) = stmt {
+                 // Single constant? Parser usually produces .constants for list
+                 // But AST has both.
+                 if let val = evaluateConstInt(decl.value) {
+                     symbolTable.addConstant(decl.name, value: val)
+                 }
+            }
+        }
         
         // 1. Register all Types first
         for typeNode in program.types {
@@ -40,7 +92,7 @@ public final class ASTLowering {
             if case .global(let decl, _) = stmt {
                 for variable in decl.variables {
                     let irType = lowerTypeSuffix(from: variable.typeSuffix)
-                    symbolTable.addVariable(variable.name, type: irType, isLocal: false)
+                    symbolTable.addVariable(variable.name, type: irType, typeName: variable.typeName, isLocal: false)
                     irModule.globals.append((variable.name, irType, true))
                 }
             }
@@ -54,6 +106,15 @@ public final class ASTLowering {
         // 5. Lower top-level code into _start
         lowerTopLevel(program.statements, to: &irModule)
         
+        // 5b. Add pending dynamic globals (discovered during lowering)
+        for globalName in pendingDynamicGlobals {
+            irModule.globals.append((globalName, .i32, true))
+        }
+        pendingDynamicGlobals.removeAll()
+        
+        // 6. Serialize Data constants
+        serializeDataPool(to: &irModule)
+        
         irModule.data = irModuleData
         return irModule
     }
@@ -61,13 +122,31 @@ public final class ASTLowering {
     private func lowerTypeDeclaration(_ typeNode: TypeNode, to module: inout IRModule) {
         var fieldOffsets: [String: Int] = [:]
         var fieldTypes: [String: IRType] = [:]
+        var fieldDimensions: [String: [Int]] = [:]
         var currentOffset = 12 // Header: prev(4), next(4), typeID(4)
         
         for field in typeNode.fields {
             let type = lowerType(from: field.type)
             fieldOffsets[field.name.lowercased()] = currentOffset
             fieldTypes[field.name.lowercased()] = type
-            currentOffset += 4 // Everything 4 bytes for now in WASM32
+            
+            // Calculate size for field arrays
+            var elementCount = 1
+            var dims: [Int] = []
+            for dimExpr in field.dimensions {
+                if let dim = evaluateConstInt(dimExpr) {
+                    // Blitz3D: arr[10] means 11 elements (0 to 10)
+                    let size = dim + 1
+                    elementCount *= size
+                    dims.append(size) // Store the actual size for indexing logic
+                }
+            }
+            
+            if !dims.isEmpty {
+                fieldDimensions[field.name.lowercased()] = dims
+            }
+            
+            currentOffset += 4 * elementCount // Everything 4 bytes for now in WASM32
         }
         
         // Register Head/Tail globals for this type
@@ -84,6 +163,7 @@ public final class ASTLowering {
             typeName: typeNode.name,
             fieldOffsets: fieldOffsets,
             fieldTypes: fieldTypes,
+            fieldDimensions: fieldDimensions,
             totalSize: currentOffset,
             headGlobalIndex: symbolTable.globalIndex(for: headName)!,
             tailGlobalIndex: symbolTable.globalIndex(for: tailName)!
@@ -91,15 +171,70 @@ public final class ASTLowering {
         
         symbolTable.addType(typeNode.name, info: typeInfo)
         module.types[typeNode.name.lowercased()] = typeInfo
+        print("DEBUG_LOWER: Registered type '\(typeNode.name.lowercased())'")
+    }
+    
+    private func evaluateConstInt(_ expr: ExpressionNode) -> Int? {
+        switch expr {
+        case .integerLiteral(let val, _):
+            return val
+        case .unary(let unary, _):
+            if unary.op == "-", let val = evaluateConstInt(unary.expression) {
+                return -val
+            }
+            return nil
+        case .identifier(let id, _):
+            return symbolTable.constantValue(for: id.name)
+        default:
+            return nil
+        }
+    }
+    
+    private let DATA_POOL_ADDR: Int32 = 131072
+    private var dataPtrGlobalIndex: Int?
+
+    private func serializeDataPool(to module: inout IRModule) {
+        if dataPool.isEmpty { return }
+        
+        var buffer = Data()
+        var offsets: [Int] = []
+        
+        for value in dataPool {
+            offsets.append(buffer.count)
+            switch value {
+            case .integer(let v):
+                var val = Int32(v)
+                buffer.append(Data(bytes: &val, count: 4))
+            case .float(let v):
+                var val = Float32(v)
+                buffer.append(Data(bytes: &val, count: 4))
+            case .string(let v):
+                buffer.append(v.data(using: .utf8)!)
+                buffer.append(0) // Null terminator
+            }
+        }
+        
+        let segment = IRDataSegment(offset: DATA_POOL_ADDR, data: buffer)
+        irModuleData.append(segment)
     }
     
     private func lowerTopLevel(_ statements: [StatementNode], to module: inout IRModule) {
+        // Reset Gosub state for top-level code
+        gosubReturnLabels = [:]
+        needsGosubDispatcher = false
+        nextGosubId = 1
+        
+        symbolTable.clearLocals()
         builder.enterFunction(name: "_start", parameters: [], returnType: .void)
         
         var irBody: [IREffect] = []
         for statement in statements {
             switch statement {
             case .global(let decl, _):
+                // Support `Global arr[... ]` sugar by lowering it as a Dim-style array allocation.
+                for arrayDecl in decl.arrayDeclarations {
+                    lowerDimDeclaration(arrayDecl, into: &irBody)
+                }
                 // Lower global initializers into _start
                 for variable in decl.variables {
                     if let initializer = decl.initializers[variable.name] {
@@ -120,6 +255,11 @@ public final class ASTLowering {
             builder.append(effect)
         }
         
+        // Generate Gosub Dispatcher if used in top-level
+        if needsGosubDispatcher {
+            generateGosubDispatcher(into: &module)
+        }
+        
         if let startFunc = builder.exitFunction() {
             module.functions.append(startFunc)
         }
@@ -131,10 +271,10 @@ public final class ASTLowering {
         let wasmParams = paramTypes.map { irTypeToWASM($0) }
         let wasmResults = resultType == .void ? [] : [irTypeToWASM(resultType)]
         
-        var defaults: [Int: IRDefaultValue] = [:]
+        var defaults: [Int: ExpressionNode] = [:]
         for (i, param) in function.parameters.enumerated() {
             if let defaultValue = param.defaultValue {
-                defaults[i] = constantToDefaultValue(defaultValue)
+                defaults[i] = defaultValue
             }
         }
         
@@ -146,45 +286,59 @@ public final class ASTLowering {
         context.functionDefinitions[function.name.lowercased()] = def
     }
     
-    private func constantToDefaultValue(_ expr: ExpressionNode) -> IRDefaultValue {
-        switch expr {
-        case .integerLiteral(let val, _):
-            return .i32(Int32(truncatingIfNeeded: val))
-        case .floatLiteral(let val, _):
-            return .f32(Float(val))
-        case .stringLiteral(let val, _):
-            return .string(val)
-        default:
-            return .none
-        }
-    }
+
     
     private func allocateString(_ value: String) -> Int32 {
         if let existingOffset = stringLiteralMap[value] {
             return existingOffset
         }
         
-        var bytes = Array(value.utf8)
-        bytes.append(0) // Null terminator
+        // Blitz3D String Layout:
+        // Offset 0: RefCount (4 bytes)
+        // Offset 4: Length (4 bytes)
+        // Offset 8: Characters...
+        // Offset 8+N: Null terminator
+        
+        var buffer = Data()
+        // RefCount: 1 (static constant)
+        var refCount: Int32 = 1
+        buffer.append(Data(bytes: &refCount, count: 4))
+        
+        // Length
+        var length: Int32 = Int32(value.utf8.count)
+        buffer.append(Data(bytes: &length, count: 4))
+        
+        // Data + Null
+        buffer.append(value.data(using: .utf8)!)
+        buffer.append(0)
         
         let offset = nextStringOffset
-        let data = IRDataSegment(offset: offset, data: Data(bytes))
+        let data = IRDataSegment(offset: offset, data: buffer)
         irModuleData.append(data)
         
+        // Align next offset to 4 bytes
+        let totalSize = buffer.count
+        nextStringOffset += Int32((totalSize + 3) & ~3)
+        
         stringLiteralMap[value] = offset
-        nextStringOffset += Int32(bytes.count)
+        // nextStringOffset is already updated above
         return offset
     }
     
     private func lowerFunction(_ function: FunctionNode, to module: inout IRModule) {
+        let parameters = function.parameters.map { ($0.name, lowerType(from: $0.type), $0.typeName) }
         let returnType = lowerType(from: function.returnType)
-        let parameters = function.parameters.map { ($0.name, lowerType(from: $0.type)) }
         
-        builder.enterFunction(name: function.name, parameters: parameters, returnType: returnType)
+        // Reset Gosub state for new function
+        gosubReturnLabels = [:]
+        needsGosubDispatcher = false
+        
+        symbolTable.clearLocals()
+        builder.enterFunction(name: function.name, parameters: parameters, returnType: returnType, returnTypeName: function.returnTypeName)
         
         for param in function.parameters {
             let irType = lowerType(from: param.type)
-            symbolTable.addVariable(param.name, type: irType, isLocal: true)
+            symbolTable.addVariable(param.name, type: irType, typeName: param.typeName, isLocal: true)
         }
         
         var irBody: [IREffect] = []
@@ -196,6 +350,11 @@ public final class ASTLowering {
             builder.append(effect)
         }
         
+        // Generate Gosub Dispatcher if used in this function
+        if needsGosubDispatcher {
+            generateGosubDispatcher(into: &module)
+        }
+        
         if let irFunc = builder.exitFunction() {
             module.functions.append(irFunc)
         }
@@ -204,10 +363,13 @@ public final class ASTLowering {
     private func lowerStatement(_ statement: StatementNode, into body: inout [IREffect]) {
         switch statement {
         case .local(let decl, _):
+            for arrayDecl in decl.arrayDeclarations {
+                lowerDimDeclaration(arrayDecl, into: &body)
+            }
             for variable in decl.variables {
                 let irType = lowerTypeSuffix(from: variable.typeSuffix)
-                builder.addLocal(name: variable.name, type: irType)
-                symbolTable.addVariable(variable.name, type: irType, isLocal: true)
+                builder.addLocal(name: variable.name, type: irType, typeName: variable.typeName)
+                symbolTable.addVariable(variable.name, type: irType, typeName: variable.typeName, isLocal: true)
                 
                 if let initializer = decl.initializers[variable.name] {
                     let value = lowerExpression(initializer)
@@ -215,41 +377,21 @@ public final class ASTLowering {
                 }
             }
             
-        case .global:
+        case .global(let decl, _):
+            for arrayDecl in decl.arrayDeclarations {
+                lowerDimDeclaration(arrayDecl, into: &body)
+            }
             break
             
         case .constant, .constants:
             break
             
         case .dim(let decl, _):
-            let irType: IRType = .i32 
-            let elementSize = 4
-            
-            var dimSizes: [Int] = []
-            var totalElements = 1
-            for dimExpr in decl.dimensions {
-                if case .integerLiteral(let val, _) = dimExpr {
-                    let size = val + 1
-                    dimSizes.append(size)
-                    totalElements *= size
-                } else {
-                    dimSizes.append(11)
-                    totalElements *= 11
-                }
-            }
-            
-            let arrayInfo = IRArrayInfo(
-                baseAddress: Int(nextArrayOffset),
-                elementSize: elementSize,
-                dimensions: dimSizes,
-                elementType: irType
-            )
-            symbolTable.addArray(decl.name, info: arrayInfo)
-            nextArrayOffset += Int32(totalElements * elementSize)
+            lowerDimDeclaration(decl, into: &body)
             
         case .dims(let decls, _):
             for decl in decls {
-                lowerStatement(.dim(decl, .unknown), into: &body)
+                lowerDimDeclaration(decl, into: &body)
             }
             
         case .assignment(let assign, _):
@@ -258,11 +400,29 @@ public final class ASTLowering {
             switch assign.target {
             case .identifier(let id, _):
                 if let localIdx = symbolTable.localIndex(for: id.name) {
-                    body.append(.assignLocal(index: localIdx, value: value))
+                    let targetType = symbolTable.type(of: id.name) ?? lowerTypeSuffix(from: id.typeSuffix)
+                    body.append(.assignLocal(index: localIdx, value: coerce(value, to: targetType)))
                 } else if let globalIdx = symbolTable.globalIndex(for: id.name) {
-                    body.append(.assignGlobal(index: globalIdx, value: value))
+                    let targetType = symbolTable.type(of: id.name) ?? lowerTypeSuffix(from: id.typeSuffix)
+                    body.append(.assignGlobal(index: globalIdx, value: coerce(value, to: targetType)))
                 } else {
-                    body.append(.assign(target: id.name, value: value))
+                    // Implicit local declaration
+                    let irType: IRType
+                    if let typeName = id.typeName {
+                         // Typed implicit declaration: t.MyType = ...
+                         // Custom types are pointers (i32)
+                         irType = .i32
+                    } else {
+                         // Infers from suffix or default
+                         irType = lowerTypeSuffix(from: id.typeSuffix)
+                    }
+                    
+                    builder.addLocal(name: id.name, type: irType, typeName: id.typeName)
+                    symbolTable.addVariable(id.name, type: irType, typeName: id.typeName, isLocal: true)
+                    
+                    if let newIdx = symbolTable.localIndex(for: id.name) {
+                        body.append(.assignLocal(index: newIdx, value: coerce(value, to: irType)))
+                    }
                 }
                 
             case .arrayAccess(let access, _):
@@ -276,7 +436,25 @@ public final class ASTLowering {
                         index: flatIndex,
                         elementSize: arrayInfo.elementSize,
                         elementType: arrayInfo.elementType,
-                        value: value
+                        value: coerce(value, to: arrayInfo.elementType)
+                    ))
+                } else if case .fieldAccess(let fieldAccess, _) = access.array,
+                          let typeName = getTypeName(from: fieldAccess.object),
+                          let fieldOffset = symbolTable.fieldOffset(type: typeName, field: fieldAccess.field),
+                          let fieldType = symbolTable.fieldType(type: typeName, field: fieldAccess.field) {
+                    
+                    let baseObj = lowerExpression(fieldAccess.object)
+                    let baseAddr = builder.buildBinary("+", lhs: baseObj, rhs: builder.buildConstI32(Int32(fieldOffset)), resultType: .i32)
+                    
+                    let dims = symbolTable.fieldDimensions(type: typeName, field: fieldAccess.field) ?? []
+                    let flatIndex = flattenIndex(indices: access.indices, dimensions: dims)
+                    
+                    body.append(.assignArray(
+                         base: baseAddr,
+                         index: flatIndex,
+                         elementSize: 4, // Fields are usually 4 bytes
+                         elementType: fieldType,
+                         value: coerce(value, to: fieldType)
                     ))
                 }
                 
@@ -289,20 +467,26 @@ public final class ASTLowering {
                         base: baseValue,
                         fieldOffset: fieldOffset,
                         fieldType: fieldType,
-                        value: value
+                        value: coerce(value, to: fieldType)
                     ))
                 }
                 
             case .functionCall(let call, _):
                 if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
-                    let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+                    let baseAddr: IRValue
+                    if let ptrIdx = arrayInfo.dynamicPointerGlobalIndex {
+                         baseAddr = .globalGet(index: ptrIdx, type: .i32)
+                    } else {
+                         baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+                    }
+                    
                     let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
                     body.append(.assignArray(
                         base: baseAddr,
                         index: flatIndex,
                         elementSize: arrayInfo.elementSize,
                         elementType: arrayInfo.elementType,
-                        value: value
+                        value: coerce(value, to: arrayInfo.elementType)
                     ))
                 }
                 
@@ -383,7 +567,11 @@ public final class ASTLowering {
                 let value = lowerExpression(returnExpr)
                 body.append(builder.buildReturn(value))
             } else {
-                body.append(builder.buildReturn(nil))
+                // Bare Return is treated as Gosub Return if we've seen Gosubs,
+                // otherwise it's a void function return.
+                // In Blitz3D, Return is primarily for Gosub.
+                needsGosubDispatcher = true
+                body.append(builder.buildBranch("__gosub_dispatch"))
             }
             
         case .exit(_):
@@ -391,14 +579,85 @@ public final class ASTLowering {
             
         case .label(let name, _):
             body.append(builder.buildLabel(name))
+            labelDataOffsets[name] = dataPool.count
             
         case .goto(let label, _):
             body.append(builder.buildBranch(label))
             
         case .gosub(let label, _):
-            // TODO: Implement true GOSUB semantics (shadow stack or function extraction)
-            // For now, mapping to branch to maintain CFG connectivity
+            // ... (keep start)
+            let returnId = nextGosubId
+            nextGosubId += 1
+            let returnLabel = "__gosub_ret_\(returnId)"
+            gosubReturnLabels[returnId] = returnLabel
+            
+            // 1. Push return ID: stack[sp] = id; sp++
+            if let spIdx = gosubSpGlobalIndex {
+                let spValue = IRValue.globalGet(index: spIdx, type: .i32)
+                
+                // mem[GOSUB_STACK_ADDR + sp * 4] = returnId
+                let addr = builder.buildBinary("+", 
+                    lhs: builder.buildConstI32(GOSUB_STACK_ADDR), 
+                    rhs: builder.buildBinary("*", lhs: spValue, rhs: builder.buildConstI32(4), resultType: .i32),
+                    resultType: .i32)
+                
+                body.append(.assignField(base: addr, fieldOffset: 0, fieldType: .i32, value: .constI32(Int32(returnId))))
+                
+                // sp++
+                body.append(.assignGlobal(index: spIdx, value: builder.buildBinary("+", lhs: spValue, rhs: builder.buildConstI32(1), resultType: .i32)))
+            }
+            
+            // 2. Branch to target
             body.append(builder.buildBranch(label))
+            
+            // 3. Define return label
+            body.append(builder.buildLabel(returnLabel))
+            
+        case .forEach(let forEachNode, _):
+            guard let typeInfo = symbolTable.typeInfo(for: forEachNode.typeName) else { break }
+            
+            // Implicitly register iterator if not already present
+            if symbolTable.localIndex(for: forEachNode.iteratorName) == nil {
+                builder.addLocal(name: forEachNode.iteratorName, type: .i32, typeName: forEachNode.typeName)
+                symbolTable.addVariable(forEachNode.iteratorName, type: .i32, typeName: forEachNode.typeName, isLocal: true)
+            }
+            
+            guard let itIdx = symbolTable.localIndex(for: forEachNode.iteratorName) else { break }
+            
+            // it = Type_Head
+            body.append(.assignLocal(index: itIdx, value: .globalGet(index: typeInfo.headGlobalIndex, type: .i32)))
+            
+            // Loop condition: while it != 0
+            let condition = builder.buildBinary("<>", lhs: .localGet(index: itIdx, type: .i32), rhs: builder.buildConstI32(0), resultType: .i32)
+            
+            var loopBody: [IREffect] = []
+            for stmt in forEachNode.body {
+                lowerStatement(stmt, into: &loopBody)
+            }
+            
+            // it = it.next (offset 4)
+            let nextVal = IRValue.loadField(base: .localGet(index: itIdx, type: .i32), fieldOffset: 4, fieldType: .i32)
+            loopBody.append(.assignLocal(index: itIdx, value: nextVal))
+            
+            body.append(.whileStmt(condition: condition, body: loopBody))
+            
+        case .data(let values, _):
+            dataPool.append(contentsOf: values)
+            
+        case .read(let identifiers, _):
+            for id in identifiers {
+                let typeHint: Int32 = id.name.hasSuffix("$") ? 3 : (id.name.hasSuffix("#") ? 2 : 1)
+                let val = IRValue.call(name: "ReadData", args: [builder.buildConstI32(typeHint)], resultType: .i32)
+                
+                if let localIdx = symbolTable.localIndex(for: id.name) {
+                    body.append(.assignLocal(index: localIdx, value: val))
+                } else if let globalIdx = symbolTable.globalIndex(for: id.name) {
+                    body.append(.assignGlobal(index: globalIdx, value: val))
+                }
+            }
+            
+        case .restore(let label, _):
+            body.append(.discard(.call(name: "RestoreData", args: [builder.buildConstI32(0)], resultType: .void)))
             
         case .typeDeclaration:
             break
@@ -470,6 +729,78 @@ public final class ASTLowering {
             break
         }
     }
+
+    private func lowerDimDeclaration(_ decl: DimDeclaration, into body: inout [IREffect]) {
+        let irType: IRType = .i32
+        let elementSize = 4
+
+        var isDynamic = false
+        var dimSizes: [Int] = []
+        var totalElements = 1
+        var runtimeSize: IRValue? = nil
+
+        for dimExpr in decl.dimensions {
+            if let size = evaluateConstInt(dimExpr) {
+                let actualSize = size + 1
+                dimSizes.append(actualSize)
+                totalElements *= actualSize
+
+                if let existingSize = runtimeSize {
+                    runtimeSize = builder.buildBinary("*", lhs: existingSize, rhs: builder.buildConstI32(Int32(actualSize)), resultType: .i32)
+                } else {
+                    runtimeSize = builder.buildConstI32(Int32(actualSize))
+                }
+            } else {
+                isDynamic = true
+                let exprVal = lowerExpression(dimExpr)
+                let actualSize = builder.buildBinary("+", lhs: exprVal, rhs: builder.buildConstI32(1), resultType: .i32)
+                dimSizes.append(0) // Marker for dynamic
+
+                if let existingSize = runtimeSize {
+                    runtimeSize = builder.buildBinary("*", lhs: existingSize, rhs: actualSize, resultType: .i32)
+                } else {
+                    runtimeSize = actualSize
+                }
+            }
+        }
+
+        if isDynamic, let totalSize = runtimeSize {
+            // Register global pointer for dynamic array
+            let ptrName = "__arr_\(decl.name.lowercased())_ptr"
+            symbolTable.addVariable(ptrName, type: .i32, isLocal: false)
+            let globalIdx = symbolTable.globalIndex(for: ptrName)!
+
+            // Add to pending globals to be added to module later
+            pendingDynamicGlobals.append(ptrName)
+
+            // Calculate size in bytes
+            let sizeInBytes = builder.buildBinary("*", lhs: totalSize, rhs: builder.buildConstI32(4), resultType: .i32)
+
+            // Allocate
+            let ptr = IRValue.call(name: "__Alloc", args: [sizeInBytes, builder.buildConstI32(0)], resultType: .i32)
+
+            body.append(.assignGlobal(index: globalIdx, value: ptr))
+
+            let arrayInfo = IRArrayInfo(
+                baseAddress: 0,
+                elementSize: elementSize,
+                dimensions: dimSizes,
+                elementType: irType,
+                dynamicPointerGlobalIndex: globalIdx
+            )
+            symbolTable.addArray(decl.name, info: arrayInfo)
+
+        } else {
+            let arrayInfo = IRArrayInfo(
+                baseAddress: Int(nextArrayOffset),
+                elementSize: elementSize,
+                dimensions: dimSizes,
+                elementType: irType
+            )
+            symbolTable.addArray(decl.name, info: arrayInfo)
+            nextArrayOffset += Int32(totalElements * elementSize)
+        }
+    }
     
     private func lowerExpression(_ expression: ExpressionNode) -> IRValue {
         switch expression {
@@ -496,21 +827,41 @@ public final class ASTLowering {
         case .binary(let binop, _):
             let lhs = lowerExpression(binop.left)
             let rhs = lowerExpression(binop.right)
-            let resultType = commonType(lhs.type, rhs.type)
             
-            return builder.buildBinary(binop.op, lhs: lhs, rhs: rhs, resultType: resultType)
+            // Check for string concatenation
+            if binop.op == "+" && (isStringExpression(binop.left) || isStringExpression(binop.right)) {
+                // Ensure both are strings. If one is int/float, we might need conversion (Str$)
+                // For now assuming implicit or explicit conversion exists or user provides strings.
+                // Actually Blitz3D allows "Str" + 123.
+                
+                // TODO: Handle Int/Float to String conversion if needed. 
+                // Currently assuming strings.
+                
+                return .call(name: "__StringConcat", args: [lhs, rhs], resultType: .i32)
+            }
+            
+            let op = binop.op
+            let isComparison = op == "=" || op == "<>" || op == "<" || op == ">" || op == "<=" || op == ">="
+            let isIntegerOnly = op == "And" || op == "Or" || op == "Xor" || op == "Shl" || op == "Shr" || op == "mod"
+            let operandType: IRType = isIntegerOnly ? .i32 : commonType(lhs.type, rhs.type)
+
+            let lhsC = coerce(lhs, to: operandType)
+            let rhsC = coerce(rhs, to: operandType)
+            let resultType: IRType = isComparison ? .i32 : operandType
+            return builder.buildBinary(op, lhs: lhsC, rhs: rhsC, resultType: resultType)
             
         case .unary(let unary, _):
             let operand = lowerExpression(unary.expression)
             
             switch unary.op {
             case "Not":
-                return builder.buildBinary("Xor", lhs: operand, rhs: builder.buildConstI32(-1), resultType: .i32)
+                let opnd = coerce(operand, to: .i32)
+                return builder.buildBinary("Xor", lhs: opnd, rhs: builder.buildConstI32(-1), resultType: .i32)
             case "-":
                 if operand.type == .i32 {
-                    return builder.buildBinary("Sub", lhs: builder.buildConstI32(0), rhs: operand, resultType: .i32)
+                    return builder.buildBinary("-", lhs: builder.buildConstI32(0), rhs: operand, resultType: .i32)
                 } else {
-                    return builder.buildBinary("Sub", lhs: builder.buildConstF32(0), rhs: operand, resultType: .f32)
+                    return builder.buildBinary("-", lhs: builder.buildConstF32(0), rhs: operand, resultType: .f32)
                 }
             default:
                 return operand
@@ -534,6 +885,17 @@ public final class ASTLowering {
                 let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
                 let flatIndex = flattenIndex(indices: access.indices, dimensions: arrayInfo.dimensions)
                 return IRValue.loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
+            } else if case .fieldAccess(let fieldAccess, _) = access.array,
+               let typeName = getTypeName(from: fieldAccess.object),
+               let fieldOffset = symbolTable.fieldOffset(type: typeName, field: fieldAccess.field),
+               let fieldType = symbolTable.fieldType(type: typeName, field: fieldAccess.field) {
+                
+                let baseValue = lowerExpression(fieldAccess.object)
+                let fieldAddr = builder.buildBinary("+", lhs: baseValue, rhs: builder.buildConstI32(Int32(fieldOffset)), resultType: .i32)
+                
+                let dims = symbolTable.fieldDimensions(type: typeName, field: fieldAccess.field) ?? []
+                let flatIndex = flattenIndex(indices: access.indices, dimensions: dims)
+                return IRValue.loadArray(base: fieldAddr, index: flatIndex, elementSize: 4, elementType: fieldType)
             }
             return builder.buildConstI32(0)
             
@@ -558,19 +920,68 @@ public final class ASTLowering {
         case .objectCast(let typeName, let expr, _):
             return .objectCast(typeName: typeName, value: lowerExpression(expr))
             
-        case .typeCast:
+        case .typeCast(let cast, _):
+            let value = lowerExpression(cast.expression)
+            let targetType = lowerType(from: cast.targetType)
+            return .convert(value: value, from: value.type, to: targetType)
+            
+        default:
             return builder.buildConstI32(0)
         }
     }
     
     private func lowerCall(_ call: FunctionCallNode) -> IRValue {
         if let arrayInfo = symbolTable.arrayInfo(for: call.name) {
-            let baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+            let baseAddr: IRValue
+            if let ptrIdx = arrayInfo.dynamicPointerGlobalIndex {
+                 baseAddr = .globalGet(index: ptrIdx, type: .i32)
+            } else {
+                 baseAddr = builder.buildConstI32(Int32(arrayInfo.baseAddress))
+            }
             let flatIndex = flattenIndex(indices: call.arguments, dimensions: arrayInfo.dimensions)
             return .loadArray(base: baseAddr, index: flatIndex, elementSize: arrayInfo.elementSize, elementType: arrayInfo.elementType)
         }
         
+        // Special handling for Print overloading
+        if call.name.lowercased() == "print" {
+            if let arg = call.arguments.first {
+                let lowerArg = lowerExpression(arg)
+                
+                var isString = false
+                if case .stringLiteral = arg {
+                     isString = true
+                } else if case .binary = arg {
+                     isString = true 
+                } else if case .identifier(let id, _) = arg,
+                          (id.typeSuffix == .string || symbolTable.type(of: id.name) == .i32 && id.name.hasSuffix("$")) {
+                     isString = true
+                } else if case .functionCall(let subCall, _) = arg, subCall.name.hasSuffix("$") {
+                     isString = true
+                }
+                
+                if isString {
+                    return .call(name: "printstring", args: [lowerArg], resultType: .void)
+                } else if case .floatLiteral = arg {
+                     return .call(name: "printfloat", args: [lowerArg], resultType: .void)
+                } else {
+                    return .call(name: "printint", args: [lowerArg], resultType: .void)
+                }
+            } else {
+                // Empty Print: print a newline
+                let emptyStr = allocateString("")
+                return .call(name: "printstring", args: [.constStringPtr(emptyStr)], resultType: .void)
+            }
+        }
+
         var args = call.arguments.map { lowerExpression($0) }
+        
+        // Check if this is a type cast: TypeName(handle)
+        if symbolTable.typeInfo(for: call.name) != nil && args.count == 1 {
+            print("DEBUG_LOWER: Lowering '\(call.name)' as .objectCast")
+            return .objectCast(typeName: call.name, value: args[0])
+        }
+
+        print("DEBUG_LOWER: Resolving call to '\(call.name)' at \(call.span.start)")
         let resolver = SignatureResolver(context: context)
         
         if let def = resolver.definition(forName: call.name) {
@@ -578,28 +989,39 @@ public final class ASTLowering {
             if args.count < expectedCount {
                 for i in args.count..<expectedCount {
                     if let defaultValue = def.defaults?[i] {
-                        args.append(lowerDefaultValue(defaultValue))
+                        args.append(lowerExpression(defaultValue))
                     } else {
                         args.append(.constI32(0))
                     }
+                }
+            }
+
+            // Coerce arguments to the expected signature types.
+            if !def.params.isEmpty {
+                for i in 0..<min(args.count, def.params.count) {
+                    let expected = irType(from: def.params[i])
+                    args[i] = coerce(args[i], to: expected)
                 }
             }
             
             let irResult = irType(from: def.results.first ?? .void)
             return .call(name: call.name.lowercased(), args: args, resultType: irResult)
         }
-        
+
+        if context.canAutoImport(call.name) {
+            let params = Array(repeating: WASMType.i32, count: args.count)
+            _ = context.registerAutoImport(name: call.name, params: params, results: [.i32])
+            if let def = resolver.definition(forName: call.name) {
+                let irResult = irType(from: def.results.first ?? .void)
+                return .call(name: call.name.lowercased(), args: args, resultType: irResult)
+            }
+        }
+
+        print("ERROR: Unknown function '\(call.name)' at \(call.span.start)")
         return .call(name: call.name.lowercased(), args: args, resultType: .i32)
     }
     
-    private func lowerDefaultValue(_ defaultValue: IRDefaultValue) -> IRValue {
-        switch defaultValue {
-        case .i32(let val): return .constI32(val)
-        case .f32(let val): return .constF32(val)
-        case .string(let val): return .constStringPtr(allocateString(val))
-        case .none: return .constI32(0)
-        }
-    }
+
     
     private func flattenIndex(indices: [ExpressionNode], dimensions: [Int]) -> IRValue {
         var flatIndex = lowerExpression(indices[0])
@@ -640,8 +1062,41 @@ public final class ASTLowering {
         let context = ModuleContext(module: module)
         let builtInImports: [(String, [WASMType], [WASMType])] = [
             ("PrintInt", [.i32], []),
+            ("printint", [.i32], []),
+            ("PrintFloat", [.f32], []),
+            ("printfloat", [.f32], []),
             ("PrintString", [.i32], []),
+            ("printstring", [.i32], []),
             ("Graphics3D", [.i32, .i32, .i32, .i32], []),
+            ("AppTitle", [.i32, .i32], []),
+            ("GraphicsWidth", [], [.i32]),
+            ("GraphicsHeight", [], [.i32]),
+            ("WindowWidth", [], [.i32]),
+            ("WindowHeight", [], [.i32]),
+            ("CreatePivot", [.i32], [.i32]),
+            ("NameEntity", [.i32, .i32], []),
+            ("EntityName", [.i32], [.i32]),
+            ("CountChildren", [.i32], [.i32]),
+            ("GetChild", [.i32, .i32], [.i32]),
+            ("GetParent", [.i32], [.i32]),
+            ("FindChild", [.i32, .i32], [.i32]),
+            ("EntityClass", [.i32], [.i32]),
+            ("EntityPick", [.i32, .f32], [.i32]),
+            ("LinePick", [.f32, .f32, .f32, .f32, .f32, .f32, .f32], [.i32]),
+            ("PickedX", [], [.f32]),
+            ("PickedY", [], [.f32]),
+            ("PickedZ", [], [.f32]),
+            ("PickedNX", [], [.f32]),
+            ("PickedNY", [], [.f32]),
+            ("PickedNZ", [], [.f32]),
+            ("PickedEntity", [], [.i32]),
+            ("PickedSurface", [], [.i32]),
+            ("PickedTriangle", [], [.i32]),
+            ("EntityOrder", [.i32, .i32], []),
+            ("EntityAutoFade", [.i32, .f32, .f32], []),
+            ("MilliSecs", [], [.i32]),
+            ("FSOUND_Stream_GetTime", [.i32], [.i32]),
+            ("GetEntityBrush", [.i32], [.i32]),
         ]
         for (name, params, results) in builtInImports {
             _ = context.registerAutoImport(name: name, params: params, results: results)
@@ -678,6 +1133,12 @@ public final class ASTLowering {
         }
         return .i32
     }
+
+    private func coerce(_ value: IRValue, to target: IRType) -> IRValue {
+        guard value.type != target else { return value }
+        guard target != .void else { return value }
+        return .convert(value: value, from: value.type, to: target)
+    }
     
     private func getTypeName(from expression: ExpressionNode) -> String? {
         switch expression {
@@ -693,23 +1154,60 @@ public final class ASTLowering {
             return nil
         }
     }
+
+    private func generateGosubDispatcher(into module: inout IRModule) {
+        // Label the dispatcher entry
+        builder.append(builder.buildLabel("__gosub_dispatch"))
+        
+        if let spIdx = gosubSpGlobalIndex {
+            // 1. sp--
+            let oldSp = IRValue.globalGet(index: spIdx, type: .i32)
+            let newSp = builder.buildBinary("-", lhs: oldSp, rhs: builder.buildConstI32(1), resultType: .i32)
+            builder.append(.assignGlobal(index: spIdx, value: newSp))
+            
+            // 2. id = stack[newSp]
+            let addr = builder.buildBinary("+", 
+                lhs: builder.buildConstI32(GOSUB_STACK_ADDR), 
+                rhs: builder.buildBinary("*", lhs: newSp, rhs: builder.buildConstI32(4), resultType: .i32),
+                resultType: .i32)
+            
+            let idValue = IRValue.loadField(base: addr, fieldOffset: 0, fieldType: .i32)
+            
+            // 3. SelectStmt to branch to return labels
+            var cases: [(Int32, [IREffect])] = []
+            for (id, label) in gosubReturnLabels {
+                cases.append((Int32(id), [builder.buildBranch(label)]))
+            }
+            
+            // Default case if ID is invalid: return from function (or trap)
+            builder.append(.selectStmt(value: idValue, cases: cases, default: [builder.buildReturn(nil)]))
+        } else {
+            builder.append(builder.buildReturn(nil))
+        }
+    }
 }
 
 private class IRSymbolTable {
-    private var locals: [String: (index: Int, type: IRType)] = [:]
-    private var globals: [String: (index: Int, type: IRType)] = [:]
+    private var locals: [String: (index: Int, type: IRType, typeName: String?)] = [:]
+    private var globals: [String: (index: Int, type: IRType, typeName: String?)] = [:]
     private var arrays: [String: IRArrayInfo] = [:]
     private var types: [String: IRTypeInfo] = [:]
+    private var constants: [String: Int] = [:] // Map name -> value
     private var nextLocalIndex: Int = 0
     private var nextGlobalIndex: Int = 0
     
-    func addVariable(_ name: String, type: IRType, isLocal: Bool) {
+    func clearLocals() {
+        locals.removeAll()
+        nextLocalIndex = 0
+    }
+    
+    func addVariable(_ name: String, type: IRType, typeName: String? = nil, isLocal: Bool) {
         let key = name.lowercased()
         if isLocal {
-            locals[key] = (nextLocalIndex, type)
+            locals[key] = (nextLocalIndex, type, typeName)
             nextLocalIndex += 1
         } else {
-            globals[key] = (nextGlobalIndex, type)
+            globals[key] = (nextGlobalIndex, type, typeName)
             nextGlobalIndex += 1
         }
     }
@@ -728,7 +1226,8 @@ private class IRSymbolTable {
     }
     
     func typeName(for name: String) -> String? {
-        return nil
+        let key = name.lowercased()
+        return locals[key]?.typeName ?? globals[key]?.typeName
     }
     
     func addArray(_ name: String, info: IRArrayInfo) {
@@ -737,6 +1236,10 @@ private class IRSymbolTable {
     
     func arrayInfo(for name: String) -> IRArrayInfo? {
         return arrays[name.lowercased()]
+    }
+    
+    func typeInfo(for name: String) -> IRTypeInfo? {
+        return types[name.lowercased()]
     }
     
     func addType(_ name: String, info: IRTypeInfo) {
@@ -748,8 +1251,34 @@ private class IRSymbolTable {
     }
     
     func fieldType(type: String, field: String) -> IRType? {
-        guard let fieldTypes = types[type.lowercased()]?.fieldTypes else { return nil }
-        guard let type = fieldTypes[field.lowercased()] else { return nil }
-        return type
+        return types[type.lowercased()]?.fieldTypes[field.lowercased()]
+    }
+    
+    func fieldDimensions(type: String, field: String) -> [Int]? {
+        return types[type.lowercased()]?.fieldDimensions[field.lowercased()]
+    }
+    
+    func addConstant(_ name: String, value: Int) {
+        constants[name.lowercased()] = value
+    }
+    
+    func constantValue(for name: String) -> Int? {
+        return constants[name.lowercased()]
+    }
+}
+
+extension ASTLowering {
+    private func isStringExpression(_ expr: ExpressionNode) -> Bool {
+        switch expr {
+        case .stringLiteral: return true
+        case .identifier(let id, _):
+            return id.typeSuffix == .string || id.name.hasSuffix("$") || (symbolTable.typeName(for: id.name) == "String")
+        case .functionCall(let call, _):
+            return call.name.hasSuffix("$") // Simple heuristic for built-ins like Str$
+        case .binary(let bin, _):
+            return isStringExpression(bin.left) || isStringExpression(bin.right)
+        default:
+            return false
+        }
     }
 }

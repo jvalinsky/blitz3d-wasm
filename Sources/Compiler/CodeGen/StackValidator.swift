@@ -320,6 +320,7 @@ class StackValidator {
     
     /// Validate a WASM instruction's stack effect
     func validateInstruction(_ instr: WASMInstruction) {
+        print("VALIDATE: \(instr) (Depth: \(vals.count))")
         switch instr {
         // Constants
         case .i32Const:
@@ -690,8 +691,10 @@ extension StackValidator {
     static func calculateStackDelta(_ instructions: [WASMInstruction],
                                     localTypes: [Int: WASMType] = [:],
                                     globalTypes: [Int: WASMType] = [:],
-                                    functionSignatures: [Int: (params: [WASMType], results: [WASMType])] = [:]) -> (delta: Int, errors: [String]) {
+                                    functionSignatures: [Int: (params: [WASMType], results: [WASMType])] = [:],
+                                    context: ValidatorTypeContext? = nil) -> (delta: Int, errors: [String]) {
         let validator = StackValidator()
+        validator.typeContext = context
 
         // Set up type context
         for (idx, type) in localTypes {
@@ -733,15 +736,30 @@ extension StackValidator {
     static func balanceToTarget(_ instructions: inout [WASMInstruction],
                                  targetDelta: Int,
                                  localTypes: [Int: WASMType] = [:],
-                                 globalTypes: [Int: WASMType] = [:]) -> Int {
-        let (actualDelta, _) = calculateStackDelta(instructions, localTypes: localTypes, globalTypes: globalTypes)
+                                 globalTypes: [Int: WASMType] = [:],
+                                 context: ValidatorTypeContext? = nil) -> Int {
+        let (actualDelta, errors) = calculateStackDelta(instructions, localTypes: localTypes, globalTypes: globalTypes, context: context)
 
+        // CRITICAL FIX: Only add drops if we have actual excess values on the stack
+        // actualDelta must be positive AND greater than target
         let excessValues = actualDelta - targetDelta
-        if excessValues > 0 {
+
+        if excessValues > 0 && actualDelta > 0 {
+            // Log diagnostic for debugging
+            if !errors.isEmpty {
+                print("STACK_VALIDATOR_WARNING: Adding \(excessValues) drops with \(errors.count) validation errors present")
+            }
+
             for _ in 0..<excessValues {
                 instructions.append(.drop)
             }
+        } else if excessValues > 0 && actualDelta <= 0 {
+            // Stack underflow detected - DO NOT add drops
+            print("STACK_VALIDATOR_ERROR: Cannot balance to target=\(targetDelta). actualDelta=\(actualDelta) indicates underflow")
+            // Return 0 to indicate no drops were added
+            return 0
         }
+
         return max(0, excessValues)
     }
 }

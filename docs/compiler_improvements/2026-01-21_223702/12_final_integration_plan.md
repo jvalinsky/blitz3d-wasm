@@ -34,8 +34,9 @@ This document outlines the final steps required to move the Typed IR pipeline fr
 
 ### 2.1 The "SCPCB" Benchmark
 *   **Action**: Compile the following critical SCPCB modules using `--use-ir`:
-    *   `scpcb/UpdateEvents.bb`
-    *   `scpcb/NPCs.bb`
+    *   [ ] `scpcb/UpdateEvents.bb`
+    *   [ ] `scpcb/NPCs.bb`
+    *   [x] `scpcb/MapSystem.bb` (attempted Jan 26 2026; currently fails `wasm-validate`)
 *   **Success Criteria**: 
     *   `wasm-validate` returns zero errors (guaranteed stack neutrality).
     *   `StackValidator` confirms identical stack heights at all join points.

@@ -1,0 +1,347 @@
+Blitz3D WASM Compilation Test Report
+=====================================
+Date: Tue Jan 27 00:05:46 EST 2026
+Source: /Users/jack/Software/scp_port/scpcb
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Dreamfilter.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/UpdateEvents.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/CPU_Details.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Map Creator/mapcreator_new.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Category: LOCAL VAR RANGE
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/mapcreator_new.wasm:0004ac2: error: local variable out of range (max 1)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/mapcreator_new.wasm:0004ad7: error: local variable out of range (max 1)
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/mapcreator_new.wasm:0004adf: error: local variable out of range (max 1)
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/FMod.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/repro_stack.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/LightMapPNG.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LightMapPNG.wasm:0003fa3: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LightMapPNG.wasm:000412a: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LightMapPNG.wasm:00042a9: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Save.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Save.wasm:0004d83: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Save.wasm:0004d84: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Save.wasm:0004d85: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Update.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Update.wasm:0004387: error: type mismatch at end of loop, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Update.wasm:00043e5: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Update.wasm:0004668: error: type mismatch at end of loop, expected [] but got [i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Skybox.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Skybox.wasm:0003cca: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Skybox.wasm:0003ccb: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Difficulty.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/RMesh_Model_Viewer.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/RMesh_Model_Viewer.wasm:0004b8b: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/RMesh_Model_Viewer.wasm:0004b8c: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/RMesh_Model_Viewer.wasm:0004b8d: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Converter.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Converter.wasm:0004139: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Converter.wasm:00042d4: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Converter.wasm:0004418: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/repro_select.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/StrictLoads.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_File_FileName.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/MapSystem.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Category: LOCAL VAR RANGE
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/MapSystem.wasm:0004fa6: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/MapSystem.wasm:00051ca: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/MapSystem.wasm:000577d: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/repro_update_events_min.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/BlitzAL.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/KeyName.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Blitz_Basic_Bank.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Blitz_Basic_Bank.wasm:0003cb3: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/AAText.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Particles.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Category: LOCAL VAR RANGE
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Particles.wasm:0003f66: error: type mismatch in i32.or, expected [i32, i32] but got [... f32, i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Particles.wasm:0004026: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Particles.wasm:000446a: error: type mismatch at end of `if true` branch, expected [] but got [i32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Menu.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Menu.wasm:0006a08: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Menu.wasm:0007cb4: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/Menu.wasm:0007cb5: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/NPCs.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/NPCs.wasm:00068e7: error: type mismatch at end of `if false` branch, expected [] but got [f32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/NPCs.wasm:00068e7: error: type mismatch at end of `if true` branch, expected [] but got [f32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/NPCs.wasm:0006951: error: type mismatch at end of `if true` branch, expected [] but got [f32]
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Items.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_type_conversion.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_devil_mod.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_particles_min.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/test_particles_min.wasm:0003cb0: error: type mismatch in call, expected [f32, f32, f32, i32] but got [i32, f32, f32, f32]
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/test_particles_min.wasm:0003cb2: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/test_particles_min.wasm:0003cb3: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_loops.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_fileio.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_custom_types.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_audio.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_2d_graphics.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_entity_getters.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_math.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_if_balance.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_collision_queries.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/new_tests/test_strings.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/DrawPortals.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Main.bb
+Result: COMPILATION FAILED
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/LoadAllSounds.bb
+Result: VALIDATION FAILED
+Category: TYPE MISMATCH
+Category: MISSING RETURN
+Sample errors:
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LoadAllSounds.wasm:0003c8f: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LoadAllSounds.wasm:0003c90: error: type mismatch in drop, expected [any] but got []
+/var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.yPynaxMPkj/LoadAllSounds.wasm:0003c91: error: type mismatch in drop, expected [any] but got []
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/repro_types.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/Achievements.bb
+Result: PASS
+
+----------------------------------------
+File: /Users/jack/Software/scp_port/scpcb/TestLoadRMesh.bb
+Result: PASS
+
+
+=====================================
+Summary
+=====================================
+Total files tested: 52
+Passed: 34
+Failed: 18
+  - Compile errors: 4
+  - Validation errors: 14
+
+Validation error breakdown:
+  Type mismatches: 14
+  Missing returns: 14
+  Local var range: 3
+
+Passing files:
+/Users/jack/Software/scp_port/scpcb/AAText.bb
+/Users/jack/Software/scp_port/scpcb/Achievements.bb
+/Users/jack/Software/scp_port/scpcb/Blitz_File_FileName.bb
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb
+/Users/jack/Software/scp_port/scpcb/CPU_Details.bb
+/Users/jack/Software/scp_port/scpcb/Difficulty.bb
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb
+/Users/jack/Software/scp_port/scpcb/DrawPortals.bb
+/Users/jack/Software/scp_port/scpcb/Dreamfilter.bb
+/Users/jack/Software/scp_port/scpcb/FMod.bb
+/Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb
+/Users/jack/Software/scp_port/scpcb/Items.bb
+/Users/jack/Software/scp_port/scpcb/KeyName.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_2d_graphics.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_audio.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_collision_queries.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_custom_types.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_devil_mod.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_entity_getters.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_fileio.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_if_balance.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_loops.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_math.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_strings.bb
+/Users/jack/Software/scp_port/scpcb/new_tests/test_type_conversion.bb
+/Users/jack/Software/scp_port/scpcb/repro_select.bb
+/Users/jack/Software/scp_port/scpcb/repro_stack.bb
+/Users/jack/Software/scp_port/scpcb/repro_types.bb
+/Users/jack/Software/scp_port/scpcb/repro_update_events_min.bb
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb
+/Users/jack/Software/scp_port/scpcb/TestLoadRMesh.bb
+/Users/jack/Software/scp_port/scpcb/UpdateEvents.bb

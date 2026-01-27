@@ -211,23 +211,17 @@ public class CFGBuilder {
                 }
                 
                 // 2. Header Condition
-                // We need to synthesize the condition IRValue.
-                // This is slightly complex because `IRValue` generation logic is in ASTLowering.
-                // But we have `step` value.
-                // Assuming positive step for now (standard Basic behavior usually checks sign at runtime?)
-                // Blitz3D IR 'forStmt' encapsulates this.
-                // Flattening it requires recreating the binary comparison.
-                // Let's assume 'step' is constant positive for MVP or use a generic 'ForCheck'.
-                // Since `IREffect.forStmt` exists, we are deconstructing it.
-                // We can construct `IRValue.binary("<=", localGet(idx), end)`
+                // Use the type of the 'start' value for the loop variable.
+                let loopVarType = start.type
+                let loopVar = IRValue.localGet(index: idx, type: loopVarType)
                 
-                // Let's just emit the condition check manually
-                let loopVar = IRValue.localGet(index: idx, type: .i32) // Assuming i32
-                // Note: Step might be negative. The IR doesn't explicitly say.
-                // If we want to be safe, we should have lowered For to While in ASTLowering.
-                // But here we are.
-                // We'll assume a standard LE check for now.
-                let cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
+                // Construct the condition based on the type
+                let cond: IRValue
+                if loopVarType == .f32 {
+                    cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
+                } else {
+                    cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
+                }
                 headerBlock.terminator = .condBranch(condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
                 
                 // 3. Body
@@ -236,7 +230,7 @@ public class CFGBuilder {
                 
                 // 4. Latch (Increment)
                 let stepVal = step ?? .constI32(1)
-                let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: stepVal, resultType: .i32)
+                let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: stepVal, resultType: loopVarType)
                 currentBlock.instructions.append(.assignLocal(index: idx, value: inc))
                 
                 if case .none = currentBlock.terminator {

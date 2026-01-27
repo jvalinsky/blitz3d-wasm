@@ -308,11 +308,36 @@ func collectAutoImportArities(program: ProgramNode, allowlist: Set<String>) -> [
 }
 
 func loadAutoImportNames(from path: String?) -> Set<String> {
-    guard let path = path else { return [] }
+    var resolvedPath = path
+    if resolvedPath == nil {
+        let cwd = FileManager.default.currentDirectoryPath
+        let defaultPath = (cwd as NSString).appendingPathComponent("import_requirements_full.json")
+        if FileManager.default.fileExists(atPath: defaultPath) {
+            print("Auto-import map: \(defaultPath)")
+            resolvedPath = defaultPath
+        } else {
+            return []
+        }
+    }
+
+    guard let path = resolvedPath else { return [] }
     do {
         let data = try Data(contentsOf: URL(fileURLWithPath: path))
-        if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            return Set(json.keys.map { $0.lowercased() })
+        let json = try JSONSerialization.jsonObject(with: data)
+        if let map = json as? [String: Any] {
+            return Set(map.keys.map { $0.lowercased() })
+        }
+        if let array = json as? [[String: Any]] {
+            var names: [String] = []
+            for item in array {
+                if let name = item["name"] as? String {
+                    names.append(name.lowercased())
+                }
+            }
+            return Set(names)
+        }
+        if let array = json as? [String] {
+            return Set(array.map { $0.lowercased() })
         }
     } catch {
         print("Warning: Failed to load auto-import map from \(path): \(error)")
@@ -373,6 +398,14 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             print("Using Typed IR pipeline (experimental)")
             print("")
             var codeGen = CodeGenerator()
+            if generateSourceMap {
+                sourceMapGenerator = SourceMapGenerator()
+                codeGen.enableSourceMapping(sourceMapGenerator!)
+            }
+            if generateDebug {
+                debugGenerator = DebugGenerator()
+                codeGen.enableDebugging(debugGenerator!)
+            }
             module = codeGen.generateFromIR(program)
         } else {
             var codeGen = CodeGenerator()
@@ -473,6 +506,7 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
 }
 
 func main() {
+    print("DEBUG: CLI Entry Point")
     let args = CommandLine.arguments
     
     guard args.count >= 2 else {
@@ -634,10 +668,11 @@ func main() {
             assets = collectAssets(from: [assetsDirectory])
         }
         
-        let source = try String(contentsOf: finalInputURL, encoding: .utf8)
+        print("DEBUG: Starting compilation of \(finalInputURL.path)")
         
         if showTokens {
-            tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
+             let source = try String(contentsOf: finalInputURL, encoding: .utf8)
+             tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
         } else {
             compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR)
         }

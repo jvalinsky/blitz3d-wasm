@@ -30,6 +30,7 @@ export const LLM_QUICK_REFERENCE = {
     basic: 'node Tools/analyzer/cli.js <wasmfile>',
     detailed: 'node Tools/analyzer/cli.js <wasmfile> -v',
     llmOptimized: 'node Tools/analyzer/llm-analyzer.js <wasmfile>',
+    llmCompact: 'node Tools/analyzer/llm-compact.js <wasmfile>',
     compare: 'node Tools/analyzer/compare-builds.js <before.wasm> <after.wasm>'
   },
   

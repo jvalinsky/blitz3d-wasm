@@ -13,7 +13,7 @@ class Blitz3DPhysics {
         this.picks = [];
         this.collided = false;
         this.lastPick = null;
-        
+
         // WASM collision support
         this.wasmColliderMap = new Map();
         this.useWasmCollision = false;
@@ -59,47 +59,29 @@ class Blitz3DPhysics {
         this.lastPickY = 0;
         this.lastPickZ = 0;
 
-        imports.env.EntityPick = (entityId, range) => {
-            const entity = this.graphics.entities[entityId];
-            if (entity && this.graphics.camera) {
-                const raycaster = new THREE.Raycaster();
-                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(entity.quaternion);
-                raycaster.set(entity.position, dir);
-                raycaster.far = range;
+        // Picking functions are implemented below (lines 150+)
 
-                const intersects = raycaster.intersectObjects(this.graphics.scene.children, true);
-                if (intersects.length > 0) {
-                    this.lastPickX = intersects[0].point.x;
-                    this.lastPickY = intersects[0].point.y;
-                    this.lastPickZ = intersects[0].point.z;
-                    return 1;
+        imports.env.PickedX = () => this.lastPick?.point?.x || 0;
+        imports.env.PickedY = () => -(this.lastPick?.point?.y || 0);
+        imports.env.PickedZ = () => this.lastPick?.point?.z || 0;
+        imports.env.PickedNX = () => this.lastPick?.face?.normal?.x || 0;
+        imports.env.PickedNY = () => -(this.lastPick?.face?.normal?.y || 0);
+        imports.env.PickedNZ = () => this.lastPick?.face?.normal?.z || 0;
+        imports.env.PickedEntity = () => {
+            if (!this.lastPick?.object) return 0;
+            // Recursively find the root Blitz3D entity for this Three.js object
+            let current = this.lastPick.object;
+            while (current) {
+                // Search for this object in our entity map
+                for (const id in this.graphics.entities) {
+                    if (this.graphics.entities[id] === current) return parseInt(id);
                 }
+                current = current.parent;
             }
             return 0;
         };
-
-        imports.env.LinePick = (x1, y1, z1, x2, y2, z2, radius) => {
-            const raycaster = new THREE.Raycaster();
-            const origin = new THREE.Vector3(x1, y1, z1);
-            const dest = new THREE.Vector3(x2, y2, z2);
-            const direction = dest.sub(origin).normalize();
-            
-            raycaster.set(origin, direction);
-            raycaster.far = origin.distanceTo(new THREE.Vector3(x2, y2, z2));
-            
-            const intersects = raycaster.intersectObjects(this.graphics.scene.children, true);
-            if (intersects.length > 0) {
-                this.lastPickX = intersects[0].point.x;
-                this.lastPickY = intersects[0].point.y;
-                this.lastPickZ = intersects[0].point.z;
-                return 1;
-            }
-            return 0;
-        };
-
-        imports.env.PickedX = () => this.lastPickX;
-        imports.env.PickedY = () => this.lastPickY;
-        imports.env.PickedZ = () => this.lastPickZ;
+        imports.env.PickedSurface = () => 1; // Stub
+        imports.env.PickedTriangle = () => this.lastPick?.faceIndex || 0;
 
         imports.env.EntityPickMode = (entityId, mode, obscure) => {
             // Set entity picking mode
@@ -155,12 +137,15 @@ class Blitz3DPhysics {
             }
         };
 
-        imports.env.EntityPick = (entity, range) => {
-            const obj = this.graphics.entities[entity];
-            if (obj && this.graphics.camera) {
+        imports.env.EntityPick = (entityId, range) => {
+            const entity = this.graphics.entities[entityId];
+            if (entity) {
                 const raycaster = new THREE.Raycaster();
-                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(obj.quaternion);
-                raycaster.set(obj.position, dir);
+                // In Blitz3D, +Z is forward. In our Three.js, we negated Z for position,
+                // so we need to check how forward is handled.
+                // Standard Blitz3D forward is (0,0,1).
+                const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(entity.quaternion);
+                raycaster.set(entity.position, dir);
                 raycaster.far = range;
 
                 const intersects = raycaster.intersectObjects(this.graphics.scene.children, true);
@@ -188,9 +173,9 @@ class Blitz3DPhysics {
             return 0;
         };
 
-        imports.env.GetMatPickX = () => this.lastPick?.point?.x || 0;
-        imports.env.GetMatPickY = () => -(this.lastPick?.point?.y || 0);
-        imports.env.GetMatPickZ = () => this.lastPick?.point?.z || 0;
+        imports.env.GetMatPickX = () => imports.env.PickedX();
+        imports.env.GetMatPickY = () => imports.env.PickedY();
+        imports.env.GetMatPickZ = () => imports.env.PickedZ();
 
         imports.env.CountCollisions = (ent) => {
             const entity = this.graphics.entities[ent];
@@ -276,78 +261,78 @@ class Blitz3DPhysics {
             }
             return 0;
         };
-        
+
         // WASM Collision Functions
         imports.env.CreateCollider = (radius, height) => {
             return this.createWasmCollider(radius, height);
         };
-        
+
         imports.env.FreeCollider = (id) => {
             this.freeWasmCollider(id);
         };
-        
+
         imports.env.SetColliderPosition = (id, x, y, z) => {
             if (this.core.engineExports && this.core.engineExports.SetColliderPosition) {
                 this.core.engineExports.SetColliderPosition(id, x, y, z);
             }
         };
-        
+
         imports.env.GetColliderPositionX = (id) => {
             if (this.core.engineExports && this.core.engineExports.GetColliderPositionX) {
                 return this.core.engineExports.GetColliderPositionX(id);
             }
             return 0;
         };
-        
+
         imports.env.GetColliderPositionY = (id) => {
             if (this.core.engineExports && this.core.engineExports.GetColliderPositionY) {
                 return this.core.engineExports.GetColliderPositionY(id);
             }
             return 0;
         };
-        
+
         imports.env.GetColliderPositionZ = (id) => {
             if (this.core.engineExports && this.core.engineExports.GetColliderPositionZ) {
                 return this.core.engineExports.GetColliderPositionZ(id);
             }
             return 0;
         };
-        
+
         imports.env.CollideWithMesh = (colliderId, meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.CollideWithMesh) {
                 return this.core.engineExports.CollideWithMesh(colliderId, meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.CollisionDepth = (colliderId, meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.CollisionDepth) {
                 return this.core.engineExports.CollisionDepth(colliderId, meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.CollisionNormalX = (colliderId, meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.CollisionNormalX) {
                 return this.core.engineExports.CollisionNormalX(colliderId, meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.CollisionNormalY = (colliderId, meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.CollisionNormalY) {
                 return this.core.engineExports.CollisionNormalY(colliderId, meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.CollisionNormalZ = (colliderId, meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.CollisionNormalZ) {
                 return this.core.engineExports.CollisionNormalZ(colliderId, meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         // WASM Mesh Functions
         imports.env.CreateMesh = () => {
             if (this.core.engineExports && this.core.engineExports.CreateMesh) {
@@ -355,49 +340,49 @@ class Blitz3DPhysics {
             }
             return 0;
         };
-        
+
         imports.env.AddSurface = (meshId, vertexCount, indexCount) => {
             if (this.core.engineExports && this.core.engineExports.AddSurface) {
                 return this.core.engineExports.AddSurface(meshId, vertexCount, indexCount);
             }
             return -1;
         };
-        
+
         imports.env.GetMeshSurfaceCount = (meshId) => {
             if (this.core.engineExports && this.core.engineExports.GetMeshSurfaceCount) {
                 return this.core.engineExports.GetMeshSurfaceCount(meshId);
             }
             return 0;
         };
-        
+
         imports.env.GetSurfaceVertexCount = (meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.GetSurfaceVertexCount) {
                 return this.core.engineExports.GetSurfaceVertexCount(meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.GetSurfaceIndexCount = (meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.GetSurfaceIndexCount) {
                 return this.core.engineExports.GetSurfaceIndexCount(meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.GetSurfaceVerticesPtr = (meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.GetSurfaceVerticesPtr) {
                 return this.core.engineExports.GetSurfaceVerticesPtr(meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         imports.env.GetSurfaceIndicesPtr = (meshId, surfaceIdx) => {
             if (this.core.engineExports && this.core.engineExports.GetSurfaceIndicesPtr) {
                 return this.core.engineExports.GetSurfaceIndicesPtr(meshId, surfaceIdx);
             }
             return 0;
         };
-        
+
         // WASM LinePick Functions
         imports.env.LinePick = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePick) {
@@ -405,49 +390,49 @@ class Blitz3DPhysics {
             }
             return -1;
         };
-        
+
         imports.env.LinePickX = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickX) {
                 return this.core.engineExports.LinePickX(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickY = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickY) {
                 return this.core.engineExports.LinePickY(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickZ = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickZ) {
                 return this.core.engineExports.LinePickZ(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickNX = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickNX) {
                 return this.core.engineExports.LinePickNX(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickNY = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickNY) {
                 return this.core.engineExports.LinePickNY(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickNZ = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickNZ) {
                 return this.core.engineExports.LinePickNZ(meshId, x, y, z, dx, dy, dz);
             }
             return 0;
         };
-        
+
         imports.env.LinePickDistance = (meshId, x, y, z, dx, dy, dz) => {
             if (this.core.engineExports && this.core.engineExports.LinePickDistance) {
                 return this.core.engineExports.LinePickDistance(meshId, x, y, z, dx, dy, dz);
@@ -463,13 +448,13 @@ class Blitz3DPhysics {
         }
         return 0;
     }
-    
+
     freeWasmCollider(id) {
         if (this.core.engineExports && this.core.engineExports.FreeCollider) {
             this.core.engineExports.FreeCollider(id);
         }
     }
-    
+
     updateWasmColliderPosition(entId) {
         const entity = this.graphics.entities[entId];
         const colliderId = this.wasmColliderMap.get(entId);
@@ -490,32 +475,32 @@ class Blitz3DPhysics {
             this.updateJSCollisions();
         }
     }
-    
+
     updateWasmCollisions() {
         this.collisionResults = {};
-        
+
         for (const [entId, colliderId] of this.wasmColliderMap) {
             const entity = this.graphics.entities[entId];
             if (!entity) continue;
-            
+
             this.updateWasmColliderPosition(entId);
-            
+
             const entityCollisions = [];
-            
+
             // Check collision with all meshes in the scene
             for (const [meshEntId, meshEntity] of Object.entries(this.graphics.entities)) {
                 if (meshEntId === entId) continue;
                 if (!meshEntity.userData || !meshEntity.userData.meshes) continue;
-                
+
                 for (let i = 0; i < meshEntity.userData.meshes.length; i++) {
                     const meshWrapper = meshEntity.userData.meshes[i];
                     if (!meshWrapper || !meshWrapper.userData) continue;
-                    
+
                     const meshId = meshWrapper.userData.meshId;
                     if (meshId === undefined) continue;
-                    
+
                     const surfaceCount = this.core.engineExports?.GetMeshSurfaceCount(meshId) || 0;
-                    
+
                     for (let s = 0; s < surfaceCount; s++) {
                         const collided = this.core.engineExports?.CollideWithMesh(colliderId, meshId, s);
                         if (collided) {
@@ -523,7 +508,7 @@ class Blitz3DPhysics {
                             const nx = this.core.engineExports?.CollisionNormalX(colliderId, meshId, s) || 0;
                             const ny = this.core.engineExports?.CollisionNormalY(colliderId, meshId, s) || 0;
                             const nz = this.core.engineExports?.CollisionNormalZ(colliderId, meshId, s) || 0;
-                            
+
                             entityCollisions.push({
                                 object: meshEntity,
                                 point: entity.position.clone(),
@@ -534,26 +519,26 @@ class Blitz3DPhysics {
                     }
                 }
             }
-            
+
             if (entityCollisions.length > 0) {
                 this.collisionResults[entId] = entityCollisions;
             }
         }
     }
-    
+
     updateJSCollisions() {
         this.collisionResults = {};
-        
+
         for (const rule of this.collisionRules) {
             // Simplified collision detection
         }
     }
-    
+
     enableWasmCollision(enabled) {
         this.useWasmCollision = enabled;
         console.log(`WASM Collision: ${enabled ? 'enabled' : 'disabled'}`);
     }
-    
+
     setWasmEngineReady(ready) {
         this.wasmEngineReady = ready;
         if (ready) {

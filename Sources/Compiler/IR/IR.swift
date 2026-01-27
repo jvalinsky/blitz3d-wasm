@@ -73,15 +73,17 @@ public indirect enum IREffect {
 
 public struct IRFunction {
     public var name: String
-    public var parameters: [(String, IRType)]
+    public var parameters: [(String, IRType, String?)]
     public var returnType: IRType
-    public var locals: [(String, IRType)]
+    public var returnTypeName: String?
+    public var locals: [(String, IRType, String?)]
     public var body: [IREffect]
     
-    public init(name: String, parameters: [(String, IRType)] = [], returnType: IRType = .void, locals: [(String, IRType)] = [], body: [IREffect] = []) {
+    public init(name: String, parameters: [(String, IRType, String?)] = [], returnType: IRType = .void, returnTypeName: String? = nil, locals: [(String, IRType, String?)] = [], body: [IREffect] = []) {
         self.name = name
         self.parameters = parameters
         self.returnType = returnType
+        self.returnTypeName = returnTypeName
         self.locals = locals
         self.body = body
     }
@@ -110,14 +112,18 @@ public struct IRTypeInfo {
     public let typeName: String
     public let fieldOffsets: [String: Int]
     public let fieldTypes: [String: IRType]
+    public let fieldCustomTypes: [String: String]
+    public let fieldDimensions: [String: [Int]]
     public let totalSize: Int
     public let headGlobalIndex: Int
     public let tailGlobalIndex: Int
     
-    public init(typeName: String, fieldOffsets: [String: Int], fieldTypes: [String: IRType], totalSize: Int, headGlobalIndex: Int, tailGlobalIndex: Int) {
+    public init(typeName: String, fieldOffsets: [String: Int], fieldTypes: [String: IRType], fieldCustomTypes: [String: String] = [:], fieldDimensions: [String: [Int]] = [:], totalSize: Int, headGlobalIndex: Int, tailGlobalIndex: Int) {
         self.typeName = typeName
         self.fieldOffsets = fieldOffsets
         self.fieldTypes = fieldTypes
+        self.fieldCustomTypes = fieldCustomTypes
+        self.fieldDimensions = fieldDimensions
         self.totalSize = totalSize
         self.headGlobalIndex = headGlobalIndex
         self.tailGlobalIndex = tailGlobalIndex
@@ -129,12 +135,14 @@ public struct IRArrayInfo {
     public let elementSize: Int
     public let dimensions: [Int]
     public let elementType: IRType
+    public let dynamicPointerGlobalIndex: Int? // If set, baseAddress is ignored (or used as default/offset)
     
-    public init(baseAddress: Int, elementSize: Int, dimensions: [Int], elementType: IRType) {
+    public init(baseAddress: Int, elementSize: Int, dimensions: [Int], elementType: IRType, dynamicPointerGlobalIndex: Int? = nil) {
         self.baseAddress = baseAddress
         self.elementSize = elementSize
         self.dimensions = dimensions
         self.elementType = elementType
+        self.dynamicPointerGlobalIndex = dynamicPointerGlobalIndex
     }
 }
 
@@ -145,14 +153,14 @@ public class IRBuilder {
     
     public init() {}
     
-    public func enterFunction(name: String, parameters: [(String, IRType)], returnType: IRType) {
-        currentFunction = IRFunction(name: name, parameters: parameters, returnType: returnType)
+    public func enterFunction(name: String, parameters: [(String, IRType, String?)], returnType: IRType, returnTypeName: String? = nil) {
+        currentFunction = IRFunction(name: name, parameters: parameters, returnType: returnType, returnTypeName: returnTypeName)
         localIndexMap.removeAll()
         nextLocalIndex = 0
         
         // Add parameters to local index map
         for param in parameters {
-            localIndexMap[param.0] = nextLocalIndex
+            localIndexMap[param.0.lowercased()] = nextLocalIndex
             nextLocalIndex += 1
         }
     }
@@ -162,10 +170,10 @@ public class IRBuilder {
         return currentFunction
     }
     
-    public func addLocal(name: String, type: IRType) {
+    public func addLocal(name: String, type: IRType, typeName: String? = nil) {
         guard var funcRef = currentFunction else { return }
-        localIndexMap[name] = nextLocalIndex
-        funcRef.locals.append((name, type))
+        localIndexMap[name.lowercased()] = nextLocalIndex
+        funcRef.locals.append((name, type, typeName))
         currentFunction = funcRef
         nextLocalIndex += 1
     }

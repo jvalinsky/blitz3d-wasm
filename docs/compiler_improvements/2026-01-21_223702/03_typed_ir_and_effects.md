@@ -61,6 +61,16 @@ This plan has been elevated to the highest priority following the failure of heu
 | User-Defined Types (Objects) | ⏳ In Progress |
 | Default Argument Synthesis | ✅ Basic Coverage Added |
 
+## Reality Check (Jan 26 2026)
+
+The Typed IR pipeline successfully compiles small tests and passes `WASMValidationTests`, but a real SCPCB module currently breaks the “`wasm-validate` passes” invariant:
+
+- [x] Compiled `scpcb/MapSystem.bb` with `--use-ir`
+- [x] Ran `wasm-validate` on the output
+- [ ] Output validates cleanly (**currently fails with large clusters of type/stack errors**)
+
+This is now the active blocker before promoting `--use-ir` to be used broadly for SCPCB modules.
+
 ## Goal
 
 Introduce an intermediate representation (IR) that makes it impossible to generate invalid WASM for supported constructs by:

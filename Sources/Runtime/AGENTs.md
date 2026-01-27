@@ -2,17 +2,19 @@
 
 **Parent**: [../](..)
 
-**Children**:
-- [JS](./JS)
-- [docs](./docs)
-- [examples](./examples)
-- [modules](./modules)
-- [tools](./tools)
+**Description**:
+The JavaScript Runtime environment. Since WebAssembly cannot directly access the DOM, WebGL, or FileSystem, this runtime provides the "OS" for the compiled Blitz3D game.
 
-## Docs
+### Structure
+-   **`JS/`**: Core JavaScript loader and module system.
+    -   `loader.js`: Initializes the WASM module and sets up imports.
+    -   `runtime.js`: The central registry of runtime functions.
+-   **`modules/`**: Specific subsystem implementations.
+    -   `graphics.js`: WebGL/Canvas rendering (Blitz3D `Graphics3D`, `Image` commands).
+    -   `input.js`: Keyboard/Mouse handling (`KeyDown`, `MouseX`).
+    -   `audio.js`: Sound playback.
+    -   `filesystem.js`: Virtual file system for `ReadFile`/`WriteFile`.
+    -   `blitz3d.js`: General language helpers (`MilliSecs`, `DebugLog`).
 
-- [PHASE1_FILEIO.md](docs/PHASE1_FILEIO.md)
-- [PHASE2_COMPLETE.md](docs/PHASE2_COMPLETE.md)
-- [PHASE2_RMESH.md](docs/PHASE2_RMESH.md)
-- [PHASE3_COMPLETE.md](docs/PHASE3_COMPLETE.md)
-- [PHASE3_TEXTURE.md](docs/PHASE3_TEXTURE.md)
+### How it works
+The Compiler generates WASM that expects certain imports (e.g., `env.bb_Graphics`). The Runtime provides these functions during WASM instantiation. When the WASM code calls `bb_Graphics`, it executes the JavaScript code in `graphics.js`.

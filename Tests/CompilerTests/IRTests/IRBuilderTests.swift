@@ -35,7 +35,7 @@ final class IRBuilderTests: XCTestCase {
     }
     
     func testFunctionScoping() {
-        builder.enterFunction(name: "test", parameters: [("a", .i32)], returnType: .i32)
+        builder.enterFunction(name: "test", parameters: [("a", .i32, nil)], returnType: .i32)
         builder.addLocal(name: "b", type: .f32)
         
         let a = builder.buildLocalGet("a", type: .i32)

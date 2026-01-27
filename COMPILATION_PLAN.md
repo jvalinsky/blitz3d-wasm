@@ -4,8 +4,13 @@
 - **Total files:** 33
 - **Passing:** 13 (39%)
 - **Failing:** 20 (61%)
-  - Compile errors: 1 (Map Creator - separate tool, not game code)
+  - Compile errors: 1 (Map Creator - separate tool)
   - Validation errors: 19
+- **Latest Update (2026-01-26):**
+  - **Stack Balancing:** Infrastructure implemented (`StackValidator.swift`), but integration currently disabled in `StatementGeneration.swift`.
+  - **Type Promotion:** Implemented in `ExpressionGeneration.swift` and `StatementGeneration.swift` (implicit conversions).
+  - **Parser:** Fixes for early termination implemented (Diagnostics + Recovery).
+  - **Optional Parameters:** Parsing support added, CodeGen uses zero-padding (needs update to use declared defaults).
 
 ## Root Cause Analysis
 

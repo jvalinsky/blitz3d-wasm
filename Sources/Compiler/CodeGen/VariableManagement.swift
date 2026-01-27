@@ -99,19 +99,19 @@ public struct VariableManagement {
             typeName: typeName,
             dimensions: dimensions
         )
-        localVariables[name] = info
+        localVariables[name.lowercased()] = info
         nextLocalIndex += 1
         return info
     }
     
     /// Get local variable info
     public func localInfo(for name: String) -> LocalInfo? {
-        return localVariables[name]
+        return localVariables[name.lowercased()]
     }
     
     /// Check if local variable exists
     public func hasLocal(_ name: String) -> Bool {
-        return localVariables[name] != nil
+        return localVariables[name.lowercased()] != nil
     }
     
     /// Get all local variables
@@ -149,7 +149,7 @@ public struct VariableManagement {
             type: type,
             typeName: typeName
         )
-        globalVariables[name] = info
+        globalVariables[name.lowercased()] = info
         nextGlobalIndex += 1
         return info
     }
@@ -161,18 +161,18 @@ public struct VariableManagement {
             type: type,
             typeName: typeName
         )
-        globalVariables[name] = info
+        globalVariables[name.lowercased()] = info
         return info
     }
     
     /// Get global variable info
     public func globalInfo(for name: String) -> GlobalInfo? {
-        return globalVariables[name]
+        return globalVariables[name.lowercased()]
     }
     
     /// Check if global variable exists
     public func hasGlobal(_ name: String) -> Bool {
-        return globalVariables[name] != nil
+        return globalVariables[name.lowercased()] != nil
     }
     
     // MARK: - Array Variables
@@ -270,9 +270,9 @@ public struct VariableManagement {
 public struct FunctionDefinition {
     public let params: [WASMType]
     public let results: [WASMType]
-    public let defaults: [Int: IRDefaultValue]?
+    public let defaults: [Int: ExpressionNode]?
     
-    public init(params: [WASMType], results: [WASMType], defaults: [Int: IRDefaultValue]? = nil) {
+    public init(params: [WASMType], results: [WASMType], defaults: [Int: ExpressionNode]? = nil) {
         self.params = params
         self.results = results
         self.defaults = defaults
@@ -318,6 +318,7 @@ public final class ModuleContext {
     // Debug generator and runtime hooks
     public var debugGenerator: DebugGenerator?
     public var debugIndices: (enter: Int, leave: Int, stmt: Int)?
+    public var debugFunctionSpans: [String: SourceSpan] = [:]
 
     // Diagnostics collected during code generation
     public var diagnostics: [CompilerDiagnostic] = []
@@ -415,7 +416,7 @@ public final class ModuleContext {
     /// Dynamically register an import with the given signature if it does not already exist.
     /// Returns the function index (import index).
     @discardableResult
-    public func registerAutoImport(name: String, params: [WASMType], results: [WASMType], defaults: [Int: IRDefaultValue]? = nil) -> Int {
+    public func registerAutoImport(name: String, params: [WASMType], results: [WASMType], defaults: [Int: ExpressionNode]? = nil) -> Int {
         let lower = name.lowercased()
         if let existing = functionIndexMap[lower] {
             return existing
@@ -445,7 +446,8 @@ public final class ModuleContext {
     
     /// Register a specific import from a specific module
     @discardableResult
-    public func registerImport(name: String, internalName: String, params: [WASMType], results: [WASMType], module moduleName: String, defaults: [Int: IRDefaultValue]? = nil) -> Int {
+    public func registerImport(name: String, internalName: String, params: [WASMType], results: [WASMType], module moduleName: String, defaults: [Int: ExpressionNode]? = nil) -> Int {
+        let lowerName = name.lowercased()
         let lowerInternal = internalName.lowercased()
         
         let resStr = results.map { $0.rawValue }.joined(separator: ", ")
@@ -464,10 +466,17 @@ public final class ModuleContext {
         module.imports.append(WASMImport(module: moduleName, name: name, kind: .function, index: typeIdx))
         
         functionIndexMap[lowerInternal] = importIdx
+        functionIndexMap[lowerName] = importIdx
+        
         let def = FunctionDefinition(params: params, results: results, defaults: defaults)
         functionDefinitions[lowerInternal] = def
+        functionDefinitions[lowerName] = def
+        
         functionDefinitionsByIndex[importIdx] = def
         functionOriginalNames[lowerInternal] = internalName
+        functionOriginalNames[lowerName] = name
+        
+        // print("DEBUG: Registered import \(name) (\(internalName)) at index \(importIdx)")
         
         return importIdx
     }

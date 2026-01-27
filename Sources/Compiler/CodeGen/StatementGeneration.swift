@@ -492,11 +492,55 @@ public final class StatementGeneration: ValidatorTypeContext {
                     currentDepth -= 1
                 }
                 
-                // DO NOT auto-balance branches - this papers over bugs in statement generation
-                // If statements are truly statements (net-zero stack effect), branches will naturally balance
-                // Let WASM validation catch any issues - that's what the validator is for
+                // CRITICAL: Balance if/else branches to have same stack effect
+                // Blitz3D allows statements that return values (e.g., function calls as statements)
+                // WASM requires balanced branches, so we must add drops
 
-                result.append(.if(.void, thenBody, elseBody))
+                // Calculate stack deltas for each branch
+                let thenDelta = StackValidator.calculateStackDelta(
+                    thenBody,
+                    localTypes: localTypeCache,
+                    globalTypes: globalTypeCache,
+                    context: self
+                ).delta
+
+                let elseDelta: Int
+                if let elseBody = elseBody {
+                    elseDelta = StackValidator.calculateStackDelta(
+                        elseBody,
+                        localTypes: localTypeCache,
+                        globalTypes: globalTypeCache,
+                        context: self
+                    ).delta
+                } else {
+                    elseDelta = 0  // Empty else branch has zero stack effect
+                }
+
+                // Balance branches by adding drops to the branch with more values
+                var balancedThen = thenBody
+                var balancedElse = elseBody
+
+                if thenDelta > elseDelta {
+                    let dropCount = thenDelta - elseDelta
+                    print("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to then branch (delta: \(thenDelta) vs \(elseDelta))")
+                    for _ in 0..<dropCount {
+                        balancedThen.append(.drop)
+                    }
+                } else if elseDelta > thenDelta {
+                    let dropCount = elseDelta - thenDelta
+                    print("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to else branch (delta: \(elseDelta) vs \(thenDelta))")
+                    if balancedElse != nil {
+                        for _ in 0..<dropCount {
+                            balancedElse!.append(.drop)
+                        }
+                    }
+                } else if thenDelta != 0 || elseDelta != 0 {
+                    // Both branches have same non-zero delta - this is fine for if expressions
+                    // but for if statements (blockType = .void), we should warn
+                    print("DEBUG_BRANCH_WARNING: Both branches have delta=\(thenDelta), but blockType is .void")
+                }
+
+                result.append(.if(.void, balancedThen, balancedElse))
                 return result
             }
 

@@ -21,10 +21,8 @@ let package = Package(
             name: "blitz3d-wasm",
             dependencies: ["Blitz3DCompiler"],
             path: "Tools/wasm-cli",
-            exclude: ["AGENTs.md"],
-            linkerSettings: [
-                .unsafeFlags(["-Xlinker", "-stack_size", "-Xlinker", "0x10000000"])  // 256MB stack for deep recursion
-            ]
+            exclude: ["AGENTs.md"]
+            // Note: -stack_size linker flag only works on macOS
         ),
         .target(
             name: "Blitz3DEngine",

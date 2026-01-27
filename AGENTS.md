@@ -5,82 +5,98 @@ A compiler and runtime that compiles Blitz3D BASIC to WebAssembly for browser ex
 ## Project Status (January 2026)
 
 **Compiler**: Working - compiles Blitz3D code to valid WASM  
-**Runtime**: JavaScript implementation of Blitz3D API (Three.js for 3D)  
+**Runtime**: Thin runtime (~500 lines JS) for browser API bindings  
 **Target**: Run SCP: Containment Breach in browser
 
-### Recent Progress
-- Typed IR pipeline with Relooper state machine
-- Multi-dimensional array support
-- Branch balancing for if/else statements
-- Function argument type conversion
-- WASM validation improvements
+### Working Demo
+
+**https://blitz3d.exe.xyz:8000/test.html** - Particle system demo
+
+- Particles fall with gravity
+- Alpha fading and deletion
+- All logic in compiled BB → WASM
+- JS only provides Three.js rendering calls
 
 ## Architecture
 
+**WASM does game logic. JS only wraps browser APIs.**
+
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Blitz3D (.bb)  │────▶│  Swift Compiler │────▶│   WASM Module   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        │                       ▼                       ▼
-        │               ┌───────────────┐       ┌───────────────┐
-        │               │ Lexer/Parser  │       │ JS Runtime    │
-        │               │ AST/IR/CodeGen│       │ (Three.js)    │
-        │               └───────────────┘       └───────────────┘
-        │
-        ▼
-┌─────────────────┐
-│ Include Files   │
-│ Type Defs       │
-│ Functions       │
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                   WASM (Compiled BB Code)                    │
+├─────────────────────────────────────────────────────────────┤
+│ • Type system (New, Delete, linked lists)                   │
+│ • Field access (p\x, p\y, p\obj)                            │
+│ • Physics/math (gravity, velocity, distance)                │
+│ • Game logic (AI, events, state)                            │
+│ • Control flow (If, While, For Each)                        │
+│ • Memory management                                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ imports ~10-50 functions
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   JS Runtime (~500 lines)                    │
+├─────────────────────────────────────────────────────────────┤
+│ • CreateSprite/Mesh → Three.js objects                      │
+│ • PositionEntity → obj.position.set()                       │
+│ • EntityAlpha → material.opacity                            │
+│ • LoadSound/PlaySound → Web Audio                           │
+│ • KeyDown/MouseX → DOM events                               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Directory Structure
 
-### Sources/
-- **Compiler/** (14.7K lines Swift) - Blitz3D to WASM compiler
-  - `Lexer/` - Tokenizer for Blitz3D syntax
-  - `Parser/` - Recursive descent parser (2K lines)
-  - `AST/` - Abstract syntax tree nodes
-  - `IR/` - Typed intermediate representation
-  - `Lowering/` - AST to IR conversion
-  - `CodeGen/` - WASM binary generation
-- **Runtime/** (11K lines JS) - Browser runtime
-  - `modules/` - Modular API implementations
-  - Core, Graphics, Input, Audio, Physics, VFS
-- **Blitz3DEngine/** - Swift asset parsers (B3D, RMesh)
-
-### Tests/
-- `CompilerTests/` - Swift unit tests
-- `fixtures/` - Test .bb files by category
-- `IntegrationTests/` - Browser-based tests
-- `Automation/` - Puppeteer test harness
-
-### Tools/
-- `wasm-cli/` - Command-line compiler
-- `analyzer/` - WASM analysis and debugging
-
-### Examples/
-- `hello/` - Minimal test
-- `walking_sim/` - 3D walking demo
-- `scpcb_*` - SCP:CB related demos
-
-### docs/
-Technical documentation. See `docs/README.md`.
-
-### notes/
-SCP:CB analysis notes for understanding the target game.
-
-### plan/
-Implementation phases and roadmaps.
+```
+blitz3d-wasm/
+├── Sources/
+│   ├── Compiler/          # Swift compiler (14K lines)
+│   │   ├── Lexer/         # Tokenizer
+│   │   ├── Parser/        # Recursive descent (2K lines)
+│   │   ├── AST/           # Syntax tree nodes
+│   │   ├── IR/            # Intermediate representation
+│   │   ├── Lowering/      # AST → IR
+│   │   └── CodeGen/       # WASM generation (5K lines)
+│   │
+│   ├── Runtime/
+│   │   ├── thin/          # Minimal runtime ← USE THIS
+│   │   │   ├── runtime.js # ~500 lines, browser bindings
+│   │   │   ├── test.html  # Working particle demo
+│   │   │   └── particles.bb
+│   │   └── modules/       # Legacy full runtime (11K lines)
+│   │
+│   └── Blitz3DEngine/     # Swift asset parsers
+│
+├── Tests/
+│   ├── CompilerTests/     # Swift unit tests
+│   ├── fixtures/          # Test .bb files
+│   └── IntegrationTests/  # Browser tests
+│
+├── Tools/
+│   ├── wasm-cli/          # CLI compiler
+│   └── analyzer/          # WASM debugging
+│
+├── Examples/              # Demo projects
+├── docs/                  # Documentation
+│   ├── ARCHITECTURE.md    # System design
+│   └── archive/           # Old session notes
+├── notes/                 # SCPCB analysis
+└── plan/                  # Implementation phases
+```
 
 ## Building
 
 ### Prerequisites
 - Swift 6.0+ (`swift --version`)
-- Node.js (for runtime bundling)
+- Node.js (for serving)
 - wabt (for wasm-validate)
+
+### Linux Note
+Comment out the macOS linker flag in Package.swift:
+```swift
+// linkerSettings: [.unsafeFlags(["-Xlinker", "-stack_size", "-Xlinker", "0x10000000"])]
+```
 
 ### Compile
 ```bash
@@ -90,68 +106,48 @@ swift build
 # Compile a .bb file
 .build/debug/blitz3d-wasm input.bb -o output.wasm
 
-# With debug info
-.build/debug/blitz3d-wasm input.bb -o output.wasm -g -d
-```
-
-### Linux Note
-The Package.swift has a macOS-specific linker flag. On Linux, comment out:
-```swift
-linkerSettings: [
-    .unsafeFlags(["-Xlinker", "-stack_size", "-Xlinker", "0x10000000"])
-]
-```
-
-## Testing
-
-```bash
-# Run compiler tests
-swift test
-
-# Validate WASM output
+# Validate output
 wasm-validate output.wasm
-
-# Integration tests
-cd Tests/IntegrationTests && npm test
 ```
+
+### Run Demo
+```bash
+cd Sources/Runtime/thin
+python3 -m http.server 8000
+# Open http://localhost:8000/test.html
+```
+
+## Language Support
+
+### Implemented ✅
+- Variables (Local, Global, Const, Dim)
+- Types (custom types with fields)
+- Type operations (New, Delete, First, Last, After, Before)
+- For Each iteration
+- Functions with return types
+- Control flow (If/Then/Else, For/Next, While/Wend, Select/Case)
+- Operators (arithmetic, comparison, logical, string)
+- Field access (obj\field)
+- Include files
+
+### Known Issues
+- Function shadowing: user functions can't have same name as runtime imports
+- For Each + Delete: use While loop with saved next pointer instead
 
 ## Key Files
 
 | File | Purpose |
-|------|--------|
-| `Package.swift` | Swift package definition |
-| `Tools/wasm-cli/main.swift` | CLI entry point |
-| `Sources/Compiler/Parser/Parser.swift` | Main parser |
+|------|---------|
+| `Sources/Compiler/Parser/Parser.swift` | Main parser (2K lines) |
 | `Sources/Compiler/CodeGen/CodeGenerator.swift` | WASM generation |
-| `Sources/Runtime/modules/runtime.js` | Runtime entry |
+| `Sources/Compiler/CodeGen/StatementGeneration.swift` | Statement codegen |
+| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression codegen |
+| `Sources/Runtime/thin/runtime.js` | Thin JS runtime |
+| `Sources/Runtime/thin/particles.bb` | Working demo source |
 
-## Blitz3D Language Support
+## Recent Fixes (Jan 2026)
 
-### Implemented
-- Variables (Local, Global, Const, Dim)
-- Types (custom types with fields)
-- Functions with return types
-- Control flow (If/Then/Else, For/Next, While/Wend, Select/Case)
-- Operators (arithmetic, comparison, logical)
-- String operations
-- Include files
-
-### In Progress
-- Goto/Gosub (via Relooper)
-- Data/Read/Restore
-- Full type system with object references
-
-## Import Modules
-
-The generated WASM requires these import modules:
-- `env` - Core Blitz3D functions (400+ imports)
-- `blitz3d` - Bank operations, mesh parsing
-- `al` - OpenAL audio bindings
-
-## Documentation Index
-
-- [docs/README.md](docs/README.md) - Documentation hub
-- [docs/DESIGN_CHOICES.md](docs/DESIGN_CHOICES.md) - Architecture decisions
-- [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) - Code quality notes
-- [plan/](plan/) - Implementation phases
-- [notes/](notes/) - SCP:CB analysis
+- Type system: `New` allocation, `Delete` linked list management
+- Field access: case-insensitive lookups
+- Function exports: user functions no longer shadowed by imports
+- For Each: proper iteration over type instances

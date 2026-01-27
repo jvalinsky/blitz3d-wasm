@@ -4,73 +4,57 @@
 
 ## Summary
 
-Blitz3D-WASM is a compiler that translates Blitz3D BASIC code to WebAssembly, with a JavaScript runtime that implements the Blitz3D API using Three.js for 3D graphics.
+Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a thin JS runtime for browser APIs.
 
-## Compiler Status: ✅ Working
+## Working Demo
 
-### What Works
-- **Parsing**: Full Blitz3D syntax (Types, Functions, Dim, control flow)
-- **Code Generation**: Valid WASM binary output
-- **Type System**: Integer, Float, String, custom Types
-- **Control Flow**: If/Else, For/Next, While/Wend, Select/Case
-- **Functions**: User-defined with parameters and return types
-- **Includes**: Multi-file projects via Include directive
+**URL**: https://blitz3d.exe.xyz:8000/test.html
 
-### Recent Fixes (Jan 2026)
-- Branch balancing for if/else statements
-- Function argument type conversion  
-- StackValidator balanceToTarget logic
-- Relooper state machine for Goto
+Demonstrates:
+- Particles falling with gravity
+- Alpha fading
+- Automatic deletion when expired
+- All logic in WASM, JS only renders
 
-### Known Limitations
-- Goto/Gosub partially implemented (Relooper in progress)
-- Data/Read/Restore basic support
-- Some edge cases in type inference
+## What's In WASM vs JS
 
-## Runtime Status: ⚠️ Functional but Incomplete
+### WASM (compiled BB code)
+- Type system (New, Delete, linked lists)
+- Field access (p\x, p\y, p\obj)
+- Physics (gravity, velocity)
+- Game logic (lifetime, conditions)
+- Control flow (While, If, For Each)
+- Memory management
 
-### Implemented
-- Core module (memory, strings, types)
-- Graphics module (Three.js rendering)
-- Input module (keyboard, mouse)
-- Basic audio (Web Audio API)
-- File I/O (virtual filesystem)
+### JS Runtime (~500 lines)
+- `CreateSprite()` → Three.js Sprite
+- `PositionEntity(id,x,y,z)` → set position
+- `EntityAlpha(id,a)` → set opacity
+- `FreeEntity(id)` → remove from scene
+- `Print(s)` → console.log
 
-### Needs Work
-- Complete Blitz3D API coverage (~400 functions)
-- Collision system refinement
-- Animation system
-- Some 3D operations
+## Compilation Test Results
 
-## Build Requirements
+| File | Status |
+|------|--------|
+| particles.bb | ✅ Valid WASM, runs correctly |
+| SCPCB/Difficulty.bb | ✅ Compiles |
+| SCPCB/KeyName.bb | ✅ Compiles |
+| SCPCB/Particles.bb | ✅ Compiles |
 
-- Swift 6.0+
-- Node.js 18+
-- wabt (wasm-validate)
+## Recent Fixes
 
-## Test Results
-
-Compiler successfully compiles:
-- Simple test programs ✅
-- SCPCB Difficulty.bb ✅
-- SCPCB KeyName.bb ✅
-- SCPCB Particles.bb ✅
-- Custom multi-feature test ✅
-
-WASM validation: Passing with recent fixes
+| Issue | Fix |
+|-------|-----|
+| Type lookup case sensitivity | `.lowercased()` on all lookups |
+| Field access wrong offset | Fixed fieldOffsets lookup |
+| Delete not working | Fixed userTypes lookup |
+| Function shadowing | Added userFunctionIndices map |
+| New allocation stack leak | Changed if block to void |
 
 ## Next Steps
 
-1. Complete Goto/Gosub via Relooper
-2. Improve runtime API coverage
-3. Test with larger SCPCB modules
-4. Browser integration testing
-
-## Files Changed Recently
-
-```
-Sources/Compiler/CodeGen/CodeGenerator.swift
-Sources/Compiler/CodeGen/FunctionGeneration.swift  
-Sources/Compiler/IR/Passes/Relooper.swift
-Sources/Compiler/Lowering/ASTLowering.swift
-```
+1. **Test more SCPCB files** - MapSystem.bb, NPCs.bb
+2. **Implement missing imports** - LoadMesh, LoadTexture, etc.
+3. **Load actual SCPCB assets** - RMesh rooms, textures
+4. **Compile full SCPCB** - Main.bb with all includes

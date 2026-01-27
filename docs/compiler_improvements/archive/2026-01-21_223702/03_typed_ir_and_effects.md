@@ -3,6 +3,25 @@
 **Status: ACTIVE (Jan 22 2026)**
 This plan has been elevated to the highest priority following the failure of heuristic patches in the current AST-to-WASM pipeline.
 
+## Tactical AST-to-WASM Fixes (2026-01-27) ✅
+
+While the Typed IR work continues, three critical validation bugs in the existing AST-to-WASM pipeline were fixed to enable immediate progress on SCPCB compilation:
+
+**WASM Validation Trilogy** (branch: `fix/wasm-validation-trilogy`):
+- ✅ **Issue #2**: StackValidator logic - guard against drops on empty stack
+- ✅ **Issue #3A**: Function argument type conversion with WASM module fallback
+- ✅ **Issue #1**: Automatic branch balancing with stack delta calculation
+
+**Results**: 8/8 test files validated, 144KB real-world code compiled with 0 errors
+
+**Why this matters for IR work**:
+These fixes demonstrate the validation patterns that the IR pipeline must enforce by construction:
+1. Stack neutrality for statement blocks (Issue #1 → IR's `IREffect` guarantees)
+2. Type-correct function calls (Issue #3A → IR's typed `Call` nodes)
+3. No drops on empty stack (Issue #2 → IR's explicit `Discard` nodes)
+
+The tactical fixes buy time for the strategic IR implementation while proving the correctness requirements.
+
 ## What Was Tried (FAILED)
 
 ### Auto-Import Experiment (Attempted in codex_session.log lines 377-530)

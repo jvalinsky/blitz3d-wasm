@@ -146,3 +146,65 @@ These items are tactical and directly aligned to current failure modes:
   - Completed via Typed IR implementation where `if`, `while`, and `loop` bodies are stack-neutral by construction.
   - Verified in `IRPipelineTests.swift`.
   - Refs: `../../../Sources/Compiler/IR/IR.swift`, `../../../Sources/Compiler/CodeGen/IREmitter.swift`
+
+## WASM Validation Trilogy (Completed 2026-01-27)
+
+**Status**: ✅ COMPLETE - All validation errors eliminated in tested codebase
+
+A comprehensive fix for three critical WASM validation bugs was implemented and validated:
+
+### ✅ Issue #2: StackValidator Logic Bugs
+- [x] **Fixed `balanceToTarget` to never emit drops on empty/underflow stack**
+  - Added guard condition: `actualDelta > 0 AND excessValues > 0`
+  - Added DEBUG assertion to detect incomplete functionDefinitionsByIndex
+  - Commit: `c957360`
+  - Files: `Sources/Compiler/CodeGen/StackValidator.swift`, `Sources/Compiler/CodeGen/StatementGeneration.swift`
+  - Test: `test_validator_underflow.bb` ✅ PASSED
+
+### ✅ Issue #3A: Function Argument Type Conversion
+- [x] **Added type conversion with WASM module fallback**
+  - Created `getParamTypeFromModule()` helper to extract param types
+  - Fixed else-if branch to convert arguments when signature definition missing
+  - Handles f32→i32 conversions when passing float to int parameters
+  - Commit: `116a27d`
+  - Files: `Sources/Compiler/CodeGen/ExpressionGeneration.swift`
+  - Test: `test_arg_conversion.bb` ✅ PASSED
+  - Verified: `DEBUG_ARG_CONVERT` logs show conversions working
+
+### ✅ Issue #1: Branch Balancing
+- [x] **Automatic branch balancing with stack delta calculation**
+  - Calculate stack deltas for then/else branches using StackValidator
+  - Add drops to balance branches with different stack effects
+  - Handle empty else branch (delta = 0) correctly
+  - Commit: `dc079ca`
+  - Files: `Sources/Compiler/CodeGen/StatementGeneration.swift`
+  - Test: `test_branch_imbalance.bb` ✅ PASSED
+
+### Validation Results
+
+**Unit Tests**: 3/3 PASSED
+- test_validator_underflow.bb ✅
+- test_arg_conversion.bb ✅
+- test_branch_imbalance.bb ✅
+
+**Real-World Tests**: 5/5 PASSED (100%)
+- Dreamfilter.bb (16KB) ✅
+- Save.bb (34KB) ✅
+- UpdateEvents.bb (18KB) ✅
+- FMod.bb (15KB) ✅
+- Menu.bb (60KB, 32 functions) ✅
+
+**Total**: 144KB compiled code, 56 functions, 334 globals, 0 validation errors
+
+**Error Reduction**: 100% elimination of targeted error classes
+- Branch imbalance errors: 0
+- Stack underflow drops: 0
+- Type mismatch in calls: 0
+
+**Documentation**:
+- `WASM_VALIDATION_FIXES_SUMMARY.md` - Implementation details
+- `REAL_WORLD_VALIDATION_RESULTS.md` - Test results
+- `MERGE_READY_SUMMARY.md` - Production readiness
+
+**Branch**: `fix/wasm-validation-trilogy`
+**Status**: Ready for merge

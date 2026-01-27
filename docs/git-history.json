@@ -1,1 +1,34 @@
-[]
+[
+  {
+    "hash": "66c51032d3ab9de1742f952f0a676c3c6aeb39c5",
+    "short_hash": "66c5103",
+    "author": "Jack Valinsky",
+    "date": "2026-01-27T10:53:11-05:00",
+    "message": "docs: Add comprehensive validation test results and merge readiness report\n\n- WASM_VALIDATION_FIXES_SUMMARY.md: Implementation details for all 3 fixes\n- REAL_WORLD_VALIDATION_RESULTS.md: Test results on 5 real SCP-CB files\n- MERGE_READY_SUMMARY.md: Production readiness assessment\n\nAll tests passed: 8/8 files (100%)\nValidation errors: 0 (100% reduction)\nStatus: READY FOR MERGE",
+    "files_changed": 3
+  },
+  {
+    "hash": "dc079cacdca951253973520be4f6e7addd327ebc",
+    "short_hash": "dc079ca",
+    "author": "Jack Valinsky",
+    "date": "2026-01-27T10:14:50-05:00",
+    "message": "fix(codegen): Issue #1 - Add branch balancing for if/else statements\n\n- Calculate stack deltas for then/else branches using StackValidator\n- Add drops to balance branches with different stack effects\n- Handle empty else branch (delta = 0) correctly\n- Added debug logging for branch balancing decisions\n- Created test_branch_imbalance.bb with 6 test cases\n\nThis fixes 'type mismatch at end of if true branch' errors caused by\nBlitz3D statements that leave values on the stack (e.g., function calls\nused as statements where the return value is not used).",
+    "files_changed": 2
+  },
+  {
+    "hash": "116a27d67ad9dfc108f8c2c543a743251a58031e",
+    "short_hash": "116a27d",
+    "author": "Jack Valinsky",
+    "date": "2026-01-27T10:14:07-05:00",
+    "message": "fix(codegen): Issue #3A - Add function argument type conversion\n\n- Added getParamTypeFromModule() helper to extract param types from WASM module\n- Fixed else-if branch to perform type conversion when def is missing\n- Now converts arguments even when SignatureResolver definition is unavailable\n- Added debug logging for argument conversions and warnings\n- Created test_arg_conversion.bb test case\n\nThis fixes 'type mismatch in call' errors when passing float arguments to\ninteger parameters (e.g., DrawImage(img, x#, y#) where x# and y# are float).",
+    "files_changed": 2
+  },
+  {
+    "hash": "c957360c84c1aaaf89c2805d417eab13cbf186c9",
+    "short_hash": "c957360",
+    "author": "Jack Valinsky",
+    "date": "2026-01-27T10:13:16-05:00",
+    "message": "fix(codegen): Issue #2 - Fix StackValidator balanceToTarget logic\n\n- Added guard to prevent drops on empty/underflow stack (actualDelta <= 0)\n- Added diagnostic warnings when drops are emitted with validation errors\n- Added DEBUG assertion to detect incomplete functionDefinitionsByIndex\n- Created test_validator_underflow.bb test case\n\nThis fixes the 'type mismatch in drop, expected [any] but got []' errors\ncaused by the validator incorrectly emitting drops when the stack was\nalready empty or in an underflow state.",
+    "files_changed": 101
+  }
+]

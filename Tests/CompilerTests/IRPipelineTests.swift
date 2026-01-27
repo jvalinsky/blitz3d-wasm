@@ -20,54 +20,98 @@ final class IRPipelineTests: XCTestCase {
         return module.code.last
     }
 
-    // MARK: - Stack Delta Calculator
-    private func calculateStackDelta(_ instructions: [WASMInstruction], trace: inout String) -> Int {
-        var count = 0
-        for instr in instructions {
-            let actualInstr: WASMInstruction
-            if case .sourceLocation(_, let inner) = instr {
-                actualInstr = inner
-            } else {
-                actualInstr = instr
-            }
+    // MARK: - Helpers
 
-            let prevCount = count
-            switch actualInstr {
-            case .i32Const, .f32Const, .localGet, .globalGet:
-                count += 1
-            case .localSet, .globalSet, .localTee, .drop, .brIf:
-                count -= 1
-            case .brTable:
-                count -= 1
-            case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS, .i32And, .i32Or, .i32Xor, .i32Shl, .i32ShrS, .i32RemS:
-                count -= 1 
-            case .f32Add, .f32Sub, .f32Mul, .f32Div, .f32Eq, .f32Ne, .f32Lt, .f32Gt, .f32Le, .f32Ge:
-                count -= 1
-            case .i32EqZ, .f32Neg, .f32ConvertI32S, .i32TruncF32S:
-                break 
-            case .i32Load, .f32Load:
-                break 
-            case .i32Store, .f32Store:
-                count -= 2
-            case .call(let idx):
-                // Simplified arity for tests
-                if idx == 0 { count -= 1 } else { count += 1 }
+    private func walkInstructions(_ instructions: [WASMInstruction], visit: (WASMInstruction) -> Void) {
+        for instr in instructions {
+            switch instr {
+            case .sourceLocation(_, let inner):
+                walkInstructions([inner], visit: visit)
             case .block(_, let body), .loop(_, let body):
-                var innerTrace = ""
-                let inner = calculateStackDelta(body, trace: &innerTrace)
-                count += inner
+                visit(instr)
+                walkInstructions(body, visit: visit)
             case .if(_, let thenBody, let elseBody):
-                count -= 1 // condition
-                var tTrace = ""
-                let thenDelta = calculateStackDelta(thenBody, trace: &tTrace)
-                count += thenDelta
-            case .return:
-                return count
+                visit(instr)
+                walkInstructions(thenBody, visit: visit)
+                if let elseBody {
+                    walkInstructions(elseBody, visit: visit)
+                }
             default:
-                break
+                visit(instr)
             }
         }
-        return count
+    }
+
+    private func containsInstruction(_ instructions: [WASMInstruction], where predicate: (WASMInstruction) -> Bool) -> Bool {
+        var found = false
+        walkInstructions(instructions) { instr in
+            if !found && predicate(instr) {
+                found = true
+            }
+        }
+        return found
+    }
+
+    private final class ModuleTypeContext: ValidatorTypeContext {
+        private let module: WASMModule
+        private let function: WASMFunction
+
+        init(module: WASMModule, function: WASMFunction) {
+            self.module = module
+            self.function = function
+        }
+
+        func localType(at index: Int) -> WASMType? {
+            guard function.typeIndex >= 0 && function.typeIndex < module.types.count else { return nil }
+            let paramTypes = module.types[function.typeIndex].parameters
+            if index < paramTypes.count { return paramTypes[index] }
+            let localIndex = index - paramTypes.count
+            guard localIndex >= 0 && localIndex < function.locals.count else { return nil }
+            return function.locals[localIndex]
+        }
+
+        func globalType(at index: Int) -> WASMType? {
+            guard index >= 0 && index < module.globals.count else { return nil }
+            return module.globals[index].type
+        }
+
+        func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])? {
+            // Global function indices are: [imports...] + [defined functions...]
+            if index < module.imports.count {
+                let imp = module.imports[index]
+                guard imp.kind == .function else { return nil }
+                guard imp.index >= 0 && imp.index < module.types.count else { return nil }
+                let ty = module.types[imp.index]
+                return (params: ty.parameters, results: ty.results)
+            }
+
+            let localIndex = index - module.imports.count
+            guard localIndex >= 0 && localIndex < module.functions.count else { return nil }
+            let typeIndex = module.functions[localIndex]
+            guard typeIndex >= 0 && typeIndex < module.types.count else { return nil }
+            let ty = module.types[typeIndex]
+            return (params: ty.parameters, results: ty.results)
+        }
+    }
+
+    private func assertStackValid(_ module: WASMModule, function: WASMFunction, file: StaticString = #filePath, line: UInt = #line) {
+        guard function.typeIndex >= 0 && function.typeIndex < module.types.count else {
+            XCTFail("Function typeIndex out of range", file: file, line: line)
+            return
+        }
+
+        let sig = module.types[function.typeIndex]
+        let validator = StackValidator(returnTypes: sig.results)
+        let typeContext = ModuleTypeContext(module: module, function: function)
+        validator.typeContext = typeContext
+
+        for instr in function.body {
+            validator.validateInstruction(instr)
+        }
+
+        if !validator.isValid {
+            XCTFail("Stack validation failed:\n\(validator.errors.joined(separator: "\n"))", file: file, line: line)
+        }
     }
 
     func testIfStatementStackBalance() throws {
@@ -85,10 +129,7 @@ final class IRPipelineTests: XCTestCase {
             XCTFail("Main function not found")
             return
         }
-
-        var trace = ""
-        let delta = calculateStackDelta(main.body, trace: &trace)
-        XCTAssertEqual(delta, 1)
+        assertStackValid(module, function: main)
     }
 
     func testWhileLoopStackBalance() throws {
@@ -106,10 +147,7 @@ final class IRPipelineTests: XCTestCase {
             XCTFail("Main function not found")
             return
         }
-
-        var trace = ""
-        let delta = calculateStackDelta(main.body, trace: &trace)
-        XCTAssertEqual(delta, 1)
+        assertStackValid(module, function: main)
     }
 
     func testForLoopStackBalance() throws {
@@ -127,10 +165,7 @@ final class IRPipelineTests: XCTestCase {
             XCTFail("Main function not found")
             return
         }
-
-        var trace = ""
-        let delta = calculateStackDelta(main.body, trace: &trace)
-        XCTAssertEqual(delta, 1)
+        assertStackValid(module, function: main)
     }
 
     func testTypePromotion() throws {
@@ -146,10 +181,8 @@ final class IRPipelineTests: XCTestCase {
             return
         }
 
-        let hasF32Add = main.body.contains { instr in
-            let actual: WASMInstruction
-            if case .sourceLocation(_, let inner) = instr { actual = inner } else { actual = instr }
-            if case .f32Add = actual { return true }
+        let hasF32Add = containsInstruction(main.body) { instr in
+            if case .f32Add = instr { return true }
             return false
         }
         XCTAssertTrue(hasF32Add)
@@ -209,15 +242,10 @@ final class IRPipelineTests: XCTestCase {
             XCTFail("Main function not found")
             return
         }
-
-        var trace = ""
-        let delta = calculateStackDelta(main.body, trace: &trace)
-        if delta != 1 {
-            XCTFail("Function returning i32 should have net 1 stack delta, got \(delta)\nTrace:\n\(trace)")
-        }
+        assertStackValid(module, function: main)
         
         let bodyStr = "\(main.body)"
-        XCTAssertTrue(bodyStr.contains("i32LtS"), "Negative step loop should use i32.lt_s comparison")
+        XCTAssertTrue(bodyStr.contains("i32GeS"), "Negative step loop should use i32.ge_s comparison")
     }
 
     func testDefaultArguments() throws {
@@ -237,11 +265,9 @@ final class IRPipelineTests: XCTestCase {
             return
         }
 
-        var found42 = false
-        for instr in main.body {
-            let actual: WASMInstruction
-            if case .sourceLocation(_, let inner) = instr { actual = inner } else { actual = instr }
-            if case .i32Const(let val) = actual, val == 42 { found42 = true }
+        let found42 = containsInstruction(main.body) { instr in
+            if case .i32Const(let val) = instr, val == 42 { return true }
+            return false
         }
         XCTAssertTrue(found42, "Should synthesize default argument 42")
     }
@@ -258,8 +284,13 @@ final class IRPipelineTests: XCTestCase {
         let program = parser.parse()
         let lowering = ASTLowering(context: ModuleContext(module: WASMModule()))
         let irModule = lowering.lower(program)
-        
-        let helloBytes = Array("hello".utf8) + [0]
+
+        func leBytes(_ v: Int32) -> [UInt8] {
+            withUnsafeBytes(of: v.littleEndian) { Array($0) }
+        }
+
+        // Strings are stored as: [refCount:i32][length:i32][utf8 bytes...][0]
+        let helloBytes = leBytes(1) + leBytes(Int32("hello".utf8.count)) + Array("hello".utf8) + [0]
         let helloSegments = irModule.data.filter { Array($0.data) == helloBytes }
         XCTAssertEqual(helloSegments.count, 1)
     }

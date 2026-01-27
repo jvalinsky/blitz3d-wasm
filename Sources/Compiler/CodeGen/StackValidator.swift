@@ -320,7 +320,7 @@ class StackValidator {
     
     /// Validate a WASM instruction's stack effect
     func validateInstruction(_ instr: WASMInstruction) {
-        print("VALIDATE: \(instr) (Depth: \(vals.count))")
+        CompilerLogger.trace("VALIDATE: \(instr) (Depth: \(vals.count))")
         switch instr {
         // Constants
         case .i32Const:
@@ -747,7 +747,7 @@ extension StackValidator {
         if excessValues > 0 && actualDelta > 0 {
             // Log diagnostic for debugging
             if !errors.isEmpty {
-                print("STACK_VALIDATOR_WARNING: Adding \(excessValues) drops with \(errors.count) validation errors present")
+                CompilerLogger.warn("STACK_VALIDATOR_WARNING: Adding \(excessValues) drops with \(errors.count) validation errors present")
             }
 
             for _ in 0..<excessValues {
@@ -755,7 +755,7 @@ extension StackValidator {
             }
         } else if excessValues > 0 && actualDelta <= 0 {
             // Stack underflow detected - DO NOT add drops
-            print("STACK_VALIDATOR_ERROR: Cannot balance to target=\(targetDelta). actualDelta=\(actualDelta) indicates underflow")
+            CompilerLogger.error("STACK_VALIDATOR_ERROR: Cannot balance to target=\(targetDelta). actualDelta=\(actualDelta) indicates underflow")
             // Return 0 to indicate no drops were added
             return 0
         }

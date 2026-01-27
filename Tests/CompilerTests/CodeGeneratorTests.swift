@@ -959,9 +959,9 @@ final class CodeGeneratorTests: XCTestCase {
         var preprocessor = Preprocessor()
         let processed = try preprocessor.process(file: mainPath)
         
-        // Function should appear twice (Blitz3D allows this, it's a user error)
+        // Include deduplication prevents duplicate processing.
         let count = processed.components(separatedBy: "Function CountCalls").count - 1
-        XCTAssertEqual(count, 2, "Include twice should include content twice")
+        XCTAssertEqual(count, 1, "Include twice should only include content once")
         
         // Clean up
         try FileManager.default.removeItem(atPath: utilsPath)

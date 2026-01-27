@@ -390,11 +390,11 @@ public final class IREmitter {
             // If step is a constant, we can optimize. If not, we need a runtime check.
             var stepVal: Int32 = 1
             var isConstantStep = false
-            if case .constI32(let s) = step {
+            if let stepValue = step, case .constI32(let s) = stepValue {
                 stepVal = s
                 isConstantStep = true
             }
-            
+
             let stepInstrs = step.map { emitValue($0) } ?? [.i32Const(1)]
             
             // Provide a predictable loop structure for `break`/`continue`.
@@ -846,7 +846,7 @@ public final class IREmitter {
         let maxIdx = f.parameters.count + f.locals.count
         if index < 0 || index >= maxIdx {
             // This is a compiler bug indicator
-            print("FATAL: IR local index \(index) out of range (max \(maxIdx-1)) in function \(f.name)")
+            CompilerLogger.error("FATAL: IR local index \(index) out of range (max \(maxIdx-1)) in function \(f.name)")
         }
     }
 }

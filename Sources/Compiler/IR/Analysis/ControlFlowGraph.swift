@@ -287,7 +287,27 @@ public final class CFGBuilder {
 
                 let loopVarType = start.type
                 let loopVar = IRValue.localGet(index: index, type: loopVarType)
-                let cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
+
+                // For-loop direction:
+                // - Positive step: continue while i <= end
+                // - Negative step: continue while i >= end
+                // - Unknown step: (step > 0 && i <= end) || (step < 0 && i >= end)
+                let stepVal = step ?? .constI32(1)
+                let cond: IRValue
+                if case .constI32(let s) = stepVal {
+                    if s < 0 {
+                        cond = IRValue.binary(op: ">=", lhs: loopVar, rhs: end, resultType: .i32)
+                    } else {
+                        cond = IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32)
+                    }
+                } else {
+                    let zero: IRValue = .constI32(0)
+                    let stepGT0 = IRValue.binary(op: ">", lhs: stepVal, rhs: zero, resultType: .i32)
+                    let stepLT0 = IRValue.binary(op: "<", lhs: stepVal, rhs: zero, resultType: .i32)
+                    let pos = IRValue.binary(op: "And", lhs: stepGT0, rhs: IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32), resultType: .i32)
+                    let neg = IRValue.binary(op: "And", lhs: stepLT0, rhs: IRValue.binary(op: ">=", lhs: loopVar, rhs: end, resultType: .i32), resultType: .i32)
+                    cond = IRValue.binary(op: "Or", lhs: pos, rhs: neg, resultType: .i32)
+                }
                 headerBlock.terminator = .condBranch(condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
 
                 let ctx = LoopContext(breakTarget: exitBlock, continueTarget: latchBlock)
@@ -302,8 +322,8 @@ public final class CFGBuilder {
                 _ = loopStack.popLast()
 
                 currentBlock = latchBlock
-                let stepVal = step ?? .constI32(1)
-                let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: stepVal, resultType: loopVarType)
+                let incStep = step ?? .constI32(1)
+                let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: incStep, resultType: loopVarType)
                 currentBlock.instructions.append(.assignLocal(index: index, value: inc))
                 currentBlock.terminator = .branch(target: headerBlock)
 

@@ -42,11 +42,17 @@ blitz3d-wasm [options] <input.bb|project.json> [-o <output.wasm>]
 
 Options:
   -o, --output <file>     Output WASM file (default: input.wasm)
+  -g, --source-map        Generate source map (.wasm.map)
+  -d, --debug             Instrument with live debug hooks
+  --quiet                 Suppress non-error compiler logs
+  --verbose               Enable verbose compiler logs
   -h, --help              Show this help
   -t, --tokens            Show tokens only (debug)
   -w, --wat               Output WebAssembly text format (.wat)
   -a, --assets <dir>      Include assets from directory
   -I, --input-dir <dir>   Input directory for multi-file projects
+  -p, --project <file>    Project file (JSON) specifying sources and assets
+  --no-dedupe-includes    Do not dedupe repeated Include statements
   --embed-assets          Embed assets into WASM data sections
   --manifest              Generate asset manifest JSON
 ```
@@ -61,6 +67,8 @@ Include "utils.bb"
 
 ; ... rest of code
 ```
+
+By default, includes are deduped to avoid accidental double-inclusion. Use `--no-dedupe-includes` if you need strict textual inclusion.
 
 ## Running in Browser
 

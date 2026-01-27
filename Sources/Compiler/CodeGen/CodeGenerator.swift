@@ -178,7 +178,7 @@ public struct CodeGenerator {
         }
 
         if totalOptimized > 0 {
-            print("DEBUG_SCHEDULER: Optimized \(totalOptimized) function(s) with stack scheduling")
+            CompilerLogger.debug("DEBUG_SCHEDULER: Optimized \(totalOptimized) function(s) with stack scheduling")
         }
     }
     
@@ -791,7 +791,7 @@ public struct CodeGenerator {
         #if DEBUG
         for (name, _) in context.functionIndexMap {
             if context.functionDefinitions[name] == nil {
-                print("WARNING: Function '\(name)' in functionIndexMap but missing from functionDefinitions")
+                CompilerLogger.warn("WARNING: Function '\(name)' in functionIndexMap but missing from functionDefinitions")
             }
         }
         #endif
@@ -871,7 +871,7 @@ public struct CodeGenerator {
                 
                 context.fieldOffsets[typeNode.name.lowercased()]?[field.name.lowercased()] = offset
                 typeFieldOffsets[field.name.lowercased()] = offset
-                print("DEBUG_FIELD: Type=\(typeNode.name) Field=\(field.name) Offset=\(offset)")
+                CompilerLogger.debug("DEBUG_FIELD: Type=\(typeNode.name) Field=\(field.name) Offset=\(offset)")
                 typeFieldTypes[field.name.lowercased()] = field.type?.rawValue ?? "Int"
                 
                 // Store dimensions if field is an array
@@ -965,10 +965,9 @@ public struct CodeGenerator {
             
             let def = FunctionDefinition(params: paramTypes, results: results, defaults: defaults.isEmpty ? nil : defaults)
             
-            // Don't overwrite existing definitions (e.g., from imports)
-            if context.functionDefinitions[lowerName] == nil {
-                context.functionDefinitions[lowerName] = def
-            }
+            // User-defined functions shadow any existing import definition with the same name.
+            // (SCPCB defines many helper functions that may collide with auto-imported/hard-coded names.)
+            context.functionDefinitions[lowerName] = def
             
             // Also register the type signature in the module
             let resStr = results.map { $0.rawValue }.joined(separator: ", ")
@@ -980,12 +979,10 @@ public struct CodeGenerator {
                 context.typeIndexMap[sig] = typeIdx
             }
             
-            // Register function index if not already present (imports)
-            let funcIdx = context.functionIndexMap[lowerName] ?? nextFuncIdx
-            if context.functionIndexMap[lowerName] == nil {
-                context.functionIndexMap[lowerName] = nextFuncIdx
-            }
-            context.functionDefinitionsByIndex[funcIdx] = def
+            // Assign a stable local function index for this user-defined function, even if an import exists
+            // with the same name. Calls should resolve to the user function within this compilation unit.
+            context.functionIndexMap[lowerName] = nextFuncIdx
+            context.functionDefinitionsByIndex[nextFuncIdx] = def
 
             // Store original name for exports (preserves case)
             context.functionOriginalNames[lowerName] = function.name
@@ -1004,22 +1001,22 @@ public struct CodeGenerator {
     
     private mutating func processGlobalDeclarations(_ statements: [StatementNode]) {
         let typeHandling = TypeHandling()
-        print("DEBUG_GLOBAL_PROC: Processing \(statements.count) statements for Global declarations")
+        CompilerLogger.debug("DEBUG_GLOBAL_PROC: Processing \(statements.count) statements for Global declarations")
         var globalCount = 0
         for statement in statements {
             if case .global(let decl, _) = statement {
                 globalCount += 1
-                print("DEBUG_GLOBAL_PROC: Found Global statement #\(globalCount) with \(decl.variables.count) variable(s)")
+                CompilerLogger.debug("DEBUG_GLOBAL_PROC: Found Global statement #\(globalCount) with \(decl.variables.count) variable(s)")
                 for variable in decl.variables {
                     let wasmType = typeHandling.typeInfo(from: variable.typeSuffix).wasmType
-                    print("DEBUG_GLOBAL: Registering global '\(variable.name)' with suffix=\(variable.typeSuffix?.rawValue ?? "none") → wasmType=\(wasmType)")
+                    CompilerLogger.debug("DEBUG_GLOBAL: Registering global '\(variable.name)' with suffix=\(variable.typeSuffix?.rawValue ?? "none") → wasmType=\(wasmType)")
                     let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
                     _ = context.variableManagement.registerGlobalWithIndex(variable.name, type: wasmType, typeName: variable.typeName, wasmIndex: actualGlobalIdx)
                     context.module.exports.append(WASMExport(name: variable.name, kind: .global, index: actualGlobalIdx))
                 }
             }
         }
-        print("DEBUG_GLOBAL_PROC: Finished processing. Found \(globalCount) Global statements")
+        CompilerLogger.debug("DEBUG_GLOBAL_PROC: Finished processing. Found \(globalCount) Global statements")
     }
     
     private func extractTopLevelStatements(_ statements: [StatementNode]) -> [StatementNode] {

@@ -10,8 +10,23 @@ import Foundation
 public struct Preprocessor {
     private var includedFiles: Set<String> = []
     private var rootDirectory: String = ""
+    private let dedupeIncludes: Bool
+    private var includeStack: [String] = []
     
-    public init() {}
+    public init(dedupeIncludes: Bool = true) {
+        self.dedupeIncludes = dedupeIncludes
+    }
+
+    public enum PreprocessorError: Error, CustomStringConvertible {
+        case circularInclude(stack: [String], next: String)
+
+        public var description: String {
+            switch self {
+            case .circularInclude(let stack, let next):
+                return "Circular Include detected: \(stack.joined(separator: " -> ")) -> \(next)"
+            }
+        }
+    }
     
     public struct PreprocessedSource {
         public let source: String
@@ -22,7 +37,10 @@ public struct Preprocessor {
     public mutating func process(file: String) throws -> String {
         let url = URL(fileURLWithPath: file)
         rootDirectory = url.deletingLastPathComponent().path
-        includedFiles.insert(url.path)
+        if dedupeIncludes {
+            includedFiles.insert(url.path)
+        }
+        includeStack = [url.path]
         
         let source = try String(contentsOfFile: file, encoding: .utf8)
         return try processSource(source)
@@ -59,12 +77,58 @@ public struct Preprocessor {
         return result
     }
 
+    private func resolveCaseInsensitivePath(baseDirectory: String, relativePath: String) -> String? {
+        let fm = FileManager.default
+        let normalized = relativePath.replacingOccurrences(of: "\\", with: "/")
+        let components = normalized.split(separator: "/").map(String.init).filter { !$0.isEmpty }
+
+        var current = baseDirectory
+        for component in components {
+            if component == "." { continue }
+            if component == ".." {
+                current = (current as NSString).deletingLastPathComponent
+                continue
+            }
+
+            guard let entries = try? fm.contentsOfDirectory(atPath: current) else {
+                return nil
+            }
+
+            if let match = entries.first(where: { $0.lowercased() == component.lowercased() }) {
+                current = (current as NSString).appendingPathComponent(match)
+            } else {
+                return nil
+            }
+        }
+
+        return URL(fileURLWithPath: current).standardized.path
+    }
+
+    private func resolveIncludePath(_ includePath: String) -> String {
+        let normalized = includePath.replacingOccurrences(of: "\\", with: "/")
+        let candidate = (rootDirectory as NSString).appendingPathComponent(normalized)
+
+        if FileManager.default.fileExists(atPath: candidate) {
+            return URL(fileURLWithPath: candidate).standardized.path
+        }
+
+        if let resolved = resolveCaseInsensitivePath(baseDirectory: rootDirectory, relativePath: normalized) {
+            return resolved
+        }
+
+        // Fall back to the candidate path; caller will surface the read error.
+        return URL(fileURLWithPath: candidate).standardized.path
+    }
+
     /// Preprocess a file and return merged source plus a line map back to original files.
     /// This is opt-in to avoid disrupting existing call sites.
     public mutating func processWithMap(file: String) throws -> PreprocessedSource {
         let url = URL(fileURLWithPath: file)
         rootDirectory = url.deletingLastPathComponent().path
-        includedFiles.insert(url.path)
+        if dedupeIncludes {
+            includedFiles.insert(url.path)
+        }
+        includeStack = [url.path]
         
         let (src, map) = try processFileWithMap(path: url.path)
         return PreprocessedSource(source: src, lineMap: map)
@@ -94,17 +158,21 @@ public struct Preprocessor {
                         let mergedLine = result.components(separatedBy: .newlines).count - 1
                         lineMap[mergedLine] = (file: path, line: lineNumber)
                     } else {
-                        // Resolve include file and merge with mapping
-                        var fullPath = (rootDirectory as NSString).appendingPathComponent(includePath)
-                        fullPath = fullPath.replacingOccurrences(of: "\\", with: "/")
+                        // Resolve include file (case-insensitive) and merge with mapping
+                        let canonical = resolveIncludePath(includePath)
+                        let url = URL(fileURLWithPath: canonical)
                         
-                        let url = URL(fileURLWithPath: fullPath)
-                        let canonical = url.standardized.path
-                        
-                        if includedFiles.contains(canonical) {
+                        if includeStack.contains(canonical) {
+                            throw PreprocessorError.circularInclude(stack: includeStack, next: canonical)
+                        }
+                        if dedupeIncludes && includedFiles.contains(canonical) {
                             continue
                         }
-                        includedFiles.insert(canonical)
+                        if dedupeIncludes {
+                            includedFiles.insert(canonical)
+                        }
+                        includeStack.append(canonical)
+                        defer { _ = includeStack.popLast() }
                         
                         let oldRoot = rootDirectory
                         rootDirectory = url.deletingLastPathComponent().path
@@ -168,21 +236,23 @@ public struct Preprocessor {
     }
     
     private mutating func includeFile(_ path: String, into result: inout String) throws {
-        // Resolve path relative to CURRENT rootDirectory
-        var fullPath = (rootDirectory as NSString).appendingPathComponent(path)
+        // Resolve path relative to CURRENT rootDirectory (case-insensitive)
+        let canonicalPath = resolveIncludePath(path)
+        let url = URL(fileURLWithPath: canonicalPath)
         
-        // Handle Windows-style backslashes
-        fullPath = fullPath.replacingOccurrences(of: "\\", with: "/")
-        
-        let url = URL(fileURLWithPath: fullPath)
-        let canonicalPath = url.standardized.path
-        
-        if includedFiles.contains(canonicalPath) {
-            print("DEBUG: Skipping already included file: \(path)")
+        if includeStack.contains(canonicalPath) {
+            throw PreprocessorError.circularInclude(stack: includeStack, next: canonicalPath)
+        }
+        if dedupeIncludes && includedFiles.contains(canonicalPath) {
+            CompilerLogger.debug("DEBUG: Skipping already included file: \(path)")
             return
         }
-        includedFiles.insert(canonicalPath)
-        print("DEBUG: Including file: \(path) -> \(canonicalPath)")
+        if dedupeIncludes {
+            includedFiles.insert(canonicalPath)
+        }
+        includeStack.append(canonicalPath)
+        defer { _ = includeStack.popLast() }
+        CompilerLogger.debug("DEBUG: Including file: \(path) -> \(canonicalPath)")
         
         // Try UTF-8 first, fallback to Windows-1252
         var source = ""
@@ -195,14 +265,14 @@ public struct Preprocessor {
         
         // Save current root, update for recursion, then restore
         let oldRoot = rootDirectory
-        print("DEBUG: Included \(path). Switching root from \(oldRoot) to \(url.deletingLastPathComponent().path)")
+        CompilerLogger.debug("DEBUG: Included \(path). Switching root from \(oldRoot) to \(url.deletingLastPathComponent().path)")
         rootDirectory = url.deletingLastPathComponent().path
         
         // RECURSION: processSource calls includeFile, which uses the updated rootDirectory
         let processedSource = try processSource(source)
         result += processedSource + "\n"
         
-        print("DEBUG: Restoring root to \(oldRoot)")
+        CompilerLogger.debug("DEBUG: Restoring root to \(oldRoot)")
         rootDirectory = oldRoot
     }
 }

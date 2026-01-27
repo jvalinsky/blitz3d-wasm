@@ -93,7 +93,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             let totalFunctions = context.module.imports.count + context.module.functions.count
             let mappedFunctions = context.functionDefinitionsByIndex.count
             if mappedFunctions < totalFunctions && totalFunctions > 0 {
-                print("STACK_VALIDATOR_WARNING: functionDefinitionsByIndex incomplete. Expected \(totalFunctions), got \(mappedFunctions)")
+                CompilerLogger.warn("STACK_VALIDATOR_WARNING: functionDefinitionsByIndex incomplete. Expected \(totalFunctions), got \(mappedFunctions)")
             }
         }
         #endif
@@ -110,8 +110,11 @@ public final class StatementGeneration: ValidatorTypeContext {
                  function.body.insert(.i32Const(Int32(statement.span.start.line)), at: startIndex)
                  function.body.insert(.i32Const(Int32(fileId)), at: startIndex)
             }
-            
-            function.body[startIndex] = .sourceLocation(statement.span, function.body[startIndex])
+
+            // Only emit source locations when explicitly enabled (source maps or debugging).
+            if context.sourceMapGenerator != nil || context.debugGenerator != nil {
+                function.body[startIndex] = .sourceLocation(statement.span, function.body[startIndex])
+            }
         }
     }
     
@@ -204,19 +207,19 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             switch assign.target {
             case .identifier(let id, _):
-                print("DEBUG_ASSIGN: Assigning to '\(id.name)' suffix=\(id.typeSuffix?.rawValue ?? "none") targetType=\(targetType) valueType=\(valueResult.type)")
+                CompilerLogger.debug("DEBUG_ASSIGN: Assigning to '\(id.name)' suffix=\(id.typeSuffix?.rawValue ?? "none") targetType=\(targetType) valueType=\(valueResult.type)")
                 
                 if let local = context.variableManagement.localInfo(for: id.name) {
-                    print("  → Found as local[\(local.index)] type=\(local.type)")
+                    CompilerLogger.debug("  → Found as local[\(local.index)] type=\(local.type)")
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.localSet(local.index))
                 } else if let global = context.variableManagement.globalInfo(for: id.name) {
-                    print("  → Found as global[\(global.index)] type=\(global.type)")
+                    CompilerLogger.debug("  → Found as global[\(global.index)] type=\(global.type)")
                     function.body.append(contentsOf: finalInstrs)
                     function.body.append(.globalSet(global.index))
                 } else {
                     // Auto-declare implicit variable as global (Blitz3D behavior)
-                    print("  → NOT FOUND, auto-declaring as global")
+                    CompilerLogger.debug("  → NOT FOUND, auto-declaring as global")
                     let wasmType = targetType
                     
                     // Register actual WASM global and track in VariableManagement
@@ -317,8 +320,8 @@ public final class StatementGeneration: ValidatorTypeContext {
                     } else {
                         // Field array resolution failed - drop object pointer and value to balance stack
                         function.body.append(.drop) // Drop object pointer
-                        function.body.append(contentsOf: finalInstrs)
-                        function.body.append(.drop) // Drop value
+                        // Balance RHS only if it actually produces a value (e.g. non-void function call)
+                        function.body.append(contentsOf: validateAndBalance(finalInstrs, targetDelta: 0))
                     }
                 }
             case .fieldAccess(let access, _):
@@ -346,8 +349,8 @@ public final class StatementGeneration: ValidatorTypeContext {
                 } else {
                     // Type resolution failed - drop object pointer and value to balance stack
                     function.body.append(.drop) // Drop object pointer
-                    function.body.append(contentsOf: finalInstrs)
-                    function.body.append(.drop) // Drop value
+                    // Balance RHS only if it actually produces a value (e.g. non-void function call)
+                    function.body.append(contentsOf: validateAndBalance(finalInstrs, targetDelta: 0))
                 }
             case .functionCall(let call, _):
                 // In Blitz3D, array access uses function call syntax: ArrayName(index)
@@ -390,15 +393,13 @@ public final class StatementGeneration: ValidatorTypeContext {
                     }
                 } else {
                     // Not found as array - drop the value to balance stack
-                    function.body.append(contentsOf: finalInstrs)
-                    function.body.append(.drop)
+                    function.body.append(contentsOf: validateAndBalance(finalInstrs, targetDelta: 0))
                 }
                 
             default:
                 // Assignment target type not directly handled
                 // Drop the RHS value to balance the stack
-                function.body.append(contentsOf: finalInstrs)
-                function.body.append(.drop)
+                function.body.append(contentsOf: validateAndBalance(finalInstrs, targetDelta: 0))
                 break
             }
             
@@ -407,18 +408,43 @@ public final class StatementGeneration: ValidatorTypeContext {
             let (instrs, type) = expressionGenerator.generateWithInfo(.functionCall(call, call.span), allowVoidAsValue: true)
             function.body.append(contentsOf: instrs)
             
-            // Drop only when the resolved signature reports a result (or, if unknown, when the generated value is non-void)
+            // Drop only when the *actual WASM function type* reports a result.
+            // (SignatureResolver can drift from the module imports; the module type is validation source-of-truth.)
             var shouldDrop = false
             var internalName = call.name.lowercased()
             if internalName.hasSuffix("$") || internalName.hasSuffix("#") || internalName.hasSuffix("%") {
                 internalName = String(internalName.dropLast())
             }
-            let signatureResolver = SignatureResolver(context: context)
-            if let def = signatureResolver.definition(forName: internalName) {
-                shouldDrop = !def.results.isEmpty
+            if let funcIdx = context.functionIndexMap[internalName] {
+                // Imported vs local functions store their type index differently.
+                if Int(funcIdx) < context.module.imports.count {
+                    let importEntry = context.module.imports[Int(funcIdx)]
+                    if importEntry.kind == .function, importEntry.index < context.module.types.count {
+                        shouldDrop = !context.module.types[importEntry.index].results.isEmpty
+                    }
+                } else {
+                    // For local functions, rely on pre-registered signatures first (forward calls happen before
+                    // the function body is emitted into module.functions).
+                    if let def = context.functionDefinitionsByIndex[Int(funcIdx)] {
+                        shouldDrop = !def.results.isEmpty
+                    } else {
+                        let localFuncIdx = Int(funcIdx) - context.module.imports.count
+                        if localFuncIdx < context.module.functions.count {
+                            let typeIdx = context.module.functions[localFuncIdx]
+                            if typeIdx < context.module.types.count {
+                                shouldDrop = !context.module.types[typeIdx].results.isEmpty
+                            }
+                        }
+                    }
+                }
             } else {
-                // Fallback: use generated type info if signature is unknown
-                shouldDrop = (type != WASMType.void)
+                // Fallback: use SignatureResolver if we don't have a module mapping, otherwise generated type info.
+                let signatureResolver = SignatureResolver(context: context)
+                if let def = signatureResolver.definition(forName: internalName) {
+                    shouldDrop = !def.results.isEmpty
+                } else {
+                    shouldDrop = (type != WASMType.void)
+                }
             }
             // Note: auto-import allowlists may include real void-returning built-ins, so never force-drop
             // just because a name is auto-importable.
@@ -522,13 +548,13 @@ public final class StatementGeneration: ValidatorTypeContext {
 
                 if thenDelta > elseDelta {
                     let dropCount = thenDelta - elseDelta
-                    print("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to then branch (delta: \(thenDelta) vs \(elseDelta))")
+                    CompilerLogger.debug("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to then branch (delta: \(thenDelta) vs \(elseDelta))")
                     for _ in 0..<dropCount {
                         balancedThen.append(.drop)
                     }
                 } else if elseDelta > thenDelta {
                     let dropCount = elseDelta - thenDelta
-                    print("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to else branch (delta: \(elseDelta) vs \(thenDelta))")
+                    CompilerLogger.debug("DEBUG_BRANCH_BALANCE: Adding \(dropCount) drop(s) to else branch (delta: \(elseDelta) vs \(thenDelta))")
                     if balancedElse != nil {
                         for _ in 0..<dropCount {
                             balancedElse!.append(.drop)
@@ -537,7 +563,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 } else if thenDelta != 0 || elseDelta != 0 {
                     // Both branches have same non-zero delta - this is fine for if expressions
                     // but for if statements (blockType = .void), we should warn
-                    print("DEBUG_BRANCH_WARNING: Both branches have delta=\(thenDelta), but blockType is .void")
+                    CompilerLogger.warn("DEBUG_BRANCH_WARNING: Both branches have delta=\(thenDelta), but blockType is .void")
                 }
 
                 result.append(.if(.void, balancedThen, balancedElse))
@@ -1022,54 +1048,55 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
             
         case .delete(let expr, _):
-            print("DEBUG_DELETE: expr=\(expr)")
+            CompilerLogger.debug("DEBUG_DELETE: expr=\(expr)")
             guard let typeName = getTypeName(from: expr) else {
-                print("DEBUG_DELETE: typeName is nil!")
+                CompilerLogger.warn("DEBUG_DELETE: typeName is nil!")
                 break
             }
-            print("DEBUG_DELETE: typeName=\(typeName)")
+            CompilerLogger.debug("DEBUG_DELETE: typeName=\(typeName)")
             guard let typeInfo = context.userTypes[typeName.lowercased()] else {
-                print("DEBUG_DELETE: typeInfo not found for \(typeName.lowercased())")
+                CompilerLogger.warn("DEBUG_DELETE: typeInfo not found for \(typeName.lowercased())")
                 break
             }
             guard let expressionGenerator = expressionGenerator else {
-                print("DEBUG_DELETE: no expressionGenerator")
+                CompilerLogger.warn("DEBUG_DELETE: no expressionGenerator")
                 break
             }
             
             let objInstrs = expressionGenerator.generate(expr)
             function.body.append(contentsOf: objInstrs)
-            function.body.append(.localSet(0)) // local 0: obj
+            // Use a dedicated scratch global instead of assuming a local[0] exists.
+            function.body.append(.globalSet(context.scratchGlobalIdx)) // obj
             
             // 1. Unstitch
             // if (obj.prev != 0) obj.prev.next = obj.next
             // else first = obj.next
-            function.body.append(.localGet(0))
+            function.body.append(.globalGet(context.scratchGlobalIdx))
             function.body.append(.i32Load(2, 0)) // obj.prev
             function.body.append(.if(.void, [
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 0), // prev
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 4), // next
                 .i32Store(2, 4) // prev.next = obj.next
             ], [
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 4), // next
                 .globalSet(typeInfo.firstGlobalIdx) // first = next
             ]))
             
             // if (obj.next != 0) obj.next.prev = obj.prev
             // else last = obj.prev
-            function.body.append(.localGet(0))
+            function.body.append(.globalGet(context.scratchGlobalIdx))
             function.body.append(.i32Load(2, 4)) // obj.next
             function.body.append(.if(.void, [
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 4), // next
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 0), // prev
                 .i32Store(2, 0) // next.prev = obj.prev
             ], [
-                .localGet(0),
+                .globalGet(context.scratchGlobalIdx),
                 .i32Load(2, 0), // prev
                 .globalSet(typeInfo.lastGlobalIdx) // last = prev
             ]))
@@ -1077,15 +1104,15 @@ public final class StatementGeneration: ValidatorTypeContext {
             // 2. Recycle
             // obj.next = freeHead
             // freeHead = obj
-            function.body.append(.localGet(0))
+            function.body.append(.globalGet(context.scratchGlobalIdx))
             function.body.append(.globalGet(typeInfo.freeHeadGlobalIdx))
             function.body.append(.i32Store(2, 4)) // using next field for free list
             
-            function.body.append(.localGet(0))
+            function.body.append(.globalGet(context.scratchGlobalIdx))
             function.body.append(.globalSet(typeInfo.freeHeadGlobalIdx))
             
             // Invalidate typeID for safety
-            function.body.append(.localGet(0))
+            function.body.append(.globalGet(context.scratchGlobalIdx))
             function.body.append(.i32Const(0))
             function.body.append(.i32Store(2, 8))
             
@@ -1241,21 +1268,21 @@ public final class StatementGeneration: ValidatorTypeContext {
             // If the variable already exists, trust the registry type to keep the module consistent.
             // (We can't change an already-declared WASM local/global's type after the fact.)
             if let local = context.variableManagement.localInfo(for: id.name) {
-                print("  → From local registry: \(local.type)")
+                CompilerLogger.debug("  → From local registry: \(local.type)")
                 return local.type
             }
             if let global = context.variableManagement.globalInfo(for: id.name) {
-                print("  → From global registry: \(global.type)")
+                CompilerLogger.debug("  → From global registry: \(global.type)")
                 return global.type
             }
 
             // Otherwise, use an explicit suffix if provided (Blitz3D typing).
             if let suffix = id.typeSuffix {
                 let type = typeHandling.wasmType(from: suffix)
-                print("  → From suffix: \(type)")
+                CompilerLogger.debug("  → From suffix: \(type)")
                 return type
             }
-            print("  → DEFAULT: i32")
+            CompilerLogger.debug("  → DEFAULT: i32")
         case .arrayAccess(let access, _):
             if case .identifier(let arrayId, _) = access.array,
                let array = context.variableManagement.arrayInfo(for: arrayId.name) {
@@ -1596,9 +1623,39 @@ public final class StatementGeneration: ValidatorTypeContext {
     }
     
     func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])? {
+        // Prefer the WASM module signature (source of truth), then fall back to resolved definitions.
+        // This is critical for stack validation: signature drift can cause invalid drops.
+        let imports = context.module.imports
+        let types = context.module.types
+
+        // Map function index -> import (function-only) or local function.
+        var importedFunctionCount = 0
+        for imp in imports {
+            guard imp.kind == .function else { continue }
+            if importedFunctionCount == index {
+                let typeIdx = imp.index
+                if typeIdx >= 0 && typeIdx < types.count {
+                    let fnType = types[typeIdx]
+                    return (fnType.parameters, fnType.results)
+                }
+                break
+            }
+            importedFunctionCount += 1
+        }
+
+        let localFuncIdx = index - importedFunctionCount
+        if localFuncIdx >= 0 && localFuncIdx < context.module.functions.count {
+            let typeIdx = context.module.functions[localFuncIdx]
+            if typeIdx >= 0 && typeIdx < types.count {
+                let fnType = types[typeIdx]
+                return (fnType.parameters, fnType.results)
+            }
+        }
+
         if let def = context.functionDefinitionsByIndex[index] {
             return (def.params, def.results)
         }
+
         return nil
     }
 }

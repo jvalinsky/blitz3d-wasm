@@ -23,7 +23,7 @@ public struct Lexer {
         self.currentColumn = 1
         self.lineStarts = [source.startIndex]
         
-        print("DEBUG_LEXER: Initialized with source length: \(source.count) characters")
+        CompilerLogger.trace("DEBUG_LEXER: Initialized with source length: \(source.count) characters")
         
         // Pre-compute line starts for error reporting
         var idx = source.startIndex
@@ -34,7 +34,7 @@ public struct Lexer {
             idx = source.index(after: idx)
         }
         
-        print("DEBUG_LEXER: Found \(lineStarts.count) lines")
+        CompilerLogger.trace("DEBUG_LEXER: Found \(lineStarts.count) lines")
     }
     
     public mutating func nextToken() -> Token {
@@ -44,7 +44,7 @@ public struct Lexer {
         let startColumn = currentColumn
         
         guard currentIndex < source.endIndex else {
-            print("DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
+            CompilerLogger.trace("DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
             return makeToken(.endOfFile, text: "", line: currentLine, column: currentColumn)
         }
         
@@ -328,13 +328,13 @@ public struct Lexer {
             if !nextWord.isEmpty {
                 let combined = text + " " + nextWord
                 if let keywordType = keywordMap[combined.lowercased()] {
-                    print("DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)")
+                    CompilerLogger.trace("DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)")
                     return makeToken(keywordType, text: combined, line: startLine, column: startColumn)
                 }
             }
             
             // Not a multi-word keyword - rewind to saved position
-            print("DEBUG_LEXER: No multi-word match for '\(text)' + '\(nextWord)', rewinding")
+            CompilerLogger.trace("DEBUG_LEXER: No multi-word match for '\(text)' + '\(nextWord)', rewinding")
             currentIndex = savedIndex
             currentLine = savedLine
             currentColumn = savedColumn
@@ -343,7 +343,7 @@ public struct Lexer {
         // Check if it's a keyword
         if let keywordType = keywordMap[lowercase] {
             if keywordType == .keywordFunction {
-                print("DEBUG_LEXER: Producing .keywordFunction at line \(startLine)")
+                CompilerLogger.trace("DEBUG_LEXER: Producing .keywordFunction at line \(startLine)")
             }
             return makeToken(keywordType, text: text, line: startLine, column: startColumn)
         }

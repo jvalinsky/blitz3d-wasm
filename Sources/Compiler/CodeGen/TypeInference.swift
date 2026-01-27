@@ -29,20 +29,20 @@ public class TypeInference {
     public func inferVariableType(name: String, fromStatements statements: [StatementNode]) -> WASMType? {
         // Check cache first
         if let cachedType = cache[name] {
-            print("DEBUG_INFERENCE: Cache hit for '\(name)' → \(cachedType)")
+            CompilerLogger.debug("DEBUG_INFERENCE: Cache hit for '\(name)' → \(cachedType)")
             return cachedType
         }
         
-        print("DEBUG_INFERENCE: Scanning for '\(name)' type hints...")
+        CompilerLogger.debug("DEBUG_INFERENCE: Scanning for '\(name)' type hints...")
         
         // Scan statements for first assignment with type suffix
         if let inferredType = scanForTypeHint(variableName: name, in: statements) {
-            print("DEBUG_INFERENCE: Found type hint for '\(name)' → \(inferredType)")
+            CompilerLogger.debug("DEBUG_INFERENCE: Found type hint for '\(name)' → \(inferredType)")
             cache[name] = inferredType
             return inferredType
         }
         
-        print("DEBUG_INFERENCE: No type hint found for '\(name)'")
+        CompilerLogger.debug("DEBUG_INFERENCE: No type hint found for '\(name)'")
         return nil
     }
     

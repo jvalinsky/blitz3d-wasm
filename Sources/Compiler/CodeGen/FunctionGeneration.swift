@@ -264,7 +264,7 @@ public final class FunctionGeneration {
         let maxLocalIndex = context.variableManagement.maxLocalIndex()
         let declaredLocals = function.locals.count + paramCount
         if maxLocalIndex >= declaredLocals {
-            print("ERROR: Function '\(functionNode.name)' - Local index \(maxLocalIndex) exceeds declared locals count \(declaredLocals) (params: \(paramCount), locals: \(function.locals.count))")
+            CompilerLogger.warn("ERROR: Function '\(functionNode.name)' - Local index \(maxLocalIndex) exceeds declared locals count \(declaredLocals) (params: \(paramCount), locals: \(function.locals.count))")
         }
 
         // Add function to module

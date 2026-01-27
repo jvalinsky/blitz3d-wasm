@@ -311,7 +311,7 @@ public struct Parser {
                 switch statement {
                 case .function(let funcNode, _):
                     functionCount += 1
-                    print("DEBUG_PARSER: Added function '\(funcNode.name)' (#\(functionCount))")
+                    CompilerLogger.debug("DEBUG_PARSER: Added function '\(funcNode.name)' (#\(functionCount))")
                     program.functions.append(funcNode)
                 case .typeDeclaration(let typeDecl, _):
                     let typeNode = TypeNode(name: typeDecl.typeName, fields: typeDecl.fields)
@@ -320,7 +320,7 @@ public struct Parser {
                     break
                 case .global:
                     globalCount += 1
-                    print("DEBUG_PARSER: Found Global statement #\(globalCount) (after \(functionCount) functions)")
+                    CompilerLogger.debug("DEBUG_PARSER: Found Global statement #\(globalCount) (after \(functionCount) functions)")
                     program.statements.append(statement)
                 default:
                     program.statements.append(statement)
@@ -354,28 +354,28 @@ public struct Parser {
                 }
             } else {
                 // parseTopLevelStatement() returned nil - this is the problem!
-                print("ERROR: parseTopLevelStatement() returned nil!")
-                print("  Statement #\(statementCount)")
-                print("  Token: type=\(currentToken.type) text='\(currentToken.text)'")
-                print("  Position: After \(functionCount) functions, \(globalCount) globals")
-                print("  Started at: type=\(startToken.type) text='\(startToken.text)'")
+                CompilerLogger.warn("ERROR: parseTopLevelStatement() returned nil!")
+                CompilerLogger.debug("  Statement #\(statementCount)")
+                CompilerLogger.debug("  Token: type=\(currentToken.type) text='\(currentToken.text)'")
+                CompilerLogger.debug("  Position: After \(functionCount) functions, \(globalCount) globals")
+                CompilerLogger.debug("  Started at: type=\(startToken.type) text='\(startToken.text)'")
                 
                 // Report error and attempt recovery
                 if currentToken.type != .endOfFile {
                     reportError("Unexpected token '\(currentToken.text)'")
                     synchronize()
                 } else {
-                    print("  Reason: EOF reached")
+                    CompilerLogger.debug("  Reason: EOF reached")
                     break  // Normal termination
                 }
             }
         }
 
-        print("DEBUG_PARSER: === PARSING COMPLETE ===")
-        print("  Total items processed: \(statementCount)")
-        print("  Functions found: \(functionCount)")
-        print("  Globals found: \(globalCount)")
-        print("  Final token: type=\(currentToken.type) text='\(currentToken.text)'")
+        CompilerLogger.debug("DEBUG_PARSER: === PARSING COMPLETE ===")
+        CompilerLogger.debug("  Total items processed: \(statementCount)")
+        CompilerLogger.debug("  Functions found: \(functionCount)")
+        CompilerLogger.debug("  Globals found: \(globalCount)")
+        CompilerLogger.debug("  Final token: type=\(currentToken.type) text='\(currentToken.text)'")
 
         return program
     }
@@ -553,7 +553,7 @@ public struct Parser {
         }
         
         var body: [StatementNode] = []
-        print("DEBUG: Parsing function '\(name)' body...")
+        CompilerLogger.debug("DEBUG: Parsing function '\(name)' body...")
         while !isEndFunction() && !expect(.endOfFile) {
             let loopToken = currentToken
             // Skip newlines in function body
@@ -564,7 +564,7 @@ public struct Parser {
             
             if let stmt = parseStatement() {
                 if name == "UpdateLauncher" && body.count >= 15 {
-                    print("  Statement #\(body.count + 1): \(stmt), currentToken now at line \(currentToken.line)")
+                    CompilerLogger.debug("  Statement #\(body.count + 1): \(stmt), currentToken now at line \(currentToken.line)")
                 }
                 body.append(stmt)
                 
@@ -600,8 +600,8 @@ public struct Parser {
         
         // Consume "End Function"
         _ = consume(.keywordEndFunction)
-        print("DEBUG: Finished parsing function '\(name)', found \(body.count) statements in body")
-        print("DEBUG: Current token after End Function: type=\(currentToken.type) text='\(currentToken.text)'")
+        CompilerLogger.debug("DEBUG: Finished parsing function '\(name)', found \(body.count) statements in body")
+        CompilerLogger.debug("DEBUG: Current token after End Function: type=\(currentToken.type) text='\(currentToken.text)'")
         
         return .function(FunctionNode(name: name, parameters: parameters, body: body, returnType: returnType, returnTypeName: returnTypeName, explicitReturnTypeSuffix: explicitReturnTypeSuffix, span: endSpan(from: start)), endSpan(from: start))
     }
@@ -1660,7 +1660,7 @@ public struct Parser {
                 while consume(.comma) {
                     args.append(parseExpression())
                 }
-                print("DEBUG_PARSER: Produced functionCall for '\(id.name)'")
+                CompilerLogger.debug("DEBUG_PARSER: Produced functionCall for '\(id.name)'")
                 return .functionCall(FunctionCallNode(name: id.name, arguments: args, span: endSpan(from: start)), endSpan(from: start))
             }
 
@@ -1723,7 +1723,16 @@ public struct Parser {
         if expect(.equals) || expect(.notEquals) || expect(.lessThan) ||
            expect(.greaterThan) || expect(.lessThanOrEqual) || expect(.greaterThanOrEqual) {
             let startLoc = left.span.start
-            let op = currentToken.text
+            // Canonicalize operators where Blitz3D accepts multiple spellings (e.g. "=<" as "<=").
+            let op: String
+            switch currentToken.type {
+            case .lessThanOrEqual:
+                op = "<="
+            case .greaterThanOrEqual:
+                op = ">="
+            default:
+                op = currentToken.text
+            }
             advance()
             let right = parseShiftExpression()
             let span = endSpan(from: startLoc)

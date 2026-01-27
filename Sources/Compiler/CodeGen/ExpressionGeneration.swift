@@ -54,7 +54,7 @@ public final class ExpressionGeneration {
                 return ([.globalGet(global.index)], global.type)
             }
             // Auto-declare implicit variable as global (Blitz3D behavior)
-            print("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
+            CompilerLogger.debug("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
             
             // CRITICAL FIX: Infer type using forward scanning first
             // This handles cases like: ScrollMenuHeight used without suffix, then ScrollMenuHeight# = ...
@@ -66,17 +66,17 @@ public final class ExpressionGeneration {
                 fromStatements: context.currentFunctionBody
             ) {
                 wasmType = inferredType
-                print("  → Inferred from forward scan: \(wasmType)")
+                CompilerLogger.debug("  → Inferred from forward scan: \(wasmType)")
             }
             // Strategy 2: Check type suffix on current use
             else if let suffix = id.typeSuffix {
                 wasmType = typeHandling.wasmType(from: suffix)
-                print("  → Inferred from suffix: \(wasmType)")
+                CompilerLogger.debug("  → Inferred from suffix: \(wasmType)")
             }
             // Strategy 3: Default to i32
             else {
                 wasmType = typeHandling.typeInfo(from: id.name).wasmType
-                print("  → Inferred from name (default): \(wasmType)")
+                CompilerLogger.debug("  → Inferred from name (default): \(wasmType)")
             }
             
             let actualGlobalIdx = context.registerGlobalWithDefaultInit(type: wasmType, mutability: true)
@@ -639,76 +639,41 @@ public final class ExpressionGeneration {
         var returnType: WASMType = .i32
         var actualWasmReturnType: WASMType = .void
         
-        if let funcIdx = context.functionIndexMap[internalName] {
+	        if let funcIdx = context.functionIndexMap[internalName] {
             if internalName == "createcamera" {
-                print("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
+                CompilerLogger.debug("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
             }
             
-            // Handle Extra Arguments (Stack Imbalance Fix)
-            // If def is missing, check WASM signature for param count!
-            var expectedArgCount = call.arguments.count
-            
-            // Resolve function type to get accurate param count
-            var paramCountFromWasm: Int? = nil
-            if Int(funcIdx) < context.module.imports.count {
-                 let importEntry = context.module.imports[Int(funcIdx)]
-                 if importEntry.kind == .function {
-                      let typeIdx = importEntry.index
-                      if typeIdx < context.module.types.count {
-                          paramCountFromWasm = context.module.types[typeIdx].parameters.count
-                      }
-                 }
-            } else {
-                 let localFuncIdx = Int(funcIdx) - context.module.imports.count
-                 if localFuncIdx < context.module.functions.count {
-                      let typeIdx = context.module.functions[localFuncIdx]
-                      if typeIdx < context.module.types.count {
-                          paramCountFromWasm = context.module.types[typeIdx].parameters.count
-                      }
-                 }
-            }
-            
-            // Always trust the module's function type for arity when available.
-            // (SignatureResolver definitions can drift; the module type is the validation source of truth.)
-            if let wasmCount = paramCountFromWasm {
-                expectedArgCount = wasmCount
-            } else if let def = def {
-                expectedArgCount = def.params.count
-            }
+	            // Resolve imported function type (available immediately) for accurate arity/types.
+	            // For local (user-defined) functions, rely on pre-registered signatures (forward calls must work
+	            // even before the function body is emitted into module.functions).
+	            func getImportedFunctionType(funcIndex: Int) -> WASMFunctionType? {
+	                var functionImportIndex = 0
+	                for imp in context.module.imports {
+	                    guard imp.kind == .function else { continue }
+	                    if functionImportIndex == funcIndex {
+	                        let typeIdx = imp.index
+	                        guard typeIdx >= 0 && typeIdx < context.module.types.count else { return nil }
+	                        return context.module.types[typeIdx]
+	                    }
+	                    functionImportIndex += 1
+	                }
+	                return nil
+	            }
+	            
+	            let importedType = getImportedFunctionType(funcIndex: Int(funcIdx))
+	            
+	            // Handle Extra Arguments (Stack Imbalance Fix)
+	            var expectedArgCount = call.arguments.count
+	            if let importedType {
+	                expectedArgCount = importedType.parameters.count
+	            } else if let def = def {
+	                expectedArgCount = def.params.count
+	            }
 
-            // Helper to get actual param type from WASM module
-            func getParamTypeFromModule(funcIdx: Int, paramIdx: Int) -> WASMType? {
-                // Get the type index for this function
-                var typeIdx: Int?
-
-                if funcIdx < context.module.imports.count {
-                    // Imported function
-                    let importEntry = context.module.imports[funcIdx]
-                    if importEntry.kind == .function {
-                        typeIdx = importEntry.index
-                    }
-                } else {
-                    // Local function
-                    let localFuncIdx = funcIdx - context.module.imports.count
-                    if localFuncIdx < context.module.functions.count {
-                        typeIdx = context.module.functions[localFuncIdx]
-                    }
-                }
-
-                // Look up the function type
-                if let typeIdx = typeIdx, typeIdx < context.module.types.count {
-                    let funcType = context.module.types[typeIdx]
-                    if paramIdx < funcType.parameters.count {
-                        return funcType.parameters[paramIdx]
-                    }
-                }
-
-                return nil
-            }
-
-            // Re-implement argument generation loop to be safer
-            instrs = [] // Reset instructions from previous loop
-            let argsToPush = min(call.arguments.count, expectedArgCount)
+	            // Re-implement argument generation loop to be safer
+	            instrs = [] // Reset instructions from previous loop
+	            let argsToPush = min(call.arguments.count, expectedArgCount)
 
             // 1. Generate arguments that WILL be consumed
             for i in 0..<argsToPush {
@@ -718,36 +683,38 @@ public final class ExpressionGeneration {
                 // CRITICAL FIX: Always attempt type conversion
                 var targetType: WASMType?
 
-                // Strategy 1: Use resolved signature definition (most accurate)
-                if let def = def, i < def.params.count {
-                    targetType = def.params[i]
-                }
-                // Strategy 2: Fall back to WASM module type (handles missing defs)
-                else if let wasmCount = paramCountFromWasm, i < wasmCount {
-                    targetType = getParamTypeFromModule(funcIdx: funcIdx, paramIdx: i)
-                }
+	                // Strategy 1: Use resolved signature definition (most accurate)
+	                if let def = def, i < def.params.count {
+	                    targetType = def.params[i]
+	                }
+	                // Strategy 2: Fall back to imported WASM type (handles missing defs for imports)
+	                else if let importedType, i < importedType.parameters.count {
+	                    targetType = importedType.parameters[i]
+	                }
 
                 // Apply conversion if we have a target type
                 if let targetType = targetType, argResult.type != targetType {
-                    print("DEBUG_ARG_CONVERT: \(call.name) arg[\(i)] converting \(argResult.type) -> \(targetType)")
+                    CompilerLogger.debug("DEBUG_ARG_CONVERT: \(call.name) arg[\(i)] converting \(argResult.type) -> \(targetType)")
                     instrs.append(contentsOf: convert(from: argResult.type, to: targetType))
                 } else if targetType == nil {
-                    print("DEBUG_ARG_WARNING: \(call.name) arg[\(i)] has unknown target type, passing \(argResult.type) as-is")
+                    CompilerLogger.debug("DEBUG_ARG_WARNING: \(call.name) arg[\(i)] has unknown target type, passing \(argResult.type) as-is")
                 }
             }
             
             // 2. Generate side-effects for extra arguments but DROP results immediately
             for i in argsToPush..<call.arguments.count {
-                print("DEBUG_COMPILER: Dropping extra argument \(i) for \(internalName)")
+                CompilerLogger.debug("DEBUG_COMPILER: Dropping extra argument \(i) for \(internalName)")
                 let argResult = generateWithInfo(call.arguments[i])
                 instrs.append(contentsOf: argResult.instrs)
-                instrs.append(.drop)
+                if argResult.type != .void {
+                    instrs.append(.drop)
+                }
             }
             
-            // Pad missing args to match signature for imports (auto-imports rely on this)
-            let targetParamCount = paramCountFromWasm ?? def?.params.count ?? call.arguments.count
-            if call.arguments.count < targetParamCount {
-                let padCount = targetParamCount - call.arguments.count
+	            // Pad missing args to match signature for imports (auto-imports rely on this)
+	            let targetParamCount = importedType?.parameters.count ?? def?.params.count ?? call.arguments.count
+	            if call.arguments.count < targetParamCount {
+	                let padCount = targetParamCount - call.arguments.count
                 for i in 0..<padCount {
                     let paramIdx = call.arguments.count + i
                     if let def = def, paramIdx < def.params.count {
@@ -773,64 +740,44 @@ public final class ExpressionGeneration {
                 }
             }
 
-            instrs.append(.call(Int(funcIdx)))
+	            instrs.append(.call(Int(funcIdx)))
 
-            // Determine ACTUAL return type from WASM Module (Source of Truth)
-            // This fixes mismatch between Heuristic (f32) and Stub (i32)
-            // Determine ACTUAL return type from WASM Module (Source of Truth)
-            // This fixes mismatch between Heuristic (f32) and Stub (i32)
-            if Int(funcIdx) < context.module.imports.count {
-                 let importEntry = context.module.imports[Int(funcIdx)]
-                 // importEntry.index IS the type index for functions
-                 if importEntry.kind == .function {
-                      let typeIdx = importEntry.index
-                      if typeIdx < context.module.types.count {
-                          let typeFn = context.module.types[typeIdx]
-                          actualWasmReturnType = typeFn.results.first ?? .void
-                      }
-                 }
-            } else {
-                 // Local function
-                 let localFuncIdx = Int(funcIdx) - context.module.imports.count
-                 if localFuncIdx < context.module.functions.count {
-                      let typeIdx = context.module.functions[localFuncIdx]
-                      if typeIdx < context.module.types.count {
-                          let typeFn = context.module.types[typeIdx]
-                          actualWasmReturnType = typeFn.results.first ?? .void
-                      }
-                 }
-            }
-            
-            // Determine EXPECTED return type (prefer resolved signature, fall back to actual, minimal heuristics)
-            if let def = def {
-                returnType = def.results.first ?? .void
-            } else if actualWasmReturnType != .void {
-                returnType = actualWasmReturnType
-            } else if call.name.hasSuffix("#") {
-                returnType = .f32
-            } else {
-                returnType = actualWasmReturnType // Fallback to truth (likely .void here)
-            }
-            
-        // If truth != expected, convert
-        if actualWasmReturnType != returnType {
-             instrs.append(contentsOf: convert(from: actualWasmReturnType, to: returnType))
-        }
+	            // Determine ACTUAL return type.
+	            // - Imports: trust the module type (available immediately and authoritative for validation).
+	            // - Locals: trust the pre-registered signature (forward calls happen before module.functions is populated).
+	            if let importedType {
+	                actualWasmReturnType = importedType.results.first ?? .void
+	            } else if let def = def {
+	                actualWasmReturnType = def.results.first ?? .void
+	            } else if let idxDef = context.functionDefinitionsByIndex[Int(funcIdx)] {
+	                actualWasmReturnType = idxDef.results.first ?? .void
+	            } else {
+	                actualWasmReturnType = .void
+	            }
+	            
+	            // Determine the language-visible return type, but never pretend a void-returning WASM function returns a value.
+	            // The module signature is the validation source-of-truth.
+	            returnType = actualWasmReturnType
+	            if actualWasmReturnType != .void, let defReturnType = def?.results.first, defReturnType != .void {
+	                returnType = defReturnType
+	            }
+	            
+	            // If truth != visible type, convert (only meaningful when a value is actually produced).
+	            if actualWasmReturnType != .void, actualWasmReturnType != returnType {
+	                instrs.append(contentsOf: convert(from: actualWasmReturnType, to: returnType))
+	            }
 
-        } else {
+	        } else {
             // Function not found - same fallback logic
-            print("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0/0.0.")
-            for _ in call.arguments {
-                instrs.append(.drop) // Drop logic here is simpler: we pushed nothing yet? No, original code pushed.
-                // Wait, I cleared instrs above.
-                // For unknown function, we can't clear, we must loop and drop.
-            }
+            CompilerLogger.warn("DEBUG_COMPILER: WARNING! Function \(internalName) not found in map. Defaulting to 0/0.0.")
             // Re-generate args and drop them (simulated side effects)
             instrs = [] 
             for arg in call.arguments {
                 let res = generateWithInfo(arg)
                 instrs.append(contentsOf: res.instrs)
-                instrs.append(.drop)
+                if res.type != .void {
+                    instrs.append(.drop)
+                }
             }
             
             if internalName.hasSuffix("#") || 
@@ -972,7 +919,7 @@ public final class ExpressionGeneration {
         // Add field offset (use lowercased names for lookup)
         if let typeName = getTypeName(from: access.object),
            let fieldOffset = context.fieldOffsets[typeName.lowercased()]?[access.field.lowercased()] {
-            print("DEBUG_FIELD_ACCESS: type=\(typeName) field=\(access.field) offset=\(fieldOffset)")
+            CompilerLogger.debug("DEBUG_FIELD_ACCESS: type=\(typeName) field=\(access.field) offset=\(fieldOffset)")
             instrs.append(.i32Const(Int32(truncatingIfNeeded: fieldOffset)))
             instrs.append(.i32Add)
             

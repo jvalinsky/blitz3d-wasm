@@ -182,6 +182,63 @@ final class StackBalanceTests: XCTestCase {
         let module = try compileToModule(source)
         XCTAssertNoThrow(try validateWASM(module), "Achievements array pattern should work")
     }
+
+    func testComparisonOperatorEqualLess_IsCanonicalized() throws {
+        // Blitz3D accepts `=<` as a synonym for `<=` (SCPCB uses this).
+        let source = """
+        Function Main()
+            Local x% = 0
+            If 1 =< 2 Then x = 1
+        End Function
+        """
+
+        let module = try compileToModule(source)
+        XCTAssertNoThrow(try validateWASM(module))
+    }
+
+    func testDeleteStatement_DoesNotAssumeLocal0Exists() throws {
+        // Regression: Delete used a hard-coded local[0] scratch, which fails in functions with no locals.
+        let source = """
+        Type T
+            Field x%
+        End Type
+
+        Function Main()
+            Delete Each T
+        End Function
+        """
+
+        let module = try compileToModule(source)
+        XCTAssertNoThrow(try validateWASM(module))
+    }
+
+    func testForwardCallStatement_DropsReturnValue() throws {
+        // Regression: statement-level drop decisions must work even when the callee is defined later.
+        let source = """
+        Function Main()
+            B()
+        End Function
+
+        Function B%()
+            Return 1
+        End Function
+        """
+
+        let module = try compileToModule(source)
+        XCTAssertNoThrow(try validateWASM(module))
+    }
+
+    func testVoidImportCallInIf_DoesNotUnderflow() throws {
+        // Regression: do not drop after void imports (e.g. Flip).
+        let source = """
+        Function Main()
+            If 1 Then Flip()
+        End Function
+        """
+
+        let module = try compileToModule(source)
+        XCTAssertNoThrow(try validateWASM(module))
+    }
     
     // MARK: - Helper Methods
     
@@ -193,8 +250,108 @@ final class StackBalanceTests: XCTestCase {
     }
     
     private func validateWASM(_ module: WASMModule) throws {
-        // For now, just check module is valid structure
-        // Full WASM validation requires writing binary and calling wasm-validate
-        XCTAssertNotNil(module)
+        // Validate stack types and ensure local indices are in range.
+        // This catches a large class of "wasm-validate"/JS instantiation errors without shelling out.
+
+        func walkInstructions(_ instructions: [WASMInstruction], visit: (WASMInstruction) -> Void) {
+            for instr in instructions {
+                switch instr {
+                case .sourceLocation(_, let inner):
+                    walkInstructions([inner], visit: visit)
+                case .block(_, let body), .loop(_, let body):
+                    visit(instr)
+                    walkInstructions(body, visit: visit)
+                case .if(_, let thenBody, let elseBody):
+                    visit(instr)
+                    walkInstructions(thenBody, visit: visit)
+                    if let elseBody { walkInstructions(elseBody, visit: visit) }
+                default:
+                    visit(instr)
+                }
+            }
+        }
+
+        final class ModuleTypeContext: ValidatorTypeContext {
+            private let module: WASMModule
+            private let function: WASMFunction
+
+            init(module: WASMModule, function: WASMFunction) {
+                self.module = module
+                self.function = function
+            }
+
+            func localType(at index: Int) -> WASMType? {
+                guard function.typeIndex >= 0 && function.typeIndex < module.types.count else { return nil }
+                let paramTypes = module.types[function.typeIndex].parameters
+                if index < paramTypes.count { return paramTypes[index] }
+                let localIndex = index - paramTypes.count
+                guard localIndex >= 0 && localIndex < function.locals.count else { return nil }
+                return function.locals[localIndex]
+            }
+
+            func globalType(at index: Int) -> WASMType? {
+                guard index >= 0 && index < module.globals.count else { return nil }
+                return module.globals[index].type
+            }
+
+            func functionSignature(at index: Int) -> (params: [WASMType], results: [WASMType])? {
+                // Global function indices are: [imports...] + [defined functions...]
+                if index < module.imports.count {
+                    let imp = module.imports[index]
+                    guard imp.kind == .function else { return nil }
+                    guard imp.index >= 0 && imp.index < module.types.count else { return nil }
+                    let ty = module.types[imp.index]
+                    return (params: ty.parameters, results: ty.results)
+                }
+
+                let localIndex = index - module.imports.count
+                guard localIndex >= 0 && localIndex < module.functions.count else { return nil }
+                let typeIndex = module.functions[localIndex]
+                guard typeIndex >= 0 && typeIndex < module.types.count else { return nil }
+                let ty = module.types[typeIndex]
+                return (params: ty.parameters, results: ty.results)
+            }
+        }
+
+        for function in module.code {
+            guard function.typeIndex >= 0 && function.typeIndex < module.types.count else {
+                throw ValidationError("Function typeIndex out of range")
+            }
+
+            let sig = module.types[function.typeIndex]
+            let paramCount = sig.parameters.count
+            let maxLocal = paramCount + function.locals.count - 1
+
+            // Local index range scan (catches invalid local.get/set/tee).
+            walkInstructions(function.body) { instr in
+                let localIdx: Int?
+                switch instr {
+                case .localGet(let idx), .localSet(let idx), .localTee(let idx):
+                    localIdx = idx
+                default:
+                    localIdx = nil
+                }
+                if let idx = localIdx, idx > maxLocal {
+                    XCTFail("Invalid local index \(idx) (max \(maxLocal)) in function typeIndex=\(function.typeIndex)")
+                }
+            }
+
+            // Stack/type validation.
+            let validator = StackValidator(returnTypes: sig.results)
+            let typeContext = ModuleTypeContext(module: module, function: function)
+            validator.typeContext = typeContext
+            for instr in function.body {
+                validator.validateInstruction(instr)
+            }
+
+            if !validator.isValid {
+                XCTFail("Stack validation failed:\n\(validator.errors.joined(separator: "\n"))")
+            }
+        }
+    }
+
+    private struct ValidationError: Error, CustomStringConvertible {
+        let description: String
+        init(_ description: String) { self.description = description }
     }
 }

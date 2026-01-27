@@ -16,12 +16,15 @@ func printUsage() {
     print("  -o, --output <file>     Output WASM file (default: input.wasm)")
     print("  -g, --source-map        Generate source map (.wasm.map)")
     print("  -d, --debug             Instrument with live debug hooks")
+    print("  --quiet                 Suppress non-error compiler logs")
+    print("  --verbose               Enable verbose compiler logs")
     print("  -h, --help              Show this help")
     print("  -t, --tokens            Show tokens only (debug)")
     print("  -w, --wat               Output WebAssembly text format (.wat)")
     print("  -a, --assets <dir>      Include assets from directory")
     print("  -I, --input-dir <dir>   Input directory for multi-file projects")
     print("  -p, --project <file>    Project file (JSON) specifying sources and assets")
+    print("  --no-dedupe-includes    Do not dedupe repeated Include statements")
     print("  --embed-assets          Embed assets into WASM data sections")
     print("  --manifest              Generate asset manifest JSON")
     print("  --use-ir                Use new Typed IR pipeline (experimental)")
@@ -345,23 +348,25 @@ func loadAutoImportNames(from path: String?) -> Set<String> {
     return []
 }
 
-func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false, generateSourceMap: Bool = false, generateDebug: Bool = false, autoImportNames: Set<String> = [], useIR: Bool = false) {
+func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false, generateSourceMap: Bool = false, generateDebug: Bool = false, autoImportNames: Set<String> = [], useIR: Bool = false, dedupeIncludes: Bool = true, verboseOutput: Bool = false) {
     do {
         print("Compiling: \(inputPath)")
         print("Output: \(outputPath)")
         
-        if !assets.isEmpty {
+        if verboseOutput, !assets.isEmpty {
             print("Assets: \(assets.count) files")
             for asset in assets {
                 print("  - \(asset.path) (\(asset.data.count) bytes)")
             }
         }
-        print("")
+        if verboseOutput { print("") }
         
         // Preprocess
-        var preprocessor = Preprocessor()
+        var preprocessor = Preprocessor(dedupeIncludes: dedupeIncludes)
         let preprocessed = try preprocessor.processWithMap(file: inputPath)
-        print("Preprocessed source size: \(preprocessed.source.count) characters")
+        if verboseOutput {
+            print("Preprocessed source size: \(preprocessed.source.count) characters")
+        }
         
         // Parse
         var parser = Parser(source: preprocessed.source, sourceFile: inputPath, lineMap: preprocessed.lineMap)
@@ -376,18 +381,20 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             exit(1)
         }
         
-        print("Parsed program:")
-        print("  - \(program.statements.count) top-level statements")
-        print("  - \(program.functions.count) functions")
-        
-        var totalStatements = program.statements.count
-        for fn in program.functions {
-            totalStatements += fn.body.count
+        if verboseOutput {
+            print("Parsed program:")
+            print("  - \(program.statements.count) top-level statements")
+            print("  - \(program.functions.count) functions")
+            
+            var totalStatements = program.statements.count
+            for fn in program.functions {
+                totalStatements += fn.body.count
+            }
+            print("  - \(totalStatements) total statements (including functions)")
+            
+            print("  - \(program.types.count) type declarations")
+            print("")
         }
-        print("  - \(totalStatements) total statements (including functions)")
-        
-        print("  - \(program.types.count) type declarations")
-        print("")
         
         // Generate WASM
         var module: WASMModule
@@ -395,8 +402,10 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         var debugGenerator: DebugGenerator?
         
         if useIR {
-            print("Using Typed IR pipeline (experimental)")
-            print("")
+            if verboseOutput {
+                print("Using Typed IR pipeline (experimental)")
+                print("")
+            }
             var codeGen = CodeGenerator()
             if !autoImportNames.isEmpty {
                 let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
@@ -452,15 +461,17 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             assetManifest = embedAssetsIntoModule(&module, assets: assets, startingAt: dataOffset)
         }
         
-        print("Generated WASM module:")
-        print("  - \(module.types.count) function types")
-        print("  - \(module.functions.count) functions")
-        print("  - \(module.memories.count) memory pages")
-        print("  - \(module.globals.count) globals")
-        print("  - \(module.exports.count) exports")
-        print("  - \(module.code.count) function bodies")
-        print("  - \(module.data.count) data segments")
-        print("")
+        if verboseOutput {
+            print("Generated WASM module:")
+            print("  - \(module.types.count) function types")
+            print("  - \(module.functions.count) functions")
+            print("  - \(module.memories.count) memory pages")
+            print("  - \(module.globals.count) globals")
+            print("  - \(module.exports.count) exports")
+            print("  - \(module.code.count) function bodies")
+            print("  - \(module.data.count) data segments")
+            print("")
+        }
         
         if outputWat {
             // Generate WAT (text format)
@@ -510,7 +521,6 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
 }
 
 func main() {
-    print("DEBUG: CLI Entry Point")
     let args = CommandLine.arguments
     
     guard args.count >= 2 else {
@@ -530,6 +540,9 @@ func main() {
     var generateDebug = false
     var autoImportMapPath: String?
     var useIR = false
+    var quiet = false
+    var verbose = false
+    var dedupeIncludes = true
     
     var i = 1
     while i < args.count {
@@ -583,6 +596,18 @@ func main() {
         case "-d", "--debug":
             generateDebug = true
             i += 1
+
+        case "--quiet":
+            quiet = true
+            i += 1
+
+        case "--verbose":
+            verbose = true
+            i += 1
+
+        case "--no-dedupe-includes":
+            dedupeIncludes = false
+            i += 1
         
         case "--auto-import-map":
             i += 1
@@ -623,6 +648,14 @@ func main() {
         print("Error: No input file specified")
         exit(1)
     }
+
+    if quiet {
+        CompilerLogger.level = .error
+    } else if verbose {
+        CompilerLogger.level = .debug
+    } else {
+        CompilerLogger.level = .warn
+    }
     
     // Check if input is a project file
     if input.hasSuffix(".json") {
@@ -646,7 +679,7 @@ func main() {
                 assets = collectAssets(from: projectConfig.assets)
             }
             
-            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR)
+            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet)
             exit(0)
         } catch {
             print("Error parsing project file: \(error)")
@@ -672,13 +705,13 @@ func main() {
             assets = collectAssets(from: [assetsDirectory])
         }
         
-        print("DEBUG: Starting compilation of \(finalInputURL.path)")
+        CompilerLogger.debug("DEBUG: Starting compilation of \(finalInputURL.path)")
         
         if showTokens {
              let source = try String(contentsOf: finalInputURL, encoding: .utf8)
              tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
         } else {
-            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR)
+            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet)
         }
         
     } catch {

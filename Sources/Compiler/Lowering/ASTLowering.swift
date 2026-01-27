@@ -171,7 +171,7 @@ public final class ASTLowering {
         
         symbolTable.addType(typeNode.name, info: typeInfo)
         module.types[typeNode.name.lowercased()] = typeInfo
-        print("DEBUG_LOWER: Registered type '\(typeNode.name.lowercased())'")
+        CompilerLogger.debug("DEBUG_LOWER: Registered type '\(typeNode.name.lowercased())'")
     }
     
     private func evaluateConstInt(_ expr: ExpressionNode) -> Int? {
@@ -865,8 +865,14 @@ public final class ASTLowering {
                 return builder.buildBinary("Xor", lhs: opnd, rhs: builder.buildConstI32(-1), resultType: .i32)
             case "-":
                 if operand.type == .i32 {
+                    if case .constI32(let v) = operand {
+                        return .constI32(-v)
+                    }
                     return builder.buildBinary("-", lhs: builder.buildConstI32(0), rhs: operand, resultType: .i32)
                 } else {
+                    if case .constF32(let v) = operand {
+                        return .constF32(-v)
+                    }
                     return builder.buildBinary("-", lhs: builder.buildConstF32(0), rhs: operand, resultType: .f32)
                 }
             default:
@@ -983,11 +989,11 @@ public final class ASTLowering {
         
         // Check if this is a type cast: TypeName(handle)
         if symbolTable.typeInfo(for: call.name) != nil && args.count == 1 {
-            print("DEBUG_LOWER: Lowering '\(call.name)' as .objectCast")
+            CompilerLogger.debug("DEBUG_LOWER: Lowering '\(call.name)' as .objectCast")
             return .objectCast(typeName: call.name, value: args[0])
         }
 
-        print("DEBUG_LOWER: Resolving call to '\(call.name)' at \(call.span.start)")
+        CompilerLogger.debug("DEBUG_LOWER: Resolving call to '\(call.name)' at \(call.span.start)")
         let resolver = SignatureResolver(context: context)
         
         if let def = resolver.definition(forName: call.name) {
@@ -1039,7 +1045,7 @@ public final class ASTLowering {
             }
         }
 
-        print("ERROR: Unknown function '\(call.name)' at \(call.span.start)")
+        CompilerLogger.warn("ERROR: Unknown function '\(call.name)' at \(call.span.start)")
         return .call(name: call.name.lowercased(), args: args, resultType: .i32)
     }
     

@@ -43,9 +43,10 @@ Error: file doesn't exist - Drawportals.bb
 ```
 Include references `Drawportals.bb` but file is `DrawPortals.bb`.
 
+**Update**: The preprocessor now resolves include paths case-insensitively, so this should no longer block on case-sensitive filesystems.
+
 ## Prioritized Fix List
 
 1. **Function return drop** - Don't add drop for void functions
 2. **Float comparison in boolean** - Convert f32 comparison to i32
 3. **Case-insensitive includes** - Match files regardless of case
-

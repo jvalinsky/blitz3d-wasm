@@ -113,6 +113,21 @@ final class LexerTests: XCTestCase {
         let colonToken = tokens.first { $0.type == .colon }
         XCTAssertNotNil(colonToken)
     }
+
+    func testEqualsSemicolonLine_IsComment() throws {
+        // SCPCB/IDE metadata lines sometimes start with "=;".
+        let source = """
+        =; ID: 123
+        Function Main()
+            Return
+        End Function
+        """
+        var lexer = Lexer(source: source, sourceFile: "test.bb")
+        let tokens = lexer.tokenize()
+
+        let firstNonNewline = tokens.first(where: { $0.type != .newline })
+        XCTAssertEqual(firstNonNewline?.type, .keywordFunction, "Lexer should skip '=;' lines")
+    }
     
     func testFieldAccess() throws {
         var lexer = Lexer(source: "obj\\xfield", sourceFile: "test.bb")

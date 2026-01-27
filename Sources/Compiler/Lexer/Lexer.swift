@@ -62,6 +62,13 @@ public struct Lexer {
             skipComment()
             return nextToken()
         }
+
+        // SCPCB/IDE metadata lines can begin with "=;" (treat as a comment line).
+        if ch == "=" && startColumn == 1, let next = peek(offset: 1), next == ";" {
+            advance() // consume '='
+            skipComment() // now positioned at ';'
+            return nextToken()
+        }
         
         // String literals
         if ch == "\"" {

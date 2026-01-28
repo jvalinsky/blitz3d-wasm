@@ -18,17 +18,17 @@ If you have Python installed:
 3. Open browser:
    http://localhost:8000
 
-## Running with Node.js
-If you have Node.js installed:
+## Running with Deno
+If you have Deno installed:
 
-1. Install `http-server` globally (once):
+1. Start server:
    ```bash
-   npm install -g http-server
+   deno task serve
    ```
 
-2. Start server:
+   Or use the stdlib file server:
    ```bash
-   http-server .
+   deno run --allow-net https://deno.land/std/http/file_server.ts --port 8000
    ```
 
 ## Controls

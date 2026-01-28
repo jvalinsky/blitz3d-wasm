@@ -67,7 +67,7 @@ swift test
 ```
 
 ### WASM Integration Tests
-Requires [Node.js](https://nodejs.org/):
+Requires Deno (https://deno.com/runtime):
 ```bash
-npm run test:all
+deno task test:all
 ```

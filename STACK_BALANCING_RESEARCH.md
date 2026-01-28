@@ -177,7 +177,7 @@ From WASM spec:
 ## Next Steps
 
 1. **Immediate** (30 min):
-   - Install binaryen npm package
+   - Install binaryen (system package or Deno-compatible tooling)
    - Test post-processing on failing WASM
    - Measure improvement
 

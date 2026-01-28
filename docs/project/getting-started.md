@@ -2,7 +2,7 @@
 
 **Audience:** Compiler Developers
 **Time to Complete:** 30 minutes
-**Prerequisites:** Swift 5.5+, Node.js 16+, modern web browser
+**Prerequisites:** Swift 5.5+, Deno 1.40+, modern web browser
 
 ## Quick Setup
 
@@ -84,7 +84,7 @@ node run_tests.js
 #### Essential Tools
 - **Xcode** or **VS Code** with Swift extension
 - **WebAssembly Binary Toolkit** (`wasm2wat`, `wasm-validate`)
-- **Node.js** for runtime testing
+- **Deno** for runtime testing
 - **Chrome DevTools** for browser debugging
 
 #### Recommended VS Code Extensions

@@ -290,7 +290,7 @@ swift run blitz3d-wasm temp_npcs.bb -o temp_npcs.wasm
 
 - **Compiler**: Custom Swift implementation for BlitzBasic-to-WASM
 - **Runtime**: JavaScript with Three.js for browser compatibility
-- **Testing**: Node.js integration tests against SCPB codebase
+- **Testing**: Deno integration tests against SCPB codebase
 - **Documentation**: Comprehensive analysis of compilation status
 - **SCPB Integration**: Tested against external SCP: Containment Breach source
 

@@ -15,7 +15,8 @@ Comprehensive analysis toolkit for validating and debugging WebAssembly output f
 
 ```bash
 cd Tools/analyzer
-npm install
+# install deps via Deno npm integration
+# TODO: add deno.json tasks
 ```
 
 ## Quick Start
@@ -24,25 +25,25 @@ npm install
 
 ```bash
 # Analyze a single WASM file
-node cli.js output.wasm
+deno task analyze output.wasm
 
 # Analyze all files in a directory
-node cli.js ./compiled/
+deno task analyze ./compiled/
 
 # Watch file for changes and re-analyze
-node cli.js -w Main.wasm
+deno task analyze -- -w Main.wasm
 
 # Compare two WASM files
-node cli.js -c before.wasm after.wasm
+deno task analyze -- -c before.wasm after.wasm
 
 # Batch analyze files matching pattern
-node cli.js -b "*.wasm"
+deno task analyze -- -b "*.wasm"
 
 # Verbose output with full report
-node cli.js output.wasm -v
+deno task analyze -- -v output.wasm
 
 # Compact LLM-friendly summary (JSON by default)
-node llm-compact.js output.wasm
+deno task llm-compact -- output.wasm
 ```
 
 ### Token-Efficient Debugging
@@ -185,7 +186,7 @@ Generates JUnit-compatible XML for integration with CI systems.
   "scripts": {
     "compile": "swift run blitz3d-wasm input.bb -o output.wasm",
     "analyze": "node Tools/analyzer/cli.js output.wasm",
-    "test": "npm run compile && npm run analyze"
+    "test": "deno task compile && deno task analyze"
   }
 }
 ```
@@ -196,7 +197,7 @@ Generates JUnit-compatible XML for integration with CI systems.
 - name: Compile and Analyze
   run: |
     swift run blitz3d-wasm Main.bb -o Main.wasm
-    node Tools/analyzer/cli.js Main.wasm
+    deno task analyze -- Main.wasm
 
 - name: Upload Analysis
   uses: actions/upload-artifact@v4
@@ -244,7 +245,7 @@ generator.saveReport('report.json', 'json');
 Uses **@webassemblyjs/wasm-parser** for WASM binary parsing:
 - AST-based parsing of WASM binaries
 - Full support for all WASM instruction types
-- Works in Node.js and browser environments
+- Works in Deno and browser environments
 
 ## Troubleshooting
 
@@ -257,9 +258,10 @@ wasm-validate output.wasm
 
 ### Out of memory
 
-Increase Node.js memory limit:
+Increase Deno memory limit (if running on constrained systems):
 ```bash
-node --max-old-space-size=4096 cli.js large.wasm
+DENO_VERSION=$(deno --version | head -n1)
+# adjust Deno/V8 memory flags as needed
 ```
 
 ## Common Issues & Fixes

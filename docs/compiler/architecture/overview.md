@@ -80,7 +80,7 @@ blitz3d-wasm/
 │       ├── runtime.js         # Main entry point
 │       ├── browser_compat.js  # Browser compatibility
 │       ├── server.js          # Development server
-│       ├── package.json       # Node.js configuration
+│       ├── deno.json          # Deno configuration
 │       ├── index.html         # Demo page
 │       ├── modules/           # Runtime modules (18 files)
 │       │   ├── core.js        # Core Blitz3D API
@@ -116,7 +116,7 @@ blitz3d-wasm/
 │   └── wasm-cli/              # CLI compiler tool
 ├── Tests/
 │   ├── CompilerTests/         # Swift XCTests
-│   ├── IntegrationTests/      # Node.js tests
+│   ├── IntegrationTests/      # Deno tests
 │   │   ├── MainTest.bb
 │   │   ├── FPS_Test.bb
 │   │   ├── Animation_Test.bb
@@ -369,8 +369,8 @@ class INIManager {
 
 | Library | Purpose | Source |
 |---------|---------|--------|
-| Three.js | 3D graphics rendering | CDN/npm |
-| JSZip | ZIP file handling | npm |
+| Three.js | 3D graphics rendering | CDN/Deno |
+| JSZip | ZIP file handling | Deno |
 | Web Audio API | Audio playback | Browser native |
 | WebGL | GPU rendering | Browser native |
 

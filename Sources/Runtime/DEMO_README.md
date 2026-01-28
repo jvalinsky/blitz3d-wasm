@@ -16,7 +16,7 @@ A fully functional web-based demo that allows you to browse and view SCPCB (SCP:
   - Loading overlays and smooth UI
 
 ### Server
-- **`server.js`** - Node.js HTTP server
+- **`server.js`** - legacy server script (prefer Deno)
 - **`serve.py`** - Python HTTP server (alternative)
 - **`package.json`** - NPM package configuration
 
@@ -32,12 +32,12 @@ python3 serve.py
 ```
 Then open http://localhost:8080 in your browser.
 
-### Option 2: Node.js Server
+### Option 2: Deno Server
 ```bash
 cd /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Runtime
-node server.js
+deno task serve
 ```
-Then open http://localhost:3000 in your browser.
+Then open http://localhost:8080 in your browser.
 
 ### Option 3: Direct Browser
 Simply open `examples/scpcb_asset_viewer.html` directly in a web browser.
@@ -99,7 +99,7 @@ Simply open `examples/scpcb_asset_viewer.html` directly in a web browser.
 - Responsive design
 
 ### Backend (Optional)
-- Node.js HTTP server
+- Deno HTTP server
 - Python HTTP server
 - MIME type handling
 - CORS support

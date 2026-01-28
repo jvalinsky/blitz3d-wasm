@@ -22,8 +22,11 @@ python3 -m http.server 8000
 # Or Python 2
 python -m SimpleHTTPServer 8000
 
-# Or Node.js (if you have http-server installed)
-npx http-server -p 8000
+# Or Deno
+deno task serve
+
+# Or Deno stdlib file server
+deno run --allow-net https://deno.land/std/http/file_server.ts --port 8000
 ```
 
 ### 3. Open Browser

@@ -15,7 +15,7 @@ A web-based demo showcasing the Blitz3D-WASM runtime for loading and rendering S
 ### Option 1: Using the server script
 ```bash
 cd Sources/Runtime
-npm start
+deno task serve
 ```
 
 Then open http://localhost:8080 in your browser.
@@ -27,7 +27,7 @@ Open `examples/scpcb_asset_viewer.html` directly in a web browser.
 
 - Modern web browser with WebGL support
 - Three.js (loaded via CDN)
-- For local development: Node.js
+- For local development: Deno
 
 ## Asset Categories
 

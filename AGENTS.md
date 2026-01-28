@@ -91,7 +91,7 @@ blitz3d-wasm/
 
 ### Prerequisites
 - Swift 6.0+ (`swift --version`)
-- Node.js (for serving)
+- Deno (for serving)
 - wabt (for wasm-validate)
 
 ### Linux Note

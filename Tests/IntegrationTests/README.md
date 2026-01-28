@@ -8,7 +8,7 @@ This directory contains integration tests for the Blitz3D WASM compiler and runt
 Tests/
 ├── IntegrationTests/
 │   ├── IntegrationTests.swift    # Swift XCTests for compiler
-│   ├── run_tests.js              # Node.js test runner
+│   ├── run_tests.js              # Deno test runner
 │   ├── runtime_test.js           # Runtime simulation tests
 │   ├── integration_tests.html    # Browser-based test UI
 │   ├── test_read_file.bb         # Test BASIC file
@@ -36,7 +36,7 @@ This runs all unit tests including:
 - Binary encoder tests
 - NEW: Integration tests for data/asset compilation
 
-### Node.js Integration Tests
+### Deno Integration Tests
 
 ```bash
 cd Tests/IntegrationTests
@@ -73,7 +73,7 @@ Open `integration_tests.html` in a browser to run visual tests.
 4. **Multi-file Project Tests**
    - `testCompileWithIncludeStatement` - Test Include statements
 
-### Node.js Tests (run_tests.js)
+### Deno Tests (run_tests.js)
 
 1. `test_string_data.bb` - Embedded string data
 2. `test_multiple_types.bb` - Multiple data types (int, float, string)
@@ -104,7 +104,7 @@ func testMyNewFeature() throws {
 }
 ```
 
-### Adding Node.js Tests
+### Adding Deno Tests
 
 Add to the `tests` array in `run_tests.js`:
 
@@ -122,7 +122,7 @@ Then create the corresponding `.bb` file in `Assets/`.
 
 Current test results:
 - **Swift XCTests**: 82 tests, 0 failures
-- **Node.js Integration**: 4 tests, 0 failures
+- **Deno Integration**: 4 tests, 0 failures
 
 ## CI Integration
 

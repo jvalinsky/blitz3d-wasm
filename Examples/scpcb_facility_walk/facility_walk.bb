@@ -60,10 +60,23 @@ Function InitCollision()
 End Function
 
 Function InitGame()
+    Graphics3D 800, 600, 0, 2
+
     player = CreatePivot()
     cam = CreateCamera(player)
+    PositionEntity cam, 0, 1.6, -2
+    CameraRange cam, 0.05, 300
+
     Collider = player
     lastMillis = MilliSecs()
+
+    ; Simple floor + light so something renders
+    Local floor% = CreatePlane()
+    PositionEntity floor, 0, 0, 0
+    ScaleEntity floor, 10, 1, 10
+    EntityColor floor, 80, 80, 80
+
+    CreateLight(2)
 
     InitCollision()
 
@@ -139,7 +152,6 @@ Function MovePlayer()
         If KeyHit(57) And CanJump Then  ; Space
             DropSpeed = JUMP_FORCE
             CanJump = False
-            Grounded = False
         End If
     Else
         ; Apply gravity
@@ -147,16 +159,11 @@ Function MovePlayer()
         If DropSpeed < -MAX_FALL_SPEED Then DropSpeed = -MAX_FALL_SPEED
     End If
 
-    ; Vertical movement
+    ; Apply vertical movement
     TranslateEntity Collider, 0, DropSpeed * FPSfactor, 0, True
 
-    ; Re-check floor after vertical movement
-    For i = 1 To CountCollisions(Collider)
-        If CollisionY(Collider, i) < EntityY(Collider) - 0.25 Then
-            Grounded = True
-            If DropSpeed < 0 Then DropSpeed = 0
-        End If
-    Next
+    ; Keep camera aligned with player
+    PositionEntity cam, EntityX(Collider), EntityY(Collider) + 0.8, EntityZ(Collider)
 End Function
 
 ; ============ DOOR SYSTEM ============
@@ -269,8 +276,14 @@ Function UpdateGame()
     MovePlayer()
     UpdateDoors()
     CheckDoorInteraction()
+    RenderWorld
+    Flip
 End Function
 
 ; ============ ENTRY POINT ============
 
 InitGame()
+
+While True
+    UpdateGame()
+Wend

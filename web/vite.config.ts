@@ -10,7 +10,17 @@ export default defineConfig({
     build: {
         outDir: '../dist',
         emptyOutDir: true,
-        target: 'esnext' // Support Top-level await for WASM
+        target: 'esnext', // Support Top-level await for WASM
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    three: ['three'],
+                    loaders: [
+                        './src/runtime/xloader.ts'
+                    ]
+                }
+            }
+        }
     },
     resolve: {
         alias: {

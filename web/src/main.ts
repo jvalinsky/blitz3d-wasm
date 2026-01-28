@@ -1,125 +1,225 @@
-
 import { Blitz3DCore } from './runtime/core';
 import { Blitz3DGraphics } from './runtime/graphics';
 import { Blitz3DFileIO } from './runtime/fileio';
 
+type LoaderElements = {
+    overlay: HTMLElement;
+    stage: HTMLElement;
+    progress: HTMLElement;
+    detail: HTMLElement;
+};
+
+type ProgressUpdate = {
+    stage: string;
+    progress?: number;
+    detail?: string;
+};
+
+const BOOT_WASM_PATH = '/Main.wasm';
+
+const getLoaderElements = (): LoaderElements => {
+    const overlay = document.getElementById('loading') as HTMLElement | null;
+    const stage = document.getElementById('loading-stage') as HTMLElement | null;
+    const progress = document.getElementById('loading-progress') as HTMLElement | null;
+    const detail = document.getElementById('loading-detail') as HTMLElement | null;
+
+    if (!overlay || !stage || !progress || !detail) {
+        throw new Error('Missing loader UI elements');
+    }
+
+    return { overlay, stage, progress, detail };
+};
+
+const updateLoader = (elements: LoaderElements, update: ProgressUpdate) => {
+    elements.stage.textContent = update.stage;
+    if (typeof update.progress === 'number') {
+        const clamped = Math.max(0, Math.min(1, update.progress));
+        elements.progress.style.width = `${Math.round(clamped * 100)}%`;
+    }
+    elements.detail.textContent = update.detail ?? '';
+};
+
+const streamFetchWithProgress = async (url: string, onProgress: (loaded: number, total: number | null) => void) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
+    }
+
+    if (!response.body) {
+        const buffer = await response.arrayBuffer();
+        onProgress(buffer.byteLength, buffer.byteLength);
+        return buffer;
+    }
+
+    const contentLength = response.headers.get('Content-Length');
+    const total = contentLength ? Number(contentLength) : null;
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let loaded = 0;
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        if (value) {
+            chunks.push(value);
+            loaded += value.length;
+            onProgress(loaded, total);
+        }
+    }
+
+    const buffer = new Uint8Array(loaded);
+    let offset = 0;
+    for (const chunk of chunks) {
+        buffer.set(chunk, offset);
+        offset += chunk.length;
+    }
+
+    return buffer.buffer;
+};
+
+const setupImports = (core: Blitz3DCore, graphics: Blitz3DGraphics, fileIO: Blitz3DFileIO) => {
+    const imports: any = {
+        env: {
+            __indirect_function_table: new WebAssembly.Table({ initial: 0, element: 'anyfunc' })
+        },
+        blitz3d: {}
+    };
+
+    if (core.setupCommonImports) core.setupCommonImports(imports);
+    if (graphics.setupImports) graphics.setupImports(imports);
+    if (fileIO.setupImports) fileIO.setupImports(imports);
+
+    return imports;
+};
+
+const stubMissingImports = (imports: any, module: WebAssembly.Module) => {
+    const requiredImports = WebAssembly.Module.imports(module);
+
+    requiredImports.forEach(imp => {
+        if (!(imp.module in imports)) {
+            imports[imp.module] = {};
+        }
+        if (!(imp.name in imports[imp.module])) {
+            if (imp.kind === 'function') {
+                console.warn(`[Runtime] Stubbing missing import: ${imp.module}.${imp.name}`);
+                imports[imp.module][imp.name] = (...args: any[]) => {
+                    console.warn(`[WASM] Called missing function: ${imp.module}.${imp.name}`, args);
+                    return 0;
+                };
+            } else if (imp.kind === 'memory') {
+                console.warn(`[Runtime] Missing memory import: ${imp.module}.${imp.name}`);
+            }
+        }
+    });
+};
+
+const instantiateWasm = async (
+    buffer: ArrayBuffer,
+    imports: any,
+    onProgress: (ratio: number, detail: string) => void
+): Promise<WebAssembly.Instance> => {
+    onProgress(0.85, 'Compiling WASM');
+    const wasmModule = await WebAssembly.compile(buffer);
+    stubMissingImports(imports, wasmModule);
+    onProgress(0.95, 'Instantiating WASM');
+    const instance = await WebAssembly.instantiate(wasmModule, imports);
+    onProgress(1, 'WASM ready');
+    return instance;
+};
+
+const attachRuntime = (core: Blitz3DCore, fileIO: Blitz3DFileIO, instance: WebAssembly.Instance) => {
+    core.memory = instance.exports.memory as WebAssembly.Memory;
+    core.instance = instance;
+    core.exports = instance.exports;
+
+    core.allocString = (str: string) => {
+        if (instance.exports.__StringAlloc) {
+            const ptr = (instance.exports.__StringAlloc as Function)(str.length);
+            const mem = new Uint8Array(core.memory.buffer, ptr, str.length + 1);
+            for (let i = 0; i < str.length; i++) {
+                mem[i] = str.charCodeAt(i);
+            }
+            mem[str.length] = 0;
+            return ptr;
+        }
+        return 0;
+    };
+
+    fileIO.setMemory(core.memory);
+};
+
+const startMain = (instance: WebAssembly.Instance) => {
+    if (instance.exports.Main) {
+        console.log('Starting Blitz3D Main (Async)...');
+        setTimeout(() => {
+            try {
+                (instance.exports.Main as Function)();
+            } catch (e) {
+                console.error('Blitz3D Execution Error:', e);
+            }
+        }, 100);
+    } else if (instance.exports._start) {
+        console.log('Starting WASI _start...');
+        (instance.exports._start as Function)();
+    } else {
+        console.warn('No Main/_start found, assuming auto-start or library mode');
+    }
+};
+
+const startRenderLoop = (core: Blitz3DCore) => {
+    const loop = () => {
+        core.beginFrame();
+        requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+};
+
 async function init() {
-    const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-    if (!canvas) throw new Error("No canvas found");
+    const canvas = document.getElementById('canvas') as HTMLCanvasElement | null;
+    if (!canvas) throw new Error('No canvas found');
 
-    // Initialize Core
+    const loader = getLoaderElements();
+    updateLoader(loader, { stage: 'Initializing runtime...', progress: 0.05 });
+
     const core = new Blitz3DCore();
-    core.init('canvas'); // Pass ID string as expected by core.init
+    core.init('canvas');
 
-    // Initialize Subsystems
     const graphics = new Blitz3DGraphics(core);
     const fileIO = new Blitz3DFileIO(core);
 
-    // Attach to core (legacy pattern support)
     core.graphics = graphics;
     core.fileIO = fileIO;
 
-    // Load WASM
     try {
-        const response = await fetch('/Main.wasm');
-        if (!response.ok) throw new Error(`Failed to load WASM: ${response.statusText}`);
+        updateLoader(loader, { stage: 'Downloading WASM...', progress: 0.1, detail: BOOT_WASM_PATH });
 
-        const buffer = await response.arrayBuffer();
-
-        // Create Imports Object
-        const imports: any = {
-            env: {
-                // Add missing stubs
-                __indirect_function_table: new WebAssembly.Table({ initial: 0, element: 'anyfunc' })
-            },
-            blitz3d: {}
-        };
-
-        // Setup Imports
-        if (core.setupCommonImports) core.setupCommonImports(imports);
-        if (graphics.setupImports) graphics.setupImports(imports);
-        if (fileIO.setupImports) fileIO.setupImports(imports);
-
-        // --- Automatic Stubbing for Missing Imports ---
-        const wasmModule = await WebAssembly.compile(buffer);
-        const requiredImports = WebAssembly.Module.imports(wasmModule);
-
-        requiredImports.forEach(imp => {
-            if (!(imp.module in imports)) {
-                imports[imp.module] = {};
-            }
-            if (!(imp.name in imports[imp.module])) {
-                if (imp.kind === 'function') {
-                    console.warn(`[Runtime] Stubbing missing import: ${imp.module}.${imp.name}`);
-                    imports[imp.module][imp.name] = (...args: any[]) => {
-                        console.warn(`[WASM] Called missing function: ${imp.module}.${imp.name}`, args);
-                        return 0;
-                    };
-                } else if (imp.kind === 'memory') {
-                    // Memory is usually provided by the host, but sometimes imported
-                    // If missing, we might have a problem, but let's try to provide a default
-                    console.warn(`[Runtime] Missing memory import: ${imp.module}.${imp.name}`);
-                }
-            }
+        const buffer = await streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total) => {
+            const ratio = total ? loaded / total : 0;
+            updateLoader(loader, {
+                stage: 'Downloading WASM...',
+                progress: 0.1 + ratio * 0.6,
+                detail: total ? `${(loaded / 1024 / 1024).toFixed(1)} / ${(total / 1024 / 1024).toFixed(1)} MB` : `${(loaded / 1024 / 1024).toFixed(1)} MB`
+            });
         });
 
-        // Instantiate
-        const instance = await WebAssembly.instantiate(wasmModule, imports);
+        updateLoader(loader, { stage: 'Preparing imports...', progress: 0.72 });
+        const imports = setupImports(core, graphics, fileIO);
 
-        // Link Memory
-        core.memory = instance.exports.memory;
-        core.instance = instance;
-        core.exports = instance.exports;
+        const instance = await instantiateWasm(buffer, imports, (ratio, detail) => {
+            updateLoader(loader, { stage: detail, progress: 0.72 + ratio * 0.28 });
+        });
 
-        // Implementation of string allocation in WASM memory
-        core.allocString = (str: string) => {
-            if (instance.exports.__StringAlloc) {
-                const ptr = (instance.exports.__StringAlloc as Function)(str.length);
-                const mem = new Uint8Array(core.memory.buffer, ptr, str.length + 1);
-                for (let i = 0; i < str.length; i++) {
-                    mem[i] = str.charCodeAt(i);
-                }
-                mem[str.length] = 0; // Null terminator
-                return ptr;
-            }
-            return 0;
-        };
+        attachRuntime(core, fileIO, instance);
 
-        // Initialize FileIO Memory Access
-        fileIO.setMemory(core.memory);
+        console.log('WASM Instantiated', instance.exports);
+        startMain(instance);
+        startRenderLoop(core);
 
-        // Run Main (Implicit or Explicit export)
-        console.log("WASM Instantiated", instance.exports);
-
-        if (instance.exports.Main) {
-            console.log("Starting Blitz3D Main (Async)...");
-            setTimeout(() => {
-                try {
-                    (instance.exports.Main as Function)();
-                } catch (e) {
-                    console.error("Blitz3D Execution Error:", e);
-                }
-            }, 100);
-        } else if (instance.exports._start) {
-            console.log("Starting WASI _start...");
-            (instance.exports._start as Function)();
-        } else {
-            console.warn("No Main/_start found, assuming auto-start or library mode");
-        }
-
-        // Start Render Loop
-        const loop = () => {
-            core.beginFrame();
-            // Blitz3D usually drives its own loop via Flip(), but we might need to pump it here if Main() returns
-            requestAnimationFrame(loop);
-        };
-        requestAnimationFrame(loop);
-
-        document.getElementById('loading')!.style.display = 'none';
-
-    } catch (e) {
-        console.error("Game Launch Error:", e);
-        document.getElementById('loading')!.innerText = `Error: ${e}`;
+        updateLoader(loader, { stage: 'Ready', progress: 1, detail: '' });
+        loader.overlay.style.display = 'none';
+    } catch (e: any) {
+        console.error('Game Launch Error:', e);
+        updateLoader(loader, { stage: 'Launch failed', progress: 1, detail: e?.message ?? String(e) });
     }
 }
 

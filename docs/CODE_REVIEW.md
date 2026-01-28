@@ -707,32 +707,11 @@ Result: 17 + (2 << 7) = 17 + 256 = 273 ✓
 
 ---
 
-### Browser Testing Challenges
+### Browser Testing Notes
 
-**Issue:** Puppeteer failed to launch on this system
-
-```
-Failed to launch the browser process!
-TROUBLESHOOTING: https://pptr.dev/troubleshooting
-```
-
-**Workaround:** Created pure Node.js validation without browser
-- No headless browser dependency
-- Binary-level validation
-- Can run in CI/CD pipelines
-
----
-
-### New Package.json Scripts
-
-```json
-{
-  "scripts": {
-    "test:wasm": "node validate_wasm.js Sources/Runtime/input_test.wasm",
-    "test:all": "swift test && node validate_wasm.js Sources/Runtime/input_test.wasm"
-  }
-}
-```
+Browser automation was previously attempted but has been removed. Prefer:
+- `wasm-validate` (wabt), when available
+- Deno-based validation (`Tools/wasm_validate.ts`)
 
 ---
 
@@ -746,7 +725,7 @@ TROUBLESHOOTING: https://pptr.dev/troubleshooting
 | Version | ✓ Correct | 1 |
 | Swift tests | ✓ 82/82 pass | All existing and new tests pass |
 | Browser loading | ⚠️ Cache | Requires hard refresh on file changes |
-| Puppeteer | ✗ Unavailable | Falls back to binary validation |
+| Browser automation | — | Removed; use binary validation |
 
 ---
 
@@ -763,8 +742,7 @@ TROUBLESHOOTING: https://pptr.dev/troubleshooting
 ### Files Modified During Debugging
 
 1. `Sources/Compiler/CodeGen/WASMBinaryEncoder.swift` - Added/removed debug output
-2. `browser_tests.js` - Created for WASM validation
-3. `validate_wasm.js` - Created for section parsing
+2. `Tools/wasm_validate.ts` - Deno WASM validation
 4. `Tests/input_test.bb` - Created test program
 5. `Sources/Runtime/index.html` - Updated for input testing
 

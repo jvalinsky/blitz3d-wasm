@@ -54,6 +54,5 @@ python3 "$ROOT/Tools/wasm_error_digest.py" "$OUTPUT" \
 
 if command -v node >/dev/null 2>&1; then
   echo ""
-  echo "llm-compact:"
-  node "$ROOT/Tools/analyzer/llm-compact.js" "$OUTPUT" --format "$LLM_FORMAT"
+  echo "NOTE: Tools/analyzer is Node.js-based; skipping (Deno-only workflow)."
 fi

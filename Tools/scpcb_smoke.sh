@@ -26,7 +26,11 @@ compile_and_validate() {
   echo "Compiling: $input"
   HOME="$SCPCB_SMOKE_HOME" CLANG_MODULE_CACHE_PATH="$SCPCB_SMOKE_CLANG_MODULE_CACHE_PATH" \
     .build/debug/blitz3d-wasm "$input" -o "$out" --quiet
-  node -e "new WebAssembly.Module(require('fs').readFileSync('$out'));"
+  if ! command -v deno >/dev/null 2>&1; then
+    echo "deno not found. Install Deno to run WebAssembly validation."
+    exit 3
+  fi
+  deno run --quiet --allow-read "$REPO_ROOT/Tools/wasm_validate.ts" "$out"
   echo "OK: $out"
 }
 

@@ -200,6 +200,8 @@ async function init() {
     core.graphics = graphics;
     core.fileIO = fileIO;
 
+    graphics.init3D();
+
     try {
         updateLoader(loader, { stage: 'Downloading WASM...', progress: 0.1, detail: BOOT_WASM_PATH });
 

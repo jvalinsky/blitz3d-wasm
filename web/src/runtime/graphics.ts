@@ -2147,8 +2147,10 @@ export class Blitz3DGraphics {
 
             if (parentId && this.entities[parentId]) {
                 this.entities[parentId].add(pivot);
-            } else {
+            } else if (this.scene) {
                 this.scene.add(pivot);
+            } else {
+                console.warn("CreatePivot: scene not initialized; deferring add", { id, parentId });
             }
 
             console.log("CreatePivot: id=" + id + " parent=" + parentId);

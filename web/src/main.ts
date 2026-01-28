@@ -284,7 +284,7 @@ async function init() {
 
         if (manifestLoaded) {
             let completed = 0;
-            await fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
+            fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
                 concurrency: 4,
                 onProgress: (loaded, total, file) => {
                     const ratio = total ? loaded / total : 0;
@@ -298,13 +298,13 @@ async function init() {
                         detail: file ?? ''
                     });
                 }
-            });
+            }).catch(err => console.error('Boot asset preload failed:', err));
             diagnosticsState.Assets = `${completed}/${fileIO.assetManifest?.groups?.[BOOT_ASSET_GROUP]?.length ?? 0}`;
 
             if (fileIO.assetManifest?.groups?.facility_assets?.length) {
                 const totalAssets = fileIO.assetManifest.groups.facility_assets.length;
                 let loadedAssets = 0;
-                await fileIO.preloadAssetGroup('facility_assets', {
+                fileIO.preloadAssetGroup('facility_assets', {
                     concurrency: 4,
                     onProgress: (loaded, total, file) => {
                         loadedAssets = loaded;
@@ -318,7 +318,7 @@ async function init() {
                             detail: file ?? ''
                         });
                     }
-                });
+                }).catch(err => console.error('Facility asset preload failed:', err));
                 diagnosticsState.Assets = `${loadedAssets}/${totalAssets}`;
                 loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
             }
@@ -327,7 +327,7 @@ async function init() {
             loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
         }
 
-        updateLoader(loader, { stage: 'Ready', progress: 1, detail: '' });
+        updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
         loader.overlay.style.display = 'none';
     } catch (e: any) {
         console.error('Game Launch Error:', e);

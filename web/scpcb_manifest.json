@@ -1,7 +1,15 @@
 {
   "basePath": "/",
   "groups": {
-    "boot": []
+    "boot": [
+      "scpcb.wasm"
+    ]
   },
-  "files": []
+  "files": [
+    {
+      "path": "scpcb.wasm",
+      "size": 0,
+      "type": "wasm"
+    }
+  ]
 }

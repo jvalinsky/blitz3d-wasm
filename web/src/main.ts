@@ -16,7 +16,7 @@ type ProgressUpdate = {
     detail?: string;
 };
 
-const BOOT_WASM_PATH = '/Main.wasm';
+const BOOT_WASM_PATH = '/scpcb.wasm';
 const BOOT_MANIFEST_PATH = '/scpcb_manifest.json';
 const BOOT_ASSET_GROUP = 'boot';
 

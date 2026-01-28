@@ -284,6 +284,4 @@ End Function
 
 InitGame()
 
-While True
-    UpdateGame()
-Wend
+; Browser runtime calls UpdateGame() each frame

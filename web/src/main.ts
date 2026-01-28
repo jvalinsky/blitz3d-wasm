@@ -176,6 +176,23 @@ const startMain = (instance: WebAssembly.Instance) => {
     }
 };
 
+const startUpdateLoop = (core: Blitz3DCore) => {
+    if (!core.exports || typeof core.exports.UpdateGame !== 'function') {
+        console.warn('No UpdateGame export found; skipping tick loop');
+        return;
+    }
+
+    const tick = () => {
+        try {
+            (core.exports.UpdateGame as Function)();
+        } catch (e) {
+            console.error('UpdateGame error:', e);
+        }
+        requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+};
+
 const startRenderLoop = (core: Blitz3DCore) => {
     const loop = () => {
         core.beginFrame();
@@ -278,6 +295,7 @@ async function init() {
 
         console.log('WASM Instantiated', instance.exports);
         startMain(instance);
+        startUpdateLoop(core);
         startRenderLoop(core);
 
         updateLoader(loader, { stage: 'Ready', progress: 1, detail: '' });

@@ -7,6 +7,7 @@ type LoaderElements = {
     stage: HTMLElement;
     progress: HTMLElement;
     detail: HTMLElement;
+    diagnostics: HTMLElement;
 };
 
 type ProgressUpdate = {
@@ -24,12 +25,13 @@ const getLoaderElements = (): LoaderElements => {
     const stage = document.getElementById('loading-stage') as HTMLElement | null;
     const progress = document.getElementById('loading-progress') as HTMLElement | null;
     const detail = document.getElementById('loading-detail') as HTMLElement | null;
+    const diagnostics = document.getElementById('diagnostics') as HTMLElement | null;
 
-    if (!overlay || !stage || !progress || !detail) {
+    if (!overlay || !stage || !progress || !detail || !diagnostics) {
         throw new Error('Missing loader UI elements');
     }
 
-    return { overlay, stage, progress, detail };
+    return { overlay, stage, progress, detail, diagnostics };
 };
 
 const updateLoader = (elements: LoaderElements, update: ProgressUpdate) => {
@@ -39,6 +41,12 @@ const updateLoader = (elements: LoaderElements, update: ProgressUpdate) => {
         elements.progress.style.width = `${Math.round(clamped * 100)}%`;
     }
     elements.detail.textContent = update.detail ?? '';
+};
+
+const formatDiagnostics = (entries: Record<string, string | number>) => {
+    return Object.entries(entries)
+        .map(([key, value]) => `<div><strong>${key}:</strong> ${value}</div>`)
+        .join('');
 };
 
 const streamFetchWithProgress = async (url: string, onProgress: (loaded: number, total: number | null) => void) => {
@@ -195,8 +203,16 @@ async function init() {
     try {
         updateLoader(loader, { stage: 'Downloading WASM...', progress: 0.1, detail: BOOT_WASM_PATH });
 
+        const diagnosticsState: Record<string, string | number> = {
+            'WASM': 'starting',
+            'Assets': 'pending',
+            'Downloads': 0
+        };
+
         const buffer = await streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total) => {
             const ratio = total ? loaded / total : 0;
+            diagnosticsState.WASM = total ? `${(loaded / 1024 / 1024).toFixed(1)} / ${(total / 1024 / 1024).toFixed(1)} MB` : `${(loaded / 1024 / 1024).toFixed(1)} MB`;
+            loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
             updateLoader(loader, {
                 stage: 'Downloading WASM...',
                 progress: 0.1 + ratio * 0.6,
@@ -214,12 +230,19 @@ async function init() {
         attachRuntime(core, fileIO, instance);
 
         updateLoader(loader, { stage: 'Loading boot assets...', progress: 0.98 });
+        diagnosticsState.Assets = 'loading';
+        loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
         const manifestLoaded = await fileIO.loadAssetManifest(BOOT_MANIFEST_PATH);
         if (manifestLoaded) {
+            let completed = 0;
             await fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
                 concurrency: 4,
                 onProgress: (loaded, total, file) => {
                     const ratio = total ? loaded / total : 0;
+                    completed = loaded;
+                    diagnosticsState.Assets = `${loaded}/${total ?? '?'}`;
+                    diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loaded);
+                    loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
                     updateLoader(loader, {
                         stage: 'Loading boot assets...',
                         progress: 0.98 + ratio * 0.02,
@@ -227,7 +250,11 @@ async function init() {
                     });
                 }
             });
+            diagnosticsState.Assets = `${completed}/${fileIO.assetManifest?.groups?.[BOOT_ASSET_GROUP]?.length ?? 0}`;
+        } else {
+            diagnosticsState.Assets = 'manifest missing';
         }
+        loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
 
         console.log('WASM Instantiated', instance.exports);
         startMain(instance);

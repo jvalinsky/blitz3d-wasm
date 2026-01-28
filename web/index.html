@@ -62,6 +62,19 @@
             font-size: 12px;
             color: #6e7378;
         }
+        #diagnostics {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #cdd0d5;
+            background: rgba(0,0,0,0.45);
+            border-radius: 8px;
+            line-height: 1.4;
+            min-width: 220px;
+            pointer-events: none;
+        }
     </style>
   </head>
   <body>
@@ -73,6 +86,7 @@
             <div id="loading-bar"><span id="loading-progress"></span></div>
             <div id="loading-detail"></div>
         </div>
+        <div id="diagnostics"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

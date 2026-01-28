@@ -330,7 +330,7 @@
   "files": [
     {
       "path": "scpcb.wasm",
-      "size": 16812,
+      "size": 18414,
       "type": "wasm"
     },
     {

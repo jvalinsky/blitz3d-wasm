@@ -274,6 +274,14 @@ async function init() {
         diagnosticsState.Assets = 'loading';
         loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
         const manifestLoaded = await fileIO.loadAssetManifest(BOOT_MANIFEST_PATH);
+
+        console.log('WASM Instantiated', instance.exports);
+        startMain(instance);
+        startUpdateLoop(core);
+        startRenderLoop(core);
+
+        updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
+
         if (manifestLoaded) {
             let completed = 0;
             await fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
@@ -285,7 +293,7 @@ async function init() {
                     diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loaded);
                     loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
                     updateLoader(loader, {
-                        stage: 'Loading boot assets...',
+                        stage: 'Streaming boot assets…',
                         progress: 0.98 + ratio * 0.02,
                         detail: file ?? ''
                     });
@@ -296,7 +304,6 @@ async function init() {
             if (fileIO.assetManifest?.groups?.facility_assets?.length) {
                 const totalAssets = fileIO.assetManifest.groups.facility_assets.length;
                 let loadedAssets = 0;
-                updateLoader(loader, { stage: 'Loading facility assets...', progress: 0.99 });
                 await fileIO.preloadAssetGroup('facility_assets', {
                     concurrency: 4,
                     onProgress: (loaded, total, file) => {
@@ -306,7 +313,7 @@ async function init() {
                         diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loadedAssets);
                         loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
                         updateLoader(loader, {
-                            stage: 'Loading facility assets...',
+                            stage: 'Streaming facility assets…',
                             progress: 0.99 + ratio * 0.01,
                             detail: file ?? ''
                         });
@@ -317,13 +324,8 @@ async function init() {
             }
         } else {
             diagnosticsState.Assets = 'manifest missing';
+            loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
         }
-        loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
-
-        console.log('WASM Instantiated', instance.exports);
-        startMain(instance);
-        startUpdateLoop(core);
-        startRenderLoop(core);
 
         updateLoader(loader, { stage: 'Ready', progress: 1, detail: '' });
         loader.overlay.style.display = 'none';

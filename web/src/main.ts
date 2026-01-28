@@ -49,15 +49,24 @@ const formatDiagnostics = (entries: Record<string, string | number>) => {
         .join('');
 };
 
-const streamFetchWithProgress = async (url: string, onProgress: (loaded: number, total: number | null) => void) => {
-    const response = await fetch(url);
+const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+};
+
+const streamFetchWithProgress = async (
+    url: string,
+    onProgress: (loaded: number, total: number | null, rate: number | null) => void
+) => {
+    const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) {
         throw new Error(`Failed to load ${url}: ${response.status} ${response.statusText}`);
     }
 
     if (!response.body) {
         const buffer = await response.arrayBuffer();
-        onProgress(buffer.byteLength, buffer.byteLength);
+        onProgress(buffer.byteLength, buffer.byteLength, null);
         return buffer;
     }
 
@@ -66,6 +75,8 @@ const streamFetchWithProgress = async (url: string, onProgress: (loaded: number,
     const reader = response.body.getReader();
     const chunks: Uint8Array[] = [];
     let loaded = 0;
+    let lastTime = performance.now();
+    let lastLoaded = 0;
 
     while (true) {
         const { done, value } = await reader.read();
@@ -73,7 +84,15 @@ const streamFetchWithProgress = async (url: string, onProgress: (loaded: number,
         if (value) {
             chunks.push(value);
             loaded += value.length;
-            onProgress(loaded, total);
+            const now = performance.now();
+            const dt = (now - lastTime) / 1000;
+            let rate: number | null = null;
+            if (dt > 0.25) {
+                rate = (loaded - lastLoaded) / dt;
+                lastLoaded = loaded;
+                lastTime = now;
+            }
+            onProgress(loaded, total, rate);
         }
     }
 
@@ -229,14 +248,16 @@ async function init() {
             'Downloads': 0
         };
 
-        const buffer = await streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total) => {
+        const buffer = await streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total, rate) => {
             const ratio = total ? loaded / total : 0;
-            diagnosticsState.WASM = total ? `${(loaded / 1024 / 1024).toFixed(1)} / ${(total / 1024 / 1024).toFixed(1)} MB` : `${(loaded / 1024 / 1024).toFixed(1)} MB`;
+            const sizeLabel = total ? `${formatBytes(loaded)} / ${formatBytes(total)}` : formatBytes(loaded);
+            const rateLabel = rate ? `${formatBytes(rate)}/s` : '';
+            diagnosticsState.WASM = rateLabel ? `${sizeLabel} (${rateLabel})` : sizeLabel;
             loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
             updateLoader(loader, {
                 stage: 'Downloading WASM...',
                 progress: 0.1 + ratio * 0.6,
-                detail: total ? `${(loaded / 1024 / 1024).toFixed(1)} / ${(total / 1024 / 1024).toFixed(1)} MB` : `${(loaded / 1024 / 1024).toFixed(1)} MB`
+                detail: rateLabel ? `${sizeLabel} • ${rateLabel}` : sizeLabel
             });
         });
 

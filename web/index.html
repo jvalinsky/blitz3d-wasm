@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SCP: Containment Breach (Blitz3D WASM)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; color: #fff; font-family: sans-serif; }
+        #game-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        canvas { box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #loading { position: absolute; font-size: 24px; color: #aaa; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+        <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+        <div id="loading">Loading Engine...</div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

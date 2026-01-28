@@ -13,11 +13,11 @@ fi
 # 2. Bundle Runtime (runtime.js -> dist/runtime.bundle.js)
 echo "Bundling Runtime..."
 mkdir -p dist
-# Use npx browserify (assuming node is available)
-npx -y browserify Sources/Runtime/runtime.js -o dist/runtime.bundle.js
+# Use Deno to run browserify (via npm compat)
+deno run -A npm:browserify Sources/Runtime/runtime.js -o dist/runtime.bundle.js
 
 if [ $? -ne 0 ]; then
-    echo "Bundling failed! Make sure browserify is installed (npm install browserify)."
+    echo "Bundling failed! Make sure Deno is installed."
     exit 1
 fi
 

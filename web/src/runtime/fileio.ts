@@ -128,6 +128,8 @@ export class Blitz3DFileIO {
                 if (options.onProgress) {
                     options.onProgress(completed, total, entry.path);
                 }
+                // Yield to event loop to keep UI responsive
+                await new Promise(r => setTimeout(r, 0));
             }
         };
 

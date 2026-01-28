@@ -13,8 +13,12 @@ public struct Lexer {
     private let sourceFile: String
     private let lineMap: [Int: (file: String, line: Int)]?
     private var lineStarts: [String.Index]  // For line lookup
-    
-    public init(source: String, sourceFile: String = "unknown", lineMap: [Int: (file: String, line: Int)]? = nil) {
+    private var hadWhitespace: Bool = false  // Track if whitespace preceded current token
+
+    public init(
+        source: String, sourceFile: String = "unknown",
+        lineMap: [Int: (file: String, line: Int)]? = nil
+    ) {
         self.source = source
         self.sourceFile = sourceFile
         self.lineMap = lineMap
@@ -22,9 +26,10 @@ public struct Lexer {
         self.currentLine = 1
         self.currentColumn = 1
         self.lineStarts = [source.startIndex]
-        
-        CompilerLogger.trace("DEBUG_LEXER: Initialized with source length: \(source.count) characters")
-        
+
+        CompilerLogger.trace(
+            "DEBUG_LEXER: Initialized with source length: \(source.count) characters")
+
         // Pre-compute line starts for error reporting
         var idx = source.startIndex
         while idx < source.endIndex {
@@ -33,30 +38,31 @@ public struct Lexer {
             }
             idx = source.index(after: idx)
         }
-        
+
         CompilerLogger.trace("DEBUG_LEXER: Found \(lineStarts.count) lines")
     }
-    
+
     public mutating func nextToken() -> Token {
         skipWhitespace()
-        
+
         let startLine = currentLine
         let startColumn = currentColumn
-        
+
         guard currentIndex < source.endIndex else {
-            CompilerLogger.trace("DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
+            CompilerLogger.trace(
+                "DEBUG_LEXER: Reached EOF at line \(currentLine), column \(currentColumn)")
             return makeToken(.endOfFile, text: "", line: currentLine, column: currentColumn)
         }
-        
+
         let ch = source[currentIndex]
-        
+
         if ch == "\n" {
             advance()
             currentLine += 1
             currentColumn = 1
             return makeToken(.newline, text: "\n", line: startLine, column: startColumn)
         }
-        
+
         // Comments
         if ch == "'" || ch == ";" {
             skipComment()
@@ -65,28 +71,28 @@ public struct Lexer {
 
         // SCPCB/IDE metadata lines can begin with "=;" (treat as a comment line).
         if ch == "=" && startColumn == 1, let next = peek(offset: 1), next == ";" {
-            advance() // consume '='
-            skipComment() // now positioned at ';'
+            advance()  // consume '='
+            skipComment()  // now positioned at ';'
             return nextToken()
         }
-        
+
         // String literals
         if ch == "\"" {
             return readStringLiteral(startLine: startLine, startColumn: startColumn)
         }
-        
+
         // Numbers (including floats like .01)
         if ch.isASCII && ch.isNumber {
             return readNumber(startLine: startLine, startColumn: startColumn)
         }
-        
+
         // Floats starting with . (like .01, .5)
         if ch == "." {
             if let next = peek(offset: 1), next.isASCII && next.isNumber {
                 return readNumber(startLine: startLine, startColumn: startColumn)
             }
         }
-        
+
         // Hex literals
         if ch == "$" {
             return readHexLiteral(startLine: startLine, startColumn: startColumn)
@@ -105,52 +111,54 @@ public struct Lexer {
         if ch.isASCII && (ch.isLetter || ch == "_") {
             return readIdentifierOrKeyword(startLine: startLine, startColumn: startColumn)
         }
-        
+
         // Operators and punctuation
         return readOperatorOrPunctuation(startLine: startLine, startColumn: startColumn)
     }
-    
+
     public mutating func tokenize() -> [Token] {
         var tokens: [Token] = []
-        
+
         while true {
             let token = nextToken()
             tokens.append(token)
-            
+
             if token.type == .endOfFile {
                 break
             }
         }
-        
+
         return tokens
     }
-    
+
     // MARK: - Private Methods
-    
+
     private mutating func skipWhitespace() {
+        hadWhitespace = false
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
-            
+
             if ch.isWhitespace && ch != "\n" {
+                hadWhitespace = true
                 advance()
             } else {
                 break
             }
         }
     }
-    
+
     private mutating func advance() {
         if currentIndex < source.endIndex {
             currentIndex = source.index(after: currentIndex)
             currentColumn += 1
         }
     }
-    
+
     private func peek(offset: Int = 0) -> Character? {
         let idx = source.index(currentIndex, offsetBy: offset, limitedBy: source.endIndex)
         return idx != nil && idx! < source.endIndex ? source[idx!] : nil
     }
-    
+
     private mutating func skipComment() {
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
@@ -160,14 +168,14 @@ public struct Lexer {
             advance()
         }
     }
-    
+
     private mutating func readStringLiteral(startLine: Int, startColumn: Int) -> Token {
         advance()  // Skip opening quote
-        
+
         var text = ""
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
-            
+
             if ch == "\"" {
                 // Check for escaped quote ("")
                 if let next = peek(offset: 1), next == "\"" {
@@ -187,24 +195,24 @@ public struct Lexer {
                 advance()
             }
         }
-        
+
         return makeToken(.stringLiteral, text: text, line: startLine, column: startColumn)
     }
-    
+
     private mutating func readNumber(startLine: Int, startColumn: Int) -> Token {
         var text = ""
         var hasDecimal = false
-        
+
         // Handle numbers starting with . (like .01)
         if source[currentIndex] == "." {
             hasDecimal = true
             text.append(".")
             advance()
         }
-        
+
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
-            
+
             if ch.isASCII && ch.isNumber {
                 text.append(ch)
                 advance()
@@ -223,22 +231,22 @@ public struct Lexer {
                 break
             }
         }
-        
+
         // Check for type suffix
         if let next = peek(), next == "#" || next == "%" {
             text.append(next)
             advance()
         }
-        
+
         if hasDecimal || text.contains("e") || text.contains("E") {
             return makeToken(.floatLiteral, text: text, line: startLine, column: startColumn)
         } else {
             return makeToken(.integerLiteral, text: text, line: startLine, column: startColumn)
         }
     }
-    
+
     private mutating func readHexLiteral(startLine: Int, startColumn: Int) -> Token {
-        advance() // Skip $
+        advance()  // Skip $
 
         var text = ""
         while currentIndex < source.endIndex {
@@ -253,14 +261,15 @@ public struct Lexer {
 
         // Convert to integer
         if let value = Int(text, radix: 16) {
-            return makeToken(.integerLiteral, text: String(value), line: startLine, column: startColumn)
+            return makeToken(
+                .integerLiteral, text: String(value), line: startLine, column: startColumn)
         }
 
         return makeToken(.error, text: "$" + text, line: startLine, column: startColumn)
     }
 
     private mutating func readBinaryLiteral(startLine: Int, startColumn: Int) -> Token {
-        advance() // Skip %
+        advance()  // Skip %
 
         var text = ""
         while currentIndex < source.endIndex {
@@ -275,15 +284,16 @@ public struct Lexer {
 
         // Convert to integer
         if let value = Int(text, radix: 2) {
-            return makeToken(.integerLiteral, text: String(value), line: startLine, column: startColumn)
+            return makeToken(
+                .integerLiteral, text: String(value), line: startLine, column: startColumn)
         }
-        
+
         return makeToken(.error, text: "%" + text, line: startLine, column: startColumn)
     }
-    
+
     private mutating func readIdentifierOrKeyword(startLine: Int, startColumn: Int) -> Token {
         var text = ""
-        
+
         while currentIndex < source.endIndex {
             let ch = source[currentIndex]
             if ch.isASCII && (ch.isLetter || ch.isNumber || ch == "_") {
@@ -293,22 +303,22 @@ public struct Lexer {
                 break
             }
         }
-        
+
         // Check for type suffix
         if let next = peek(), next == "%" || next == "#" || next == "$" {
             text.append(next)
             advance()
         }
-        
+
         let lowercase = text.lowercased()
-        
+
         // Look ahead for multi-word keywords
         if lowercase == "end" || lowercase == "else" {
             // Save current position
             let savedIndex = currentIndex
             let savedLine = currentLine
             let savedColumn = currentColumn
-            
+
             // Skip whitespace
             while currentIndex < source.endIndex {
                 let ch = source[currentIndex]
@@ -318,7 +328,7 @@ public struct Lexer {
                     break
                 }
             }
-            
+
             // Try to read next word
             var nextWord = ""
             while currentIndex < source.endIndex {
@@ -330,23 +340,27 @@ public struct Lexer {
                     break
                 }
             }
-            
+
             // Check if the combined phrase is a keyword
             if !nextWord.isEmpty {
                 let combined = text + " " + nextWord
                 if let keywordType = keywordMap[combined.lowercased()] {
-                    CompilerLogger.trace("DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)")
-                    return makeToken(keywordType, text: combined, line: startLine, column: startColumn)
+                    CompilerLogger.trace(
+                        "DEBUG_LEXER: Matched multi-word keyword '\(combined)' at line \(startLine)"
+                    )
+                    return makeToken(
+                        keywordType, text: combined, line: startLine, column: startColumn)
                 }
             }
-            
+
             // Not a multi-word keyword - rewind to saved position
-            CompilerLogger.trace("DEBUG_LEXER: No multi-word match for '\(text)' + '\(nextWord)', rewinding")
+            CompilerLogger.trace(
+                "DEBUG_LEXER: No multi-word match for '\(text)' + '\(nextWord)', rewinding")
             currentIndex = savedIndex
             currentLine = savedLine
             currentColumn = savedColumn
         }
-        
+
         // Check if it's a keyword
         if let keywordType = keywordMap[lowercase] {
             if keywordType == .keywordFunction {
@@ -354,39 +368,43 @@ public struct Lexer {
             }
             return makeToken(keywordType, text: text, line: startLine, column: startColumn)
         }
-        
+
         return makeToken(.identifier, text: text, line: startLine, column: startColumn)
     }
-    
+
     private mutating func readOperatorOrPunctuation(startLine: Int, startColumn: Int) -> Token {
         let ch = source[currentIndex]
         advance()
-        
+
         // Two-character operators - check currentIndex is valid BEFORE accessing source
         if currentIndex < source.endIndex {
             let twoChar = String(ch) + String(source[currentIndex])
-            
+
             switch twoChar {
             case "<>":
                 advance()
                 return makeToken(.notEquals, text: twoChar, line: startLine, column: startColumn)
             case "<=":
                 advance()
-                return makeToken(.lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+                return makeToken(
+                    .lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             case "=<":
                 advance()
-                return makeToken(.lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+                return makeToken(
+                    .lessThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             case ">=":
                 advance()
-                return makeToken(.greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+                return makeToken(
+                    .greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             case "=>":
                 advance()
-                return makeToken(.greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
+                return makeToken(
+                    .greaterThanOrEqual, text: twoChar, line: startLine, column: startColumn)
             default:
                 break
             }
         }
-        
+
         // Single character
         switch ch {
         case "+": return makeToken(.plus, text: "+", line: startLine, column: startColumn)
@@ -412,11 +430,15 @@ public struct Lexer {
 
     private func makeToken(_ type: TokenType, text: String, line: Int, column: Int) -> Token {
         if let map = lineMap, let entry = map[line] {
-            return Token(type: type, text: text, line: entry.line, column: column, sourceFile: entry.file)
+            return Token(
+                type: type, text: text, line: entry.line, column: column, sourceFile: entry.file,
+                hadLeadingWhitespace: hadWhitespace)
         }
-        return Token(type: type, text: text, line: line, column: column, sourceFile: sourceFile)
+        return Token(
+            type: type, text: text, line: line, column: column, sourceFile: sourceFile,
+            hadLeadingWhitespace: hadWhitespace)
     }
-    
+
     // Keyword lookup table (case-insensitive)
     private let keywordMap: [String: TokenType] = [
         "dim": .keywordDim,
@@ -482,6 +504,6 @@ public struct Lexer {
         "not": .keywordNot,
         "shl": .keywordShl,
         "shr": .keywordShr,
-        "sar": .keywordSar
+        "sar": .keywordSar,
     ]
 }

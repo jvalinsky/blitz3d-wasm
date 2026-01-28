@@ -15,7 +15,28 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:troubles.md)",
       "Bash(wasm-objdump:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(ls:*)",
+      "Bash(deciduous add action:*)",
+      "Bash(deciduous link:*)",
+      "Bash(./test_scpcb_compilation.sh:*)",
+      "Bash(deciduous add:*)",
+      "Bash(wasm-validate:*)",
+      "Bash(for test in Tests/parser_paren_args_*.bb)",
+      "Bash(echo for test in Tests/parser_paren_args_*.bb)",
+      "Bash(grep -E \"\\(Parser errors|Wrote WASM\\)\" if [ -f /tmp/music.wasm ])",
+      "Bash(then wasm-validate /tmp/music.wasm)",
+      "Bash(grep -E \"\\(Parser errors|Wrote WASM\\)\" if [ -f /tmp/window3d.wasm ])",
+      "Bash(then wasm-validate /tmp/window3d.wasm)",
+      "Bash(echo echo \"Test Files:\" for test in Tests/parser_paren_args_*.bb)",
+      "Bash(then if wasm-validate /tmp/test.wasm)",
+      "Bash(then echo \" ❌ INVALID\" else echo \" ✅ PASS\" fi else echo \" ❌ FAIL\" fi done __NEW_LINE_b5800e86e83f3051__ echo \"\" echo \"Real Files:\" printf \"%-35s\" \"MusicPlayer.bb:\" if .build/debug/blitz3d-wasm \"../scpcb/MusicPlayer.bb\" -o /tmp/music.wasm)",
+      "Bash(then echo \" ✅ PASS\" else echo \" ❌ FAIL\" fi __NEW_LINE_b5800e86e83f3051__ printf \"%-35s\" \"window3d.bb:\" if .build/debug/blitz3d-wasm \"../scpcb/Map Creator/window3d.bb\" -o /tmp/window3d.wasm)",
+      "Bash(then echo \" ✅ PASS\" else echo \" ❌ FAIL\" fi)",
+      "Bash(deciduous nodes:*)",
+      "Bash(grep:*)",
+      "Bash(tee:*)",
+      "Bash(git checkout:*)"
     ]
   }
 }

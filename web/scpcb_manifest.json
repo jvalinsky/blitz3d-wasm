@@ -5,326 +5,326 @@
       "scpcb.wasm"
     ],
     "facility_assets": [
-      "assets/dimension1499_lm1.png",
-      "assets/room2poffices2_lm1.png",
-      "assets/door.jpg",
-      "assets/gatea_lm1.png",
-      "assets/boxfile_a.jpg",
-      "assets/Door01.x",
-      "assets/room4pit_lm3.png",
-      "assets/room3pit_lm1.png",
-      "assets/room2tesla_lm1.png",
-      "assets/room2_4_lm2.png",
-      "assets/room3offices_lm2.png",
-      "assets/testroom_opt.rmesh",
-      "assets/flat_monitor.jpg",
-      "assets/cabinet_a.jpg",
-      "assets/079-monitor-screen.jpg",
-      "assets/LAMP.jpg",
-      "assets/room2closets_lm1.png",
-      "assets/scp1162bump.jpg",
-      "assets/room3storage_lm2.png",
-      "assets/room4info_lm1.png",
-      "assets/room3tunnel_lm1.png",
-      "assets/label895.jpg",
-      "assets/rock.jpg",
-      "assets/room2_4_lm6.png",
-      "assets/tree1.jpg",
-      "assets/Logo_of_the_SCP_Foundation.png",
-      "assets/room2_lm1.png",
-      "assets/lamp3.jpg",
-      "assets/914panel.jpg",
-      "assets/label106.jpg",
-      "assets/label205.jpg",
-      "assets/room2toilets_lm1.png",
-      "assets/forestfloor.jpg",
-      "assets/ceiling.jpg",
-      "assets/Pipes.jpg",
-      "assets/granite-texture-tileable.png",
-      "assets/room049_lm2.png",
-      "assets/room3z2_lm1.png",
-      "assets/testroom_lm1.png",
-      "assets/room2cpit_lm1.png",
-      "assets/room079_lm2.png",
-      "assets/miscsigns3.jpg",
-      "assets/miscsigns4.jpg",
-      "assets/bowl-blood.jpg",
-      "assets/label173.jpg",
-      "assets/room2c2_lm1.png",
-      "assets/misc.jpg",
-      "assets/testroom_lm2.png",
-      "assets/room2cz3_lm1.png",
-      "assets/controlpanel.jpg",
-      "assets/concretefloor.jpg",
-      "assets/metal.jpg",
-      "assets/diff_trolley.jpg",
-      "assets/room4pit_lm2.png",
-      "assets/zimmerframe1.jpg",
-      "assets/red.jpg",
-      "assets/4tunnels_lm1.png",
-      "assets/room2c2_lm3.png",
-      "assets/room2servers2_lm1.png",
-      "assets/room2nuke_lm1.png",
-      "assets/1123_lm1.png",
-      "assets/tesla.jpg",
-      "assets/room2c2_lm2.png",
-      "assets/room4_lm1.png",
-      "assets/room079_lm1.png",
-      "assets/officewall.jpg",
-      "assets/room513_lm1.png",
-      "assets/room2_2_lm1.png",
-      "assets/scp1162wall.jpg",
-      "assets/079_computer_1.jpg",
-      "assets/label372.jpg",
-      "assets/room2test1074_lm1.png",
-      "assets/scp-012_0.jpg",
-      "assets/room2gw_lm4.png",
-      "assets/tree2.png",
-      "assets/alcohol-hand-gel-v2-256-blood.jpg",
-      "assets/room106_lm2.png",
-      "assets/pdwall.jpg",
-      "assets/room2offices_lm1.png",
-      "assets/decal1.png",
+      "assets/containment_doors.jpg",
+      "assets/miscsigns2.jpg",
+      "assets/294test.png",
       "assets/room2pipes2_lm1.png",
-      "assets/294.jpg",
-      "assets/grass2bump.jpg",
-      "assets/room2_3_lm1.png",
-      "assets/room2ctunnel_lm1.png",
-      "assets/label513.jpg",
-      "assets/label079.jpg",
-      "assets/concretewallbump.jpg",
-      "assets/room2servers_lm1.png",
-      "assets/soft grey.jpg",
-      "assets/officeseat_a.jpg",
-      "assets/room2gw_lm2.png",
-      "assets/controlpanel2.jpg",
-      "assets/machineroom_lm1.png",
-      "assets/room3_lm1.png",
-      "assets/scp1162.jpg",
-      "assets/whitewall.jpg",
-      "assets/whitewallbump.jpg",
-      "assets/metalpanels2bump.jpg",
-      "assets/grass.png",
-      "assets/miscbump.jpg",
-      "assets/room3servers2_lm1.png",
-      "assets/Pipes_NoRust2.jpg",
-      "assets/room2offices4_lm1.png",
-      "assets/decal4.png",
-      "assets/larry.jpg",
-      "assets/pdfloor.jpg",
-      "assets/room2gw_lm6.png",
-      "assets/079_peripherals.jpg",
-      "assets/room2_4_lm3.png",
-      "assets/room2c_lm1.png",
-      "assets/room2z3_2_lm4.png",
-      "assets/room2ccont_lm1.png",
-      "assets/LockdownScreen.jpg",
-      "assets/room2closets_lm2.png",
-      "assets/dirtymetalbump.jpg",
-      "assets/Door02.jpg",
-      "assets/room2offices2_lm1.png",
-      "assets/label049.jpg",
-      "assets/room2scps2_lm3.png",
-      "assets/ElecBox.jpg",
-      "assets/rockmoss.jpg",
-      "assets/checkpoint1_lm1.png",
-      "assets/room2z3_2_lm2.png",
-      "assets/screen.jpg",
-      "assets/vent.jpg",
-      "assets/room1lifts_lm1.png",
-      "assets/room2pipes_lm1.png",
-      "assets/checkpoint2_lm1.png",
-      "assets/metalpanelsbump.jpg",
-      "assets/CD_Diff.png",
-      "assets/room2offices3_lm1.png",
-      "assets/mechanical_lever.jpg",
-      "assets/room2_5_lm1.png",
-      "assets/room2cafeteria_opt.rmesh",
-      "assets/tank1.jpg",
-      "assets/tilefloor.jpg",
-      "assets/room3gw_lm2.png",
-      "assets/room2scps2_lm1.png",
-      "assets/CameraTexture.jpg",
-      "assets/room2servers2_lm2.png",
-      "assets/miscsigns.jpg",
-      "assets/room2scps2_lm4.png",
-      "assets/concretemoss.jpg",
-      "assets/room3offices_lm1.png",
-      "assets/keyboard.jpg",
-      "assets/roompj_lm1.png",
-      "assets/room2scps_lm1.png",
-      "assets/room2_5_lm2.png",
-      "assets/MEQM805_9.jpg",
-      "assets/room2sl_lm1.png",
-      "assets/coffin_lm1.png",
-      "assets/Door01.jpg",
-      "assets/gatea_lm3.png",
-      "assets/rockmossbump.jpg",
-      "assets/room2doors_lm1.png",
-      "assets/exit1_lm1.png",
+      "assets/forestfloor.jpg",
+      "assets/room3gw_lm1.png",
+      "assets/tilebump.jpg",
+      "assets/room2test1074_lm1.png",
+      "assets/KeyPad.jpg",
       "assets/room2.rmesh",
+      "assets/maintenance_lm.png",
+      "assets/concretewallbump.jpg",
+      "assets/room1lifts_lm1.png",
+      "assets/miscsigns3.jpg",
+      "assets/metal3.jpg",
+      "assets/room3pit_lm1.png",
+      "assets/label008.jpg",
+      "assets/room2ctunnel_lm1.png",
+      "assets/scplogo.jpg",
+      "assets/decal1.png",
+      "assets/Logo_of_the_SCP_Foundation.png",
+      "assets/gears.jpg",
+      "assets/room3gw_lm2.png",
+      "assets/room2offices3_lm1.png",
+      "assets/metalpanels.jpg",
+      "assets/zimmerframe1.jpg",
+      "assets/room2gw_b_lm1.png",
+      "assets/tunnel2_lm1.png",
+      "assets/room1lifts_lm2.png",
+      "assets/room2tunnel_opt.rmesh",
+      "assets/testroom_opt.rmesh",
+      "assets/ctwalls2.png",
+      "assets/larry.jpg",
+      "assets/exit2.jpg",
+      "assets/room3_2_lm1.png",
+      "assets/MonitorTexture2.jpg",
+      "assets/label035.jpg",
+      "assets/caution_tesla.jpg",
+      "assets/SLH_1499_tex2.jpg",
+      "assets/pocketdimension1_lm1.png",
+      "assets/miscsigns4.jpg",
+      "assets/decal4.png",
+      "assets/metal.jpg",
+      "assets/rockmoss.jpg",
+      "assets/room2offices2_lm1.png",
+      "assets/079_computer_2.jpg",
+      "assets/room3_3_lm1.png",
+      "assets/roompj_lm1.png",
+      "assets/ceiling.jpg",
+      "assets/ox-cy-tray.jpg",
+      "assets/chatscreen2.jpg",
+      "assets/metal3bump.jpg",
+      "assets/SLH_1499_tex1.jpg",
+      "assets/miscsigns.jpg",
+      "assets/914panel.jpg",
+      "assets/metalpanels2bump.jpg",
+      "assets/room2testroom2_lm1.png",
+      "assets/lamp3.jpg",
+      "assets/room2ccont_lm1.png",
+      "assets/grass2.jpg",
+      "assets/room2offices3_opt.rmesh",
+      "assets/flat_monitor.jpg",
+      "assets/checkpoint2_lm1.png",
+      "assets/forestpath.jpg",
+      "assets/room4info_lm1.png",
+      "assets/079_computer_1.jpg",
+      "assets/vent.jpg",
+      "assets/keyboard.jpg",
+      "assets/scp1162bump.jpg",
+      "assets/label966.jpg",
+      "assets/173.rmesh",
+      "assets/room4_2_lm4.png",
+      "assets/exit1_lm5.png",
+      "assets/room3_lm1.png",
+      "assets/room2gw_lm1.png",
+      "assets/officewall.jpg",
+      "assets/room2tesla_lm1.png",
+      "assets/chatscreen.jpg",
+      "assets/boxfile_a.jpg",
+      "assets/SLH_miscsigns.jpg",
+      "assets/grass2bump.jpg",
+      "assets/room2cafeteria_lm1.png",
+      "assets/controlpanel.jpg",
+      "assets/room2closets_lm2.png",
+      "assets/label914.jpg",
+      "assets/exit1_lm4.png",
+      "assets/dirtymetalbump.jpg",
+      "assets/room4_2_lm5.png",
+      "assets/concrete.jpg",
+      "assets/room2gw_lm2.png",
+      "assets/914labels.jpg",
+      "assets/dimension1499_lm1.png",
+      "assets/room035_lm1.png",
+      "assets/metalpanelsbump.jpg",
+      "assets/room2closets_lm1.png",
+      "assets/room2_2_lm1.png",
+      "assets/concretefloorbump.jpg",
+      "assets/079_peripherals.jpg",
+      "assets/circuit.jpg",
+      "assets/room1archive_lm1.png",
+      "assets/room2gw_lm3.png",
+      "assets/exit1_lm3.png",
+      "assets/tilefloor.jpg",
+      "assets/room4_2_lm2.png",
+      "assets/room2doors_lm1.png",
+      "assets/room966_lm1.png",
+      "assets/whitewallbump.jpg",
+      "assets/MonitorTexture.jpg",
+      "assets/room2cpit_lm1.png",
+      "assets/079_monitor.jpg",
+      "assets/gravel.jpg",
+      "assets/ventbump.jpg",
+      "assets/tank1.jpg",
+      "assets/room2_3_lm1.png",
+      "assets/Pipes.jpg",
+      "assets/alcohol-hand-gel-v2-256-blood.jpg",
+      "assets/room079_lm1.png",
+      "assets/rock.jpg",
+      "assets/wood.jpg",
+      "assets/room4pit_lm1.png",
+      "assets/checkpoint1_lm1.png",
+      "assets/scp1162.jpg",
+      "assets/cloth.jpg",
+      "assets/crtbev.jpg",
+      "assets/LockdownScreen.jpg",
+      "assets/room2gw_lm6.png",
+      "assets/room4_2_lm3.png",
+      "assets/exit1_lm2.png",
+      "assets/tesla.jpg",
+      "assets/room205_lm1.png",
+      "assets/CD_Diff.png",
+      "assets/label079.jpg",
+      "assets/room4_2_lm1.png",
+      "assets/room2gw_lm4.png",
+      "assets/room2scps_lm1.png",
+      "assets/room4pit_lm3.png",
+      "assets/mechanical_lever.jpg",
+      "assets/room2_lm1.png",
+      "assets/SLH_1499_water.png",
+      "assets/medibay.jpg",
+      "assets/room2elevator_lm1.png",
+      "assets/room2_opt.rmesh",
+      "assets/4tunnels_lm1.png",
+      "assets/navtexture.jpg",
+      "assets/tank2.jpg",
+      "assets/room079_lm2.png",
+      "assets/room012_lm1.png",
+      "assets/room4pit_lm2.png",
+      "assets/servers1.jpg",
+      "assets/room2tesla_lcz_lm1.png",
+      "assets/room2gw_lm5.png",
+      "assets/room3tunnel_lm1.png",
+      "assets/exit1_lm1.png",
+      "assets/room3storage_lm2.png",
+      "assets/room2tunnel_lm2.png",
+      "assets/dirtymetal.jpg",
+      "assets/label049.jpg",
+      "assets/endroom_lm1.png",
+      "assets/scp-012_2.jpg",
+      "assets/room2offices4_lm1.png",
+      "assets/whitewall.jpg",
+      "assets/room3z2_lm1.png",
+      "assets/room2c2_lm3.png",
+      "assets/room3servers2_lm2.png",
+      "assets/ctwalls.png",
+      "assets/testroom_lm1.png",
+      "assets/room2servers_lm1.png",
+      "assets/room2c2_lm2.png",
+      "assets/room860_lm1.png",
+      "assets/294.jpg",
+      "assets/scp-012_3.jpg",
+      "assets/grass.png",
+      "assets/room2pipes_lm1.png",
+      "assets/room3storage_lm3.png",
+      "assets/room2tunnel_lm1.png",
+      "assets/oxygen-cylinder.jpg",
+      "assets/room3storage_lm1.png",
+      "assets/doctors.jpg",
+      "assets/scp-012_1.jpg",
+      "assets/rockmossbump.jpg",
+      "assets/room2offices4_lm2.png",
+      "assets/screen.jpg",
+      "assets/room2poffices_lm1.png",
+      "assets/room3servers2_lm1.png",
+      "assets/MEQM805_9.jpg",
+      "assets/label895.jpg",
+      "assets/testroom_lm2.png",
+      "assets/room2c2_lm1.png",
+      "assets/room2offices4_lm3.png",
+      "assets/granite-texture-tileable.png",
+      "assets/ElecBox.jpg",
+      "assets/scp-012_0.jpg",
+      "assets/bowl-blood.jpg",
+      "assets/label513.jpg",
+      "assets/machineroom_lm1.png",
+      "assets/room3storage_lm4.png",
+      "assets/coffin_lm1.png",
+      "assets/gateaentrance_lm1.png",
+      "assets/008_lm1.png",
+      "assets/LockdownScreen3.jpg",
+      "assets/LockdownScreen2.jpg",
+      "assets/door.jpg",
+      "assets/label106.jpg",
+      "assets/scp1162wallbump.jpg",
+      "assets/concretemoss.jpg",
+      "assets/room2storage_lm1.png",
+      "assets/medibay_lm1.png",
+      "assets/endroom2_lm1.png",
+      "assets/room2c_lm1.png",
+      "assets/microscope.jpg",
+      "assets/room513_lm1.png",
+      "assets/1123_lm1.png",
+      "assets/room2toilets_lm1.png",
+      "assets/pdfloor.jpg",
+      "assets/room3servers_lm1.png",
+      "assets/201_camera_diffuse1.png",
+      "assets/room2pit_lm1.png",
+      "assets/metal_darker.jpg",
+      "assets/room3z3_lm1.png",
+      "assets/room2cz3_lm1.png",
+      "assets/controlpanel2.jpg",
+      "assets/fire_extinguisher.jpg",
       "assets/gravelbump.jpg",
       "assets/metalpanels2.jpg",
-      "assets/exit1_lm5.png",
-      "assets/glass.png",
-      "assets/SLH_1499_tex2.jpg",
-      "assets/SLH_1499_water.png",
-      "assets/ctwalls2.png",
-      "assets/room2testroom2_lm1.png",
-      "assets/room860_lm1.png",
-      "assets/label966.jpg",
-      "assets/room2scps2_lm2.png",
-      "assets/room2tesla_hcz_lm1.png",
-      "assets/metal3bump.jpg",
-      "assets/scp-012_1.jpg",
-      "assets/endroom2_lm1.png",
-      "assets/079_computer_2.jpg",
-      "assets/room2shaft_lm2.png",
-      "assets/room2tunnel_lm2.png",
-      "assets/sun.jpg",
-      "assets/room2testmisc_lm1.png",
-      "assets/chatscreen2.jpg",
-      "assets/metalpanels.jpg",
-      "assets/room2_opt.rmesh",
-      "assets/LockdownScreen3.jpg",
-      "assets/navtexture.jpg",
-      "assets/room2elevator_lm1.png",
-      "assets/room2sl_lm2.png",
-      "assets/containmentdoorsbump.jpg",
-      "assets/173_lm2.png",
-      "assets/scp-012_3.jpg",
-      "assets/oxygen-cylinder.jpg",
-      "assets/tank2.jpg",
-      "assets/gateaentrance_lm1.png",
-      "assets/201_camera_diffuse1.png",
-      "assets/pocketdimension1_lm1.png",
-      "assets/room2gw_lm5.png",
-      "assets/grass2.jpg",
-      "assets/294test.png",
-      "assets/room966_lm1.png",
-      "assets/room4pit_lm1.png",
+      "assets/officeseat_a.jpg",
+      "assets/Door01.x",
       "assets/medibay_lm2.png",
-      "assets/AGENTs.md",
-      "assets/room2offices4_lm3.png",
-      "assets/room3storage_lm3.png",
-      "assets/exit2.jpg",
-      "assets/fire_extinguisher.jpg",
       "assets/labelmedicalbay.jpg",
-      "assets/ctwalls.png",
-      "assets/room1lifts_lm2.png",
-      "assets/room2gw_lm1.png",
-      "assets/room1162_lm1.png",
-      "assets/room3storage_lm4.png",
-      "assets/2_office_lamps_dif.jpg",
-      "assets/gears.jpg",
-      "assets/label914.jpg",
-      "assets/label035.jpg",
-      "assets/room4_2_lm3.png",
-      "assets/room2z3_2_lm1.png",
-      "assets/scplogo.jpg",
-      "assets/forestpath.jpg",
-      "assets/173bright_lm2.png",
-      "assets/maintenance_lm.png",
-      "assets/label008.jpg",
-      "assets/medibay_lm1.png",
-      "assets/concretefloorbump.jpg",
-      "assets/room2storage_lm1.png",
-      "assets/room2tunnel_opt.rmesh",
-      "assets/room2shaft_lm3.png",
-      "assets/servers1.jpg",
-      "assets/KeyPad.jpg",
-      "assets/label012.jpg",
-      "assets/room035_lm1.png",
-      "assets/lockroom_lm1.png",
-      "assets/doctors.jpg",
-      "assets/room3_2_lm1.png",
-      "assets/gravel.jpg",
-      "assets/room2scps2_lm6.png",
-      "assets/173.rmesh",
-      "assets/concretewall.jpg",
-      "assets/ox-cy-tray.jpg",
-      "assets/room3gw_lm1.png",
-      "assets/173bright_lm1.png",
-      "assets/room2pit_lm1.png",
-      "assets/scp-012_2.jpg",
-      "assets/room2z3_2_lm3.png",
-      "assets/exit1_lm4.png",
-      "assets/room3servers_lm1.png",
-      "assets/914labels.jpg",
-      "assets/room3storage_lm1.png",
-      "assets/LockdownScreen2.jpg",
-      "assets/circuit.jpg",
-      "assets/lockroom2_lm1.png",
-      "assets/room2_4_lm1.png",
-      "assets/room2gw_lm3.png",
-      "assets/room2_4_lm5.png",
-      "assets/room2sroom_lm1.png",
-      "assets/079_monitor.jpg",
-      "assets/MonitorTexture.jpg",
-      "assets/room2poffices_lm1.png",
-      "assets/wood.jpg",
-      "assets/tunnel2_lm1.png",
-      "assets/metal3.jpg",
-      "assets/concrete.jpg",
-      "assets/room205_lm1.png",
-      "assets/scp1162wallbump.jpg",
-      "assets/metal_darker.jpg",
-      "assets/crtbev.jpg",
-      "assets/room106_lm1.png",
-      "assets/room3z3_lm1.png",
-      "assets/caution_tesla.jpg",
-      "assets/room2tunnel_lm1.png",
-      "assets/crtrec.jpg",
-      "assets/MonitorTexture2.jpg",
-      "assets/room4_2_lm2.png",
-      "assets/op-table-light-blood.jpg",
-      "assets/exit1_lm3.png",
-      "assets/mat_glass.png",
-      "assets/room4_2_lm5.png",
-      "assets/chatscreen.jpg",
-      "assets/room2offices4_lm2.png",
-      "assets/ventbump.jpg",
-      "assets/cloth.jpg",
-      "assets/cable_black.jpg",
-      "assets/microscope.jpg",
-      "assets/room3_3_lm1.png",
-      "assets/containment_doors.jpg",
-      "assets/room4_2_lm1.png",
-      "assets/lockroom3_lm1.png",
-      "assets/dirtymetal.jpg",
-      "assets/room2scps2_lm5.png",
-      "assets/173bright_lm3.png",
-      "assets/medibay.jpg",
-      "assets/exit1_lm2.png",
-      "assets/room3servers2_lm2.png",
-      "assets/bed-table.jpg",
-      "assets/white.jpg",
-      "assets/room2tesla_lcz_lm1.png",
-      "assets/SLH_miscsigns.jpg",
-      "assets/gatea_lm2.png",
-      "assets/endroom_lm1.png",
-      "assets/room2_4_lm4.png",
-      "assets/miscsigns2.jpg",
-      "assets/room2offices3_opt.rmesh",
-      "assets/room2gw_b_lm1.png",
-      "assets/lockroom3_lm2.png",
-      "assets/papertexture.jpg",
-      "assets/room4_2_lm4.png",
-      "assets/SLH_1499_tex1.jpg",
-      "assets/room2z3_lm1.png",
       "assets/crtroc.jpg",
-      "assets/173_lm1.png",
-      "assets/new_metal1.jpg",
-      "assets/room4z3_lm1.png",
+      "assets/173bright_lm1.png",
+      "assets/room2shaft_lm2.png",
+      "assets/Pipes_NoRust2.jpg",
+      "assets/room2testmisc_lm1.png",
+      "assets/room2_4_lm4.png",
+      "assets/room2_5_lm1.png",
+      "assets/containmentdoorsbump.jpg",
+      "assets/gatea_lm1.png",
+      "assets/room2scps2_lm1.png",
+      "assets/room049_lm2.png",
+      "assets/papertexture.jpg",
+      "assets/room2_4_lm5.png",
+      "assets/room2shaft_lm3.png",
+      "assets/room2cafeteria_opt.rmesh",
+      "assets/cable_black.jpg",
+      "assets/room2z3_2_lm4.png",
+      "assets/AGENTs.md",
+      "assets/sun.jpg",
+      "assets/lockroom_lm1.png",
+      "assets/173bright_lm2.png",
       "assets/room2shaft_lm1.png",
-      "assets/d-quest173.png",
-      "assets/room012_lm1.png",
-      "assets/tilebump.jpg",
-      "assets/room049_lm1.png",
       "assets/tunnel_lm1.png",
-      "assets/008_lm1.png",
-      "assets/room2cafeteria_lm1.png",
-      "assets/room1archive_lm1.png"
+      "assets/op-table-light-blood.jpg",
+      "assets/room2offices_lm1.png",
+      "assets/room2_5_lm2.png",
+      "assets/gatea_lm2.png",
+      "assets/room2scps2_lm2.png",
+      "assets/glass.png",
+      "assets/lockroom2_lm1.png",
+      "assets/pdwall.jpg",
+      "assets/room2scps2_lm3.png",
+      "assets/mat_glass.png",
+      "assets/gatea_lm3.png",
+      "assets/room049_lm1.png",
+      "assets/2_office_lamps_dif.jpg",
+      "assets/room4z3_lm1.png",
+      "assets/room2_4_lm6.png",
+      "assets/room2sroom_lm1.png",
+      "assets/173bright_lm3.png",
+      "assets/room4_lm1.png",
+      "assets/room2poffices2_lm1.png",
+      "assets/room2tesla_hcz_lm1.png",
+      "assets/bed-table.jpg",
+      "assets/room2z3_2_lm1.png",
+      "assets/173_lm2.png",
+      "assets/room2sl_lm1.png",
+      "assets/tree2.png",
+      "assets/room2servers2_lm2.png",
+      "assets/misc.jpg",
+      "assets/miscbump.jpg",
+      "assets/room2_4_lm2.png",
+      "assets/label372.jpg",
+      "assets/cabinet_a.jpg",
+      "assets/room106_lm2.png",
+      "assets/room1162_lm1.png",
+      "assets/room2scps2_lm6.png",
+      "assets/lockroom3_lm1.png",
+      "assets/d-quest173.png",
+      "assets/soft grey.jpg",
+      "assets/room2_4_lm3.png",
+      "assets/new_metal1.jpg",
+      "assets/concretefloor.jpg",
+      "assets/white.jpg",
+      "assets/room2nuke_lm1.png",
+      "assets/room3offices_lm1.png",
+      "assets/CameraTexture.jpg",
+      "assets/Door02.jpg",
+      "assets/room2z3_lm1.png",
+      "assets/room2z3_2_lm2.png",
+      "assets/173_lm1.png",
+      "assets/tree1.jpg",
+      "assets/LAMP.jpg",
+      "assets/room2sl_lm2.png",
+      "assets/label205.jpg",
+      "assets/room2servers2_lm1.png",
+      "assets/concretewall.jpg",
+      "assets/room2_4_lm1.png",
+      "assets/room106_lm1.png",
+      "assets/label173.jpg",
+      "assets/room2scps2_lm4.png",
+      "assets/room2scps2_lm5.png",
+      "assets/079-monitor-screen.jpg",
+      "assets/scp1162wall.jpg",
+      "assets/lockroom3_lm2.png",
+      "assets/red.jpg",
+      "assets/diff_trolley.jpg",
+      "assets/crtrec.jpg",
+      "assets/room3offices_lm2.png",
+      "assets/label012.jpg",
+      "assets/room2z3_2_lm3.png",
+      "assets/Door01.jpg"
     ]
   },
   "files": [
@@ -334,636 +334,892 @@
       "type": "wasm"
     },
     {
-      "path": "assets/dimension1499_lm1.png",
-      "size": 2968
+      "path": "assets/containment_doors.jpg",
+      "size": 799804
     },
     {
-      "path": "assets/room2poffices2_lm1.png",
-      "size": 16111
+      "path": "assets/miscsigns2.jpg",
+      "size": 179977
     },
     {
-      "path": "assets/door.jpg",
-      "size": 162273
-    },
-    {
-      "path": "assets/gatea_lm1.png",
-      "size": 47678
-    },
-    {
-      "path": "assets/boxfile_a.jpg",
-      "size": 54292
-    },
-    {
-      "path": "assets/Door01.x",
-      "size": 116345
-    },
-    {
-      "path": "assets/room4pit_lm3.png",
-      "size": 18053
-    },
-    {
-      "path": "assets/room3pit_lm1.png",
-      "size": 29229
-    },
-    {
-      "path": "assets/room2tesla_lm1.png",
-      "size": 41168
-    },
-    {
-      "path": "assets/room2_4_lm2.png",
-      "size": 21350
-    },
-    {
-      "path": "assets/room3offices_lm2.png",
-      "size": 38404
-    },
-    {
-      "path": "assets/testroom_opt.rmesh",
-      "size": 585914
-    },
-    {
-      "path": "assets/flat_monitor.jpg",
-      "size": 54389
-    },
-    {
-      "path": "assets/cabinet_a.jpg",
-      "size": 146872
-    },
-    {
-      "path": "assets/079-monitor-screen.jpg",
-      "size": 31350
-    },
-    {
-      "path": "assets/LAMP.jpg",
-      "size": 36165
-    },
-    {
-      "path": "assets/room2closets_lm1.png",
-      "size": 42819
-    },
-    {
-      "path": "assets/scp1162bump.jpg",
-      "size": 198964
-    },
-    {
-      "path": "assets/room3storage_lm2.png",
-      "size": 40125
-    },
-    {
-      "path": "assets/room4info_lm1.png",
-      "size": 26751
-    },
-    {
-      "path": "assets/room3tunnel_lm1.png",
-      "size": 7871
-    },
-    {
-      "path": "assets/label895.jpg",
-      "size": 74454
-    },
-    {
-      "path": "assets/rock.jpg",
-      "size": 58507
-    },
-    {
-      "path": "assets/room2_4_lm6.png",
-      "size": 3656
-    },
-    {
-      "path": "assets/tree1.jpg",
-      "size": 31549
-    },
-    {
-      "path": "assets/Logo_of_the_SCP_Foundation.png",
-      "size": 7589
-    },
-    {
-      "path": "assets/room2_lm1.png",
-      "size": 17942
-    },
-    {
-      "path": "assets/lamp3.jpg",
-      "size": 30989
-    },
-    {
-      "path": "assets/914panel.jpg",
-      "size": 104174
-    },
-    {
-      "path": "assets/label106.jpg",
-      "size": 170022
-    },
-    {
-      "path": "assets/label205.jpg",
-      "size": 53830
-    },
-    {
-      "path": "assets/room2toilets_lm1.png",
-      "size": 14324
-    },
-    {
-      "path": "assets/forestfloor.jpg",
-      "size": 414430
-    },
-    {
-      "path": "assets/ceiling.jpg",
-      "size": 323992
-    },
-    {
-      "path": "assets/Pipes.jpg",
-      "size": 105301
-    },
-    {
-      "path": "assets/granite-texture-tileable.png",
-      "size": 899063
-    },
-    {
-      "path": "assets/room049_lm2.png",
-      "size": 41901
-    },
-    {
-      "path": "assets/room3z2_lm1.png",
-      "size": 2369
-    },
-    {
-      "path": "assets/testroom_lm1.png",
-      "size": 46822
-    },
-    {
-      "path": "assets/room2cpit_lm1.png",
-      "size": 28423
-    },
-    {
-      "path": "assets/room079_lm2.png",
-      "size": 20433
-    },
-    {
-      "path": "assets/miscsigns3.jpg",
-      "size": 186465
-    },
-    {
-      "path": "assets/miscsigns4.jpg",
-      "size": 98461
-    },
-    {
-      "path": "assets/bowl-blood.jpg",
-      "size": 31524
-    },
-    {
-      "path": "assets/label173.jpg",
-      "size": 141931
-    },
-    {
-      "path": "assets/room2c2_lm1.png",
-      "size": 25275
-    },
-    {
-      "path": "assets/misc.jpg",
-      "size": 105115
-    },
-    {
-      "path": "assets/testroom_lm2.png",
-      "size": 60393
-    },
-    {
-      "path": "assets/room2cz3_lm1.png",
-      "size": 8345
-    },
-    {
-      "path": "assets/controlpanel.jpg",
-      "size": 165956
-    },
-    {
-      "path": "assets/concretefloor.jpg",
-      "size": 89041
-    },
-    {
-      "path": "assets/metal.jpg",
-      "size": 184324
-    },
-    {
-      "path": "assets/diff_trolley.jpg",
-      "size": 43542
-    },
-    {
-      "path": "assets/room4pit_lm2.png",
-      "size": 7723
-    },
-    {
-      "path": "assets/zimmerframe1.jpg",
-      "size": 36067
-    },
-    {
-      "path": "assets/red.jpg",
-      "size": 26823
-    },
-    {
-      "path": "assets/4tunnels_lm1.png",
-      "size": 8431
-    },
-    {
-      "path": "assets/room2c2_lm3.png",
-      "size": 1123
-    },
-    {
-      "path": "assets/room2servers2_lm1.png",
-      "size": 40206
-    },
-    {
-      "path": "assets/room2nuke_lm1.png",
-      "size": 101003
-    },
-    {
-      "path": "assets/1123_lm1.png",
-      "size": 39347
-    },
-    {
-      "path": "assets/tesla.jpg",
-      "size": 305312
-    },
-    {
-      "path": "assets/room2c2_lm2.png",
-      "size": 26902
-    },
-    {
-      "path": "assets/room4_lm1.png",
-      "size": 15527
-    },
-    {
-      "path": "assets/room079_lm1.png",
-      "size": 47638
-    },
-    {
-      "path": "assets/officewall.jpg",
-      "size": 238076
-    },
-    {
-      "path": "assets/room513_lm1.png",
-      "size": 28331
-    },
-    {
-      "path": "assets/room2_2_lm1.png",
-      "size": 12977
-    },
-    {
-      "path": "assets/scp1162wall.jpg",
-      "size": 26905
-    },
-    {
-      "path": "assets/079_computer_1.jpg",
-      "size": 122584
-    },
-    {
-      "path": "assets/label372.jpg",
-      "size": 75948
-    },
-    {
-      "path": "assets/room2test1074_lm1.png",
-      "size": 42288
-    },
-    {
-      "path": "assets/scp-012_0.jpg",
-      "size": 186402
-    },
-    {
-      "path": "assets/room2gw_lm4.png",
-      "size": 23404
-    },
-    {
-      "path": "assets/tree2.png",
-      "size": 117918
-    },
-    {
-      "path": "assets/alcohol-hand-gel-v2-256-blood.jpg",
-      "size": 16913
-    },
-    {
-      "path": "assets/room106_lm2.png",
-      "size": 31537
-    },
-    {
-      "path": "assets/pdwall.jpg",
-      "size": 113145
-    },
-    {
-      "path": "assets/room2offices_lm1.png",
-      "size": 20604
-    },
-    {
-      "path": "assets/decal1.png",
-      "size": 187517
+      "path": "assets/294test.png",
+      "size": 701340
     },
     {
       "path": "assets/room2pipes2_lm1.png",
       "size": 56133
     },
     {
-      "path": "assets/294.jpg",
-      "size": 177522
+      "path": "assets/forestfloor.jpg",
+      "size": 414430
     },
     {
-      "path": "assets/grass2bump.jpg",
-      "size": 1383399
+      "path": "assets/room3gw_lm1.png",
+      "size": 7520
     },
     {
-      "path": "assets/room2_3_lm1.png",
-      "size": 3046
+      "path": "assets/tilebump.jpg",
+      "size": 198734
     },
     {
-      "path": "assets/room2ctunnel_lm1.png",
-      "size": 14798
+      "path": "assets/room2test1074_lm1.png",
+      "size": 42288
     },
     {
-      "path": "assets/label513.jpg",
-      "size": 73691
+      "path": "assets/KeyPad.jpg",
+      "size": 169504
     },
     {
-      "path": "assets/label079.jpg",
-      "size": 77525
+      "path": "assets/room2.rmesh",
+      "size": 0
+    },
+    {
+      "path": "assets/maintenance_lm.png",
+      "size": 61519
     },
     {
       "path": "assets/concretewallbump.jpg",
       "size": 111189
     },
     {
-      "path": "assets/room2servers_lm1.png",
-      "size": 11058
-    },
-    {
-      "path": "assets/soft grey.jpg",
-      "size": 67732
-    },
-    {
-      "path": "assets/officeseat_a.jpg",
-      "size": 73585
-    },
-    {
-      "path": "assets/room2gw_lm2.png",
-      "size": 7559
-    },
-    {
-      "path": "assets/controlpanel2.jpg",
-      "size": 300016
-    },
-    {
-      "path": "assets/machineroom_lm1.png",
-      "size": 39457
-    },
-    {
-      "path": "assets/room3_lm1.png",
-      "size": 21122
-    },
-    {
-      "path": "assets/scp1162.jpg",
-      "size": 39706
-    },
-    {
-      "path": "assets/whitewall.jpg",
-      "size": 77626
-    },
-    {
-      "path": "assets/whitewallbump.jpg",
-      "size": 31296
-    },
-    {
-      "path": "assets/metalpanels2bump.jpg",
-      "size": 104326
-    },
-    {
-      "path": "assets/grass.png",
-      "size": 103640
-    },
-    {
-      "path": "assets/miscbump.jpg",
-      "size": 119707
-    },
-    {
-      "path": "assets/room3servers2_lm1.png",
-      "size": 27724
-    },
-    {
-      "path": "assets/Pipes_NoRust2.jpg",
-      "size": 343697
-    },
-    {
-      "path": "assets/room2offices4_lm1.png",
-      "size": 18563
-    },
-    {
-      "path": "assets/decal4.png",
-      "size": 77416
-    },
-    {
-      "path": "assets/larry.jpg",
-      "size": 35551
-    },
-    {
-      "path": "assets/pdfloor.jpg",
-      "size": 131561
-    },
-    {
-      "path": "assets/room2gw_lm6.png",
-      "size": 7673
-    },
-    {
-      "path": "assets/079_peripherals.jpg",
-      "size": 95604
-    },
-    {
-      "path": "assets/room2_4_lm3.png",
-      "size": 17656
-    },
-    {
-      "path": "assets/room2c_lm1.png",
-      "size": 18031
-    },
-    {
-      "path": "assets/room2z3_2_lm4.png",
-      "size": 3825
-    },
-    {
-      "path": "assets/room2ccont_lm1.png",
-      "size": 29440
-    },
-    {
-      "path": "assets/LockdownScreen.jpg",
-      "size": 126460
-    },
-    {
-      "path": "assets/room2closets_lm2.png",
-      "size": 4410
-    },
-    {
-      "path": "assets/dirtymetalbump.jpg",
-      "size": 324301
-    },
-    {
-      "path": "assets/Door02.jpg",
-      "size": 235242
-    },
-    {
-      "path": "assets/room2offices2_lm1.png",
-      "size": 33080
-    },
-    {
-      "path": "assets/label049.jpg",
-      "size": 77424
-    },
-    {
-      "path": "assets/room2scps2_lm3.png",
-      "size": 56160
-    },
-    {
-      "path": "assets/ElecBox.jpg",
-      "size": 186172
-    },
-    {
-      "path": "assets/rockmoss.jpg",
-      "size": 262673
-    },
-    {
-      "path": "assets/checkpoint1_lm1.png",
-      "size": 33661
-    },
-    {
-      "path": "assets/room2z3_2_lm2.png",
-      "size": 2591
-    },
-    {
-      "path": "assets/screen.jpg",
-      "size": 208080
-    },
-    {
-      "path": "assets/vent.jpg",
-      "size": 45847
-    },
-    {
       "path": "assets/room1lifts_lm1.png",
       "size": 2862
     },
     {
-      "path": "assets/room2pipes_lm1.png",
-      "size": 26395
+      "path": "assets/miscsigns3.jpg",
+      "size": 186465
     },
     {
-      "path": "assets/checkpoint2_lm1.png",
-      "size": 33464
+      "path": "assets/metal3.jpg",
+      "size": 148071
     },
     {
-      "path": "assets/metalpanelsbump.jpg",
-      "size": 46532
+      "path": "assets/room3pit_lm1.png",
+      "size": 29229
     },
     {
-      "path": "assets/CD_Diff.png",
-      "size": 682495
+      "path": "assets/label008.jpg",
+      "size": 73894
     },
     {
-      "path": "assets/room2offices3_lm1.png",
-      "size": 51606
+      "path": "assets/room2ctunnel_lm1.png",
+      "size": 14798
     },
     {
-      "path": "assets/mechanical_lever.jpg",
-      "size": 78922
+      "path": "assets/scplogo.jpg",
+      "size": 105659
     },
     {
-      "path": "assets/room2_5_lm1.png",
-      "size": 20212
+      "path": "assets/decal1.png",
+      "size": 187517
     },
     {
-      "path": "assets/room2cafeteria_opt.rmesh",
-      "size": 389049
+      "path": "assets/Logo_of_the_SCP_Foundation.png",
+      "size": 7589
     },
     {
-      "path": "assets/tank1.jpg",
-      "size": 96160
-    },
-    {
-      "path": "assets/tilefloor.jpg",
-      "size": 291215
+      "path": "assets/gears.jpg",
+      "size": 128926
     },
     {
       "path": "assets/room3gw_lm2.png",
       "size": 6761
     },
     {
-      "path": "assets/room2scps2_lm1.png",
-      "size": 35204
+      "path": "assets/room2offices3_lm1.png",
+      "size": 51606
     },
     {
-      "path": "assets/CameraTexture.jpg",
-      "size": 43242
+      "path": "assets/metalpanels.jpg",
+      "size": 71483
     },
     {
-      "path": "assets/room2servers2_lm2.png",
-      "size": 36778
+      "path": "assets/zimmerframe1.jpg",
+      "size": 36067
     },
     {
-      "path": "assets/miscsigns.jpg",
-      "size": 171009
+      "path": "assets/room2gw_b_lm1.png",
+      "size": 28514
     },
     {
-      "path": "assets/room2scps2_lm4.png",
-      "size": 17807
+      "path": "assets/tunnel2_lm1.png",
+      "size": 21691
     },
     {
-      "path": "assets/concretemoss.jpg",
-      "size": 430869
+      "path": "assets/room1lifts_lm2.png",
+      "size": 3478
     },
     {
-      "path": "assets/room3offices_lm1.png",
-      "size": 12104
+      "path": "assets/room2tunnel_opt.rmesh",
+      "size": 113356
     },
     {
-      "path": "assets/keyboard.jpg",
-      "size": 49156
+      "path": "assets/testroom_opt.rmesh",
+      "size": 585914
+    },
+    {
+      "path": "assets/ctwalls2.png",
+      "size": 555276
+    },
+    {
+      "path": "assets/larry.jpg",
+      "size": 35551
+    },
+    {
+      "path": "assets/exit2.jpg",
+      "size": 21374
+    },
+    {
+      "path": "assets/room3_2_lm1.png",
+      "size": 19837
+    },
+    {
+      "path": "assets/MonitorTexture2.jpg",
+      "size": 56869
+    },
+    {
+      "path": "assets/label035.jpg",
+      "size": 82879
+    },
+    {
+      "path": "assets/caution_tesla.jpg",
+      "size": 152257
+    },
+    {
+      "path": "assets/SLH_1499_tex2.jpg",
+      "size": 26249
+    },
+    {
+      "path": "assets/pocketdimension1_lm1.png",
+      "size": 4572
+    },
+    {
+      "path": "assets/miscsigns4.jpg",
+      "size": 98461
+    },
+    {
+      "path": "assets/decal4.png",
+      "size": 77416
+    },
+    {
+      "path": "assets/metal.jpg",
+      "size": 184324
+    },
+    {
+      "path": "assets/rockmoss.jpg",
+      "size": 262673
+    },
+    {
+      "path": "assets/room2offices2_lm1.png",
+      "size": 33080
+    },
+    {
+      "path": "assets/079_computer_2.jpg",
+      "size": 67856
+    },
+    {
+      "path": "assets/room3_3_lm1.png",
+      "size": 12359
     },
     {
       "path": "assets/roompj_lm1.png",
       "size": 23136
     },
     {
-      "path": "assets/room2scps_lm1.png",
-      "size": 41499
+      "path": "assets/ceiling.jpg",
+      "size": 323992
     },
     {
-      "path": "assets/room2_5_lm2.png",
-      "size": 20649
+      "path": "assets/ox-cy-tray.jpg",
+      "size": 31010
     },
     {
-      "path": "assets/MEQM805_9.jpg",
-      "size": 15980
+      "path": "assets/chatscreen2.jpg",
+      "size": 63745
     },
     {
-      "path": "assets/room2sl_lm1.png",
-      "size": 30173
+      "path": "assets/metal3bump.jpg",
+      "size": 37990
     },
     {
-      "path": "assets/coffin_lm1.png",
-      "size": 14760
+      "path": "assets/SLH_1499_tex1.jpg",
+      "size": 17285
     },
     {
-      "path": "assets/Door01.jpg",
-      "size": 202814
+      "path": "assets/miscsigns.jpg",
+      "size": 171009
     },
     {
-      "path": "assets/gatea_lm3.png",
-      "size": 34325
+      "path": "assets/914panel.jpg",
+      "size": 104174
     },
     {
-      "path": "assets/rockmossbump.jpg",
-      "size": 417336
+      "path": "assets/metalpanels2bump.jpg",
+      "size": 104326
+    },
+    {
+      "path": "assets/room2testroom2_lm1.png",
+      "size": 62516
+    },
+    {
+      "path": "assets/lamp3.jpg",
+      "size": 30989
+    },
+    {
+      "path": "assets/room2ccont_lm1.png",
+      "size": 29440
+    },
+    {
+      "path": "assets/grass2.jpg",
+      "size": 167996
+    },
+    {
+      "path": "assets/room2offices3_opt.rmesh",
+      "size": 633402
+    },
+    {
+      "path": "assets/flat_monitor.jpg",
+      "size": 54389
+    },
+    {
+      "path": "assets/checkpoint2_lm1.png",
+      "size": 33464
+    },
+    {
+      "path": "assets/forestpath.jpg",
+      "size": 423970
+    },
+    {
+      "path": "assets/room4info_lm1.png",
+      "size": 26751
+    },
+    {
+      "path": "assets/079_computer_1.jpg",
+      "size": 122584
+    },
+    {
+      "path": "assets/vent.jpg",
+      "size": 45847
+    },
+    {
+      "path": "assets/keyboard.jpg",
+      "size": 49156
+    },
+    {
+      "path": "assets/scp1162bump.jpg",
+      "size": 198964
+    },
+    {
+      "path": "assets/label966.jpg",
+      "size": 62132
+    },
+    {
+      "path": "assets/173.rmesh",
+      "size": 910274
+    },
+    {
+      "path": "assets/room4_2_lm4.png",
+      "size": 4638
+    },
+    {
+      "path": "assets/exit1_lm5.png",
+      "size": 20241
+    },
+    {
+      "path": "assets/room3_lm1.png",
+      "size": 21122
+    },
+    {
+      "path": "assets/room2gw_lm1.png",
+      "size": 3863
+    },
+    {
+      "path": "assets/officewall.jpg",
+      "size": 238076
+    },
+    {
+      "path": "assets/room2tesla_lm1.png",
+      "size": 41168
+    },
+    {
+      "path": "assets/chatscreen.jpg",
+      "size": 46172
+    },
+    {
+      "path": "assets/boxfile_a.jpg",
+      "size": 54292
+    },
+    {
+      "path": "assets/SLH_miscsigns.jpg",
+      "size": 185065
+    },
+    {
+      "path": "assets/grass2bump.jpg",
+      "size": 1383399
+    },
+    {
+      "path": "assets/room2cafeteria_lm1.png",
+      "size": 42624
+    },
+    {
+      "path": "assets/controlpanel.jpg",
+      "size": 165956
+    },
+    {
+      "path": "assets/room2closets_lm2.png",
+      "size": 4410
+    },
+    {
+      "path": "assets/label914.jpg",
+      "size": 193156
+    },
+    {
+      "path": "assets/exit1_lm4.png",
+      "size": 55494
+    },
+    {
+      "path": "assets/dirtymetalbump.jpg",
+      "size": 324301
+    },
+    {
+      "path": "assets/room4_2_lm5.png",
+      "size": 6572
+    },
+    {
+      "path": "assets/concrete.jpg",
+      "size": 78143
+    },
+    {
+      "path": "assets/room2gw_lm2.png",
+      "size": 7559
+    },
+    {
+      "path": "assets/914labels.jpg",
+      "size": 53294
+    },
+    {
+      "path": "assets/dimension1499_lm1.png",
+      "size": 2968
+    },
+    {
+      "path": "assets/room035_lm1.png",
+      "size": 26815
+    },
+    {
+      "path": "assets/metalpanelsbump.jpg",
+      "size": 46532
+    },
+    {
+      "path": "assets/room2closets_lm1.png",
+      "size": 42819
+    },
+    {
+      "path": "assets/room2_2_lm1.png",
+      "size": 12977
+    },
+    {
+      "path": "assets/concretefloorbump.jpg",
+      "size": 100692
+    },
+    {
+      "path": "assets/079_peripherals.jpg",
+      "size": 95604
+    },
+    {
+      "path": "assets/circuit.jpg",
+      "size": 37072
+    },
+    {
+      "path": "assets/room1archive_lm1.png",
+      "size": 9112
+    },
+    {
+      "path": "assets/room2gw_lm3.png",
+      "size": 9861
+    },
+    {
+      "path": "assets/exit1_lm3.png",
+      "size": 94545
+    },
+    {
+      "path": "assets/tilefloor.jpg",
+      "size": 291215
+    },
+    {
+      "path": "assets/room4_2_lm2.png",
+      "size": 6191
     },
     {
       "path": "assets/room2doors_lm1.png",
       "size": 21827
     },
     {
+      "path": "assets/room966_lm1.png",
+      "size": 20721
+    },
+    {
+      "path": "assets/whitewallbump.jpg",
+      "size": 31296
+    },
+    {
+      "path": "assets/MonitorTexture.jpg",
+      "size": 43495
+    },
+    {
+      "path": "assets/room2cpit_lm1.png",
+      "size": 28423
+    },
+    {
+      "path": "assets/079_monitor.jpg",
+      "size": 109718
+    },
+    {
+      "path": "assets/gravel.jpg",
+      "size": 677381
+    },
+    {
+      "path": "assets/ventbump.jpg",
+      "size": 47309
+    },
+    {
+      "path": "assets/tank1.jpg",
+      "size": 96160
+    },
+    {
+      "path": "assets/room2_3_lm1.png",
+      "size": 3046
+    },
+    {
+      "path": "assets/Pipes.jpg",
+      "size": 105301
+    },
+    {
+      "path": "assets/alcohol-hand-gel-v2-256-blood.jpg",
+      "size": 16913
+    },
+    {
+      "path": "assets/room079_lm1.png",
+      "size": 47638
+    },
+    {
+      "path": "assets/rock.jpg",
+      "size": 58507
+    },
+    {
+      "path": "assets/wood.jpg",
+      "size": 296546
+    },
+    {
+      "path": "assets/room4pit_lm1.png",
+      "size": 117847
+    },
+    {
+      "path": "assets/checkpoint1_lm1.png",
+      "size": 33661
+    },
+    {
+      "path": "assets/scp1162.jpg",
+      "size": 39706
+    },
+    {
+      "path": "assets/cloth.jpg",
+      "size": 96647
+    },
+    {
+      "path": "assets/crtbev.jpg",
+      "size": 112330
+    },
+    {
+      "path": "assets/LockdownScreen.jpg",
+      "size": 126460
+    },
+    {
+      "path": "assets/room2gw_lm6.png",
+      "size": 7673
+    },
+    {
+      "path": "assets/room4_2_lm3.png",
+      "size": 5994
+    },
+    {
+      "path": "assets/exit1_lm2.png",
+      "size": 44853
+    },
+    {
+      "path": "assets/tesla.jpg",
+      "size": 305312
+    },
+    {
+      "path": "assets/room205_lm1.png",
+      "size": 18922
+    },
+    {
+      "path": "assets/CD_Diff.png",
+      "size": 682495
+    },
+    {
+      "path": "assets/label079.jpg",
+      "size": 77525
+    },
+    {
+      "path": "assets/room4_2_lm1.png",
+      "size": 8039
+    },
+    {
+      "path": "assets/room2gw_lm4.png",
+      "size": 23404
+    },
+    {
+      "path": "assets/room2scps_lm1.png",
+      "size": 41499
+    },
+    {
+      "path": "assets/room4pit_lm3.png",
+      "size": 18053
+    },
+    {
+      "path": "assets/mechanical_lever.jpg",
+      "size": 78922
+    },
+    {
+      "path": "assets/room2_lm1.png",
+      "size": 17942
+    },
+    {
+      "path": "assets/SLH_1499_water.png",
+      "size": 11336
+    },
+    {
+      "path": "assets/medibay.jpg",
+      "size": 52039
+    },
+    {
+      "path": "assets/room2elevator_lm1.png",
+      "size": 9662
+    },
+    {
+      "path": "assets/room2_opt.rmesh",
+      "size": 334225
+    },
+    {
+      "path": "assets/4tunnels_lm1.png",
+      "size": 8431
+    },
+    {
+      "path": "assets/navtexture.jpg",
+      "size": 47432
+    },
+    {
+      "path": "assets/tank2.jpg",
+      "size": 89858
+    },
+    {
+      "path": "assets/room079_lm2.png",
+      "size": 20433
+    },
+    {
+      "path": "assets/room012_lm1.png",
+      "size": 30199
+    },
+    {
+      "path": "assets/room4pit_lm2.png",
+      "size": 7723
+    },
+    {
+      "path": "assets/servers1.jpg",
+      "size": 277120
+    },
+    {
+      "path": "assets/room2tesla_lcz_lm1.png",
+      "size": 47794
+    },
+    {
+      "path": "assets/room2gw_lm5.png",
+      "size": 15191
+    },
+    {
+      "path": "assets/room3tunnel_lm1.png",
+      "size": 7871
+    },
+    {
       "path": "assets/exit1_lm1.png",
       "size": 71957
     },
     {
-      "path": "assets/room2.rmesh",
-      "size": 0
+      "path": "assets/room3storage_lm2.png",
+      "size": 40125
+    },
+    {
+      "path": "assets/room2tunnel_lm2.png",
+      "size": 38260
+    },
+    {
+      "path": "assets/dirtymetal.jpg",
+      "size": 286869
+    },
+    {
+      "path": "assets/label049.jpg",
+      "size": 77424
+    },
+    {
+      "path": "assets/endroom_lm1.png",
+      "size": 25657
+    },
+    {
+      "path": "assets/scp-012_2.jpg",
+      "size": 192843
+    },
+    {
+      "path": "assets/room2offices4_lm1.png",
+      "size": 18563
+    },
+    {
+      "path": "assets/whitewall.jpg",
+      "size": 77626
+    },
+    {
+      "path": "assets/room3z2_lm1.png",
+      "size": 2369
+    },
+    {
+      "path": "assets/room2c2_lm3.png",
+      "size": 1123
+    },
+    {
+      "path": "assets/room3servers2_lm2.png",
+      "size": 3582
+    },
+    {
+      "path": "assets/ctwalls.png",
+      "size": 502345
+    },
+    {
+      "path": "assets/testroom_lm1.png",
+      "size": 46822
+    },
+    {
+      "path": "assets/room2servers_lm1.png",
+      "size": 11058
+    },
+    {
+      "path": "assets/room2c2_lm2.png",
+      "size": 26902
+    },
+    {
+      "path": "assets/room860_lm1.png",
+      "size": 8564
+    },
+    {
+      "path": "assets/294.jpg",
+      "size": 177522
+    },
+    {
+      "path": "assets/scp-012_3.jpg",
+      "size": 195772
+    },
+    {
+      "path": "assets/grass.png",
+      "size": 103640
+    },
+    {
+      "path": "assets/room2pipes_lm1.png",
+      "size": 26395
+    },
+    {
+      "path": "assets/room3storage_lm3.png",
+      "size": 64653
+    },
+    {
+      "path": "assets/room2tunnel_lm1.png",
+      "size": 8564
+    },
+    {
+      "path": "assets/oxygen-cylinder.jpg",
+      "size": 36330
+    },
+    {
+      "path": "assets/room3storage_lm1.png",
+      "size": 55628
+    },
+    {
+      "path": "assets/doctors.jpg",
+      "size": 64003
+    },
+    {
+      "path": "assets/scp-012_1.jpg",
+      "size": 189625
+    },
+    {
+      "path": "assets/rockmossbump.jpg",
+      "size": 417336
+    },
+    {
+      "path": "assets/room2offices4_lm2.png",
+      "size": 26879
+    },
+    {
+      "path": "assets/screen.jpg",
+      "size": 208080
+    },
+    {
+      "path": "assets/room2poffices_lm1.png",
+      "size": 19501
+    },
+    {
+      "path": "assets/room3servers2_lm1.png",
+      "size": 27724
+    },
+    {
+      "path": "assets/MEQM805_9.jpg",
+      "size": 15980
+    },
+    {
+      "path": "assets/label895.jpg",
+      "size": 74454
+    },
+    {
+      "path": "assets/testroom_lm2.png",
+      "size": 60393
+    },
+    {
+      "path": "assets/room2c2_lm1.png",
+      "size": 25275
+    },
+    {
+      "path": "assets/room2offices4_lm3.png",
+      "size": 18331
+    },
+    {
+      "path": "assets/granite-texture-tileable.png",
+      "size": 899063
+    },
+    {
+      "path": "assets/ElecBox.jpg",
+      "size": 186172
+    },
+    {
+      "path": "assets/scp-012_0.jpg",
+      "size": 186402
+    },
+    {
+      "path": "assets/bowl-blood.jpg",
+      "size": 31524
+    },
+    {
+      "path": "assets/label513.jpg",
+      "size": 73691
+    },
+    {
+      "path": "assets/machineroom_lm1.png",
+      "size": 39457
+    },
+    {
+      "path": "assets/room3storage_lm4.png",
+      "size": 30869
+    },
+    {
+      "path": "assets/coffin_lm1.png",
+      "size": 14760
+    },
+    {
+      "path": "assets/gateaentrance_lm1.png",
+      "size": 25340
+    },
+    {
+      "path": "assets/008_lm1.png",
+      "size": 38738
+    },
+    {
+      "path": "assets/LockdownScreen3.jpg",
+      "size": 59091
+    },
+    {
+      "path": "assets/LockdownScreen2.jpg",
+      "size": 86293
+    },
+    {
+      "path": "assets/door.jpg",
+      "size": 162273
+    },
+    {
+      "path": "assets/label106.jpg",
+      "size": 170022
+    },
+    {
+      "path": "assets/scp1162wallbump.jpg",
+      "size": 169587
+    },
+    {
+      "path": "assets/concretemoss.jpg",
+      "size": 430869
+    },
+    {
+      "path": "assets/room2storage_lm1.png",
+      "size": 26323
+    },
+    {
+      "path": "assets/medibay_lm1.png",
+      "size": 26553
+    },
+    {
+      "path": "assets/endroom2_lm1.png",
+      "size": 7276
+    },
+    {
+      "path": "assets/room2c_lm1.png",
+      "size": 18031
+    },
+    {
+      "path": "assets/microscope.jpg",
+      "size": 34721
+    },
+    {
+      "path": "assets/room513_lm1.png",
+      "size": 28331
+    },
+    {
+      "path": "assets/1123_lm1.png",
+      "size": 39347
+    },
+    {
+      "path": "assets/room2toilets_lm1.png",
+      "size": 14324
+    },
+    {
+      "path": "assets/pdfloor.jpg",
+      "size": 131561
+    },
+    {
+      "path": "assets/room3servers_lm1.png",
+      "size": 28805
+    },
+    {
+      "path": "assets/201_camera_diffuse1.png",
+      "size": 132225
+    },
+    {
+      "path": "assets/room2pit_lm1.png",
+      "size": 16596
+    },
+    {
+      "path": "assets/metal_darker.jpg",
+      "size": 74386
+    },
+    {
+      "path": "assets/room3z3_lm1.png",
+      "size": 8524
+    },
+    {
+      "path": "assets/room2cz3_lm1.png",
+      "size": 8345
+    },
+    {
+      "path": "assets/controlpanel2.jpg",
+      "size": 300016
+    },
+    {
+      "path": "assets/fire_extinguisher.jpg",
+      "size": 22115
     },
     {
       "path": "assets/gravelbump.jpg",
@@ -974,644 +1230,388 @@
       "size": 81958
     },
     {
-      "path": "assets/exit1_lm5.png",
-      "size": 20241
+      "path": "assets/officeseat_a.jpg",
+      "size": 73585
     },
     {
-      "path": "assets/glass.png",
-      "size": 419372
-    },
-    {
-      "path": "assets/SLH_1499_tex2.jpg",
-      "size": 26249
-    },
-    {
-      "path": "assets/SLH_1499_water.png",
-      "size": 11336
-    },
-    {
-      "path": "assets/ctwalls2.png",
-      "size": 555276
-    },
-    {
-      "path": "assets/room2testroom2_lm1.png",
-      "size": 62516
-    },
-    {
-      "path": "assets/room860_lm1.png",
-      "size": 8564
-    },
-    {
-      "path": "assets/label966.jpg",
-      "size": 62132
-    },
-    {
-      "path": "assets/room2scps2_lm2.png",
-      "size": 63288
-    },
-    {
-      "path": "assets/room2tesla_hcz_lm1.png",
-      "size": 55735
-    },
-    {
-      "path": "assets/metal3bump.jpg",
-      "size": 37990
-    },
-    {
-      "path": "assets/scp-012_1.jpg",
-      "size": 189625
-    },
-    {
-      "path": "assets/endroom2_lm1.png",
-      "size": 7276
-    },
-    {
-      "path": "assets/079_computer_2.jpg",
-      "size": 67856
-    },
-    {
-      "path": "assets/room2shaft_lm2.png",
-      "size": 30916
-    },
-    {
-      "path": "assets/room2tunnel_lm2.png",
-      "size": 38260
-    },
-    {
-      "path": "assets/sun.jpg",
-      "size": 44720
-    },
-    {
-      "path": "assets/room2testmisc_lm1.png",
-      "size": 45910
-    },
-    {
-      "path": "assets/chatscreen2.jpg",
-      "size": 63745
-    },
-    {
-      "path": "assets/metalpanels.jpg",
-      "size": 71483
-    },
-    {
-      "path": "assets/room2_opt.rmesh",
-      "size": 334225
-    },
-    {
-      "path": "assets/LockdownScreen3.jpg",
-      "size": 59091
-    },
-    {
-      "path": "assets/navtexture.jpg",
-      "size": 47432
-    },
-    {
-      "path": "assets/room2elevator_lm1.png",
-      "size": 9662
-    },
-    {
-      "path": "assets/room2sl_lm2.png",
-      "size": 16037
-    },
-    {
-      "path": "assets/containmentdoorsbump.jpg",
-      "size": 672175
-    },
-    {
-      "path": "assets/173_lm2.png",
-      "size": 7042
-    },
-    {
-      "path": "assets/scp-012_3.jpg",
-      "size": 195772
-    },
-    {
-      "path": "assets/oxygen-cylinder.jpg",
-      "size": 36330
-    },
-    {
-      "path": "assets/tank2.jpg",
-      "size": 89858
-    },
-    {
-      "path": "assets/gateaentrance_lm1.png",
-      "size": 25340
-    },
-    {
-      "path": "assets/201_camera_diffuse1.png",
-      "size": 132225
-    },
-    {
-      "path": "assets/pocketdimension1_lm1.png",
-      "size": 4572
-    },
-    {
-      "path": "assets/room2gw_lm5.png",
-      "size": 15191
-    },
-    {
-      "path": "assets/grass2.jpg",
-      "size": 167996
-    },
-    {
-      "path": "assets/294test.png",
-      "size": 701340
-    },
-    {
-      "path": "assets/room966_lm1.png",
-      "size": 20721
-    },
-    {
-      "path": "assets/room4pit_lm1.png",
-      "size": 117847
+      "path": "assets/Door01.x",
+      "size": 116345
     },
     {
       "path": "assets/medibay_lm2.png",
       "size": 5935
     },
     {
-      "path": "assets/AGENTs.md",
-      "size": 105
-    },
-    {
-      "path": "assets/room2offices4_lm3.png",
-      "size": 18331
-    },
-    {
-      "path": "assets/room3storage_lm3.png",
-      "size": 64653
-    },
-    {
-      "path": "assets/exit2.jpg",
-      "size": 21374
-    },
-    {
-      "path": "assets/fire_extinguisher.jpg",
-      "size": 22115
-    },
-    {
       "path": "assets/labelmedicalbay.jpg",
       "size": 149696
-    },
-    {
-      "path": "assets/ctwalls.png",
-      "size": 502345
-    },
-    {
-      "path": "assets/room1lifts_lm2.png",
-      "size": 3478
-    },
-    {
-      "path": "assets/room2gw_lm1.png",
-      "size": 3863
-    },
-    {
-      "path": "assets/room1162_lm1.png",
-      "size": 21071
-    },
-    {
-      "path": "assets/room3storage_lm4.png",
-      "size": 30869
-    },
-    {
-      "path": "assets/2_office_lamps_dif.jpg",
-      "size": 55904
-    },
-    {
-      "path": "assets/gears.jpg",
-      "size": 128926
-    },
-    {
-      "path": "assets/label914.jpg",
-      "size": 193156
-    },
-    {
-      "path": "assets/label035.jpg",
-      "size": 82879
-    },
-    {
-      "path": "assets/room4_2_lm3.png",
-      "size": 5994
-    },
-    {
-      "path": "assets/room2z3_2_lm1.png",
-      "size": 3274
-    },
-    {
-      "path": "assets/scplogo.jpg",
-      "size": 105659
-    },
-    {
-      "path": "assets/forestpath.jpg",
-      "size": 423970
-    },
-    {
-      "path": "assets/173bright_lm2.png",
-      "size": 63025
-    },
-    {
-      "path": "assets/maintenance_lm.png",
-      "size": 61519
-    },
-    {
-      "path": "assets/label008.jpg",
-      "size": 73894
-    },
-    {
-      "path": "assets/medibay_lm1.png",
-      "size": 26553
-    },
-    {
-      "path": "assets/concretefloorbump.jpg",
-      "size": 100692
-    },
-    {
-      "path": "assets/room2storage_lm1.png",
-      "size": 26323
-    },
-    {
-      "path": "assets/room2tunnel_opt.rmesh",
-      "size": 113356
-    },
-    {
-      "path": "assets/room2shaft_lm3.png",
-      "size": 21510
-    },
-    {
-      "path": "assets/servers1.jpg",
-      "size": 277120
-    },
-    {
-      "path": "assets/KeyPad.jpg",
-      "size": 169504
-    },
-    {
-      "path": "assets/label012.jpg",
-      "size": 72095
-    },
-    {
-      "path": "assets/room035_lm1.png",
-      "size": 26815
-    },
-    {
-      "path": "assets/lockroom_lm1.png",
-      "size": 20458
-    },
-    {
-      "path": "assets/doctors.jpg",
-      "size": 64003
-    },
-    {
-      "path": "assets/room3_2_lm1.png",
-      "size": 19837
-    },
-    {
-      "path": "assets/gravel.jpg",
-      "size": 677381
-    },
-    {
-      "path": "assets/room2scps2_lm6.png",
-      "size": 5742
-    },
-    {
-      "path": "assets/173.rmesh",
-      "size": 910274
-    },
-    {
-      "path": "assets/concretewall.jpg",
-      "size": 393116
-    },
-    {
-      "path": "assets/ox-cy-tray.jpg",
-      "size": 31010
-    },
-    {
-      "path": "assets/room3gw_lm1.png",
-      "size": 7520
-    },
-    {
-      "path": "assets/173bright_lm1.png",
-      "size": 84623
-    },
-    {
-      "path": "assets/room2pit_lm1.png",
-      "size": 16596
-    },
-    {
-      "path": "assets/scp-012_2.jpg",
-      "size": 192843
-    },
-    {
-      "path": "assets/room2z3_2_lm3.png",
-      "size": 6603
-    },
-    {
-      "path": "assets/exit1_lm4.png",
-      "size": 55494
-    },
-    {
-      "path": "assets/room3servers_lm1.png",
-      "size": 28805
-    },
-    {
-      "path": "assets/914labels.jpg",
-      "size": 53294
-    },
-    {
-      "path": "assets/room3storage_lm1.png",
-      "size": 55628
-    },
-    {
-      "path": "assets/LockdownScreen2.jpg",
-      "size": 86293
-    },
-    {
-      "path": "assets/circuit.jpg",
-      "size": 37072
-    },
-    {
-      "path": "assets/lockroom2_lm1.png",
-      "size": 18685
-    },
-    {
-      "path": "assets/room2_4_lm1.png",
-      "size": 13886
-    },
-    {
-      "path": "assets/room2gw_lm3.png",
-      "size": 9861
-    },
-    {
-      "path": "assets/room2_4_lm5.png",
-      "size": 13668
-    },
-    {
-      "path": "assets/room2sroom_lm1.png",
-      "size": 23126
-    },
-    {
-      "path": "assets/079_monitor.jpg",
-      "size": 109718
-    },
-    {
-      "path": "assets/MonitorTexture.jpg",
-      "size": 43495
-    },
-    {
-      "path": "assets/room2poffices_lm1.png",
-      "size": 19501
-    },
-    {
-      "path": "assets/wood.jpg",
-      "size": 296546
-    },
-    {
-      "path": "assets/tunnel2_lm1.png",
-      "size": 21691
-    },
-    {
-      "path": "assets/metal3.jpg",
-      "size": 148071
-    },
-    {
-      "path": "assets/concrete.jpg",
-      "size": 78143
-    },
-    {
-      "path": "assets/room205_lm1.png",
-      "size": 18922
-    },
-    {
-      "path": "assets/scp1162wallbump.jpg",
-      "size": 169587
-    },
-    {
-      "path": "assets/metal_darker.jpg",
-      "size": 74386
-    },
-    {
-      "path": "assets/crtbev.jpg",
-      "size": 112330
-    },
-    {
-      "path": "assets/room106_lm1.png",
-      "size": 88273
-    },
-    {
-      "path": "assets/room3z3_lm1.png",
-      "size": 8524
-    },
-    {
-      "path": "assets/caution_tesla.jpg",
-      "size": 152257
-    },
-    {
-      "path": "assets/room2tunnel_lm1.png",
-      "size": 8564
-    },
-    {
-      "path": "assets/crtrec.jpg",
-      "size": 42572
-    },
-    {
-      "path": "assets/MonitorTexture2.jpg",
-      "size": 56869
-    },
-    {
-      "path": "assets/room4_2_lm2.png",
-      "size": 6191
-    },
-    {
-      "path": "assets/op-table-light-blood.jpg",
-      "size": 51167
-    },
-    {
-      "path": "assets/exit1_lm3.png",
-      "size": 94545
-    },
-    {
-      "path": "assets/mat_glass.png",
-      "size": 56096
-    },
-    {
-      "path": "assets/room4_2_lm5.png",
-      "size": 6572
-    },
-    {
-      "path": "assets/chatscreen.jpg",
-      "size": 46172
-    },
-    {
-      "path": "assets/room2offices4_lm2.png",
-      "size": 26879
-    },
-    {
-      "path": "assets/ventbump.jpg",
-      "size": 47309
-    },
-    {
-      "path": "assets/cloth.jpg",
-      "size": 96647
-    },
-    {
-      "path": "assets/cable_black.jpg",
-      "size": 1762
-    },
-    {
-      "path": "assets/microscope.jpg",
-      "size": 34721
-    },
-    {
-      "path": "assets/room3_3_lm1.png",
-      "size": 12359
-    },
-    {
-      "path": "assets/containment_doors.jpg",
-      "size": 799804
-    },
-    {
-      "path": "assets/room4_2_lm1.png",
-      "size": 8039
-    },
-    {
-      "path": "assets/lockroom3_lm1.png",
-      "size": 9675
-    },
-    {
-      "path": "assets/dirtymetal.jpg",
-      "size": 286869
-    },
-    {
-      "path": "assets/room2scps2_lm5.png",
-      "size": 12327
-    },
-    {
-      "path": "assets/173bright_lm3.png",
-      "size": 3374
-    },
-    {
-      "path": "assets/medibay.jpg",
-      "size": 52039
-    },
-    {
-      "path": "assets/exit1_lm2.png",
-      "size": 44853
-    },
-    {
-      "path": "assets/room3servers2_lm2.png",
-      "size": 3582
-    },
-    {
-      "path": "assets/bed-table.jpg",
-      "size": 36711
-    },
-    {
-      "path": "assets/white.jpg",
-      "size": 59241
-    },
-    {
-      "path": "assets/room2tesla_lcz_lm1.png",
-      "size": 47794
-    },
-    {
-      "path": "assets/SLH_miscsigns.jpg",
-      "size": 185065
-    },
-    {
-      "path": "assets/gatea_lm2.png",
-      "size": 61212
-    },
-    {
-      "path": "assets/endroom_lm1.png",
-      "size": 25657
-    },
-    {
-      "path": "assets/room2_4_lm4.png",
-      "size": 20546
-    },
-    {
-      "path": "assets/miscsigns2.jpg",
-      "size": 179977
-    },
-    {
-      "path": "assets/room2offices3_opt.rmesh",
-      "size": 633402
-    },
-    {
-      "path": "assets/room2gw_b_lm1.png",
-      "size": 28514
-    },
-    {
-      "path": "assets/lockroom3_lm2.png",
-      "size": 4198
-    },
-    {
-      "path": "assets/papertexture.jpg",
-      "size": 82374
-    },
-    {
-      "path": "assets/room4_2_lm4.png",
-      "size": 4638
-    },
-    {
-      "path": "assets/SLH_1499_tex1.jpg",
-      "size": 17285
-    },
-    {
-      "path": "assets/room2z3_lm1.png",
-      "size": 10909
     },
     {
       "path": "assets/crtroc.jpg",
       "size": 40140
     },
     {
-      "path": "assets/173_lm1.png",
-      "size": 53151
+      "path": "assets/173bright_lm1.png",
+      "size": 84623
     },
     {
-      "path": "assets/new_metal1.jpg",
-      "size": 64263
+      "path": "assets/room2shaft_lm2.png",
+      "size": 30916
     },
     {
-      "path": "assets/room4z3_lm1.png",
-      "size": 14275
+      "path": "assets/Pipes_NoRust2.jpg",
+      "size": 343697
+    },
+    {
+      "path": "assets/room2testmisc_lm1.png",
+      "size": 45910
+    },
+    {
+      "path": "assets/room2_4_lm4.png",
+      "size": 20546
+    },
+    {
+      "path": "assets/room2_5_lm1.png",
+      "size": 20212
+    },
+    {
+      "path": "assets/containmentdoorsbump.jpg",
+      "size": 672175
+    },
+    {
+      "path": "assets/gatea_lm1.png",
+      "size": 47678
+    },
+    {
+      "path": "assets/room2scps2_lm1.png",
+      "size": 35204
+    },
+    {
+      "path": "assets/room049_lm2.png",
+      "size": 41901
+    },
+    {
+      "path": "assets/papertexture.jpg",
+      "size": 82374
+    },
+    {
+      "path": "assets/room2_4_lm5.png",
+      "size": 13668
+    },
+    {
+      "path": "assets/room2shaft_lm3.png",
+      "size": 21510
+    },
+    {
+      "path": "assets/room2cafeteria_opt.rmesh",
+      "size": 389049
+    },
+    {
+      "path": "assets/cable_black.jpg",
+      "size": 1762
+    },
+    {
+      "path": "assets/room2z3_2_lm4.png",
+      "size": 3825
+    },
+    {
+      "path": "assets/AGENTs.md",
+      "size": 105
+    },
+    {
+      "path": "assets/sun.jpg",
+      "size": 44720
+    },
+    {
+      "path": "assets/lockroom_lm1.png",
+      "size": 20458
+    },
+    {
+      "path": "assets/173bright_lm2.png",
+      "size": 63025
     },
     {
       "path": "assets/room2shaft_lm1.png",
       "size": 20321
     },
     {
-      "path": "assets/d-quest173.png",
-      "size": 936923
+      "path": "assets/tunnel_lm1.png",
+      "size": 9528
     },
     {
-      "path": "assets/room012_lm1.png",
-      "size": 30199
+      "path": "assets/op-table-light-blood.jpg",
+      "size": 51167
     },
     {
-      "path": "assets/tilebump.jpg",
-      "size": 198734
+      "path": "assets/room2offices_lm1.png",
+      "size": 20604
+    },
+    {
+      "path": "assets/room2_5_lm2.png",
+      "size": 20649
+    },
+    {
+      "path": "assets/gatea_lm2.png",
+      "size": 61212
+    },
+    {
+      "path": "assets/room2scps2_lm2.png",
+      "size": 63288
+    },
+    {
+      "path": "assets/glass.png",
+      "size": 419372
+    },
+    {
+      "path": "assets/lockroom2_lm1.png",
+      "size": 18685
+    },
+    {
+      "path": "assets/pdwall.jpg",
+      "size": 113145
+    },
+    {
+      "path": "assets/room2scps2_lm3.png",
+      "size": 56160
+    },
+    {
+      "path": "assets/mat_glass.png",
+      "size": 56096
+    },
+    {
+      "path": "assets/gatea_lm3.png",
+      "size": 34325
     },
     {
       "path": "assets/room049_lm1.png",
       "size": 127992
     },
     {
-      "path": "assets/tunnel_lm1.png",
-      "size": 9528
+      "path": "assets/2_office_lamps_dif.jpg",
+      "size": 55904
     },
     {
-      "path": "assets/008_lm1.png",
-      "size": 38738
+      "path": "assets/room4z3_lm1.png",
+      "size": 14275
     },
     {
-      "path": "assets/room2cafeteria_lm1.png",
-      "size": 42624
+      "path": "assets/room2_4_lm6.png",
+      "size": 3656
     },
     {
-      "path": "assets/room1archive_lm1.png",
-      "size": 9112
+      "path": "assets/room2sroom_lm1.png",
+      "size": 23126
+    },
+    {
+      "path": "assets/173bright_lm3.png",
+      "size": 3374
+    },
+    {
+      "path": "assets/room4_lm1.png",
+      "size": 15527
+    },
+    {
+      "path": "assets/room2poffices2_lm1.png",
+      "size": 16111
+    },
+    {
+      "path": "assets/room2tesla_hcz_lm1.png",
+      "size": 55735
+    },
+    {
+      "path": "assets/bed-table.jpg",
+      "size": 36711
+    },
+    {
+      "path": "assets/room2z3_2_lm1.png",
+      "size": 3274
+    },
+    {
+      "path": "assets/173_lm2.png",
+      "size": 7042
+    },
+    {
+      "path": "assets/room2sl_lm1.png",
+      "size": 30173
+    },
+    {
+      "path": "assets/tree2.png",
+      "size": 117918
+    },
+    {
+      "path": "assets/room2servers2_lm2.png",
+      "size": 36778
+    },
+    {
+      "path": "assets/misc.jpg",
+      "size": 105115
+    },
+    {
+      "path": "assets/miscbump.jpg",
+      "size": 119707
+    },
+    {
+      "path": "assets/room2_4_lm2.png",
+      "size": 21350
+    },
+    {
+      "path": "assets/label372.jpg",
+      "size": 75948
+    },
+    {
+      "path": "assets/cabinet_a.jpg",
+      "size": 146872
+    },
+    {
+      "path": "assets/room106_lm2.png",
+      "size": 31537
+    },
+    {
+      "path": "assets/room1162_lm1.png",
+      "size": 21071
+    },
+    {
+      "path": "assets/room2scps2_lm6.png",
+      "size": 5742
+    },
+    {
+      "path": "assets/lockroom3_lm1.png",
+      "size": 9675
+    },
+    {
+      "path": "assets/d-quest173.png",
+      "size": 936923
+    },
+    {
+      "path": "assets/soft grey.jpg",
+      "size": 67732
+    },
+    {
+      "path": "assets/room2_4_lm3.png",
+      "size": 17656
+    },
+    {
+      "path": "assets/new_metal1.jpg",
+      "size": 64263
+    },
+    {
+      "path": "assets/concretefloor.jpg",
+      "size": 89041
+    },
+    {
+      "path": "assets/white.jpg",
+      "size": 59241
+    },
+    {
+      "path": "assets/room2nuke_lm1.png",
+      "size": 101003
+    },
+    {
+      "path": "assets/room3offices_lm1.png",
+      "size": 12104
+    },
+    {
+      "path": "assets/CameraTexture.jpg",
+      "size": 43242
+    },
+    {
+      "path": "assets/Door02.jpg",
+      "size": 235242
+    },
+    {
+      "path": "assets/room2z3_lm1.png",
+      "size": 10909
+    },
+    {
+      "path": "assets/room2z3_2_lm2.png",
+      "size": 2591
+    },
+    {
+      "path": "assets/173_lm1.png",
+      "size": 53151
+    },
+    {
+      "path": "assets/tree1.jpg",
+      "size": 31549
+    },
+    {
+      "path": "assets/LAMP.jpg",
+      "size": 36165
+    },
+    {
+      "path": "assets/room2sl_lm2.png",
+      "size": 16037
+    },
+    {
+      "path": "assets/label205.jpg",
+      "size": 53830
+    },
+    {
+      "path": "assets/room2servers2_lm1.png",
+      "size": 40206
+    },
+    {
+      "path": "assets/concretewall.jpg",
+      "size": 393116
+    },
+    {
+      "path": "assets/room2_4_lm1.png",
+      "size": 13886
+    },
+    {
+      "path": "assets/room106_lm1.png",
+      "size": 88273
+    },
+    {
+      "path": "assets/label173.jpg",
+      "size": 141931
+    },
+    {
+      "path": "assets/room2scps2_lm4.png",
+      "size": 17807
+    },
+    {
+      "path": "assets/room2scps2_lm5.png",
+      "size": 12327
+    },
+    {
+      "path": "assets/079-monitor-screen.jpg",
+      "size": 31350
+    },
+    {
+      "path": "assets/scp1162wall.jpg",
+      "size": 26905
+    },
+    {
+      "path": "assets/lockroom3_lm2.png",
+      "size": 4198
+    },
+    {
+      "path": "assets/red.jpg",
+      "size": 26823
+    },
+    {
+      "path": "assets/diff_trolley.jpg",
+      "size": 43542
+    },
+    {
+      "path": "assets/crtrec.jpg",
+      "size": 42572
+    },
+    {
+      "path": "assets/room3offices_lm2.png",
+      "size": 38404
+    },
+    {
+      "path": "assets/label012.jpg",
+      "size": 72095
+    },
+    {
+      "path": "assets/room2z3_2_lm3.png",
+      "size": 6603
+    },
+    {
+      "path": "assets/Door01.jpg",
+      "size": 202814
     }
   ]
 }

@@ -4,15 +4,18 @@ import { Blitz3DFileIO } from './runtime/fileio';
 
 type LoaderElements = {
     overlay: HTMLElement;
-    stage: HTMLElement;
-    progress: HTMLElement;
+    wasmBar: HTMLElement;
+    wasmText: HTMLElement;
+    assetsBar: HTMLElement;
+    assetsText: HTMLElement;
     detail: HTMLElement;
     diagnostics: HTMLElement;
 };
 
-type ProgressUpdate = {
-    stage: string;
+type LoaderUpdate = {
+    section?: 'wasm' | 'assets';
     progress?: number;
+    text?: string;
     detail?: string;
 };
 
@@ -22,25 +25,36 @@ const BOOT_ASSET_GROUP = 'boot';
 
 const getLoaderElements = (): LoaderElements => {
     const overlay = document.getElementById('loading') as HTMLElement | null;
-    const stage = document.getElementById('loading-stage') as HTMLElement | null;
-    const progress = document.getElementById('loading-progress') as HTMLElement | null;
+    const wasmBar = document.getElementById('loading-bar-wasm') as HTMLElement | null;
+    const wasmText = document.getElementById('loading-text-wasm') as HTMLElement | null;
+    const assetsBar = document.getElementById('loading-bar-assets') as HTMLElement | null;
+    const assetsText = document.getElementById('loading-text-assets') as HTMLElement | null;
     const detail = document.getElementById('loading-detail') as HTMLElement | null;
     const diagnostics = document.getElementById('diagnostics') as HTMLElement | null;
 
-    if (!overlay || !stage || !progress || !detail || !diagnostics) {
+    if (!overlay || !wasmBar || !wasmText || !assetsBar || !assetsText || !detail || !diagnostics) {
         throw new Error('Missing loader UI elements');
     }
 
-    return { overlay, stage, progress, detail, diagnostics };
+    return { overlay, wasmBar, wasmText, assetsBar, assetsText, detail, diagnostics };
 };
 
-const updateLoader = (elements: LoaderElements, update: ProgressUpdate) => {
-    elements.stage.textContent = update.stage;
-    if (typeof update.progress === 'number') {
-        const clamped = Math.max(0, Math.min(1, update.progress));
-        elements.progress.style.width = `${Math.round(clamped * 100)}%`;
+const updateLoader = (elements: LoaderElements, update: LoaderUpdate) => {
+    if (update.section === 'wasm') {
+        if (typeof update.progress === 'number') {
+            const clamped = Math.max(0, Math.min(1, update.progress));
+            elements.wasmBar.style.width = `${Math.round(clamped * 100)}%`;
+        }
+        if (update.text) elements.wasmText.textContent = update.text;
+    } else if (update.section === 'assets') {
+        if (typeof update.progress === 'number') {
+            const clamped = Math.max(0, Math.min(1, update.progress));
+            elements.assetsBar.style.width = `${Math.round(clamped * 100)}%`;
+        }
+        if (update.text) elements.assetsText.textContent = update.text;
     }
-    elements.detail.textContent = update.detail ?? '';
+
+    if (update.detail) elements.detail.textContent = update.detail;
 };
 
 const formatDiagnostics = (entries: Record<string, string | number>) => {
@@ -75,26 +89,40 @@ const streamFetchWithProgress = async (
     const reader = response.body.getReader();
     const chunks: Uint8Array[] = [];
     let loaded = 0;
-    let lastTime = performance.now();
+
+    let lastUpdate = performance.now();
     let lastLoaded = 0;
+    let start = lastUpdate;
 
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+
         if (value) {
             chunks.push(value);
             loaded += value.length;
+
             const now = performance.now();
-            const dt = (now - lastTime) / 1000;
-            let rate: number | null = null;
-            if (dt > 0.25) {
-                rate = (loaded - lastLoaded) / dt;
+            const dt = now - lastUpdate;
+
+            // Throttle updates to ~60fps (16ms) to avoid blocking UI
+            // Also yield to event loop if processing takes too long
+            if (dt > 32) {
+                const elapsed = (now - start) / 1000;
+                const rate = elapsed > 0 ? loaded / elapsed : 0;
+
+                onProgress(loaded, total, rate);
+                lastUpdate = now;
                 lastLoaded = loaded;
-                lastTime = now;
+
+                // Explicitly yield to let browser render
+                await new Promise(r => setTimeout(r, 0));
             }
-            onProgress(loaded, total, rate);
         }
     }
+
+    // Final update
+    onProgress(loaded, total, null);
 
     const buffer = new Uint8Array(loaded);
     let offset = 0;
@@ -148,9 +176,16 @@ const instantiateWasm = async (
     onProgress: (ratio: number, detail: string) => void
 ): Promise<WebAssembly.Instance> => {
     onProgress(0.85, 'Compiling WASM');
+    // Yield before heavy compilation
+    await new Promise(r => setTimeout(r, 10));
+
     const wasmModule = await WebAssembly.compile(buffer);
     stubMissingImports(imports, wasmModule);
+
     onProgress(0.95, 'Instantiating WASM');
+    // Yield before instantiation
+    await new Promise(r => setTimeout(r, 10));
+
     const instance = await WebAssembly.instantiate(wasmModule, imports);
     onProgress(1, 'WASM ready');
     return instance;
@@ -180,13 +215,15 @@ const attachRuntime = (core: Blitz3DCore, fileIO: Blitz3DFileIO, instance: WebAs
 const startMain = (instance: WebAssembly.Instance) => {
     if (instance.exports.Main) {
         console.log('Starting Blitz3D Main (Async)...');
-        setTimeout(() => {
+        // Use requestAnimationFrame to yield control to the browser before starting the heavy Main loop.
+        // This ensures the DOM updates (like hiding loader) have a chance to paint.
+        requestAnimationFrame(() => {
             try {
                 (instance.exports.Main as Function)();
             } catch (e) {
                 console.error('Blitz3D Execution Error:', e);
             }
-        }, 100);
+        });
     } else if (instance.exports._start) {
         console.log('Starting WASI _start...');
         (instance.exports._start as Function)();
@@ -221,11 +258,8 @@ const startRenderLoop = (core: Blitz3DCore) => {
 };
 
 async function init() {
-    const canvas = document.getElementById('canvas') as HTMLCanvasElement | null;
-    if (!canvas) throw new Error('No canvas found');
-
     const loader = getLoaderElements();
-    updateLoader(loader, { stage: 'Initializing runtime...', progress: 0.05 });
+    updateLoader(loader, { section: 'wasm', text: 'Initializing...', progress: 0.1 });
 
     const core = new Blitz3DCore();
     core.init('canvas');
@@ -240,7 +274,7 @@ async function init() {
     console.log('Graphics init3D done. Scene:', graphics.scene ? 'ok' : 'missing');
 
     try {
-        updateLoader(loader, { stage: 'Downloading WASM...', progress: 0.1, detail: BOOT_WASM_PATH });
+        updateLoader(loader, { section: 'wasm', text: 'Connecting...', progress: 0.1 });
 
         const diagnosticsState: Record<string, string | number> = {
             'WASM': 'starting',
@@ -248,90 +282,112 @@ async function init() {
             'Downloads': 0
         };
 
-        const buffer = await streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total, rate) => {
+        // Parallelize WASM fetch and Manifest fetch
+        const wasmPromise = streamFetchWithProgress(BOOT_WASM_PATH, (loaded, total, rate) => {
             const ratio = total ? loaded / total : 0;
             const sizeLabel = total ? `${formatBytes(loaded)} / ${formatBytes(total)}` : formatBytes(loaded);
             const rateLabel = rate ? `${formatBytes(rate)}/s` : '';
             diagnosticsState.WASM = rateLabel ? `${sizeLabel} (${rateLabel})` : sizeLabel;
             loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
             updateLoader(loader, {
-                stage: 'Downloading WASM...',
-                progress: 0.1 + ratio * 0.6,
+                section: 'wasm',
+                text: 'Downloading',
+                progress: ratio,
                 detail: rateLabel ? `${sizeLabel} • ${rateLabel}` : sizeLabel
             });
         });
 
-        updateLoader(loader, { stage: 'Preparing imports...', progress: 0.72 });
+        const manifestPromise = fileIO.loadAssetManifest(BOOT_MANIFEST_PATH).then(success => {
+            if (success) {
+                console.log('Manifest loaded early');
+                // Start preloading BOOT assets as soon as manifest is ready, but don't await completion yet
+                diagnosticsState.Assets = 'streaming';
+
+                // Initialize asset streaming in background
+                let lastUpdate = 0;
+                fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
+                    concurrency: 4,
+                    onProgress: (loaded, total, file) => {
+                        const now = performance.now();
+                        if (now - lastUpdate > 32 || loaded === total) {
+                            const ratio = total ? loaded / total : 0;
+                            diagnosticsState.Assets = `${loaded}/${total ?? '?'}`;
+                            diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loaded);
+                            loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
+
+                            updateLoader(loader, {
+                                section: 'assets',
+                                text: 'Streaming',
+                                progress: ratio,
+                                detail: file ?? ''
+                            });
+                            lastUpdate = now;
+                        }
+                    }
+                }).catch(err => {
+                    console.error('Boot asset preload failed:', err);
+                    diagnosticsState.Assets = 'error';
+                    loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
+                });
+            }
+            return success;
+        });
+
+        const [buffer, manifestLoaded] = await Promise.all([wasmPromise, manifestPromise]);
+
+        updateLoader(loader, { section: 'wasm', text: 'Imports...', progress: 1 });
         const imports = setupImports(core, graphics, fileIO);
 
-        const instance = await instantiateWasm(buffer, imports, (ratio, detail) => {
-            updateLoader(loader, { stage: detail, progress: 0.72 + ratio * 0.28 });
+        const instance = await instantiateWasm(buffer as ArrayBuffer, imports, (ratio, detail) => {
+            updateLoader(loader, { section: 'wasm', text: detail, progress: ratio });
         });
 
         attachRuntime(core, fileIO, instance);
 
-        updateLoader(loader, { stage: 'Loading boot assets...', progress: 0.98 });
-        diagnosticsState.Assets = 'loading';
-        loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
-        const manifestLoaded = await fileIO.loadAssetManifest(BOOT_MANIFEST_PATH);
-
         console.log('WASM Instantiated', instance.exports);
+
+        // Start Game Loop
         startMain(instance);
         startUpdateLoop(core);
         startRenderLoop(core);
 
-        updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
+        // Hide loader immediately to show game
+        updateLoader(loader, { section: 'wasm', text: 'Running', progress: 1 });
         loader.overlay.style.display = 'none';
 
-        if (manifestLoaded) {
-            let completed = 0;
-            fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
-                concurrency: 4,
-                onProgress: (loaded, total, file) => {
-                    const ratio = total ? loaded / total : 0;
-                    completed = loaded;
-                    diagnosticsState.Assets = `${loaded}/${total ?? '?'}`;
-                    diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loaded);
-                    loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
-                    updateLoader(loader, {
-                        stage: 'Streaming boot assets…',
-                        progress: 0.98 + ratio * 0.02,
-                        detail: file ?? ''
-                    });
-                }
-            }).catch(err => console.error('Boot asset preload failed:', err));
-            diagnosticsState.Assets = `${completed}/${fileIO.assetManifest?.groups?.[BOOT_ASSET_GROUP]?.length ?? 0}`;
+        // Continue with facility assets if available
+        if (manifestLoaded && fileIO.assetManifest?.groups?.facility_assets?.length) {
+            const totalAssets = fileIO.assetManifest.groups.facility_assets.length;
+            let loadedAssets = 0;
+            let lastUpdate = 0;
 
-            if (fileIO.assetManifest?.groups?.facility_assets?.length) {
-                const totalAssets = fileIO.assetManifest.groups.facility_assets.length;
-                let loadedAssets = 0;
-                fileIO.preloadAssetGroup('facility_assets', {
-                    concurrency: 4,
-                    onProgress: (loaded, total, file) => {
-                        loadedAssets = loaded;
-                        const ratio = total ? loaded / total : 0;
+            fileIO.preloadAssetGroup('facility_assets', {
+                concurrency: 2, // Reduced concurrency
+                onProgress: (loaded, total, file) => {
+                    loadedAssets = loaded;
+                    const now = performance.now();
+
+                    // Throttle UI updates to 10fps (100ms)
+                    if (now - lastUpdate > 100 || loaded === total) {
                         diagnosticsState.Assets = `${loadedAssets}/${totalAssets}`;
                         diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loadedAssets);
                         loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
                         updateLoader(loader, {
-                            stage: 'Streaming facility assets…',
-                            progress: 0.99 + ratio * 0.01,
+                            section: 'assets',
+                            text: 'Streaming',
+                            progress: total ? loadedAssets / total : 0,
                             detail: file ?? ''
                         });
+                        lastUpdate = now;
                     }
-                }).catch(err => console.error('Facility asset preload failed:', err));
-                diagnosticsState.Assets = `${loadedAssets}/${totalAssets}`;
-                loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
-            }
-        } else {
-            diagnosticsState.Assets = 'manifest missing';
-            loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
+                }
+            }).catch(err => console.error('Facility asset preload failed:', err));
         }
 
-        updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
     } catch (e: any) {
         console.error('Game Launch Error:', e);
-        updateLoader(loader, { stage: 'Launch failed', progress: 1, detail: e?.message ?? String(e) });
+        updateLoader(loader, { section: 'wasm', text: 'Error', progress: 1, detail: e?.message ?? String(e) });
+        loader.detail.style.color = '#ff5252';
     }
 }
 

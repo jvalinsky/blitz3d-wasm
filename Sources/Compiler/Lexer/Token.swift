@@ -118,13 +118,15 @@ public struct Token: Equatable {
     public let line: Int
     public let column: Int
     public let sourceFile: String
+    public let hadLeadingWhitespace: Bool
     
-    public init(type: TokenType, text: String, line: Int, column: Int, sourceFile: String = "unknown") {
+    public init(type: TokenType, text: String, line: Int, column: Int, sourceFile: String = "unknown", hadLeadingWhitespace: Bool = false) {
         self.type = type
         self.text = text
         self.line = line
         self.column = column
         self.sourceFile = sourceFile
+        self.hadLeadingWhitespace = hadLeadingWhitespace
     }
     
     public var sourceLocation: String {

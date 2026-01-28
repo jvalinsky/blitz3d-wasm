@@ -16,9 +16,9 @@ A fully functional web-based demo that allows you to browse and view SCPCB (SCP:
   - Loading overlays and smooth UI
 
 ### Server
-- **`server.js`** - legacy server script (prefer Deno)
+- **`server.js`** - legacy server script (use Deno)
 - **`serve.py`** - Python HTTP server (alternative)
-- **`package.json`** - NPM package configuration
+- **`deno.json`** - Deno task configuration
 
 ### Documentation
 - **`README_DEMO.md`** - Quick start guide

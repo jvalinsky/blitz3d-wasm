@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SCP: Containment Breach (Blitz3D WASM)</title>
@@ -12,6 +13,7 @@
             color: #fff;
             font-family: system-ui, -apple-system, Segoe UI, sans-serif;
         }
+
         #game-container {
             position: absolute;
             inset: 0;
@@ -19,9 +21,11 @@
             align-items: center;
             justify-content: center;
         }
+
         canvas {
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
+
         #loading {
             position: absolute;
             inset: 0;
@@ -29,38 +33,62 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            background: radial-gradient(circle at center, rgba(30,30,30,0.85), rgba(0,0,0,0.95));
+            background: radial-gradient(circle at center, rgba(30, 30, 30, 0.85), rgba(0, 0, 0, 0.95));
             color: #ddd;
             text-align: center;
             gap: 12px;
         }
+
         #loading-title {
             font-size: 20px;
             letter-spacing: 0.12em;
             text-transform: uppercase;
         }
-        #loading-stage {
-            font-size: 14px;
-            color: #9aa0a6;
-        }
-        #loading-bar {
+
+        .loading-row {
             width: min(420px, 70vw);
-            height: 8px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .loading-label {
+            width: 60px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .loading-track {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
             overflow: hidden;
         }
-        #loading-bar > span {
+
+        .loading-track>span {
             display: block;
             height: 100%;
-            width: 0%;
-            background: linear-gradient(90deg, #4caf50, #8bc34a);
-            transition: width 150ms ease;
+            background: #4caf50;
+            transition: width 0.2s ease-out;
         }
+
+        .loading-text {
+            width: 80px;
+            font-family: monospace;
+            font-size: 11px;
+            color: #9aa0a6;
+        }
+
         #loading-detail {
+            margin-top: 8px;
             font-size: 12px;
             color: #6e7378;
+            height: 1.2em;
         }
+
         #diagnostics {
             position: absolute;
             bottom: 16px;
@@ -68,25 +96,42 @@
             padding: 10px 12px;
             font-size: 12px;
             color: #cdd0d5;
-            background: rgba(0,0,0,0.45);
+            background: rgba(0, 0, 0, 0.45);
             border-radius: 8px;
             line-height: 1.4;
             min-width: 220px;
             pointer-events: none;
         }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="game-container">
         <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
         <div id="loading">
             <div id="loading-title">SCP: Containment Breach</div>
-            <div id="loading-stage">Initializing...</div>
-            <div id="loading-bar"><span id="loading-progress"></span></div>
+
+            <div class="loading-row">
+                <div class="loading-label">System</div>
+                <div class="loading-track">
+                    <span id="loading-bar-wasm" style="width: 0%"></span>
+                </div>
+                <div class="loading-text" id="loading-text-wasm">Connecting...</div>
+            </div>
+
+            <div class="loading-row">
+                <div class="loading-label">Assets</div>
+                <div class="loading-track">
+                    <span id="loading-bar-assets" style="width: 0%"></span>
+                </div>
+                <div class="loading-text" id="loading-text-assets">Waiting...</div>
+            </div>
+
             <div id="loading-detail"></div>
         </div>
         <div id="diagnostics"></div>
     </div>
     <script type="module" src="/src/main.ts"></script>
-  </body>
+</body>
+
 </html>

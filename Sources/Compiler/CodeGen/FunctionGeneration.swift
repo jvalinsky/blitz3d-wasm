@@ -214,6 +214,14 @@ public final class FunctionGeneration {
                     statementGenerator?.generateStatement(stmt, function: &tempFunc)
                 }
                 chunkBody.append(contentsOf: tempFunc.body)
+
+                // CRITICAL: Copy back any new locals declared in this chunk to main function
+                // Without this, locals declared in GOTO chunks are registered in VariableManagement
+                // but never added to function.locals, causing validation errors
+                if tempFunc.locals.count > function.locals.count {
+                    let newLocals = tempFunc.locals[function.locals.count...]
+                    function.locals.append(contentsOf: newLocals)
+                }
                 
                 // Determine next state for fall-through
                 let nextStateIdx = stateIdx + 1

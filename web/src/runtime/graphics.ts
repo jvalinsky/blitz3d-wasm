@@ -1957,6 +1957,8 @@ export class Blitz3DGraphics {
         imports.env.CreatePlane = (parent) => {
             const geometry = new THREE.PlaneGeometry(20, 20);
             const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0x888888, side: THREE.DoubleSide }));
+            // Blitz3D planes lie on XZ; Three.js planes default to XY
+            mesh.rotation.x = -Math.PI / 2;
             const id = this.nextEntityId++;
             this.entities[id] = mesh;
             if (parent && this.entities[parent]) this.entities[parent].add(mesh);

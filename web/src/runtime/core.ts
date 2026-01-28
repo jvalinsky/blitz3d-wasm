@@ -103,10 +103,27 @@ export class Blitz3DCore {
     }
 
     init(canvasId) {
-        this.canvas = document.getElementById(canvasId);
+        this.canvas = document.getElementById(canvasId) as HTMLCanvasElement | null;
         if (!this.canvas) {
             console.error("Canvas not found: " + canvasId);
             return;
+        }
+
+        // Ensure WebGL canvas is not used for 2D contexts
+        if (this.canvas.getContext('2d')) {
+            console.warn('Core init: canvas already has 2D context; creating dedicated WebGL canvas');
+            const glCanvas = document.createElement('canvas');
+            glCanvas.width = this.canvas.width || 800;
+            glCanvas.height = this.canvas.height || 600;
+            glCanvas.id = this.canvas.id;
+            glCanvas.style.width = this.canvas.style.width;
+            glCanvas.style.height = this.canvas.style.height;
+            glCanvas.style.display = this.canvas.style.display || 'block';
+            glCanvas.style.position = this.canvas.style.position || 'relative';
+            if (this.canvas.parentElement) {
+                this.canvas.parentElement.replaceChild(glCanvas, this.canvas);
+            }
+            this.canvas = glCanvas;
         }
 
         // Setup 2D overlay canvas for Text commands
@@ -117,7 +134,9 @@ export class Blitz3DCore {
         this.textCanvas.style.top = '0';
         this.textCanvas.style.left = '0';
         this.textCanvas.style.pointerEvents = 'none';
-        this.canvas.parentElement.appendChild(this.textCanvas);
+        if (this.canvas.parentElement) {
+            this.canvas.parentElement.appendChild(this.textCanvas);
+        }
         this.ctx2d = this.textCanvas.getContext('2d');
 
         console.log("Blitz3D Runtime Core Initialized");

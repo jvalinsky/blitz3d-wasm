@@ -6,3 +6,8 @@
 # Deciduous database (local)
 .deciduous/
 *.wasm
+
+# Web build artifacts
+/web/node_modules/
+/web/deno.lock
+/dist/

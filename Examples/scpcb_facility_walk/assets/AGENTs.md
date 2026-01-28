@@ -1,4 +1,4 @@
-# Directory: blitz3d-wasm/Examples/walking_sim/assets
+# Directory: blitz3d-wasm/Examples/scpcb_facility_walk/assets
 
 **Parent**: [../](..)
 

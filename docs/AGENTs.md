@@ -12,6 +12,8 @@ See [README.md](README.md) for the documentation index.
 - `compiler/` - Compiler-specific docs
 - `compiler_improvements/` - Improvement proposals
 - `archive/` - Old session notes and dated files
+- `plans/` - Planning docs
+- `project/` - Project notes
 
 ## Key Documents
 

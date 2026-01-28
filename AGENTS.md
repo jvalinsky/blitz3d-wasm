@@ -64,6 +64,7 @@ blitz3d-wasm/
 │   │   │   ├── runtime.js # ~500 lines, browser bindings
 │   │   │   ├── test.html  # Working particle demo
 │   │   │   └── particles.bb
+│   │   ├── JS/            # TS/JS runtime bindings
 │   │   └── modules/       # Legacy full runtime (11K lines)
 │   │
 │   └── Blitz3DEngine/     # Swift asset parsers
@@ -79,10 +80,11 @@ blitz3d-wasm/
 │
 ├── Examples/              # Demo projects
 ├── docs/                  # Documentation
-│   ├── ARCHITECTURE.md    # System design
+│   ├── compiler/          # Compiler docs
 │   └── archive/           # Old session notes
 ├── notes/                 # SCPCB analysis
-└── plan/                  # Implementation phases
+├── plan/                  # Implementation phases
+└── web/                   # Web frontend app
 ```
 
 ## Building

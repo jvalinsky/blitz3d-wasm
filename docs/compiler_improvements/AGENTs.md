@@ -3,10 +3,8 @@
 **Parent**: [../](..)
 
 **Children**:
-- [INDEX.md](./INDEX.md)
 - [2026-01-27_145331](./2026-01-27_145331)
 - [archive](./archive)
-
 ## Notes
 
 - This folder is planning-only (no code).

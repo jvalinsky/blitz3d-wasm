@@ -16,6 +16,8 @@ type ProgressUpdate = {
 };
 
 const BOOT_WASM_PATH = '/Main.wasm';
+const BOOT_MANIFEST_PATH = '/scpcb_manifest.json';
+const BOOT_ASSET_GROUP = 'boot';
 
 const getLoaderElements = (): LoaderElements => {
     const overlay = document.getElementById('loading') as HTMLElement | null;
@@ -210,6 +212,22 @@ async function init() {
         });
 
         attachRuntime(core, fileIO, instance);
+
+        updateLoader(loader, { stage: 'Loading boot assets...', progress: 0.98 });
+        const manifestLoaded = await fileIO.loadAssetManifest(BOOT_MANIFEST_PATH);
+        if (manifestLoaded) {
+            await fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
+                concurrency: 4,
+                onProgress: (loaded, total, file) => {
+                    const ratio = total ? loaded / total : 0;
+                    updateLoader(loader, {
+                        stage: 'Loading boot assets...',
+                        progress: 0.98 + ratio * 0.02,
+                        detail: file ?? ''
+                    });
+                }
+            });
+        }
 
         console.log('WASM Instantiated', instance.exports);
         startMain(instance);

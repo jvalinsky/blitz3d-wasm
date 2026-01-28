@@ -3,10 +3,23 @@
  * Handles file reading, virtual file system, and asset bundling
  */
 
-/**
- * Blitz3D Runtime File I/O Module
- * Handles file reading, virtual file system, and asset bundling
- */
+type AssetManifestEntry = {
+    path: string;
+    url?: string;
+    size?: number;
+    group?: string;
+};
+
+type AssetManifest = {
+    basePath?: string;
+    groups?: Record<string, string[]>;
+    files?: AssetManifestEntry[];
+};
+
+type PreloadOptions = {
+    concurrency?: number;
+    onProgress?: (loaded: number, total: number | null, file?: string) => void;
+};
 
 // Browser shim for path
 const path = {
@@ -22,6 +35,8 @@ export class Blitz3DFileIO {
         this.openFiles = new Map();
         this.nextFileHandle = 1;
         this.assetBundle = null;
+        this.assetManifest = null;
+        this.pendingLoads = new Map();
         this.basePath = '';
     }
 
@@ -30,13 +45,18 @@ export class Blitz3DFileIO {
      * @param {string} basePath - Base path for asset files
      * @param {Object} assetBundle - Optional pre-loaded asset bundle
      */
-    init(basePath = '', assetBundle = null) {
+    init(basePath = '', assetBundle = null, assetManifest: AssetManifest | null = null) {
         this.basePath = basePath;
         this.assetBundle = assetBundle;
+        this.assetManifest = assetManifest;
         console.log(`File I/O initialized with base path: ${basePath}`);
 
         if (assetBundle) {
             console.log(`Asset bundle loaded with ${assetBundle.fileCount || 0} files`);
+        }
+
+        if (assetManifest) {
+            console.log(`Asset manifest loaded with ${assetManifest.files?.length ?? 0} files`);
         }
     }
 
@@ -54,6 +74,119 @@ export class Blitz3DFileIO {
         } catch (error: any) {
             console.error(`Failed to load asset bundle: ${error.message}`);
             return false;
+        }
+    }
+
+    async loadAssetManifest(manifestPath: string) {
+        try {
+            const response = await fetch(manifestPath);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = (await response.json()) as AssetManifest;
+            this.assetManifest = data;
+            if (data.basePath) {
+                this.basePath = data.basePath;
+            }
+            console.log(`Asset manifest loaded: ${data.files?.length ?? 0} files`);
+            return true;
+        } catch (error: any) {
+            console.error(`Failed to load asset manifest: ${error.message}`);
+            return false;
+        }
+    }
+
+    async preloadAssetGroup(group: string, options: PreloadOptions = {}) {
+        if (!this.assetManifest?.groups || !this.assetManifest.files) {
+            console.warn('No asset manifest groups available');
+            return false;
+        }
+
+        const files = this.assetManifest.groups[group];
+        if (!files) {
+            console.warn(`Asset group not found: ${group}`);
+            return false;
+        }
+
+        const manifestFiles = new Map(this.assetManifest.files.map(file => [file.path, file]));
+        const list = files.map(path => manifestFiles.get(path)).filter(Boolean) as AssetManifestEntry[];
+
+        await this.preloadFiles(list, options);
+        return true;
+    }
+
+    async preloadFiles(files: AssetManifestEntry[], options: PreloadOptions = {}) {
+        const concurrency = options.concurrency ?? 4;
+        let completed = 0;
+        const total = files.length;
+        const queue = [...files];
+
+        const pump = async () => {
+            while (queue.length) {
+                const entry = queue.shift();
+                if (!entry) return;
+                await this.fetchAndRegister(entry, options.onProgress);
+                completed += 1;
+                if (options.onProgress) {
+                    options.onProgress(completed, total, entry.path);
+                }
+            }
+        };
+
+        await Promise.all(new Array(concurrency).fill(0).map(() => pump()));
+    }
+
+    async fetchAndRegister(entry: AssetManifestEntry, onProgress?: (loaded: number, total: number | null, file?: string) => void) {
+        const resolvedPath = this.resolvePath(entry.path);
+        if (this.fileSystem.has(resolvedPath)) {
+            return;
+        }
+
+        const url = entry.url ?? path.join(this.basePath, entry.path);
+        if (this.pendingLoads.has(resolvedPath)) {
+            await this.pendingLoads.get(resolvedPath);
+            return;
+        }
+
+        const loadPromise = (async () => {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            if (!response.body) {
+                const buffer = new Uint8Array(await response.arrayBuffer());
+                this.registerFile(resolvedPath, buffer);
+                return;
+            }
+
+            const reader = response.body.getReader();
+            const contentLength = response.headers.get('Content-Length');
+            const total = contentLength ? Number(contentLength) : null;
+            let loaded = 0;
+            const chunks: Uint8Array[] = [];
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                if (value) {
+                    chunks.push(value);
+                    loaded += value.length;
+                    if (onProgress) onProgress(loaded, total, resolvedPath);
+                }
+            }
+
+            const buffer = new Uint8Array(loaded);
+            let offset = 0;
+            for (const chunk of chunks) {
+                buffer.set(chunk, offset);
+                offset += chunk.length;
+            }
+
+            this.registerFile(resolvedPath, buffer);
+        })();
+
+        this.pendingLoads.set(resolvedPath, loadPromise);
+        try {
+            await loadPromise;
+        } finally {
+            this.pendingLoads.delete(resolvedPath);
         }
     }
 
@@ -121,6 +254,18 @@ export class Blitz3DFileIO {
                 });
                 console.log(`Opened file from bundle: ${resolvedPath} (handle: ${handle})`);
                 return handle;
+            }
+        }
+
+        // Try manifest-driven fetch on demand
+        if (this.assetManifest?.files) {
+            const entry = this.assetManifest.files.find(file => file.path === resolvedPath);
+            if (entry) {
+                console.warn(`File not yet loaded, fetching: ${resolvedPath}`);
+                this.fetchAndRegister(entry).catch((error) => {
+                    console.error(`Failed to fetch asset ${resolvedPath}:`, error);
+                });
+                return 0;
             }
         }
 

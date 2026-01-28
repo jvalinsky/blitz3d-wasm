@@ -76,7 +76,7 @@ export class Blitz3DGraphics {
         }
 
         // Check Three.js availability
-        if (!(window as any).THREE) {
+        if (!THREE) {
             console.error("Three.js not loaded! Cannot initialize 3D graphics.");
             return;
         }
@@ -849,6 +849,10 @@ export class Blitz3DGraphics {
             if (!this.core.canvas) {
                 console.error("CreateCamera: canvas is not available");
                 return 0;
+            }
+            if (!this.scene) {
+                console.warn("CreateCamera: scene not initialized, calling init3D");
+                this.init3D();
             }
             if (!this.scene) {
                 console.error("CreateCamera: scene is not initialized");
@@ -2150,7 +2154,13 @@ export class Blitz3DGraphics {
             } else if (this.scene) {
                 this.scene.add(pivot);
             } else {
-                console.warn("CreatePivot: scene not initialized; deferring add", { id, parentId });
+                console.warn("CreatePivot: scene not initialized; calling init3D");
+                this.init3D();
+                if (this.scene) {
+                    this.scene.add(pivot);
+                } else {
+                    console.warn("CreatePivot: scene still not initialized; deferring add", { id, parentId });
+                }
             }
 
             console.log("CreatePivot: id=" + id + " parent=" + parentId);

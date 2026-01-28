@@ -201,6 +201,7 @@ async function init() {
     core.fileIO = fileIO;
 
     graphics.init3D();
+    console.log('Graphics init3D done. Scene:', graphics.scene ? 'ok' : 'missing');
 
     try {
         updateLoader(loader, { stage: 'Downloading WASM...', progress: 0.1, detail: BOOT_WASM_PATH });

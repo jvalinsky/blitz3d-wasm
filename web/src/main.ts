@@ -254,6 +254,23 @@ async function init() {
                 }
             });
             diagnosticsState.Assets = `${completed}/${fileIO.assetManifest?.groups?.[BOOT_ASSET_GROUP]?.length ?? 0}`;
+
+            if (fileIO.assetManifest?.groups?.facility_assets?.length) {
+                updateLoader(loader, { stage: 'Loading facility assets...', progress: 0.99 });
+                await fileIO.preloadAssetGroup('facility_assets', {
+                    concurrency: 4,
+                    onProgress: (loaded, total, file) => {
+                        diagnosticsState.Assets = `${loaded}/${total ?? '?'}`;
+                        diagnosticsState.Downloads = Math.max(diagnosticsState.Downloads as number, loaded);
+                        loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
+                        updateLoader(loader, {
+                            stage: 'Loading facility assets...',
+                            progress: 0.99,
+                            detail: file ?? ''
+                        });
+                    }
+                });
+            }
         } else {
             diagnosticsState.Assets = 'manifest missing';
         }

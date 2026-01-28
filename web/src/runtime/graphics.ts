@@ -90,10 +90,20 @@ export class Blitz3DGraphics {
         console.log("Creating WebGLRenderer...");
         try {
             this.renderer = new THREE.WebGLRenderer({
-                canvas: this.core.canvas,
-                antialias: false
+                antialias: false,
+                alpha: false,
+                powerPreference: 'high-performance'
             });
             console.log("WebGLRenderer created successfully");
+
+            // Ensure renderer canvas is attached to DOM
+            if (this.renderer.domElement && this.core.canvas && this.renderer.domElement !== this.core.canvas) {
+                const oldCanvas = this.core.canvas;
+                if (oldCanvas.parentElement) {
+                    oldCanvas.parentElement.replaceChild(this.renderer.domElement, oldCanvas);
+                }
+                this.core.canvas = this.renderer.domElement;
+            }
 
             // Verify renderer was created properly
             if (!this.renderer) {
@@ -113,8 +123,7 @@ export class Blitz3DGraphics {
             this.renderer.autoClear = false;
             console.log("Renderer size set to: " + this.core.canvas.width + "x" + this.core.canvas.height);
 
-            // Verify WebGL context
-            const gl = this.core.canvas.getContext('webgl') || this.core.canvas.getContext('experimental-webgl');
+            const gl = this.renderer.getContext?.();
             if (gl) {
                 console.log("WebGL context verified");
                 console.log("WebGL Renderer: " + gl.getParameter(gl.RENDERER));

@@ -140,6 +140,12 @@ export class Blitz3DCore {
         console.log("Blitz3D Runtime Core Initialized");
     }
 
+    createBankFromData(data: Uint8Array) {
+        const bankId = this.nextBankId++;
+        this.banks.set(bankId, data);
+        return bankId;
+    }
+
     readString(ptr) {
         if (!this.memory || !this.memory.buffer) {
             return "";

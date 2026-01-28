@@ -1770,7 +1770,22 @@ export class Blitz3DGraphics {
 
             // Determine loader
             const lowerPath = path.toLowerCase();
-            if (lowerPath.endsWith('.x')) {
+            if (lowerPath.endsWith('.rmesh')) {
+                const handle = this.core.fileIO?.openFile?.(path) ?? 0;
+                if (!handle) {
+                    console.warn(`LoadMesh: failed to open rmesh ${path}`);
+                } else {
+                    const data = this.core.fileIO?.readRemaining?.(handle);
+                    this.core.fileIO?.closeFile?.(handle);
+                    if (data && data.length) {
+                        const bankId = this.core.createBankFromData?.(data);
+                        if (bankId) {
+                            console.log(`LoadMesh: parsing rmesh ${path} (bank ${bankId})`);
+                            imports.blitz3d?.ParseRMesh?.(bankId);
+                        }
+                    }
+                }
+            } else if (lowerPath.endsWith('.x')) {
                 if (!this.xLoader) this.xLoader = new this.XLoader(this, this.core, null);
                 this.xLoader.loadFile(path, parent).then(entityId => {
                     // XLoader creates its own entity, we might need to swap or just add to parent

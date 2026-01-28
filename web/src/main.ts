@@ -281,6 +281,7 @@ async function init() {
         startRenderLoop(core);
 
         updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
+        loader.overlay.style.display = 'none';
 
         if (manifestLoaded) {
             let completed = 0;
@@ -328,7 +329,6 @@ async function init() {
         }
 
         updateLoader(loader, { stage: 'Running', progress: 1, detail: 'Streaming assets…' });
-        loader.overlay.style.display = 'none';
     } catch (e: any) {
         console.error('Game Launch Error:', e);
         updateLoader(loader, { stage: 'Launch failed', progress: 1, detail: e?.message ?? String(e) });

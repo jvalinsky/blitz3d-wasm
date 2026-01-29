@@ -1,0 +1,126 @@
+#!/usr/bin/env -S deno run -A
+import { parseRMesh } from "./rmesh/parse.ts";
+import { encodeSmpk } from "./smpk/codec.ts";
+import type { SmpkAccessor, SmpkFile, SmpkJson, SmpkMaterial, SmpkPrimitive } from "./smpk/types.ts";
+
+type Args = { input: string; output: string };
+
+const parseArgs = (): Args => {
+  const input = Deno.args[0];
+  if (!input) throw new Error("usage: Tools/convert_rmesh_to_smpk.ts <input.rmesh> [-o out.smpk]");
+  const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
+  const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.rmesh$/i, ".smpk");
+  if (!output) throw new Error("missing -o output");
+  return { input, output };
+};
+
+const computeNormals = (positions: Float32Array, indices: Uint32Array): Float32Array => {
+  const n = new Float32Array(positions.length);
+  for (let i = 0; i < indices.length; i += 3) {
+    const i0 = indices[i + 0]! * 3;
+    const i1 = indices[i + 1]! * 3;
+    const i2 = indices[i + 2]! * 3;
+    const ax = positions[i0 + 0]!, ay = positions[i0 + 1]!, az = positions[i0 + 2]!;
+    const bx = positions[i1 + 0]!, by = positions[i1 + 1]!, bz = positions[i1 + 2]!;
+    const cx = positions[i2 + 0]!, cy = positions[i2 + 1]!, cz = positions[i2 + 2]!;
+    const abx = bx - ax, aby = by - ay, abz = bz - az;
+    const acx = cx - ax, acy = cy - ay, acz = cz - az;
+    const nx = aby * acz - abz * acy;
+    const ny = abz * acx - abx * acz;
+    const nz = abx * acy - aby * acx;
+    n[i0 + 0] += nx; n[i0 + 1] += ny; n[i0 + 2] += nz;
+    n[i1 + 0] += nx; n[i1 + 1] += ny; n[i1 + 2] += nz;
+    n[i2 + 0] += nx; n[i2 + 1] += ny; n[i2 + 2] += nz;
+  }
+  for (let i = 0; i < n.length; i += 3) {
+    const x = n[i + 0]!, y = n[i + 1]!, z = n[i + 2]!;
+    const len = Math.hypot(x, y, z) || 1;
+    n[i + 0] = x / len;
+    n[i + 1] = y / len;
+    n[i + 2] = z / len;
+  }
+  return n;
+};
+
+const main = async () => {
+  const args = parseArgs();
+  const st = await Deno.stat(args.input);
+  if (st.size === 0) throw new Error(`RMESH is empty: ${args.input}`);
+
+  const bytes = await Deno.readFile(args.input);
+  const rm = parseRMesh(bytes);
+
+  const binParts: Uint8Array[] = [];
+  const accessors: SmpkAccessor[] = [];
+  const currentBinOff = () => binParts.reduce((s, p) => s + p.byteLength, 0);
+  const push = (name: string, view: ArrayBufferView, componentType: any, type: any, count: number): number => {
+    const off = currentBinOff();
+    const u8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
+    binParts.push(u8);
+    accessors.push({ name, offset: off, componentType, type, count });
+    return accessors.length - 1;
+  };
+  const makeBin = () => {
+    const total = currentBinOff();
+    const out = new Uint8Array(total);
+    let o = 0;
+    for (const p of binParts) {
+      out.set(p, o);
+      o += p.byteLength;
+    }
+    return out;
+  };
+
+  const materials: SmpkMaterial[] = [];
+  const primitives: SmpkPrimitive[] = [];
+
+  for (let s = 0; s < rm.drawn.length; s++) {
+    const surf = rm.drawn[s]!;
+    const vCount = surf.positions.length / 3;
+    if (!vCount || !surf.indices.length) continue;
+
+    const normals = computeNormals(surf.positions, surf.indices);
+
+    const posAcc = push(`POSITION_s${s}`, surf.positions, "f32", "VEC3", vCount);
+    const norAcc = push(`NORMAL_s${s}`, normals, "f32", "VEC3", vCount);
+    const uv0Acc = push(`TEXCOORD_0_s${s}`, surf.uvs0, "f32", "VEC2", vCount);
+    const uv1Acc = push(`TEXCOORD_1_s${s}`, surf.uvs1, "f32", "VEC2", vCount);
+    const idxAcc = push(`INDICES_s${s}`, surf.indices, "u32", "SCALAR", surf.indices.length);
+
+    // Materials: slot0 is base, slot1 is lightmap (in SCPCB convention).
+    const tex0 = surf.textures[0].name;
+    const tex1 = surf.textures[1].name;
+    const alphaMode = surf.textures[0].kind === 3 ? "BLEND" : "OPAQUE";
+    const matIdx = materials.length;
+    materials.push({
+      name: `surf_${s}`,
+      baseColorTexture: tex0,
+      lightmapTexture: tex1,
+      alphaMode,
+    });
+
+    primitives.push({
+      attributes: { POSITION: posAcc, NORMAL: norAcc, TEXCOORD_0: uv0Acc, TEXCOORD_1: uv1Acc },
+      indices: idxAcc,
+      material: matIdx,
+    });
+  }
+
+  const json: SmpkJson = {
+    version: 1,
+    generator: "blitz3d-wasm Tools/convert_rmesh_to_smpk.ts",
+    accessors,
+    meshes: [{ name: "rmesh", primitives }],
+    nodes: [{ name: "root", children: [], mesh: 0 }],
+    materials: materials.length ? materials : undefined,
+    sceneRoots: [0],
+  };
+
+  const smpk: SmpkFile = { json, bin: makeBin() };
+  const outBytes = encodeSmpk(smpk);
+  await Deno.writeFile(args.output, outBytes);
+  console.log(`[smpk] wrote ${args.output} (${outBytes.byteLength} bytes)`);
+};
+
+if (import.meta.main) await main();
+

@@ -25,12 +25,13 @@ compile_and_validate() {
   local out="/tmp/$(basename "${input%.*}")_smoke.wasm"
   echo "Compiling: $input"
   HOME="$SCPCB_SMOKE_HOME" CLANG_MODULE_CACHE_PATH="$SCPCB_SMOKE_CLANG_MODULE_CACHE_PATH" \
-    .build/debug/blitz3d-wasm "$input" -o "$out" --quiet
+    .build/debug/blitz3d-wasm "$input" -o "$out" --quiet --cmdbuf
   if ! command -v deno >/dev/null 2>&1; then
     echo "deno not found. Install Deno to run WebAssembly validation."
     exit 3
   fi
   deno run --quiet --allow-read "$REPO_ROOT/Tools/wasm_validate.ts" "$out"
+  deno run --quiet --allow-read "$REPO_ROOT/Tools/validate_cmdbuf_wasm.ts" "$out"
   echo "OK: $out"
 }
 

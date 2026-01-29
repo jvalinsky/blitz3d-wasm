@@ -639,7 +639,7 @@ public final class ExpressionGeneration {
         var returnType: WASMType = .i32
         var actualWasmReturnType: WASMType = .void
         
-	        if let funcIdx = context.functionIndexMap[internalName] {
+		        if let funcIdx = context.functionIndexMap[internalName] {
             if internalName == "createcamera" {
                 CompilerLogger.debug("DEBUG_COMPILER: Generating call to CreateCamera. Index: \(funcIdx)")
             }
@@ -661,12 +661,23 @@ public final class ExpressionGeneration {
 	                return nil
 	            }
 	            
-	            let importedType = getImportedFunctionType(funcIndex: Int(funcIdx))
-	            
-	            // Handle Extra Arguments (Stack Imbalance Fix)
-	            var expectedArgCount = call.arguments.count
-	            if let importedType {
-	                expectedArgCount = importedType.parameters.count
+		            let importedType = getImportedFunctionType(funcIndex: Int(funcIdx))
+
+                    if context.enableCommandBufferABI,
+                       let lowered = generateCommandBufferLowering(
+                        internalName: internalName,
+                        call: call,
+                        funcIdx: Int(funcIdx),
+                        def: def,
+                        importedType: importedType
+                       ) {
+                        return lowered
+                    }
+		            
+		            // Handle Extra Arguments (Stack Imbalance Fix)
+		            var expectedArgCount = call.arguments.count
+		            if let importedType {
+		                expectedArgCount = importedType.parameters.count
 	            } else if let def = def {
 	                expectedArgCount = def.params.count
 	            }
@@ -804,6 +815,1502 @@ public final class ExpressionGeneration {
         }
         
         return (instrs, finalType)
+    }
+
+    // MARK: - Track B: Command Buffer ABI lowerings
+
+    private func generateCommandBufferLowering(
+        internalName: String,
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType)? {
+        guard context.cmdBufPtrGlobalIdx >= 0 else { return nil }
+
+        switch internalName {
+        case "createcube":
+            return generateCmdCreateEntity(call: call, funcIdx: funcIdx, def: def, importedType: importedType, entityType: 1)
+        case "createmesh":
+            return generateCmdCreateEntity(call: call, funcIdx: funcIdx, def: def, importedType: importedType, entityType: 2)
+        case "freeentity":
+            return generateCmdDestroyEntity(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "hideentity":
+            return generateCmdSetVisibility(call: call, funcIdx: funcIdx, def: def, importedType: importedType, visible: 0)
+        case "showentity":
+            return generateCmdSetVisibility(call: call, funcIdx: funcIdx, def: def, importedType: importedType, visible: 1)
+        case "positionentity":
+            return generateCmdSetPosition(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "rotateentity":
+            return generateCmdSetRotationEuler(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "scaleentity":
+            return generateCmdSetScale(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "moveentity":
+            return generateCmdMoveEntity(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "turnentity":
+            return generateCmdTurnEntity(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "entityparent":
+            return generateCmdSetParent(call: call, funcIdx: funcIdx, def: def, importedType: importedType)
+        case "entityx":
+            return generateCmdGetEntPosF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, component: 0)
+        case "entityy":
+            return generateCmdGetEntPosF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, component: 1)
+        case "entityz":
+            return generateCmdGetEntPosF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, component: 2)
+        case "entitypitch":
+            return generateCmdGetEntF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, byteOffset: 20)
+        case "entityyaw":
+            return generateCmdGetEntF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, byteOffset: 24)
+        case "entityroll":
+            return generateCmdGetEntF32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, byteOffset: 28)
+        case "entityvisible":
+            return generateCmdGetEntI32(call: call, funcIdx: funcIdx, def: def, importedType: importedType, byteOffset: 4)
+        default:
+            return nil
+        }
+    }
+
+    private func expectedParamCount(def: FunctionDefinition?, importedType: WASMFunctionType?, fallback: Int) -> Int {
+        if let importedType { return importedType.parameters.count }
+        if let def { return def.params.count }
+        return fallback
+    }
+
+    private func paramType(def: FunctionDefinition?, importedType: WASMFunctionType?, index: Int) -> WASMType? {
+        if let def, index < def.params.count { return def.params[index] }
+        if let importedType, index < importedType.parameters.count { return importedType.parameters[index] }
+        return nil
+    }
+
+    private func emitPaddedArgsStored(
+        call: FunctionCallNode,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        expectedCount: Int,
+        stores: [Int: (global: Int, type: WASMType)]
+    ) -> [WASMInstruction] {
+        var instrs: [WASMInstruction] = []
+
+        let argsToPush = min(call.arguments.count, expectedCount)
+
+        for i in 0..<argsToPush {
+            let argResult = generateWithInfo(call.arguments[i])
+            instrs.append(contentsOf: argResult.instrs)
+
+            let targetType = paramType(def: def, importedType: importedType, index: i)
+            if let targetType, argResult.type != targetType {
+                instrs.append(contentsOf: convert(from: argResult.type, to: targetType))
+            }
+
+            if let store = stores[i] {
+                instrs.append(.globalSet(store.global))
+            } else if argResult.type != .void {
+                instrs.append(.drop)
+            }
+        }
+
+        // Extra arguments (side effects only)
+        for i in argsToPush..<call.arguments.count {
+            let argResult = generateWithInfo(call.arguments[i])
+            instrs.append(contentsOf: argResult.instrs)
+            if argResult.type != .void { instrs.append(.drop) }
+        }
+
+        // Pad missing args to match signature
+        if call.arguments.count < expectedCount {
+            for paramIdx in call.arguments.count..<expectedCount {
+                let t = paramType(def: def, importedType: importedType, index: paramIdx) ?? .i32
+                if let defaultExpr = def?.defaults?[paramIdx] {
+                    let r = generateWithInfo(defaultExpr)
+                    instrs.append(contentsOf: r.instrs)
+                    if r.type != t {
+                        instrs.append(contentsOf: convert(from: r.type, to: t))
+                    }
+                } else {
+                    switch t {
+                    case .f32: instrs.append(.f32Const(0))
+                    default: instrs.append(.i32Const(0))
+                    }
+                }
+
+                if let store = stores[paramIdx] {
+                    instrs.append(.globalSet(store.global))
+                } else {
+                    // Preserve side effects, but don't leave values on stack.
+                    if t != .void { instrs.append(.drop) }
+                }
+            }
+        }
+
+        return instrs
+    }
+
+    private func emitFallbackImportCall(funcIdx: Int, paramStores: [(global: Int, type: WASMType)]) -> [WASMInstruction] {
+        var instrs: [WASMInstruction] = []
+        for s in paramStores {
+            instrs.append(.globalGet(s.global))
+        }
+        instrs.append(.call(funcIdx))
+        return instrs
+    }
+
+    // Track B: EntityX/Y/Z with global-space support (uses WASM authoritative parent + local transforms).
+    // component: 0=x, 1=y, 2=z
+    private func generateCmdGetEntPosF32(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        component: Int
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 2)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (globalG, .i32),
+        ]
+
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (globalG, .i32)])
+
+        guard context.cmdBufPtrGlobalIdx >= 0 else {
+            instrs.append(contentsOf: fallback)
+            return (instrs, .f32)
+        }
+
+        let basePtrG = context.cmdBufPtrGlobalIdx
+        let entPtrG = context.scratchGlobal3Idx
+        let parentIdG = context.scratchGlobal4Idx
+
+        let xG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let zG = context.scratchGlobalFloat3Idx
+
+        let tmp0 = context.scratchGlobalFloat4Idx
+        let tmp1 = context.scratchGlobalFloat5Idx
+        let tmp2 = context.scratchGlobalFloat6Idx
+
+        // Offsets in entity slot
+        let offParent: Int32 = 0
+        let offPosX: Int32 = 8
+        let offPosY: Int32 = 12
+        let offPosZ: Int32 = 16
+        let offPitch: Int32 = 20
+        let offYaw: Int32 = 24
+        let offRoll: Int32 = 28
+        let offSx: Int32 = 32
+        let offSy: Int32 = 36
+        let offSz: Int32 = 40
+
+        let cosIdx = context.functionIndexMap["cos"] ?? -1
+        let sinIdx = context.functionIndexMap["sin"] ?? -1
+
+        // body when cmdbuf enabled
+        let elseBranch: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            b.append(contentsOf: emitEnsureEntityStateTable())
+            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+            b.append(.globalGet(entPtrG))
+            b.append(.i32EqZ)
+            b.append(.if(.f32, fallback, {
+                // if (global == 0) return local
+                let localLoad: [WASMInstruction] = {
+                    let off: Int32 = component == 0 ? offPosX : (component == 1 ? offPosY : offPosZ)
+                    return [.globalGet(entPtrG), .f32Load(2, Int(off))]
+                }()
+
+                // global-space: walk parent chain and apply parent transforms to position
+                var globalLoad: [WASMInstruction] = []
+
+                // init current pos from local
+                globalLoad.append(.globalGet(entPtrG)); globalLoad.append(.f32Load(2, Int(offPosX))); globalLoad.append(.globalSet(xG))
+                globalLoad.append(.globalGet(entPtrG)); globalLoad.append(.f32Load(2, Int(offPosY))); globalLoad.append(.globalSet(yG))
+                globalLoad.append(.globalGet(entPtrG)); globalLoad.append(.f32Load(2, Int(offPosZ))); globalLoad.append(.globalSet(zG))
+                // parentId = *(i32*)(ent+0)
+                globalLoad.append(.globalGet(entPtrG)); globalLoad.append(.i32Load(2, Int(offParent))); globalLoad.append(.globalSet(parentIdG))
+
+                // reuse globalG as depth counter (clobber OK in global branch)
+                globalLoad.append(.i32Const(0))
+                globalLoad.append(.globalSet(globalG))
+
+                // block { loop { ... } }
+                globalLoad.append(.block(.void, [
+                    .loop(.void, {
+                        var loopBody: [WASMInstruction] = []
+
+                        // if (parentId == 0) break
+                        loopBody.append(.globalGet(parentIdG))
+                        loopBody.append(.i32EqZ)
+                        loopBody.append(.brIf(1))
+
+                        // if (depth >= 32) break
+                        loopBody.append(.globalGet(globalG))
+                        loopBody.append(.i32Const(32))
+                        loopBody.append(.i32GeU)
+                        loopBody.append(.brIf(1))
+
+                        // depth++
+                        loopBody.append(.globalGet(globalG))
+                        loopBody.append(.i32Const(1))
+                        loopBody.append(.i32Add)
+                        loopBody.append(.globalSet(globalG))
+
+                        // parentPtr = entStatePtr + parentId*slotBytes (emitEntPtrToScratch writes to entPtrG)
+                        loopBody.append(contentsOf: emitEntPtrToScratch(entIdGlobal: parentIdG))
+                        // if (parentPtr == 0) break
+                        loopBody.append(.globalGet(entPtrG))
+                        loopBody.append(.i32EqZ)
+                        loopBody.append(.brIf(1))
+
+                        // Apply parent scale
+                        loopBody.append(contentsOf: [.globalGet(xG), .globalGet(entPtrG), .f32Load(2, Int(offSx)), .f32Mul, .globalSet(xG)])
+                        loopBody.append(contentsOf: [.globalGet(yG), .globalGet(entPtrG), .f32Load(2, Int(offSy)), .f32Mul, .globalSet(yG)])
+                        loopBody.append(contentsOf: [.globalGet(zG), .globalGet(entPtrG), .f32Load(2, Int(offSz)), .f32Mul, .globalSet(zG)])
+
+                        // Rotate X (pitch)
+                        if cosIdx >= 0 && sinIdx >= 0 {
+                            // cosP / sinP in tmp0/tmp1
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offPitch))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offPitch))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
+                            // tmp2 = y
+                            loopBody.append(.globalGet(yG)); loopBody.append(.globalSet(tmp2))
+                            // y = y*cos - z*sin
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp0), .f32Mul,
+                                .globalGet(zG), .globalGet(tmp1), .f32Mul,
+                                .f32Sub,
+                                .globalSet(yG),
+                            ])
+                            // z = y*sin + z*cos
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
+                                .globalGet(zG), .globalGet(tmp0), .f32Mul,
+                                .f32Add,
+                                .globalSet(zG),
+                            ])
+
+                            // Rotate Y (yaw)
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offYaw))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offYaw))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
+                            loopBody.append(.globalGet(xG)); loopBody.append(.globalSet(tmp2))
+                            // x = x*cos + z*sin
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp0), .f32Mul,
+                                .globalGet(zG), .globalGet(tmp1), .f32Mul,
+                                .f32Add,
+                                .globalSet(xG),
+                            ])
+                            // z = z*cos - x*sin
+                            loopBody.append(contentsOf: [
+                                .globalGet(zG), .globalGet(tmp0), .f32Mul,
+                                .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
+                                .f32Sub,
+                                .globalSet(zG),
+                            ])
+
+                            // Rotate Z (roll)
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
+                            loopBody.append(.globalGet(xG)); loopBody.append(.globalSet(tmp2))
+                            // x = x*cos - y*sin
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp0), .f32Mul,
+                                .globalGet(yG), .globalGet(tmp1), .f32Mul,
+                                .f32Sub,
+                                .globalSet(xG),
+                            ])
+                            // y = x*sin + y*cos
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
+                                .globalGet(yG), .globalGet(tmp0), .f32Mul,
+                                .f32Add,
+                                .globalSet(yG),
+                            ])
+                        }
+
+                        // Add parent translation
+                        loopBody.append(contentsOf: [
+                            .globalGet(xG),
+                            .globalGet(entPtrG), .f32Load(2, Int(offPosX)),
+                            .f32Add,
+                            .globalSet(xG),
+                        ])
+                        loopBody.append(contentsOf: [
+                            .globalGet(yG),
+                            .globalGet(entPtrG), .f32Load(2, Int(offPosY)),
+                            .f32Add,
+                            .globalSet(yG),
+                        ])
+                        loopBody.append(contentsOf: [
+                            .globalGet(zG),
+                            .globalGet(entPtrG), .f32Load(2, Int(offPosZ)),
+                            .f32Add,
+                            .globalSet(zG),
+                        ])
+
+                        // parentId = parent.parent
+                        loopBody.append(.globalGet(entPtrG))
+                        loopBody.append(.i32Load(2, Int(offParent)))
+                        loopBody.append(.globalSet(parentIdG))
+
+                        // continue
+                        loopBody.append(.br(0))
+                        return loopBody
+                    }()),
+                ]))
+
+                // return selected component
+                if component == 0 { globalLoad.append(.globalGet(xG)) }
+                else if component == 1 { globalLoad.append(.globalGet(yG)) }
+                else { globalLoad.append(.globalGet(zG)) }
+
+                return [
+                    .globalGet(globalG),
+                    .i32EqZ,
+                    .if(.f32, localLoad, globalLoad),
+                ]
+            }()))
+            return b
+        }()
+
+        instrs.append(.globalGet(basePtrG))
+        instrs.append(.i32EqZ)
+        instrs.append(.if(.f32, fallback, elseBranch))
+        return (instrs, .f32)
+    }
+
+    private func generateCmdGetEntF32(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        byteOffset: Int32
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 2)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (globalG, .i32),
+        ]
+
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        // Fallback: call import (JS authoritative) if CMDB not enabled at runtime.
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (globalG, .i32)])
+
+        guard context.cmdBufPtrGlobalIdx >= 0 else {
+            instrs.append(contentsOf: fallback)
+            return (instrs, .f32)
+        }
+
+        let basePtrG = context.cmdBufPtrGlobalIdx
+        let entPtrG = context.scratchGlobal3Idx
+
+        // if (__CmdBufPtr == 0) -> fallback
+        // else -> ensure table; entPtr; if entPtr==0 -> fallback; else load f32
+        let thenBranch = fallback
+        let elseBranch: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            b.append(contentsOf: emitEnsureEntityStateTable())
+            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+            b.append(.globalGet(entPtrG))
+            b.append(.i32EqZ)
+            b.append(.if(.f32, fallback, [
+                .globalGet(entPtrG),
+                .f32Load(2, Int(byteOffset)),
+            ]))
+            return b
+        }()
+
+        instrs.append(.globalGet(basePtrG))
+        instrs.append(.i32EqZ)
+        instrs.append(.if(.f32, thenBranch, elseBranch))
+        return (instrs, .f32)
+    }
+
+    private func generateCmdGetEntI32(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        byteOffset: Int32
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 2)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (globalG, .i32),
+        ]
+
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (globalG, .i32)])
+
+        guard context.cmdBufPtrGlobalIdx >= 0 else {
+            instrs.append(contentsOf: fallback)
+            return (instrs, .i32)
+        }
+
+        let basePtrG = context.cmdBufPtrGlobalIdx
+        let entPtrG = context.scratchGlobal3Idx
+
+        let thenBranch = fallback
+        let elseBranch: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            b.append(contentsOf: emitEnsureEntityStateTable())
+            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+            b.append(.globalGet(entPtrG))
+            b.append(.i32EqZ)
+            b.append(.if(.i32, fallback, [
+                .globalGet(entPtrG),
+                .i32Load(2, Int(byteOffset)),
+            ]))
+            return b
+        }()
+
+        instrs.append(.globalGet(basePtrG))
+        instrs.append(.i32EqZ)
+        instrs.append(.if(.i32, thenBranch, elseBranch))
+        return (instrs, .i32)
+    }
+
+    // CMDB layout constants (must match web/src/shared/command_buffer.ts)
+    private var cmdbHeaderBytes: Int32 { 24 }
+    private var cmdbOffTotalBytes: Int32 { 8 }
+    private var cmdbOffWriteOff: Int32 { 12 }
+    private var cmdbOffFlags: Int32 { 20 }
+    private var cmdbFlagOverflow: Int32 { 1 }
+
+    // Entity state table layout (bytes)
+    // slotSize = 48
+    //  0: parent i32
+    //  4: visible i32
+    //  8: posX f32
+    // 12: posY f32
+    // 16: posZ f32
+    // 20: pitch f32
+    // 24: yaw f32
+    // 28: roll f32
+    // 32: sclX f32
+    // 36: sclY f32
+    // 40: sclZ f32
+    // 44: reserved
+    private var entSlotBytes: Int32 { 48 }
+
+    private func generateCmdSetParent(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 3)
+        let entG = context.scratchGlobalIdx
+        let parentG = context.scratchGlobal2Idx
+        let globalG = context.scratchGlobal4Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (parentG, .i32),
+            2: (globalG, .i32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (parentG, .i32), (globalG, .i32)])
+
+        let opcode: Int32 = 13
+        let byteLen: Int32 = 20
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(parentG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(globalG))
+            b.append(.i32Store(2, 0))
+            return b
+        }
+
+        let updateState: [WASMInstruction] = {
+            let entPtrG = context.scratchGlobal3Idx
+            var b: [WASMInstruction] = []
+            b.append(contentsOf: emitEnsureEntityStateTable())
+            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+            b.append(.globalGet(entPtrG))
+            b.append(.i32EqZ)
+            b.append(.if(.void, [], [
+                .globalGet(entPtrG),
+                .globalGet(parentG),
+                .i32Store(2, 0),
+            ]))
+            return b
+        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func emitEnsureEntityStateTable() -> [WASMInstruction] {
+        guard context.cmdEntStatePtrGlobalIdx >= 0,
+              context.cmdEntStateCapGlobalIdx >= 0,
+              context.heapPointerIdx >= 0
+        else { return [] }
+
+        let ptrG = context.cmdEntStatePtrGlobalIdx
+        let capG = context.cmdEntStateCapGlobalIdx
+        let heapG = context.heapPointerIdx
+
+        // scratch usage
+        let gTmp = context.scratchGlobal3Idx
+        let gTmp2 = context.scratchGlobal4Idx
+
+        // Allocate a fixed-capacity table once (v1).
+        let cap: Int32 = 32768
+        let bytes: Int32 = cap &* entSlotBytes
+
+        // if (ptr == 0) { ptr = heap; cap=cap; heap += bytes; grow memory if needed }
+        var body: [WASMInstruction] = []
+        body.append(.globalGet(ptrG))
+        body.append(.i32EqZ)
+        body.append(.if(.void, [
+            // ptr = heap
+            .globalGet(heapG),
+            .globalSet(ptrG),
+            // cap = const
+            .i32Const(cap),
+            .globalSet(capG),
+            // heap = heap + bytes
+            .globalGet(heapG),
+            .i32Const(bytes),
+            .i32Add,
+            .globalSet(heapG),
+
+            // Ensure memory big enough for heap.
+            // needed = heap
+            .globalGet(heapG),
+            .globalSet(gTmp),
+            // curBytes = memory.size * 65536
+            .memorySize,
+            .i32Const(65536),
+            .i32Mul,
+            .globalSet(gTmp2),
+            // if (needed > curBytes) grow
+            .globalGet(gTmp),
+            .globalGet(gTmp2),
+            .i32GtU,
+            .if(.void, [
+                // delta = needed - curBytes
+                .globalGet(gTmp),
+                .globalGet(gTmp2),
+                .i32Sub,
+                // pages = (delta + 65535) / 65536
+                .i32Const(65535),
+                .i32Add,
+                .i32Const(65536),
+                .i32DivU,
+                .memoryGrow,
+                .drop,
+            ], nil),
+        ], nil))
+        return body
+    }
+
+	    private func emitEntPtrToScratch(entIdGlobal: Int) -> [WASMInstruction] {
+	        // scratchGlobal3Idx = entPtr (or 0 if no table / id out of range)
+	        guard context.cmdEntStatePtrGlobalIdx >= 0, context.cmdEntStateCapGlobalIdx >= 0 else { return [] }
+	        let ptrG = context.cmdEntStatePtrGlobalIdx
+	        let capG = context.cmdEntStateCapGlobalIdx
+	        let outPtrG = context.scratchGlobal3Idx
+	        let capTmpG = context.scratchGlobal4Idx
+	
+	        // if (entId == 0 || entId >= cap) ptr=0 else ptr=base + entId*slotBytes
+	        return [
+	            .globalGet(capG),
+	            .globalSet(capTmpG),
+	            .globalGet(entIdGlobal),
+	            .i32EqZ,
+	            .if(.i32, [
+	                .i32Const(0),
+	            ], [
+	                .globalGet(entIdGlobal),
+	                .globalGet(capTmpG),
+	                .i32GeU,
+	                .if(.i32, [
+	                    .i32Const(0),
+	                ], [
+	                    .globalGet(ptrG),
+	                    .globalGet(entIdGlobal),
+	                    .i32Const(entSlotBytes),
+	                    .i32Mul,
+	                    .i32Add,
+	                ]),
+	            ]),
+	            .globalSet(outPtrG),
+	        ]
+	    }
+
+    private func emitCmdWriteCommon(
+        byteLen: Int32,
+        writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction],
+        fallback: [WASMInstruction],
+        returnsValue: Bool,
+        returnValueInstrs: [WASMInstruction]
+    ) -> [WASMInstruction] {
+        // Structure:
+        // if (__CmdBufPtr == 0) { fallback } else { if (overflow) { setFlag; fallback } else { write; returnValue } }
+        let basePtrG = context.cmdBufPtrGlobalIdx
+
+        // Reusable globals
+        let gWriteOff = context.scratchGlobal4Idx
+        let gTmp = context.scratchGlobal3Idx
+
+        // Write path body (assumes cmdBufPtr != 0 and enough capacity)
+        let writeBody: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            // writeOff = *(u32*)(base+12)
+            b.append(.globalGet(basePtrG))
+            b.append(.i32Load(2, Int(cmdbOffWriteOff)))
+            b.append(.globalSet(gWriteOff))
+
+            // cmdPtr = base + 24 + writeOff
+            b.append(.globalGet(basePtrG))
+            b.append(.i32Const(cmdbHeaderBytes))
+            b.append(.i32Add)
+            b.append(.globalGet(gWriteOff))
+            b.append(.i32Add)
+            b.append(.globalSet(gTmp)) // cmdPtr
+
+            // opcode/len written by payload closure, then bump writeOff
+            b.append(contentsOf: writePayload(gTmp))
+
+            // *(u32*)(base+12) = writeOff + byteLen
+            b.append(.globalGet(basePtrG))
+            b.append(.globalGet(gWriteOff))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Add)
+            b.append(.i32Store(2, Int(cmdbOffWriteOff)))
+
+            b.append(contentsOf: returnValueInstrs)
+            return b
+        }()
+
+        // Overflow check body
+        let overflowCheck: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            // writeOff in gWriteOff (loaded again for simplicity)
+            b.append(.globalGet(basePtrG))
+            b.append(.i32Load(2, Int(cmdbOffWriteOff)))
+            b.append(.globalSet(gWriteOff))
+
+            // cap = totalBytes - headerBytes
+            // if (writeOff + byteLen > cap) overflow
+            b.append(.globalGet(gWriteOff))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Add) // needed
+            b.append(.globalGet(basePtrG))
+            b.append(.i32Load(2, Int(cmdbOffTotalBytes)))
+            b.append(.i32Const(cmdbHeaderBytes))
+            b.append(.i32Sub) // cap
+            b.append(.i32GtU)
+            return b
+        }()
+
+        // Overflow branch: set flag and run fallback
+        let overflowBranch: [WASMInstruction] = {
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(basePtrG))
+            b.append(.globalGet(basePtrG))
+            b.append(.i32Load(2, Int(cmdbOffFlags)))
+            b.append(.i32Const(cmdbFlagOverflow))
+            b.append(.i32Or)
+            b.append(.i32Store(2, Int(cmdbOffFlags)))
+            b.append(contentsOf: fallback)
+            return b
+        }()
+
+        var body: [WASMInstruction] = []
+
+        let resultType: WASMType = returnsValue ? .i32 : .void
+
+        let elseBranch: [WASMInstruction] = overflowCheck + [
+            .if(resultType, overflowBranch, writeBody),
+        ]
+
+        body.append(.globalGet(basePtrG))
+        body.append(.i32EqZ)
+        body.append(.if(resultType, fallback, elseBranch))
+
+        return body
+    }
+
+    // CreateCube/CreateMesh -> CMDB CreateEntity and return WASM-owned id.
+    private func generateCmdCreateEntity(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        entityType: Int32
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 1)
+        // parent only (index 0)
+        let parentG = context.scratchGlobalIdx
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (parentG, .i32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        // fallback call: load params and call import (returns i32)
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(parentG, .i32)])
+
+        // cmd write: allocate id, emit CreateEntity(entityType,parent,id)
+        let idG = context.scratchGlobal2Idx
+        let nextIdG = context.cmdNextEntityIdGlobalIdx
+        let opcode: Int32 = 1
+        let byteLen: Int32 = 20 // 8 hdr + 12 payload
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            // id = nextId; nextId = id + 1
+            b.append(.globalGet(nextIdG))
+            b.append(.globalSet(idG))
+            b.append(.globalGet(idG))
+            b.append(.i32Const(1))
+            b.append(.i32Add)
+            b.append(.globalSet(nextIdG))
+
+            // *(u32*)(cmdPtr+0)=opcode; *(u32*)(cmdPtr+4)=byteLen
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            // payload
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.i32Const(entityType))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(parentG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(idG))
+            b.append(.i32Store(2, 0))
+
+            return b
+        }
+
+	        // Update WASM-side authoritative state table for this entity.
+	        let initState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: idG))
+	            // if (entPtr != 0) { init fields }
+	            var thenBody: [WASMInstruction] = []
+	            // parent
+	            thenBody.append(.globalGet(entPtrG))
+	            thenBody.append(.globalGet(parentG))
+	            thenBody.append(.i32Store(2, 0))
+	            // visible = 1
+	            thenBody.append(.globalGet(entPtrG))
+	            thenBody.append(.i32Const(1))
+	            thenBody.append(.i32Store(2, 4))
+	            // pos = 0
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 8)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 12)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 16)])
+	            // rot = 0
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 20)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 24)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(0.0), .f32Store(2, 28)])
+	            // scl = 1
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(1.0), .f32Store(2, 32)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(1.0), .f32Store(2, 36)])
+	            thenBody.append(contentsOf: [.globalGet(entPtrG), .f32Const(1.0), .f32Store(2, 40)])
+
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], thenBody))
+	            return b
+	        }()
+
+        let cmd = emitCmdWriteCommon(
+            byteLen: byteLen,
+            writePayload: writePayload,
+            fallback: fallback,
+            returnsValue: true,
+            returnValueInstrs: [.globalGet(idG)]
+        )
+        instrs.append(contentsOf: initState)
+        instrs.append(contentsOf: cmd)
+        return (instrs, .i32)
+    }
+
+    private func generateCmdDestroyEntity(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 1)
+        let entG = context.scratchGlobalIdx
+        let stores: [Int: (global: Int, type: WASMType)] = [0: (entG, .i32)]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32)])
+
+        let opcode: Int32 = 2
+        let byteLen: Int32 = 12 // 8 hdr + 4 payload
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+            return b
+        }
+
+        // Best-effort: mark entity as not visible in WASM state.
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                .globalGet(entPtrG),
+	                .i32Const(0),
+	                .i32Store(2, 4),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdSetVisibility(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?,
+        visible: Int32
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 1)
+        let entG = context.scratchGlobalIdx
+        let stores: [Int: (global: Int, type: WASMType)] = [0: (entG, .i32)]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32)])
+
+        let opcode: Int32 = 5
+        let byteLen: Int32 = 16 // 8 hdr + 8 payload
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.i32Const(visible))
+            b.append(.i32Store(2, 0))
+            return b
+        }
+
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                .globalGet(entPtrG),
+	                .i32Const(visible),
+	                .i32Store(2, 4),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdSetPosition(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 5)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let xG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let zG = context.scratchGlobalFloat3Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (xG, .f32),
+            2: (yG, .f32),
+            3: (zG, .f32),
+            4: (globalG, .i32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (xG, .f32), (yG, .f32), (zG, .f32), (globalG, .i32)])
+
+        let opcode: Int32 = 8
+        let byteLen: Int32 = 24
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            // id
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            // x,y,z
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(xG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(yG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(20))
+            b.append(.i32Add)
+            b.append(.globalGet(zG))
+            b.append(.f32Store(2, 0))
+
+            return b
+        }
+
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                .globalGet(entPtrG), .globalGet(xG), .f32Store(2, 8),
+	                .globalGet(entPtrG), .globalGet(yG), .f32Store(2, 12),
+	                .globalGet(entPtrG), .globalGet(zG), .f32Store(2, 16),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdSetRotationEuler(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 5)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let pG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let rG = context.scratchGlobalFloat3Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (pG, .f32),
+            2: (yG, .f32),
+            3: (rG, .f32),
+            4: (globalG, .i32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (pG, .f32), (yG, .f32), (rG, .f32), (globalG, .i32)])
+
+        let opcode: Int32 = 9
+        let byteLen: Int32 = 28
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(pG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(yG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(20))
+            b.append(.i32Add)
+            b.append(.globalGet(rG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(24))
+            b.append(.i32Add)
+            b.append(.globalGet(globalG))
+            b.append(.i32Store(2, 0))
+
+            return b
+        }
+
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                .globalGet(entPtrG), .globalGet(pG), .f32Store(2, 20),
+	                .globalGet(entPtrG), .globalGet(yG), .f32Store(2, 24),
+	                .globalGet(entPtrG), .globalGet(rG), .f32Store(2, 28),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdSetScale(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 4)
+        let entG = context.scratchGlobalIdx
+        let xG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let zG = context.scratchGlobalFloat3Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (xG, .f32),
+            2: (yG, .f32),
+            3: (zG, .f32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (xG, .f32), (yG, .f32), (zG, .f32)])
+
+        let opcode: Int32 = 10
+        let byteLen: Int32 = 24
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(xG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(yG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(20))
+            b.append(.i32Add)
+            b.append(.globalGet(zG))
+            b.append(.f32Store(2, 0))
+
+            return b
+        }
+
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                .globalGet(entPtrG), .globalGet(xG), .f32Store(2, 32),
+	                .globalGet(entPtrG), .globalGet(yG), .f32Store(2, 36),
+	                .globalGet(entPtrG), .globalGet(zG), .f32Store(2, 40),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdMoveEntity(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 4)
+        let entG = context.scratchGlobalIdx
+        let xG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let zG = context.scratchGlobalFloat3Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (xG, .f32),
+            2: (yG, .f32),
+            3: (zG, .f32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (xG, .f32), (yG, .f32), (zG, .f32)])
+
+        let opcode: Int32 = 11
+        let byteLen: Int32 = 24
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(xG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(yG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(20))
+            b.append(.i32Add)
+            b.append(.globalGet(zG))
+            b.append(.f32Store(2, 0))
+
+            return b
+        }
+
+        // Update WASM authoritative position.
+        // v1: apply yaw-only rotation (good enough for most SCPCB movement; avoids full Euler math).
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            let yawG = context.scratchGlobalFloat4Idx
+	            let cosYG = context.scratchGlobalFloat5Idx
+	            let sinYG = context.scratchGlobalFloat6Idx
+	            let dxwG = context.scratchGlobalFloat4Idx // reuse yaw scratch after trig computed
+
+            let cosIdx = context.functionIndexMap["cos"] ?? -1
+            let sinIdx = context.functionIndexMap["sin"] ?? -1
+
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	
+	            var thenBody: [WASMInstruction] = []
+	            // yaw = *(f32*)(ent+24)
+	            thenBody.append(.globalGet(entPtrG))
+	            thenBody.append(.f32Load(2, 24))
+	            thenBody.append(.globalSet(yawG))
+	
+	            // cosYaw / sinYaw (Blitz3D trig uses degrees; runtime should implement that).
+	            // If missing, fall back to identity rotation.
+	            if cosIdx >= 0 {
+	                thenBody.append(.globalGet(yawG))
+	                thenBody.append(.call(cosIdx))
+	                thenBody.append(.globalSet(cosYG))
+	            } else {
+	                thenBody.append(.f32Const(1.0))
+	                thenBody.append(.globalSet(cosYG))
+	            }
+	            if sinIdx >= 0 {
+	                thenBody.append(.globalGet(yawG))
+	                thenBody.append(.call(sinIdx))
+	                thenBody.append(.globalSet(sinYG))
+	            } else {
+	                thenBody.append(.f32Const(0.0))
+	                thenBody.append(.globalSet(sinYG))
+	            }
+	
+	            // dxw = dx*cos + dz*sin
+	            thenBody.append(contentsOf: [
+	                .globalGet(xG), .globalGet(cosYG), .f32Mul,
+	                .globalGet(zG), .globalGet(sinYG), .f32Mul,
+	                .f32Add,
+	                .globalSet(dxwG),
+	            ])
+	            // dzw (store into zG scratch): dz*cos - dx*sin
+	            thenBody.append(contentsOf: [
+	                .globalGet(zG), .globalGet(cosYG), .f32Mul,
+	                .globalGet(xG), .globalGet(sinYG), .f32Mul,
+	                .f32Sub,
+	                .globalSet(zG),
+	            ])
+	
+	            // posX += dxw
+	            thenBody.append(contentsOf: [
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 8),
+	                .globalGet(dxwG),
+	                .f32Add,
+	                .f32Store(2, 8),
+	            ])
+	            // posY += dy
+	            thenBody.append(contentsOf: [
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 12),
+	                .globalGet(yG),
+	                .f32Add,
+	                .f32Store(2, 12),
+	            ])
+	            // posZ += dzw
+	            thenBody.append(contentsOf: [
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 16),
+	                .globalGet(zG),
+	                .f32Add,
+	                .f32Store(2, 16),
+	            ])
+	
+	            b.append(.if(.void, [], thenBody))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
+    }
+
+    private func generateCmdTurnEntity(
+        call: FunctionCallNode,
+        funcIdx: Int,
+        def: FunctionDefinition?,
+        importedType: WASMFunctionType?
+    ) -> (instrs: [WASMInstruction], type: WASMType) {
+        let expected = expectedParamCount(def: def, importedType: importedType, fallback: 5)
+        let entG = context.scratchGlobalIdx
+        let globalG = context.scratchGlobal2Idx
+        let pG = context.scratchGlobalFloatIdx
+        let yG = context.scratchGlobalFloat2Idx
+        let rG = context.scratchGlobalFloat3Idx
+
+        let stores: [Int: (global: Int, type: WASMType)] = [
+            0: (entG, .i32),
+            1: (pG, .f32),
+            2: (yG, .f32),
+            3: (rG, .f32),
+            4: (globalG, .i32),
+        ]
+        var instrs: [WASMInstruction] = []
+        instrs.append(contentsOf: emitPaddedArgsStored(call: call, def: def, importedType: importedType, expectedCount: expected, stores: stores))
+
+        let fallback = emitFallbackImportCall(funcIdx: funcIdx, paramStores: [(entG, .i32), (pG, .f32), (yG, .f32), (rG, .f32), (globalG, .i32)])
+
+        let opcode: Int32 = 12
+        let byteLen: Int32 = 28
+
+        let writePayload: (_ cmdPtrGlobal: Int) -> [WASMInstruction] = { cmdPtrG in
+            var b: [WASMInstruction] = []
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(opcode))
+            b.append(.i32Store(2, 0))
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(byteLen))
+            b.append(.i32Store(2, 4))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(8))
+            b.append(.i32Add)
+            b.append(.globalGet(entG))
+            b.append(.i32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(12))
+            b.append(.i32Add)
+            b.append(.globalGet(pG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(16))
+            b.append(.i32Add)
+            b.append(.globalGet(yG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(20))
+            b.append(.i32Add)
+            b.append(.globalGet(rG))
+            b.append(.f32Store(2, 0))
+
+            b.append(.globalGet(cmdPtrG))
+            b.append(.i32Const(24))
+            b.append(.i32Add)
+            b.append(.globalGet(globalG))
+            b.append(.i32Store(2, 0))
+
+            return b
+        }
+
+	        let updateState: [WASMInstruction] = {
+	            let entPtrG = context.scratchGlobal3Idx
+	            var b: [WASMInstruction] = []
+	            b.append(contentsOf: emitEnsureEntityStateTable())
+	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
+	            b.append(.globalGet(entPtrG))
+	            b.append(.i32EqZ)
+	            b.append(.if(.void, [], [
+	                // pitch += dp
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 20),
+	                .globalGet(pG), .f32Add,
+	                .f32Store(2, 20),
+	                // yaw += dy
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 24),
+	                .globalGet(yG), .f32Add,
+	                .f32Store(2, 24),
+	                // roll += dr
+	                .globalGet(entPtrG),
+	                .globalGet(entPtrG), .f32Load(2, 28),
+	                .globalGet(rG), .f32Add,
+	                .f32Store(2, 28),
+	            ]))
+	            return b
+	        }()
+
+        instrs.append(contentsOf: updateState)
+        instrs.append(contentsOf: emitCmdWriteCommon(byteLen: byteLen, writePayload: writePayload, fallback: fallback, returnsValue: false, returnValueInstrs: []))
+        return (instrs, .void)
     }
     
     // MARK: - Array Access

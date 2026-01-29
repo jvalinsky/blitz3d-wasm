@@ -26,7 +26,7 @@ python -m SimpleHTTPServer 8000
 deno task serve
 
 # Or Deno stdlib file server
-deno run --allow-net https://deno.land/std/http/file_server.ts --port 8000
+deno run --allow-net --allow-read https://deno.land/std@0.224.0/http/file_server.ts --port 8000
 ```
 
 ### 3. Open Browser
@@ -108,7 +108,8 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 
 **Problem**: WASM files not found
 
-**Solution**: 
+**Solution**:
+
 - Make sure WASM files are in the same directory as test_runtime.html
 - Or update file paths in the HTML
 - Check HTTP server is running
@@ -118,6 +119,7 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 **Problem**: Browser requires user interaction
 
 **Solution**:
+
 - Click "Initialize Audio" button first
 - Modern browsers require user gesture to start audio
 
@@ -126,6 +128,7 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 **Problem**: `module.exports is not defined`
 
 **Solution**:
+
 - Make sure browser_compat.js loads first
 - Check browser console for errors
 
@@ -134,6 +137,7 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 **Problem**: CDN might be blocked or slow
 
 **Solution**:
+
 - Download libraries locally
 - Update script src to local paths
 
@@ -146,9 +150,9 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 ```javascript
 // In browser console or add to HTML
 async function loadGameAssets() {
-    await Blitz3D.vfs.loadZip('GFX/gfx.zip');
-    await Blitz3D.vfs.loadZip('SFX/sounds.zip');
-    console.log('Assets loaded!');
+  await Blitz3D.vfs.loadZip("GFX/gfx.zip");
+  await Blitz3D.vfs.loadZip("SFX/sounds.zip");
+  console.log("Assets loaded!");
 }
 ```
 
@@ -156,9 +160,9 @@ async function loadGameAssets() {
 
 ```javascript
 // After mounting ZIPs
-const fileExists = Blitz3D.vfs.resolveFile('textures/wall.png');
-console.log('File found:', fileExists.found);
-console.log('File size:', fileExists.data?.length);
+const fileExists = Blitz3D.vfs.resolveFile("textures/wall.png");
+console.log("File found:", fileExists.found);
+console.log("File size:", fileExists.data?.length);
 ```
 
 ---

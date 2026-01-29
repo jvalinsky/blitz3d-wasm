@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import { B3DLoader } from './b3d';
+import { SMPKLoader } from "./smpk";
 
 export class Blitz3DAnimation {
     [key: string]: any;
@@ -13,8 +13,7 @@ export class Blitz3DAnimation {
         this.graphics = graphics;
         this.core = core;
 
-        // Create B3D loader for animated meshes
-        this.b3dLoader = new B3DLoader(graphics, core);
+        this.smpkLoader = new SMPKLoader(graphics, core);
     }
 
     animate(entityId: number, mode: number, speed: number, seq: number, trans: number) {
@@ -76,16 +75,11 @@ export class Blitz3DAnimation {
 
         // Check file extension
         const lowerPath = path.toLowerCase();
-        if (lowerPath.endsWith('.b3d')) {
-            // Use B3D loader for .b3d files
-            const entityId = await this.b3dLoader.loadFile(path, parentId);
-
-            const entity = this.graphics.entities[entityId];
-            if (entity) {
-                console.log(`[Animation] B3D loaded, entity ${entityId} has ${entity.userData.bones?.length || 0} bones`);
-            }
-
+        if (lowerPath.endsWith('.smpk')) {
+            const entityId = await this.smpkLoader.loadFile(path, parentId);
             return entityId;
+        } else if (lowerPath.endsWith('.b3d') || lowerPath.endsWith('.x')) {
+            throw new Error(`[Animation] Refusing to load source mesh at runtime: ${path} (convert offline to .smpk)`);
         } else {
             // Fallback for other formats
             return this.loadGenericAnimMesh(path, parentId);

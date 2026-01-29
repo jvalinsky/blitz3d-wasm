@@ -311,8 +311,23 @@ public final class ModuleContext {
     public var stringHeapPtrIdx: Int = -1
     public var scratchGlobalIdx: Int = -1  // For temporary storage
     public var scratchGlobal2Idx: Int = -1  // For temporary storage
+    public var scratchGlobal3Idx: Int = -1  // For temporary storage
+    public var scratchGlobal4Idx: Int = -1  // For temporary storage
     public var scratchGlobalFloatIdx: Int = -1 // For temporary float storage
     public var scratchGlobalFloat2Idx: Int = -1 // For temporary float storage
+    public var scratchGlobalFloat3Idx: Int = -1 // For temporary float storage
+    public var scratchGlobalFloat4Idx: Int = -1 // For temporary float storage
+    public var scratchGlobalFloat5Idx: Int = -1 // For temporary float storage
+    public var scratchGlobalFloat6Idx: Int = -1 // For temporary float storage
+
+    // Command Buffer ABI (Track B)
+    public var enableCommandBufferABI: Bool = false
+    public var cmdBufPtrGlobalIdx: Int = -1
+    public var cmdBufBytesGlobalIdx: Int = -1
+    public var cmdBufAbiVersionGlobalIdx: Int = -1
+    public var cmdNextEntityIdGlobalIdx: Int = -1
+    public var cmdEntStatePtrGlobalIdx: Int = -1
+    public var cmdEntStateCapGlobalIdx: Int = -1
     
     // Source map generator for debug information
     public var sourceMapGenerator: SourceMapGenerator?

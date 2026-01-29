@@ -1,0 +1,11 @@
+# Deno CI Configuration
+# This file provides additional Deno-specific CI configuration
+
+# Import map for CI environment
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.224.0/",
+    "three": "npm:three@0.182.0",
+    "jszip": "npm:jszip@3.10.1"
+  }
+}

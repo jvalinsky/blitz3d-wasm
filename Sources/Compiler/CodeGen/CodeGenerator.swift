@@ -8,6 +8,16 @@
 public struct CodeGenerator {
     private var context: ModuleContext
 
+    public struct ProgressEvent: Sendable {
+        public let phase: String
+        public let current: Int
+        public let total: Int
+        public let name: String
+    }
+
+    // Optional progress hook for long compiles (used by the CLI for progress bars).
+    public var progressHandler: ((ProgressEvent) -> Void)? = nil
+
     // Module instances
     private var expressionGenerator: ExpressionGeneration
     private var statementGenerator: StatementGeneration
@@ -17,6 +27,10 @@ public struct CodeGenerator {
     // Stack optimization (Koopman's algorithm)
     private var stackScheduler: StackScheduler
     private var enableStackOptimization: Bool = false  // Toggle for debugging
+
+    // Track B: Command buffer ABI (WASM-first runtime)
+    private var enableCommandBufferABI: Bool = false
+    private let cmdBufAbiVersion: Int32 = 1
 
     // Internal state for things not yet moved to context/modules
     private var typeCollectionGlobal: Int = -1
@@ -47,6 +61,14 @@ public struct CodeGenerator {
     public mutating func enableAutoImports(_ names: Set<String>, arities: [String: Int] = [:]) {
         context.autoImportNames = names
         context.autoImportArities = arities
+        expressionGenerator.updateContext(context)
+        statementGenerator.updateContext(context)
+        functionGenerator.updateContext(context)
+    }
+
+    public mutating func enableCommandBuffer() {
+        enableCommandBufferABI = true
+        context.enableCommandBufferABI = true
         expressionGenerator.updateContext(context)
         statementGenerator.updateContext(context)
         functionGenerator.updateContext(context)
@@ -94,7 +116,7 @@ public struct CodeGenerator {
         processGlobalDeclarations(program.statements)
         
         let topLevelStatements = extractTopLevelStatements(program.statements)
-        
+
         // Pre-pass: Register all function signatures and indices
         registerFunctionSignatures(program.functions, hasMain: !topLevelStatements.isEmpty)
         
@@ -103,7 +125,14 @@ public struct CodeGenerator {
             dataGenerator.collectDataStatements(function.body)
         }
         dataGenerator.serializeDataSection()
-        
+
+        let totalUserFunctions = program.functions.count + (topLevelStatements.isEmpty ? 0 : 1)
+        var userFunctionProgress = 0
+
+        if !topLevelStatements.isEmpty {
+            userFunctionProgress += 1
+            progressHandler?(.init(phase: "function", current: userFunctionProgress, total: totalUserFunctions, name: "_main"))
+        }
         generateMainFunction(topLevelStatements)
         
         addAllocFunction()
@@ -137,6 +166,8 @@ public struct CodeGenerator {
         }
         
         for functionNode in program.functions {
+            userFunctionProgress += 1
+            progressHandler?(.init(phase: "function", current: userFunctionProgress, total: totalUserFunctions, name: functionNode.name))
             generateFunction(functionNode)
         }
 
@@ -204,6 +235,7 @@ public struct CodeGenerator {
             ("FreeFont", "FreeFont", [.i32], [], "env"),
             
             ("LoadImage", "LoadImage", [.i32], [.i32], "env"),
+            ("CreateImage", "CreateImage", [.i32, .i32, .i32], [.i32], "env"),
             ("DrawImage", "DrawImage", [.i32, .i32, .i32, .i32], [], "env"),
             ("DrawImageRect", "DrawImageRect", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [], "env"),
             ("DrawBlock", "DrawBlock", [.i32, .i32, .i32, .i32], [], "env"),
@@ -385,6 +417,7 @@ public struct CodeGenerator {
             ("RenderWorld", "RenderWorld", [.f32], [], "env"),
             ("Flip", "Flip", [.i32], [], "env"),
             ("LoadTexture", "LoadTexture", [.i32, .i32], [.i32], "env"),
+            ("CreateTexture", "CreateTexture", [.i32, .i32, .i32, .i32], [.i32], "env"),
             ("LoadAsset", "LoadAsset", [.i32], [.i32], "env"),
             ("GetAssetData", "GetAssetData", [.i32], [.i32], "env"),
             ("GetAssetSize", "GetAssetSize", [.i32], [.i32], "env"),
@@ -762,6 +795,12 @@ public struct CodeGenerator {
                 defaults = [1: .integerLiteral(0, .unknown)]
             } else if name == "LoadMesh" || name == "LoadAnimMesh" || name == "LoadTexture" || name == "LoadImage" || name == "LoadSound" || name == "LoadFont" {
                 defaults = [1: .integerLiteral(0, .unknown)]
+            } else if name == "CreateImage" {
+                // CreateImage(width, height[, frames]) - frames defaults to 1
+                defaults = [2: .integerLiteral(1, .unknown)]
+            } else if name == "CreateTexture" {
+                // CreateTexture(width, height[, flags[, frames]]) - flags defaults to 0, frames defaults to 1
+                defaults = [2: .integerLiteral(0, .unknown), 3: .integerLiteral(1, .unknown)]
             } else if name == "ScaleEntity" || name == "PositionEntity" || name == "RotateEntity" || name == "MoveEntity" || name == "TurnEntity" || name == "TranslateEntity" {
                 defaults = [4: .integerLiteral(0, .unknown)]
             } else if name == "EntityPick" || name == "LinePick" {
@@ -920,11 +959,34 @@ public struct CodeGenerator {
         // Scratch globals for temporary values (always needed, not just for types)
         context.scratchGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
         context.scratchGlobal2Idx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+        context.scratchGlobal3Idx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+        context.scratchGlobal4Idx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
         context.scratchGlobalFloatIdx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
         context.scratchGlobalFloat2Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
-        
+        context.scratchGlobalFloat3Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
+        context.scratchGlobalFloat4Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
+        context.scratchGlobalFloat5Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
+        context.scratchGlobalFloat6Idx = context.registerGlobal(type: .f32, mutability: true, initExpr: .f32Const(0.0))
+
         scratchGlobal = context.scratchGlobalIdx
         scratchGlobal2 = context.scratchGlobal2Idx
+
+        if enableCommandBufferABI {
+            // Host-provided command buffer region (byte pointer to CMDB header, and total bytes).
+            context.cmdBufPtrGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            context.cmdBufBytesGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            // Stable ABI version constant so the runtime can fail fast on mismatches.
+            context.cmdBufAbiVersionGlobalIdx = context.registerGlobal(type: .i32, mutability: false, initExpr: .i32Const(cmdBufAbiVersion))
+            // WASM-owned entity id allocator for CMDB entity handles.
+            context.cmdNextEntityIdGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(1))
+            // WASM-owned entity state table (authoritative transform state).
+            context.cmdEntStatePtrGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+            context.cmdEntStateCapGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+
+            context.module.exports.append(WASMExport(name: "__CmdBufPtr", kind: .global, index: context.cmdBufPtrGlobalIdx))
+            context.module.exports.append(WASMExport(name: "__CmdBufBytes", kind: .global, index: context.cmdBufBytesGlobalIdx))
+            context.module.exports.append(WASMExport(name: "__CmdBufAbiVersion", kind: .global, index: context.cmdBufAbiVersionGlobalIdx))
+        }
         
         if !types.isEmpty {
             let typeCollectionGlobalVar = WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(65536))

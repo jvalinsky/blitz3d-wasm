@@ -6,9 +6,15 @@
 //
 
 import Foundation
+import Dispatch
 
 public struct WASMBinaryEncoder {
     private var bytes: [UInt8] = []
+    
+    /// Number of worker jobs used for parallelizable encoding steps.
+    /// - `<= 1`: disabled (serial)
+    /// - `0`: auto (use active processor count)
+    public var jobs: Int = 1
     
     public init() {}
     
@@ -224,7 +230,13 @@ public struct WASMBinaryEncoder {
         var relativeMappings: [(Int, SourceSpan)] = []
         var currentOffset = sectionContent.count
         
-        for function in functions {
+        struct EncodedFunctionBody {
+            let funcBody: [UInt8]
+            let localsSize: Int
+            let instrMappings: [(Int, SourceSpan)]
+        }
+        
+        func encodeOne(_ function: WASMFunction) -> EncodedFunctionBody {
             var funcBody: [UInt8] = []
             
             // Local declarations
@@ -246,24 +258,59 @@ public struct WASMBinaryEncoder {
             
             let localsSize = funcBody.count
             
-            // Function body instructions
-            let (instrBytes, instrMappings) = encodeInstructionsWithMap(function.body)
+            // Function body instructions (encode using a fresh encoder instance to keep this thread-safe)
+            var localEncoder = WASMBinaryEncoder()
+            let (instrBytes, instrMappings) = localEncoder.encodeInstructionsWithMap(function.body)
             funcBody.append(contentsOf: instrBytes)
             funcBody.append(0x0B) // end
             
-            // Prefix with size of function body
-            let sizeBytes = encodeVarUInt(funcBody.count)
-            sectionContent.append(contentsOf: sizeBytes)
-            currentOffset += sizeBytes.count
-            
-            sectionContent.append(contentsOf: funcBody)
-            
-            // Record mappings shifted by proper offsets
-            // Mapping offset = currentOffset (start of function content) + localsSize + instrOffset
-            for (offset, span) in instrMappings {
-                relativeMappings.append((currentOffset + localsSize + offset, span))
+            return EncodedFunctionBody(funcBody: funcBody, localsSize: localsSize, instrMappings: instrMappings)
+        }
+        
+        let requestedJobs = jobs <= 0 ? ProcessInfo.processInfo.activeProcessorCount : jobs
+        let jobCount = max(1, min(requestedJobs, functions.count))
+        let shouldParallelize = jobCount > 1 && functions.count >= 32
+        
+        if shouldParallelize {
+            var encoded: [EncodedFunctionBody] = Array(
+                repeating: EncodedFunctionBody(funcBody: [], localsSize: 0, instrMappings: []),
+                count: functions.count
+            )
+            encoded.withUnsafeMutableBufferPointer { buf in
+                DispatchQueue.concurrentPerform(iterations: functions.count) { i in
+                    buf[i] = encodeOne(functions[i])
+                }
             }
-            currentOffset += funcBody.count
+            
+            for i in 0..<functions.count {
+                let e = encoded[i]
+                
+                let sizeBytes = encodeVarUInt(e.funcBody.count)
+                sectionContent.append(contentsOf: sizeBytes)
+                currentOffset += sizeBytes.count
+                
+                sectionContent.append(contentsOf: e.funcBody)
+                
+                for (offset, span) in e.instrMappings {
+                    relativeMappings.append((currentOffset + e.localsSize + offset, span))
+                }
+                currentOffset += e.funcBody.count
+            }
+        } else {
+            for function in functions {
+                let e = encodeOne(function)
+                
+                let sizeBytes = encodeVarUInt(e.funcBody.count)
+                sectionContent.append(contentsOf: sizeBytes)
+                currentOffset += sizeBytes.count
+                
+                sectionContent.append(contentsOf: e.funcBody)
+                
+                for (offset, span) in e.instrMappings {
+                    relativeMappings.append((currentOffset + e.localsSize + offset, span))
+                }
+                currentOffset += e.funcBody.count
+            }
         }
         
         // Calculate absolute start offset of the code section content in the final binary

@@ -1,0 +1,340 @@
+================================================================================
+                    BLITZ3D-WASM SCPCB COMPILATION TEST REPORT
+================================================================================
+Date: Tue Jan 27 20:50:23 EST 2026
+Compiler: /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/blitz3d-wasm
+Validator: /opt/homebrew/bin/wasm-validate
+Source: /Users/jack/Software/scp_port/scpcb
+
+----------------------------------------
+File: Dreamfilter.bb
+Status: PASS
+Size: 16597 bytes
+
+----------------------------------------
+File: UpdateEvents.bb
+Status: PASS
+Size: 17291 bytes
+
+----------------------------------------
+File: CPU_Details.bb
+Status: PASS
+Size: 16946 bytes
+
+----------------------------------------
+File: Map Creator/mapcreator_new.bb
+Status: PASS
+Size: 50160 bytes
+
+----------------------------------------
+File: Map Creator/window3d.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.YnnK2ByBmW/window3d.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:18: error: Unexpected token '*' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:28: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:29: error: Unexpected token '(' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:31: error: Unexpected token '+' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:38: error: Unexpected token '/' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:39: error: Unexpected token '2' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:40: error: Unexpected token '-' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:41: error: Unexpected token '1' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:42: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:43: error: Unexpected token '*' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:53: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:58: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:60: error: Unexpected token 'True' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:64: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:66: error: Unexpected token 'True' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1790:12: error: Unexpected token '*' in function body
+
+
+----------------------------------------
+File: FMod.bb
+Status: PASS
+Size: 16058 bytes
+
+----------------------------------------
+File: repro_stack.bb
+Status: PASS
+Size: 16481 bytes
+
+----------------------------------------
+File: LightMapPNG.bb
+Status: PASS
+Size: 22058 bytes
+
+----------------------------------------
+File: Save.bb
+Status: PASS
+Size: 34434 bytes
+
+----------------------------------------
+File: Update.bb
+Status: PASS
+Size: 28434 bytes
+
+----------------------------------------
+File: DevilParticleSystem.bb
+Status: PASS
+Size: 21805 bytes
+
+----------------------------------------
+File: Skybox.bb
+Status: PASS
+Size: 17830 bytes
+
+----------------------------------------
+File: Difficulty.bb
+Status: PASS
+Size: 17929 bytes
+
+----------------------------------------
+File: RMesh_Model_Viewer.bb
+Status: PASS
+Size: 27276 bytes
+
+----------------------------------------
+File: Converter.bb
+Status: PASS
+Size: 25233 bytes
+
+----------------------------------------
+File: Blitz_File_ZipApi.bb
+Status: PASS
+Size: 22130 bytes
+
+----------------------------------------
+File: repro_select.bb
+Status: PASS
+Size: 16178 bytes
+
+----------------------------------------
+File: StrictLoads.bb
+Status: PASS
+Size: 20843 bytes
+
+----------------------------------------
+File: Blitz_File_FileName.bb
+Status: PASS
+Size: 16643 bytes
+
+----------------------------------------
+File: MapSystem.bb
+Status: PASS
+Size: 146359 bytes
+
+----------------------------------------
+File: MusicPlayer.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.YnnK2ByBmW/MusicPlayer.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:18: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:19: error: Unexpected token '(' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:21: error: Unexpected token '+' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:28: error: Unexpected token '/' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:29: error: Unexpected token '2' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:30: error: Unexpected token '-' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:31: error: Unexpected token '1' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:33: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:38: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:40: error: Unexpected token 'True' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:44: error: Unexpected token ',' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:46: error: Unexpected token 'True' in function body
+
+
+----------------------------------------
+File: repro_update_events_min.bb
+Status: PASS
+Size: 16297 bytes
+
+----------------------------------------
+File: BlitzAL.bb
+Status: PASS
+Size: 17353 bytes
+
+----------------------------------------
+File: KeyName.bb
+Status: PASS
+Size: 18220 bytes
+
+----------------------------------------
+File: DrawPortals – Kopio.bb
+Status: PASS
+Size: 17468 bytes
+
+----------------------------------------
+File: Blitz_Basic_Bank.bb
+Status: PASS
+Size: 16648 bytes
+
+----------------------------------------
+File: AAText.bb
+Status: PASS
+Size: 19853 bytes
+
+----------------------------------------
+File: Particles.bb
+Status: PASS
+Size: 18897 bytes
+
+----------------------------------------
+File: Menu.bb
+Status: PASS
+Size: 59288 bytes
+
+----------------------------------------
+File: NPCs.bb
+Status: PASS
+Size: 114019 bytes
+
+----------------------------------------
+File: Items.bb
+Status: PASS
+Size: 56547 bytes
+
+----------------------------------------
+File: new_tests/test_type_conversion.bb
+Status: PASS
+Size: 16221 bytes
+
+----------------------------------------
+File: new_tests/test_devil_mod.bb
+Status: PASS
+Size: 16191 bytes
+
+----------------------------------------
+File: new_tests/test_particles_min.bb
+Status: PASS
+Size: 16567 bytes
+
+----------------------------------------
+File: new_tests/test_loops.bb
+Status: PASS
+Size: 16472 bytes
+
+----------------------------------------
+File: new_tests/test_fileio.bb
+Status: PASS
+Size: 16165 bytes
+
+----------------------------------------
+File: new_tests/test_custom_types.bb
+Status: PASS
+Size: 16475 bytes
+
+----------------------------------------
+File: new_tests/test_audio.bb
+Status: PASS
+Size: 16218 bytes
+
+----------------------------------------
+File: new_tests/test_2d_graphics.bb
+Status: PASS
+Size: 16495 bytes
+
+----------------------------------------
+File: new_tests/test_entity_getters.bb
+Status: PASS
+Size: 16465 bytes
+
+----------------------------------------
+File: new_tests/test_arrays.bb
+Status: PASS
+Size: 16422 bytes
+
+----------------------------------------
+File: new_tests/test_math.bb
+Status: PASS
+Size: 16256 bytes
+
+----------------------------------------
+File: new_tests/test_if_balance.bb
+Status: PASS
+Size: 16237 bytes
+
+----------------------------------------
+File: new_tests/test_collision_queries.bb
+Status: PASS
+Size: 16479 bytes
+
+----------------------------------------
+File: new_tests/test_strings.bb
+Status: PASS
+Size: 16306 bytes
+
+----------------------------------------
+File: DrawPortals.bb
+Status: PASS
+Size: 16893 bytes
+
+----------------------------------------
+File: fullscreen_window_fix.bb
+Status: PASS
+Size: 16523 bytes
+
+----------------------------------------
+File: Main.bb
+Status: PASS
+Size: 781801 bytes
+
+----------------------------------------
+File: LoadAllSounds.bb
+Status: PASS
+Size: 21893 bytes
+
+----------------------------------------
+File: repro_types.bb
+Status: PASS
+Size: 16218 bytes
+
+----------------------------------------
+File: Achievements.bb
+Status: PASS
+Size: 18597 bytes
+
+----------------------------------------
+File: TestLoadRMesh.bb
+Status: PASS
+Size: 18314 bytes
+
+
+================================================================================
+                              CATEGORY BREAKDOWN                                
+================================================================================
+
+
+================================================================================
+                              FILES WITH ERRORS                                 
+================================================================================
+
+  - Map Creator/window3d.bb
+  - MusicPlayer.bb
+
+================================================================================
+                              DETAILED ERROR REPORTS                            
+================================================================================
+
+--- MusicPlayer.json ---
+{
+  "file": "MusicPlayer.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-27T20:51:36-05:00",
+  "errors": [{"error": "Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json Compiling: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.YnnK2ByBmW/MusicPlayer.wasm Parser errors found: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:268:18: error: Unexpected token ',' in function body ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+
+--- window3d.json ---
+{
+  "file": "Map Creator/window3d.bb",
+  "status": "compilation_failed",
+  "timestamp": "2026-01-27T20:51:04-05:00",
+  "errors": [{"error": "Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json Compiling: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.YnnK2ByBmW/window3d.wasm Parser errors found: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1753:18: error: Unexpected token '*' in function body ", "category": "COMPILER_ERROR", "suggestion": "Review compiler output for syntax errors in source"}]
+}
+

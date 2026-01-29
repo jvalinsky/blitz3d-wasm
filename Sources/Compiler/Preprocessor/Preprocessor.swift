@@ -123,45 +123,69 @@ public struct Preprocessor {
     /// Preprocess a file and return merged source plus a line map back to original files.
     /// This is opt-in to avoid disrupting existing call sites.
     public mutating func processWithMap(file: String) throws -> PreprocessedSource {
+        return try processWithMap(file: file, onIncludeFile: nil)
+    }
+
+    /// Variant of `processWithMap` that can report progress when each file is actually processed.
+    /// `onIncludeFile` is called with the canonical path of the file being merged.
+    public mutating func processWithMap(file: String, onIncludeFile: ((String) -> Void)? = nil) throws -> PreprocessedSource {
         let url = URL(fileURLWithPath: file)
         rootDirectory = url.deletingLastPathComponent().path
         if dedupeIncludes {
             includedFiles.insert(url.path)
         }
         includeStack = [url.path]
-        
-        let (src, map) = try processFileWithMap(path: url.path)
+
+        // NOTE: Avoid O(n^2) String growth and repeated splitting when building line maps.
+        // Main.bb can be very large (hundreds of thousands of lines once includes are expanded).
+        let (lines, origins) = try processFileWithMapLines(path: url.path, onIncludeFile: onIncludeFile)
+        let src = lines.isEmpty ? "" : (lines.joined(separator: "\n") + "\n")
+        var map: [Int: (file: String, line: Int)] = [:]
+        map.reserveCapacity(origins.count)
+        for (i, origin) in origins.enumerated() {
+            map[i + 1] = origin
+        }
         return PreprocessedSource(source: src, lineMap: map)
     }
     
-    private mutating func processFileWithMap(path: String) throws -> (String, [Int: (file: String, line: Int)]) {
-        var result = ""
-        var lineMap: [Int: (file: String, line: Int)] = [:]
+    private mutating func processFileWithMapLines(
+        path: String,
+        onIncludeFile: ((String) -> Void)?
+    ) throws -> (lines: [String], origins: [(file: String, line: Int)]) {
         var source = ""
         do {
             source = try String(contentsOfFile: path, encoding: .utf8)
         } catch {
-             source = try String(contentsOfFile: path, encoding: .windowsCP1252)
+            source = try String(contentsOfFile: path, encoding: .windowsCP1252)
         }
-        let lines = source.components(separatedBy: .newlines)
-        
-        for (idx, rawLine) in lines.enumerated() {
+        onIncludeFile?(path)
+        let rawLines = source.components(separatedBy: .newlines)
+
+        // Heuristic reserve: reduces reallocs for large merged sources (Main.bb + includes).
+        var outLines: [String] = []
+        outLines.reserveCapacity(rawLines.count)
+        var origins: [(file: String, line: Int)] = []
+        origins.reserveCapacity(rawLines.count)
+
+        for (idx, rawLine) in rawLines.enumerated() {
             let lineNumber = idx + 1
             let trimmed = rawLine.trimmingCharacters(in: .whitespaces)
             if trimmed.lowercased().hasPrefix("include ") {
                 let parts = trimmed.split(separator: "\"", maxSplits: 2)
                 if parts.count >= 2 {
                     let includePath = String(parts[1])
-                    // Inline include content is treated as literal
+                    // Inline include content is treated as literal.
                     if includePath.contains("\n") {
-                        result += includePath + "\n"
-                        let mergedLine = result.components(separatedBy: .newlines).count - 1
-                        lineMap[mergedLine] = (file: path, line: lineNumber)
+                        let inlineLines = includePath.components(separatedBy: .newlines)
+                        for l in inlineLines {
+                            outLines.append(l)
+                            origins.append((file: path, line: lineNumber))
+                        }
                     } else {
-                        // Resolve include file (case-insensitive) and merge with mapping
+                        // Resolve include file (case-insensitive) and merge with mapping.
                         let canonical = resolveIncludePath(includePath)
                         let url = URL(fileURLWithPath: canonical)
-                        
+
                         if includeStack.contains(canonical) {
                             throw PreprocessorError.circularInclude(stack: includeStack, next: canonical)
                         }
@@ -173,42 +197,28 @@ public struct Preprocessor {
                         }
                         includeStack.append(canonical)
                         defer { _ = includeStack.popLast() }
-                        
+
                         let oldRoot = rootDirectory
                         rootDirectory = url.deletingLastPathComponent().path
-                        
-                        // Handle encoding fallback in recursion target?
-                        // Actually processFileWithMap opens the file encoded utf8.
-                        // We need to fix that too.
-                        // Ideally pass a hint or handle inside processFileWithMap.
-                        // But processFileWithMap takes 'path' and opens it.
-                        // Let's modify processFileWithMap to try fallback.
-                        // (We need to edit line 76 separately or let the recursive call handle it)
-                        
-                        let (incSrc, incMap) = try processFileWithMap(path: canonical)
-                        
+
+                        let (incLines, incOrigins) = try processFileWithMapLines(path: canonical, onIncludeFile: onIncludeFile)
+
                         rootDirectory = oldRoot
-                        
-                        let currentLineOffset = result.components(separatedBy: .newlines).count - 1
-                        result += incSrc
-                        // Shift included map lines by current offset
-                        for (merged, origin) in incMap {
-                            lineMap[merged + currentLineOffset] = origin
-                        }
+
+                        outLines.append(contentsOf: incLines)
+                        origins.append(contentsOf: incOrigins)
                     }
                 } else {
-                    result += rawLine + "\n"
-                    let mergedLine = result.components(separatedBy: .newlines).count - 1
-                    lineMap[mergedLine] = (file: path, line: lineNumber)
+                    outLines.append(rawLine)
+                    origins.append((file: path, line: lineNumber))
                 }
             } else {
-                result += rawLine + "\n"
-                let mergedLine = result.components(separatedBy: .newlines).count - 1
-                lineMap[mergedLine] = (file: path, line: lineNumber)
+                outLines.append(rawLine)
+                origins.append((file: path, line: lineNumber))
             }
         }
-        
-        return (result, lineMap)
+
+        return (outLines, origins)
     }
     
     private mutating func processSource(_ source: String) throws -> String {

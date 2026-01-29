@@ -2,7 +2,11 @@
   "basePath": "/",
   "groups": {
     "boot": [
-      "scpcb.wasm"
+      "scpcb.wasm",
+      "options.ini"
+    ],
+    "init": [
+      "options.ini"
     ],
     "facility_assets": [
       "assets/containment_doors.jpg",
@@ -14,7 +18,6 @@
       "assets/tilebump.jpg",
       "assets/room2test1074_lm1.png",
       "assets/KeyPad.jpg",
-      "assets/room2.rmesh",
       "assets/maintenance_lm.png",
       "assets/concretewallbump.jpg",
       "assets/room1lifts_lm1.png",
@@ -34,8 +37,8 @@
       "assets/room2gw_b_lm1.png",
       "assets/tunnel2_lm1.png",
       "assets/room1lifts_lm2.png",
-      "assets/room2tunnel_opt.rmesh",
-      "assets/testroom_opt.rmesh",
+      "assets/room2tunnel_opt.smpk",
+      "assets/testroom_opt.smpk",
       "assets/ctwalls2.png",
       "assets/larry.jpg",
       "assets/exit2.jpg",
@@ -65,7 +68,7 @@
       "assets/lamp3.jpg",
       "assets/room2ccont_lm1.png",
       "assets/grass2.jpg",
-      "assets/room2offices3_opt.rmesh",
+      "assets/room2offices3_opt.smpk",
       "assets/flat_monitor.jpg",
       "assets/checkpoint2_lm1.png",
       "assets/forestpath.jpg",
@@ -75,7 +78,7 @@
       "assets/keyboard.jpg",
       "assets/scp1162bump.jpg",
       "assets/label966.jpg",
-      "assets/173.rmesh",
+      "assets/173.smpk",
       "assets/room4_2_lm4.png",
       "assets/exit1_lm5.png",
       "assets/room3_lm1.png",
@@ -146,7 +149,7 @@
       "assets/SLH_1499_water.png",
       "assets/medibay.jpg",
       "assets/room2elevator_lm1.png",
-      "assets/room2_opt.rmesh",
+      "assets/room2_opt.smpk",
       "assets/4tunnels_lm1.png",
       "assets/navtexture.jpg",
       "assets/tank2.jpg",
@@ -230,7 +233,7 @@
       "assets/gravelbump.jpg",
       "assets/metalpanels2.jpg",
       "assets/officeseat_a.jpg",
-      "assets/Door01.x",
+      "assets/Door01.smpk",
       "assets/medibay_lm2.png",
       "assets/labelmedicalbay.jpg",
       "assets/crtroc.jpg",
@@ -247,7 +250,7 @@
       "assets/papertexture.jpg",
       "assets/room2_4_lm5.png",
       "assets/room2shaft_lm3.png",
-      "assets/room2cafeteria_opt.rmesh",
+      "assets/room2cafeteria_opt.smpk",
       "assets/cable_black.jpg",
       "assets/room2z3_2_lm4.png",
       "assets/AGENTs.md",
@@ -330,8 +333,12 @@
   "files": [
     {
       "path": "scpcb.wasm",
-      "size": 18397,
+      "size": 2135082,
       "type": "wasm"
+    },
+    {
+      "path": "options.ini",
+      "size": 1067
     },
     {
       "path": "assets/containment_doors.jpg",
@@ -368,10 +375,6 @@
     {
       "path": "assets/KeyPad.jpg",
       "size": 169504
-    },
-    {
-      "path": "assets/room2.rmesh",
-      "size": 0
     },
     {
       "path": "assets/maintenance_lm.png",
@@ -450,12 +453,12 @@
       "size": 3478
     },
     {
-      "path": "assets/room2tunnel_opt.rmesh",
-      "size": 113356
+      "path": "assets/room2tunnel_opt.smpk",
+      "size": 144537
     },
     {
-      "path": "assets/testroom_opt.rmesh",
-      "size": 585914
+      "path": "assets/testroom_opt.smpk",
+      "size": 729360
     },
     {
       "path": "assets/ctwalls2.png",
@@ -574,8 +577,8 @@
       "size": 167996
     },
     {
-      "path": "assets/room2offices3_opt.rmesh",
-      "size": 633402
+      "path": "assets/room2offices3_opt.smpk",
+      "size": 788483
     },
     {
       "path": "assets/flat_monitor.jpg",
@@ -614,8 +617,8 @@
       "size": 62132
     },
     {
-      "path": "assets/173.rmesh",
-      "size": 910274
+      "path": "assets/173.smpk",
+      "size": 1138881
     },
     {
       "path": "assets/room4_2_lm4.png",
@@ -898,8 +901,8 @@
       "size": 9662
     },
     {
-      "path": "assets/room2_opt.rmesh",
-      "size": 334225
+      "path": "assets/room2_opt.smpk",
+      "size": 416294
     },
     {
       "path": "assets/4tunnels_lm1.png",
@@ -1234,8 +1237,8 @@
       "size": 73585
     },
     {
-      "path": "assets/Door01.x",
-      "size": 116345
+      "path": "assets/Door01.smpk",
+      "size": 33405
     },
     {
       "path": "assets/medibay_lm2.png",
@@ -1302,8 +1305,8 @@
       "size": 21510
     },
     {
-      "path": "assets/room2cafeteria_opt.rmesh",
-      "size": 389049
+      "path": "assets/room2cafeteria_opt.smpk",
+      "size": 489991
     },
     {
       "path": "assets/cable_black.jpg",

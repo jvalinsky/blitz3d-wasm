@@ -1,0 +1,527 @@
+================================================================================
+                    BLITZ3D-WASM SCPCB COMPILATION TEST REPORT
+================================================================================
+Date: Tue Jan 27 20:44:41 EST 2026
+Compiler: /Users/jack/Software/scp_port/blitz3d-wasm/.build/arm64-apple-macosx/debug/blitz3d-wasm
+Validator: /opt/homebrew/bin/wasm-validate
+Source: /Users/jack/Software/scp_port/scpcb
+
+----------------------------------------
+File: Dreamfilter.bb
+Status: PASS
+Size: 16597 bytes
+
+----------------------------------------
+File: UpdateEvents.bb
+Status: PASS
+Size: 17294 bytes
+
+----------------------------------------
+File: CPU_Details.bb
+Status: PASS
+Size: 16949 bytes
+
+----------------------------------------
+File: Map Creator/mapcreator_new.bb
+Status: COMPILATION_FAILED
+Compiler output:
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+
+
+----------------------------------------
+File: Map Creator/window3d.bb
+Status: COMPILATION_FAILED
+Compiler output:
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/window3d.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:22:25: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:27:58: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:28:89: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1000:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1001:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1002:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1003:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1007:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1008:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1009:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1010:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1014:67: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Map Creator/window3d.bb:1015:67: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: FMod.bb
+Status: COMPILATION_FAILED
+Compiler output:
+ERROR: parseTopLevelStatement() returned nil!
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/FMod.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/FMod.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/FMod.bb:15:34: error: Unexpected token ')'
+
+
+----------------------------------------
+File: repro_stack.bb
+Status: PASS
+Size: 16486 bytes
+
+----------------------------------------
+File: LightMapPNG.bb
+Status: PASS
+Size: 22061 bytes
+
+----------------------------------------
+File: Save.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Save.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Save.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Save.bb:985:39: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:997:35: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:1011:35: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:2643:39: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:2659:35: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:2673:35: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:3981:25: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:4965:29: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:4967:53: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:4969:33: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Save.bb:4971:49: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Update.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Update.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Update.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Update.bb:274:31: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Update.bb:290:53: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Update.bb:299:46: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Update.bb:308:46: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Update.bb:317:46: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Update.bb:326:47: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: DevilParticleSystem.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/DevilParticleSystem.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:70:36: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:71:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:72:44: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:73:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:74:41: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:75:44: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:76:29: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:77:31: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:78:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:79:45: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:80:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:81:36: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:82:38: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DevilParticleSystem.bb:249:28: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Skybox.bb
+Status: PASS
+Size: 17830 bytes
+
+----------------------------------------
+File: Difficulty.bb
+Status: PASS
+Size: 17955 bytes
+
+----------------------------------------
+File: RMesh_Model_Viewer.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/RMesh_Model_Viewer.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/RMesh_Model_Viewer.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/RMesh_Model_Viewer.bb:69:54: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Converter.bb
+Status: PASS
+Size: 25236 bytes
+
+----------------------------------------
+File: Blitz_File_ZipApi.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Blitz_File_ZipApi.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:247:57: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:249:74: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:250:76: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:272:57: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:307:41: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:323:43: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:349:41: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:365:43: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:593:64: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:637:168: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:766:51: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:783:70: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:830:45: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:907:41: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:950:82: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Blitz_File_ZipApi.bb:1032:54: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: repro_select.bb
+Status: PASS
+Size: 16178 bytes
+
+----------------------------------------
+File: StrictLoads.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/StrictLoads.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/StrictLoads.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:365:36: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:367:31: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:439:38: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:441:31: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:473:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/StrictLoads.bb:547:32: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Blitz_File_FileName.bb
+Status: PASS
+Size: 16643 bytes
+
+----------------------------------------
+File: MapSystem.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/MapSystem.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/MapSystem.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:5676:85: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:5676:87: error: Unexpected token '=' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:5676:89: error: Unexpected token '1' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6033:33: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6036:104: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6238:25: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6319:44: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6321:44: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:6359:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7371:18: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7371:20: error: Unexpected token '=' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7371:22: error: Unexpected token 'start' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7372:75: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7373:72: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7374:79: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MapSystem.bb:7375:76: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: MusicPlayer.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/MusicPlayer.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/MusicPlayer.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:19:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:20:29: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:31:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:38:33: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:45:26: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:109:284: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:127:194: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:135:76: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:145:74: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:154:84: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:163:69: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:173:75: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:187:147: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:303:33: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:309:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/MusicPlayer.bb:310:38: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: repro_update_events_min.bb
+Status: PASS
+Size: 16297 bytes
+
+----------------------------------------
+File: BlitzAL.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/BlitzAL.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/BlitzAL.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:19:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:20:29: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:31:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:38:33: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:45:26: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:109:284: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:127:194: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:135:76: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:145:74: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:154:84: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:163:69: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:173:75: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/BlitzAL.bb:187:147: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: KeyName.bb
+Status: PASS
+Size: 18470 bytes
+
+----------------------------------------
+File: DrawPortals – Kopio.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/DrawPortals – Kopio.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:54:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:55:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:61:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:62:34: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:129:32: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/DrawPortals – Kopio.bb:130:36: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Blitz_Basic_Bank.bb
+Status: PASS
+Size: 16648 bytes
+
+----------------------------------------
+File: AAText.bb
+Status: PASS
+Size: 19856 bytes
+
+----------------------------------------
+File: Particles.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Particles.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Particles.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Particles.bb:22:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:23:46: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:24:36: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:25:23: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:27:26: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:37:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:43:35: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Particles.bb:165:37: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Menu.bb
+Status: COMPILATION_FAILED
+Compiler output:
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+ERROR: parseTopLevelStatement() returned nil!
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Menu.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Menu.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Menu.bb:9:90: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Menu.bb:10:90: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Menu.bb:11:87: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Menu.bb:12:105: error: Unexpected token ')'
+/Users/jack/Software/scp_port/scpcb/Menu.bb:65:26: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:123:121: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1127:51: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1287:76: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1288:78: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1309:68: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1638:22: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Menu.bb:1639:87: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: NPCs.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/NPCs.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/NPCs.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:609:42: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:610:37: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:7035:84: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:7039:90: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:7441:163: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/NPCs.bb:7443:23: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: Items.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/Items.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/Items.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/Items.bb:121:133: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:122:133: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:123:133: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:124:133: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:125:132: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:126:124: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:127:134: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:128:135: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:236:125: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:241:139: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:242:135: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:243:144: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:244:139: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:246:127: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:247:131: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/Items.bb:248:135: error: Unexpected token ')' in function body
+
+
+----------------------------------------
+File: new_tests/test_type_conversion.bb
+Status: PASS
+Size: 16221 bytes
+
+----------------------------------------
+File: new_tests/test_devil_mod.bb
+Status: PASS
+Size: 16191 bytes
+
+----------------------------------------
+File: new_tests/test_particles_min.bb
+Status: PASS
+Size: 16570 bytes
+
+----------------------------------------
+File: new_tests/test_loops.bb
+Status: PASS
+Size: 16472 bytes
+
+----------------------------------------
+File: new_tests/test_fileio.bb
+Status: PASS
+Size: 16165 bytes
+
+----------------------------------------
+File: new_tests/test_custom_types.bb
+Status: PASS
+Size: 16475 bytes
+
+----------------------------------------
+File: new_tests/test_audio.bb
+Status: PASS
+Size: 16221 bytes
+
+----------------------------------------
+File: new_tests/test_2d_graphics.bb
+Status: PASS
+Size: 16495 bytes
+
+----------------------------------------
+File: new_tests/test_entity_getters.bb
+Status: PASS
+Size: 16465 bytes
+
+----------------------------------------
+File: new_tests/test_arrays.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/test_arrays.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb:22:17: error: Unexpected token ')' in function body
+/Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb:22:19: error: Unexpected token '=' in function body
+/Users/jack/Software/scp_port/scpcb/new_tests/test_arrays.bb:22:21: error: Unexpected token '999' in function body
+
+
+----------------------------------------
+File: new_tests/test_math.bb
+Status: PASS
+Size: 16256 bytes
+
+----------------------------------------
+File: new_tests/test_if_balance.bb
+Status: PASS
+Size: 16249 bytes
+
+----------------------------------------
+File: new_tests/test_collision_queries.bb
+Status: PASS
+Size: 16479 bytes
+
+----------------------------------------
+File: new_tests/test_strings.bb
+Status: PASS
+Size: 16306 bytes
+
+----------------------------------------
+File: DrawPortals.bb
+Status: PASS
+Size: 16893 bytes
+
+----------------------------------------
+File: fullscreen_window_fix.bb
+Status: COMPILATION_FAILED
+Compiler output:
+Auto-import map: /Users/jack/Software/scp_port/blitz3d-wasm/import_requirements_full.json
+Compiling: /Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb
+Output: /var/folders/rm/n83zx1ws1l7d2w3cczg7r1280000gn/T/tmp.7W2Qh8AC3f/fullscreen_window_fix.wasm
+Parser errors found:
+/Users/jack/Software/scp_port/scpcb/fullscreen_window_fix.bb:70:55: error: Unexpected token ')' in function body
+
+

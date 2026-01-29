@@ -1,0 +1,31 @@
+{
+  "imports": {
+    "jszip": "npm:jszip@3.10.1",
+    "three": "npm:three@0.182.0"
+  },
+  "tasks": {
+    "serve": "deno run -A Tools/serve_dir.ts --root . --port 8000",
+    "assets:scpcb:convert": "deno run -A Tools/assets_scpcb_convert.ts",
+    "test:deno": "deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests",
+    "dist:report": "deno run -A Tools/dist_report.ts dist --top 20",
+    "test:web:build": "deno task web:build && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno task dist:report",
+    "test:wasm": "deno run -A browser_tests.js",
+    "test:swift": "swift test",
+    "test:all": "deno task test:swift && deno task test:deno && deno task test:web:build && deno task test:wasm",
+    "memleak:scan": "deno run -A Tools/memleak/scan.ts",
+    "memleak:run": "deno run -A --sloppy-imports --node-modules-dir Tools/memleak/leakcheck.ts",
+    "memleak:webgpu": "deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts --skip-if-unavailable",
+    "memleak:webgpu:strict": "deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts",
+    "memleak:webgpu:strict-queue": "deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts --strict-queue",
+    "memleak:webgpu:strict-queue-hard": "deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts --strict-queue --require-work-done",
+    "memleak:scpcb:compile": ".build/debug/blitz3d-wasm Tools/memleak/scpcb_leaktest.bb -o Main.leaktest.wasm",
+    "memleak:scpcb:churn": "deno run -A --sloppy-imports --node-modules-dir Tools/memleak/scpcb_churn.ts",
+    "memleak:wasm:timeout": "deno run -A Tools/memleak/wasm_timeout_probe.ts",
+    "memleak:fxsnapshot:strings": "deno run -A Tools/memleak/fxsnapshot_strings.ts",
+    "web:setup": "cd web && deno task setup",
+    "web:dev": "cd web && deno task dev",
+    "web:build": "cd web && deno task build",
+    "web:preview": "cd web && deno task preview",
+    "scpcb:compile:main": "deno run -A Tools/compile_scpcb_main.ts"
+  }
+}

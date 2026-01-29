@@ -16,6 +16,9 @@ func printUsage() {
     print("  -o, --output <file>     Output WASM file (default: input.wasm)")
     print("  -g, --source-map        Generate source map (.wasm.map)")
     print("  -d, --debug             Instrument with live debug hooks")
+    print("  --cmdbuf                Enable Track B command-buffer ABI (experimental)")
+    print("  --progress <mode>       Progress output: none|ndjson (default: none)")
+    print("  --jobs <n>              Parallelism for encoding (0=auto, 1=off)")
     print("  --quiet                 Suppress non-error compiler logs")
     print("  --verbose               Enable verbose compiler logs")
     print("  -h, --help              Show this help")
@@ -33,6 +36,72 @@ func printUsage() {
     print("  blitz3d-wasm game.bb -o game.wasm")
     print("  blitz3d-wasm project.json -o game.wasm --assets ./assets")
     print("  blitz3d-wasm game.bb --embed-assets --manifest")
+}
+
+enum ProgressMode: String {
+    case none
+    case ndjson
+}
+
+struct ProgressEvent: Encodable {
+    let type: String
+    let version: Int
+    let kind: String
+    let phase: String
+    let current: Int?
+    let total: Int?
+    let message: String?
+    let file: String?
+    let tsMs: Int64
+}
+
+final class ProgressEmitter {
+    let mode: ProgressMode
+    private let encoder = JSONEncoder()
+    private let out = FileHandle.standardError
+
+    init(mode: ProgressMode) {
+        self.mode = mode
+        encoder.outputFormatting = []
+    }
+
+    private func nowMs() -> Int64 {
+        Int64(Date().timeIntervalSince1970 * 1000.0)
+    }
+
+    func emit(kind: String, phase: String, current: Int? = nil, total: Int? = nil, message: String? = nil, file: String? = nil) {
+        guard mode == .ndjson else { return }
+        let ev = ProgressEvent(
+            type: "b3d-progress",
+            version: 1,
+            kind: kind,
+            phase: phase,
+            current: current,
+            total: total,
+            message: message,
+            file: file,
+            tsMs: nowMs()
+        )
+        do {
+            var data = try encoder.encode(ev)
+            data.append(0x0A) // \n
+            out.write(data)
+        } catch {
+            // Best-effort: never fail compilation because of progress output.
+        }
+    }
+
+    func withPhase<T>(_ phase: String, _ body: () throws -> T) rethrows -> T {
+        emit(kind: "start", phase: phase)
+        do {
+            let v = try body()
+            emit(kind: "end", phase: phase)
+            return v
+        } catch {
+            emit(kind: "error", phase: phase, message: String(describing: error))
+            throw error
+        }
+    }
 }
 
 struct ProjectConfig: Codable {
@@ -81,11 +150,13 @@ func collectAllSourceFiles(from sources: [String], in inputDir: String) throws -
     return allFiles
 }
 
-func collectIncludes(from file: String, to files: inout [String], processed: inout Set<String>, rootDir: String) throws {
+func collectIncludes(from file: String, to files: inout [String], processed: inout Set<String>, rootDir: String, onFile: ((String, Int) -> Void)? = nil) throws {
         let url = URL(fileURLWithPath: file)
         let canonicalPath = url.standardizedFileURL.path
         guard !processed.contains(canonicalPath) else { return }
         processed.insert(canonicalPath)
+
+        onFile?(canonicalPath, processed.count)
         
         if !files.contains(canonicalPath) {
             files.append(canonicalPath)
@@ -101,7 +172,7 @@ func collectIncludes(from file: String, to files: inout [String], processed: ino
                 if parts.count >= 2 {
                     let includePath = String(parts[1])
                     let fullIncludePath = (rootDir as NSString).appendingPathComponent(includePath)
-                    try collectIncludes(from: fullIncludePath, to: &files, processed: &processed, rootDir: rootDir)
+                    try collectIncludes(from: fullIncludePath, to: &files, processed: &processed, rootDir: rootDir, onFile: onFile)
                 }
             }
         }
@@ -348,10 +419,11 @@ func loadAutoImportNames(from path: String?) -> Set<String> {
     return []
 }
 
-func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false, generateSourceMap: Bool = false, generateDebug: Bool = false, autoImportNames: Set<String> = [], useIR: Bool = false, dedupeIncludes: Bool = true, verboseOutput: Bool = false) {
+func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false, assets: [(path: String, data: Data, type: String)] = [], embedAssets: Bool = false, generateManifest: Bool = false, generateSourceMap: Bool = false, generateDebug: Bool = false, enableCommandBuffer: Bool = false, autoImportNames: Set<String> = [], useIR: Bool = false, dedupeIncludes: Bool = true, verboseOutput: Bool = false, jobs: Int = 1, progress: ProgressEmitter? = nil) {
     do {
         print("Compiling: \(inputPath)")
         print("Output: \(outputPath)")
+        progress?.emit(kind: "start", phase: "compile", message: "start", file: inputPath)
         
         if verboseOutput, !assets.isEmpty {
             print("Assets: \(assets.count) files")
@@ -360,17 +432,58 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             }
         }
         if verboseOutput { print("") }
+
+        // Include scan (best-effort): gives the runner something to show early for large projects.
+        let inputDir = URL(fileURLWithPath: inputPath).deletingLastPathComponent().path
+        var includeFiles: [String] = []
+        var processedIncludes: Set<String> = []
+        if let progress = progress {
+            try progress.withPhase("include-scan") {
+                try collectIncludes(from: inputPath, to: &includeFiles, processed: &processedIncludes, rootDir: inputDir, onFile: { path, count in
+                    progress.emit(kind: "progress", phase: "include-scan", current: count, total: nil, message: "scanned", file: path)
+                })
+            }
+        } else {
+            try collectIncludes(from: inputPath, to: &includeFiles, processed: &processedIncludes, rootDir: inputDir)
+        }
+        progress?.emit(kind: "progress", phase: "include-scan", current: includeFiles.count, total: includeFiles.count, message: "done", file: nil)
         
         // Preprocess
-        var preprocessor = Preprocessor(dedupeIncludes: dedupeIncludes)
-        let preprocessed = try preprocessor.processWithMap(file: inputPath)
+        let preprocessed: Preprocessor.PreprocessedSource
+        if let progress = progress {
+            preprocessed = try progress.withPhase("preprocess") {
+                var preprocessor = Preprocessor(dedupeIncludes: dedupeIncludes)
+                var processed = 0
+                let total = max(1, includeFiles.count)
+                return try preprocessor.processWithMap(file: inputPath, onIncludeFile: { path in
+                    processed += 1
+                    progress.emit(
+                        kind: "progress",
+                        phase: "preprocess",
+                        current: processed,
+                        total: total,
+                        message: URL(fileURLWithPath: path).lastPathComponent,
+                        file: path
+                    )
+                })
+            }
+        } else {
+            var preprocessor = Preprocessor(dedupeIncludes: dedupeIncludes)
+            preprocessed = try preprocessor.processWithMap(file: inputPath)
+        }
         if verboseOutput {
             print("Preprocessed source size: \(preprocessed.source.count) characters")
         }
+        progress?.emit(kind: "progress", phase: "preprocess", message: "chars=\(preprocessed.source.count)")
         
         // Parse
         var parser = Parser(source: preprocessed.source, sourceFile: inputPath, lineMap: preprocessed.lineMap)
-        let program = parser.parse()
+        let program: ProgramNode
+        if let progress = progress {
+            program = progress.withPhase("parse") { parser.parse() }
+        } else {
+            program = parser.parse()
+        }
         
         if parser.hasErrors {
             print("Parser errors found:")
@@ -395,58 +508,133 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             print("  - \(program.types.count) type declarations")
             print("")
         }
+        progress?.emit(kind: "progress", phase: "parse", message: "functions=\(program.functions.count) types=\(program.types.count)")
         
         // Generate WASM
         var module: WASMModule
         var sourceMapGenerator: SourceMapGenerator?
         var debugGenerator: DebugGenerator?
         
-        if useIR {
-            if verboseOutput {
-                print("Using Typed IR pipeline (experimental)")
-                print("")
-            }
-            var codeGen = CodeGenerator()
-            if !autoImportNames.isEmpty {
-                let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
-                codeGen.enableAutoImports(autoImportNames, arities: arities)
-            }
-            if generateSourceMap {
-                sourceMapGenerator = SourceMapGenerator()
-                codeGen.enableSourceMapping(sourceMapGenerator!)
-            }
-            if generateDebug {
-                debugGenerator = DebugGenerator()
-                codeGen.enableDebugging(debugGenerator!)
-            }
-            module = codeGen.generateFromIR(program)
-        } else {
-            var codeGen = CodeGenerator()
-            if !autoImportNames.isEmpty {
-                let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
-                codeGen.enableAutoImports(autoImportNames, arities: arities)
-            }
-            
-            if generateSourceMap {
-                sourceMapGenerator = SourceMapGenerator()
-                codeGen.enableSourceMapping(sourceMapGenerator!)
-            }
-            
-            if generateDebug {
-                debugGenerator = DebugGenerator()
-                codeGen.enableDebugging(debugGenerator!)
-            }
-            
-            module = codeGen.generate(from: program)
-            
-            if codeGen.hasDiagnostics {
-                print("Code generation errors found:")
-                for diagnostic in codeGen.diagnostics {
-                    print(diagnostic)
+        module = progress?.withPhase("codegen") {
+            if useIR {
+                if verboseOutput {
+                    print("Using Typed IR pipeline (experimental)")
+                    print("")
                 }
-                exit(1)
+                var codeGen = CodeGenerator()
+                if let progress = progress, progress.mode == .ndjson {
+                    codeGen.progressHandler = { e in
+                        progress.emit(kind: "progress", phase: "codegen", current: e.current, total: e.total, message: e.name)
+                    }
+                }
+                if !autoImportNames.isEmpty {
+                    let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                    codeGen.enableAutoImports(autoImportNames, arities: arities)
+                }
+                if enableCommandBuffer {
+                    codeGen.enableCommandBuffer()
+                }
+                if generateSourceMap {
+                    sourceMapGenerator = SourceMapGenerator()
+                    codeGen.enableSourceMapping(sourceMapGenerator!)
+                }
+                if generateDebug {
+                    debugGenerator = DebugGenerator()
+                    codeGen.enableDebugging(debugGenerator!)
+                }
+                return codeGen.generateFromIR(program)
+            } else {
+                var codeGen = CodeGenerator()
+                if let progress = progress, progress.mode == .ndjson {
+                    codeGen.progressHandler = { e in
+                        progress.emit(kind: "progress", phase: "codegen", current: e.current, total: e.total, message: e.name)
+                    }
+                }
+                if !autoImportNames.isEmpty {
+                    let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                    codeGen.enableAutoImports(autoImportNames, arities: arities)
+                }
+                if enableCommandBuffer {
+                    codeGen.enableCommandBuffer()
+                }
+                
+                if generateSourceMap {
+                    sourceMapGenerator = SourceMapGenerator()
+                    codeGen.enableSourceMapping(sourceMapGenerator!)
+                }
+                
+                if generateDebug {
+                    debugGenerator = DebugGenerator()
+                    codeGen.enableDebugging(debugGenerator!)
+                }
+                
+                let m = codeGen.generate(from: program)
+                
+                if codeGen.hasDiagnostics {
+                    print("Code generation errors found:")
+                    for diagnostic in codeGen.diagnostics {
+                        print(diagnostic)
+                    }
+                    exit(1)
+                }
+                return m
             }
-        }
+        } ?? {
+            if useIR {
+                if verboseOutput {
+                    print("Using Typed IR pipeline (experimental)")
+                    print("")
+                }
+                var codeGen = CodeGenerator()
+                if !autoImportNames.isEmpty {
+                    let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                    codeGen.enableAutoImports(autoImportNames, arities: arities)
+                }
+                if enableCommandBuffer {
+                    codeGen.enableCommandBuffer()
+                }
+                if generateSourceMap {
+                    sourceMapGenerator = SourceMapGenerator()
+                    codeGen.enableSourceMapping(sourceMapGenerator!)
+                }
+                if generateDebug {
+                    debugGenerator = DebugGenerator()
+                    codeGen.enableDebugging(debugGenerator!)
+                }
+                return codeGen.generateFromIR(program)
+            } else {
+                var codeGen = CodeGenerator()
+                if !autoImportNames.isEmpty {
+                    let arities = collectAutoImportArities(program: program, allowlist: autoImportNames)
+                    codeGen.enableAutoImports(autoImportNames, arities: arities)
+                }
+                if enableCommandBuffer {
+                    codeGen.enableCommandBuffer()
+                }
+                
+                if generateSourceMap {
+                    sourceMapGenerator = SourceMapGenerator()
+                    codeGen.enableSourceMapping(sourceMapGenerator!)
+                }
+                
+                if generateDebug {
+                    debugGenerator = DebugGenerator()
+                    codeGen.enableDebugging(debugGenerator!)
+                }
+                
+                let m = codeGen.generate(from: program)
+                
+                if codeGen.hasDiagnostics {
+                    print("Code generation errors found:")
+                    for diagnostic in codeGen.diagnostics {
+                        print(diagnostic)
+                    }
+                    exit(1)
+                }
+                return m
+            }
+        }()
+        progress?.emit(kind: "progress", phase: "codegen", message: "exports=\(module.exports.count) funcs=\(module.functions.count)")
         
         if generateSourceMap {
             let mapFileName = URL(fileURLWithPath: outputPath).lastPathComponent + ".map"
@@ -475,8 +663,13 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         
         if outputWat {
             // Generate WAT (text format)
-            var writer = WASMTextWriter()
-            let watOutput = writer.write(module)
+            let watOutput = progress?.withPhase("wat") {
+                var writer = WASMTextWriter()
+                return writer.write(module)
+            } ?? {
+                var writer = WASMTextWriter()
+                return writer.write(module)
+            }()
             
             let watPath = outputPath.replacingOccurrences(of: ".wasm", with: ".wat")
             try watOutput.write(toFile: watPath, atomically: true, encoding: String.Encoding.utf8)
@@ -485,11 +678,25 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
         }
         
         // Generate WASM (binary format)
-        var encoder = WASMBinaryEncoder()
-        let wasmBytes = encoder.encode(module, sourceMapGenerator: sourceMapGenerator)
+        let wasmBytes = progress?.withPhase("encode") {
+            var encoder = WASMBinaryEncoder()
+            encoder.jobs = jobs
+            return encoder.encode(module, sourceMapGenerator: sourceMapGenerator)
+        } ?? {
+            var encoder = WASMBinaryEncoder()
+            encoder.jobs = jobs
+            return encoder.encode(module, sourceMapGenerator: sourceMapGenerator)
+        }()
         
-        try Data(wasmBytes).write(to: URL(fileURLWithPath: outputPath))
+        if let progress = progress {
+            try progress.withPhase("write") {
+                try Data(wasmBytes).write(to: URL(fileURLWithPath: outputPath))
+            }
+        } else {
+            try Data(wasmBytes).write(to: URL(fileURLWithPath: outputPath))
+        }
         print("Wrote WASM file: \(outputPath) (\(wasmBytes.count) bytes)")
+        progress?.emit(kind: "progress", phase: "write", message: "bytes=\(wasmBytes.count)")
         
         if let generator = sourceMapGenerator, generateSourceMap {
              let mapOutputPath = outputPath + ".map"
@@ -514,6 +721,8 @@ func compileFile(inputPath: String, outputPath: String, outputWat: Bool = false,
             print("Wrote manifest: \(manifestPath)")
         }
         
+        progress?.emit(kind: "end", phase: "compile", message: "done", file: inputPath)
+        
     } catch {
         print("Error: \(error)")
         exit(1)
@@ -536,13 +745,16 @@ func main() {
     var inputDir: String = ""
     var embedAssets = false
     var generateManifest = false
-    var generateSourceMap = false
-    var generateDebug = false
-    var autoImportMapPath: String?
-    var useIR = false
-    var quiet = false
-    var verbose = false
-    var dedupeIncludes = true
+	    var generateSourceMap = false
+	    var generateDebug = false
+	    var enableCommandBuffer = false
+        var progressMode: ProgressMode = .none
+        var jobs = 1
+	    var autoImportMapPath: String?
+	    var useIR = false
+	    var quiet = false
+	    var verbose = false
+	    var dedupeIncludes = true
     
     var i = 1
     while i < args.count {
@@ -596,10 +808,35 @@ func main() {
         case "-d", "--debug":
             generateDebug = true
             i += 1
+            
+	        case "--cmdbuf":
+	            enableCommandBuffer = true
+	            i += 1
 
-        case "--quiet":
-            quiet = true
-            i += 1
+            case "--progress":
+                i += 1
+                if i < args.count {
+                    let m = args[i].lowercased()
+                    progressMode = ProgressMode(rawValue: m) ?? .none
+                } else {
+                    print("Error: --progress requires a mode (none|ndjson)")
+                    exit(1)
+                }
+                i += 1
+
+            case "--jobs":
+                i += 1
+                if i < args.count {
+                    jobs = Int(args[i]) ?? jobs
+                } else {
+                    print("Error: --jobs requires a number (0=auto, 1=off)")
+                    exit(1)
+                }
+                i += 1
+	
+	        case "--quiet":
+	            quiet = true
+	            i += 1
 
         case "--verbose":
             verbose = true
@@ -657,11 +894,12 @@ func main() {
         CompilerLogger.level = .warn
     }
     
-    // Check if input is a project file
-    if input.hasSuffix(".json") {
-        do {
-            let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
-            let projectConfig = try parseProjectFile(at: input)
+	    // Check if input is a project file
+	    if input.hasSuffix(".json") {
+	        do {
+	            let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
+                let progress = ProgressEmitter(mode: progressMode)
+	            let projectConfig = try parseProjectFile(at: input)
             
             let projectDir = URL(fileURLWithPath: input).deletingLastPathComponent()
             let entryURL = projectDir.appendingPathComponent(projectConfig.entry)
@@ -679,20 +917,21 @@ func main() {
                 assets = collectAssets(from: projectConfig.assets)
             }
             
-            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet)
-            exit(0)
-        } catch {
-            print("Error parsing project file: \(error)")
-            exit(1)
-        }
+	            compileFile(inputPath: entryURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, enableCommandBuffer: enableCommandBuffer, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet, jobs: jobs, progress: progress)
+	            exit(0)
+	        } catch {
+	            print("Error parsing project file: \(error)")
+	            exit(1)
+	        }
     }
     
     do {
         // Handle single file
-        let inputURL = URL(fileURLWithPath: input)
-        let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
-        let inputDirURL = inputDir.isEmpty ? inputURL.deletingLastPathComponent() : URL(fileURLWithPath: inputDir)
-        let finalInputURL = inputDirURL.appendingPathComponent(inputURL.lastPathComponent)
+	        let inputURL = URL(fileURLWithPath: input)
+	        let autoImportNames = loadAutoImportNames(from: autoImportMapPath)
+            let progress = ProgressEmitter(mode: progressMode)
+	        let inputDirURL = inputDir.isEmpty ? inputURL.deletingLastPathComponent() : URL(fileURLWithPath: inputDir)
+	        let finalInputURL = inputDirURL.appendingPathComponent(inputURL.lastPathComponent)
         var finalOutputURL: URL
         if let outPath = outputPath {
             finalOutputURL = URL(fileURLWithPath: outPath)
@@ -707,16 +946,16 @@ func main() {
         
         CompilerLogger.debug("DEBUG: Starting compilation of \(finalInputURL.path)")
         
-        if showTokens {
-             let source = try String(contentsOf: finalInputURL, encoding: .utf8)
-             tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
-        } else {
-            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet)
-        }
-        
-    } catch {
-        print("Error: \(error)")
-        exit(1)
+	        if showTokens {
+	             let source = try String(contentsOf: finalInputURL, encoding: .utf8)
+	             tokenizeAndPrint(source: source, sourceFile: finalInputURL.path)
+	        } else {
+	            compileFile(inputPath: finalInputURL.path, outputPath: finalOutputURL.path, outputWat: outputWat, assets: assets, embedAssets: embedAssets, generateManifest: generateManifest, generateSourceMap: generateSourceMap, generateDebug: generateDebug, enableCommandBuffer: enableCommandBuffer, autoImportNames: autoImportNames, useIR: useIR, dedupeIncludes: dedupeIncludes, verboseOutput: verbose && !quiet, jobs: jobs, progress: progress)
+	        }
+	        
+	    } catch {
+	        print("Error: \(error)")
+	        exit(1)
     }
 }
 

@@ -44,7 +44,10 @@ function validateWASM(filePath) {
   let pos = 8;
   const sections = [];
   while (pos < buf.length) {
-    // Read size (varuint)
+    // Read section id
+    const id = buf[pos++];
+
+    // Read payload size (varuint32)
     let size = 0, shift = 0, byte;
     do {
       byte = buf[pos++];
@@ -52,8 +55,6 @@ function validateWASM(filePath) {
       shift += 7;
     } while (byte & 0x80);
 
-    // Read id
-    const id = buf[pos++];
     sections.push({ id, size });
     pos += size;
   }
@@ -70,11 +71,17 @@ function validateWASM(filePath) {
   if (allPresent) {
     console.log(`  ✓ All required sections present`);
     console.log(
-      `  ${hasDataSection ? "✓" : "○"} Data section: ${hasDataSection ? "present" : "not present (no Data statements in source)"}`,
+      `  ${hasDataSection ? "✓" : "○"} Data section: ${
+        hasDataSection
+          ? "present"
+          : "not present (no Data statements in source)"
+      }`,
     );
     passed++;
   } else {
-    console.log(`  ✗ Missing sections. Expected: ${requiredSections.join(", ")}`);
+    console.log(
+      `  ✗ Missing sections. Expected: ${requiredSections.join(", ")}`,
+    );
     failed++;
   }
 
@@ -82,7 +89,10 @@ function validateWASM(filePath) {
   console.log("\nTest 5: Section order");
   const sectionOrder = sections.map((s) => s.id);
   const expectedOrder = [1, 2, 3, 5, 7, 10, 11];
-  const isOrdered = sectionOrder.length >= 2 && sectionOrder.every((id, i) => i === 0 || id >= sectionOrder[i - 1]);
+  // Custom sections (id=0) can appear anywhere; ignore them for ordering checks.
+  const nonCustomOrder = sectionOrder.filter((id) => id !== 0);
+  const isOrdered = nonCustomOrder.length >= 2 &&
+    nonCustomOrder.every((id, i) => i === 0 || id >= nonCustomOrder[i - 1]);
   if (isOrdered) {
     console.log(`  ✓ Sections in valid order`);
     passed++;

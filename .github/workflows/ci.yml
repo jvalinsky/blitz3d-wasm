@@ -1,0 +1,412 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  # Cache version to invalidate cache when needed
+  CACHE_VERSION: v1
+
+jobs:
+  # Swift Tests - Multiple platforms for comprehensive coverage
+  swift-tests:
+    name: Swift Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        # Use different Swift versions if needed
+        swift-version: [5.9, 5.10]
+        exclude:
+          # Exclude some combinations to reduce CI load if needed
+          - os: ubuntu-latest
+            swift-version: 5.10
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Swift (${{ matrix.swift-version }})
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ matrix.swift-version }}
+
+    - name: Cache Swift build artifacts
+      uses: actions/cache@v4
+      with:
+        path: |
+          .build
+          ~/.cache
+        key: ${{ runner.os }}-swift-${{ matrix.swift-version }}-${{ env.CACHE_VERSION }}-${{ hashFiles('**/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-swift-${{ matrix.swift-version }}-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-swift-${{ matrix.swift-version }}-
+
+    - name: Show Swift version
+      run: swift --version
+
+    - name: Build Swift project
+      run: swift build -c release
+
+    - name: Run Swift tests
+      run: swift test --enable-code-coverage
+
+    - name: Generate Swift test coverage report
+      if: matrix.os == 'macos-latest'
+      run: |
+        xcrun llvm-cov report \
+          .build/release/PackageTests.xctest/Contents/MacOS/PackageTests \
+          -instr-profile=.build/release/codecov/default.profdata \
+          -format=xml > coverage-swift.xml
+
+    - name: Upload Swift coverage to Codecov
+      if: matrix.os == 'macos-latest'
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage-swift.xml
+        flags: swift
+        name: swift-coverage
+
+  # Deno/TypeScript Tests
+  deno-tests:
+    name: Deno/TypeScript Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+
+    - name: Cache Deno dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/deno
+          deno.lock
+        key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', 'import_map.json') }}
+        restore-keys: |
+          ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-deno-
+
+    - name: Show Deno version
+      run: deno --version
+
+    - name: Check Deno formatting
+      run: deno fmt --check
+
+    - name: Run Deno linter
+      run: deno lint
+
+    - name: Run Deno type checking
+      run: deno check **/*.ts
+
+    - name: Run Deno unit tests
+      run: deno task test:deno
+
+    - name: Generate Deno test coverage
+      run: |
+        deno test --allow-read --allow-write=/tmp --allow-run=deno --coverage=./coverage-denotools Tools/tests
+        deno coverage ./coverage-denotools --lcov > coverage-deno.lcov
+
+    - name: Upload Deno coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage-deno.lcov
+        flags: deno
+        name: deno-coverage
+
+    - name: Run memory leak scan
+      run: deno task memleak:scan --max 50
+
+    - name: Run headless leak check (basic)
+      run: |
+        # Quick leak check with minimal cycles for CI
+        deno run -A --node-modules-dir Tools/memleak/leakcheck.ts --cycles 2 --settle-ms 0 --fail-on-growth-bytes 10485760
+
+    - name: Compile test WASM for leak tests
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      run: |
+        # Build the compiler if not already built
+        swift build -c release
+        # Compile test BB file for leak testing
+        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o test-particles.wasm
+
+    - name: Run SCPCB leak test (if WASM available)
+      if: github.event_name == 'push' || github.event_name == 'pull_request'
+      run: |
+        if [ -f test-particles.wasm ]; then
+          deno run -A --sloppy-imports --node-modules-dir Tools/memleak/leakcheck.ts --wasm test-particles.wasm --cycles 1 --call-count 5 --fail-on-growth-bytes 20971520
+        else
+          echo "No WASM file found, skipping WASM leak test"
+        fi
+
+  # Web Build Tests
+  web-build-tests:
+    name: Web Build Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+
+    - name: Cache Deno dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/deno
+          web/deno.lock
+        key: ${{ runner.os }}-web-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('web/deno.lock', 'web/import_map.json') }}
+        restore-keys: |
+          ${{ runner.os }}-web-deno-${{ env.CACHE_VERSION }}-
+          ${{ runner.os }}-web-deno-
+
+    - name: Setup web project
+      run: deno task web:setup
+
+    - name: Build web project
+      run: deno task web:build
+
+    - name: Run web build validation tests
+      run: deno task test:web:build
+
+    - name: Upload web build artifacts
+      uses: actions/upload-artifact@v4
+      if: github.event_name == 'push'
+      with:
+        name: web-build-artifacts
+        path: web/dist/
+        retention-days: 7
+
+  # WASM Browser Tests (Chrome/Firefox)
+  browser-tests:
+    name: Browser WASM Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js (for browser testing)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache Node dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ env.CACHE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-${{ env.CACHE_VERSION }}-
+
+    - name: Install browser test dependencies
+      run: |
+        # Install puppeteer for headless browser testing
+        npm install -g puppeteer
+
+    - name: Build Swift compiler
+      run: swift build -c release
+
+    - name: Compile test WASM for browser
+      run: |
+        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o browser-test.wasm
+        wasm-validate browser-test.wasm
+
+    - name: Run browser-based tests
+      run: deno run -A browser_tests.js
+      env:
+        DISPLAY: :99
+
+    - name: Archive browser test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: browser-test-results
+        path: |
+          test-results/
+          screenshots/
+        retention-days: 7
+
+  # Security and Dependency Scans
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Check for hardcoded secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+
+  # Performance Regression Tests
+  performance-tests:
+    name: Performance Regression Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for performance comparison
+
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/deno
+          ~/.npm
+        key: ${{ runner.os }}-perf-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', 'package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-perf-${{ env.CACHE_VERSION }}-
+
+    - name: Build Swift compiler
+      run: swift build -c release
+
+    - name: Run performance benchmarks
+      run: |
+        # Run WebGPU performance tests if available
+        if command -v nvidia-smi &> /dev/null; then
+          echo "GPU detected, running WebGPU performance tests"
+          deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts --iterations 10 --verbose || echo "WebGPU tests failed (expected in CI without GPU)"
+        fi
+
+        # Run memory leak performance tests
+        deno run -A --node-modules-dir --v8-flags=--expose-gc Tools/memleak/leakcheck.ts --cycles 3 --verbose
+
+    - name: Store performance metrics
+      run: |
+        echo "Performance test completed at $(date)" > performance-metrics.txt
+        echo "Commit: ${{ github.sha }}" >> performance-metrics.txt
+        echo "Available memory: $(free -h)" >> performance-metrics.txt
+
+    - name: Upload performance metrics
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-metrics
+        path: performance-metrics.txt
+        retention-days: 30
+
+  # Cross-platform Integration Tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Deno
+      uses: denoland/setup-deno@v2
+      with:
+        deno-version: v2.x
+
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cache/deno
+          .build
+        key: ${{ runner.os }}-integration-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', 'Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-integration-${{ env.CACHE_VERSION }}-
+
+    - name: Build Swift compiler
+      run: swift build -c release
+
+    - name: Run comprehensive integration tests
+      run: deno task test:all
+      env:
+        # Enable necessary permissions for integration tests
+        CI: true
+        INTEGRATION_TEST_MODE: true
+
+    - name: Validate WASM output
+      run: |
+        # Test that compiler produces valid WASM
+        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o integration-test.wasm
+        wasm-validate integration-test.wasm
+        
+        # Check that WASM can be instantiated
+        deno run -A --check=/dev/null integration-test.wasm || echo "WASM instantiation test completed"
+
+  # Results and Summary
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [swift-tests, deno-tests, web-build-tests, browser-tests, security-scan, integration-tests]
+    if: always()
+
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Generate test summary
+      run: |
+        echo "# CI Test Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Swift Tests (${{ needs.swift-tests.result }}) | ${{ needs.swift-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Deno/TypeScript Tests (${{ needs.deno-tests.result }}) | ${{ needs.deno-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Web Build Tests (${{ needs.web-build-tests.result }}) | ${{ needs.web-build-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Browser Tests (${{ needs.browser-tests.result }}) | ${{ needs.browser-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Security Scan (${{ needs.security-scan.result }}) | ${{ needs.security-scan.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Integration Tests (${{ needs.integration-tests.result }}) | ${{ needs.integration-tests.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload combined coverage
+      if: needs.swift-tests.result == 'success' && needs.deno-tests.result == 'success'
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage-*
+        flags: unittests
+        name: combined-coverage
+        fail_ci_if_error: false

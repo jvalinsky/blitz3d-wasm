@@ -5,7 +5,7 @@
 //  WebAssembly types and instruction definitions
 //
 
-public enum WASMType: String, Equatable, Comparable {
+public enum WASMType: String, Equatable, Comparable, Sendable {
     case i32 = "i32"
     case i64 = "i64"
     case f32 = "f32"
@@ -29,7 +29,7 @@ public enum WASMType: String, Equatable, Comparable {
     }
 }
 
-public enum WASMInstruction: Equatable {
+public enum WASMInstruction: Equatable, Sendable {
     case unreachable
     case nop
     case `return`
@@ -218,7 +218,7 @@ public enum WASMInstruction: Equatable {
     case end
 }
 
-public struct WASMFunction {
+public struct WASMFunction: Sendable {
     public var typeIndex: Int
     public var locals: [WASMType]
     public var body: [WASMInstruction]
@@ -232,7 +232,7 @@ public struct WASMFunction {
     }
 }
 
-public struct WASMGlobal {
+public struct WASMGlobal: Sendable {
     public var type: WASMType
     public var mutability: Bool
     public var initExpr: WASMInitExpression
@@ -244,7 +244,7 @@ public struct WASMGlobal {
     }
 }
 
-public enum WASMInitExpression {
+public enum WASMInitExpression: Sendable {
     case i32Const(Int32)
     case i64Const(Int64)
     case f32Const(Float)
@@ -252,7 +252,7 @@ public enum WASMInitExpression {
     case globalGet(Int)
 }
 
-public struct WASMMemory {
+public struct WASMMemory: Sendable {
     public var initial: Int
     public var maximum: Int?
     

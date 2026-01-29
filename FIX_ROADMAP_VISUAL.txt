@@ -1,0 +1,119 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                  SCPCB COMPILATION FIX ROADMAP                        ║
+║                                                                       ║
+║  Current Status: 49/52 files (94.2%) ━━━━━━━━━━━━━━━━░░ 94%        ║
+║  Target Status:  52/52 files (100%)  ━━━━━━━━━━━━━━━━━━ 100%       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ ISSUE #1: Parser - Expression Ambiguity                            │
+├─────────────────────────────────────────────────────────────────────┤
+│ Files:   MusicPlayer.bb, window3d.bb (Map Creator)                 │
+│ Impact:  2 files (3.8%)                                             │
+│ Fix:     Add whitespace tracking OR source workaround              │
+│ Time:    3-4 hours (perfect) OR 30 min (workaround)                │
+│ Status:  🟡 Partial solution implemented                            │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ ISSUE #2: Local Variable Overflow                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│ Files:   mapcreator_new.bb (Map Creator)                           │
+│ Impact:  1 file, 530 validation errors                             │
+│ Fix:     Fix variable counting in CodeGenerator.swift              │
+│ Time:    4-6 hours                                                  │
+│ Status:  🔴 Not started                                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      THREE APPROACHES                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+╭─────────────────────╮  ╭─────────────────────╮  ╭────────────────────╮
+│   🟢 PRAGMATIC      │  │  🟡 CONSERVATIVE    │  │  🔴 AGGRESSIVE     │
+│   (Recommended)     │  │                     │  │                    │
+├─────────────────────┤  ├─────────────────────┤  ├────────────────────┤
+│ Time:    6-8 hrs    │  │ Time:    8-10 hrs   │  │ Time:   10-15 hrs  │
+│ Risk:    Low        │  │ Risk:    Very Low   │  │ Risk:   Medium     │
+│ Result:  100%       │  │ Result:  100%       │  │ Result: 100%       │
+│ Changes: Minor src  │  │ Changes: Doc only   │  │ Changes: None      │
+├─────────────────────┤  ├─────────────────────┤  ├────────────────────┤
+│ ✓ Source workaround │  │ ✓ Source workaround │  │ ✓ Whitespace track │
+│ ✓ Fix var counting  │  │ ✓ Fix var counting  │  │ ✓ Fix var counting │
+│                     │  │ ✓ Document parser   │  │ ✓ Full validation  │
+╰─────────────────────╯  ╰─────────────────────╯  ╰────────────────────╯
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                    IMPLEMENTATION TIMELINE                          │
+└─────────────────────────────────────────────────────────────────────┘
+
+PRAGMATIC (Recommended):
+─────────────────────────
+Day 1 AM  │ █████░░░░░ Source workarounds      (30 min)  → 98%
+Day 1 PM  │ ██████████ Investigate var bug     (2 hrs)
+Day 2 AM  │ ████████████████ Implement fix     (4 hrs)   → 100%
+Day 2 PM  │ ████░░░░░░ Test & validate         (1 hr)    ✅ DONE
+
+AGGRESSIVE (Perfect):
+─────────────────────────
+Day 1     │ ████████████████████ Lexer changes (3 hrs)
+Day 2 AM  │ ████████████████ Parser update     (3 hrs)
+Day 2 PM  │ ████████████████ Var counting      (4 hrs)   → 100%
+Day 3     │ ████████░░░░░░░░ Full validation   (2 hrs)   ✅ DONE
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                       SUCCESS METRICS                               │
+└─────────────────────────────────────────────────────────────────────┘
+
+Phase        Files Passing    Validation    Status
+─────────────────────────────────────────────────────────
+Current      49/52 (94.2%)    49 valid      ✅ COMPLETE
+Phase 1      51/52 (98.0%)    51 valid      🎯 TARGET
+Phase 3      52/52 (100%)     52 valid      🏆 GOAL
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                      QUICK START                                    │
+└─────────────────────────────────────────────────────────────────────┘
+
+1. Read:   FIX_PLAN_SUMMARY.md              (Quick reference)
+2. Review: REMAINING_ISSUES_FIX_PLAN.md     (Full details)
+3. Choose: DECISION_TREE.md                 (Pick approach)
+4. Start:  Execute Phase 1 or Phase 2       (Begin work)
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                   FILES & DOCUMENTATION                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+📄 REMAINING_ISSUES_FIX_PLAN.md  (562 lines) - Complete implementation plan
+📄 FIX_PLAN_SUMMARY.md           (173 lines) - Quick reference guide
+📄 DECISION_TREE.md              (159 lines) - Approach selection guide
+📄 PARSER_FIX_STATUS.md          (80 lines)  - Parser work documentation
+📄 SESSION_SUMMARY.md            (200 lines) - Session accomplishments
+📄 SCPCB_ERROR_TRIAGE_PLAN.md    (146 lines) - Initial triage analysis
+
+Total Documentation: 1,320 lines / 894 lines core planning
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     RECOMMENDATION                                  │
+└─────────────────────────────────────────────────────────────────────┘
+
+🟢 START WITH: PRAGMATIC APPROACH
+   
+   Why?
+   • Fastest path to 100% (6-8 hours)
+   • Lowest risk
+   • Can refine later
+   • Minor source changes acceptable
+   
+   Next Step:
+   1. Apply window3d.bb workarounds (30 min)
+   2. Fix variable counting (4-6 hrs)
+   3. Validate and commit (1 hr)
+   
+   Result: 52/52 files compiling ✅
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║  STATUS: Plan complete and ready for execution                       ║
+║  CONFIDENCE: High (95%)                                              ║
+║  NEXT ACTION: Choose approach and begin implementation               ║
+╚═══════════════════════════════════════════════════════════════════════╝

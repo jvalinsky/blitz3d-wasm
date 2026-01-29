@@ -1070,9 +1070,29 @@ public final class ExpressionGeneration {
                         loopBody.append(contentsOf: [.globalGet(yG), .globalGet(entPtrG), .f32Load(2, Int(offSy)), .f32Mul, .globalSet(yG)])
                         loopBody.append(contentsOf: [.globalGet(zG), .globalGet(entPtrG), .f32Load(2, Int(offSz)), .f32Mul, .globalSet(zG)])
 
-                        // Rotate X (pitch)
+                        // Apply parent rotation in Blitz3D order: Ry * Rx * Rz * v
+                        // This means apply Z (roll) first, then X (pitch), then Y (yaw)
                         if cosIdx >= 0 && sinIdx >= 0 {
-                            // cosP / sinP in tmp0/tmp1
+                            // Rotate Z (roll)
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
+                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
+                            loopBody.append(.globalGet(xG)); loopBody.append(.globalSet(tmp2))
+                            // x = x*cos - y*sin
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp0), .f32Mul,
+                                .globalGet(yG), .globalGet(tmp1), .f32Mul,
+                                .f32Sub,
+                                .globalSet(xG),
+                            ])
+                            // y = x*sin + y*cos
+                            loopBody.append(contentsOf: [
+                                .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
+                                .globalGet(yG), .globalGet(tmp0), .f32Mul,
+                                .f32Add,
+                                .globalSet(yG),
+                            ])
+
+                            // Rotate X (pitch)
                             loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offPitch))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
                             loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offPitch))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
                             // tmp2 = y
@@ -1109,25 +1129,6 @@ public final class ExpressionGeneration {
                                 .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
                                 .f32Sub,
                                 .globalSet(zG),
-                            ])
-
-                            // Rotate Z (roll)
-                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(cosIdx)); loopBody.append(.globalSet(tmp0))
-                            loopBody.append(.globalGet(entPtrG)); loopBody.append(.f32Load(2, Int(offRoll))); loopBody.append(.call(sinIdx)); loopBody.append(.globalSet(tmp1))
-                            loopBody.append(.globalGet(xG)); loopBody.append(.globalSet(tmp2))
-                            // x = x*cos - y*sin
-                            loopBody.append(contentsOf: [
-                                .globalGet(tmp2), .globalGet(tmp0), .f32Mul,
-                                .globalGet(yG), .globalGet(tmp1), .f32Mul,
-                                .f32Sub,
-                                .globalSet(xG),
-                            ])
-                            // y = x*sin + y*cos
-                            loopBody.append(contentsOf: [
-                                .globalGet(tmp2), .globalGet(tmp1), .f32Mul,
-                                .globalGet(yG), .globalGet(tmp0), .f32Mul,
-                                .f32Add,
-                                .globalSet(yG),
                             ])
                         }
 
@@ -1444,23 +1445,22 @@ public final class ExpressionGeneration {
 
 	    private func emitEntPtrToScratch(entIdGlobal: Int) -> [WASMInstruction] {
 	        // scratchGlobal3Idx = entPtr (or 0 if no table / id out of range)
+	        // NOTE: Uses capG directly (not cached in a scratch global) to avoid
+	        // collisions when the caller stores a value in scratchGlobal4Idx.
 	        guard context.cmdEntStatePtrGlobalIdx >= 0, context.cmdEntStateCapGlobalIdx >= 0 else { return [] }
 	        let ptrG = context.cmdEntStatePtrGlobalIdx
 	        let capG = context.cmdEntStateCapGlobalIdx
 	        let outPtrG = context.scratchGlobal3Idx
-	        let capTmpG = context.scratchGlobal4Idx
-	
+
 	        // if (entId == 0 || entId >= cap) ptr=0 else ptr=base + entId*slotBytes
 	        return [
-	            .globalGet(capG),
-	            .globalSet(capTmpG),
 	            .globalGet(entIdGlobal),
 	            .i32EqZ,
 	            .if(.i32, [
 	                .i32Const(0),
 	            ], [
 	                .globalGet(entIdGlobal),
-	                .globalGet(capTmpG),
+	                .globalGet(capG),
 	                .i32GeU,
 	                .if(.i32, [
 	                    .i32Const(0),

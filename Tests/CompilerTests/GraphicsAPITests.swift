@@ -170,7 +170,72 @@ final class GraphicsAPITests: XCTestCase {
         
         var codeGen = CodeGenerator()
         let module = codeGen.generate(from: program)
-        
+
         XCTAssertGreaterThan(module.code.count, 0)
+    }
+
+    // MARK: - Entity Parenting Tests
+
+    func testEntityParentingCompiles() throws {
+        let source = """
+        Local grandparent = CreatePivot()
+        Local parent = CreatePivot()
+        Local child = CreatePivot()
+
+        PositionEntity grandparent, 10, 0, 0
+        RotateEntity grandparent, 0, 90, 0
+
+        PositionEntity parent, 5, 0, 0
+        RotateEntity parent, 45, 0, 0
+        EntityParent parent, grandparent
+
+        PositionEntity child, 0, 3, 0
+        EntityParent child, parent
+
+        Local gx# = EntityX(child, 1)
+        Local gy# = EntityY(child, 1)
+        Local gz# = EntityZ(child, 1)
+        """
+
+        var parser = Parser(source: source)
+        let program = parser.parse()
+
+        var codeGen = CodeGenerator()
+        let module = codeGen.generate(from: program)
+
+        XCTAssertGreaterThan(module.code.count, 0, "Multi-level parenting should produce code")
+
+        // Verify it encodes to valid WASM binary
+        var encoder = WASMBinaryEncoder()
+        let bytes = encoder.encode(module)
+        XCTAssertGreaterThan(bytes.count, 8, "Should produce valid WASM binary")
+        XCTAssertEqual(bytes[0], 0x00)
+        XCTAssertEqual(bytes[1], 0x61) // 'a'
+        XCTAssertEqual(bytes[2], 0x73) // 's'
+        XCTAssertEqual(bytes[3], 0x6D) // 'm'
+    }
+
+    func testEntityGlobalPositionQuery() throws {
+        // Tests that EntityX/Y/Z with global=1 compiles correctly
+        // This exercises the parent chain walk with rotation and scale
+        let source = """
+        Function TestGlobalPos#(ent%, axis%)
+            If axis = 0 Then Return EntityX(ent, 1)
+            If axis = 1 Then Return EntityY(ent, 1)
+            Return EntityZ(ent, 1)
+        End Function
+        """
+
+        var parser = Parser(source: source)
+        let program = parser.parse()
+
+        var codeGen = CodeGenerator()
+        let module = codeGen.generate(from: program)
+
+        XCTAssertGreaterThan(module.code.count, 0, "Global position query should produce code")
+
+        var encoder = WASMBinaryEncoder()
+        let bytes = encoder.encode(module)
+        XCTAssertGreaterThan(bytes.count, 8, "Should produce valid WASM binary")
     }
 }

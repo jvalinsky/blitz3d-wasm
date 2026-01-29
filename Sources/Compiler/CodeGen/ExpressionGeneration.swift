@@ -2120,13 +2120,13 @@ public final class ExpressionGeneration {
         }
 
         // Update WASM authoritative position.
-        // v1: apply yaw-only rotation (good enough for most SCPCB movement; avoids full Euler math).
+        // Apply full YXZ Euler rotation (Ry * Rx * Rz * v) to the movement vector,
+        // matching Blitz3D convention: roll first, then pitch, then yaw.
 	        let updateState: [WASMInstruction] = {
 	            let entPtrG = context.scratchGlobal3Idx
-	            let yawG = context.scratchGlobalFloat4Idx
-	            let cosYG = context.scratchGlobalFloat5Idx
-	            let sinYG = context.scratchGlobalFloat6Idx
-	            let dxwG = context.scratchGlobalFloat4Idx // reuse yaw scratch after trig computed
+	            let cosG = context.scratchGlobalFloat4Idx
+	            let sinG = context.scratchGlobalFloat5Idx
+	            let tmpG = context.scratchGlobalFloat6Idx
 
             let cosIdx = context.functionIndexMap["cos"] ?? -1
             let sinIdx = context.functionIndexMap["sin"] ?? -1
@@ -2136,56 +2136,71 @@ public final class ExpressionGeneration {
 	            b.append(contentsOf: emitEntPtrToScratch(entIdGlobal: entG))
 	            b.append(.globalGet(entPtrG))
 	            b.append(.i32EqZ)
-	
+
 	            var thenBody: [WASMInstruction] = []
-	            // yaw = *(f32*)(ent+24)
-	            thenBody.append(.globalGet(entPtrG))
-	            thenBody.append(.f32Load(2, 24))
-	            thenBody.append(.globalSet(yawG))
-	
-	            // cosYaw / sinYaw (Blitz3D trig uses degrees; runtime should implement that).
-	            // If missing, fall back to identity rotation.
-	            if cosIdx >= 0 {
-	                thenBody.append(.globalGet(yawG))
-	                thenBody.append(.call(cosIdx))
-	                thenBody.append(.globalSet(cosYG))
-	            } else {
-	                thenBody.append(.f32Const(1.0))
-	                thenBody.append(.globalSet(cosYG))
+
+	            if cosIdx >= 0 && sinIdx >= 0 {
+	                // Rotate Z (roll): affects x, y
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 28)); thenBody.append(.call(cosIdx)); thenBody.append(.globalSet(cosG))
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 28)); thenBody.append(.call(sinIdx)); thenBody.append(.globalSet(sinG))
+	                thenBody.append(.globalGet(xG)); thenBody.append(.globalSet(tmpG))
+	                // x = x*cos - y*sin
+	                thenBody.append(contentsOf: [
+	                    .globalGet(tmpG), .globalGet(cosG), .f32Mul,
+	                    .globalGet(yG), .globalGet(sinG), .f32Mul,
+	                    .f32Sub, .globalSet(xG),
+	                ])
+	                // y = x*sin + y*cos
+	                thenBody.append(contentsOf: [
+	                    .globalGet(tmpG), .globalGet(sinG), .f32Mul,
+	                    .globalGet(yG), .globalGet(cosG), .f32Mul,
+	                    .f32Add, .globalSet(yG),
+	                ])
+
+	                // Rotate X (pitch): affects y, z
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 20)); thenBody.append(.call(cosIdx)); thenBody.append(.globalSet(cosG))
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 20)); thenBody.append(.call(sinIdx)); thenBody.append(.globalSet(sinG))
+	                thenBody.append(.globalGet(yG)); thenBody.append(.globalSet(tmpG))
+	                // y = y*cos - z*sin
+	                thenBody.append(contentsOf: [
+	                    .globalGet(tmpG), .globalGet(cosG), .f32Mul,
+	                    .globalGet(zG), .globalGet(sinG), .f32Mul,
+	                    .f32Sub, .globalSet(yG),
+	                ])
+	                // z = y*sin + z*cos
+	                thenBody.append(contentsOf: [
+	                    .globalGet(tmpG), .globalGet(sinG), .f32Mul,
+	                    .globalGet(zG), .globalGet(cosG), .f32Mul,
+	                    .f32Add, .globalSet(zG),
+	                ])
+
+	                // Rotate Y (yaw): affects x, z
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 24)); thenBody.append(.call(cosIdx)); thenBody.append(.globalSet(cosG))
+	                thenBody.append(.globalGet(entPtrG)); thenBody.append(.f32Load(2, 24)); thenBody.append(.call(sinIdx)); thenBody.append(.globalSet(sinG))
+	                thenBody.append(.globalGet(xG)); thenBody.append(.globalSet(tmpG))
+	                // x = x*cos + z*sin
+	                thenBody.append(contentsOf: [
+	                    .globalGet(tmpG), .globalGet(cosG), .f32Mul,
+	                    .globalGet(zG), .globalGet(sinG), .f32Mul,
+	                    .f32Add, .globalSet(xG),
+	                ])
+	                // z = z*cos - x*sin
+	                thenBody.append(contentsOf: [
+	                    .globalGet(zG), .globalGet(cosG), .f32Mul,
+	                    .globalGet(tmpG), .globalGet(sinG), .f32Mul,
+	                    .f32Sub, .globalSet(zG),
+	                ])
 	            }
-	            if sinIdx >= 0 {
-	                thenBody.append(.globalGet(yawG))
-	                thenBody.append(.call(sinIdx))
-	                thenBody.append(.globalSet(sinYG))
-	            } else {
-	                thenBody.append(.f32Const(0.0))
-	                thenBody.append(.globalSet(sinYG))
-	            }
-	
-	            // dxw = dx*cos + dz*sin
-	            thenBody.append(contentsOf: [
-	                .globalGet(xG), .globalGet(cosYG), .f32Mul,
-	                .globalGet(zG), .globalGet(sinYG), .f32Mul,
-	                .f32Add,
-	                .globalSet(dxwG),
-	            ])
-	            // dzw (store into zG scratch): dz*cos - dx*sin
-	            thenBody.append(contentsOf: [
-	                .globalGet(zG), .globalGet(cosYG), .f32Mul,
-	                .globalGet(xG), .globalGet(sinYG), .f32Mul,
-	                .f32Sub,
-	                .globalSet(zG),
-	            ])
-	
-	            // posX += dxw
+
+	            // posX += rotated dx
 	            thenBody.append(contentsOf: [
 	                .globalGet(entPtrG),
 	                .globalGet(entPtrG), .f32Load(2, 8),
-	                .globalGet(dxwG),
+	                .globalGet(xG),
 	                .f32Add,
 	                .f32Store(2, 8),
 	            ])
-	            // posY += dy
+	            // posY += rotated dy
 	            thenBody.append(contentsOf: [
 	                .globalGet(entPtrG),
 	                .globalGet(entPtrG), .f32Load(2, 12),
@@ -2193,7 +2208,7 @@ public final class ExpressionGeneration {
 	                .f32Add,
 	                .f32Store(2, 12),
 	            ])
-	            // posZ += dzw
+	            // posZ += rotated dz
 	            thenBody.append(contentsOf: [
 	                .globalGet(entPtrG),
 	                .globalGet(entPtrG), .f32Load(2, 16),
@@ -2201,7 +2216,7 @@ public final class ExpressionGeneration {
 	                .f32Add,
 	                .f32Store(2, 16),
 	            ])
-	
+
 	            b.append(.if(.void, [], thenBody))
 	            return b
 	        }()

@@ -36,7 +36,17 @@
       "Bash(deciduous nodes:*)",
       "Bash(grep:*)",
       "Bash(tee:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(swift run:*)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm status)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm diff Sources/Compiler/CodeGen/ExpressionGeneration.swift Tests/CompilerTests/GraphicsAPITests.swift)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm log --oneline -5)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm add Sources/Compiler/CodeGen/ExpressionGeneration.swift Tests/CompilerTests/GraphicsAPITests.swift)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm commit -m \"$\\(cat <<''EOF''\nfix\\(codegen\\): fix entity parent chain walk bugs\n\nFix scratch global collision where emitEntPtrToScratch clobbered\nscratchGlobal4Idx \\(parentIdG\\) with the table capacity, breaking\nmulti-level parenting. Now reads capG directly instead of caching it.\n\nFix Euler rotation order from pitch->yaw->roll to roll->pitch->yaw\nto match Blitz3D''s YXZ convention \\(Ry * Rx * Rz * v\\).\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm push)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm add Sources/Compiler/CodeGen/ExpressionGeneration.swift)",
+      "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm commit -m \"$\\(cat <<''EOF''\nfix\\(codegen\\): upgrade MoveEntity to full YXZ Euler rotation\n\nReplace yaw-only rotation with full roll->pitch->yaw \\(Ry*Rx*Rz*v\\)\nto match Blitz3D convention. Prevents WASM-side position drift vs\nThree.js renderer when entities move while pitched or rolled.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(.build/arm64-apple-macosx/debug/blitz3d-wasm:*)"
     ]
   }
 }

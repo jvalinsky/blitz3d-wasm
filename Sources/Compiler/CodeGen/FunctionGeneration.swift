@@ -179,22 +179,25 @@ public final class FunctionGeneration {
             }
             
             // Build contiguous target array (0..maxState+1)
+            // From inside the innermost block, to reach chunk at blockIdx b,
+            // we need to exit (numStates - 1 - b) blocks: depth = numStates - 1 - b
             var targets: [Int] = []
             for i in 0...max(maxState, 0) {
                 if let blockIdx = stateToBlockIndex[i] {
-                    // Depth to break to: innermost block is numStates-blockIdx
-                    targets.append(numStates - blockIdx)
+                    targets.append(numStates - 1 - blockIdx)
                 } else {
                     targets.append(0) // Unknown state → default (terminate)
                 }
             }
             
             // Handle -1 (termination) by exiting outer block
+            // From inside the if: depth 0=if, 1..numStates=state blocks,
+            // numStates+1=loop, numStates+2=$exit block
             let terminationCheck: [WASMInstruction] = [
                 .localGet(gotoStateLocalIdx),
                 .i32Const(-1),
                 .i32Eq,
-                .if(.void, [.br(numStates + 1)], nil)  // Break to $exit
+                .if(.void, [.br(numStates + 2)], nil)  // Break to $exit
             ]
             
             // br_table dispatch
@@ -240,9 +243,9 @@ public final class FunctionGeneration {
                     chunkBody.append(.localSet(gotoStateLocalIdx))
                 }
                 
-                // Continue loop
-                let depthToLoop = numStates - stateIdx
-                chunkBody.append(.br(depthToLoop))
+                // Continue loop: chunk at stateIdx has stateIdx enclosing blocks
+                // between it and the loop, so br(stateIdx) targets the loop
+                chunkBody.append(.br(stateIdx))
                 
                 // Wrap previous in block, then add this chunk's body
                 innermost = [.block(.void, innermost)] + chunkBody

@@ -243,8 +243,26 @@ const main = async () => {
 
   const f32 = (a: ArrayBufferView) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
-  const posAcc = push("POSITION", f32(mesh.positions), "f32", "VEC3", vCount);
-  const normAcc = push("NORMAL", f32(mesh.normals ?? new Float32Array(vCount * 3)), "f32", "VEC3", vCount);
+  // Convert positions from Blitz3D left-handed to Three.js right-handed: negate Z
+  const positions = new Float32Array(mesh.positions.length);
+  for (let i = 0; i < mesh.positions.length; i += 3) {
+    positions[i + 0] = mesh.positions[i + 0];  // X
+    positions[i + 1] = mesh.positions[i + 1];  // Y
+    positions[i + 2] = -mesh.positions[i + 2]; // Z negated
+  }
+
+  // Convert normals from Blitz3D left-handed to Three.js right-handed: negate Z
+  const normals = new Float32Array(mesh.normals?.length ?? vCount * 3);
+  if (mesh.normals) {
+    for (let i = 0; i < mesh.normals.length; i += 3) {
+      normals[i + 0] = mesh.normals[i + 0];  // X
+      normals[i + 1] = mesh.normals[i + 1];  // Y
+      normals[i + 2] = -mesh.normals[i + 2]; // Z negated
+    }
+  }
+
+  const posAcc = push("POSITION", f32(positions), "f32", "VEC3", vCount);
+  const normAcc = push("NORMAL", f32(normals), "f32", "VEC3", vCount);
   const uvAcc = push("TEXCOORD_0", f32(mesh.uvs0 ?? new Float32Array(vCount * 2)), "f32", "VEC2", vCount);
   const jointsAcc = push("JOINTS_0", f32(jointIndices), "u16", "VEC4", vCount);
   const weightsAcc = push("WEIGHTS_0", f32(jointWeights), "f32", "VEC4", vCount);
@@ -263,16 +281,30 @@ const main = async () => {
   };
 
   // Nodes & skin
-  const smpkNodes = flatNodes.map((n) => ({
-    name: n.name,
-    parent: n.parent ?? undefined,
-    children: n.children.length ? n.children : undefined,
-    translation: n.trs.t,
-    rotation: quatWxyzToXyzw(n.trs.qWxyz[0], n.trs.qWxyz[1], n.trs.qWxyz[2], n.trs.qWxyz[3]),
-    scale: n.trs.s,
-    mesh: undefined as number | undefined,
-    skin: undefined as number | undefined,
-  }));
+  const smpkNodes = flatNodes.map((n) => {
+    // Convert translation from Blitz3D left-handed to Three.js right-handed
+    const translation: [number, number, number] = [n.trs.t[0], n.trs.t[1], -n.trs.t[2]];
+    
+    // Convert rotation from Blitz3D left-handed to Three.js right-handed
+    // Negate X and Y components of the quaternion
+    const quat = quatWxyzToXyzw(
+      n.trs.qWxyz[0],  // W stays same
+      -n.trs.qWxyz[1], // X negated
+      -n.trs.qWxyz[2], // Y negated  
+      n.trs.qWxyz[3]   // Z stays same
+    );
+    
+    return {
+      name: n.name,
+      parent: n.parent ?? undefined,
+      children: n.children.length ? n.children : undefined,
+      translation,
+      rotation: quat,
+      scale: n.trs.s,
+      mesh: undefined as number | undefined,
+      skin: undefined as number | undefined,
+    };
+  });
 
   // Build materials from brushes
   const materials: Array<{
@@ -469,7 +501,13 @@ const buildAnimations = (
     const timeAcc = pushAcc(`anim:${clipName}:time:${nodeIndex}`, f32(times), "f32", "SCALAR", times.length);
 
     if (k.positions) {
-      const out = new Float32Array(k.positions);
+      // Convert from Blitz3D left-handed to Three.js right-handed: negate Z
+      const out = new Float32Array(k.positions.length);
+      for (let i = 0; i < k.positions.length; i += 3) {
+        out[i + 0] = k.positions[i + 0];  // X stays same
+        out[i + 1] = k.positions[i + 1];  // Y stays same  
+        out[i + 2] = -k.positions[i + 2]; // Z negated
+      }
       const outAcc = pushAcc(`anim:${clipName}:t:${nodeIndex}`, f32(out), "f32", "VEC3", times.length);
       const s = samplers.length;
       samplers.push({ input: timeAcc, output: outAcc, interpolation: "LINEAR" });
@@ -484,13 +522,15 @@ const buildAnimations = (
     }
     if (k.rotationsWxyz) {
       // Convert to xyzw for runtime consumption.
+      // Also convert from Blitz3D left-handed to Three.js right-handed: negate X and Y
       const out = new Float32Array(times.length * 4);
       for (let i = 0; i < times.length; i++) {
         const w = k.rotationsWxyz[i * 4 + 0];
         const x = k.rotationsWxyz[i * 4 + 1];
         const y = k.rotationsWxyz[i * 4 + 2];
         const z = k.rotationsWxyz[i * 4 + 3];
-        out.set([x, y, z, w], i * 4);
+        // Negate X and Y components for right-handed system
+        out.set([-x, -y, z, w], i * 4);
       }
       const outAcc = pushAcc(`anim:${clipName}:r:${nodeIndex}`, f32(out), "f32", "VEC4", times.length);
       const s = samplers.length;

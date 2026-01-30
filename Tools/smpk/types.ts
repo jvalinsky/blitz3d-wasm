@@ -78,6 +78,27 @@ export type SmpkMaterial = {
   alphaMode?: "OPAQUE" | "BLEND" | "MASK";
 };
 
+export type SmpkRmeshTriggerAabb = {
+  min: [number, number, number];
+  max: [number, number, number];
+};
+
+export type SmpkRmeshTrigger = {
+  name: string;
+  aabb: SmpkRmeshTriggerAabb;
+};
+
+export type SmpkRmeshExtras = {
+  triggers?: SmpkRmeshTrigger[];
+  entities?: unknown[];
+};
+
+export type SmpkExtras = {
+  rmesh?: SmpkRmeshExtras;
+  // Allow future metadata (gltf-style "extras").
+  [k: string]: unknown;
+};
+
 export type SmpkJson = {
   version: 1;
   generator?: string;
@@ -88,6 +109,7 @@ export type SmpkJson = {
   animations?: SmpkAnimation[];
   materials?: SmpkMaterial[];
   sceneRoots?: number[]; // node indices
+  extras?: SmpkExtras;
 };
 
 export type SmpkFile = {

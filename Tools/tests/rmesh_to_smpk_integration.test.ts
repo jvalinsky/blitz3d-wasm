@@ -10,8 +10,8 @@ const run = async (cmd: string[]) => {
 };
 
 Deno.test("convert_rmesh_to_smpk produces a readable SMPK", async () => {
-  const out = "/tmp/173.smpk";
-  await run(["deno", "run", "-A", "Tools/convert_rmesh_to_smpk.ts", "web/public/GFX/map/173.rmesh", "-o", out]);
+  const out = "/tmp/173_opt.smpk";
+  await run(["deno", "run", "-A", "Tools/convert_rmesh_to_smpk.ts", "web/public/GFX/map/173_opt.rmesh", "-o", out]);
   const bytes = await Deno.readFile(out);
   const smpk = decodeSmpk(bytes);
   assert(smpk.json.meshes.length === 1);
@@ -19,5 +19,12 @@ Deno.test("convert_rmesh_to_smpk produces a readable SMPK", async () => {
   const prim = smpk.json.meshes[0]!.primitives[0]!;
   assert(typeof prim.attributes["POSITION"] === "number");
   assert(typeof prim.attributes["TEXCOORD_1"] === "number");
-});
 
+  // RMESH metadata export (point entities + trigger boxes).
+  const rmesh = (smpk.json as any).extras?.rmesh;
+  assert(Array.isArray(rmesh?.entities) && rmesh.entities.length > 0);
+  assert(Array.isArray(rmesh?.triggers) && rmesh.triggers.length === 3);
+  assert(typeof rmesh.triggers[0]?.name === "string");
+  assert(Array.isArray(rmesh.triggers[0]?.aabb?.min));
+  assert(Array.isArray(rmesh.triggers[0]?.aabb?.max));
+});

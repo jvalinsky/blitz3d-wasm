@@ -20,7 +20,7 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
 - [x] `.x → .smpk` converter exists (`Tools/convert_x_to_smpk.ts`). (2026-01-29)
 - [x] `.rmesh → .smpk` converter exists (`Tools/convert_rmesh_to_smpk.ts`). (2026-01-29)
 - [ ] RMESH point-entities + triggers:
-  - [ ] Extend converter to encode room point-entities + trigger boxes into SMPK JSON (or a sidecar JSON) so runtime can spawn them without RMESH parsing.
+  - [x] Extend converter to encode room point-entities + trigger boxes into SMPK JSON (or a sidecar JSON) so runtime can spawn them without RMESH parsing. (2026-01-30: `Tools/convert_rmesh_to_smpk.ts` exports `json.extras.rmesh`)
   - [ ] Add a migration path for existing room loading code to consume that metadata.
 
 ## C) Texture + Audio Pipeline (Web-Optimal)

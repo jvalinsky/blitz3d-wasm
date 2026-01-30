@@ -108,6 +108,47 @@ const main = async () => {
   const bytes = await Deno.readFile(args.input);
   const rm = parseRMesh(bytes);
 
+  const extrasRmeshTriggers = rm.triggers.length
+    ? rm.triggers.map((t) => {
+      let minX = Infinity, minY = Infinity, minZ = Infinity;
+      let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+      for (const s of t.surfaces) {
+        const p = s.positions;
+        for (let i = 0; i < p.length; i += 3) {
+          const x = p[i + 0]!;
+          const y = p[i + 1]!;
+          const z = p[i + 2]!;
+          if (x < minX) minX = x;
+          if (y < minY) minY = y;
+          if (z < minZ) minZ = z;
+          if (x > maxX) maxX = x;
+          if (y > maxY) maxY = y;
+          if (z > maxZ) maxZ = z;
+        }
+      }
+      // Tolerate malformed trigger surfaces (empty): keep a zero AABB for diagnostics.
+      if (!Number.isFinite(minX)) minX = minY = minZ = 0;
+      if (!Number.isFinite(maxX)) maxX = maxY = maxZ = 0;
+      return {
+        name: t.name,
+        aabb: { min: [minX, minY, minZ] as [number, number, number], max: [maxX, maxY, maxZ] as [number, number, number] },
+      };
+    })
+    : undefined;
+
+  const extrasRmeshEntities = rm.entities.length
+    ? rm.entities.map((e: any) => {
+      if (e?.type === "model" && typeof e.file === "string") {
+        return {
+          ...e,
+          // Convenience: Track B expects `.smpk` at runtime (path aliasing also exists, but make it explicit).
+          smpkFile: String(e.file).replace(/\.(b3d|x|rmesh)$/i, ".smpk"),
+        };
+      }
+      return e;
+    })
+    : undefined;
+
   const binParts: Uint8Array[] = [];
   const accessors: SmpkAccessor[] = [];
   const currentBinOff = () => binParts.reduce((s, p) => s + p.byteLength, 0);
@@ -172,6 +213,7 @@ const main = async () => {
     nodes: [{ name: "root", children: [], mesh: 0 }],
     materials: materials.length ? materials : undefined,
     sceneRoots: [0],
+    extras: (extrasRmeshTriggers || extrasRmeshEntities) ? { rmesh: { triggers: extrasRmeshTriggers, entities: extrasRmeshEntities } } : undefined,
   };
 
   const smpk: SmpkFile = { json, bin: makeBin() };

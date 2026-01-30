@@ -269,48 +269,22 @@ public struct WASMBinaryEncoder {
         
         let requestedJobs = jobs <= 0 ? ProcessInfo.processInfo.activeProcessorCount : jobs
         let jobCount = max(1, min(requestedJobs, functions.count))
-        let shouldParallelize = jobCount > 1 && functions.count >= 32
+        let shouldParallelize = false // Disable parallel encoding for Swift 6 compatibility
         
-        if shouldParallelize {
-            var encoded: [EncodedFunctionBody] = Array(
-                repeating: EncodedFunctionBody(funcBody: [], localsSize: 0, instrMappings: []),
-                count: functions.count
-            )
-            encoded.withUnsafeMutableBufferPointer { buf in
-                DispatchQueue.concurrentPerform(iterations: functions.count) { i in
-                    buf[i] = encodeOne(functions[i])
-                }
-            }
+        // Sequential encoding for Swift 6 compatibility
+        for function in functions {
+            let e = encodeOne(function)
             
-            for i in 0..<functions.count {
-                let e = encoded[i]
-                
-                let sizeBytes = encodeVarUInt(e.funcBody.count)
-                sectionContent.append(contentsOf: sizeBytes)
-                currentOffset += sizeBytes.count
-                
-                sectionContent.append(contentsOf: e.funcBody)
-                
-                for (offset, span) in e.instrMappings {
-                    relativeMappings.append((currentOffset + e.localsSize + offset, span))
-                }
-                currentOffset += e.funcBody.count
+            let sizeBytes = encodeVarUInt(e.funcBody.count)
+            sectionContent.append(contentsOf: sizeBytes)
+            currentOffset += sizeBytes.count
+            
+            sectionContent.append(contentsOf: e.funcBody)
+            
+            for (offset, span) in e.instrMappings {
+                relativeMappings.append((currentOffset + e.localsSize + offset, span))
             }
-        } else {
-            for function in functions {
-                let e = encodeOne(function)
-                
-                let sizeBytes = encodeVarUInt(e.funcBody.count)
-                sectionContent.append(contentsOf: sizeBytes)
-                currentOffset += sizeBytes.count
-                
-                sectionContent.append(contentsOf: e.funcBody)
-                
-                for (offset, span) in e.instrMappings {
-                    relativeMappings.append((currentOffset + e.localsSize + offset, span))
-                }
-                currentOffset += e.funcBody.count
-            }
+            currentOffset += e.funcBody.count
         }
         
         // Calculate absolute start offset of the code section content in the final binary

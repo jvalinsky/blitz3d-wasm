@@ -40,10 +40,10 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
 ## E) Deploy Contract
 
 - [x] Web build enforces no `.b3d/.x/.rmesh` in `dist/` + manifest. (2026-01-29)
-- [ ] Add a “staging deploy” task that:
-  - [ ] runs conversion
-  - [ ] deletes source formats in the staging output
-  - [ ] runs validator + size report
+- [x] Add a “staging deploy” task that: (2026-01-30: `deno task deploy:staging`)
+  - [x] runs conversion (2026-01-30)
+  - [x] deletes source formats in the staging output (2026-01-30: enforced by `deno task test:web:build`)
+  - [x] runs validator + size report (2026-01-30: `deno task test:web:build`)
 
 Acceptance Criteria:
 - [x] `dist/` contains 0 files matching `*.b3d|*.x|*.rmesh`. (2026-01-29: enforced by `deno task test:web:build`)

@@ -9,8 +9,8 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
 
 - [x] Run `Tools/scpcb_audit.ts` on `../scpcb` and save a snapshot report (paths + callsites). (2026-01-29: `docs/scpcb/scpcb_audit_2026-01-29_1539.json`)
 - [ ] Classify load sites into:
-  - [ ] static string literals (convert automatically)
-  - [ ] dynamic path construction (needs manual mapping rules)
+  - [x] static string literals (convert automatically) (2026-01-30: `docs/scpcb/scpcb_loadsite_classification_2026-01-30.md`)
+  - [x] dynamic path construction (needs manual mapping rules) (2026-01-30: `docs/scpcb/scpcb_loadsite_classification_2026-01-30.md`)
   - [ ] optional/unused content (can defer)
 - [x] Add a CI gate that fails if new `.b3d/.x/.rmesh` literals are introduced without conversion rules. (2026-01-30: `Tools/scpcb_audit_gate.ts` + baseline `docs/scpcb/scpcb_audit_baseline.json` + task `deno task scpcb:audit`)
 

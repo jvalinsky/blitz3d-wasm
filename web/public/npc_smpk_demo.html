@@ -98,25 +98,122 @@
         return { json, bin };
     };
 
-    const accessorView = (bin, acc) => {
+    // Read accessor data as Float32Array (handles alignment automatically)
+    const readFloat32Array = (bin, acc) => {
         const base = bin.byteOffset + acc.offset;
         const count = acc.count;
-        const ct = acc.componentType;
-        const t = acc.type;
-        const comps = t === "SCALAR" ? 1 : t === "VEC2" ? 2 : t === "VEC3" ? 3 : t === "VEC4" ? 4 : 1;
-        const bytesPerComp = ct === 5123 ? 2 : ct === 5126 ? 4 : 4;
-        const totalBytes = count * comps * bytesPerComp;
+        const bytesPerComp = acc.componentType === 5123 ? 2 : 4;
+        const totalBytes = count * 3 * bytesPerComp; // VEC3
         
-        // Handle alignment: create a copy if not aligned to 4 bytes
-        const original = new Uint8Array(bin.buffer, base, totalBytes);
-        if (base % 4 === 0) {
-            return original;
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
         }
         
-        // Copy to aligned buffer
-        const aligned = new Uint8Array(totalBytes);
-        aligned.set(original);
-        return aligned;
+        const data = new Float32Array(count * 3);
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        
+        // Copy with potential unaligned access
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < count * 3; i++) {
+            data[i] = view.getFloat32(i * 4, true);
+        }
+        return data;
+    };
+    
+    // Read accessor data as Uint16Array (indices)
+    const readUint16Array = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const totalBytes = count * 2;
+        
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
+        }
+        
+        const data = new Uint16Array(count);
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < count; i++) {
+            data[i] = view.getUint16(i * 2, true);
+        }
+        return data;
+    };
+    
+    // Read accessor data as Uint32Array (indices)
+    const readUint32Array = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const totalBytes = count * 4;
+        
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
+        }
+        
+        const data = new Uint32Array(count);
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < count; i++) {
+            data[i] = view.getUint32(i * 4, true);
+        }
+        return data;
+    };
+    
+    // Read accessor data as Float32Array for VEC2 (UVs)
+    const readFloat32ArrayVec2 = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const totalBytes = count * 2 * 4;
+        
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
+        }
+        
+        const data = new Float32Array(count * 2);
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < count * 2; i++) {
+            data[i] = view.getFloat32(i * 4, true);
+        }
+        return data;
+    };
+    
+    // Read animation times
+    const readFloat32ArrayAnim = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const totalBytes = count * 4;
+        
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
+        }
+        
+        const data = new Float32Array(count);
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < count; i++) {
+            data[i] = view.getFloat32(i * 4, true);
+        }
+        return data;
+    };
+    
+    // Read animation values (VEC3 or VEC4)
+    const readFloat32ArrayAnimValues = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const isVec4 = acc.type === "VEC4";
+        const totalBytes = count * (isVec4 ? 4 : 3) * 4;
+        
+        if (base + totalBytes > bin.byteOffset + bin.length) {
+            throw new Error("offset is out of bounds");
+        }
+        
+        const data = new Float32Array(count * (isVec4 ? 4 : 3));
+        const src = new Uint8Array(bin.buffer, base, totalBytes);
+        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+        for (let i = 0; i < data.length; i++) {
+            data[i] = view.getFloat32(i * 4, true);
+        }
+        return data;
     };
 
     const loadSmpkModel = async (path) => {
@@ -170,70 +267,35 @@
                 const prim = meshJson.primitives[pi];
                 const geometry = new THREE.BufferGeometry();
                 
-                // Position
+                // Position (VEC3)
                 if (prim.attributes.POSITION !== undefined) {
                     const acc = json.accessors[prim.attributes.POSITION];
-                    const view = accessorView(bin, acc);
-                    // If view was copied (not aligned), it's already a standalone Uint8Array
-                    const positions = new Float32Array(
-                        view.buffer === bin.buffer ? view.byteOffset : 0,
-                        acc.count * 3
-                    );
-                    if (view.buffer !== bin.buffer) {
-                        positions.set(new Float32Array(view.buffer, view.byteOffset, acc.count * 3));
-                    }
+                    const positions = readFloat32Array(bin, acc);
                     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
                 }
                 
-                // Normal
+                // Normal (VEC3)
                 if (prim.attributes.NORMAL !== undefined) {
                     const acc = json.accessors[prim.attributes.NORMAL];
-                    const view = accessorView(bin, acc);
-                    const normals = new Float32Array(
-                        view.buffer === bin.buffer ? view.byteOffset : 0,
-                        acc.count * 3
-                    );
-                    if (view.buffer !== bin.buffer) {
-                        normals.set(new Float32Array(view.buffer, view.byteOffset, acc.count * 3));
-                    }
+                    const normals = readFloat32Array(bin, acc);
                     geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
                 }
                 
-                // UV
+                // UV (VEC2)
                 if (prim.attributes.TEXCOORD_0 !== undefined) {
                     const acc = json.accessors[prim.attributes.TEXCOORD_0];
-                    const view = accessorView(bin, acc);
-                    const uvs = new Float32Array(
-                        view.buffer === bin.buffer ? view.byteOffset : 0,
-                        acc.count * 2
-                    );
-                    if (view.buffer !== bin.buffer) {
-                        uvs.set(new Float32Array(view.buffer, view.byteOffset, acc.count * 2));
-                    }
+                    const uvs = readFloat32ArrayVec2(bin, acc);
                     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
                 }
                 
                 // Indices
                 if (prim.indices !== undefined) {
                     const acc = json.accessors[prim.indices];
-                    const view = accessorView(bin, acc);
                     let indices;
                     if (acc.componentType === 5123) {
-                        indices = new Uint16Array(
-                            view.buffer === bin.buffer ? view.byteOffset : 0,
-                            acc.count
-                        );
-                        if (view.buffer !== bin.buffer) {
-                            indices.set(new Uint16Array(view.buffer, view.byteOffset, acc.count));
-                        }
+                        indices = readUint16Array(bin, acc);
                     } else {
-                        indices = new Uint32Array(
-                            view.buffer === bin.buffer ? view.byteOffset : 0,
-                            acc.count
-                        );
-                        if (view.buffer !== bin.buffer) {
-                            indices.set(new Uint32Array(view.buffer, view.byteOffset, acc.count));
-                        }
+                        indices = readUint32Array(bin, acc);
                     }
                     geometry.setIndex(new THREE.BufferAttribute(indices, 1));
                 }
@@ -290,26 +352,9 @@
                 const sampler = anim.samplers[channel.sampler];
                 const inputAcc = json.accessors[sampler.input];
                 const outputAcc = json.accessors[sampler.output];
-                const inputView = accessorView(bin, inputAcc);
-                const outputView = accessorView(bin, outputAcc);
                 
-                // Handle alignment for animation data
-                const times = new Float32Array(
-                    inputView.buffer === bin.buffer ? inputView.byteOffset : 0,
-                    inputAcc.count
-                );
-                if (inputView.buffer !== bin.buffer) {
-                    times.set(new Float32Array(inputView.buffer, inputView.byteOffset, inputAcc.count));
-                }
-                
-                const valueCount = outputAcc.count * (outputAcc.type === "VEC3" ? 3 : 4);
-                const values = new Float32Array(
-                    outputView.buffer === bin.buffer ? outputView.byteOffset : 0,
-                    valueCount
-                );
-                if (outputView.buffer !== bin.buffer) {
-                    values.set(new Float32Array(outputView.buffer, outputView.byteOffset, valueCount));
-                }
+                const times = readFloat32ArrayAnim(bin, inputAcc);
+                const values = readFloat32ArrayAnimValues(bin, outputAcc);
                 
                 const trackName = targetNode.uuid + (channel.path === "translation" ? ".position" : channel.path === "rotation" ? ".quaternion" : ".scale");
                 
@@ -317,6 +362,20 @@
                     tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
                 } else if (channel.path === "rotation" && outputAcc.type === "VEC4") {
                     tracks.push(new THREE.QuaternionKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                } else if (channel.path === "scale" && outputAcc.type === "VEC3") {
+                    tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                }
+            }
+            
+            if (tracks.length > 0) {
+                const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
+                mixer = new THREE.AnimationMixer(group);
+                npcAction = mixer.clipAction(clip);
+                npcAction.setLoop(THREE.LoopRepeat);
+                npcAction.play();
+                log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+            }
+        }
                 } else if (channel.path === "scale" && outputAcc.type === "VEC3") {
                     tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
                 }

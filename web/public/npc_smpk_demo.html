@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blitz3D WASM - Real NPC Model Demo (SCPCB)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #canvas { border: 1px solid #333; background: #000; }
+        #log {
+            width: 800px; height: 150px;
+            background: #0a0a1a; border: 1px solid #333;
+            padding: 10px; overflow-y: auto; white-space: pre;
+            margin-top: 10px; font-size: 11px;
+        }
+        h1 { color: #4af; margin: 10px; font-size: 18px; }
+        #controls { margin: 10px; }
+        button, select {
+            background: #2a4a6a; color: #fff;
+            border: 1px solid #4a6a8a;
+            padding: 8px 16px; margin: 5px;
+            cursor: pointer; font-family: monospace;
+        }
+        button:hover { background: #3a5a7a; }
+        button:disabled { background: #333; color: #666; }
+        #stats { color: #4af; margin: 10px; font-size: 14px; }
+        .info { color: #888; font-size: 12px; margin: 5px 0; }
+        .loading { color: #fa0; }
+    </style>
+</head>
+<body>
+    <h1>Blitz3D WASM - Real SCPCB NPC Models</h1>
+    <p class="info">Loading actual SCPCB NPC models (converted to SMPK offline)</p>
+    <div id="controls">
+        <select id="modelSelect">
+            <option value="035.smpk">SCP-035 (Containment Pod)</option>
+            <option value="173_2.smpk">SCP-173 (The Sculpture)</option>
+            <option value="049.smpk">SCP-049 (The Doctor)</option>
+            <option value="106_2.smpk">SCP-106 (The Old Man)</option>
+            <option value="939.smpk">SCP-939 (Hounds)</option>
+            <option value="966.smpk">SCP-966 (Sleep Killers)</option>
+            <option value="372.smpk">SCP-372 (Phantom)</option>
+            <option value="guard.smpk">MTF Guard</option>
+            <option value="classd.smpk">Class D Personnel</option>
+        </select>
+        <button onclick="loadNPC()" id="btnLoad">Load NPC Model</button>
+        <button onclick="toggleAnimation()" id="btnAnim" disabled>Toggle Animation</button>
+        <button onclick="setAnimSpeed(0.5)" id="btnSlow" disabled>0.5x</button>
+        <button onclick="setAnimSpeed(1.0)" id="btnNormal" disabled>1.0x</button>
+        <button onclick="setAnimSpeed(2.0)" id="btnFast" disabled>2.0x</button>
+        <button onclick="resetCamera()">Reset Camera</button>
+    </div>
+    <div id="stats">Select a model and click "Load NPC Model"</div>
+    <canvas id="canvas" width="800" height="500"></canvas>
+    <div id="log"></div>
+
+    <script>
+    const logDiv = document.getElementById('log');
+    const statsDiv = document.getElementById('stats');
+    const origLog = console.log;
+    console.log = (...args) => {
+        origLog(...args);
+        logDiv.innerHTML += args.join(' ') + '\n';
+        logDiv.scrollTop = logDiv.scrollHeight;
+    };
+
+    let renderer, scene, camera, mixer;
+    let npcEntity = null;
+    let npcAction = null;
+    let animPlaying = false;
+    let animTime = 0;
+    let animSpeed = 1.0;
+    let clock = new THREE.Clock();
+
+    function log(msg) { console.log(msg); }
+
+    // SMPK Decoder (same as web/src/runtime/smpk.ts)
+    const SMPK_MAGIC = [0x53, 0x4d, 0x50, 0x4b];
+    const decodeSmpk = (bytes) => {
+        if (bytes.byteLength < 16) throw new Error("SMPK too small");
+        for (let i = 0; i < 4; i++) if (bytes[i] !== SMPK_MAGIC[i]) throw new Error("Invalid SMPK magic");
+        const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+        const version = dv.getUint32(4, true);
+        if (version !== 1) throw new Error(`Unsupported SMPK version ${version}`);
+        const jsonLen = dv.getUint32(8, true);
+        const binLen = dv.getUint32(12, true);
+        const jsonText = new TextDecoder().decode(bytes.subarray(16, 16 + jsonLen));
+        const json = JSON.parse(jsonText);
+        const bin = bytes.subarray(16 + jsonLen, 16 + jsonLen + binLen);
+        return { json, bin };
+    };
+
+    const accessorView = (bin, acc) => {
+        const base = bin.byteOffset + acc.offset;
+        const count = acc.count;
+        const ct = acc.componentType;
+        const t = acc.type;
+        const comps = t === "SCALAR" ? 1 : t === "VEC2" ? 2 : t === "VEC3" ? 3 : t === "VEC4" ? 4 : 1;
+        const bytesPerComp = ct === 5123 ? 2 : ct === 5126 ? 4 : 4;
+        const totalBytes = count * comps * bytesPerComp;
+        return new Uint8Array(bin.buffer, base, totalBytes);
+    };
+
+    const loadSmpkModel = async (path) => {
+        log(`Loading SMPK: ${path}`);
+        
+        const response = await fetch(path);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        
+        const { json, bin } = decodeSmpk(bytes);
+        log(`SMPK loaded: ${json.meshes?.length || 0} meshes, ${json.nodes?.length || 0} nodes`);
+        if (json.animations) log(`Animations: ${json.animations.length}`);
+        
+        const group = new THREE.Group();
+        const meshes = [];
+        const nodes = json.nodes || [];
+        
+        // Build node hierarchy
+        const nodeObjects = [];
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            const obj = new THREE.Object3D();
+            obj.name = node.name || `node_${i}`;
+            
+            if (node.translation) obj.position.fromArray(node.translation);
+            if (node.rotation) {
+                obj.quaternion.fromArray([node.rotation[1], node.rotation[2], node.rotation[3], node.rotation[0]]);
+            }
+            if (node.scale) obj.scale.fromArray(node.scale);
+            
+            nodeObjects.push(obj);
+            group.add(obj);
+        }
+        
+        // Build parent-child relationships
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            if (node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
+                nodeObjects[node.parent].add(nodeObjects[i]);
+            }
+        }
+        
+        // Create meshes
+        for (let mi = 0; mi < (json.meshes?.length || 0); mi++) {
+            const meshJson = json.meshes[mi];
+            const meshGroup = new THREE.Group();
+            meshGroup.name = meshJson.name || `mesh_${mi}`;
+            
+            for (let pi = 0; pi < meshJson.primitives.length; pi++) {
+                const prim = meshJson.primitives[pi];
+                const geometry = new THREE.BufferGeometry();
+                
+                // Position
+                if (prim.attributes.POSITION !== undefined) {
+                    const acc = json.accessors[prim.attributes.POSITION];
+                    const view = accessorView(bin, acc);
+                    const positions = new Float32Array(view.buffer, view.byteOffset, acc.count * 3);
+                    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                }
+                
+                // Normal
+                if (prim.attributes.NORMAL !== undefined) {
+                    const acc = json.accessors[prim.attributes.NORMAL];
+                    const view = accessorView(bin, acc);
+                    const normals = new Float32Array(view.buffer, view.byteOffset, acc.count * 3);
+                    geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+                }
+                
+                // UV
+                if (prim.attributes.TEXCOORD_0 !== undefined) {
+                    const acc = json.accessors[prim.attributes.TEXCOORD_0];
+                    const view = accessorView(bin, acc);
+                    const uvs = new Float32Array(view.buffer, view.byteOffset, acc.count * 2);
+                    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+                }
+                
+                // Indices
+                if (prim.indices !== undefined) {
+                    const acc = json.accessors[prim.indices];
+                    const view = accessorView(bin, acc);
+                    let indices;
+                    if (acc.componentType === 5123) {
+                        indices = new Uint16Array(view.buffer, view.byteOffset, acc.count);
+                    } else {
+                        indices = new Uint32Array(view.buffer, view.byteOffset, acc.count);
+                    }
+                    geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+                }
+                
+                geometry.computeVertexNormals();
+                
+                // Material
+                let material;
+                if (prim.material !== undefined && json.materials && json.materials[prim.material]) {
+                    const matInfo = json.materials[prim.material];
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0x888888,
+                        side: THREE.DoubleSide
+                    });
+                    if (matInfo.baseColorTexture) {
+                        const texLoader = new THREE.TextureLoader();
+                        const texPath = path.replace(/[^/]+$/, '') + matInfo.baseColorTexture;
+                        try {
+                            material.map = texLoader.load(texPath);
+                        } catch (e) { log(`Texture load failed: ${texPath}`); }
+                    }
+                } else {
+                    material = new THREE.MeshStandardMaterial({
+                        color: 0x6a7a8a,
+                        side: THREE.DoubleSide
+                    });
+                }
+                
+                const mesh = new THREE.Mesh(geometry, material);
+                meshGroup.add(mesh);
+            }
+            
+            // Attach mesh to node
+            if (meshJson.node !== undefined && meshJson.node >= 0 && meshJson.node < nodeObjects.length) {
+                nodeObjects[meshJson.node].add(meshGroup);
+            } else {
+                group.add(meshGroup);
+            }
+            
+            meshes.push(meshGroup);
+        }
+        
+        // Setup animation
+        if (json.animations && json.animations.length > 0) {
+            const anim = json.animations[0];
+            const fps = anim.fps || 30;
+            const tracks = [];
+            
+            for (let ci = 0; ci < anim.channels.length; ci++) {
+                const channel = anim.channels[ci];
+                const targetNode = nodeObjects[channel.targetNode];
+                if (!targetNode) continue;
+                
+                const sampler = anim.samplers[channel.sampler];
+                const inputAcc = json.accessors[sampler.input];
+                const outputAcc = json.accessors[sampler.output];
+                const inputView = accessorView(bin, inputAcc);
+                const outputView = accessorView(bin, outputAcc);
+                
+                const times = new Float32Array(inputView.buffer, inputView.byteOffset, inputAcc.count);
+                const values = new Float32Array(outputView.buffer, outputView.byteOffset, outputAcc.count * (outputAcc.type === "VEC3" ? 3 : 4));
+                
+                const trackName = targetNode.uuid + (channel.path === "translation" ? ".position" : channel.path === "rotation" ? ".quaternion" : ".scale");
+                
+                if (channel.path === "translation" && outputAcc.type === "VEC3") {
+                    tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                } else if (channel.path === "rotation" && outputAcc.type === "VEC4") {
+                    tracks.push(new THREE.QuaternionKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                } else if (channel.path === "scale" && outputAcc.type === "VEC3") {
+                    tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                }
+            }
+            
+            if (tracks.length > 0) {
+                const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
+                mixer = new THREE.AnimationMixer(group);
+                npcAction = mixer.clipAction(clip);
+                npcAction.setLoop(THREE.LoopRepeat);
+                npcAction.play();
+                log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+            }
+        }
+        
+        return group;
+    };
+
+    async function loadNPC() {
+        const modelName = document.getElementById('modelSelect').value;
+        const modelPath = `GFX/npcs/${modelName}`;
+        
+        document.getElementById('btnLoad').disabled = true;
+        document.getElementById('btnLoad').innerHTML = '<span class="loading">Loading...</span>';
+        
+        log('=== SCPCB NPC Model Demo ===');
+        log(`Model: ${modelName}`);
+        log('');
+        
+        // Setup Three.js
+        const canvas = document.getElementById('canvas');
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        renderer.setSize(800, 500);
+        renderer.setClearColor(0x1a1a2e);
+        renderer.shadowMap.enabled = true;
+        
+        scene = new THREE.Scene();
+        
+        camera = new THREE.PerspectiveCamera(60, 800/500, 0.1, 1000);
+        camera.position.set(0, 2, -6);
+        camera.lookAt(0, 1, 0);
+        
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404050, 0.6);
+        scene.add(ambient);
+        
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(5, 10, -5);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+        fillLight.position.set(-5, 5, 5);
+        scene.add(fillLight);
+        
+        // Ground
+        const groundGeom = new THREE.PlaneGeometry(30, 30);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.9 });
+        const ground = new THREE.Mesh(groundGeom, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        scene.add(ground);
+        
+        // Grid helper
+        const grid = new THREE.GridHelper(30, 30, 0x3a3a4a, 0x2a2a3a);
+        scene.add(grid);
+        
+        // Load NPC model
+        log('');
+        log(`Loading: ${modelPath}`);
+        
+        try {
+            const npcGroup = await loadSmpkModel(modelPath);
+            npcEntity = npcGroup;
+            npcGroup.position.set(0, 0, 0);
+            scene.add(npcGroup);
+            
+            // Auto-scale if needed
+            npcGroup.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            
+            // Auto-fit camera
+            const box = new THREE.Box3().setFromObject(npcGroup);
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z);
+            if (maxDim > 4) {
+                camera.position.z = -maxDim * 2;
+            }
+            
+            log('');
+            log(`Model loaded successfully!`);
+            log(`Bounding box: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+        } catch (e) {
+            log(`Failed to load: ${e.message}`);
+            log('Using placeholder...');
+            createPlaceholderNPC();
+        }
+        
+        // Enable controls
+        document.getElementById('btnAnim').disabled = false;
+        document.getElementById('btnSlow').disabled = false;
+        document.getElementById('btnNormal').disabled = false;
+        document.getElementById('btnFast').disabled = false;
+        
+        animPlaying = true;
+        if (npcAction) npcAction.play();
+        
+        statsDiv.textContent = `Model: ${modelName}`;
+        log('');
+        log('Controls:');
+        log('  WASD/Arrows - Move camera');
+        log('  SPACE - Toggle animation');
+        log('  1/2/3 - Animation speed');
+        
+        // Start render loop
+        animate();
+    }
+    
+    function createPlaceholderNPC() {
+        const group = new THREE.Group();
+        
+        const bodyGeom = new THREE.BoxGeometry(0.7, 1.2, 0.35);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3a4a5a });
+        const body = new THREE.Mesh(bodyGeom, bodyMat);
+        body.position.y = 1.1;
+        body.castShadow = true;
+        group.add(body);
+        
+        const headGeom = new THREE.BoxGeometry(0.35, 0.4, 0.35);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xd4a574 });
+        const head = new THREE.Mesh(headGeom, headMat);
+        head.position.y = 1.9;
+        head.castShadow = true;
+        group.add(head);
+        
+        const armGeom = new THREE.BoxGeometry(0.18, 0.8, 0.18);
+        const armMat = new THREE.MeshStandardMaterial({ color: 0x3a4a5a });
+        const leftArm = new THREE.Mesh(armGeom, armMat);
+        leftArm.position.set(-0.55, 1.1, 0);
+        group.add(leftArm);
+        const rightArm = new THREE.Mesh(armGeom, armMat);
+        rightArm.position.set(0.55, 1.1, 0);
+        group.add(rightArm);
+        
+        const legGeom = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+        const legMat = new THREE.MeshStandardMaterial({ color: 0x2a3a4a });
+        const leftLeg = new THREE.Mesh(legGeom, legMat);
+        leftLeg.position.set(-0.22, 0.4, 0);
+        group.add(leftLeg);
+        const rightLeg = new THREE.Mesh(legGeom, legMat);
+        rightLeg.position.set(0.22, 0.4, 0);
+        group.add(rightLeg);
+        
+        npcEntity = group;
+        group.position.set(0, 0, 0);
+        scene.add(group);
+        
+        // Setup simple animation
+        mixer = new THREE.AnimationMixer(group);
+        npcEntity.userData.leftArm = leftArm;
+        npcEntity.userData.rightArm = rightArm;
+        npcEntity.userData.leftLeg = leftLeg;
+        npcEntity.userData.rightLeg = rightLeg;
+        npcEntity.userData.body = body;
+        
+        animPlaying = true;
+    }
+
+    function toggleAnimation() {
+        animPlaying = !animPlaying;
+        if (npcAction) {
+            if (animPlaying) npcAction.play();
+            else npcAction.stop();
+        }
+        log(`Animation: ${animPlaying ? 'ON' : 'OFF'}`);
+    }
+
+    function setAnimSpeed(speed) {
+        animSpeed = speed;
+        if (npcAction) npcAction.timeScale = speed;
+        log(`Speed: ${speed}x`);
+    }
+
+    function resetCamera() {
+        camera.position.set(0, 2, -6);
+        camera.lookAt(0, 1, 0);
+        log('Camera reset');
+    }
+
+    let lastTime = performance.now();
+    let frame = 0;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        const now = performance.now();
+        const dt = clock.getDelta();
+        
+        if (mixer) mixer.update(dt);
+        
+        // Simple walking animation for placeholder
+        if (animPlaying && npcEntity && npcEntity.userData.leftArm) {
+            animTime += dt * 30 * animSpeed;
+            const t = (animTime % 30) / 30;
+            const swing = Math.sin(t * Math.PI * 2) * 0.5;
+            
+            npcEntity.userData.leftArm.rotation.x = swing;
+            npcEntity.userData.rightArm.rotation.x = -swing;
+            npcEntity.userData.leftLeg.rotation.x = -swing * 0.4;
+            npcEntity.userData.rightLeg.rotation.x = swing * 0.4;
+            npcEntity.userData.body.position.y = 1.1 + Math.abs(Math.sin(t * Math.PI * 2)) * 0.05;
+        }
+        
+        // Slow NPC rotation
+        if (npcEntity) {
+            npcEntity.rotation.y += 0.002;
+        }
+        
+        renderer.render(scene, camera);
+        
+        frame++;
+        if (frame % 30 === 0) {
+            const animStatus = animPlaying ? 'ON' : 'OFF';
+            statsDiv.textContent = `Model loaded | Anim: ${animStatus} | Speed: ${animSpeed}x`;
+        }
+    }
+
+    document.addEventListener('keydown', (e) => {
+        const speed = 0.15;
+        switch(e.key.toLowerCase()) {
+            case 'w': case 'arrowup': camera.position.z += speed; break;
+            case 's': case 'arrowdown': camera.position.z -= speed; break;
+            case 'a': case 'arrowleft': camera.position.x -= speed; break;
+            case 'd': case 'arrowright': camera.position.x += speed; break;
+            case ' ': e.preventDefault(); toggleAnimation(); break;
+        }
+    });
+
+    log('Blitz3D WASM SCPCB NPC Demo');
+    log('Select a model and click "Load NPC Model"');
+    </script>
+</body>
+</html>

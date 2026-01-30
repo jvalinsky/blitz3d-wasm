@@ -32,6 +32,7 @@ export class Blitz3DFileIO {
   constructor(core) {
     this.core = core;
     this.fileSystem = new Map();
+    this._fileSystemByLower = new Map();
     this.openFiles = new Map();
     this.nextFileHandle = 1;
     this.assetBundle = null;
@@ -40,6 +41,7 @@ export class Blitz3DFileIO {
     this.basePath = "";
     this.syncFetchEnabled = false;
     this._manifestByPath = null;
+    this._manifestByPathLower = null;
     this._missingCounts = new Map();
     this._missingLastLogMs = new Map();
     this._missingGlobalLastMs = 0;
@@ -115,19 +117,27 @@ export class Blitz3DFileIO {
     const files = this.assetManifest?.files;
     if (!files || !Array.isArray(files)) {
       this._manifestByPath = null;
+      this._manifestByPathLower = null;
       return;
     }
     const map = new Map<string, AssetManifestEntry>();
+    const mapLower = new Map<string, AssetManifestEntry>();
     for (const entry of files) {
       if (!entry?.path) continue;
-      map.set(this.resolvePath(entry.path), entry);
+      const p = this.resolvePath(entry.path);
+      map.set(p, entry);
+      mapLower.set(p.toLowerCase(), entry);
     }
     this._manifestByPath = map;
+    this._manifestByPathLower = mapLower;
   }
 
   _getManifestEntry(resolvedPath: string): AssetManifestEntry | null {
     if (this._manifestByPath instanceof Map) {
-      return this._manifestByPath.get(resolvedPath) ?? null;
+      return this._manifestByPath.get(resolvedPath) ??
+        (this._manifestByPathLower instanceof Map
+          ? (this._manifestByPathLower.get(resolvedPath.toLowerCase()) ?? null)
+          : null);
     }
     if (this.assetManifest?.files) {
       return this.assetManifest.files.find((file) => file.path === resolvedPath) ??
@@ -364,17 +374,19 @@ export class Blitz3DFileIO {
    * @param {Uint8Array} data - File contents
    */
   registerFile(filePath, data) {
-    this.fileSystem.set(filePath, {
+    const resolvedPath = this.resolvePath(filePath);
+    this.fileSystem.set(resolvedPath, {
       data: data,
       size: data.length,
       position: 0,
     });
+    this._fileSystemByLower.set(resolvedPath.toLowerCase(), resolvedPath);
     // Asset preloads can register thousands of files; per-file logging can freeze the tab,
     // especially when `?debug` mirrors logs into the DOM. Keep this low-noise.
     this._registeredCount = (this._registeredCount ?? 0) + 1;
     const n = this._registeredCount as number;
     if (n <= 50 || (n <= 500 && n % 50 === 0) || n % 500 === 0) {
-      console.log(`Registered file: ${filePath} (${data.length} bytes)`);
+      console.log(`Registered file: ${resolvedPath} (${data.length} bytes)`);
     }
   }
 
@@ -453,17 +465,18 @@ export class Blitz3DFileIO {
     const candidates = this._openFileCandidates(filePath);
 
     for (const resolvedPath of candidates) {
+      const vfsKey = this._fileSystemByLower.get(resolvedPath.toLowerCase()) ?? resolvedPath;
       // Check virtual file system first
-      if (this.fileSystem.has(resolvedPath)) {
-        const file = this.fileSystem.get(resolvedPath);
+      if (this.fileSystem.has(vfsKey)) {
+        const file = this.fileSystem.get(vfsKey);
         file.position = 0;
         const handle = this.nextFileHandle++;
         this.openFiles.set(handle, {
           ...file,
-          path: resolvedPath,
+          path: vfsKey,
           eof: false,
         });
-        console.log(`Opened file from VFS: ${resolvedPath} (handle: ${handle})`);
+        console.log(`Opened file from VFS: ${vfsKey} (handle: ${handle})`);
         return handle;
       }
 

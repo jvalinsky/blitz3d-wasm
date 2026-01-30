@@ -34,7 +34,7 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
 ## D) Manifest + Preload Strategy
 
 - [x] Ensure `scpcb_manifest.json` boot/init/facility grouping matches SCPCB init requirements (options.ini early, rooms.ini, etc.). (2026-01-29: `web/build.ts` generates groups; loader preloads `init` before `Main()` when opted in.)
-- [x] Add runtime path aliasing so legacy SCPCB paths resolve to Track B outputs (`assets/` prefix + `.b3d/.x/.rmesh` → `.smpk`). (2026-01-30: `web/src/runtime/fileio.ts` + `web/src/worker/scpcb_worker.ts`)
+- [x] Add runtime path aliasing so legacy SCPCB paths resolve to Track B outputs (`assets/` prefix + `.b3d/.x/.rmesh` → `.smpk`, case-insensitive VFS lookup). (2026-01-30: `web/src/runtime/fileio.ts` + `web/src/worker/scpcb_worker.ts` + `web/src/shared/path_alias.ts`)
 - [ ] Ensure `.smpk` assets referenced at runtime are preloaded before calling into WASM init paths that expect sync IO.
   - Current: init-via-Main preloads `init` group; gameplay-time sync IO still needs audit. (2026-01-29)
 

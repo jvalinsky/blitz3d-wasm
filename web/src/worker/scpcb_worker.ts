@@ -1,3 +1,5 @@
+import { normalizePath, openFileCandidates } from "../shared/path_alias.ts";
+
 type WorkerInitMessage = {
   cmd: "init";
   wasmUrl: string;
@@ -191,63 +193,14 @@ const primeInput = () => {
   mouseDown.set(1, true);
 };
 
-const resolvePath = (p: string) =>
-  String(p || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
-
-const rewriteSourceModelPath = (p: string) => p.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
-
-const openFileCandidates = (path: string): string[] => {
-  const rp = resolvePath(path);
-  const rpLower = rp.toLowerCase();
-  const rewritten = rewriteSourceModelPath(rp);
-
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const push = (p: string) => {
-    const r = resolvePath(p);
-    if (!r) return;
-    const k = r.toLowerCase();
-    if (seen.has(k)) return;
-    seen.add(k);
-    out.push(r);
-  };
-
-  push(rp);
-  if (rewritten !== rp) push(rewritten);
-
-  if (!rpLower.startsWith("assets/")) {
-    push(`assets/${rp}`);
-    if (rewritten !== rp) push(`assets/${rewritten}`);
-  } else {
-    const stripped = rp.slice("assets/".length);
-    push(stripped);
-    const strippedRewritten = rewriteSourceModelPath(stripped);
-    if (strippedRewritten !== stripped) push(strippedRewritten);
-  }
-
-  // Dev convenience: some older manifests/servers place Data/* at root.
-  if (rpLower.startsWith("data/")) {
-    const stripped = rp.slice("data/".length);
-    push(stripped);
-    const strippedRewritten = rewriteSourceModelPath(stripped);
-    if (strippedRewritten !== stripped) push(strippedRewritten);
-    if (!rpLower.startsWith("assets/")) {
-      push(`assets/${stripped}`);
-      if (strippedRewritten !== stripped) push(`assets/${strippedRewritten}`);
-    }
-  }
-
-  return out;
-};
-
 const vfsSet = (path: string, data: Uint8Array) => {
-  const rp = resolvePath(path);
+  const rp = normalizePath(path);
   vfs.set(rp, data);
   vfsIndexLower.set(rp.toLowerCase(), rp);
 };
 
 const vfsGet = (path: string): { key: string; data: Uint8Array } | null => {
-  const rp = resolvePath(path);
+  const rp = normalizePath(path);
   const exact = vfs.get(rp);
   if (exact) return { key: rp, data: exact };
   const actual = vfsIndexLower.get(rp.toLowerCase());
@@ -272,7 +225,7 @@ const openFile = (path: string) => {
     maybePostStatus();
     return h;
   }
-  status.lastFileReq = candidates[0] ?? resolvePath(path);
+  status.lastFileReq = candidates[0] ?? normalizePath(path);
   maybePostStatus();
   return 0;
 };
@@ -394,7 +347,7 @@ const buildImports = () => {
   };
   imports.env.FileType = (pathPtr: number) => {
     if (!memory) return 0;
-    const req = resolvePath(readString(memory, pathPtr));
+    const req = normalizePath(readString(memory, pathPtr));
     const candidates = openFileCandidates(req);
     for (const p of candidates) {
       const hit = vfsGet(p);
@@ -410,7 +363,7 @@ const buildImports = () => {
   };
   imports.env.FileSize = (pathPtr: number) => {
     if (!memory) return 0;
-    const req = resolvePath(readString(memory, pathPtr));
+    const req = normalizePath(readString(memory, pathPtr));
     const candidates = openFileCandidates(req);
     for (const p of candidates) {
       const hit = vfsGet(p);
@@ -800,8 +753,8 @@ const fetchFile = async (basePath: string, entry: AssetManifestEntry) => {
 const preloadGroup = async (manifest: AssetManifest, group: string) => {
   const files = manifest.groups?.[group] ?? [];
   const byPath = new Map<string, AssetManifestEntry>();
-  for (const e of manifest.files ?? []) byPath.set(resolvePath(e.path), e);
-  const list = files.map((p) => byPath.get(resolvePath(p))).filter(Boolean) as AssetManifestEntry[];
+  for (const e of manifest.files ?? []) byPath.set(normalizePath(e.path), e);
+  const list = files.map((p) => byPath.get(normalizePath(p))).filter(Boolean) as AssetManifestEntry[];
   status.stage = `preload:${group}`;
   status.preload = { loaded: 0, total: list.length, file: "" };
   postStatus();

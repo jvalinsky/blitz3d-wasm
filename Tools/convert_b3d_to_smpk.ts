@@ -159,6 +159,15 @@ const main = async () => {
   const b3d = parseB3D(new Uint8Array(inputBytes));
   if (!b3d.root) throw new Error("B3D has no root node");
 
+  // Extract textures and brushes for material support
+  const textures = b3d.textures ?? [];
+  const brushes = b3d.brushes ?? [];
+  
+  console.log(`[b3d] Found ${textures.length} textures, ${brushes.length} brushes`);
+  for (const tex of textures) {
+    console.log(`  texture: ${tex.name}`);
+  }
+
   const flatNodes = gatherNodes(b3d);
   const jointNodeIndices = flatNodes
     .map((n, i) => (n.bone && n.bone.length ? i : -1))
@@ -265,6 +274,102 @@ const main = async () => {
     skin: undefined as number | undefined,
   }));
 
+  // Build materials from brushes
+  const materials: Array<{
+    name?: string;
+    baseColorTexture?: string;
+    detailTexture?: string;
+    detailTexture2?: string;
+    detailTexture3?: string;
+    cubeTexture?: string;
+    normalTexture?: string;
+    roughness?: number;
+    metalness?: number;
+    shininess?: number;
+    emissiveTexture?: string;
+    emissiveFactor?: [number, number, number];
+    color?: [number, number, number];
+    alpha?: number;
+    alphaMode?: "OPAQUE" | "BLEND" | "MASK";
+    alphaCutoff?: number;
+    blendMode?: number;
+    fx?: number;
+  }> = brushes.map((brush, i) => {
+    const mat: any = {
+      name: brush.name || `material_${i}`,
+    };
+    
+    // Add color if not white
+    if (brush.color[0] !== 1 || brush.color[1] !== 1 || brush.color[2] !== 1) {
+      mat.color = brush.color;
+    }
+    
+    // Add alpha and alphaMode based on blend
+    if (brush.alpha < 1) {
+      mat.alpha = brush.alpha;
+      mat.alphaMode = "BLEND";
+    } else if (brush.blend === 3) { // B3D BLEND_MASK = 3
+      mat.alphaMode = "MASK";
+      mat.alphaCutoff = 0.5;
+    } else if (brush.blend === 2) { // B3D BLEND_ADD = 2
+      mat.alphaMode = "BLEND";
+    }
+    mat.blendMode = brush.blend;
+    
+    // Add shininess (B3D shininess 0-1, convert to roughness inverse)
+    // B3D shininess 0 = no specular, 1 = sharp specular
+    // Three.js roughness 0 = smooth/shiny, 1 = rough/matte
+    if (brush.shininess > 0 && brush.shininess < 1) {
+      mat.shininess = brush.shininess;
+      mat.roughness = 1 - brush.shininess;
+    } else if (brush.shininess >= 1) {
+      mat.roughness = 0.05; // Very shiny
+    } else {
+      mat.roughness = 0.9; // Very rough
+    }
+    
+    // Add FX flags
+    mat.fx = brush.fx;
+    
+    // Helper to normalize texture paths
+    const normalizeTex = (texName: string) => {
+      if (!texName) return "";
+      // Handle Windows paths
+      const lastSlash = Math.max(texName.lastIndexOf('/'), texName.lastIndexOf('\\'));
+      if (lastSlash >= 0) {
+        texName = texName.substring(lastSlash + 1);
+      }
+      return texName;
+    };
+    
+    // Link textures (texIds[0] = base, texIds[1] = detail, texIds[7] = environment)
+    if (brush.texIds.length > 0 && brush.texIds[0] >= 0 && textures[brush.texIds[0]]) {
+      mat.baseColorTexture = normalizeTex(textures[brush.texIds[0]].name);
+    }
+    if (brush.texIds.length > 1 && brush.texIds[1] >= 0 && textures[brush.texIds[1]]) {
+      mat.detailTexture = normalizeTex(textures[brush.texIds[1]].name);
+    }
+    if (brush.texIds.length > 2 && brush.texIds[2] >= 0 && textures[brush.texIds[2]]) {
+      mat.detailTexture2 = normalizeTex(textures[brush.texIds[2]].name);
+    }
+    if (brush.texIds.length > 3 && brush.texIds[3] >= 0 && textures[brush.texIds[3]]) {
+      mat.detailTexture3 = normalizeTex(textures[brush.texIds[3]].name);
+    }
+    if (brush.texIds.length > 7 && brush.texIds[7] >= 0 && textures[brush.texIds[7]]) {
+      mat.cubeTexture = normalizeTex(textures[brush.texIds[7]].name);
+    }
+    
+    console.log(`  material ${i}: ${brush.name} -> ${mat.baseColorTexture || '(no texture)'} (shininess: ${brush.shininess.toFixed(2)}, blend: ${brush.blend})`);
+    
+    return mat;
+  });
+
+  // Determine material index for mesh primitive
+  // If brushId is -1 but we have materials, default to material 0
+  const meshBrushId = mesh.brushId >= 0 && mesh.brushId < brushes.length 
+    ? mesh.brushId 
+    : (materials.length > 0 ? 0 : undefined);
+
   const meshes = [{
     name: "mesh0",
     primitives: [{
@@ -276,6 +381,7 @@ const main = async () => {
         WEIGHTS_0: weightsAcc,
       },
       indices: idxAcc,
+      material: meshBrushId,
     }],
   }];
 
@@ -300,6 +406,7 @@ const main = async () => {
     meshes,
     nodes: smpkNodes,
     skins,
+    materials: materials.length ? materials : undefined,
     animations: animations.length ? animations.map((a) => ({
       ...a,
       sequences: b3d.sequences?.map((s) => ({

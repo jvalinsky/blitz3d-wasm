@@ -5,7 +5,7 @@ type MissingTextureRef = {
   smpkRelPath: string;
   materialIndex: number;
   materialName: string;
-  field: "baseColorTexture" | "lightmapTexture";
+  field: "baseColorTexture" | "detailTexture" | "detailTexture2" | "detailTexture3" | "cubeTexture" | "normalTexture" | "emissiveTexture" | "lightmapTexture";
   texture: string;
 };
 
@@ -98,8 +98,14 @@ const main = async () => {
     for (let i = 0; i < mats.length; i++) {
       const mat = mats[i]!;
       const matName = mat.name ?? `material_${i}`;
-      const refs: Array<{ field: "baseColorTexture" | "lightmapTexture"; tex: string | undefined }> = [
+      const refs: Array<{ field: "baseColorTexture" | "detailTexture" | "detailTexture2" | "detailTexture3" | "cubeTexture" | "normalTexture" | "emissiveTexture" | "lightmapTexture"; tex: string | undefined }> = [
         { field: "baseColorTexture", tex: mat.baseColorTexture },
+        { field: "detailTexture", tex: mat.detailTexture },
+        { field: "detailTexture2", tex: mat.detailTexture2 },
+        { field: "detailTexture3", tex: mat.detailTexture3 },
+        { field: "cubeTexture", tex: mat.cubeTexture },
+        { field: "normalTexture", tex: mat.normalTexture },
+        { field: "emissiveTexture", tex: mat.emissiveTexture },
         { field: "lightmapTexture", tex: mat.lightmapTexture },
       ];
 

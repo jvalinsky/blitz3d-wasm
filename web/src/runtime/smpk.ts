@@ -52,8 +52,24 @@ type SmpkJson = {
   materials?: Array<{
     name?: string;
     baseColorTexture?: string;
+    detailTexture?: string;
+    detailTexture2?: string;
+    detailTexture3?: string;
+    cubeTexture?: string;
+    normalTexture?: string;
+    normalScale?: number;
+    roughness?: number;
+    metalness?: number;
+    shininess?: number;
+    emissiveTexture?: string;
+    emissiveFactor?: [number, number, number];
     lightmapTexture?: string;
-    alphaMode?: string;
+    color?: [number, number, number];
+    alpha?: number;
+    alphaMode?: "OPAQUE" | "BLEND" | "MASK";
+    alphaCutoff?: number;
+    blendMode?: number;
+    fx?: number;
   }>;
   sceneRoots?: number[];
   extras?: any;
@@ -204,27 +220,78 @@ export class SMPKLoader {
     };
 
     // Materials
+    const loader = new THREE.TextureLoader();
     const materials = (json.materials ?? []).map((m) => {
+      // Determine alpha mode from blendMode if not explicitly set
+      let alphaMode = m.alphaMode;
+      if (!alphaMode && m.blendMode !== undefined) {
+        // B3D blend modes: 0=NONE, 1=ALPHA, 2=ADD, 3=MASK, 4=MUL
+        if (m.blendMode === 1 || m.blendMode === 2) {
+          alphaMode = "BLEND";
+        } else if (m.blendMode === 3) {
+          alphaMode = "MASK";
+        }
+      }
+      
       const mat = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
+        color: m.color ? new THREE.Color(m.color[0], m.color[1], m.color[2]) : (m.baseColorTexture ? 0xffffff : 0x888888),
         side: THREE.DoubleSide,
-        transparent: m.alphaMode === "BLEND",
+        transparent: alphaMode === "BLEND",
+        depthWrite: alphaMode !== "BLEND",
+        alphaTest: alphaMode === "MASK" ? (m.alphaCutoff ?? 0.5) : 0,
+        roughness: m.roughness ?? (m.shininess !== undefined ? (1 - m.shininess) : 0.8),
+        metalness: m.metalness ?? 0.0,
+        emissive: m.emissiveFactor
+          ? new THREE.Color(m.emissiveFactor[0], m.emissiveFactor[1], m.emissiveFactor[2])
+          : new THREE.Color(0x000000),
       });
       mat.name = m.name ?? "";
-      const loader = new THREE.TextureLoader();
-      if (m.baseColorTexture) {
-        loader.load(resolveAssetUrl(m.baseColorTexture), (t) => {
-          mat.map = t;
+
+      const loadTex = (url: string | undefined, prop: keyof THREE.MeshStandardMaterial, uScale = 1, vScale = 1) => {
+        if (!url) return;
+        const resolved = resolveAssetUrl(url);
+        loader.load(resolved, (t: THREE.Texture) => {
+          (mat[prop] as THREE.Texture | undefined) = t;
+          t.colorSpace = THREE.SRGBColorSpace;
+          t.wrapS = THREE.RepeatWrapping;
+          t.wrapT = THREE.RepeatWrapping;
+          if (uScale !== 1 || vScale !== 1) {
+            t.repeat.set(uScale, vScale);
+          }
           mat.needsUpdate = true;
         });
+      };
+
+      // Load all texture types
+      loadTex(m.baseColorTexture, "map");
+      loadTex(m.normalTexture, "normalMap");
+      loadTex(m.lightmapTexture, "lightMap");
+      loadTex(m.emissiveTexture, "emissiveMap");
+      
+      // Load detail textures (would need custom shader for proper multi-texturing)
+      // For now, these are logged for debugging
+      if (m.detailTexture) {
+        loadTex(m.detailTexture, "roughnessMap");
       }
-      if (m.lightmapTexture) {
-        loader.load(resolveAssetUrl(m.lightmapTexture), (t) => {
-          mat.lightMap = t;
-          mat.lightMapIntensity = 1.0;
-          mat.needsUpdate = true;
-        });
+      if (m.detailTexture2) {
+        console.log(`Material ${m.name}: detailTexture2=${m.detailTexture2} (not loaded - requires custom shader)`);
       }
+      if (m.detailTexture3) {
+        console.log(`Material ${m.name}: detailTexture3=${m.detailTexture3} (not loaded - requires custom shader)`);
+      }
+      if (m.cubeTexture) {
+        console.log(`Material ${m.name}: cubeTexture=${m.cubeTexture} (not loaded - requires envMap)`);
+      }
+
+      if (m.normalTexture || m.normalScale !== undefined) {
+        mat.normalScale.set(m.normalScale ?? 1, m.normalScale ?? 1);
+      }
+
+      // Log FX flags for debugging
+      if (m.fx !== undefined && m.fx !== 0) {
+        console.log(`Material ${m.name}: FX flags=${m.fx.toString(16)}`);
+      }
+
       return mat;
     });
 

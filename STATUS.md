@@ -1,10 +1,13 @@
 # Project Status
 
-**Last Updated**: January 27, 2026
+**Last Updated**: January 30, 2026
 
 ## Summary
 
-Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a thin JS runtime for browser APIs.
+Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a TypeScript runtime for browser APIs.
+
+**Compiler**: Production-ready (~17K lines Swift) — 94.7% SCPCB pass rate\
+**Runtime**: TypeScript runtime (~12K lines) with command buffers
 
 ## Working Demo
 
@@ -16,7 +19,7 @@ Demonstrates:
 - Automatic deletion when expired
 - All logic in WASM, JS only renders
 
-## What's In WASM vs JS
+## Architecture
 
 ### WASM (compiled BB code)
 - Type system (New, Delete, linked lists)
@@ -26,35 +29,38 @@ Demonstrates:
 - Control flow (While, If, For Each)
 - Memory management
 
-### JS Runtime (~500 lines)
+### TypeScript Runtime (~12K lines)
+- Graphics (Three.js integration)
+- Audio (Web Audio API)
+- File I/O (Virtual filesystem)
+- Input (DOM events)
+- Command buffer (efficient WASM→JS batching)
+
+### Thin Demo Runtime (~500 lines)
 - `CreateSprite()` → Three.js Sprite
 - `PositionEntity(id,x,y,z)` → set position
 - `EntityAlpha(id,a)` → set opacity
 - `FreeEntity(id)` → remove from scene
 - `Print(s)` → console.log
 
-## Compilation Test Results
+## SCPCB Compilation Status
 
-| File | Status |
-|------|--------|
-| particles.bb | ✅ Valid WASM, runs correctly |
-| SCPCB/Difficulty.bb | ✅ Compiles |
-| SCPCB/KeyName.bb | ✅ Compiles |
-| SCPCB/Particles.bb | ✅ Compiles |
+| Metric | Value |
+|--------|-------|
+| Files Tested | 57 |
+| Passing | 54 (94.7%) |
+| WASM Validation | 100% |
 
-## Recent Fixes
+## Source of Truth
 
-| Issue | Fix |
-|-------|-----|
-| Type lookup case sensitivity | `.lowercased()` on all lookups |
-| Field access wrong offset | Fixed fieldOffsets lookup |
-| Delete not working | Fixed userTypes lookup |
-| Function shadowing | Added userFunctionIndices map |
-| New allocation stack leak | Changed if block to void |
+- **Plan index**: `plan/README.md`
+- **SCPCB web port**: `plan/scpcb-web-track-b/README.md`
+- **Compiler status**: `docs/COMPILER_STATUS_ANALYSIS.md`
 
-## Next Steps
+## Recent Achievements
 
-1. **Test more SCPCB files** - MapSystem.bb, NPCs.bb
-2. **Implement missing imports** - LoadMesh, LoadTexture, etc.
-3. **Load actual SCPCB assets** - RMesh rooms, textures
-4. **Compile full SCPCB** - Main.bb with all includes
+- Complete asset pipeline (B3D/X/RMESH → SMPK)
+- Command buffer system for efficient WASM→JS
+- Virtual filesystem with path aliasing
+- Memory leak detection tooling
+- CI gates for no-source-model deployment

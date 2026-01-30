@@ -1,7 +1,7 @@
 # Plan 06 — Testing + Long-Run Stability (Leaks, Freezes, Regressions)
 
 Created: 2026-01-29
-Last updated: 2026-01-29 16:33 EST
+Last updated: 2026-01-30
 
 Goal: catch regressions early and ensure the port can run for long sessions without leaks or freezes.
 
@@ -10,7 +10,7 @@ Goal: catch regressions early and ensure the port can run for long sessions with
 - [x] SMPK codec tests. (2026-01-29)
 - [x] `.b3d/.x/.rmesh` conversion integration tests. (2026-01-29)
 - [x] CMDB wasm export contract tests. (2026-01-29: `Tools/cmdbuf_wasm_check.ts` + `Tools/tests/cmdbuf_wasm_check.test.ts`)
-- [ ] Add tests for:
+- [x] Add tests for key build/runtime contracts. (2026-01-30)
   - [x] “manifest references exist on disk” (for dist build output) (2026-01-29: `Tools/validate_manifest_files.ts` + `Tools/tests/validate_manifest_files.test.ts`)
   - [x] “SMPK materials reference present textures” (policy-based) (2026-01-30: `Tools/validate_smpk_material_textures.ts` + `Tools/tests/smpk_material_textures_validator.test.ts`)
 

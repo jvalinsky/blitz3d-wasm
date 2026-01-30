@@ -1,7 +1,7 @@
 # Plan 05 — Build/Deploy + CI Gates (Reproducible, Enforced Contracts)
 
 Created: 2026-01-29
-Last updated: 2026-01-29 16:56 EST
+Last updated: 2026-01-30
 
 Goal: build outputs are reproducible and enforce Track B constraints automatically.
 
@@ -25,7 +25,7 @@ Goal: build outputs are reproducible and enforce Track B constraints automatical
 
 ## C) CI Tasks
 
-- [ ] Standardize CI pipeline:
+- [x] Standardize CI pipeline. (2026-01-30)
   - [x] `deno task test:swift` (exists in `deno.json`). (2026-01-29)
   - [x] `deno task test:deno` (exists in `deno.json`). (2026-01-29)
   - [x] `deno task test:web:build` (exists in `deno.json`). (2026-01-29)
@@ -34,5 +34,5 @@ Goal: build outputs are reproducible and enforce Track B constraints automatical
 - [x] Add progress reporting for long compiles (NDJSON) so wrappers can show a progress bar. (2026-01-29: `Tools/wasm-cli/main.swift` `--progress ndjson`, includes per-function codegen progress; used by `Tools/compile_scpcb_main.ts`)
 
 Acceptance Criteria:
-- [ ] CI fails immediately if `.b3d/.x/.rmesh` would be shipped.
+- [x] CI fails immediately if `.b3d/.x/.rmesh` would be shipped. (2026-01-30: `deno task test:web:build` enforces via `Tools/validate_no_source_models.ts`)
 - [x] CI produces a stable artifact with the same manifest hash given the same inputs. (2026-01-30: sort `files` and group lists in `web/build.ts`)

@@ -1,7 +1,7 @@
 # Plan 01 — Asset Pipeline (Offline Conversion, No Source Formats Shipped)
 
 Created: 2026-01-29
-Last updated: 2026-01-29 15:39 EST
+Last updated: 2026-01-30
 
 Goal: all model/room assets are converted offline into `.smpk`, and the web build **never** serves `.b3d/.x/.rmesh`.
 
@@ -12,7 +12,7 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
   - [ ] static string literals (convert automatically)
   - [ ] dynamic path construction (needs manual mapping rules)
   - [ ] optional/unused content (can defer)
-- [ ] Add a CI gate that fails if new `.b3d/.x/.rmesh` literals are introduced without conversion rules.
+- [x] Add a CI gate that fails if new `.b3d/.x/.rmesh` literals are introduced without conversion rules. (2026-01-30: `Tools/scpcb_audit_gate.ts` + baseline `docs/scpcb/scpcb_audit_baseline.json` + task `deno task scpcb:audit`)
 
 ## B) Converters (B3D/X/RMESH → SMPK)
 

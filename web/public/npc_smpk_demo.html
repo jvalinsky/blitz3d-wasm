@@ -263,7 +263,16 @@
         for (let si = 0; si < skins.length; si++) {
             const skin = skins[si];
             const joints = skin.joints;
+            if (!joints || joints.length === 0) {
+                log(`Skin ${si} has no joints, skipping`);
+                continue;
+            }
+            
             const ibmAcc = json.accessors[skin.inverseBindMatrices];
+            if (!ibmAcc) {
+                log(`Skin ${si} missing inverse bind matrices, skipping`);
+                continue;
+            }
             
             // Read inverse bind matrices
             const ibmData = new Float32Array(joints.length * 16);
@@ -282,14 +291,18 @@
                 ibm.fromArray(ibmData, ji * 16);
                 
                 const bone = new THREE.Bone();
-                bone.name = node.name || `bone_${ji}`;
-                bone.position.copy(node.position);
-                bone.quaternion.copy(node.quaternion);
-                bone.scale.copy(node.scale);
+                bone.name = node ? node.name : `bone_${ji}`;
+                if (node) {
+                    bone.position.copy(node.position);
+                    bone.quaternion.copy(node.quaternion);
+                    bone.scale.copy(node.scale);
+                }
                 bone.bindMatrixInverse = ibm;
                 
                 bones.push(bone);
-                nodeObjects[nodeIndex] = bone; // Replace Object3D with Bone
+                if (node && nodeIndex < nodeObjects.length) {
+                    nodeObjects[nodeIndex] = bone; // Replace Object3D with Bone
+                }
             }
             
             // Build bone hierarchy
@@ -298,7 +311,7 @@
                 const node = nodes[nodeIndex];
                 const bone = bones[ji];
                 
-                if (node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
+                if (node && node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
                     const parentBone = nodeObjects[node.parent];
                     if (parentBone && parentBone instanceof THREE.Bone) {
                         parentBone.add(bone);
@@ -415,15 +428,30 @@
                 
                 const mesh = new THREE.SkinnedMesh(geometry, material);
                 
-                // Attach skeleton to skinned mesh
+                // Attach skeleton to skinned mesh if available
+                let skeletonValid = false;
                 for (const sk of skeletons) {
-                    if (sk.skeleton.bones.length > 0) {
-                        mesh.bind(sk.skeleton);
-                        break;
+                    if (sk.skeleton && sk.skeleton.bones && sk.skeleton.bones.length > 0) {
+                        try {
+                            mesh.bind(sk.skeleton);
+                            skeletonValid = true;
+                            log(`Bound skeleton with ${sk.skeleton.bones.length} bones`);
+                            break;
+                        } catch (e) {
+                            log(`Failed to bind skeleton: ${e.message}`);
+                        }
                     }
                 }
                 
-                meshGroup.add(mesh);
+                if (!skeletonValid) {
+                    // Convert to regular mesh if skeleton binding fails
+                    log(`No valid skeleton, using regular mesh`);
+                    const regularMesh = new THREE.Mesh(geometry, material);
+                    meshGroup.add(regularMesh);
+                    meshGroup.remove(mesh);
+                } else {
+                    meshGroup.add(mesh);
+                }
             }
             
             // Attach mesh to node
@@ -475,12 +503,22 @@
             }
             
             if (tracks.length > 0) {
-                const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
-                mixer = new THREE.AnimationMixer(group);
-                npcAction = mixer.clipAction(clip);
-                npcAction.setLoop(THREE.LoopRepeat);
-                npcAction.play();
-                log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+                try {
+                    const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
+                    if (clip.duration > 0) {
+                        mixer = new THREE.AnimationMixer(group);
+                        npcAction = mixer.clipAction(clip);
+                        npcAction.setLoop(THREE.LoopRepeat);
+                        npcAction.play();
+                        log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+                    } else {
+                        log(`Animation clip has zero duration, skipping`);
+                    }
+                } catch (e) {
+                    log(`Animation setup failed: ${e.message}`);
+                }
+            } else {
+                log(`No animation tracks (model has ${json.animations?.length || 0} animations)`);
             }
         }
         
@@ -578,7 +616,9 @@
         document.getElementById('btnFast').disabled = false;
         
         animPlaying = true;
-        if (npcAction) npcAction.play();
+        if (npcAction) {
+            npcAction.play();
+        }
         
         statsDiv.textContent = `Model: ${modelName}`;
         log('');
@@ -671,10 +711,13 @@
         const now = performance.now();
         const dt = clock.getDelta();
         
-        if (mixer) mixer.update(dt);
+        // Update animation mixer if valid
+        if (mixer && npcAction && npcAction.isRunning()) {
+            mixer.update(dt);
+        }
         
         // Simple walking animation for placeholder
-        if (animPlaying && npcEntity && npcEntity.userData.leftArm) {
+        if (animPlaying && npcEntity && npcEntity.userData && npcEntity.userData.leftArm) {
             animTime += dt * 30 * animSpeed;
             const t = (animTime % 30) / 30;
             const swing = Math.sin(t * Math.PI * 2) * 0.5;

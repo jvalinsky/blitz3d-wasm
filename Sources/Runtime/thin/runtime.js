@@ -83,6 +83,7 @@ class Blitz3DThinRuntime {
     }
     
     render() {
+        this.updateAnimations();
         if (this.activeCamera) {
             this.renderer.render(this.scene, this.activeCamera);
         }
@@ -485,11 +486,377 @@ class Blitz3DThinRuntime {
                 
                 ChannelPlaying: (ch) => self.channels.has(ch) ? 1 : 0,
                 FreeSound: (snd) => self.sounds.delete(snd),
+                
+                //==================================================================
+                // B3D Model Loading (simplified parser for thin runtime)
+                //==================================================================
+                
+                LoadAnimMesh: async (pathPtr) => {
+                    const path = self._readString(pathPtr);
+                    console.log(`LoadAnimMesh: ${path}`);
+                    
+                    try {
+                        const response = await fetch(path);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const buffer = await response.arrayBuffer();
+                        const data = new Uint8Array(buffer);
+                        
+                        // Parse B3D and create Three.js mesh
+                        const entityId = await self._parseB3D(data, 0);
+                        console.log(`Loaded B3D model -> entity ${entityId}`);
+                        return entityId;
+                    } catch (e) {
+                        console.warn(`Failed to load ${path}: ${e.message}`);
+                        // Return placeholder cube
+                        return self._createPlaceholder();
+                    }
+                },
+                
+                Animate: (entityId, mode, speed, seq, trans) => {
+                    const ent = self.entities.get(entityId);
+                    if (ent && ent.animations) {
+                        // mode: 0=stop, 1=loop, 2=pingpong, 3=oneshot
+                        ent.animMode = mode;
+                        ent.animSpeed = speed || 1.0;
+                        ent.animSeq = seq || 0;
+                        ent.animTime = 0;
+                        ent.animPlaying = mode !== 0;
+                        console.log(`Animate entity ${entityId}: mode=${mode}, speed=${speed}`);
+                    }
+                },
+                
+                AnimLength: (entityId) => {
+                    const ent = self.entities.get(entityId);
+                    return ent && ent.animLength ? ent.animLength : 0;
+                },
+                
+                AnimTime: (entityId) => {
+                    const ent = self.entities.get(entityId);
+                    return ent ? (ent.animTime || 0) : 0;
+                },
+                
+                Animating: (entityId) => {
+                    const ent = self.entities.get(entityId);
+                    return (ent && ent.animPlaying) ? 1 : 0;
+                },
+                
+                SetAnimSeq: (entityId, seq) => {
+                    const ent = self.entities.get(entityId);
+                    if (ent) ent.animSeq = seq;
+                },
             }),
             
             blitz3d: createProxy({}),
             al: createProxy({}),
         };
+    }
+    
+    //==================================================================
+    // B3D Parser (simplified)
+    //==================================================================
+    
+    async _parseB3D(data, parentId) {
+        const offset = 0;
+        
+        // Check header
+        const header = String.fromCharCode(...data.slice(0, 4));
+        if (header !== 'BB3D') {
+            console.warn('Invalid B3D header');
+            return this._createPlaceholder();
+        }
+        
+        const version = new DataView(data.buffer).getInt32(4, true);
+        console.log(`B3D version: ${version}`);
+        
+        let pos = 8;
+        const meshes = [];
+        const animations = [];
+        
+        while (pos < data.length - 8) {
+            const chunkId = new DataView(data.buffer).getInt32(pos, false);
+            const chunkSize = new DataView(data.buffer).getInt32(pos + 4, true);
+            const chunkName = String.fromCharCode(
+                (chunkId >> 24) & 0xff,
+                (chunkId >> 16) & 0xff,
+                (chunkId >> 8) & 0xff,
+                chunkId & 0xff
+            );
+            
+            const chunkEnd = pos + 8 + chunkSize;
+            
+            if (chunkName === 'TEXS') {
+                pos = await this._parseTextures(data, pos + 8, chunkSize);
+            } else if (chunkName === 'BRUS') {
+                pos = this._parseBrushes(data, pos + 8, chunkSize);
+            } else if (chunkName === 'MESH') {
+                const meshData = await this._parseMesh(data, pos + 8, chunkSize);
+                if (meshData) meshes.push(meshData);
+                pos = chunkEnd;
+            } else if (chunkName === 'ANIM') {
+                const animData = this._parseAnimation(data, pos + 8, chunkSize);
+                if (animData) animations.push(animData);
+                pos = chunkEnd;
+            } else {
+                pos = chunkEnd;
+            }
+        }
+        
+        // Create Three.js objects
+        const root = new THREE.Group();
+        const rootId = this.nextEntityId++;
+        this.entities.set(rootId, { 
+            obj: root, 
+            type: 'model',
+            animations: animations,
+            animMode: 0,
+            animSpeed: 1.0,
+            animTime: 0,
+            animPlaying: false,
+            animLength: animations.length > 0 ? animations[0].frames : 0
+        });
+        this.scene.add(root);
+        
+        // Create meshes
+        for (const meshData of meshes) {
+            const mesh = this._createMeshFromData(meshData);
+            if (mesh) root.add(mesh);
+        }
+        
+        return rootId;
+    }
+    
+    async _parseTextures(data, offset, size) {
+        const end = offset + size;
+        while (offset < end) {
+            let name = '';
+            while (offset < end && data[offset] !== 0) {
+                name += String.fromCharCode(data[offset++]);
+            }
+            offset++; // skip null
+            // Skip texture flags, blend, u/v params
+            offset += 4 + 4 + 4 + 4 + 4 + 4 + 4;
+        }
+        return end;
+    }
+    
+    _parseBrushes(data, offset, size) {
+        const end = offset + size;
+        const numTexs = new DataView(data.buffer).getInt32(offset, true);
+        offset += 4;
+        
+        while (offset < end) {
+            let name = '';
+            while (offset < end && data[offset] !== 0) {
+                name += String.fromCharCode(data[offset++]);
+            }
+            offset++; // skip null
+            // Skip color (4 floats), blend, fx
+            offset += 4 + 4 + 4 + 4 + 4 + 4 + 4;
+            // Skip texture IDs
+            for (let i = 0; i < numTexs && offset < end; i++) {
+                offset += 4;
+            }
+        }
+        return end;
+    }
+    
+    async _parseMesh(data, offset, size) {
+        const end = offset + size;
+        
+        // Skip mesh flags if present
+        if (offset + 4 <= end && data[offset] === 0xff) {
+            offset += 4;
+        }
+        
+        let vertices = null;
+        let indices = null;
+        let brushIndex = -1;
+        
+        while (offset < end - 8) {
+            const subChunkId = new DataView(data.buffer).getInt32(offset, false);
+            const subChunkSize = new DataView(data.buffer).getInt32(offset + 4, true);
+            const subEnd = offset + 8 + subChunkSize;
+            
+            const subChunkName = String.fromCharCode(
+                (subChunkId >> 24) & 0xff,
+                (subChunkId >> 16) & 0xff,
+                (subChunkId >> 8) & 0xff,
+                subChunkId & 0xff
+            );
+            
+            if (subChunkName === 'VRTS') {
+                vertices = this._parseVertices(data, offset + 8, subChunkSize);
+            } else if (subChunkName === 'TRIS') {
+                brushIndex = new DataView(data.buffer).getInt32(offset + 8, true);
+                indices = this._parseTriangles(data, offset + 12, subChunkSize - 4);
+            }
+            
+            offset = subEnd;
+        }
+        
+        return vertices && indices ? { vertices, indices, brushIndex } : null;
+    }
+    
+    _parseVertices(data, offset, size) {
+        const end = offset + size;
+        const vertexFlags = new DataView(data.buffer).getInt32(offset, true);
+        const texCoordSets = new DataView(data.buffer).getInt32(offset + 4, true);
+        const texCoordSize = new DataView(data.buffer).getInt32(offset + 8, true);
+        offset += 12;
+        
+        const positions = [];
+        const normals = [];
+        const uvs = [];
+        const colors = [];
+        
+        while (offset < end - 12) {
+            const x = new DataView(data.buffer).getFloat32(offset, true);
+            const y = new DataView(data.buffer).getFloat32(offset + 4, true);
+            const z = new DataView(data.buffer).getFloat32(offset + 8, true);
+            positions.push(x, y, -z); // Negate Z
+            offset += 12;
+            
+            if (vertexFlags & 1) {
+                const nx = new DataView(data.buffer).getFloat32(offset, true);
+                const ny = new DataView(data.buffer).getFloat32(offset + 4, true);
+                const nz = new DataView(data.buffer).getFloat32(offset + 8, true);
+                normals.push(nx, ny, -nz);
+                offset += 12;
+            }
+            
+            if (vertexFlags & 2) {
+                colors.push(data[offset] / 255, data[offset + 1] / 255, data[offset + 2] / 255, data[offset + 3] / 255);
+                offset += 4;
+            }
+            
+            for (let tc = 0; tc < texCoordSets && tc < 2; tc++) {
+                if (offset + 8 > end) break;
+                const u = new DataView(data.buffer).getFloat32(offset, true);
+                const v = new DataView(data.buffer).getFloat32(offset + 4, true);
+                uvs.push(u, 1 - v);
+                offset += 8;
+            }
+        }
+        
+        return { positions, normals, uvs, colors, vertexFlags };
+    }
+    
+    _parseTriangles(data, offset, size) {
+        const end = offset + size;
+        const indices = [];
+        
+        while (offset < end - 12) {
+            const v0 = new DataView(data.buffer).getInt32(offset, true);
+            const v1 = new DataView(data.buffer).getInt32(offset + 4, true);
+            const v2 = new DataView(data.buffer).getInt32(offset + 8, true);
+            indices.push(v0, v2, v1); // Reverse winding
+            offset += 12;
+            
+            if (offset + 12 <= end) {
+                offset += 12; // Skip control points
+            }
+        }
+        
+        return indices;
+    }
+    
+    _parseAnimation(data, offset, size) {
+        const end = offset + size;
+        const flags = new DataView(data.buffer).getInt32(offset, true);
+        const frames = new DataView(data.buffer).getInt32(offset + 4, true);
+        const speed = new DataView(data.buffer).getFloat32(offset + 8, true);
+        
+        return { flags, frames, speed, tracks: [] };
+    }
+    
+    _createMeshFromData(meshData) {
+        const { positions, indices, normals, uvs, colors } = meshData;
+        
+        if (positions.length === 0) return null;
+        
+        const geometry = new THREE.BufferGeometry();
+        
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        
+        if (normals.length > 0) {
+            geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        } else {
+            geometry.computeVertexNormals();
+        }
+        
+        if (uvs.length > 0) {
+            geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        }
+        
+        if (indices.length > 0) {
+            geometry.setIndex(indices);
+        }
+        
+        let material;
+        if (colors.length > 0) {
+            material = new THREE.MeshBasicMaterial({
+                vertexColors: true,
+                side: THREE.DoubleSide
+            });
+        } else {
+            material = new THREE.MeshStandardMaterial({
+                color: 0x888888,
+                side: THREE.DoubleSide
+            });
+        }
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        
+        return mesh;
+    }
+    
+    _createPlaceholder() {
+        const geometry = new THREE.BoxGeometry(1, 2, 1);
+        const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const mesh = new THREE.Mesh(geometry, material);
+        
+        const root = new THREE.Group();
+        const rootId = this.nextEntityId++;
+        this.entities.set(rootId, { obj: root, type: 'model' });
+        root.add(mesh);
+        this.scene.add(root);
+        
+        return rootId;
+    }
+    
+    //==================================================================
+    // Animation Update (called each frame)
+    //==================================================================
+    
+    updateAnimations() {
+        for (const [id, ent] of this.entities) {
+            if (ent.animations && ent.animPlaying && ent.animMode !== 0) {
+                ent.animTime += ent.animSpeed;
+                
+                const length = ent.animLength || 30;
+                if (ent.animTime >= length) {
+                    if (ent.animMode === 1) { // Loop
+                        ent.animTime = 0;
+                    } else if (ent.animMode === 3) { // OneShot
+                        ent.animTime = length;
+                        ent.animPlaying = false;
+                    } else if (ent.animMode === 2) { // PingPong
+                        ent.animTime = length;
+                        ent.animMode = -2; // Reverse
+                    }
+                } else if (ent.animTime < 0 && ent.animMode === -2) {
+                    ent.animTime = 0;
+                    ent.animMode = 2; // Forward
+                }
+                
+                // Apply animation to entity (simple: rotate based on time)
+                if (ent.obj) {
+                    ent.obj.rotation.y = (ent.animTime / length) * Math.PI * 2;
+                }
+            }
+        }
     }
     
     async loadAndRun(wasmUrl, entryPoint = 'Main') {

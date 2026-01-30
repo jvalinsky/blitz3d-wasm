@@ -128,21 +128,18 @@ cd /home/exedev/Software/blitz3d-wasm
 
 This script:
 1. Builds TypeScript sources (if needed)
-2. Creates/updates web root at `/var/www/blitz3d`
+2. Creates/updates web root at `/var/www/html` (nginx web root)
 3. Copies HTML and static assets
 4. Copies built JavaScript/TypeScript dist
 5. Converts and copies NPC models (if source B3D files exist)
 
-**Do NOT manually copy files to `/var/www/blitz3d`** - use the deploy script to ensure all changes are properly deployed.
+**Do NOT manually copy files to `/var/www/html`** - use the deploy script to ensure all changes are properly deployed.
 
-After deployment, the demo is available at:
+**Note**: The deployment uses nginx which is already running on port 8000. After deployment, the demo is immediately available at:
 - Local: `http://localhost:8000/npc_smpk_demo.html`
 - Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
 
-Start the web server with:
-```bash
-cd /var/www/blitz3d && busybox httpd -f -p 8000 -h .
-```
+No need to start a separate web server - nginx is already configured to serve from `/var/www/html` on port 8000.
 
 ### Linux Note
 
@@ -183,15 +180,16 @@ The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models 
    ./deploy.sh
    ```
 
-2. Start server:
-   ```bash
-   cd /var/www/blitz3d
-   busybox httpd -f -p 8000 -h .
-   ```
-
-3. Open in browser:
+2. Open in browser (nginx is already running):
    - Local: `http://localhost:8000/npc_smpk_demo.html`
    - Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
+
+Features:
+- Load SCPCB NPC models (SCP-173, SCP-049, Guard, Class-D, etc.)
+- Skeletal animation playback with Three.js AnimationMixer
+- Animation controls: play/pause, speed adjustment (0.25x-2.0x), frame scrubbing
+- Clip and sequence selection
+- Real-time frame counter
 
 ## Web UI (SCPCB Loader)
 

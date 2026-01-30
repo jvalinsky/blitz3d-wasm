@@ -28,6 +28,24 @@ export const enum CmdOpcode {
   MoveEntity = 11,
   TurnEntity = 12,
   SetParent = 13,
+  LoadMesh = 14,
+  LoadAnimMesh = 15,
+  CreateMesh = 16,
+  LoadTexture = 17,
+  TextureBlend = 18,
+  TextureCoords = 19,
+  CreateBrush = 20,
+  BrushColor = 21,
+  BrushAlpha = 22,
+  BrushShininess = 23,
+  BrushTexture = 24,
+  EntityTexture = 25,
+  EntityColor = 26,
+  EntityAlpha = 27,
+  EntityShininess = 28,
+  EntityFX = 29,
+  EntityBlend = 30,
+  FreeEntity = 31,
 }
 
 export type Cmd =
@@ -49,7 +67,25 @@ export type Cmd =
   | { op: CmdOpcode.SetScale; id: number; x: number; y: number; z: number }
   | { op: CmdOpcode.MoveEntity; id: number; x: number; y: number; z: number }
   | { op: CmdOpcode.TurnEntity; id: number; pitch: number; yaw: number; roll: number; global: number }
-  | { op: CmdOpcode.SetParent; id: number; parent: number; global: number };
+  | { op: CmdOpcode.SetParent; id: number; parent: number; global: number }
+  | { op: CmdOpcode.LoadMesh; id: number; parent: number; pathPtr: number }
+  | { op: CmdOpcode.LoadAnimMesh; id: number; parent: number; pathPtr: number }
+  | { op: CmdOpcode.CreateMesh; id: number; parent: number }
+  | { op: CmdOpcode.LoadTexture; id: number; pathPtr: number; flags: number }
+  | { op: CmdOpcode.TextureBlend; id: number; blend: number }
+  | { op: CmdOpcode.TextureCoords; id: number; coords: number }
+  | { op: CmdOpcode.CreateBrush; id: number }
+  | { op: CmdOpcode.BrushColor; id: number; r: number; g: number; b: number }
+  | { op: CmdOpcode.BrushAlpha; id: number; a: number }
+  | { op: CmdOpcode.BrushShininess; id: number; s: number }
+  | { op: CmdOpcode.BrushTexture; brushId: number; textureId: number; frame: number; index: number }
+  | { op: CmdOpcode.EntityTexture; entityId: number; textureId: number; frame: number; index: number }
+  | { op: CmdOpcode.EntityColor; entityId: number; r: number; g: number; b: number }
+  | { op: CmdOpcode.EntityAlpha; entityId: number; a: number }
+  | { op: CmdOpcode.EntityShininess; entityId: number; s: number }
+  | { op: CmdOpcode.EntityFX; entityId: number; fx: number }
+  | { op: CmdOpcode.EntityBlend; entityId: number; blend: number }
+  | { op: CmdOpcode.FreeEntity; id: number };
 
 export const initCmdBuf = (buffer: ArrayBuffer, byteOffset = 0, totalBytes?: number) => {
   const bytes = totalBytes ?? (buffer.byteLength - byteOffset);
@@ -239,6 +275,141 @@ export const writeCmd = (dv: DataView, cmd: Cmd) => {
       writeU32(dv, base + 16, cmd.global ? 1 : 0);
       return;
     }
+    case CmdOpcode.LoadMesh: {
+      const byteLen = CMD_HDR + 12;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.parent);
+      writeU32(dv, base + 16, cmd.pathPtr);
+      return;
+    }
+    case CmdOpcode.LoadAnimMesh: {
+      const byteLen = CMD_HDR + 12;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.parent);
+      writeU32(dv, base + 16, cmd.pathPtr);
+      return;
+    }
+    case CmdOpcode.CreateMesh: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.parent);
+      return;
+    }
+    case CmdOpcode.LoadTexture: {
+      const byteLen = CMD_HDR + 12;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.pathPtr);
+      writeU32(dv, base + 16, cmd.flags);
+      return;
+    }
+    case CmdOpcode.TextureBlend: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.blend);
+      return;
+    }
+    case CmdOpcode.TextureCoords: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeU32(dv, base + 12, cmd.coords);
+      return;
+    }
+    case CmdOpcode.CreateBrush: {
+      const byteLen = CMD_HDR + 4;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      return;
+    }
+    case CmdOpcode.BrushColor: {
+      const byteLen = CMD_HDR + 16;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeF32(dv, base + 12, cmd.r);
+      writeF32(dv, base + 16, cmd.g);
+      writeF32(dv, base + 20, cmd.b);
+      return;
+    }
+    case CmdOpcode.BrushAlpha: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeF32(dv, base + 12, cmd.a);
+      return;
+    }
+    case CmdOpcode.BrushShininess: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      writeF32(dv, base + 12, cmd.s);
+      return;
+    }
+    case CmdOpcode.BrushTexture: {
+      const byteLen = CMD_HDR + 16;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.brushId);
+      writeU32(dv, base + 12, cmd.textureId);
+      writeU32(dv, base + 16, cmd.frame);
+      writeU32(dv, base + 20, cmd.index);
+      return;
+    }
+    case CmdOpcode.EntityTexture: {
+      const byteLen = CMD_HDR + 16;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeU32(dv, base + 12, cmd.textureId);
+      writeU32(dv, base + 16, cmd.frame);
+      writeU32(dv, base + 20, cmd.index);
+      return;
+    }
+    case CmdOpcode.EntityColor: {
+      const byteLen = CMD_HDR + 16;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeF32(dv, base + 12, cmd.r);
+      writeF32(dv, base + 16, cmd.g);
+      writeF32(dv, base + 20, cmd.b);
+      return;
+    }
+    case CmdOpcode.EntityAlpha: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeF32(dv, base + 12, cmd.a);
+      return;
+    }
+    case CmdOpcode.EntityShininess: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeF32(dv, base + 12, cmd.s);
+      return;
+    }
+    case CmdOpcode.EntityFX: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeU32(dv, base + 12, cmd.fx);
+      return;
+    }
+    case CmdOpcode.EntityBlend: {
+      const byteLen = CMD_HDR + 8;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.entityId);
+      writeU32(dv, base + 12, cmd.blend);
+      return;
+    }
+    case CmdOpcode.FreeEntity: {
+      const byteLen = CMD_HDR + 4;
+      commit(byteLen);
+      writeU32(dv, base + 8, cmd.id);
+      return;
+    }
     default: {
       const _exhaustive: never = cmd;
       throw new Error(`CMDB write: unknown opcode ${(cmd as any).op}`);
@@ -360,6 +531,123 @@ export const drainCmds = (dv: DataView, onCmd: (cmd: Cmd) => void) => {
         const parent = readU32(dv, r + 12);
         const global = readU32(dv, r + 16) ? 1 : 0;
         onCmd({ op, id, parent, global });
+        break;
+      }
+      case CmdOpcode.LoadMesh: {
+        const id = readU32(dv, r + 8);
+        const parent = readU32(dv, r + 12);
+        const pathPtr = readU32(dv, r + 16);
+        onCmd({ op, id, parent, pathPtr });
+        break;
+      }
+      case CmdOpcode.LoadAnimMesh: {
+        const id = readU32(dv, r + 8);
+        const parent = readU32(dv, r + 12);
+        const pathPtr = readU32(dv, r + 16);
+        onCmd({ op, id, parent, pathPtr });
+        break;
+      }
+      case CmdOpcode.CreateMesh: {
+        const id = readU32(dv, r + 8);
+        const parent = readU32(dv, r + 12);
+        onCmd({ op, id, parent });
+        break;
+      }
+      case CmdOpcode.LoadTexture: {
+        const id = readU32(dv, r + 8);
+        const pathPtr = readU32(dv, r + 12);
+        const flags = readU32(dv, r + 16);
+        onCmd({ op, id, pathPtr, flags });
+        break;
+      }
+      case CmdOpcode.TextureBlend: {
+        const id = readU32(dv, r + 8);
+        const blend = readU32(dv, r + 12);
+        onCmd({ op, id, blend });
+        break;
+      }
+      case CmdOpcode.TextureCoords: {
+        const id = readU32(dv, r + 8);
+        const coords = readU32(dv, r + 12);
+        onCmd({ op, id, coords });
+        break;
+      }
+      case CmdOpcode.CreateBrush: {
+        const id = readU32(dv, r + 8);
+        onCmd({ op, id });
+        break;
+      }
+      case CmdOpcode.BrushColor: {
+        const id = readU32(dv, r + 8);
+        const rVal = readF32(dv, r + 12);
+        const gVal = readF32(dv, r + 16);
+        const bVal = readF32(dv, r + 20);
+        onCmd({ op, id, r: rVal, g: gVal, b: bVal });
+        break;
+      }
+      case CmdOpcode.BrushAlpha: {
+        const id = readU32(dv, r + 8);
+        const a = readF32(dv, r + 12);
+        onCmd({ op, id, a });
+        break;
+      }
+      case CmdOpcode.BrushShininess: {
+        const id = readU32(dv, r + 8);
+        const s = readF32(dv, r + 12);
+        onCmd({ op, id, s });
+        break;
+      }
+      case CmdOpcode.BrushTexture: {
+        const brushId = readU32(dv, r + 8);
+        const textureId = readU32(dv, r + 12);
+        const frame = readU32(dv, r + 16);
+        const index = readU32(dv, r + 20);
+        onCmd({ op, brushId, textureId, frame, index });
+        break;
+      }
+      case CmdOpcode.EntityTexture: {
+        const entityId = readU32(dv, r + 8);
+        const textureId = readU32(dv, r + 12);
+        const frame = readU32(dv, r + 16);
+        const index = readU32(dv, r + 20);
+        onCmd({ op, entityId, textureId, frame, index });
+        break;
+      }
+      case CmdOpcode.EntityColor: {
+        const entityId = readU32(dv, r + 8);
+        const rVal = readF32(dv, r + 12);
+        const gVal = readF32(dv, r + 16);
+        const bVal = readF32(dv, r + 20);
+        onCmd({ op, entityId, r: rVal, g: gVal, b: bVal });
+        break;
+      }
+      case CmdOpcode.EntityAlpha: {
+        const entityId = readU32(dv, r + 8);
+        const a = readF32(dv, r + 12);
+        onCmd({ op, entityId, a });
+        break;
+      }
+      case CmdOpcode.EntityShininess: {
+        const entityId = readU32(dv, r + 8);
+        const s = readF32(dv, r + 12);
+        onCmd({ op, entityId, s });
+        break;
+      }
+      case CmdOpcode.EntityFX: {
+        const entityId = readU32(dv, r + 8);
+        const fx = readU32(dv, r + 12);
+        onCmd({ op, entityId, fx });
+        break;
+      }
+      case CmdOpcode.EntityBlend: {
+        const entityId = readU32(dv, r + 8);
+        const blend = readU32(dv, r + 12);
+        onCmd({ op, entityId, blend });
+        break;
+      }
+      case CmdOpcode.FreeEntity: {
+        const id = readU32(dv, r + 8);
+        onCmd({ op, id });
         break;
       }
       default:

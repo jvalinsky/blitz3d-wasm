@@ -3,6 +3,7 @@ import { Blitz3DGraphics } from "./runtime/graphics";
 import { Blitz3DFileIO } from "./runtime/fileio";
 import { initCmdBuf } from "./shared/command_buffer";
 import { assertCmdBufAbi } from "./shared/cmdbuf_abi";
+import { EntityTableView } from "./shared/entity_table";
 import { BootStateMachine } from "./shared/boot_state_machine";
 
 type LoaderElements = {
@@ -75,14 +76,14 @@ const terminateWorker = () => {
   if (currentWorkerWatchdog != null) {
     try {
       clearTimeout(currentWorkerWatchdog);
-    } catch {}
+    } catch { }
     currentWorkerWatchdog = null;
   }
   const prevStatus = (window as any).__WORKER_STATUS;
   if (currentWorker) {
     try {
       currentWorker.terminate();
-    } catch {}
+    } catch { }
   }
   currentWorker = null;
   // Keep last status for HUD/debugging after termination.
@@ -94,12 +95,12 @@ const terminateWorker = () => {
     try {
       clearTimeout(p.timeoutId);
       p.reject(new Error("worker terminated"));
-    } catch {}
+    } catch { }
   }
   currentWorkerPending.clear();
   try {
     currentWorkerUiRefresh?.();
-  } catch {}
+  } catch { }
 };
 
 const formatMaybeNumber = (v: unknown) => {
@@ -119,7 +120,7 @@ const getExportValue = (instance: WebAssembly.Instance | null, name: string) => 
     const v: any = (instance.exports as any)[name];
     if (typeof v === "number" || typeof v === "bigint") return v;
     if (v && typeof v === "object" && "value" in v) return v.value;
-  } catch {}
+  } catch { }
   return undefined;
 };
 
@@ -235,7 +236,7 @@ const drawDebugHud = (core: Blitz3DCore) => {
       if (canvas.style.display !== "block") canvas.style.display = "block";
       if (canvas.style.zIndex !== "100000") canvas.style.zIndex = "100000";
     }
-  } catch {}
+  } catch { }
 
   const instance = (core as any).instance as WebAssembly.Instance | null;
 
@@ -255,14 +256,20 @@ const drawDebugHud = (core: Blitz3DCore) => {
   );
   const initDone = Boolean((globalThis as any).__SCPCB_INIT_DONE);
 
-  const perf = core.getPerformanceStats?.() ?? {};
+  const perf: any = core.getPerformanceStats?.() ?? {
+    fps: "0.0",
+    frameCount: 0,
+    heapAllocations: 0,
+    stringAllocations: 0,
+    memoryUsage: "N/A",
+  };
   const gfx: any = (core as any).graphics;
 
   const baseLines: string[] = [];
   baseLines.push(`Blitz3D HUD • v=${LOADER_BUILD_ID}`);
   baseLines.push(
     `initDone=${initDone} stage=${initStage || "(none)"} file=${lastFileReq ||
-      "(none)"}`,
+    "(none)"}`,
   );
   if (initFile || preload) {
     baseLines.push(
@@ -286,40 +293,35 @@ const drawDebugHud = (core: Blitz3DCore) => {
           `workerCtr=${keys.map((k) => `${k}:${formatMaybeNumber(c[k])}`).join(" ")}`,
         );
       }
-    } catch {}
+    } catch { }
   }
   baseLines.push(
-    `fps=${perf.fps ?? "?"} mem=${perf.memoryUsage ?? "?"} heap=${
-      perf.heapAllocations ?? "?"
+    `fps=${perf.fps ?? "?"} mem=${perf.memoryUsage ?? "?"} heap=${perf.heapAllocations ?? "?"
     } str=${perf.stringAllocations ?? "?"}`,
+  );
+  baseLines.push(
+    `entities=${gfx ? Object.keys(gfx.entities).length : "?"} render=${gfx?.renderer?.info?.render?.calls ?? "?"} draws=${gfx?.renderer?.info?.render?.triangles ?? "?"}`,
   );
   baseLines.push(
     `canvas=${core.canvas?.width ?? "?"}x${core.canvas?.height ?? "?"} overlay=${canvas.width}x${canvas.height}`,
   );
   baseLines.push(
-    `three scene=${gfx?.scene ? "ok" : "missing"} camera=${
-      gfx?.camera ? "ok" : "missing"
+    `three scene=${gfx?.scene ? "ok" : "missing"} camera=${gfx?.camera ? "ok" : "missing"
     } children=${gfx?.scene?.children?.length ?? "?"}`,
   );
   baseLines.push(
-    `WebPort=${formatMaybeNumber(getExportValue(instance, "WebPort"))} LauncherEnabled=${
-      formatMaybeNumber(getExportValue(instance, "LauncherEnabled"))
-    } MenuOpen=${formatMaybeNumber(getExportValue(instance, "MenuOpen"))} MainMenuOpen=${
-      formatMaybeNumber(getExportValue(instance, "MainMenuOpen"))
+    `WebPort=${formatMaybeNumber(getExportValue(instance, "WebPort"))} LauncherEnabled=${formatMaybeNumber(getExportValue(instance, "LauncherEnabled"))
+    } MenuOpen=${formatMaybeNumber(getExportValue(instance, "MenuOpen"))} MainMenuOpen=${formatMaybeNumber(getExportValue(instance, "MainMenuOpen"))
     }`,
   );
   baseLines.push(
-    `Graphic=${formatMaybeNumber(getExportValue(instance, "GraphicWidth"))}x${
-      formatMaybeNumber(getExportValue(instance, "GraphicHeight"))
-    } Real=${formatMaybeNumber(getExportValue(instance, "RealGraphicWidth"))}x${
-      formatMaybeNumber(getExportValue(instance, "RealGraphicHeight"))
-    } MenuScale=${formatMaybeNumber(getExportValue(instance, "MenuScale"))} AR=${
-      formatMaybeNumber(getExportValue(instance, "AspectRatioRatio"))
+    `Graphic=${formatMaybeNumber(getExportValue(instance, "GraphicWidth"))}x${formatMaybeNumber(getExportValue(instance, "GraphicHeight"))
+    } Real=${formatMaybeNumber(getExportValue(instance, "RealGraphicWidth"))}x${formatMaybeNumber(getExportValue(instance, "RealGraphicHeight"))
+    } MenuScale=${formatMaybeNumber(getExportValue(instance, "MenuScale"))} AR=${formatMaybeNumber(getExportValue(instance, "AspectRatioRatio"))
     }`,
   );
   baseLines.push(
-    `player=${formatMaybeNumber(getExportValue(instance, "player"))} cam=${
-      formatMaybeNumber(getExportValue(instance, "cam"))
+    `player=${formatMaybeNumber(getExportValue(instance, "player"))} cam=${formatMaybeNumber(getExportValue(instance, "cam"))
     } Camera=${formatMaybeNumber(getExportValue(instance, "Camera"))}`,
   );
 
@@ -352,7 +354,7 @@ const startDebugHudLoop = (core: Blitz3DCore) => {
   const flags = (window as any).__BLITZ3D_FLAGS as ReturnType<
     typeof getUrlFlags
   > | undefined;
-  if (!flags?.debugHud) return () => {};
+  if (!flags?.debugHud) return () => { };
 
   let raf = 0;
   let running = true;
@@ -360,7 +362,7 @@ const startDebugHudLoop = (core: Blitz3DCore) => {
     if (!running) return;
     try {
       drawDebugHud(core);
-    } catch {}
+    } catch { }
     raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
@@ -368,7 +370,7 @@ const startDebugHudLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch {}
+    } catch { }
   };
 };
 
@@ -377,7 +379,7 @@ const installOnscreenConsole = (elements: LoaderElements) => {
     elements.detail.style.whiteSpace = "pre-wrap";
     elements.detail.style.maxHeight = "40vh";
     elements.detail.style.overflow = "auto";
-  } catch {}
+  } catch { }
 
   const lines: string[] = [];
   const max = 200;
@@ -429,7 +431,7 @@ const installOnscreenConsole = (elements: LoaderElements) => {
     if (raf) {
       try {
         cancelAnimationFrame(raf);
-      } catch {}
+      } catch { }
       raf = 0;
     }
     console.log = origLog;
@@ -493,7 +495,7 @@ const setMutableGlobal = (
       (g as WebAssembly.Global).value = value as any;
       return true;
     }
-  } catch {}
+  } catch { }
   return false;
 };
 
@@ -505,7 +507,7 @@ const getGlobalNumber = (instance: WebAssembly.Instance, name: string) => {
       const gv = (v as WebAssembly.Global).value as any;
       return typeof gv === "number" ? gv : Number(gv);
     }
-  } catch {}
+  } catch { }
   return undefined as undefined | number;
 };
 
@@ -740,20 +742,20 @@ const setupImports = (
 
   // Ensure a few SCPCB-specific imports exist even if HMR/caching gets weird.
   // These are safe no-ops/basic stubs.
-  if (!imports.env.UpdateSoundOrigin) imports.env.UpdateSoundOrigin = () => {};
+  if (!imports.env.UpdateSoundOrigin) imports.env.UpdateSoundOrigin = () => { };
   if (!imports.env.UpdateSoundOrigin2) {
-    imports.env.UpdateSoundOrigin2 = () => {};
+    imports.env.UpdateSoundOrigin2 = () => { };
   }
   if (!imports.env.LoadEventSound) imports.env.LoadEventSound = () => 0;
-  if (!imports.env.PlayAnnouncement) imports.env.PlayAnnouncement = () => {};
+  if (!imports.env.PlayAnnouncement) imports.env.PlayAnnouncement = () => { };
   if (!imports.env.KeyName) imports.env.KeyName = (_k: number) => 0;
-  if (!imports.env.FlipMesh) imports.env.FlipMesh = () => {};
-  if (!imports.env.MeshCullBox) imports.env.MeshCullBox = () => {};
-  if (!imports.env.LightConeAngles) imports.env.LightConeAngles = () => {};
+  if (!imports.env.FlipMesh) imports.env.FlipMesh = () => { };
+  if (!imports.env.MeshCullBox) imports.env.MeshCullBox = () => { };
+  if (!imports.env.LightConeAngles) imports.env.LightConeAngles = () => { };
 
   if (flags.noAudio) {
     console.warn("noaudio=1: stubbing audio imports");
-    const noop = () => {};
+    const noop = () => { };
     const zero = () => 0;
     imports.env.FSOUND_Init = () => 1;
     imports.env.FSOUND_Close = noop;
@@ -882,46 +884,89 @@ const attachRuntime = (
     return 0;
   };
 
-  // Command buffer (Track B): allocate a shared CMDB region in WASM memory if `__StringAlloc` exists.
-  // Compiled BB code can write directly when built with `--cmdbuf` (the ABI is versioned and checked here).
+  // Command buffer & Entity Table (Track B): allocate shared regions in WASM memory if `__StringAlloc` exists.
   assertCmdBufAbi(instance.exports);
   try {
     const stringAlloc = (instance.exports as any).__StringAlloc;
     const mem = core.memory;
     if (typeof stringAlloc === "function" && mem) {
-      const bytes = 256 * 1024; // v1 default
-      const objPtr = (stringAlloc as Function)(bytes) | 0;
-      if (objPtr) {
-        const base = (objPtr + 8) >>> 0;
-        const needed = (base + bytes) >>> 0;
-        const cur = mem.buffer.byteLength >>> 0;
-        if (needed > cur) {
-          const pages = Math.ceil((needed - cur) / 65536);
-          if (pages > 0) mem.grow(pages);
-        }
-        initCmdBuf(mem.buffer, base, bytes);
+      // 1. Command Buffer
+      const cmdbBytes = 256 * 1024;
+      const cmdbObj = (stringAlloc as Function)(cmdbBytes) | 0;
+      if (cmdbObj) {
+        const base = (cmdbObj + 8) >>> 0;
+        initCmdBuf(mem.buffer, base, cmdbBytes);
         core.cmdBufPtr = base;
-        core.cmdBufBytes = bytes;
-        (window as any).__CMDB = { ptr: base, bytes };
-        // If the module exposes command buffer globals, publish them so compiled BB can write directly.
+        core.cmdBufBytes = cmdbBytes;
         setMutableGlobal(instance, "__CmdBufPtr", base);
-        setMutableGlobal(instance, "__CmdBufBytes", bytes);
-        console.log(`[CMDB] allocated ptr=${base} bytes=${bytes}`);
+        setMutableGlobal(instance, "__CmdBufBytes", cmdbBytes);
+        console.log(`[CMDB] allocated ptr=${base} bytes=${cmdbBytes}`);
+      }
+
+      // 2. Entity Table (Shared Transforms)
+      const ENTITY_LIMIT = 8192;
+      const tableBytes = ENTITY_LIMIT * 9 * 4; // 9 floats per entity, 4 bytes each
+      const tableObj = (stringAlloc as Function)(tableBytes) | 0;
+      if (tableObj) {
+        const base = (tableObj + 8) >>> 0;
+        core.entityTable = new EntityTableView(mem.buffer, base, tableBytes);
+        setMutableGlobal(instance, "__EntityTablePtr", base);
+        console.log(`[EntityTable] allocated ptr=${base} limit=${ENTITY_LIMIT}`);
       }
     }
   } catch (e) {
-    console.warn("[CMDB] allocation skipped:", e);
+    console.warn("[ABI] shared memory allocation skipped/failed:", e);
   }
 
   fileIO.setMemory(core.memory);
 };
 
-const startMain = (instance: WebAssembly.Instance) => {
+const startGameLoop = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
+  let rafHandle = 0;
+  let lastTime = performance.now();
+  const updateGame = (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) as Function | undefined;
+
+  const loop = (time: number) => {
+    rafHandle = requestAnimationFrame(loop);
+
+    const dt = (time - lastTime) / 1000;
+    lastTime = time;
+
+    try {
+      // 1. Update Game Logic (WASM)
+      if (updateGame) {
+        updateGame(dt);
+      }
+
+      // 2. Synchronize State (CMDB -> Three.js)
+      if (core.graphics && typeof (core.graphics as any).drainCommandBuffer === 'function') {
+        (core.graphics as any).drainCommandBuffer();
+      }
+
+      // 3. Render Visuals (JS)
+      if (core.graphics && typeof (core.graphics as any).render === 'function') {
+        (core.graphics as any).render(time);
+      }
+
+    } catch (e) {
+      console.error("[Loop] Error:", e);
+      cancelAnimationFrame(rafHandle);
+    }
+  };
+
+  rafHandle = requestAnimationFrame(loop);
+  return () => cancelAnimationFrame(rafHandle);
+};
+
+const startMain = (instance: WebAssembly.Instance, core: Blitz3DCore) => {
+  if (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) {
+    console.log("[main] Starting unified game loop (non-blocking)...");
+    return startGameLoop(core, instance);
+  }
+
   let raf = 0;
   if (instance.exports.Main) {
     console.log("Starting Blitz3D Main (Async)...");
-    // Use requestAnimationFrame to yield control to the browser before starting the heavy Main loop.
-    // This ensures the DOM updates (like hiding loader) have a chance to paint.
     raf = requestAnimationFrame(() => {
       try {
         (instance.exports.Main as Function)();
@@ -938,15 +983,15 @@ const startMain = (instance: WebAssembly.Instance) => {
     return () => {
       try {
         cancelAnimationFrame(raf);
-      } catch {}
+      } catch { }
     };
   } else if (instance.exports._start) {
     console.log("Starting WASI _start...");
     (instance.exports._start as Function)();
-    return () => {};
+    return () => { };
   } else {
-    console.warn("No Main/_start found, assuming auto-start or library mode");
-    return () => {};
+    console.warn("No Main/Update found, assuming auto-start or library mode");
+    return () => { };
   }
 };
 
@@ -963,7 +1008,7 @@ const runInitIfPresent = async (
   > | undefined;
 
   // Prefer a non-blocking web init export if present.
-  for (const name of ["__WebInit%", "__WebInit", "WebInit", "__InitWeb%"]) {
+  for (const name of ["__WebInit%", "__WebInit", "WebInit", "__InitWeb%", "InitOnce"]) {
     const fn = (instance.exports as any)[name];
     if (typeof fn === "function") {
       console.log(`[Blitz3D] calling ${name}()...`);
@@ -973,6 +1018,12 @@ const runInitIfPresent = async (
         console.error(`[Blitz3D] ${name} error:`, e);
       }
       ensureScpcbScaleGlobals(core, instance);
+
+      // After a non-blocking init, we should automatically start the game loop
+      // if UpdateGame/WebUpdate is present.
+      if (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) {
+        (window as any).__GAME_LOOP_STOP = startMain(instance, core);
+      }
       return;
     }
   }
@@ -980,8 +1031,6 @@ const runInitIfPresent = async (
   // If a caller explicitly sets `forceMain` to false (e.g. "Init (safe)"), it must
   // override the URL flag `?init=main`.
   const shouldForceMain = (options.forceMain ?? !!flags?.initMain) === true;
-  // Default: do NOT call SCPCB's Main(). Many builds contain launcher/game loops that
-  // will block the browser tab (and may get killed by the browser's long-script timeout).
   if (!shouldForceMain) {
     console.log(
       "[Blitz3D] Init (safe): not calling Main(). Use 'Init via Main (danger)' or `?init=main` when auto-running.",
@@ -1033,7 +1082,7 @@ const runInitIfPresent = async (
       g.mouseDown = g.mouseDown ?? {};
       g.mouseDown[1] = true;
     }
-  } catch {}
+  } catch { }
   // Guard against divide-by-zero traps if options/config didn't load.
   ensureScpcbScaleGlobals(core, instance);
 
@@ -1088,22 +1137,22 @@ const runInitIfPresent = async (
         detail: "Calling Main() once (may freeze if init is not resumable)",
       });
     }
-  } catch {}
+  } catch { }
 
   // Yield once so loader/logs can paint before calling into potentially heavy WASM init.
   try {
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  } catch {}
+  } catch { }
 
   try {
     mainFn();
   } catch (e) {
     if ((e as any)?.__blitz3dEnd || (e as any)?.message === "__BLITZ3D_END__") {
-    console.log("[Blitz3D] Init ended via End (expected)");
-    (window as any).__SCPCB_INIT_DONE = true;
-    (window as any).__SCPCB_INIT_STAGE = "done:End";
-    ensureScpcbScaleGlobals(core, instance);
-    return;
+      console.log("[Blitz3D] Init ended via End (expected)");
+      (window as any).__SCPCB_INIT_DONE = true;
+      (window as any).__SCPCB_INIT_STAGE = "done:End";
+      ensureScpcbScaleGlobals(core, instance);
+      return;
     }
     console.error("[Blitz3D] Init error:", e);
   }
@@ -1115,7 +1164,7 @@ const runInitIfPresent = async (
 const startUpdateLoop = (core: Blitz3DCore) => {
   if (!core.exports || typeof core.exports.UpdateGame !== "function") {
     console.warn("No UpdateGame export found; skipping tick loop");
-    return () => {};
+    return () => { };
   }
 
   let raf = 0;
@@ -1139,8 +1188,7 @@ const startUpdateLoop = (core: Blitz3DCore) => {
       if (lastTickMs > longTickLimitMs) {
         longTickCount++;
         console.warn(
-          `warn: long UpdateGame tick ${
-            lastTickMs.toFixed(1)
+          `warn: long UpdateGame tick ${lastTickMs.toFixed(1)
           }ms (${longTickCount}/${maxConsecutiveLongTicks})`,
         );
         if (longTickCount >= maxConsecutiveLongTicks) {
@@ -1163,7 +1211,7 @@ const startUpdateLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch {}
+    } catch { }
   };
 };
 
@@ -1174,7 +1222,7 @@ const startRenderLoop = (core: Blitz3DCore) => {
     if (!running) return;
     try {
       core.graphics?.drainCommandBuffer?.();
-    } catch {}
+    } catch { }
     core.beginFrame();
     raf = requestAnimationFrame(loop);
   };
@@ -1183,7 +1231,7 @@ const startRenderLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch {}
+    } catch { }
   };
 };
 
@@ -1191,13 +1239,13 @@ async function init() {
   if (currentRuntime) {
     try {
       currentRuntime.dispose();
-    } catch {}
+    } catch { }
     currentRuntime = null;
   }
   if (currentHudCancel) {
     try {
       currentHudCancel();
-    } catch {}
+    } catch { }
     currentHudCancel = null;
   }
   if (currentWorker) {
@@ -1218,7 +1266,7 @@ async function init() {
     if (bootWatchdogId == null) return;
     try {
       clearInterval(bootWatchdogId);
-    } catch {}
+    } catch { }
     bootWatchdogId = null;
   };
   const startBootWatchdog = () => {
@@ -1233,13 +1281,13 @@ async function init() {
       console.warn("[boot]", msg);
       try {
         updateLoader(loader, { detail: msg });
-      } catch {}
+      } catch { }
     }, 250) as unknown as number;
   };
   console.log(`[Blitz3D] loader build ${LOADER_BUILD_ID}`, flags);
   const uninstallOnscreen = flags.debug
     ? installOnscreenConsole(loader)
-    : () => {};
+    : () => { };
   updateLoader(loader, {
     section: "wasm",
     text: "Initializing...",
@@ -1394,35 +1442,38 @@ async function init() {
 
     boot.setPhase("ATTACH_RUNTIME", "attach");
     attachRuntime(core, fileIO, instance);
+
+    // Call the non-blocking Init variants and start the loop if possible.
+    boot.setPhase("INIT", "calling web init");
+    await runInitIfPresent(core, fileIO, instance, loader);
+
     boot.setPhase("READY", "wasm ready");
     stopBootWatchdog();
 
-    // Avoid dumping hundreds/thousands of exports to the console (can be very slow / freeze the tab).
-    console.log(
-      "WASM Instantiated",
-      `exports=${WebAssembly.Module.exports(module).length}`,
-    );
-    ensureScpcbScaleGlobals(core, instance);
-
+    // Default auto-running if ?auto=1 or no Main/Update found
     const exportsList = WebAssembly.Module.exports(module).map((e) => e.name);
-    const hasUpdateGame = exportsList.includes("UpdateGame");
+    const hasUpdateGame = exportsList.includes("UpdateGame") || exportsList.includes("__WebUpdate");
     const hasMain = exportsList.includes("Main");
 
-    // Default is paused (no auto-run) unless `?auto=1` is provided.
+    if (!(window as any).__GAME_LOOP_STOP && (hasUpdateGame || hasMain)) {
+      if (flags.auto || !hasMain) {
+        boot.setPhase("RUNNING", "auto-starting");
+        (window as any).__GAME_LOOP_STOP = startMain(instance, core);
+      }
+    }
     // In `?worker=1` mode, keep the main thread paused to avoid freezes.
     const shouldAutoRun = flags.auto && !flags.safe && !flags.worker;
     if (!shouldAutoRun) {
       try {
         boot.setPhase("PAUSED", "no auto-run");
         stopBootWatchdog();
-      } catch {}
+      } catch { }
       updateLoader(loader, {
         section: "wasm",
         text: "Paused (no auto-run)",
         progress: 1,
-        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${
-          exportsList.length > 80 ? ", ..." : ""
-        }`,
+        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${exportsList.length > 80 ? ", ..." : ""
+          }`,
       });
       loader.overlay.style.display = "block";
 
@@ -1430,8 +1481,7 @@ async function init() {
       bar.innerHTML = "";
       addLabel(
         bar,
-        `${flags.worker ? "worker-ui • " : ""}paused • v=${LOADER_BUILD_ID} • add ?auto=1 to run • add ?tick=manual to step • exports: ${
-          hasUpdateGame ? "UpdateGame" : ""
+        `${flags.worker ? "worker-ui • " : ""}paused • v=${LOADER_BUILD_ID} • add ?auto=1 to run • add ?tick=manual to step • exports: ${hasUpdateGame ? "UpdateGame" : ""
         }${hasMain ? " Main" : ""}`,
       );
       if (flags.worker && !flags.allowMain) {
@@ -1505,7 +1555,7 @@ async function init() {
             try {
               const n = (window as any).__WORKER_EXPORTS.length;
               console.log(`[worker] exports: ${n}`);
-            } catch {}
+            } catch { }
           } else if (m?.type === "ready") {
             console.log("[worker] ready");
             currentWorkerReady = true;
@@ -1517,7 +1567,7 @@ async function init() {
                 try {
                   const btnHint = flags.allowMain ? "" : " (add ?noprobes=1 to disable)";
                   console.log(`[worker] auto-probe starting${btnHint}...`);
-                } catch {}
+                } catch { }
                 void runWorkerProbe();
               }, 0);
             }
@@ -1532,7 +1582,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.resolve(m.result);
-              } catch {}
+              } catch { }
             }
             refreshWorkerButtons();
           } else if (m?.type === "error") {
@@ -1544,7 +1594,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.reject(new Error(String(m.error ?? "worker error")));
-              } catch {}
+              } catch { }
             }
             refreshWorkerButtons();
           }
@@ -1556,7 +1606,7 @@ async function init() {
             try {
               clearTimeout(p.timeoutId);
               p.reject(new Error("worker error"));
-            } catch {}
+            } catch { }
           }
           currentWorkerPending.clear();
           refreshWorkerButtons();
@@ -1636,7 +1686,7 @@ async function init() {
                 null,
                 0,
               );
-            } catch {}
+            } catch { }
             console.error(
               `[worker] watchdog: ${exportName} exceeded ${timeoutMs}ms; terminating worker${snapSummary ? ` snapshot=${snapSummary}` : ""}`,
             );
@@ -1826,7 +1876,7 @@ async function init() {
           if (flags.worker) {
             workerCallUI("Main", 10_000);
           } else {
-            startMain(instance);
+            startMain(instance, core);
           }
         });
       }
@@ -1843,9 +1893,8 @@ async function init() {
         section: "wasm",
         text: "Safe mode (not starting WASM)",
         progress: 1,
-        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${
-          exportsList.length > 80 ? ", ..." : ""
-        }`,
+        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${exportsList.length > 80 ? ", ..." : ""
+          }`,
       });
       loader.overlay.style.display = "block";
       uninstallOnscreen();
@@ -1855,7 +1904,7 @@ async function init() {
     // Start Game Loop (non-blocking by default)
     // If only `Main()` exists, it may contain a tight loop that will freeze the tab in WASM.
     // Require an explicit URL opt-in: `?run=main`.
-    let cancelMain = () => {};
+    let cancelMain = () => { };
     if (hasUpdateGame) {
       // Modules that export UpdateGame are expected to be JS-ticked.
       // Default is safe init (no Main). Opt into forcing Main via `?init=main`.
@@ -1863,7 +1912,7 @@ async function init() {
         forceMain: !!flags.initMain,
       });
     } else if (hasMain && flags.runMain) {
-      cancelMain = startMain(instance);
+      cancelMain = startMain(instance, core);
     } else if (hasMain) {
       updateLoader(loader, {
         section: "wasm",
@@ -1878,10 +1927,10 @@ async function init() {
     }
 
     // If tick=manual, don't start the RAF update loop.
-    const cancelUpdate = flags.tickManual ? () => {} : startUpdateLoop(core);
+    const cancelUpdate = flags.tickManual ? () => { } : startUpdateLoop(core);
 
     // Optional FPS limiter for render loop: `?fps=10` (or disable entirely with `?nogl=1`)
-    const cancelRender = flags.noGL ? () => {} : flags.fps > 0
+    const cancelRender = flags.noGL ? () => { } : flags.fps > 0
       ? (() => {
         let raf = 0;
         let running = true;
@@ -1900,7 +1949,7 @@ async function init() {
           running = false;
           try {
             cancelAnimationFrame(raf);
-          } catch {}
+          } catch { }
         };
       })()
       : startRenderLoop(core);
@@ -1909,26 +1958,26 @@ async function init() {
       dispose: () => {
         try {
           cancelMain();
-        } catch {}
+        } catch { }
         try {
           cancelUpdate();
-        } catch {}
+        } catch { }
         try {
           cancelRender();
-        } catch {}
+        } catch { }
         // HUD loop is managed globally so it can run in paused mode too.
         try {
           graphics.dispose?.();
-        } catch {}
+        } catch { }
         try {
           fileIO.dispose?.({ clearCache: true });
-        } catch {}
+        } catch { }
         try {
           core.dispose?.();
-        } catch {}
+        } catch { }
         try {
           uninstallOnscreen();
-        } catch {}
+        } catch { }
       },
     };
 
@@ -1936,7 +1985,7 @@ async function init() {
       window.addEventListener("beforeunload", () => {
         try {
           currentRuntime?.dispose();
-        } catch {}
+        } catch { }
       });
       unloadHookInstalled = true;
     }
@@ -1944,7 +1993,7 @@ async function init() {
     // Hide loader immediately to show game
     try {
       boot.setPhase("RUNNING", "started");
-    } catch {}
+    } catch { }
     updateLoader(loader, { section: "wasm", text: "Running", progress: 1 });
     loader.overlay.style.display = "none";
 
@@ -1985,26 +2034,26 @@ async function init() {
     console.error("Game Launch Error:", e);
     try {
       boot.setPhase("ERROR", e?.message ?? String(e));
-    } catch {}
+    } catch { }
     try {
       stopBootWatchdog();
-    } catch {}
+    } catch { }
     try {
       currentRuntime?.dispose();
-    } catch {}
+    } catch { }
     currentRuntime = null;
     try {
       graphics.dispose?.();
-    } catch {}
+    } catch { }
     try {
       fileIO.dispose?.({ clearCache: true });
-    } catch {}
+    } catch { }
     try {
       core.dispose?.();
-    } catch {}
+    } catch { }
     try {
       uninstallOnscreen();
-    } catch {}
+    } catch { }
     updateLoader(loader, {
       section: "wasm",
       text: "Error",

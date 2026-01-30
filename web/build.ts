@@ -54,7 +54,7 @@ await copy(`${runtimeRoot}scpcb.wasm`, `${distRoot}scpcb.wasm`, { overwrite: tru
   if (r.missing.length) {
     throw new Error(
       `[cmdbuf] dist/scpcb.wasm is not Track B. Missing exports: ${r.missing.join(", ")}. ` +
-        `Rebuild scpcb.wasm with --cmdbuf (e.g. \`deno task scpcb:compile:main\`).`,
+      `Rebuild scpcb.wasm with --cmdbuf (e.g. \`deno task scpcb:compile:main\`).`,
     );
   }
 }
@@ -90,12 +90,52 @@ for await (const entry of walkFiles(assetsRoot)) {
     const tool = ext === "b3d"
       ? "Tools/convert_b3d_to_smpk.ts"
       : ext === "x"
-      ? "Tools/convert_x_to_smpk.ts"
-      : "Tools/convert_rmesh_to_smpk.ts";
+        ? "Tools/convert_x_to_smpk.ts"
+        : "Tools/convert_rmesh_to_smpk.ts";
 
     await run(["deno", "run", "-A", tool, entry.path, "-o", dest], repoRoot);
     const size = (await Deno.stat(dest)).size;
     files.push({ path: `assets/${outRel}`, size });
+    continue;
+  }
+
+  if (ext === "bmp") {
+    // Optimization: convert BMP to PNG
+    const outRel = rel.replace(/\.bmp$/i, ".png");
+    const dest = join(distAssetsRoot, outRel);
+    await ensureDir(join(dest, ".."));
+
+    try {
+      await run(["sips", "-s", "format", "png", entry.path, "--out", dest], repoRoot);
+      const size = (await Deno.stat(dest)).size;
+      files.push({ path: `assets/${outRel}`, size });
+    } catch (e) {
+      console.warn(`[build] BMP conversion failed for ${rel}, falling back to copy: ${e}`);
+      // Fallback
+      const fallbackDest = join(distAssetsRoot, rel);
+      await copy(entry.path, fallbackDest, { overwrite: true });
+      files.push({ path: `assets/${rel}`, size: (await Deno.stat(fallbackDest)).size });
+    }
+    continue;
+  }
+
+  if (ext === "wav") {
+    // Optimization: convert WAV to OGG
+    const outRel = rel.replace(/\.wav$/i, ".ogg");
+    const dest = join(distAssetsRoot, outRel);
+    await ensureDir(join(dest, ".."));
+
+    try {
+      await run(["ffmpeg", "-y", "-i", entry.path, "-vn", "-map_metadata", "-1", dest], repoRoot);
+      const size = (await Deno.stat(dest)).size;
+      files.push({ path: `assets/${outRel}`, size });
+    } catch (e) {
+      console.warn(`[build] WAV conversion failed for ${rel}, falling back to copy: ${e}`);
+      // Fallback
+      const fallbackDest = join(distAssetsRoot, rel);
+      await copy(entry.path, fallbackDest, { overwrite: true });
+      files.push({ path: `assets/${rel}`, size: (await Deno.stat(fallbackDest)).size });
+    }
     continue;
   }
 

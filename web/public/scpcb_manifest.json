@@ -16,7 +16,10 @@
       "Data/events.ini",
       "Data/AGENTs.md",
       "options.ini",
-      "options.ini"
+      "GFX/cour.ttf",
+      "GFX/DS-DIGI.TTF",
+      "GFX/courbd.ttf",
+      "GFX/menu/QuickLoading.png"
     ],
     "facility_assets": [
       "GFX/containment_doors.jpg",
@@ -32,7 +35,7 @@
       "GFX/fog.jpg",
       "GFX/decal4.png",
       "GFX/cwm.cwm",
-      "GFX/apacherotor2.b3d",
+      "GFX/apacherotor2.smpk",
       "GFX/BlinkMeter.jpg",
       "GFX/AIface.jpg",
       "GFX/decal5.png",
@@ -40,27 +43,27 @@
       "GFX/decal7.png",
       "GFX/endingscreen.pt",
       "GFX/decalpd6.dc",
-      "GFX/173box.b3d",
+      "GFX/173box.smpk",
       "GFX/decal6.png",
       "GFX/bullethole1.jpg",
       "GFX/AIface2.jpg",
       "GFX/decalpd1.jpg",
-      "GFX/npcs/205_demon3.b3d",
+      "GFX/npcs/205_demon3.smpk",
       "GFX/npcs/173h.pt",
       "GFX/npcs/bll.jpg",
       "GFX/npcs/tentacle.jpg",
-      "GFX/npcs/205_demon2.b3d",
-      "GFX/npcs/bll.b3d",
+      "GFX/npcs/205_demon2.smpk",
+      "GFX/npcs/bll.smpk",
       "GFX/npcs/scp-049_clothing_diffuse4.jpg",
-      "GFX/npcs/205_demon1.b3d",
-      "GFX/npcs/035tentacle.b3d",
+      "GFX/npcs/205_demon1.smpk",
+      "GFX/npcs/035tentacle.smpk",
       "GFX/npcs/janitor.jpg",
       "GFX/npcs/duck2.png",
       "GFX/npcs/scp-939_licker_extremities2.png",
       "GFX/npcs/duck3.png",
       "GFX/npcs/173_Norm.jpg",
       "GFX/npcs/clerk_d1.jpg",
-      "GFX/npcs/372.b3d",
+      "GFX/npcs/372.smpk",
       "GFX/npcs/860_eyes.png",
       "GFX/npcs/scientist2.jpg",
       "GFX/npcs/duck1.png",
@@ -77,11 +80,11 @@
       "GFX/npcs/hg.pt",
       "GFX/npcs/scp-049_mask_diffuse5.jpg",
       "GFX/npcs/966_specular_1024.png",
-      "GFX/npcs/scp-049.b3d",
+      "GFX/npcs/scp-049.smpk",
       "GFX/npcs/helmet_guard.jpg",
       "GFX/npcs/MTF_P90_diffuse02.jpg",
       "GFX/npcs/oldmaneyes.jpg",
-      "GFX/npcs/guard.b3d",
+      "GFX/npcs/guard.smpk",
       "GFX/npcs/966_normals_1024.png",
       "GFX/npcs/pj.jpg",
       "GFX/npcs/guard_diffuse.jpg",
@@ -89,63 +92,63 @@
       "GFX/npcs/106_diffuse.jpg",
       "GFX/npcs/1048_diffusetest01.png",
       "GFX/npcs/classd3.jpg",
-      "GFX/npcs/s2.b3d",
+      "GFX/npcs/s2.smpk",
       "GFX/npcs/classd1.jpg",
-      "GFX/npcs/scp-066.b3d",
-      "GFX/npcs/scp-1048a.b3d",
-      "GFX/npcs/106_2.b3d",
-      "GFX/npcs/forestmonster.b3d",
+      "GFX/npcs/scp-066.smpk",
+      "GFX/npcs/scp-1048a.smpk",
+      "GFX/npcs/106_2.smpk",
+      "GFX/npcs/forestmonster.smpk",
       "GFX/npcs/scp-1048_penandpaper_diffuse01.png",
       "GFX/npcs/966_diffusetest_1024_01.jpg",
       "GFX/npcs/106_normals.png",
-      "GFX/npcs/duck_low_res.b3d",
-      "GFX/npcs/205_woman.b3d",
+      "GFX/npcs/duck_low_res.smpk",
+      "GFX/npcs/205_woman.smpk",
       "GFX/npcs/1499_King.jpg",
       "GFX/npcs/pjface.jpg",
       "GFX/npcs/scientist.jpg",
-      "GFX/npcs/classd.b3d",
-      "GFX/npcs/scp-1048.b3d",
+      "GFX/npcs/classd.smpk",
+      "GFX/npcs/scp-1048.smpk",
       "GFX/npcs/SCP096EYES.jpg",
       "GFX/npcs/860_glow.jpg",
       "GFX/npcs/helmetbump.jpg",
       "GFX/npcs/035victim.jpg",
-      "GFX/npcs/naziofficer.b3d",
+      "GFX/npcs/naziofficer.smpk",
       "GFX/npcs/body2.jpg",
-      "GFX/npcs/scp-939.b3d",
+      "GFX/npcs/scp-939.smpk",
       "GFX/npcs/helmet_vision.png",
       "GFX/npcs/zombie.jpg",
-      "GFX/npcs/682arm.b3d",
+      "GFX/npcs/682arm.smpk",
       "GFX/npcs/naziofficer.jpg",
       "GFX/npcs/body1.jpg",
       "GFX/npcs/mtf_newnormal01.png",
       "GFX/npcs/bodybump.jpg",
       "GFX/npcs/helmet.jpg",
-      "GFX/npcs/scp-1048pp.b3d",
-      "GFX/npcs/zombiesurgeon.b3d",
+      "GFX/npcs/scp-1048pp.smpk",
+      "GFX/npcs/zombiesurgeon.smpk",
       "GFX/npcs/682arm.jpg",
       "GFX/npcs/MTF_newdiffuse02.jpg",
       "GFX/npcs/scp_1048a_512_diffusetest01.png",
       "GFX/npcs/scp-066_diffuse01.jpg",
       "GFX/npcs/scp-939_licker_normal.png",
       "GFX/npcs/173_Spec.jpg",
-      "GFX/npcs/035.b3d",
+      "GFX/npcs/035.smpk",
       "GFX/npcs/papertexture.jpg",
       "GFX/npcs/scp-939_licker_diffusetest01.jpg",
       "GFX/npcs/AGENTs.md",
-      "GFX/npcs/173_2.b3d",
+      "GFX/npcs/173_2.smpk",
       "GFX/npcs/035.jpg",
-      "GFX/npcs/1499-1.b3d",
-      "GFX/npcs/clerk.b3d",
-      "GFX/npcs/scp-966.b3d",
+      "GFX/npcs/1499-1.smpk",
+      "GFX/npcs/clerk.smpk",
+      "GFX/npcs/scp-966.smpk",
       "GFX/npcs/1499_normal.jpg",
       "GFX/npcs/106face.jpg",
       "GFX/npcs/mauzer.jpg",
-      "GFX/npcs/scp096.b3d",
+      "GFX/npcs/scp096.smpk",
       "GFX/npcs/MTF_lens_diffuse01.png",
       "GFX/npcs/gonzales.jpg",
-      "GFX/npcs/zombie1.b3d",
+      "GFX/npcs/zombie1.smpk",
       "GFX/npcs/AgentIJ.AIJ",
-      "GFX/npcs/MTF2.b3d",
+      "GFX/npcs/MTF2.smpk",
       "GFX/npcs/SCP096.jpg",
       "GFX/decal427.png",
       "GFX/Spark.png",
@@ -165,8 +168,8 @@
       "GFX/bloodsprite.png",
       "GFX/decalpd4.jpg",
       "GFX/decalpd5.jpg",
-      "GFX/apache.b3d",
-      "GFX/apacherotor.b3d",
+      "GFX/apache.smpk",
+      "GFX/apacherotor.smpk",
       "GFX/dirtymetal.jpg",
       "GFX/screens/008.sc",
       "GFX/screens/office.sc",
@@ -187,18 +190,18 @@
       "GFX/StaminaMeter.jpg",
       "GFX/sneakicon.png",
       "GFX/light1.jpg",
-      "GFX/map/ButtonScanner.x",
+      "GFX/map/ButtonScanner.smpk",
       "GFX/map/containment_doors.jpg",
       "GFX/map/miscsigns2.jpg",
       "GFX/map/gateatunnel_lm2.bmp",
       "GFX/map/294test.png",
-      "GFX/map/room1archive.rmesh",
+      "GFX/map/room1archive.smpk",
       "GFX/map/room2pipes2_lm1.png",
       "GFX/map/forestfloor.jpg",
       "GFX/map/room3gw_lm1.png",
       "GFX/map/tilebump.jpg",
       "GFX/map/fan_lm1.bmp",
-      "GFX/map/173_opt.rmesh",
+      "GFX/map/173_opt.smpk",
       "GFX/map/forest/forestfloor.jpg",
       "GFX/map/forest/forest3h_mask.png",
       "GFX/map/forest/forest4h.png",
@@ -210,30 +213,30 @@
       "GFX/map/forest/forest4h_mask.png",
       "GFX/map/forest/forest2h.png",
       "GFX/map/forest/forest1h.png",
-      "GFX/map/forest/detail/treetest5.b3d",
-      "GFX/map/forest/detail/treetest4.b3d",
-      "GFX/map/forest/detail/rock2.b3d",
+      "GFX/map/forest/detail/treetest5.smpk",
+      "GFX/map/forest/detail/treetest4.smpk",
+      "GFX/map/forest/detail/rock2.smpk",
       "GFX/map/forest/detail/tree1.dds",
       "GFX/map/forest/detail/rock.jpg",
-      "GFX/map/forest/detail/rock.b3d",
+      "GFX/map/forest/detail/rock.smpk",
       "GFX/map/forest/detail/AGENTs.md",
       "GFX/map/forest/detail/tree2.png",
       "GFX/map/forest/detail/tree1.jpg",
       "GFX/map/forest/forest1h_mask.png",
-      "GFX/map/forest/wall.b3d",
-      "GFX/map/forest/door.b3d",
+      "GFX/map/forest/wall.smpk",
+      "GFX/map/forest/door.smpk",
       "GFX/map/forest/scp_860_testingdoor_diffuse.png",
       "GFX/map/forest/forest2Ch_mask.png",
       "GFX/map/forest/AGENTs.md",
-      "GFX/map/forest/door_frame.b3d",
+      "GFX/map/forest/door_frame.smpk",
       "GFX/map/forest/forest2Ch.png",
       "GFX/map/room2test1074_lm1.png",
       "GFX/map/room1062_lm1.bmp",
-      "GFX/map/room2servers2_opt.rmesh",
+      "GFX/map/room2servers2_opt.smpk",
       "GFX/map/KeyPad.jpg",
-      "GFX/map/lockroom3_opt.rmesh",
-      "GFX/map/dimension1499_opt.rmesh",
-      "GFX/map/room2.rmesh",
+      "GFX/map/lockroom3_opt.smpk",
+      "GFX/map/dimension1499_opt.smpk",
+      "GFX/map/room2.smpk",
       "GFX/map/maintenance_lm.png",
       "GFX/map/concretewallbump.jpg",
       "GFX/map/room1lifts_lm1.png",
@@ -242,39 +245,39 @@
       "GFX/map/room012_2_lm1.bmp",
       "GFX/map/metal3.jpg",
       "GFX/map/room3pit_lm1.png",
-      "GFX/map/room2test1074.rmesh",
+      "GFX/map/room2test1074.smpk",
       "GFX/map/label008.jpg",
-      "GFX/map/fan.b3d",
+      "GFX/map/fan.smpk",
       "GFX/map/room2ctunnel_lm1.png",
       "GFX/map/scplogo.jpg",
       "GFX/map/decal1.png",
       "GFX/map/gateatunnel_lm1.bmp",
       "GFX/map/forest_lm1.bmp",
       "GFX/map/Logo_of_the_SCP_Foundation.png",
-      "GFX/map/heavydoor1.x",
+      "GFX/map/heavydoor1.smpk",
       "GFX/map/gears.jpg",
       "GFX/map/room3gw_lm2.png",
-      "GFX/map/room2poffices2_opt.rmesh",
+      "GFX/map/room2poffices2_opt.smpk",
       "GFX/map/IntroDesk_lm1.bmp",
       "GFX/map/room2offices3_lm1.png",
       "GFX/map/metalpanels.jpg",
       "GFX/map/room3gw_pipes_lm1.bmp",
-      "GFX/map/room2elevator_opt.rmesh",
+      "GFX/map/room2elevator_opt.smpk",
       "GFX/map/zimmerframe1.jpg",
       "GFX/map/room2gw_b_lm1.png",
       "GFX/map/tunnel2_lm1.png",
       "GFX/map/room1lifts_lm2.png",
-      "GFX/map/room2tunnel_opt.rmesh",
-      "GFX/map/testroom_opt.rmesh",
+      "GFX/map/room2tunnel_opt.smpk",
+      "GFX/map/testroom_opt.smpk",
       "GFX/map/ctwalls2.png",
       "GFX/map/larry.jpg",
       "GFX/map/exit2.jpg",
-      "GFX/map/monitor.x",
+      "GFX/map/monitor.smpk",
       "GFX/map/room3_2_lm1.png",
-      "GFX/map/room3_3_opt.rmesh",
+      "GFX/map/room3_3_opt.smpk",
       "GFX/map/MonitorTexture2.jpg",
       "GFX/map/label035.jpg",
-      "GFX/map/room2pipes_opt.rmesh",
+      "GFX/map/room2pipes_opt.smpk",
       "GFX/map/caution_tesla.jpg",
       "GFX/map/SLH_1499_tex2.jpg",
       "GFX/map/pocketdimension1_lm1.png",
@@ -291,13 +294,13 @@
       "GFX/map/sky/1499sky_left.jpg",
       "GFX/map/sky/AGENTs.md",
       "GFX/map/sky/1499sky_up.jpg",
-      "GFX/map/room2tesla_caution.b3d",
+      "GFX/map/room2tesla_caution.smpk",
       "GFX/map/metal.jpg",
       "GFX/map/rockmoss.jpg",
-      "GFX/map/mt1.rmesh",
-      "GFX/map/room3servers2_opt.rmesh",
+      "GFX/map/mt1.smpk",
+      "GFX/map/room3servers2_opt.smpk",
       "GFX/map/forestterrain_lm1.bmp",
-      "GFX/map/gateatunnel.b3d",
+      "GFX/map/gateatunnel.smpk",
       "GFX/map/room2offices2_lm1.png",
       "GFX/map/079_computer_2.jpg",
       "GFX/map/room3_3_lm1.png",
@@ -307,38 +310,38 @@
       "GFX/map/chatscreen2.jpg",
       "GFX/map/metal3bump.jpg",
       "GFX/map/SLH_1499_tex1.jpg",
-      "GFX/map/intro_labels.b3d",
+      "GFX/map/intro_labels.smpk",
       "GFX/map/miscsigns.jpg",
       "GFX/map/914panel.jpg",
-      "GFX/map/room2C_opt.rmesh",
+      "GFX/map/room2C_opt.smpk",
       "GFX/map/metalpanels2bump.jpg",
-      "GFX/map/room3z2_opt.rmesh",
+      "GFX/map/room3z2_opt.smpk",
       "GFX/map/room2testroom2_lm1.png",
-      "GFX/map/room3_opt.rmesh",
-      "GFX/map/checkpoint1_opt.rmesh",
-      "GFX/map/room106_opt.rmesh",
+      "GFX/map/room3_opt.smpk",
+      "GFX/map/checkpoint1_opt.smpk",
+      "GFX/map/room106_opt.smpk",
       "GFX/map/lamp3.jpg",
-      "GFX/map/exit1terrain.b3d",
-      "GFX/map/room2test1074_opt.rmesh",
+      "GFX/map/exit1terrain.smpk",
+      "GFX/map/room2test1074_opt.smpk",
       "GFX/map/room2ccont_lm1.png",
       "GFX/map/grass2.jpg",
-      "GFX/map/room2offices3_opt.rmesh",
-      "GFX/map/Button.x",
+      "GFX/map/room2offices3_opt.smpk",
+      "GFX/map/Button.smpk",
       "GFX/map/flat_monitor.jpg",
-      "GFX/map/room2gw_opt.rmesh",
-      "GFX/map/914knob.x",
+      "GFX/map/room2gw_opt.smpk",
+      "GFX/map/914knob.smpk",
       "GFX/map/checkpoint2_lm1.png",
       "GFX/map/forestpath.jpg",
-      "GFX/map/mt3.rmesh",
+      "GFX/map/mt3.smpk",
       "GFX/map/room4info_lm1.png",
       "GFX/map/079_computer_1.jpg",
-      "GFX/map/room2ccont_opt.rmesh",
-      "GFX/map/room2gw_pipes.b3d",
+      "GFX/map/room2ccont_opt.smpk",
+      "GFX/map/room2gw_pipes.smpk",
       "GFX/map/vent.jpg",
       "GFX/map/keyboard.jpg",
       "GFX/map/scp1162bump.jpg",
       "GFX/map/label966.jpg",
-      "GFX/map/173.rmesh",
+      "GFX/map/173.smpk",
       "GFX/map/room4_2_lm4.png",
       "GFX/map/exit1_lm5.png",
       "GFX/map/room3_lm1.png",
@@ -347,60 +350,60 @@
       "GFX/map/officewall.jpg",
       "GFX/map/room2tesla_lm1.png",
       "GFX/map/chatscreen.jpg",
-      "GFX/map/room2gw_b_opt.rmesh",
-      "GFX/map/CamHead.b3d",
-      "GFX/map/room966_opt.rmesh",
-      "GFX/map/lightgun.b3d",
+      "GFX/map/room2gw_b_opt.smpk",
+      "GFX/map/CamHead.smpk",
+      "GFX/map/room966_opt.smpk",
+      "GFX/map/lightgun.smpk",
       "GFX/map/boxfile_a.jpg",
       "GFX/map/SLH_miscsigns.jpg",
       "GFX/map/grass2bump.jpg",
       "GFX/map/room2cafeteria_lm1.png",
-      "GFX/map/room4pit_opt.rmesh",
+      "GFX/map/room4pit_opt.smpk",
       "GFX/map/controlpanel.jpg",
       "GFX/map/room2closets_lm2.png",
-      "GFX/map/room3pit_opt.rmesh",
-      "GFX/map/mt4.rmesh",
+      "GFX/map/room3pit_opt.smpk",
+      "GFX/map/mt4.smpk",
       "GFX/map/exit1terrain_lm1.bmp",
       "GFX/map/Props/containment_doors.jpg",
-      "GFX/map/Props/Tank1.x",
+      "GFX/map/Props/Tank1.smpk",
       "GFX/map/Props/bathroomsinks.smf",
-      "GFX/map/Props/cabinet_b.x",
-      "GFX/map/Props/monitor.x",
-      "GFX/map/Props/boxfile_a.x",
-      "GFX/map/Props/lamp3.x",
-      "GFX/map/Props/keyboard.x",
-      "GFX/map/Props/crate2.x",
+      "GFX/map/Props/cabinet_b.smpk",
+      "GFX/map/Props/monitor.smpk",
+      "GFX/map/Props/boxfile_a.smpk",
+      "GFX/map/Props/lamp3.smpk",
+      "GFX/map/Props/keyboard.smpk",
+      "GFX/map/Props/crate2.smpk",
       "GFX/map/Props/lamp3.png",
       "GFX/map/Props/flat_monitor.jpg",
       "GFX/map/Props/keyboard.jpg",
-      "GFX/map/Props/Tank2.x",
+      "GFX/map/Props/Tank2.smpk",
       "GFX/map/Props/boxfile_a.jpg",
-      "GFX/map/Props/ElecBox.x",
-      "GFX/map/Props/cabinet_a.x",
+      "GFX/map/Props/ElecBox.smpk",
+      "GFX/map/Props/cabinet_a.smpk",
       "GFX/map/Props/MonitorTexture.jpg",
       "GFX/map/Props/tank1.jpg",
       "GFX/map/Props/Pipes.jpg",
       "GFX/map/Props/crtbev.jpg",
-      "GFX/map/Props/boxfile_b.x",
+      "GFX/map/Props/boxfile_b.smpk",
       "GFX/map/Props/tank2.jpg",
-      "GFX/map/Props/crate1.x",
+      "GFX/map/Props/crate1.smpk",
       "GFX/map/Props/ElecBox.jpg",
       "GFX/map/Props/201_camera_diffuse1.png",
-      "GFX/map/Props/lamp1.x",
+      "GFX/map/Props/lamp1.smpk",
       "GFX/map/Props/officeseat_a.jpg",
-      "GFX/map/Props/ContDoorFrame.x",
+      "GFX/map/Props/ContDoorFrame.smpk",
       "GFX/map/Props/crtroc.jpg",
-      "GFX/map/Props/officeseat_a.x",
+      "GFX/map/Props/officeseat_a.smpk",
       "GFX/map/Props/AGENTs.md",
       "GFX/map/Props/2_office_lamps_dif.jpg",
-      "GFX/map/Props/mug.x",
+      "GFX/map/Props/mug.smpk",
       "GFX/map/Props/cabinet_a.jpg",
-      "GFX/map/Props/205.x",
-      "GFX/map/Props/crate3.x",
-      "GFX/map/Props/lamp2.x",
+      "GFX/map/Props/205.smpk",
+      "GFX/map/Props/crate3.smpk",
+      "GFX/map/Props/lamp2.smpk",
       "GFX/map/Props/crtrec.jpg",
-      "GFX/map/4tunnels.rmesh",
-      "GFX/map/lockroom2_opt.rmesh",
+      "GFX/map/4tunnels.smpk",
+      "GFX/map/lockroom2_opt.smpk",
       "GFX/map/label914.jpg",
       "GFX/map/exit1_lm4.png",
       "GFX/map/dirtymetalbump.jpg",
@@ -408,55 +411,55 @@
       "GFX/map/concrete.jpg",
       "GFX/map/room2gw_lm2.png",
       "GFX/map/914labels.jpg",
-      "GFX/map/room2shaft_opt.rmesh",
+      "GFX/map/room2shaft_opt.smpk",
       "GFX/map/exit1terrain_lm3.bmp",
-      "GFX/map/room2pipes2_opt.rmesh",
-      "GFX/map/ButtonCode.x",
+      "GFX/map/room2pipes2_opt.smpk",
+      "GFX/map/ButtonCode.smpk",
       "GFX/map/dimension1499_lm1.png",
-      "GFX/map/room2offices4_opt.rmesh",
+      "GFX/map/room2offices4_opt.smpk",
       "GFX/map/room035_lm1.png",
-      "GFX/map/tunnel2_opt.rmesh",
-      "GFX/map/ButtonKeycard.x",
+      "GFX/map/tunnel2_opt.smpk",
+      "GFX/map/ButtonKeycard.smpk",
       "GFX/map/metalpanelsbump.jpg",
       "GFX/map/room2closets_lm1.png",
       "GFX/map/room2_2_lm1.png",
-      "GFX/map/room3_2_opt.rmesh",
+      "GFX/map/room3_2_opt.smpk",
       "GFX/map/concretefloorbump.jpg",
       "GFX/map/IntroDrawer_lm1.bmp",
-      "GFX/map/medibay_opt.rmesh",
+      "GFX/map/medibay_opt.smpk",
       "GFX/map/079_peripherals.jpg",
       "GFX/map/exit1terrain_lm2.bmp",
       "GFX/map/circuit.jpg",
-      "GFX/map/heavydoor2.x",
+      "GFX/map/heavydoor2.smpk",
       "GFX/map/room1archive_lm1.png",
-      "GFX/map/room4_opt.rmesh",
+      "GFX/map/room4_opt.smpk",
       "GFX/map/room2gw_lm3.png",
-      "GFX/map/room2poffices_opt.rmesh",
-      "GFX/map/room4info_opt.rmesh",
+      "GFX/map/room2poffices_opt.smpk",
+      "GFX/map/room4info_opt.smpk",
       "GFX/map/exit1_lm3.png",
       "GFX/map/tilefloor.jpg",
       "GFX/map/room4_2_lm2.png",
       "GFX/map/room2doors_lm1.png",
-      "GFX/map/room2pit_opt.rmesh",
+      "GFX/map/room2pit_opt.smpk",
       "GFX/map/room966_lm1.png",
-      "GFX/map/cambase.x",
+      "GFX/map/cambase.smpk",
       "GFX/map/whitewallbump.jpg",
       "GFX/map/MonitorTexture.jpg",
       "GFX/map/room2cpit_lm1.png",
       "GFX/map/079_monitor.jpg",
       "GFX/map/gravel.jpg",
       "GFX/map/ventbump.jpg",
-      "GFX/map/room2nuke_opt.rmesh",
-      "GFX/map/room3storage_hb.b3d",
+      "GFX/map/room2nuke_opt.smpk",
+      "GFX/map/room3storage_hb.smpk",
       "GFX/map/tank1.jpg",
       "GFX/map/room2_3_lm1.png",
       "GFX/map/Pipes.jpg",
       "GFX/map/alcohol-hand-gel-v2-256-blood.jpg",
       "GFX/map/room079_lm1.png",
-      "GFX/map/room079_opt.rmesh",
+      "GFX/map/room079_opt.smpk",
       "GFX/map/rock.jpg",
       "GFX/map/wood.jpg",
-      "GFX/map/mt2.rmesh",
+      "GFX/map/mt2.smpk",
       "GFX/map/room4pit_lm1.png",
       "GFX/map/checkpoint1_lm1.png",
       "GFX/map/scp1162.jpg",
@@ -470,36 +473,36 @@
       "GFX/map/room205_lm1.png",
       "GFX/map/CD_Diff.png",
       "GFX/map/label079.jpg",
-      "GFX/map/173bright.rmesh",
+      "GFX/map/173bright.smpk",
       "GFX/map/pocketdimension4_lm1.bmp",
       "GFX/map/room4_2_lm1.png",
-      "GFX/map/room2tesla_lcz_opt.rmesh",
+      "GFX/map/room2tesla_lcz_opt.smpk",
       "GFX/map/room2gw_lm4.png",
       "GFX/map/toilet02.smf",
-      "GFX/map/room2scps_opt.rmesh",
+      "GFX/map/room2scps_opt.smpk",
       "GFX/map/room2scps_lm1.png",
       "GFX/map/room4pit_lm3.png",
       "GFX/map/mechanical_lever.jpg",
       "GFX/map/room2_lm1.png",
       "GFX/map/SLH_1499_water.png",
-      "GFX/map/room1lifts_opt.rmesh",
+      "GFX/map/room1lifts_opt.smpk",
       "GFX/map/medibay.jpg",
-      "GFX/map/room3z3_opt.rmesh",
+      "GFX/map/room3z3_opt.smpk",
       "GFX/map/room2elevator_lm1.png",
-      "GFX/map/room2_opt.rmesh",
-      "GFX/map/lightgunbase.b3d",
+      "GFX/map/room2_opt.smpk",
+      "GFX/map/lightgunbase.smpk",
       "GFX/map/4tunnels_lm1.png",
       "GFX/map/navtexture.jpg",
-      "GFX/map/room3tunnel_opt.rmesh",
+      "GFX/map/room3tunnel_opt.smpk",
       "GFX/map/tank2.jpg",
       "GFX/map/intro_labels_lm1.bmp",
       "GFX/map/room079_lm2.png",
       "GFX/map/room012_lm1.png",
-      "GFX/map/leverhandle.x",
-      "GFX/map/room2doors_opt.rmesh",
+      "GFX/map/leverhandle.smpk",
+      "GFX/map/room2doors_opt.smpk",
       "GFX/map/exit1terrain_lm4.bmp",
-      "GFX/map/room2offices2_opt.rmesh",
-      "GFX/map/914key.x",
+      "GFX/map/room2offices2_opt.smpk",
+      "GFX/map/914key.smpk",
       "GFX/map/room4pit_lm2.png",
       "GFX/map/servers1.jpg",
       "GFX/map/room2tesla_lcz_lm1.png",
@@ -514,192 +517,192 @@
       "GFX/map/dirtymetal.jpg",
       "GFX/map/label049.jpg",
       "GFX/map/endroom_lm1.png",
-      "GFX/map/leverbase.x",
-      "GFX/map/room3gw_opt.rmesh",
+      "GFX/map/leverbase.smpk",
+      "GFX/map/room3gw_opt.smpk",
       "GFX/map/scp-012_2.jpg",
-      "GFX/map/room205_opt.rmesh",
+      "GFX/map/room205_opt.smpk",
       "GFX/map/room2offices4_lm1.png",
       "GFX/map/whitewall.jpg",
       "GFX/map/room3z2_lm1.png",
       "GFX/map/room2c2_lm3.png",
-      "GFX/map/room049_opt.rmesh",
-      "GFX/map/room3gw_pipes.b3d",
-      "GFX/map/room4z3_opt.rmesh",
-      "GFX/map/IntroDrawer.b3d",
+      "GFX/map/room049_opt.smpk",
+      "GFX/map/room3gw_pipes.smpk",
+      "GFX/map/room4z3_opt.smpk",
+      "GFX/map/IntroDrawer.smpk",
       "GFX/map/room3servers2_lm2.png",
       "GFX/map/ctwalls.png",
-      "GFX/map/room012_opt.rmesh",
-      "GFX/map/room2sl_opt.rmesh",
+      "GFX/map/room012_opt.smpk",
+      "GFX/map/room2sl_opt.smpk",
       "GFX/map/testroom_lm1.png",
       "GFX/map/room2servers_lm1.png",
       "GFX/map/room2c2_lm2.png",
-      "GFX/map/294.x",
+      "GFX/map/294.smpk",
       "GFX/map/room860_lm1.png",
       "GFX/map/294.jpg",
       "GFX/map/scp-012_3.jpg",
-      "GFX/map/mt2c.rmesh",
+      "GFX/map/mt2c.smpk",
       "GFX/map/grass.png",
-      "GFX/map/room2_5_opt.rmesh",
+      "GFX/map/room2_5_opt.smpk",
       "GFX/map/room2pipes_lm1.png",
-      "GFX/map/room2Cz3_opt.rmesh",
+      "GFX/map/room2Cz3_opt.smpk",
       "GFX/map/room3storage_lm3.png",
       "GFX/map/room2tunnel_lm1.png",
       "GFX/map/oxygen-cylinder.jpg",
       "GFX/map/room3storage_lm1.png",
       "GFX/map/doctors.jpg",
-      "GFX/map/CamHead.x",
+      "GFX/map/CamHead.smpk",
       "GFX/map/scp-012_1.jpg",
-      "GFX/map/room3offices_hb.b3d",
+      "GFX/map/room3offices_hb.smpk",
       "GFX/map/rockmossbump.jpg",
-      "GFX/map/room2z3_2_opt.rmesh",
+      "GFX/map/room2z3_2_opt.smpk",
       "GFX/map/room2offices4_lm2.png",
-      "GFX/map/pocketdimension2.b3d",
+      "GFX/map/pocketdimension2.smpk",
       "GFX/map/screen.jpg",
       "GFX/map/room2poffices_lm1.png",
       "GFX/map/room3servers2_lm1.png",
-      "GFX/map/room2sroom_opt.rmesh",
-      "GFX/map/room3servers_opt.rmesh",
+      "GFX/map/room2sroom_opt.smpk",
+      "GFX/map/room3servers_opt.smpk",
       "GFX/map/MEQM805_9.jpg",
       "GFX/map/label895.jpg",
-      "GFX/map/room2closets_opt.rmesh",
+      "GFX/map/room2closets_opt.smpk",
       "GFX/map/testroom_lm2.png",
-      "GFX/map/monitor.b3d",
+      "GFX/map/monitor.smpk",
       "GFX/map/room2c2_lm1.png",
-      "GFX/map/pocketdimension3.b3d",
+      "GFX/map/pocketdimension3.smpk",
       "GFX/map/room2offices4_lm3.png",
       "GFX/map/granite-texture-tileable.png",
       "GFX/map/ElecBox.jpg",
       "GFX/map/scp-012_0.jpg",
       "GFX/map/bowl-blood.jpg",
       "GFX/map/label513.jpg",
-      "GFX/map/ContDoorLeft.x",
+      "GFX/map/ContDoorLeft.smpk",
       "GFX/map/machineroom_lm1.png",
       "GFX/map/room3storage_lm4.png",
       "GFX/map/coffin_lm1.png",
-      "GFX/map/gateawall2.b3d",
-      "GFX/map/room2_3_opt.rmesh",
+      "GFX/map/gateawall2.smpk",
+      "GFX/map/room2_3_opt.smpk",
       "GFX/map/gateaentrance_lm1.png",
       "GFX/map/008_lm1.png",
-      "GFX/map/079.b3d",
+      "GFX/map/079.smpk",
       "GFX/map/LockdownScreen3.jpg",
       "GFX/map/LockdownScreen2.jpg",
       "GFX/map/door.jpg",
       "GFX/map/label106.jpg",
       "GFX/map/scp1162wallbump.jpg",
-      "GFX/map/room4_2_opt.rmesh",
-      "GFX/map/008_2.b3d",
-      "GFX/map/dimension1499/1499object9.b3d",
-      "GFX/map/dimension1499/1499object8.b3d",
+      "GFX/map/room4_2_opt.smpk",
+      "GFX/map/008_2.smpk",
+      "GFX/map/dimension1499/1499object9.smpk",
+      "GFX/map/dimension1499/1499object8.smpk",
       "GFX/map/dimension1499/grit2.jpg",
       "GFX/map/dimension1499/grit3.jpg",
       "GFX/map/dimension1499/grit1.jpg",
-      "GFX/map/dimension1499/1499object15.b3d",
-      "GFX/map/dimension1499/1499object14.b3d",
-      "GFX/map/dimension1499/1499object13.b3d",
-      "GFX/map/dimension1499/1499object12.b3d",
-      "GFX/map/dimension1499/1499object10.b3d",
-      "GFX/map/dimension1499/1499object0_opt.rmesh",
-      "GFX/map/dimension1499/1499object0_cull.b3d",
-      "GFX/map/dimension1499/1499object11.b3d",
-      "GFX/map/dimension1499/1499plane.b3d",
+      "GFX/map/dimension1499/1499object15.smpk",
+      "GFX/map/dimension1499/1499object14.smpk",
+      "GFX/map/dimension1499/1499object13.smpk",
+      "GFX/map/dimension1499/1499object12.smpk",
+      "GFX/map/dimension1499/1499object10.smpk",
+      "GFX/map/dimension1499/1499object0_opt.smpk",
+      "GFX/map/dimension1499/1499object0_cull.smpk",
+      "GFX/map/dimension1499/1499object11.smpk",
+      "GFX/map/dimension1499/1499plane.smpk",
       "GFX/map/dimension1499/1499object0_lm1.png",
-      "GFX/map/dimension1499/1499object3.b3d",
-      "GFX/map/dimension1499/1499object2.b3d",
+      "GFX/map/dimension1499/1499object3.smpk",
+      "GFX/map/dimension1499/1499object2.smpk",
       "GFX/map/dimension1499/AGENTs.md",
       "GFX/map/dimension1499/1499object0_lm2.png",
-      "GFX/map/dimension1499/1499object1.b3d",
+      "GFX/map/dimension1499/1499object1.smpk",
       "GFX/map/dimension1499/1499object0_lm3.png",
-      "GFX/map/dimension1499/1499object5.b3d",
-      "GFX/map/dimension1499/1499object4.b3d",
-      "GFX/map/dimension1499/1499object6.b3d",
-      "GFX/map/dimension1499/1499object7.b3d",
+      "GFX/map/dimension1499/1499object5.smpk",
+      "GFX/map/dimension1499/1499object4.smpk",
+      "GFX/map/dimension1499/1499object6.smpk",
+      "GFX/map/dimension1499/1499object7.smpk",
       "GFX/map/concretemoss.jpg",
       "GFX/map/room2storage_lm1.png",
-      "GFX/map/room205.rmesh",
+      "GFX/map/room205.smpk",
       "GFX/map/medibay_lm1.png",
       "GFX/map/endroom2_lm1.png",
       "GFX/map/room2c_lm1.png",
-      "GFX/map/room035_opt.rmesh",
+      "GFX/map/room035_opt.smpk",
       "GFX/map/microscope.jpg",
       "GFX/map/room513_lm1.png",
       "GFX/map/1123_lm1.png",
       "GFX/map/room2toilets_lm1.png",
-      "GFX/map/IntroDesk.b3d",
+      "GFX/map/IntroDesk.smpk",
       "GFX/map/pdfloor.jpg",
       "GFX/map/room3servers_lm1.png",
-      "GFX/map/gatea_hitbox1.b3d",
-      "GFX/map/room1062.b3d",
+      "GFX/map/gatea_hitbox1.smpk",
+      "GFX/map/room1062.smpk",
       "GFX/map/201_camera_diffuse1.png",
-      "GFX/map/room2scps2_opt.rmesh",
+      "GFX/map/room2scps2_opt.smpk",
       "GFX/map/room2pit_lm1.png",
-      "GFX/map/1123_opt.rmesh",
+      "GFX/map/1123_opt.smpk",
       "GFX/map/metal_darker.jpg",
-      "GFX/map/gateawall1.b3d",
+      "GFX/map/gateawall1.smpk",
       "GFX/map/room3z3_lm1.png",
-      "GFX/map/pocketdimension4.b3d",
-      "GFX/map/room3z2_hb.b3d",
+      "GFX/map/pocketdimension4.smpk",
+      "GFX/map/room3z2_hb.smpk",
       "GFX/map/room2cz3_lm1.png",
       "GFX/map/controlpanel2.jpg",
       "GFX/map/fire_extinguisher.jpg",
       "GFX/map/gravelbump.jpg",
-      "GFX/map/room049_hb.b3d",
-      "GFX/map/room2storage_opt.rmesh",
-      "GFX/map/room3offices_opt.rmesh",
-      "GFX/map/372_hb.b3d",
-      "GFX/map/ContDoorRight.x",
-      "GFX/map/pocketdimension5.b3d",
+      "GFX/map/room049_hb.smpk",
+      "GFX/map/room2storage_opt.smpk",
+      "GFX/map/room3offices_opt.smpk",
+      "GFX/map/372_hb.smpk",
+      "GFX/map/ContDoorRight.smpk",
+      "GFX/map/pocketdimension5.smpk",
       "GFX/map/metalpanels2.jpg",
-      "GFX/map/room2Ctunnel_opt.rmesh",
-      "GFX/map/DoorColl.x",
+      "GFX/map/room2Ctunnel_opt.smpk",
+      "GFX/map/DoorColl.smpk",
       "GFX/map/officeseat_a.jpg",
-      "GFX/map/Door01.x",
+      "GFX/map/Door01.smpk",
       "GFX/map/medibay_lm2.png",
-      "GFX/map/cam.x",
+      "GFX/map/cam.smpk",
       "GFX/map/labelmedicalbay.jpg",
       "GFX/map/crtroc.jpg",
       "GFX/map/173bright_lm1.png",
-      "GFX/map/roompj_opt.rmesh",
+      "GFX/map/roompj_opt.smpk",
       "GFX/map/room2shaft_lm2.png",
       "GFX/map/Pipes_NoRust2.jpg",
-      "GFX/map/lockroom_opt.rmesh",
+      "GFX/map/lockroom_opt.smpk",
       "GFX/map/room2testmisc_lm1.png",
       "GFX/map/room2_4_lm4.png",
-      "GFX/map/room012_3.b3d",
+      "GFX/map/room012_3.smpk",
       "GFX/map/room2_5_lm1.png",
       "GFX/map/containmentdoorsbump.jpg",
       "GFX/map/gatea_lm1.png",
       "GFX/map/room2scps2_lm1.png",
       "GFX/map/room049_lm2.png",
-      "GFX/map/room2cpit_opt.rmesh",
-      "GFX/map/endroom_opt.rmesh",
-      "GFX/map/1123_hb.b3d",
-      "GFX/map/room012_2.b3d",
+      "GFX/map/room2cpit_opt.smpk",
+      "GFX/map/endroom_opt.smpk",
+      "GFX/map/1123_hb.smpk",
+      "GFX/map/room012_2.smpk",
       "GFX/map/papertexture.jpg",
-      "GFX/map/room2_4_opt.rmesh",
+      "GFX/map/room2_4_opt.smpk",
       "GFX/map/room2_4_lm5.png",
       "GFX/map/room2shaft_lm3.png",
-      "GFX/map/medibay_props.b3d",
-      "GFX/map/room2cafeteria_opt.rmesh",
+      "GFX/map/medibay_props.smpk",
+      "GFX/map/room2cafeteria_opt.smpk",
       "GFX/map/cable_black.jpg",
-      "GFX/map/room966.rmesh",
-      "GFX/map/room2z3_opt.rmesh",
-      "GFX/map/mt_generator.rmesh",
-      "GFX/map/exit1_opt.rmesh",
+      "GFX/map/room966.smpk",
+      "GFX/map/room2z3_opt.smpk",
+      "GFX/map/mt_generator.smpk",
+      "GFX/map/exit1_opt.smpk",
       "GFX/map/room2z3_2_lm4.png",
       "GFX/map/AGENTs.md",
       "GFX/map/sun.jpg",
       "GFX/map/lockroom_lm1.png",
       "GFX/map/173bright_lm2.png",
-      "GFX/map/room2toilets_opt.rmesh",
+      "GFX/map/room2toilets_opt.smpk",
       "GFX/map/room2shaft_lm1.png",
       "GFX/map/tunnel_lm1.png",
-      "GFX/map/tunnel_opt.rmesh",
-      "GFX/map/room860_opt.rmesh",
-      "GFX/map/173_2.b3d",
-      "GFX/map/room1archive_opt.rmesh",
+      "GFX/map/tunnel_opt.smpk",
+      "GFX/map/room860_opt.smpk",
+      "GFX/map/173_2.smpk",
+      "GFX/map/room1archive_opt.smpk",
       "GFX/map/op-table-light-blood.jpg",
       "GFX/map/room2offices_lm1.png",
-      "GFX/map/room2servers_opt.rmesh",
+      "GFX/map/room2servers_opt.smpk",
       "GFX/map/room2_5_lm2.png",
       "GFX/map/gatea_lm2.png",
       "GFX/map/room2scps2_lm2.png",
@@ -714,16 +717,16 @@
       "GFX/map/2_office_lamps_dif.jpg",
       "GFX/map/room4z3_lm1.png",
       "GFX/map/room2_4_lm6.png",
-      "GFX/map/room1162_opt.rmesh",
+      "GFX/map/room1162_opt.smpk",
       "GFX/map/room2sroom_lm1.png",
-      "GFX/map/pocketdimension1_opt.rmesh",
+      "GFX/map/pocketdimension1_opt.smpk",
       "GFX/map/173bright_lm3.png",
       "GFX/map/room4_lm1.png",
       "GFX/map/room2poffices2_lm1.png",
       "GFX/map/room2tesla_hcz_lm1.png",
-      "GFX/map/4tunnels_opt.rmesh",
+      "GFX/map/4tunnels_opt.smpk",
       "GFX/map/pocketdimension2_lm1.bmp",
-      "GFX/map/room2_2_opt.rmesh",
+      "GFX/map/room2_2_opt.smpk",
       "GFX/map/bed-table.jpg",
       "GFX/map/medibay_props_lm2.bmp",
       "GFX/map/room2z3_2_lm1.png",
@@ -737,21 +740,21 @@
       "GFX/map/label372.jpg",
       "GFX/map/cabinet_a.jpg",
       "GFX/map/room106_lm2.png",
-      "GFX/map/coffin_opt.rmesh",
-      "GFX/map/room2tesla_opt.rmesh",
+      "GFX/map/coffin_opt.smpk",
+      "GFX/map/room2tesla_opt.smpk",
       "GFX/map/room1162_lm1.png",
       "GFX/map/room2scps2_lm6.png",
-      "GFX/map/gateaentrance_opt.rmesh",
-      "GFX/map/gatea_opt.rmesh",
+      "GFX/map/gateaentrance_opt.smpk",
+      "GFX/map/gatea_opt.smpk",
       "GFX/map/lockroom3_lm1.png",
       "GFX/map/d-quest173.png",
       "GFX/map/soft grey.jpg",
-      "GFX/map/173bright_opt.rmesh",
+      "GFX/map/173bright_opt.smpk",
       "GFX/map/room2_4_lm3.png",
       "GFX/map/pocketdimension3_lm1.bmp",
       "GFX/map/new_metal1.jpg",
       "GFX/map/concretefloor.jpg",
-      "GFX/map/elevatordoor.b3d",
+      "GFX/map/elevatordoor.smpk",
       "GFX/map/white.jpg",
       "GFX/map/room2nuke_lm1.png",
       "GFX/map/room3offices_lm1.png",
@@ -761,7 +764,7 @@
       "GFX/map/room2z3_2_lm2.png",
       "GFX/map/medibay_props_lm1.bmp",
       "GFX/map/173_lm1.png",
-      "GFX/map/room2testroom2_opt.rmesh",
+      "GFX/map/room2testroom2_opt.smpk",
       "GFX/map/tree1.jpg",
       "GFX/map/LAMP.jpg",
       "GFX/map/room2sl_lm2.png",
@@ -770,29 +773,29 @@
       "GFX/map/pocketdimension3_lm3.bmp",
       "GFX/map/concretewall.jpg",
       "GFX/map/room2_4_lm1.png",
-      "GFX/map/room3storage_opt.rmesh",
-      "GFX/map/room2offices_opt.rmesh",
-      "GFX/map/pocketdimensionterrain.b3d",
-      "GFX/map/monitor_checkpoint.b3d",
-      "GFX/map/mt_elevator.rmesh",
+      "GFX/map/room3storage_opt.smpk",
+      "GFX/map/room2offices_opt.smpk",
+      "GFX/map/pocketdimensionterrain.smpk",
+      "GFX/map/monitor_checkpoint.smpk",
+      "GFX/map/mt_elevator.smpk",
       "GFX/map/room106_lm1.png",
-      "GFX/map/endroom2_opt.rmesh",
+      "GFX/map/endroom2_opt.smpk",
       "GFX/map/label173.jpg",
       "GFX/map/room2scps2_lm4.png",
-      "GFX/map/room2c2_opt.rmesh",
+      "GFX/map/room2c2_opt.smpk",
       "GFX/map/room2scps2_lm5.png",
       "GFX/map/079-monitor-screen.jpg",
-      "GFX/map/DoorFrame.x",
+      "GFX/map/DoorFrame.smpk",
       "GFX/map/scp1162wall.jpg",
       "GFX/map/lockroom3_lm2.png",
-      "GFX/map/008_opt.rmesh",
+      "GFX/map/008_opt.smpk",
       "GFX/map/red.jpg",
       "GFX/map/diff_trolley.jpg",
-      "GFX/map/room513_opt.rmesh",
-      "GFX/map/room2tesla_hcz_opt.rmesh",
+      "GFX/map/room513_opt.smpk",
+      "GFX/map/room2tesla_hcz_opt.smpk",
       "GFX/map/pocketdimension3_lm2.bmp",
-      "GFX/map/machineroom_opt.rmesh",
-      "GFX/map/checkpoint2_opt.rmesh",
+      "GFX/map/machineroom_opt.smpk",
+      "GFX/map/checkpoint2_opt.smpk",
       "GFX/map/crtrec.jpg",
       "GFX/map/room3offices_lm2.png",
       "GFX/map/label012.jpg",
@@ -870,8 +873,8 @@
       "GFX/BlinkIcon.png",
       "GFX/ButtonUp.png",
       "GFX/smoke.png",
-      "GFX/doorhit.b3d",
-      "GFX/lightcone.b3d",
+      "GFX/doorhit.smpk",
+      "GFX/lightcone.smpk",
       "GFX/font/Journal/Journal.ttf",
       "GFX/font/Journal/AGENTs.md",
       "GFX/font/courbd/Courier New.ttf",
@@ -887,15 +890,15 @@
       "GFX/AGENTs.md",
       "GFX/kneelmortal.pd",
       "GFX/decal8.png",
-      "GFX/items/HGIB_Skull1.b3d",
-      "GFX/items/vest.x",
+      "GFX/items/HGIB_Skull1.smpk",
+      "GFX/items/vest.smpk",
       "GFX/items/card.jpg",
       "GFX/items/keycard2.jpg",
-      "GFX/items/wallet.b3d",
+      "GFX/items/wallet.smpk",
       "GFX/items/BurntNoteTexture.jpg",
       "GFX/items/keycard3.jpg",
-      "GFX/items/scp714.b3d",
-      "GFX/items/radio.x",
+      "GFX/items/scp714.smpk",
+      "GFX/items/radio.smpk",
       "GFX/items/INVnightvision.jpg",
       "GFX/items/doc427.jpg",
       "GFX/items/INVsupernightvision.jpg",
@@ -911,10 +914,10 @@
       "GFX/items/radio.png",
       "GFX/items/INVcoin.jpg",
       "GFX/items/keycard4.jpg",
-      "GFX/items/key.b3d",
+      "GFX/items/key.smpk",
       "GFX/items/INVradio.jpg",
       "GFX/items/metal.jpg",
-      "GFX/items/clipboard.b3d",
+      "GFX/items/clipboard.smpk",
       "GFX/items/nav.jpg",
       "GFX/items/INVmastercard.jpg",
       "GFX/items/key2.png",
@@ -931,7 +934,7 @@
       "GFX/items/INVpaper.jpg",
       "GFX/items/Navigator.png",
       "GFX/items/key.png",
-      "GFX/items/navigator.x",
+      "GFX/items/navigator.smpk",
       "GFX/items/keyboard.jpg",
       "GFX/items/INV513.jpg",
       "GFX/items/firstaidkit2.jpg",
@@ -950,7 +953,7 @@
       "GFX/items/docL4.jpg",
       "GFX/items/INVgasmask.jpg",
       "GFX/items/doc1048a.jpg",
-      "GFX/items/keycard.x",
+      "GFX/items/keycard.smpk",
       "GFX/items/ticket.png",
       "GFX/items/INVveryfinenightvision.jpg",
       "GFX/items/513.jpg",
@@ -960,10 +963,10 @@
       "GFX/items/doc1499.png",
       "GFX/items/docL1.jpg",
       "GFX/items/docRAND1.jpg",
-      "GFX/items/note.x",
+      "GFX/items/note.smpk",
       "GFX/items/doc682.jpg",
       "GFX/items/doc035ad.jpg",
-      "GFX/items/513.x",
+      "GFX/items/513.smpk",
       "GFX/items/INVorigami.jpg",
       "GFX/items/bottle.jpg",
       "GFX/items/docNDP.jpg",
@@ -971,11 +974,11 @@
       "GFX/items/INVeyedropsred.jpg",
       "GFX/items/scp-1025_diff.png",
       "GFX/items/docAC.jpg",
-      "GFX/items/paper.x",
+      "GFX/items/paper.smpk",
       "GFX/items/docL2.jpg",
       "GFX/items/docRAND2.jpg",
       "GFX/items/INV714.jpg",
-      "GFX/items/electronics.x",
+      "GFX/items/electronics.smpk",
       "GFX/items/INVpill.jpg",
       "GFX/items/doc939.jpg",
       "GFX/items/INVpaperstrips.jpg",
@@ -995,8 +998,8 @@
       "GFX/items/doc093rm.jpg",
       "GFX/items/doc049.jpg",
       "GFX/items/INVoldbadge.jpg",
-      "GFX/items/firstaid.x",
-      "GFX/items/SCP-1499.b3d",
+      "GFX/items/firstaid.smpk",
+      "GFX/items/SCP-1499.smpk",
       "GFX/items/eyedrops.jpg",
       "GFX/items/INVmetalpanel.jpg",
       "GFX/items/skull1.png",
@@ -1004,38 +1007,38 @@
       "GFX/items/INVfirstaid.jpg",
       "GFX/items/docOBJC.jpg",
       "GFX/items/doc513.jpg",
-      "GFX/items/paperstrips.x",
-      "GFX/items/metalpanel.x",
-      "GFX/items/severedhand.b3d",
-      "GFX/items/scp1025.b3d",
+      "GFX/items/paperstrips.smpk",
+      "GFX/items/metalpanel.smpk",
+      "GFX/items/severedhand.smpk",
+      "GFX/items/scp1025.smpk",
       "GFX/items/SCP-1499.jpg",
-      "GFX/items/eyedrops.b3d",
+      "GFX/items/eyedrops.smpk",
       "GFX/items/doc1123.jpg",
       "GFX/items/docGonzales.jpg",
       "GFX/items/INVscp1499.jpg",
       "GFX/items/doc106.jpg",
-      "GFX/items/pill.b3d",
+      "GFX/items/pill.smpk",
       "GFX/items/doc714.jpg",
       "GFX/items/badge1_tex.jpg",
       "GFX/items/INVhand2.jpg",
       "GFX/items/Syringe/inv.png",
       "GFX/items/Syringe/AGENTs.md",
       "GFX/items/Syringe/syringe.png",
-      "GFX/items/Syringe/syringe.b3d",
+      "GFX/items/Syringe/syringe.smpk",
       "GFX/items/INV1123.jpg",
       "GFX/items/INVhand.jpg",
       "GFX/items/INVwallet.jpg",
       "GFX/items/doc500.png",
       "GFX/items/Vest.png",
       "GFX/items/INVkeyomni.jpg",
-      "GFX/items/cup.x",
+      "GFX/items/cup.smpk",
       "GFX/items/note682.jpg",
       "GFX/items/INVcard.jpg",
-      "GFX/items/420.x",
+      "GFX/items/420.smpk",
       "GFX/items/INV1025.jpg",
       "GFX/items/INVkey5.jpg",
       "GFX/items/427.jpg",
-      "GFX/items/hazmat.b3d",
+      "GFX/items/hazmat.smpk",
       "GFX/items/eyedropsred.jpg",
       "GFX/items/INVscp148.jpg",
       "GFX/items/INVbottle.jpg",
@@ -1047,24 +1050,24 @@
       "GFX/items/AGENTs.md",
       "GFX/items/Battery/INVbattery22900.jpg",
       "GFX/items/Battery/Battery 18V.jpg",
-      "GFX/items/Battery/Battery.x",
+      "GFX/items/Battery/Battery.smpk",
       "GFX/items/Battery/AGENTs.md",
       "GFX/items/Battery/INVbattery9v.jpg",
       "GFX/items/Battery/INVbattery18v.jpg",
       "GFX/items/Battery/Strange Battery.jpg",
       "GFX/items/Battery/Battery 9V.jpg",
-      "GFX/items/badge.x",
+      "GFX/items/badge.smpk",
       "GFX/items/wallet_tex.jpg",
-      "GFX/items/427.b3d",
+      "GFX/items/427.smpk",
       "GFX/items/notetexture.jpg",
-      "GFX/items/NVG.b3d",
+      "GFX/items/NVG.smpk",
       "GFX/items/hazmat.jpg",
       "GFX/items/INVnavigator.jpg",
       "GFX/items/INVbadge.jpg",
       "GFX/items/INVclipboard.jpg",
       "GFX/items/INVbn.jpg",
       "GFX/items/firstaidkit.jpg",
-      "GFX/items/gasmask.b3d",
+      "GFX/items/gasmask.smpk",
       "GFX/items/mastercard.jpg",
       "GFX/items/sn.it",
       "GFX/items/INVnote.jpg",
@@ -1073,8 +1076,8 @@
       "GFX/items/INVkey3.jpg",
       "GFX/items/coin.png",
       "GFX/items/radioHUD.png",
-      "GFX/items/origami.b3d",
-      "GFX/items/scp148.x",
+      "GFX/items/origami.smpk",
+      "GFX/items/scp148.smpk",
       "GFX/items/doc038.jpg",
       "GFX/items/INVfirstaid2.jpg",
       "GFX/items/INV1162_1.jpg",
@@ -1089,7 +1092,7 @@
       "GFX/items/1025/1025_2.jpg",
       "GFX/items/1025/1025_3.jpg",
       "GFX/items/1025/AGENTs.md",
-      "GFX/items/cupliquid.x",
+      "GFX/items/cupliquid.smpk",
       "GFX/items/doc8601.jpg",
       "GFX/items/1048/1048_10.jpg",
       "GFX/items/1048/1048_11.jpg",
@@ -2183,7 +2186,7 @@
       "size": 39137
     },
     {
-      "path": "GFX/apacherotor2.b3d",
+      "path": "GFX/apacherotor2.smpk",
       "size": 7622
     },
     {
@@ -2215,7 +2218,7 @@
       "size": 56746
     },
     {
-      "path": "GFX/173box.b3d",
+      "path": "GFX/173box.smpk",
       "size": 54425
     },
     {
@@ -2235,7 +2238,7 @@
       "size": 42493
     },
     {
-      "path": "GFX/npcs/205_demon3.b3d",
+      "path": "GFX/npcs/205_demon3.smpk",
       "size": 1573596
     },
     {
@@ -2251,11 +2254,11 @@
       "size": 115730
     },
     {
-      "path": "GFX/npcs/205_demon2.b3d",
+      "path": "GFX/npcs/205_demon2.smpk",
       "size": 1189427
     },
     {
-      "path": "GFX/npcs/bll.b3d",
+      "path": "GFX/npcs/bll.smpk",
       "size": 747422
     },
     {
@@ -2263,11 +2266,11 @@
       "size": 131036
     },
     {
-      "path": "GFX/npcs/205_demon1.b3d",
+      "path": "GFX/npcs/205_demon1.smpk",
       "size": 1352182
     },
     {
-      "path": "GFX/npcs/035tentacle.b3d",
+      "path": "GFX/npcs/035tentacle.smpk",
       "size": 449427
     },
     {
@@ -2295,7 +2298,7 @@
       "size": 163878
     },
     {
-      "path": "GFX/npcs/372.b3d",
+      "path": "GFX/npcs/372.smpk",
       "size": 96316
     },
     {
@@ -2363,7 +2366,7 @@
       "size": 608332
     },
     {
-      "path": "GFX/npcs/scp-049.b3d",
+      "path": "GFX/npcs/scp-049.smpk",
       "size": 2021563
     },
     {
@@ -2379,7 +2382,7 @@
       "size": 23450
     },
     {
-      "path": "GFX/npcs/guard.b3d",
+      "path": "GFX/npcs/guard.smpk",
       "size": 771943
     },
     {
@@ -2411,7 +2414,7 @@
       "size": 149328
     },
     {
-      "path": "GFX/npcs/s2.b3d",
+      "path": "GFX/npcs/s2.smpk",
       "size": 333841
     },
     {
@@ -2419,19 +2422,19 @@
       "size": 208397
     },
     {
-      "path": "GFX/npcs/scp-066.b3d",
+      "path": "GFX/npcs/scp-066.smpk",
       "size": 743703
     },
     {
-      "path": "GFX/npcs/scp-1048a.b3d",
+      "path": "GFX/npcs/scp-1048a.smpk",
       "size": 654708
     },
     {
-      "path": "GFX/npcs/106_2.b3d",
+      "path": "GFX/npcs/106_2.smpk",
       "size": 1145814
     },
     {
-      "path": "GFX/npcs/forestmonster.b3d",
+      "path": "GFX/npcs/forestmonster.smpk",
       "size": 813449
     },
     {
@@ -2447,11 +2450,11 @@
       "size": 2614952
     },
     {
-      "path": "GFX/npcs/duck_low_res.b3d",
+      "path": "GFX/npcs/duck_low_res.smpk",
       "size": 36146
     },
     {
-      "path": "GFX/npcs/205_woman.b3d",
+      "path": "GFX/npcs/205_woman.smpk",
       "size": 1325015
     },
     {
@@ -2467,11 +2470,11 @@
       "size": 123672
     },
     {
-      "path": "GFX/npcs/classd.b3d",
+      "path": "GFX/npcs/classd.smpk",
       "size": 1083781
     },
     {
-      "path": "GFX/npcs/scp-1048.b3d",
+      "path": "GFX/npcs/scp-1048.smpk",
       "size": 324709
     },
     {
@@ -2491,7 +2494,7 @@
       "size": 188431
     },
     {
-      "path": "GFX/npcs/naziofficer.b3d",
+      "path": "GFX/npcs/naziofficer.smpk",
       "size": 415547
     },
     {
@@ -2499,7 +2502,7 @@
       "size": 173188
     },
     {
-      "path": "GFX/npcs/scp-939.b3d",
+      "path": "GFX/npcs/scp-939.smpk",
       "size": 1336091
     },
     {
@@ -2511,7 +2514,7 @@
       "size": 161007
     },
     {
-      "path": "GFX/npcs/682arm.b3d",
+      "path": "GFX/npcs/682arm.smpk",
       "size": 9092
     },
     {
@@ -2535,11 +2538,11 @@
       "size": 38275
     },
     {
-      "path": "GFX/npcs/scp-1048pp.b3d",
+      "path": "GFX/npcs/scp-1048pp.smpk",
       "size": 317068
     },
     {
-      "path": "GFX/npcs/zombiesurgeon.b3d",
+      "path": "GFX/npcs/zombiesurgeon.smpk",
       "size": 670315
     },
     {
@@ -2567,7 +2570,7 @@
       "size": 127832
     },
     {
-      "path": "GFX/npcs/035.b3d",
+      "path": "GFX/npcs/035.smpk",
       "size": 1203865
     },
     {
@@ -2583,7 +2586,7 @@
       "size": 71
     },
     {
-      "path": "GFX/npcs/173_2.b3d",
+      "path": "GFX/npcs/173_2.smpk",
       "size": 121572
     },
     {
@@ -2591,15 +2594,15 @@
       "size": 45392
     },
     {
-      "path": "GFX/npcs/1499-1.b3d",
+      "path": "GFX/npcs/1499-1.smpk",
       "size": 1017962
     },
     {
-      "path": "GFX/npcs/clerk.b3d",
+      "path": "GFX/npcs/clerk.smpk",
       "size": 1002284
     },
     {
-      "path": "GFX/npcs/scp-966.b3d",
+      "path": "GFX/npcs/scp-966.smpk",
       "size": 1294454
     },
     {
@@ -2615,7 +2618,7 @@
       "size": 42399
     },
     {
-      "path": "GFX/npcs/scp096.b3d",
+      "path": "GFX/npcs/scp096.smpk",
       "size": 798665
     },
     {
@@ -2627,7 +2630,7 @@
       "size": 244686
     },
     {
-      "path": "GFX/npcs/zombie1.b3d",
+      "path": "GFX/npcs/zombie1.smpk",
       "size": 1881490
     },
     {
@@ -2635,7 +2638,7 @@
       "size": 18213
     },
     {
-      "path": "GFX/npcs/MTF2.b3d",
+      "path": "GFX/npcs/MTF2.smpk",
       "size": 3636545
     },
     {
@@ -2715,11 +2718,11 @@
       "size": 41189
     },
     {
-      "path": "GFX/apache.b3d",
+      "path": "GFX/apache.smpk",
       "size": 42514
     },
     {
-      "path": "GFX/apacherotor.b3d",
+      "path": "GFX/apacherotor.smpk",
       "size": 10866
     },
     {
@@ -2803,7 +2806,7 @@
       "size": 27013
     },
     {
-      "path": "GFX/map/ButtonScanner.x",
+      "path": "GFX/map/ButtonScanner.smpk",
       "size": 15374
     },
     {
@@ -2823,7 +2826,7 @@
       "size": 701340
     },
     {
-      "path": "GFX/map/room1archive.rmesh",
+      "path": "GFX/map/room1archive.smpk",
       "size": 22219
     },
     {
@@ -2847,7 +2850,7 @@
       "size": 786486
     },
     {
-      "path": "GFX/map/173_opt.rmesh",
+      "path": "GFX/map/173_opt.smpk",
       "size": 911680
     },
     {
@@ -2895,15 +2898,15 @@
       "size": 3346
     },
     {
-      "path": "GFX/map/forest/detail/treetest5.b3d",
+      "path": "GFX/map/forest/detail/treetest5.smpk",
       "size": 2628
     },
     {
-      "path": "GFX/map/forest/detail/treetest4.b3d",
+      "path": "GFX/map/forest/detail/treetest4.smpk",
       "size": 18670
     },
     {
-      "path": "GFX/map/forest/detail/rock2.b3d",
+      "path": "GFX/map/forest/detail/rock2.smpk",
       "size": 4749
     },
     {
@@ -2915,7 +2918,7 @@
       "size": 58507
     },
     {
-      "path": "GFX/map/forest/detail/rock.b3d",
+      "path": "GFX/map/forest/detail/rock.smpk",
       "size": 7302
     },
     {
@@ -2935,11 +2938,11 @@
       "size": 3305
     },
     {
-      "path": "GFX/map/forest/wall.b3d",
+      "path": "GFX/map/forest/wall.smpk",
       "size": 5165
     },
     {
-      "path": "GFX/map/forest/door.b3d",
+      "path": "GFX/map/forest/door.smpk",
       "size": 51878
     },
     {
@@ -2955,7 +2958,7 @@
       "size": 93
     },
     {
-      "path": "GFX/map/forest/door_frame.b3d",
+      "path": "GFX/map/forest/door_frame.smpk",
       "size": 14214
     },
     {
@@ -2971,7 +2974,7 @@
       "size": 786486
     },
     {
-      "path": "GFX/map/room2servers2_opt.rmesh",
+      "path": "GFX/map/room2servers2_opt.smpk",
       "size": 395231
     },
     {
@@ -2979,15 +2982,15 @@
       "size": 169504
     },
     {
-      "path": "GFX/map/lockroom3_opt.rmesh",
+      "path": "GFX/map/lockroom3_opt.smpk",
       "size": 80700
     },
     {
-      "path": "GFX/map/dimension1499_opt.rmesh",
+      "path": "GFX/map/dimension1499_opt.smpk",
       "size": 250767
     },
     {
-      "path": "GFX/map/room2.rmesh",
+      "path": "GFX/map/room2.smpk",
       "size": 0
     },
     {
@@ -3023,7 +3026,7 @@
       "size": 29229
     },
     {
-      "path": "GFX/map/room2test1074.rmesh",
+      "path": "GFX/map/room2test1074.smpk",
       "size": 30583
     },
     {
@@ -3031,7 +3034,7 @@
       "size": 73894
     },
     {
-      "path": "GFX/map/fan.b3d",
+      "path": "GFX/map/fan.smpk",
       "size": 23133
     },
     {
@@ -3059,7 +3062,7 @@
       "size": 7589
     },
     {
-      "path": "GFX/map/heavydoor1.x",
+      "path": "GFX/map/heavydoor1.smpk",
       "size": 22597
     },
     {
@@ -3071,7 +3074,7 @@
       "size": 6761
     },
     {
-      "path": "GFX/map/room2poffices2_opt.rmesh",
+      "path": "GFX/map/room2poffices2_opt.smpk",
       "size": 731831
     },
     {
@@ -3091,7 +3094,7 @@
       "size": 196662
     },
     {
-      "path": "GFX/map/room2elevator_opt.rmesh",
+      "path": "GFX/map/room2elevator_opt.smpk",
       "size": 176885
     },
     {
@@ -3111,11 +3114,11 @@
       "size": 3478
     },
     {
-      "path": "GFX/map/room2tunnel_opt.rmesh",
+      "path": "GFX/map/room2tunnel_opt.smpk",
       "size": 113356
     },
     {
-      "path": "GFX/map/testroom_opt.rmesh",
+      "path": "GFX/map/testroom_opt.smpk",
       "size": 585914
     },
     {
@@ -3131,7 +3134,7 @@
       "size": 21374
     },
     {
-      "path": "GFX/map/monitor.x",
+      "path": "GFX/map/monitor.smpk",
       "size": 7535
     },
     {
@@ -3139,7 +3142,7 @@
       "size": 19837
     },
     {
-      "path": "GFX/map/room3_3_opt.rmesh",
+      "path": "GFX/map/room3_3_opt.smpk",
       "size": 148014
     },
     {
@@ -3151,7 +3154,7 @@
       "size": 82879
     },
     {
-      "path": "GFX/map/room2pipes_opt.rmesh",
+      "path": "GFX/map/room2pipes_opt.smpk",
       "size": 445157
     },
     {
@@ -3219,7 +3222,7 @@
       "size": 38693
     },
     {
-      "path": "GFX/map/room2tesla_caution.b3d",
+      "path": "GFX/map/room2tesla_caution.smpk",
       "size": 1808
     },
     {
@@ -3231,11 +3234,11 @@
       "size": 262673
     },
     {
-      "path": "GFX/map/mt1.rmesh",
+      "path": "GFX/map/mt1.smpk",
       "size": 10884
     },
     {
-      "path": "GFX/map/room3servers2_opt.rmesh",
+      "path": "GFX/map/room3servers2_opt.smpk",
       "size": 290026
     },
     {
@@ -3243,7 +3246,7 @@
       "size": 786486
     },
     {
-      "path": "GFX/map/gateatunnel.b3d",
+      "path": "GFX/map/gateatunnel.smpk",
       "size": 416295
     },
     {
@@ -3283,7 +3286,7 @@
       "size": 17285
     },
     {
-      "path": "GFX/map/intro_labels.b3d",
+      "path": "GFX/map/intro_labels.smpk",
       "size": 40062
     },
     {
@@ -3295,7 +3298,7 @@
       "size": 104174
     },
     {
-      "path": "GFX/map/room2C_opt.rmesh",
+      "path": "GFX/map/room2C_opt.smpk",
       "size": 229818
     },
     {
@@ -3303,7 +3306,7 @@
       "size": 104326
     },
     {
-      "path": "GFX/map/room3z2_opt.rmesh",
+      "path": "GFX/map/room3z2_opt.smpk",
       "size": 17506
     },
     {
@@ -3311,15 +3314,15 @@
       "size": 62516
     },
     {
-      "path": "GFX/map/room3_opt.rmesh",
+      "path": "GFX/map/room3_opt.smpk",
       "size": 491120
     },
     {
-      "path": "GFX/map/checkpoint1_opt.rmesh",
+      "path": "GFX/map/checkpoint1_opt.smpk",
       "size": 153522
     },
     {
-      "path": "GFX/map/room106_opt.rmesh",
+      "path": "GFX/map/room106_opt.smpk",
       "size": 888407
     },
     {
@@ -3327,11 +3330,11 @@
       "size": 30989
     },
     {
-      "path": "GFX/map/exit1terrain.b3d",
+      "path": "GFX/map/exit1terrain.smpk",
       "size": 615951
     },
     {
-      "path": "GFX/map/room2test1074_opt.rmesh",
+      "path": "GFX/map/room2test1074_opt.smpk",
       "size": 30587
     },
     {
@@ -3343,11 +3346,11 @@
       "size": 167996
     },
     {
-      "path": "GFX/map/room2offices3_opt.rmesh",
+      "path": "GFX/map/room2offices3_opt.smpk",
       "size": 633402
     },
     {
-      "path": "GFX/map/Button.x",
+      "path": "GFX/map/Button.smpk",
       "size": 13559
     },
     {
@@ -3355,11 +3358,11 @@
       "size": 54389
     },
     {
-      "path": "GFX/map/room2gw_opt.rmesh",
+      "path": "GFX/map/room2gw_opt.smpk",
       "size": 378951
     },
     {
-      "path": "GFX/map/914knob.x",
+      "path": "GFX/map/914knob.smpk",
       "size": 17658
     },
     {
@@ -3371,7 +3374,7 @@
       "size": 423970
     },
     {
-      "path": "GFX/map/mt3.rmesh",
+      "path": "GFX/map/mt3.smpk",
       "size": 17242
     },
     {
@@ -3383,11 +3386,11 @@
       "size": 122584
     },
     {
-      "path": "GFX/map/room2ccont_opt.rmesh",
+      "path": "GFX/map/room2ccont_opt.smpk",
       "size": 166187
     },
     {
-      "path": "GFX/map/room2gw_pipes.b3d",
+      "path": "GFX/map/room2gw_pipes.smpk",
       "size": 288919
     },
     {
@@ -3407,7 +3410,7 @@
       "size": 62132
     },
     {
-      "path": "GFX/map/173.rmesh",
+      "path": "GFX/map/173.smpk",
       "size": 910274
     },
     {
@@ -3443,19 +3446,19 @@
       "size": 46172
     },
     {
-      "path": "GFX/map/room2gw_b_opt.rmesh",
+      "path": "GFX/map/room2gw_b_opt.smpk",
       "size": 431980
     },
     {
-      "path": "GFX/map/CamHead.b3d",
+      "path": "GFX/map/CamHead.smpk",
       "size": 16478
     },
     {
-      "path": "GFX/map/room966_opt.rmesh",
+      "path": "GFX/map/room966_opt.smpk",
       "size": 97292
     },
     {
-      "path": "GFX/map/lightgun.b3d",
+      "path": "GFX/map/lightgun.smpk",
       "size": 64826
     },
     {
@@ -3475,7 +3478,7 @@
       "size": 42624
     },
     {
-      "path": "GFX/map/room4pit_opt.rmesh",
+      "path": "GFX/map/room4pit_opt.smpk",
       "size": 346871
     },
     {
@@ -3487,11 +3490,11 @@
       "size": 4410
     },
     {
-      "path": "GFX/map/room3pit_opt.rmesh",
+      "path": "GFX/map/room3pit_opt.smpk",
       "size": 255951
     },
     {
-      "path": "GFX/map/mt4.rmesh",
+      "path": "GFX/map/mt4.smpk",
       "size": 22522
     },
     {
@@ -3503,7 +3506,7 @@
       "size": 799804
     },
     {
-      "path": "GFX/map/Props/Tank1.x",
+      "path": "GFX/map/Props/Tank1.smpk",
       "size": 72525
     },
     {
@@ -3511,27 +3514,27 @@
       "size": 54272
     },
     {
-      "path": "GFX/map/Props/cabinet_b.x",
+      "path": "GFX/map/Props/cabinet_b.smpk",
       "size": 211094
     },
     {
-      "path": "GFX/map/Props/monitor.x",
+      "path": "GFX/map/Props/monitor.smpk",
       "size": 15850
     },
     {
-      "path": "GFX/map/Props/boxfile_a.x",
+      "path": "GFX/map/Props/boxfile_a.smpk",
       "size": 4766
     },
     {
-      "path": "GFX/map/Props/lamp3.x",
+      "path": "GFX/map/Props/lamp3.smpk",
       "size": 185706
     },
     {
-      "path": "GFX/map/Props/keyboard.x",
+      "path": "GFX/map/Props/keyboard.smpk",
       "size": 8699
     },
     {
-      "path": "GFX/map/Props/crate2.x",
+      "path": "GFX/map/Props/crate2.smpk",
       "size": 62788
     },
     {
@@ -3547,7 +3550,7 @@
       "size": 49156
     },
     {
-      "path": "GFX/map/Props/Tank2.x",
+      "path": "GFX/map/Props/Tank2.smpk",
       "size": 42653
     },
     {
@@ -3555,11 +3558,11 @@
       "size": 54292
     },
     {
-      "path": "GFX/map/Props/ElecBox.x",
+      "path": "GFX/map/Props/ElecBox.smpk",
       "size": 77704
     },
     {
-      "path": "GFX/map/Props/cabinet_a.x",
+      "path": "GFX/map/Props/cabinet_a.smpk",
       "size": 52985
     },
     {
@@ -3579,7 +3582,7 @@
       "size": 112330
     },
     {
-      "path": "GFX/map/Props/boxfile_b.x",
+      "path": "GFX/map/Props/boxfile_b.smpk",
       "size": 4766
     },
     {
@@ -3587,7 +3590,7 @@
       "size": 89858
     },
     {
-      "path": "GFX/map/Props/crate1.x",
+      "path": "GFX/map/Props/crate1.smpk",
       "size": 157366
     },
     {
@@ -3599,7 +3602,7 @@
       "size": 132225
     },
     {
-      "path": "GFX/map/Props/lamp1.x",
+      "path": "GFX/map/Props/lamp1.smpk",
       "size": 48307
     },
     {
@@ -3607,7 +3610,7 @@
       "size": 73585
     },
     {
-      "path": "GFX/map/Props/ContDoorFrame.x",
+      "path": "GFX/map/Props/ContDoorFrame.smpk",
       "size": 51615
     },
     {
@@ -3615,7 +3618,7 @@
       "size": 40140
     },
     {
-      "path": "GFX/map/Props/officeseat_a.x",
+      "path": "GFX/map/Props/officeseat_a.smpk",
       "size": 246235
     },
     {
@@ -3627,7 +3630,7 @@
       "size": 55904
     },
     {
-      "path": "GFX/map/Props/mug.x",
+      "path": "GFX/map/Props/mug.smpk",
       "size": 58110
     },
     {
@@ -3635,15 +3638,15 @@
       "size": 146872
     },
     {
-      "path": "GFX/map/Props/205.x",
+      "path": "GFX/map/Props/205.smpk",
       "size": 113462
     },
     {
-      "path": "GFX/map/Props/crate3.x",
+      "path": "GFX/map/Props/crate3.smpk",
       "size": 54391
     },
     {
-      "path": "GFX/map/Props/lamp2.x",
+      "path": "GFX/map/Props/lamp2.smpk",
       "size": 29966
     },
     {
@@ -3651,11 +3654,11 @@
       "size": 42572
     },
     {
-      "path": "GFX/map/4tunnels.rmesh",
+      "path": "GFX/map/4tunnels.smpk",
       "size": 141655
     },
     {
-      "path": "GFX/map/lockroom2_opt.rmesh",
+      "path": "GFX/map/lockroom2_opt.smpk",
       "size": 107875
     },
     {
@@ -3687,7 +3690,7 @@
       "size": 53294
     },
     {
-      "path": "GFX/map/room2shaft_opt.rmesh",
+      "path": "GFX/map/room2shaft_opt.smpk",
       "size": 676377
     },
     {
@@ -3695,11 +3698,11 @@
       "size": 786488
     },
     {
-      "path": "GFX/map/room2pipes2_opt.rmesh",
+      "path": "GFX/map/room2pipes2_opt.smpk",
       "size": 470839
     },
     {
-      "path": "GFX/map/ButtonCode.x",
+      "path": "GFX/map/ButtonCode.smpk",
       "size": 37170
     },
     {
@@ -3707,7 +3710,7 @@
       "size": 2968
     },
     {
-      "path": "GFX/map/room2offices4_opt.rmesh",
+      "path": "GFX/map/room2offices4_opt.smpk",
       "size": 387641
     },
     {
@@ -3715,11 +3718,11 @@
       "size": 26815
     },
     {
-      "path": "GFX/map/tunnel2_opt.rmesh",
+      "path": "GFX/map/tunnel2_opt.smpk",
       "size": 131123
     },
     {
-      "path": "GFX/map/ButtonKeycard.x",
+      "path": "GFX/map/ButtonKeycard.smpk",
       "size": 19961
     },
     {
@@ -3735,7 +3738,7 @@
       "size": 12977
     },
     {
-      "path": "GFX/map/room3_2_opt.rmesh",
+      "path": "GFX/map/room3_2_opt.smpk",
       "size": 446784
     },
     {
@@ -3747,7 +3750,7 @@
       "size": 12342
     },
     {
-      "path": "GFX/map/medibay_opt.rmesh",
+      "path": "GFX/map/medibay_opt.smpk",
       "size": 140355
     },
     {
@@ -3763,7 +3766,7 @@
       "size": 37072
     },
     {
-      "path": "GFX/map/heavydoor2.x",
+      "path": "GFX/map/heavydoor2.smpk",
       "size": 14785
     },
     {
@@ -3771,7 +3774,7 @@
       "size": 9112
     },
     {
-      "path": "GFX/map/room4_opt.rmesh",
+      "path": "GFX/map/room4_opt.smpk",
       "size": 345904
     },
     {
@@ -3779,11 +3782,11 @@
       "size": 9861
     },
     {
-      "path": "GFX/map/room2poffices_opt.rmesh",
+      "path": "GFX/map/room2poffices_opt.smpk",
       "size": 594584
     },
     {
-      "path": "GFX/map/room4info_opt.rmesh",
+      "path": "GFX/map/room4info_opt.smpk",
       "size": 296979
     },
     {
@@ -3803,7 +3806,7 @@
       "size": 21827
     },
     {
-      "path": "GFX/map/room2pit_opt.rmesh",
+      "path": "GFX/map/room2pit_opt.smpk",
       "size": 363616
     },
     {
@@ -3811,7 +3814,7 @@
       "size": 20721
     },
     {
-      "path": "GFX/map/cambase.x",
+      "path": "GFX/map/cambase.smpk",
       "size": 20268
     },
     {
@@ -3839,11 +3842,11 @@
       "size": 47309
     },
     {
-      "path": "GFX/map/room2nuke_opt.rmesh",
+      "path": "GFX/map/room2nuke_opt.smpk",
       "size": 321380
     },
     {
-      "path": "GFX/map/room3storage_hb.b3d",
+      "path": "GFX/map/room3storage_hb.smpk",
       "size": 6862
     },
     {
@@ -3867,7 +3870,7 @@
       "size": 47638
     },
     {
-      "path": "GFX/map/room079_opt.rmesh",
+      "path": "GFX/map/room079_opt.smpk",
       "size": 743124
     },
     {
@@ -3879,7 +3882,7 @@
       "size": 296546
     },
     {
-      "path": "GFX/map/mt2.rmesh",
+      "path": "GFX/map/mt2.smpk",
       "size": 7356
     },
     {
@@ -3935,7 +3938,7 @@
       "size": 77525
     },
     {
-      "path": "GFX/map/173bright.rmesh",
+      "path": "GFX/map/173bright.smpk",
       "size": 1507659
     },
     {
@@ -3947,7 +3950,7 @@
       "size": 8039
     },
     {
-      "path": "GFX/map/room2tesla_lcz_opt.rmesh",
+      "path": "GFX/map/room2tesla_lcz_opt.smpk",
       "size": 353289
     },
     {
@@ -3959,7 +3962,7 @@
       "size": 28977
     },
     {
-      "path": "GFX/map/room2scps_opt.rmesh",
+      "path": "GFX/map/room2scps_opt.smpk",
       "size": 241731
     },
     {
@@ -3983,7 +3986,7 @@
       "size": 11336
     },
     {
-      "path": "GFX/map/room1lifts_opt.rmesh",
+      "path": "GFX/map/room1lifts_opt.smpk",
       "size": 152466
     },
     {
@@ -3991,7 +3994,7 @@
       "size": 52039
     },
     {
-      "path": "GFX/map/room3z3_opt.rmesh",
+      "path": "GFX/map/room3z3_opt.smpk",
       "size": 67841
     },
     {
@@ -3999,11 +4002,11 @@
       "size": 9662
     },
     {
-      "path": "GFX/map/room2_opt.rmesh",
+      "path": "GFX/map/room2_opt.smpk",
       "size": 334225
     },
     {
-      "path": "GFX/map/lightgunbase.b3d",
+      "path": "GFX/map/lightgunbase.smpk",
       "size": 26875
     },
     {
@@ -4015,7 +4018,7 @@
       "size": 47432
     },
     {
-      "path": "GFX/map/room3tunnel_opt.rmesh",
+      "path": "GFX/map/room3tunnel_opt.smpk",
       "size": 113761
     },
     {
@@ -4035,11 +4038,11 @@
       "size": 30199
     },
     {
-      "path": "GFX/map/leverhandle.x",
+      "path": "GFX/map/leverhandle.smpk",
       "size": 24636
     },
     {
-      "path": "GFX/map/room2doors_opt.rmesh",
+      "path": "GFX/map/room2doors_opt.smpk",
       "size": 137320
     },
     {
@@ -4047,11 +4050,11 @@
       "size": 786488
     },
     {
-      "path": "GFX/map/room2offices2_opt.rmesh",
+      "path": "GFX/map/room2offices2_opt.smpk",
       "size": 322484
     },
     {
-      "path": "GFX/map/914key.x",
+      "path": "GFX/map/914key.smpk",
       "size": 26200
     },
     {
@@ -4111,11 +4114,11 @@
       "size": 25657
     },
     {
-      "path": "GFX/map/leverbase.x",
+      "path": "GFX/map/leverbase.smpk",
       "size": 41215
     },
     {
-      "path": "GFX/map/room3gw_opt.rmesh",
+      "path": "GFX/map/room3gw_opt.smpk",
       "size": 397152
     },
     {
@@ -4123,7 +4126,7 @@
       "size": 192843
     },
     {
-      "path": "GFX/map/room205_opt.rmesh",
+      "path": "GFX/map/room205_opt.smpk",
       "size": 89097
     },
     {
@@ -4143,19 +4146,19 @@
       "size": 1123
     },
     {
-      "path": "GFX/map/room049_opt.rmesh",
+      "path": "GFX/map/room049_opt.smpk",
       "size": 738749
     },
     {
-      "path": "GFX/map/room3gw_pipes.b3d",
+      "path": "GFX/map/room3gw_pipes.smpk",
       "size": 288919
     },
     {
-      "path": "GFX/map/room4z3_opt.rmesh",
+      "path": "GFX/map/room4z3_opt.smpk",
       "size": 87039
     },
     {
-      "path": "GFX/map/IntroDrawer.b3d",
+      "path": "GFX/map/IntroDrawer.smpk",
       "size": 21825
     },
     {
@@ -4167,11 +4170,11 @@
       "size": 502345
     },
     {
-      "path": "GFX/map/room012_opt.rmesh",
+      "path": "GFX/map/room012_opt.smpk",
       "size": 197629
     },
     {
-      "path": "GFX/map/room2sl_opt.rmesh",
+      "path": "GFX/map/room2sl_opt.smpk",
       "size": 386785
     },
     {
@@ -4187,7 +4190,7 @@
       "size": 26902
     },
     {
-      "path": "GFX/map/294.x",
+      "path": "GFX/map/294.smpk",
       "size": 401917
     },
     {
@@ -4203,7 +4206,7 @@
       "size": 195772
     },
     {
-      "path": "GFX/map/mt2c.rmesh",
+      "path": "GFX/map/mt2c.smpk",
       "size": 12406
     },
     {
@@ -4211,7 +4214,7 @@
       "size": 103640
     },
     {
-      "path": "GFX/map/room2_5_opt.rmesh",
+      "path": "GFX/map/room2_5_opt.smpk",
       "size": 238406
     },
     {
@@ -4219,7 +4222,7 @@
       "size": 26395
     },
     {
-      "path": "GFX/map/room2Cz3_opt.rmesh",
+      "path": "GFX/map/room2Cz3_opt.smpk",
       "size": 66648
     },
     {
@@ -4243,7 +4246,7 @@
       "size": 64003
     },
     {
-      "path": "GFX/map/CamHead.x",
+      "path": "GFX/map/CamHead.smpk",
       "size": 98383
     },
     {
@@ -4251,7 +4254,7 @@
       "size": 189625
     },
     {
-      "path": "GFX/map/room3offices_hb.b3d",
+      "path": "GFX/map/room3offices_hb.smpk",
       "size": 1882
     },
     {
@@ -4259,7 +4262,7 @@
       "size": 417336
     },
     {
-      "path": "GFX/map/room2z3_2_opt.rmesh",
+      "path": "GFX/map/room2z3_2_opt.smpk",
       "size": 15206
     },
     {
@@ -4267,7 +4270,7 @@
       "size": 26879
     },
     {
-      "path": "GFX/map/pocketdimension2.b3d",
+      "path": "GFX/map/pocketdimension2.smpk",
       "size": 16201
     },
     {
@@ -4283,11 +4286,11 @@
       "size": 27724
     },
     {
-      "path": "GFX/map/room2sroom_opt.rmesh",
+      "path": "GFX/map/room2sroom_opt.smpk",
       "size": 241472
     },
     {
-      "path": "GFX/map/room3servers_opt.rmesh",
+      "path": "GFX/map/room3servers_opt.smpk",
       "size": 310633
     },
     {
@@ -4299,7 +4302,7 @@
       "size": 74454
     },
     {
-      "path": "GFX/map/room2closets_opt.rmesh",
+      "path": "GFX/map/room2closets_opt.smpk",
       "size": 358658
     },
     {
@@ -4307,7 +4310,7 @@
       "size": 60393
     },
     {
-      "path": "GFX/map/monitor.b3d",
+      "path": "GFX/map/monitor.smpk",
       "size": 5027
     },
     {
@@ -4315,7 +4318,7 @@
       "size": 25275
     },
     {
-      "path": "GFX/map/pocketdimension3.b3d",
+      "path": "GFX/map/pocketdimension3.smpk",
       "size": 548685
     },
     {
@@ -4343,7 +4346,7 @@
       "size": 73691
     },
     {
-      "path": "GFX/map/ContDoorLeft.x",
+      "path": "GFX/map/ContDoorLeft.smpk",
       "size": 29785
     },
     {
@@ -4359,11 +4362,11 @@
       "size": 14760
     },
     {
-      "path": "GFX/map/gateawall2.b3d",
+      "path": "GFX/map/gateawall2.smpk",
       "size": 23555
     },
     {
-      "path": "GFX/map/room2_3_opt.rmesh",
+      "path": "GFX/map/room2_3_opt.smpk",
       "size": 6558
     },
     {
@@ -4375,7 +4378,7 @@
       "size": 38738
     },
     {
-      "path": "GFX/map/079.b3d",
+      "path": "GFX/map/079.smpk",
       "size": 378690
     },
     {
@@ -4399,19 +4402,19 @@
       "size": 169587
     },
     {
-      "path": "GFX/map/room4_2_opt.rmesh",
+      "path": "GFX/map/room4_2_opt.smpk",
       "size": 317835
     },
     {
-      "path": "GFX/map/008_2.b3d",
+      "path": "GFX/map/008_2.smpk",
       "size": 8693
     },
     {
-      "path": "GFX/map/dimension1499/1499object9.b3d",
+      "path": "GFX/map/dimension1499/1499object9.smpk",
       "size": 6898
     },
     {
-      "path": "GFX/map/dimension1499/1499object8.b3d",
+      "path": "GFX/map/dimension1499/1499object8.smpk",
       "size": 4962
     },
     {
@@ -4427,39 +4430,39 @@
       "size": 383764
     },
     {
-      "path": "GFX/map/dimension1499/1499object15.b3d",
+      "path": "GFX/map/dimension1499/1499object15.smpk",
       "size": 882
     },
     {
-      "path": "GFX/map/dimension1499/1499object14.b3d",
+      "path": "GFX/map/dimension1499/1499object14.smpk",
       "size": 5922
     },
     {
-      "path": "GFX/map/dimension1499/1499object13.b3d",
+      "path": "GFX/map/dimension1499/1499object13.smpk",
       "size": 6898
     },
     {
-      "path": "GFX/map/dimension1499/1499object12.b3d",
+      "path": "GFX/map/dimension1499/1499object12.smpk",
       "size": 1506
     },
     {
-      "path": "GFX/map/dimension1499/1499object10.b3d",
+      "path": "GFX/map/dimension1499/1499object10.smpk",
       "size": 882
     },
     {
-      "path": "GFX/map/dimension1499/1499object0_opt.rmesh",
+      "path": "GFX/map/dimension1499/1499object0_opt.smpk",
       "size": 245043
     },
     {
-      "path": "GFX/map/dimension1499/1499object0_cull.b3d",
+      "path": "GFX/map/dimension1499/1499object0_cull.smpk",
       "size": 3542
     },
     {
-      "path": "GFX/map/dimension1499/1499object11.b3d",
+      "path": "GFX/map/dimension1499/1499object11.smpk",
       "size": 6898
     },
     {
-      "path": "GFX/map/dimension1499/1499plane.b3d",
+      "path": "GFX/map/dimension1499/1499plane.smpk",
       "size": 409
     },
     {
@@ -4467,11 +4470,11 @@
       "size": 10381
     },
     {
-      "path": "GFX/map/dimension1499/1499object3.b3d",
+      "path": "GFX/map/dimension1499/1499object3.smpk",
       "size": 11154
     },
     {
-      "path": "GFX/map/dimension1499/1499object2.b3d",
+      "path": "GFX/map/dimension1499/1499object2.smpk",
       "size": 5882
     },
     {
@@ -4483,7 +4486,7 @@
       "size": 11209
     },
     {
-      "path": "GFX/map/dimension1499/1499object1.b3d",
+      "path": "GFX/map/dimension1499/1499object1.smpk",
       "size": 3954
     },
     {
@@ -4491,19 +4494,19 @@
       "size": 18774
     },
     {
-      "path": "GFX/map/dimension1499/1499object5.b3d",
+      "path": "GFX/map/dimension1499/1499object5.smpk",
       "size": 25002
     },
     {
-      "path": "GFX/map/dimension1499/1499object4.b3d",
+      "path": "GFX/map/dimension1499/1499object4.smpk",
       "size": 1122
     },
     {
-      "path": "GFX/map/dimension1499/1499object6.b3d",
+      "path": "GFX/map/dimension1499/1499object6.smpk",
       "size": 6898
     },
     {
-      "path": "GFX/map/dimension1499/1499object7.b3d",
+      "path": "GFX/map/dimension1499/1499object7.smpk",
       "size": 4962
     },
     {
@@ -4515,7 +4518,7 @@
       "size": 26323
     },
     {
-      "path": "GFX/map/room205.rmesh",
+      "path": "GFX/map/room205.smpk",
       "size": 89097
     },
     {
@@ -4531,7 +4534,7 @@
       "size": 18031
     },
     {
-      "path": "GFX/map/room035_opt.rmesh",
+      "path": "GFX/map/room035_opt.smpk",
       "size": 144027
     },
     {
@@ -4551,7 +4554,7 @@
       "size": 14324
     },
     {
-      "path": "GFX/map/IntroDesk.b3d",
+      "path": "GFX/map/IntroDesk.smpk",
       "size": 12071
     },
     {
@@ -4563,11 +4566,11 @@
       "size": 28805
     },
     {
-      "path": "GFX/map/gatea_hitbox1.b3d",
+      "path": "GFX/map/gatea_hitbox1.smpk",
       "size": 1882
     },
     {
-      "path": "GFX/map/room1062.b3d",
+      "path": "GFX/map/room1062.smpk",
       "size": 84062
     },
     {
@@ -4575,7 +4578,7 @@
       "size": 132225
     },
     {
-      "path": "GFX/map/room2scps2_opt.rmesh",
+      "path": "GFX/map/room2scps2_opt.smpk",
       "size": 383954
     },
     {
@@ -4583,7 +4586,7 @@
       "size": 16596
     },
     {
-      "path": "GFX/map/1123_opt.rmesh",
+      "path": "GFX/map/1123_opt.smpk",
       "size": 237743
     },
     {
@@ -4591,7 +4594,7 @@
       "size": 74386
     },
     {
-      "path": "GFX/map/gateawall1.b3d",
+      "path": "GFX/map/gateawall1.smpk",
       "size": 23555
     },
     {
@@ -4599,11 +4602,11 @@
       "size": 8524
     },
     {
-      "path": "GFX/map/pocketdimension4.b3d",
+      "path": "GFX/map/pocketdimension4.smpk",
       "size": 2474
     },
     {
-      "path": "GFX/map/room3z2_hb.b3d",
+      "path": "GFX/map/room3z2_hb.smpk",
       "size": 1882
     },
     {
@@ -4623,27 +4626,27 @@
       "size": 323895
     },
     {
-      "path": "GFX/map/room049_hb.b3d",
+      "path": "GFX/map/room049_hb.smpk",
       "size": 6862
     },
     {
-      "path": "GFX/map/room2storage_opt.rmesh",
+      "path": "GFX/map/room2storage_opt.smpk",
       "size": 460641
     },
     {
-      "path": "GFX/map/room3offices_opt.rmesh",
+      "path": "GFX/map/room3offices_opt.smpk",
       "size": 194950
     },
     {
-      "path": "GFX/map/372_hb.b3d",
+      "path": "GFX/map/372_hb.smpk",
       "size": 8624
     },
     {
-      "path": "GFX/map/ContDoorRight.x",
+      "path": "GFX/map/ContDoorRight.smpk",
       "size": 23503
     },
     {
-      "path": "GFX/map/pocketdimension5.b3d",
+      "path": "GFX/map/pocketdimension5.smpk",
       "size": 68015
     },
     {
@@ -4651,11 +4654,11 @@
       "size": 81958
     },
     {
-      "path": "GFX/map/room2Ctunnel_opt.rmesh",
+      "path": "GFX/map/room2Ctunnel_opt.smpk",
       "size": 154681
     },
     {
-      "path": "GFX/map/DoorColl.x",
+      "path": "GFX/map/DoorColl.smpk",
       "size": 5736
     },
     {
@@ -4663,7 +4666,7 @@
       "size": 73585
     },
     {
-      "path": "GFX/map/Door01.x",
+      "path": "GFX/map/Door01.smpk",
       "size": 116345
     },
     {
@@ -4671,7 +4674,7 @@
       "size": 5935
     },
     {
-      "path": "GFX/map/cam.x",
+      "path": "GFX/map/cam.smpk",
       "size": 44753
     },
     {
@@ -4687,7 +4690,7 @@
       "size": 84623
     },
     {
-      "path": "GFX/map/roompj_opt.rmesh",
+      "path": "GFX/map/roompj_opt.smpk",
       "size": 274420
     },
     {
@@ -4699,7 +4702,7 @@
       "size": 343697
     },
     {
-      "path": "GFX/map/lockroom_opt.rmesh",
+      "path": "GFX/map/lockroom_opt.smpk",
       "size": 83626
     },
     {
@@ -4711,7 +4714,7 @@
       "size": 20546
     },
     {
-      "path": "GFX/map/room012_3.b3d",
+      "path": "GFX/map/room012_3.smpk",
       "size": 18578
     },
     {
@@ -4735,19 +4738,19 @@
       "size": 41901
     },
     {
-      "path": "GFX/map/room2cpit_opt.rmesh",
+      "path": "GFX/map/room2cpit_opt.smpk",
       "size": 399949
     },
     {
-      "path": "GFX/map/endroom_opt.rmesh",
+      "path": "GFX/map/endroom_opt.smpk",
       "size": 334629
     },
     {
-      "path": "GFX/map/1123_hb.b3d",
+      "path": "GFX/map/1123_hb.smpk",
       "size": 1982
     },
     {
-      "path": "GFX/map/room012_2.b3d",
+      "path": "GFX/map/room012_2.smpk",
       "size": 39423
     },
     {
@@ -4755,7 +4758,7 @@
       "size": 82374
     },
     {
-      "path": "GFX/map/room2_4_opt.rmesh",
+      "path": "GFX/map/room2_4_opt.smpk",
       "size": 298411
     },
     {
@@ -4767,11 +4770,11 @@
       "size": 21510
     },
     {
-      "path": "GFX/map/medibay_props.b3d",
+      "path": "GFX/map/medibay_props.smpk",
       "size": 1298508
     },
     {
-      "path": "GFX/map/room2cafeteria_opt.rmesh",
+      "path": "GFX/map/room2cafeteria_opt.smpk",
       "size": 389049
     },
     {
@@ -4779,19 +4782,19 @@
       "size": 1762
     },
     {
-      "path": "GFX/map/room966.rmesh",
+      "path": "GFX/map/room966.smpk",
       "size": 97292
     },
     {
-      "path": "GFX/map/room2z3_opt.rmesh",
+      "path": "GFX/map/room2z3_opt.smpk",
       "size": 54225
     },
     {
-      "path": "GFX/map/mt_generator.rmesh",
+      "path": "GFX/map/mt_generator.smpk",
       "size": 167310
     },
     {
-      "path": "GFX/map/exit1_opt.rmesh",
+      "path": "GFX/map/exit1_opt.smpk",
       "size": 1989438
     },
     {
@@ -4815,7 +4818,7 @@
       "size": 63025
     },
     {
-      "path": "GFX/map/room2toilets_opt.rmesh",
+      "path": "GFX/map/room2toilets_opt.smpk",
       "size": 456595
     },
     {
@@ -4827,19 +4830,19 @@
       "size": 9528
     },
     {
-      "path": "GFX/map/tunnel_opt.rmesh",
+      "path": "GFX/map/tunnel_opt.smpk",
       "size": 72841
     },
     {
-      "path": "GFX/map/room860_opt.rmesh",
+      "path": "GFX/map/room860_opt.smpk",
       "size": 225216
     },
     {
-      "path": "GFX/map/173_2.b3d",
+      "path": "GFX/map/173_2.smpk",
       "size": 216024
     },
     {
-      "path": "GFX/map/room1archive_opt.rmesh",
+      "path": "GFX/map/room1archive_opt.smpk",
       "size": 22219
     },
     {
@@ -4851,7 +4854,7 @@
       "size": 20604
     },
     {
-      "path": "GFX/map/room2servers_opt.rmesh",
+      "path": "GFX/map/room2servers_opt.smpk",
       "size": 112452
     },
     {
@@ -4911,7 +4914,7 @@
       "size": 3656
     },
     {
-      "path": "GFX/map/room1162_opt.rmesh",
+      "path": "GFX/map/room1162_opt.smpk",
       "size": 245368
     },
     {
@@ -4919,7 +4922,7 @@
       "size": 23126
     },
     {
-      "path": "GFX/map/pocketdimension1_opt.rmesh",
+      "path": "GFX/map/pocketdimension1_opt.smpk",
       "size": 23217
     },
     {
@@ -4939,7 +4942,7 @@
       "size": 55735
     },
     {
-      "path": "GFX/map/4tunnels_opt.rmesh",
+      "path": "GFX/map/4tunnels_opt.smpk",
       "size": 141655
     },
     {
@@ -4947,7 +4950,7 @@
       "size": 786486
     },
     {
-      "path": "GFX/map/room2_2_opt.rmesh",
+      "path": "GFX/map/room2_2_opt.smpk",
       "size": 262693
     },
     {
@@ -5003,11 +5006,11 @@
       "size": 31537
     },
     {
-      "path": "GFX/map/coffin_opt.rmesh",
+      "path": "GFX/map/coffin_opt.smpk",
       "size": 196797
     },
     {
-      "path": "GFX/map/room2tesla_opt.rmesh",
+      "path": "GFX/map/room2tesla_opt.smpk",
       "size": 351103
     },
     {
@@ -5019,11 +5022,11 @@
       "size": 5742
     },
     {
-      "path": "GFX/map/gateaentrance_opt.rmesh",
+      "path": "GFX/map/gateaentrance_opt.smpk",
       "size": 315113
     },
     {
-      "path": "GFX/map/gatea_opt.rmesh",
+      "path": "GFX/map/gatea_opt.smpk",
       "size": 1239872
     },
     {
@@ -5039,7 +5042,7 @@
       "size": 67732
     },
     {
-      "path": "GFX/map/173bright_opt.rmesh",
+      "path": "GFX/map/173bright_opt.smpk",
       "size": 1507659
     },
     {
@@ -5059,7 +5062,7 @@
       "size": 89041
     },
     {
-      "path": "GFX/map/elevatordoor.b3d",
+      "path": "GFX/map/elevatordoor.smpk",
       "size": 8341
     },
     {
@@ -5099,7 +5102,7 @@
       "size": 53151
     },
     {
-      "path": "GFX/map/room2testroom2_opt.rmesh",
+      "path": "GFX/map/room2testroom2_opt.smpk",
       "size": 437021
     },
     {
@@ -5135,23 +5138,23 @@
       "size": 13886
     },
     {
-      "path": "GFX/map/room3storage_opt.rmesh",
+      "path": "GFX/map/room3storage_opt.smpk",
       "size": 712123
     },
     {
-      "path": "GFX/map/room2offices_opt.rmesh",
+      "path": "GFX/map/room2offices_opt.smpk",
       "size": 560957
     },
     {
-      "path": "GFX/map/pocketdimensionterrain.b3d",
+      "path": "GFX/map/pocketdimensionterrain.smpk",
       "size": 322394
     },
     {
-      "path": "GFX/map/monitor_checkpoint.b3d",
+      "path": "GFX/map/monitor_checkpoint.smpk",
       "size": 7147
     },
     {
-      "path": "GFX/map/mt_elevator.rmesh",
+      "path": "GFX/map/mt_elevator.smpk",
       "size": 25437
     },
     {
@@ -5159,7 +5162,7 @@
       "size": 88273
     },
     {
-      "path": "GFX/map/endroom2_opt.rmesh",
+      "path": "GFX/map/endroom2_opt.smpk",
       "size": 145699
     },
     {
@@ -5171,7 +5174,7 @@
       "size": 17807
     },
     {
-      "path": "GFX/map/room2c2_opt.rmesh",
+      "path": "GFX/map/room2c2_opt.smpk",
       "size": 349010
     },
     {
@@ -5183,7 +5186,7 @@
       "size": 31350
     },
     {
-      "path": "GFX/map/DoorFrame.x",
+      "path": "GFX/map/DoorFrame.smpk",
       "size": 71190
     },
     {
@@ -5195,7 +5198,7 @@
       "size": 4198
     },
     {
-      "path": "GFX/map/008_opt.rmesh",
+      "path": "GFX/map/008_opt.smpk",
       "size": 428705
     },
     {
@@ -5207,11 +5210,11 @@
       "size": 43542
     },
     {
-      "path": "GFX/map/room513_opt.rmesh",
+      "path": "GFX/map/room513_opt.smpk",
       "size": 153292
     },
     {
-      "path": "GFX/map/room2tesla_hcz_opt.rmesh",
+      "path": "GFX/map/room2tesla_hcz_opt.smpk",
       "size": 74719
     },
     {
@@ -5219,11 +5222,11 @@
       "size": 786486
     },
     {
-      "path": "GFX/map/machineroom_opt.rmesh",
+      "path": "GFX/map/machineroom_opt.smpk",
       "size": 488482
     },
     {
-      "path": "GFX/map/checkpoint2_opt.rmesh",
+      "path": "GFX/map/checkpoint2_opt.smpk",
       "size": 152043
     },
     {
@@ -5535,11 +5538,11 @@
       "size": 7925
     },
     {
-      "path": "GFX/doorhit.b3d",
+      "path": "GFX/doorhit.smpk",
       "size": 1101
     },
     {
-      "path": "GFX/lightcone.b3d",
+      "path": "GFX/lightcone.smpk",
       "size": 2441
     },
     {
@@ -5603,11 +5606,11 @@
       "size": 120311
     },
     {
-      "path": "GFX/items/HGIB_Skull1.b3d",
+      "path": "GFX/items/HGIB_Skull1.smpk",
       "size": 16081
     },
     {
-      "path": "GFX/items/vest.x",
+      "path": "GFX/items/vest.smpk",
       "size": 29837
     },
     {
@@ -5619,7 +5622,7 @@
       "size": 34027
     },
     {
-      "path": "GFX/items/wallet.b3d",
+      "path": "GFX/items/wallet.smpk",
       "size": 9695
     },
     {
@@ -5631,11 +5634,11 @@
       "size": 34226
     },
     {
-      "path": "GFX/items/scp714.b3d",
+      "path": "GFX/items/scp714.smpk",
       "size": 6561
     },
     {
-      "path": "GFX/items/radio.x",
+      "path": "GFX/items/radio.smpk",
       "size": 240583
     },
     {
@@ -5699,7 +5702,7 @@
       "size": 33563
     },
     {
-      "path": "GFX/items/key.b3d",
+      "path": "GFX/items/key.smpk",
       "size": 1091
     },
     {
@@ -5711,7 +5714,7 @@
       "size": 263451
     },
     {
-      "path": "GFX/items/clipboard.b3d",
+      "path": "GFX/items/clipboard.smpk",
       "size": 4566
     },
     {
@@ -5779,7 +5782,7 @@
       "size": 18477
     },
     {
-      "path": "GFX/items/navigator.x",
+      "path": "GFX/items/navigator.smpk",
       "size": 14072
     },
     {
@@ -5855,7 +5858,7 @@
       "size": 163774
     },
     {
-      "path": "GFX/items/keycard.x",
+      "path": "GFX/items/keycard.smpk",
       "size": 14485
     },
     {
@@ -5895,7 +5898,7 @@
       "size": 95547
     },
     {
-      "path": "GFX/items/note.x",
+      "path": "GFX/items/note.smpk",
       "size": 2114
     },
     {
@@ -5907,7 +5910,7 @@
       "size": 202511
     },
     {
-      "path": "GFX/items/513.x",
+      "path": "GFX/items/513.smpk",
       "size": 64651
     },
     {
@@ -5939,7 +5942,7 @@
       "size": 119561
     },
     {
-      "path": "GFX/items/paper.x",
+      "path": "GFX/items/paper.smpk",
       "size": 2106
     },
     {
@@ -5955,7 +5958,7 @@
       "size": 23691
     },
     {
-      "path": "GFX/items/electronics.x",
+      "path": "GFX/items/electronics.smpk",
       "size": 7794
     },
     {
@@ -6035,11 +6038,11 @@
       "size": 21828
     },
     {
-      "path": "GFX/items/firstaid.x",
+      "path": "GFX/items/firstaid.smpk",
       "size": 8412
     },
     {
-      "path": "GFX/items/SCP-1499.b3d",
+      "path": "GFX/items/SCP-1499.smpk",
       "size": 85576
     },
     {
@@ -6071,19 +6074,19 @@
       "size": 181838
     },
     {
-      "path": "GFX/items/paperstrips.x",
+      "path": "GFX/items/paperstrips.smpk",
       "size": 5335
     },
     {
-      "path": "GFX/items/metalpanel.x",
+      "path": "GFX/items/metalpanel.smpk",
       "size": 2209
     },
     {
-      "path": "GFX/items/severedhand.b3d",
+      "path": "GFX/items/severedhand.smpk",
       "size": 41182
     },
     {
-      "path": "GFX/items/scp1025.b3d",
+      "path": "GFX/items/scp1025.smpk",
       "size": 4344
     },
     {
@@ -6091,7 +6094,7 @@
       "size": 43344
     },
     {
-      "path": "GFX/items/eyedrops.b3d",
+      "path": "GFX/items/eyedrops.smpk",
       "size": 16097
     },
     {
@@ -6111,7 +6114,7 @@
       "size": 182786
     },
     {
-      "path": "GFX/items/pill.b3d",
+      "path": "GFX/items/pill.smpk",
       "size": 24695
     },
     {
@@ -6139,7 +6142,7 @@
       "size": 238249
     },
     {
-      "path": "GFX/items/Syringe/syringe.b3d",
+      "path": "GFX/items/Syringe/syringe.smpk",
       "size": 25522
     },
     {
@@ -6167,7 +6170,7 @@
       "size": 4235
     },
     {
-      "path": "GFX/items/cup.x",
+      "path": "GFX/items/cup.smpk",
       "size": 40507
     },
     {
@@ -6179,7 +6182,7 @@
       "size": 27011
     },
     {
-      "path": "GFX/items/420.x",
+      "path": "GFX/items/420.smpk",
       "size": 20304
     },
     {
@@ -6195,7 +6198,7 @@
       "size": 30812
     },
     {
-      "path": "GFX/items/hazmat.b3d",
+      "path": "GFX/items/hazmat.smpk",
       "size": 163916
     },
     {
@@ -6243,7 +6246,7 @@
       "size": 46478
     },
     {
-      "path": "GFX/items/Battery/Battery.x",
+      "path": "GFX/items/Battery/Battery.smpk",
       "size": 1428
     },
     {
@@ -6267,7 +6270,7 @@
       "size": 46712
     },
     {
-      "path": "GFX/items/badge.x",
+      "path": "GFX/items/badge.smpk",
       "size": 3928
     },
     {
@@ -6275,7 +6278,7 @@
       "size": 57174
     },
     {
-      "path": "GFX/items/427.b3d",
+      "path": "GFX/items/427.smpk",
       "size": 206520
     },
     {
@@ -6283,7 +6286,7 @@
       "size": 23657
     },
     {
-      "path": "GFX/items/NVG.b3d",
+      "path": "GFX/items/NVG.smpk",
       "size": 186731
     },
     {
@@ -6311,7 +6314,7 @@
       "size": 42632
     },
     {
-      "path": "GFX/items/gasmask.b3d",
+      "path": "GFX/items/gasmask.smpk",
       "size": 28359
     },
     {
@@ -6347,11 +6350,11 @@
       "size": 111417
     },
     {
-      "path": "GFX/items/origami.b3d",
+      "path": "GFX/items/origami.smpk",
       "size": 1643
     },
     {
-      "path": "GFX/items/scp148.x",
+      "path": "GFX/items/scp148.smpk",
       "size": 6063
     },
     {
@@ -6411,7 +6414,7 @@
       "size": 77
     },
     {
-      "path": "GFX/items/cupliquid.x",
+      "path": "GFX/items/cupliquid.smpk",
       "size": 3644
     },
     {

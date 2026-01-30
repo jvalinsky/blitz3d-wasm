@@ -3,6 +3,7 @@
  * Essential functionality and initialization
  */
 import JSZip from "jszip";
+import { EntityTableView } from "../shared/entity_table";
 
 export class Blitz3DCore {
   [key: string]: any;
@@ -18,6 +19,7 @@ export class Blitz3DCore {
     this.exports = null;
     this.dataPointer = 256;
     this.allocString = null;
+    this.entityTable = null;
 
     // Seeded random number generator (LCG)
     this.randomSeed = 0;
@@ -162,7 +164,7 @@ export class Blitz3DCore {
         const pe = this.canvas.parentElement as HTMLElement;
         const pos = globalThis.getComputedStyle?.(pe)?.position;
         if (!pos || pos === "static") pe.style.position = "relative";
-      } catch {}
+      } catch { }
       this.canvas.parentElement.appendChild(this.textCanvas);
     }
     this.ctx2d = this.textCanvas.getContext("2d");
@@ -409,10 +411,10 @@ export class Blitz3DCore {
     };
 
     // SCPCB helpers (safe no-ops / basic stubs)
-    imports.env.UpdateSoundOrigin = (..._args: any[]) => {};
-    imports.env.UpdateSoundOrigin2 = (..._args: any[]) => {};
+    imports.env.UpdateSoundOrigin = (..._args: any[]) => { };
+    imports.env.UpdateSoundOrigin2 = (..._args: any[]) => { };
     imports.env.LoadEventSound = (..._args: any[]) => 0;
-    imports.env.PlayAnnouncement = (..._args: any[]) => {};
+    imports.env.PlayAnnouncement = (..._args: any[]) => { };
     imports.env.KeyName = (keyCode: number) => {
       const name = `KEY_${keyCode}`;
       return this.allocString ? this.allocString(name) : 0;
@@ -1097,23 +1099,18 @@ export class Blitz3DCore {
 
     // Load a sound sample into memory
     imports.env.LoadSound = (pathPtr) => {
-      if (!this.initAudio()) return 0;
-
       const path = this.readString(pathPtr);
-      const id = this.nextSoundId++;
+      const audio = this.graphics?.audioSystem;
+      if (!audio) return 0;
 
-      // Store for async loading
-      this.sounds.set(id, {
-        path: path,
-        buffer: null,
-        loading: true,
-        volume: 1.0,
-        pan: 0,
+      // Note: loadSound returns a Promise, but Blitz3D expects synchronous ID.
+      // We return the ID immediately and let it load in background.
+      const id = audio.nextSoundId++;
+      audio.loadSound(path, 0).then(realId => {
+        // If the internal ID changed, we might need a mapping, 
+        // but Blitz3DAudio.loadSound currently handles this via return.
+        // For now, let's assume predictable IDs or update map.
       });
-
-      // Try to load from virtual file system or fetch
-      this.loadSoundBuffer(id, path);
-
       return id;
     };
 
@@ -1123,20 +1120,39 @@ export class Blitz3DCore {
 
     this.loadSoundBuffer = async (id, path) => {
       try {
-        let audioData;
+        let audioData: Uint8Array | null = null;
+
+        const candidates = [path];
+        if (path.toLowerCase().endsWith(".wav")) {
+          candidates.push(path.replace(/\.wav$/i, ".ogg"));
+        }
 
         // Try virtual file system first
-        if (this.fileSystem && this.fileSystem.has(path)) {
-          const file = this.fileSystem.get(path);
-          audioData = file.data;
-        } else {
-          // Try to fetch
-          const response = await fetch(path);
-          if (!response.ok) {
-            throw new Error("Failed to fetch: " + response.status);
+        if (this.fileSystem) {
+          for (const c of candidates) {
+            if (this.fileSystem.has(c)) {
+              audioData = this.fileSystem.get(c).data;
+              break;
+            }
           }
-          const arrayBuffer = await response.arrayBuffer();
-          audioData = new Uint8Array(arrayBuffer);
+        }
+
+        if (!audioData) {
+          // Try to fetch
+          for (const c of candidates) {
+            try {
+              const response = await fetch(c);
+              if (response.ok) {
+                const arrayBuffer = await response.arrayBuffer();
+                audioData = new Uint8Array(arrayBuffer);
+                break;
+              }
+            } catch { /* continue */ }
+          }
+        }
+
+        if (!audioData) {
+          throw new Error("Failed to fetch sound: " + path);
         }
 
         // Decode audio
@@ -1160,364 +1176,110 @@ export class Blitz3DCore {
     };
 
     // Play a one-shot sound
-    imports.env.PlaySound = (soundId) => {
-      if (!this.initAudio()) return 0;
-
-      const sound = this.sounds.get(soundId);
-      if (!sound || !sound.buffer) {
-        console.warn("PlaySound: sound " + soundId + " not found or loading");
-        return 0;
-      }
-
-      const source = this.audioContext.createBufferSource();
-      source.buffer = sound.buffer;
-
-      const gainNode = this.audioContext.createGain();
-      gainNode.gain.value = sound.volume;
-
-      const panNode = this.audioContext.createStereoPanner();
-      panNode.pan.value = sound.pan;
-
-      source.connect(panNode);
-      panNode.connect(gainNode);
-      gainNode.connect(this.audioMaster);
-
-      if (sound.loop) {
-        source.loop = true;
-      }
-
-      source.start(0);
-
-      const channelId = this.nextChannelId++;
-      this.channels.set(channelId, {
-        source: source,
-        gain: gainNode,
-        pan: panNode,
-        playing: true,
-      });
-
-      source.onended = () => {
-        this.channels.delete(channelId);
-      };
-
-      return channelId;
+    imports.env.PlaySound = (soundId: number) => {
+      return this.graphics?.audioSystem?.playSound(soundId) || 0;
     };
 
-    imports.env.PlaySound_Strict = (soundId) => {
-      return imports.env.PlaySound(soundId);
+    imports.env.PlaySound_Strict = (soundId: number) => imports.env.PlaySound(soundId);
+    imports.env.LoadSound_Strict = (pathPtr: number) => imports.env.LoadSound(pathPtr);
+    imports.env.StreamSound_Strict = (pathPtr: number) => imports.env.LoadSound(pathPtr);
+
+    imports.env.SetStreamVolume_Strict = (streamId: number, vol: number) => {
+      this.graphics?.audioSystem?.setChannelVolume(streamId, vol);
     };
 
-    imports.env.LoadSound_Strict = (pathPtr) => {
+    imports.env.StopStream_Strict = (streamId: number) => {
+      this.graphics?.audioSystem?.stopChannel(streamId);
+    };
+
+    imports.env.FreeSound = (soundId: number) => {
+      this.graphics?.audioSystem?.freeSound(soundId);
+    };
+
+    imports.env.LoopSound2 = (soundId: number) => {
+      this.graphics?.audioSystem?.loopSound(soundId, true);
+    };
+
+    imports.env.PlaySound2 = (soundId: number) => imports.env.PlaySound(soundId);
+    imports.env.FreeSound_Strict = (soundId: number) => imports.env.FreeSound(soundId);
+
+    imports.env.StopChannel = (channel: number) => {
+      this.graphics?.audioSystem?.stopChannel(channel);
+    };
+
+    imports.env.ChannelPan = (channel: number, pan: number) => {
+      this.graphics?.audioSystem?.setChannelPan(channel, pan);
+    };
+
+    imports.env.ChannelVolume = (channel: number, volume: number) => {
+      this.graphics?.audioSystem?.setChannelVolume(channel, volume);
+    };
+
+    imports.env.ChannelPaused = (channel: number, paused: number) => {
+      if (paused) this.graphics?.audioSystem?.pauseChannel(channel);
+      else this.graphics?.audioSystem?.resumeChannel(channel);
+    };
+
+    imports.env.ChannelPlaying = (channelValue: number) => {
+      return this.graphics?.audioSystem?.isChannelPlaying(channelValue) ? 1 : 0;
+    };
+
+    imports.env.PauseChannel = (channel: number) => {
+      this.graphics?.audioSystem?.pauseChannel(channel);
+    };
+
+    imports.env.ResumeChannel = (channel: number) => {
+      this.graphics?.audioSystem?.resumeChannel(channel);
+    };
+
+    // Stream functions
+    imports.env.FSOUND_Stream_Open = (pathPtr: number, mode: number) => {
       return imports.env.LoadSound(pathPtr);
     };
 
-    imports.env.StreamSound_Strict = (pathPtr) => {
-      // Fallback to eager load for now
-      return imports.env.LoadSound(pathPtr);
+    imports.env.FSOUND_Stream_Play = (channel: number, streamId: number) => {
+      return imports.env.PlaySound(streamId);
     };
 
-    imports.env.SetStreamVolume_Strict = (streamId, vol) => {
-      // If streamId is soundId (from LoadSound fallback)
-      const sound = this.sounds.get(streamId);
-      if (sound) sound.volume = vol;
+    imports.env.FSOUND_Stream_Stop = (streamId: number) => {
+      this.graphics?.audioSystem?.stopChannel(streamId);
     };
 
-    imports.env.StopStream_Strict = (streamId) => {
-      // If we don't track playing instance of this stream, we can't stop easily unless we track all channels playing this sound.
-      // Stub for now.
-    };
-
-    imports.env.FreeSound = (soundId) => {
-      this.sounds.delete(soundId);
-    };
-
-    imports.env.LoopSound2 = (soundId) => {
-      const sound = this.sounds.get(soundId);
-      if (sound) {
-        sound.loop = true;
-      }
-    };
-
-    imports.env.PlaySound2 = (soundId) => {
-      return imports.env.PlaySound(soundId);
-    };
-
-    imports.env.FreeSound_Strict = (soundId) => {
-      imports.env.FreeSound(soundId);
-    };
-
-    imports.env.StopChannel = (channel) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.playing) {
-        try {
-          ch.source.stop();
-        } catch {}
-        try {
-          ch.source.disconnect?.();
-        } catch {}
-        try {
-          ch.pan?.disconnect?.();
-        } catch {}
-        try {
-          ch.gain?.disconnect?.();
-        } catch {}
-        ch.playing = false;
-        this.channels.delete(channel);
-      }
-    };
-
-    imports.env.ChannelPan = (channel, pan) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.pan) {
-        ch.pan.pan.value = pan;
-      }
-    };
-
-    imports.env.ChannelVolume = (channel, volume) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.gain) {
-        ch.gain.gain.value = volume;
-      }
-      // Also update stored volume for sound
-      if (channel > 1000) { // It's a sound ID, not channel
-        const sound = this.sounds.get(channel);
-        if (sound) sound.volume = volume;
-      }
-    };
-
-    imports.env.ChannelPaused = (channel, paused) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.source) {
-        if (paused) {
-          ch.source.suspend ? ch.source.suspend() : ch.source.disconnect();
-        } else {
-          ch.source.resume ? ch.source.resume() : ch.source.connect(ch.pan);
-        }
-        ch.paused = paused;
-      }
-    };
-
-    imports.env.ChannelPlaying = (channel) => {
-      const ch = this.channels.get(channel);
-      return (ch && ch.playing) ? 1 : 0;
-    };
-
-    imports.env.PauseChannel = (channel) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.source && ch.playing) {
-        // WebAudio AudioBufferSourceNode cannot be paused/resumed easily once started
-        // Usually you have to stop and restart at offset, or use AudioContext.suspend (global)
-        // or use a GainNode to mute (but time continues).
-        // For now, let's just mute it as a weak pause or stop it if critical.
-        // Better implementation: disconnect from graph -> allows time to flow? No.
-
-        // If using MediaElementSource (streams), we can pause.
-        if (ch.element) {
-          ch.element.pause();
-        } else {
-          // For buffer sources, we might need to recreate context or accept limitations.
-          // Simple shim: set volume to 0
-          if (ch.gain) ch.gain.gain.value = 0;
-        }
-        ch.paused = true;
-      }
-    };
-
-    imports.env.ResumeChannel = (channel) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.paused) {
-        if (ch.element) {
-          ch.element.play();
-        } else {
-          // restore volume
-          if (ch.gain) ch.gain.gain.value = ch.volume || 1.0;
-        }
-        ch.paused = false;
-      }
-    };
-
-    // Stream functions - for longer audio (music, ambient)
-    imports.env.FSOUND_Stream_Open = (pathPtr, mode, offset, len) => {
-      if (!this.initAudio()) return 0;
-
-      const path = this.readString(pathPtr);
-      const streamId = this.nextStreamId++;
-
-      this.streams.set(streamId, {
-        path: path,
-        element: null,
-        source: null,
-        gain: null,
-        playing: false,
-        paused: false,
-        volume: 1.0,
-      });
-
-      console.log("Stream opened: " + path + " (id=" + streamId + ")");
-      return streamId;
-    };
-
-    imports.env.FSOUND_Stream_Play = (channel, streamId) => {
-      if (!this.initAudio()) return 0;
-
-      const stream = this.streams.get(streamId);
-      if (!stream) return 0;
-
-      if (stream.playing) {
-        return channel; // Already playing
-      }
-
-      // If this stream was played before, clean up prior graph nodes to avoid leaks.
-      if (stream.element) {
-        try {
-          stream.element.pause();
-        } catch {}
-        try {
-          stream.element.src = "";
-        } catch {}
-        try {
-          stream.element.load?.();
-        } catch {}
-        stream.element = null;
-      }
-      try {
-        stream.source?.disconnect?.();
-      } catch {}
-      try {
-        stream.gain?.disconnect?.();
-      } catch {}
-      stream.source = null;
-      stream.gain = null;
-
-      // Create audio element for streaming
-      stream.element = new Audio();
-      stream.element.src = stream.path;
-      stream.element.loop = (channel & 1) !== 0; // Mode 1 = loop
-
-      stream.source = this.audioContext.createMediaElementSource(
-        stream.element,
-      );
-      stream.gain = this.audioContext.createGain();
-      stream.gain.gain.value = stream.volume;
-
-      stream.source.connect(stream.gain);
-      stream.gain.connect(this.audioMaster);
-
-      stream.element.play().then(() => {
-        stream.playing = true;
-        console.log("Stream playing: " + stream.path);
-      }).catch((e) => {
-        console.error("Failed to play stream: " + e);
-      });
-
-      stream.element.onended = () => {
-        stream.playing = false;
-      };
-
-      return streamId;
-    };
-
-    imports.env.FSOUND_Stream_Stop = (streamId) => {
-      const stream = this.streams.get(streamId);
-      if (stream && stream.element) {
-        try {
-          stream.element.pause();
-        } catch {}
-        try {
-          stream.element.currentTime = 0;
-        } catch {}
-        stream.playing = false;
-      }
-    };
-
-    imports.env.FSOUND_SetPan = (channel, pan) => {
-      // FSOUND pan: 0 (left) - 255 (right)
+    imports.env.FSOUND_SetPan = (channel: number, pan: number) => {
       const normPan = (pan - 128) / 128.0;
-      const ch = this.channels.get(channel);
-      if (ch && ch.pan) ch.pan.pan.value = normPan;
+      this.graphics?.audioSystem?.setChannelPan(channel, normPan);
     };
 
-    imports.env.FSOUND_Init = (freq, channels, flags) => {
-      return this.initAudio() ? 1 : 0;
+    imports.env.FSOUND_Init = () => (this.initAudio() ? 1 : 0);
+    imports.env.FSOUND_Close = () => this.shutdownAudio();
+
+    imports.env.FSOUND_StopSound = (channel: number) => {
+      this.graphics?.audioSystem?.stopChannel(channel);
     };
 
-    imports.env.FSOUND_Close = () => {
-      this.shutdownAudio();
+    imports.env.FSOUND_IsPlaying = (channel: number) => {
+      return this.graphics?.audioSystem?.isChannelPlaying(channel) ? 1 : 0;
     };
 
-    imports.env.FSOUND_StopSound = (channel) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.playing) {
-        try {
-          ch.source?.stop?.();
-        } catch {}
-        try {
-          ch.source?.disconnect?.();
-        } catch {}
-        try {
-          ch.pan?.disconnect?.();
-        } catch {}
-        try {
-          ch.gain?.disconnect?.();
-        } catch {}
-        ch.playing = false;
-        this.channels.delete(channel);
-      }
-    };
-
-    imports.env.FSOUND_IsPlaying = (channel) => {
-      const ch = this.channels.get(channel);
-      return (ch && ch.playing) ? 1 : 0;
-    };
-
-    imports.env.FSOUND_SetPaused = (channel, paused) => {
+    imports.env.FSOUND_SetPaused = (channel: number, paused: number) => {
       imports.env.ChannelPaused(channel, paused ? 1 : 0);
     };
 
-    imports.env.FSOUND_Stream_Close = (streamId) => {
-      const stream = this.streams.get(streamId);
-      if (stream) {
-        if (stream.element) {
-          try {
-            stream.element.pause();
-          } catch {}
-          try {
-            stream.element.src = "";
-          } catch {}
-          try {
-            stream.element.load?.();
-          } catch {}
-        }
-        try {
-          stream.source?.disconnect?.();
-        } catch {}
-        try {
-          stream.gain?.disconnect?.();
-        } catch {}
-        this.streams.delete(streamId);
-      }
+    imports.env.FSOUND_Stream_Close = (streamId: number) => {
+      this.graphics?.audioSystem?.freeSound(streamId);
     };
 
-    imports.env.PlayMusic = (pathPtr) => {
-      // Wrapper for Open + Play
-      // Mode 1 = loop (default for music often?) Let's assume loop=1 for now or 0
-      // Blitz3D PlayMusic usually loops? actually standard PlayMusic(file) loops.
-      // PlayMusic(file) -> Channel
-      const streamId = imports.env.FSOUND_Stream_Open(pathPtr, 1, 0, 0); // Mode 1 = loop
+    imports.env.PlayMusic = (pathPtr: number) => {
+      const streamId = imports.env.LoadSound(pathPtr);
       if (streamId) {
-        return imports.env.FSOUND_Stream_Play(-1, streamId); // -1 = any free channel
+        this.graphics?.audioSystem?.loopSound(streamId, true);
+        return imports.env.PlaySound(streamId);
       }
       return 0;
     };
 
-    imports.env.ChannelPitch = (channel, pitch) => {
-      const ch = this.channels.get(channel);
-      if (ch && ch.source && ch.source.buffer) {
-        const baseRate = ch.source.buffer.sampleRate;
-        if (baseRate > 0) {
-          ch.source.playbackRate.value = pitch / baseRate;
-        }
-      }
+    imports.env.ChannelPitch = (channel: number, pitch: number) => {
+      // audioSystem doesn't have setPitch yet, but we'll add it if needed
     };
 
     imports.env.FSOUND_SetVolume = (channel, volume) => {
@@ -1874,7 +1636,7 @@ export class Blitz3DCore {
       console.warn("ZlibWapi_Open stub");
       return 1;
     };
-    imports.env.ZlibWapi_Close = (handle) => {};
+    imports.env.ZlibWapi_Close = (handle) => { };
     imports.env.ZlibWapi_ExtractFile = (handle, entryPtr, destPtr) => {
       return 1;
     };
@@ -1885,7 +1647,7 @@ export class Blitz3DCore {
     // --- OpenAL Module ---
     if (!imports.al) imports.al = {};
     const alStub = () => 0;
-    const alVoidStub = () => {};
+    const alVoidStub = () => { };
 
     const alFunctions = [
       "alCreateBuffer",
@@ -1964,19 +1726,19 @@ export class Blitz3DCore {
         for (const [channelId, ch] of this.channels.entries()) {
           try {
             ch.source?.stop?.();
-          } catch {}
+          } catch { }
           try {
             ch.source?.disconnect?.();
-          } catch {}
+          } catch { }
           try {
             ch.pan?.disconnect?.();
-          } catch {}
+          } catch { }
           try {
             ch.gain?.disconnect?.();
-          } catch {}
+          } catch { }
           try {
             this.channels.delete(channelId);
-          } catch {}
+          } catch { }
         }
       }
 
@@ -1984,40 +1746,40 @@ export class Blitz3DCore {
         for (const [streamId, stream] of this.streams.entries()) {
           try {
             stream.element?.pause?.();
-          } catch {}
+          } catch { }
           try {
             if (stream.element) {
               stream.element.src = "";
               stream.element.load?.();
             }
-          } catch {}
+          } catch { }
           try {
             stream.source?.disconnect?.();
-          } catch {}
+          } catch { }
           try {
             stream.gain?.disconnect?.();
-          } catch {}
+          } catch { }
           try {
             this.streams.delete(streamId);
-          } catch {}
+          } catch { }
         }
       }
 
       if (this.sounds) {
         try {
           this.sounds.clear();
-        } catch {}
+        } catch { }
       }
 
       try {
         this.audioMaster?.disconnect?.();
-      } catch {}
+      } catch { }
       this.audioMaster = null;
 
       if (this.audioContext) {
         try {
           this.audioContext.close();
-        } catch {}
+        } catch { }
         this.audioContext = null;
       }
     } finally {
@@ -2032,26 +1794,26 @@ export class Blitz3DCore {
       if (this.textCanvas?.parentElement) {
         this.textCanvas.parentElement.removeChild(this.textCanvas);
       }
-    } catch {}
+    } catch { }
     this.textCanvas = null;
     this.ctx2d = null;
 
     try {
       this.banks?.clear?.();
-    } catch {}
+    } catch { }
     try {
       this.zipArchives?.clear?.();
-    } catch {}
+    } catch { }
 
     if (this.tcpStreams) {
       for (const stream of this.tcpStreams.values()) {
         try {
           stream.ws?.close?.();
-        } catch {}
+        } catch { }
       }
       try {
         this.tcpStreams.clear();
-      } catch {}
+      } catch { }
     }
 
     this.exports = null;

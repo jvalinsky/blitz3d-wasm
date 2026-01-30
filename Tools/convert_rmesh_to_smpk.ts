@@ -3,62 +3,9 @@ import { parseRMesh } from "./rmesh/parse.ts";
 import { encodeSmpk } from "./smpk/codec.ts";
 import type { SmpkAccessor, SmpkFile, SmpkJson, SmpkMaterial, SmpkPrimitive } from "./smpk/types.ts";
 
+import { resolveTextureName, buildCaseInsensitiveMap } from "./texture_utils.ts";
+
 type Args = { input: string; output: string };
-
-const normalizeRel = (p: string) => p.replace(/\\/g, "/");
-const basename = (p: string) => {
-  const n = normalizeRel(p);
-  const i = n.lastIndexOf("/");
-  return i >= 0 ? n.slice(i + 1) : n;
-};
-
-const buildCaseInsensitiveMap = async (dir: string) => {
-  const map = new Map<string, string>();
-  try {
-    for await (const e of Deno.readDir(dir)) {
-      if (!e.isFile) continue;
-      map.set(e.name.toLowerCase(), e.name);
-    }
-  } catch {
-    // ignore
-  }
-  return map;
-};
-
-const resolveTextureName = async (
-  dir: string,
-  lowerNameToActual: Map<string, string>,
-  rawName: string,
-): Promise<string> => {
-  const raw = (rawName ?? "").split("\0", 1)[0]!.trim();
-  const cleaned = raw.replace(/[\u0000-\u001f\u007f]/g, "");
-  if (!cleaned) return "";
-  const base = basename(cleaned).replace(/[\u0000-\u001f\u007f]/g, "");
-  if (!base) return "";
-
-  const candidates: string[] = [base];
-  // SCPCB assets sometimes ship as PNG while formats reference BMP.
-  if (base.toLowerCase().endsWith(".bmp")) {
-    candidates.push(base.replace(/\.bmp$/i, ".png"));
-  }
-
-  for (const c of candidates) {
-    // Prefer the actual on-disk casing if we can find it (important on case-sensitive deploys,
-    // and also avoids silently persisting wrong casing on case-insensitive dev filesystems).
-    const actual = lowerNameToActual.get(c.toLowerCase());
-    if (actual) return actual;
-
-    try {
-      const st = await Deno.stat(`${dir}/${c}`);
-      if (st.isFile) return c;
-    } catch {
-      // fall through
-    }
-  }
-
-  // Give up: keep the basename as-is (better error messages downstream).
-  return base;
-};
 
 const parseArgs = (): Args => {
   const input = Deno.args[0];

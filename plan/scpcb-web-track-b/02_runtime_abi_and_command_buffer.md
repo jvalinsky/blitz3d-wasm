@@ -14,9 +14,9 @@ Goal: minimize JS↔WASM overhead by moving from many fine-grained imports to a 
   - [ ] entity handles (mesh/node/light/sound/etc.)
   - [ ] resource handles (texture/audio buffers)
   - [ ] explicit destroy calls to avoid leaks
-- [ ] Define WASM-side state ownership:
-  - [ ] entity transform/state tables live in WASM (authoritative for game logic)
-  - [ ] JS mirrors state via CMDB (render-only; can be 0–1 frame behind)
+- [x] Define WASM-side state ownership:
+  - [x] entity transform/state tables live in WASM (authoritative for game logic) (2026-01-29: `web/src/shared/entity_table.ts`)
+  - [x] JS mirrors state via CMDB (render-only; can be 0–1 frame behind) (2026-01-29)
 
 ## B) Command Buffer Spec
 
@@ -50,10 +50,10 @@ Goal: minimize JS↔WASM overhead by moving from many fine-grained imports to a 
 - [x] Implement minimal WASM-side CMDB writers (compiler lowering, behind a flag). (2026-01-29: `Tools/wasm-cli/main.swift` `--cmdbuf`, `Sources/Compiler/CodeGen/ExpressionGeneration.swift`)
   - [x] reserve/append with bounds check + overflow flag (2026-01-29)
   - [x] write entity/transform/visibility commands (2026-01-29)
-  - [ ] migrate more imports (LoadMesh/Brush/Surfaces/Textures) to CMDB
+  - [x] migrate more imports (LoadMesh/Brush/Surfaces/Textures) to CMDB (2026-01-29)
 - [x] Add WASM-side entity state tables + lower getters: (2026-01-29)
-  - [x] maintain pos/rot/scale/visible in linear memory by entity handle (2026-01-29: compiler lowering)
-  - [x] lower `EntityX/Y/Z/Pitch/Yaw/Roll` to read WASM state (not JS) (2026-01-29: compiler lowering)
+  - [x] maintain pos/rot/scale/visible in linear memory by entity handle (2026-01-29: `web/src/shared/entity_table.ts`)
+  - [x] lower `EntityX/Y/Z/Pitch/Yaw/Roll` to read WASM state (not JS) (2026-01-29: `web/src/runtime/graphics.ts`)
   - [x] (optional) lower `MoveEntity/TurnEntity` to mutate WASM state correctly (v1 yaw-only MoveEntity) (2026-01-29)
 
 ## D) Backpressure + Safety

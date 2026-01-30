@@ -245,7 +245,7 @@ class Parser {
 
   private parseFrame(name?: string): XFrame {
     // Frame [Name] { ... }
-    if (name == null && this.look.type === "id") name = this.eat("id").text;
+    if (name == null) name = this.parseName();
     this.eat("sym", "{");
     const frame: XFrame = { name, children: [] };
     while (this.look.type !== "eof" && !(this.look.type === "sym" && this.look.text === "}")) {
@@ -272,13 +272,13 @@ class Parser {
         continue;
       }
       if (kind === "Frame") {
-        const childName = this.look.type === "id" ? this.eat("id").text : undefined;
+        const childName = this.parseName();
         const child = this.parseFrame(childName);
         frame.children.push(child);
         continue;
       }
       if (kind === "Mesh") {
-        const meshName = this.look.type === "id" ? this.eat("id").text : undefined;
+        const meshName = this.parseName();
         frame.mesh = this.parseMesh(meshName);
         continue;
       }
@@ -301,9 +301,26 @@ class Parser {
     return frame;
   }
 
+  private parseName(): string | undefined {
+    // Parser for optional object name.
+    // Standard X requires simple identifiers (alphanumeric, no start digit).
+    // Some exporters (e.g. for SCPCB) produce names like "09_-_Default", which lex as num(09) + id(_-_Default).
+    // We relax expectations to consume a sequence of IDs/NUMs as the name.
+    if (this.look.type !== "id" && this.look.type !== "num") return undefined;
+
+    let name = "";
+    while (this.look.type === "id" || this.look.type === "num") {
+      name += this.look.text;
+      this.look = this.lex.next();
+      // If we see a symbol next (like '{'), stop.
+      if (this.look.type === "sym") break;
+    }
+    return name;
+  }
+
   private parseMaterial(name?: string): XMaterial {
     // Material [name] { r;g;b;a;; power; spec(r,g,b); emiss(r,g,b); [TextureFilename { "..." ; }]
-    if (name == null && this.look.type === "id") name = this.eat("id").text;
+    if (name == null) name = this.parseName();
     this.eat("sym", "{");
     const r = this.readF32(); this.eat("sym", ";");
     const g = this.readF32(); this.eat("sym", ";");
@@ -368,7 +385,7 @@ class Parser {
     const n = this.readU32(); this.expectSep();
     const uvs = new Float32Array(n * 2);
     for (let i = 0; i < n; i++) {
-      uvs[i * 2 + 0] = this.readF32(); this.eat("sym", ";");
+      uvs[i * 2 + 0] = this.readF32(); this.expectSep();
       uvs[i * 2 + 1] = this.readF32(); this.expectSep();
     }
     this.eat("sym", "}");
@@ -578,7 +595,10 @@ export const parseTextX = (text: string): XFile => {
   // Quick format check
   const head = text.slice(0, 16).toLowerCase();
   if (!head.includes("xof")) throw new Error("Not an X file (missing xof header)");
-  if (!head.includes("txt")) throw new Error("Only text .x supported by converter");
+  if (!head.includes("txt")) {
+    console.warn(`[x-convert] Skipping ${input.substring(input.lastIndexOf("/") + 1)} (format ${head.substring(4, 16).trim()} not supported)`);
+    return { root: { name: "__skipped", children: [] }, meshes: [] }; // Return empty/ignored
+  }
   const p = new Parser(text);
   return p.parse();
 };

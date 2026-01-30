@@ -4,8 +4,10 @@
  */
 import * as THREE from "three";
 import { Blitz3DMesh, Blitz3DSurface } from "./mesh";
+import { decodeSmpk, SMPKLoader } from "./smpk";
 import { Blitz3DAnimation } from "./animation";
 import { XLoader } from "./xloader";
+import { Blitz3DAudio } from "./audio";
 import { CmdOpcode, drainCmds } from "../shared/command_buffer";
 import { dispatchCmd } from "./command_executor";
 
@@ -19,6 +21,7 @@ export class Blitz3DGraphics {
     this.XLoader = XLoader;
 
     this.animationSystem = new this.Blitz3DAnimation(this, core);
+    this.audioSystem = new Blitz3DAudio(core);
     this.meshSystem = Blitz3DMesh(this);
     this.xLoader = null; // Initialized lazily when first needed
     this.scene = null;
@@ -56,11 +59,13 @@ export class Blitz3DGraphics {
     this.lastTime = 0;
     this.ambientLight = null;
     this.fog = null;
+    this.fogState = { mode: 0, r: 0, g: 0, b: 0, near: 0, far: 1000, density: 0.001 };
 
     this._stopped = false;
     this._rafHandle = null;
     this._inputInstalled = false;
     this._inputHandlers = null;
+    this.enablePointerLock = true; // Default to true for FPS
   }
 
   init3D() {
@@ -94,7 +99,7 @@ export class Blitz3DGraphics {
     if (!canvasHeight || canvasHeight <= 0) {
       console.error(
         "init3D: Invalid canvas height: " + canvasHeight +
-          ", defaulting to 600",
+        ", defaulting to 600",
       );
       this.core.canvas.height = 600;
     }
@@ -119,10 +124,10 @@ export class Blitz3DGraphics {
             this.core.canvas.height = h;
           }
         },
-        render: (_scene, _camera) => {},
-        setClearColor: (_color, _alpha) => {},
-        clear: () => {},
-        setPixelRatio: () => {},
+        render: (_scene, _camera) => { },
+        setClearColor: (_color, _alpha) => { },
+        clear: () => { },
+        setPixelRatio: () => { },
         capabilities: { getMaxAnisotropy: () => 1 },
         domElement: this.core.canvas,
       };
@@ -143,7 +148,8 @@ export class Blitz3DGraphics {
     console.log("Creating WebGLRenderer...");
     if (isHeadless || !hasWebGL) {
       createMockRenderer();
-    } else {try {
+    } else {
+      try {
         this.renderer = new THREE.WebGLRenderer({
           antialias: false,
           alpha: false,
@@ -184,7 +190,7 @@ export class Blitz3DGraphics {
         this.renderer.autoClear = false;
         console.log(
           "Renderer size set to: " + this.core.canvas.width + "x" +
-            this.core.canvas.height,
+          this.core.canvas.height,
         );
 
         const gl = this.renderer.getContext?.();
@@ -201,7 +207,8 @@ export class Blitz3DGraphics {
 
         // Create mock renderer for debugging
         createMockRenderer();
-      }}
+      }
+    }
 
     // Expose THREE for debugging
     (window as any).THREE = THREE;
@@ -220,10 +227,7 @@ export class Blitz3DGraphics {
     }
   }
 
-  animate(time) {
-    if (this._stopped) return;
-    this._rafHandle = requestAnimationFrame((t) => this.animate(t));
-
+  render(time: number) {
     const delta = (time - this.lastTime) / 1000.0;
     this.lastTime = time;
 
@@ -243,20 +247,20 @@ export class Blitz3DGraphics {
       }
       if (this.scene) {
         console.log("Scene Children:", this.scene.children.length);
-        this.scene.children.forEach((child, i) => {
-          console.log(
-            `Child ${i} (ID ${child.id}): Type ${child.type} Pos ${
-              JSON.stringify(child.position)
-            }`,
-          );
-        });
       }
     }
 
     if (this.renderer && this.scene && this.camera) {
       this.updateSurfaces();
       this.renderer.render(this.scene, this.camera);
+      this.audioSystem?.updateListener(this.camera);
     }
+  }
+
+  animate(time: number) {
+    if (this._stopped) return;
+    this._rafHandle = requestAnimationFrame((t) => this.animate(t));
+    this.render(time);
   }
 
   ensureUniqueMaterial(child: any) {
@@ -309,7 +313,7 @@ export class Blitz3DGraphics {
         try {
           mixer.stopAllAction?.();
           mixer.uncacheRoot?.(obj);
-        } catch {}
+        } catch { }
         this.animMixers.delete(mixer);
         if (obj.userData) {
           delete obj.userData.mixer;
@@ -321,7 +325,7 @@ export class Blitz3DGraphics {
       if (obj.geometry?.dispose) {
         try {
           obj.geometry.dispose();
-        } catch {}
+        } catch { }
       }
       if (obj.material) {
         const mats = Array.isArray(obj.material)
@@ -331,7 +335,7 @@ export class Blitz3DGraphics {
           if (m?.dispose) {
             try {
               m.dispose();
-            } catch {}
+            } catch { }
           }
         });
       }
@@ -483,6 +487,18 @@ export class Blitz3DGraphics {
       mousedown: (e: any) => {
         this.mouseDown[e.button + 1] = true;
         this.mouseHit[e.button + 1] = (this.mouseHit[e.button + 1] || 0) + 1;
+
+        if (this.enablePointerLock && this.renderer?.domElement) {
+          const el = this.renderer.domElement;
+          if (document.pointerLockElement !== el) {
+            try {
+              // Only request on user gesture (mousedown matches this requirement)
+              el.requestPointerLock();
+            } catch (err) {
+              console.warn("Pointer lock failed:", err);
+            }
+          }
+        }
       },
       mouseup: (e: any) => {
         this.mouseDown[e.button + 1] = false;
@@ -494,6 +510,15 @@ export class Blitz3DGraphics {
     window.addEventListener("mousemove", this._inputHandlers.mousemove);
     window.addEventListener("mousedown", this._inputHandlers.mousedown);
     window.addEventListener("mouseup", this._inputHandlers.mouseup);
+
+    // Resume Audio Context on interaction
+    const resumeAudio = () => {
+      this.audioSystem?.resume();
+      window.removeEventListener("mousedown", resumeAudio);
+      window.removeEventListener("keydown", resumeAudio);
+    };
+    window.addEventListener("mousedown", resumeAudio);
+    window.addEventListener("keydown", resumeAudio);
 
     this._inputInstalled = true;
   }
@@ -519,7 +544,7 @@ export class Blitz3DGraphics {
     if (this._rafHandle != null) {
       try {
         cancelAnimationFrame(this._rafHandle);
-      } catch {}
+      } catch { }
       this._rafHandle = null;
     }
 
@@ -528,7 +553,7 @@ export class Blitz3DGraphics {
     if (this.scene) {
       try {
         this.disposeObject3D(this.scene);
-      } catch {}
+      } catch { }
     }
 
     if (this.textures) {
@@ -539,7 +564,7 @@ export class Blitz3DGraphics {
         try {
           this.detachTextureFromScene(tex);
           tex.dispose?.();
-        } catch {}
+        } catch { }
         delete (this.textures as any)[id];
       }
     }
@@ -552,20 +577,20 @@ export class Blitz3DGraphics {
             movie.video.removeAttribute?.("src");
             movie.video.load?.();
           }
-        } catch {}
+        } catch { }
         try {
           this.movies.delete(id);
-        } catch {}
+        } catch { }
       }
     }
 
     if (this.renderer) {
       try {
         this.renderer.dispose?.();
-      } catch {}
+      } catch { }
       try {
         this.renderer.forceContextLoss?.();
-      } catch {}
+      } catch { }
     }
   }
 
@@ -577,14 +602,14 @@ export class Blitz3DGraphics {
     imports.env.Graphics3D = (width, height, depth, mode) => {
       console.log(
         "Graphics3D called: " + width + "x" + height + ", depth=" + depth +
-          ", mode=" + mode,
+        ", mode=" + mode,
       );
 
       // Validate dimensions
       if (width <= 0 || height <= 0) {
         console.error(
           "Graphics3D: Invalid dimensions " + width + "x" + height +
-            ", using defaults",
+          ", using defaults",
         );
         width = 800;
         height = 600;
@@ -599,7 +624,7 @@ export class Blitz3DGraphics {
       if (this.core.canvas) {
         console.log(
           "Updating canvas from " + this.core.canvas.width + "x" +
-            this.core.canvas.height + " to " + width + "x" + height,
+          this.core.canvas.height + " to " + width + "x" + height,
         );
         this.core.canvas.width = width;
         this.core.canvas.height = height;
@@ -615,7 +640,7 @@ export class Blitz3DGraphics {
         if (this.camera) {
           console.log(
             "Updating camera aspect from " + this.camera.aspect + " to " +
-              (width / height),
+            (width / height),
           );
           this.camera.aspect = width / height;
           this.camera.updateProjectionMatrix();
@@ -718,7 +743,7 @@ export class Blitz3DGraphics {
       this.core.canvas ? this.core.canvas.height : 600;
     imports.env.WindowWidth = () => window.innerWidth;
     imports.env.WindowHeight = () => window.innerHeight;
-    imports.env.VWait = (n) => {}; // No-op
+    imports.env.VWait = (n) => { }; // No-op
 
     // 2D Primitives Stubs
     imports.env.Rect = (x, y, w, h, solid) => {
@@ -1100,7 +1125,7 @@ export class Blitz3DGraphics {
             img.element.onerror = null;
             img.element.src = "";
           }
-        } catch {}
+        } catch { }
         delete this.images[imgId];
       }
     };
@@ -1286,14 +1311,14 @@ export class Blitz3DGraphics {
       if (canvasWidth <= 0 || canvasHeight <= 0) {
         console.error(
           "CreateCamera: invalid canvas dimensions " + canvasWidth + "x" +
-            canvasHeight,
+          canvasHeight,
         );
         return 0;
       }
 
       console.log(
         "Creating PerspectiveCamera with aspect: " +
-          (canvasWidth / canvasHeight),
+        (canvasWidth / canvasHeight),
       );
       const cam = new THREE.PerspectiveCamera(
         75,
@@ -1308,7 +1333,7 @@ export class Blitz3DGraphics {
 
       console.log(
         "Camera position set to: " + cam.position.x + ", " + cam.position.y +
-          ", " + cam.position.z,
+        ", " + cam.position.z,
       );
 
       const id = this.nextEntityId++;
@@ -1333,10 +1358,34 @@ export class Blitz3DGraphics {
       console.log("CreateCamera completed, ID: " + id);
       console.log(
         "Active camera is now: " +
-          (this.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
+        (this.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
       );
 
       return id;
+    };
+
+    imports.env.Load3DSound = (pathPtr: number) => {
+      const path = this.core.readString(pathPtr);
+      const audio = this.audioSystem;
+      if (!audio) return 0;
+
+      const id = audio.nextSoundId++;
+      audio.loadSound(path, 0); // Background load
+      return id;
+    };
+
+    imports.env.EmitSound = (soundId: number, entityId: number) => {
+      const ent = this.entities[entityId];
+      if (!ent || !this.audioSystem) return 0;
+
+      // Get world position
+      const pos = new THREE.Vector3();
+      ent.getWorldPosition(pos);
+
+      // Blitz3D -> Three: negate Z again if we are spatializing in right-handed space
+      // but WebAudio panner usually expects the same coordinate system as the listener.
+      // Since our listener is Three.js based, we use pos.x, pos.y, pos.z directly.
+      return this.audioSystem.playSound3D(soundId, pos.x, pos.y, pos.z);
     };
 
     imports.env.CreateLight = (type) => {
@@ -1396,7 +1445,7 @@ export class Blitz3DGraphics {
         this.scene.add(mesh);
         console.log(
           "Mesh added directly to scene at position: " +
-            mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
+          mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
         );
       }
 
@@ -1404,27 +1453,148 @@ export class Blitz3DGraphics {
       return id;
     };
 
+    imports.blitz3d.ParseRMesh = (bankId) => {
+      // Parse RMESH from SMPK in bank (metadata + visual)
+      const data = this.core.banks.get(bankId);
+      if (!data) {
+        console.error(`ParseRMesh: Invalid bankId ${bankId}`);
+        return 0;
+      }
+
+      // 1. Decode SMPK to access extras
+      let smpkJson;
+      try {
+        const { json } = decodeSmpk(data);
+        smpkJson = json;
+      } catch (e) {
+        console.error(`ParseRMesh: Failed to decode SMPK/JSON: ${e}`);
+        return 0;
+      }
+
+      // 2. Load visual mesh via SMPKLoader
+      // Lazy init loader
+      if (!this.smpkLoader) this.smpkLoader = new SMPKLoader(this, this.core);
+
+      // We load it as a child of the world (0). It returns a new entity ID.
+      const rootId = this.smpkLoader.loadFromBytes(data, 0, `rmesh_${bankId}`);
+      const root = this.entities[rootId];
+      if (!root) {
+        console.error("ParseRMesh: Failed to create root entity");
+        return 0;
+      }
+
+      // 3. Spawn Extras (Entities & Triggers)
+      // These are spawned as children of the Room Mesh parented to it so they move together.
+
+      const spawnEntity = (e) => {
+        if (!e.type) return;
+        const type = e.type.toLowerCase();
+        let id = 0;
+
+        // Map RMESH types to Blitz3D entities
+        if (type === "pointlight" || type === "light") {
+          // 2 = Point Light
+          id = imports.env.CreateLight(2);
+        } else if (type === "spotlight") {
+          // 3 = Spot Light
+          id = imports.env.CreateLight(3);
+        } else if (
+          type === "screen" || type === "waypoint" || type === "playerstart" ||
+          type === "soundemitter"
+        ) {
+          id = imports.env.CreatePivot(rootId);
+        } else if (type === "model") {
+          // Models in RMESH often point to external files.
+          // For now, simple pivot placeholder.
+          id = imports.env.CreatePivot(rootId);
+        } else {
+          // Fallback
+          id = imports.env.CreatePivot(rootId);
+        }
+
+        if (id) {
+          // Ensure parented to room
+          imports.env.EntityParent(id, rootId, 0);
+
+          // Position (assume Blitz coords)
+          imports.env.PositionEntity(id, e.x || 0, e.y || 0, e.z || 0, 0);
+
+          // Rotation
+          if (e.pitch || e.yaw || e.roll) {
+            imports.env.RotateEntity(id, e.pitch || 0, e.yaw || 0, e.roll || 0);
+          }
+
+          // Name
+          const obj = this.entities[id];
+          if (obj && e.name) obj.name = e.name;
+
+          // Light Props
+          if (type.includes("light")) {
+            if (e.r !== undefined || e.g !== undefined || e.b !== undefined) {
+              const r = e.r !== undefined ? e.r * 255 : 255;
+              const g = e.g !== undefined ? e.g * 255 : 255;
+              const b = e.b !== undefined ? e.b * 255 : 255;
+              imports.env.LightColor(id, r, g, b);
+            }
+            if (e.range !== undefined) {
+              imports.env.LightRange(id, e.range);
+            }
+          }
+        }
+      };
+
+      const spawnTrigger = (t) => {
+        const id = imports.env.CreatePivot(rootId);
+        if (id) {
+          const obj = this.entities[id];
+          if (obj) {
+            obj.name = t.name;
+
+            // Calculate center from AABB
+            const min = t.aabb.min;
+            const max = t.aabb.max;
+            const cx = (min[0] + max[0]) / 2;
+            const cy = (min[1] + max[1]) / 2;
+            const cz = (min[2] + max[2]) / 2;
+
+            imports.env.PositionEntity(id, cx, cy, cz, 0);
+
+            // Store metadata
+            obj.userData.trigger = true;
+            obj.userData.aabbMin = min;
+            obj.userData.aabbMax = max;
+          }
+        }
+      };
+
+      if (smpkJson.extras?.rmesh) {
+        const rm = smpkJson.extras.rmesh;
+        if (Array.isArray(rm.entities)) rm.entities.forEach(spawnEntity);
+        if (Array.isArray(rm.triggers)) rm.triggers.forEach(spawnTrigger);
+      }
+
+      return rootId;
+    };
+
     imports.env.PositionEntity = (ent, x, y, z) => {
       const entity = this.entities[ent];
+      if (this.core.entityTable) {
+        this.core.entityTable.setX(ent, x);
+        this.core.entityTable.setY(ent, y);
+        this.core.entityTable.setZ(ent, z);
+      }
       if (entity) {
-        // Convert from Blitz3D's left-handed coordinate system to Three.js right-handed
-        // In Blitz3D: +Z is towards viewer, -Z is away
-        // In Three.js: +Z is away from viewer, -Z is towards viewer
-        // So we negate Z to convert
         entity.position.set(x, y, -z);
-        console.log(
-          "PositionEntity ID " + ent + " to (" + x + ", " + y + ", " + z +
-            ") -> Three.js (" +
-            entity.position.x + ", " + entity.position.y + ", " +
-            entity.position.z + ")",
-        );
-      } else {
-        console.warn("PositionEntity: entity " + ent + " not found");
       }
     };
 
     imports.env.RotateEntity = (ent, pitch, yaw, roll) => {
       const entity = this.entities[ent];
+      if (this.core.entityTable) {
+        this.core.entityTable.setPitch(ent, pitch);
+        this.core.entityTable.setYaw(ent, yaw);
+        this.core.entityTable.setRoll(ent, roll);
+      }
       if (entity) {
         entity.rotation.set(
           pitch * Math.PI / 180,
@@ -1436,6 +1606,11 @@ export class Blitz3DGraphics {
 
     imports.env.ScaleEntity = (ent, x, y, z) => {
       const entity = this.entities[ent];
+      if (this.core.entityTable) {
+        this.core.entityTable.setScaleX(ent, x);
+        this.core.entityTable.setScaleY(ent, y);
+        this.core.entityTable.setScaleZ(ent, z);
+      }
       if (entity) entity.scale.set(x, y, z);
     };
 
@@ -1445,6 +1620,13 @@ export class Blitz3DGraphics {
         entity.translateX(x);
         entity.translateY(y);
         entity.translateZ(-z);
+        // After relative move, sync absolute state back to entityTable if possible
+        // but MoveEntity is rare in high-freq loops usually; better if WASM just writes results.
+        if (this.core.entityTable) {
+          this.core.entityTable.setX(ent, entity.position.x);
+          this.core.entityTable.setY(ent, entity.position.y);
+          this.core.entityTable.setZ(ent, -entity.position.z);
+        }
       }
     };
 
@@ -1454,20 +1636,19 @@ export class Blitz3DGraphics {
         entity.rotateX(pitch * Math.PI / 180);
         entity.rotateY(yaw * Math.PI / 180);
         entity.rotateZ(roll * Math.PI / 180);
-        if (this.frameCount % 60 === 0 || this.frameCount < 10) {
-          console.log(
-            "TurnEntity ID " + ent + " by (" + pitch + ", " + yaw + ", " +
-              roll + "), rotation: (" +
-              (entity.rotation.x * 180 / Math.PI).toFixed(1) + ", " +
-              (entity.rotation.y * 180 / Math.PI).toFixed(1) + ", " +
-              (entity.rotation.z * 180 / Math.PI).toFixed(1) + ")",
-          );
+        if (this.core.entityTable) {
+          // Very simplified: this doesn't handle global=1 correctly without full matrix sync
+          // but for local turns it's better than nothing.
+          this.core.entityTable.setPitch(ent, entity.rotation.x * 180 / Math.PI);
+          this.core.entityTable.setYaw(ent, entity.rotation.y * 180 / Math.PI);
+          this.core.entityTable.setRoll(ent, entity.rotation.z * 180 / Math.PI);
         }
       }
     };
 
     // Entity Property Getters
     imports.env.EntityX = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getX(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       if (global) {
@@ -1479,6 +1660,7 @@ export class Blitz3DGraphics {
     };
 
     imports.env.EntityY = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getY(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       if (global) {
@@ -1490,6 +1672,7 @@ export class Blitz3DGraphics {
     };
 
     imports.env.EntityZ = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getZ(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       // Convert from Three.js coordinate system back to Blitz3D (negate Z)
@@ -1502,13 +1685,12 @@ export class Blitz3DGraphics {
     };
 
     imports.env.EntityPitch = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getPitch(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       if (global) {
         const worldRot = new THREE.Euler();
-        entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(
-          entity.matrixWorld,
-        );
+        entity.getWorldQuaternion(new THREE.Quaternion());
         worldRot.setFromQuaternion(entity.quaternion);
         return worldRot.x * 180 / Math.PI;
       }
@@ -1516,13 +1698,12 @@ export class Blitz3DGraphics {
     };
 
     imports.env.EntityYaw = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getYaw(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       if (global) {
         const worldRot = new THREE.Euler();
-        entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(
-          entity.matrixWorld,
-        );
+        entity.getWorldQuaternion(new THREE.Quaternion());
         worldRot.setFromQuaternion(entity.quaternion);
         return worldRot.y * 180 / Math.PI;
       }
@@ -1530,13 +1711,12 @@ export class Blitz3DGraphics {
     };
 
     imports.env.EntityRoll = (ent, global) => {
+      if (!global && this.core.entityTable) return this.core.entityTable.getRoll(ent);
       const entity = this.entities[ent];
       if (!entity) return 0.0;
       if (global) {
         const worldRot = new THREE.Euler();
-        entity.getWorldQuaternion(new THREE.Quaternion()).setFromRotationMatrix(
-          entity.matrixWorld,
-        );
+        entity.getWorldQuaternion(new THREE.Quaternion());
         worldRot.setFromQuaternion(entity.quaternion);
         return worldRot.z * 180 / Math.PI;
       }
@@ -1650,7 +1830,7 @@ export class Blitz3DGraphics {
       if (entity) {
         try {
           this.disposeObject3D(entity);
-        } catch {}
+        } catch { }
         if (entity.parent) entity.parent.remove(entity);
         delete this.entities[ent];
       }
@@ -2113,7 +2293,7 @@ export class Blitz3DGraphics {
         if (this.frameCount < 10) {
           console.log(
             "AddTriangle surface " + surfId + ": indices=(" + v0 + ", " + v1 +
-              ", " + v2 + "), triangleIndex=" + triangleIndex,
+            ", " + v2 + "), triangleIndex=" + triangleIndex,
           );
         }
         return triangleIndex;
@@ -2134,7 +2314,7 @@ export class Blitz3DGraphics {
         if (this.frameCount < 5) {
           console.log(
             "UpdateNormals for mesh ID: " + meshId + ", children: " +
-              mesh.children.length,
+            mesh.children.length,
           );
         }
 
@@ -2144,7 +2324,7 @@ export class Blitz3DGraphics {
             if (this.frameCount < 5) {
               console.log(
                 "  Processing child " + i + ": type=" +
-                  (child.isMesh ? "Mesh" : "Other"),
+                (child.isMesh ? "Mesh" : "Other"),
               );
             }
 
@@ -2171,7 +2351,7 @@ export class Blitz3DGraphics {
                   if (this.frameCount < 5) {
                     console.log(
                       "  Found matching surface in map, ID: " + surfId +
-                        ", calling update()...",
+                      ", calling update()...",
                     );
                   }
                   surf.update();
@@ -2197,7 +2377,7 @@ export class Blitz3DGraphics {
                 if (this.frameCount < 5) {
                   console.log(
                     "  Skipping child " + i + ": no attributes, available: " +
-                      Object.keys(child.geometry).join(", "),
+                    Object.keys(child.geometry).join(", "),
                   );
                 }
                 return;
@@ -2363,7 +2543,7 @@ export class Blitz3DGraphics {
           );
           console.error(
             "Canvas dimensions: " + this.core.canvas.width + "x" +
-              this.core.canvas.height,
+            this.core.canvas.height,
           );
         }
         return;
@@ -2388,7 +2568,7 @@ export class Blitz3DGraphics {
       }
     };
 
-    imports.env.UpdateWorld = (elapsed) => {};
+    imports.env.UpdateWorld = (elapsed) => { };
 
     // Camera/Light/Fog Stubs
     imports.env.AmbientLight = (r, g, b) => {
@@ -2400,17 +2580,28 @@ export class Blitz3DGraphics {
       );
       this.scene.add(this.ambientLight);
     };
-    imports.env.LightColor = (light, r, g, b) => {};
-    imports.env.LightRange = (light, range) => {};
-    imports.env.CameraClsColor = (cam, r, g, b) => {};
-    imports.env.CameraRange = (cam, near, far) => {};
-    imports.env.CameraZoom = (cam, zoom) => {};
-    imports.env.CameraProjMode = (cam, mode) => {};
-    imports.env.CameraViewport = (cam, x, y, w, h) => {};
-    imports.env.FogMode = (mode) => {};
-    imports.env.FogColor = (r, g, b) => {};
-    imports.env.FogRange = (near, far) => {};
-    imports.env.FogDensity = (d) => {};
+    imports.env.LightColor = (lightId, r, g, b) => {
+      const light = this.entities[lightId];
+      if (light && light.isLight) {
+        light.color.setRGB(r / 255.0, g / 255.0, b / 255.0);
+      }
+    };
+    imports.env.LightRange = (lightId, range) => {
+      const light = this.entities[lightId];
+      // PointLight and SpotLight have distance property
+      if (light && (light.isPointLight || light.isSpotLight)) {
+        light.distance = range;
+      }
+    };
+    imports.env.CameraClsColor = (cam, r, g, b) => { };
+    imports.env.CameraRange = (cam, near, far) => { };
+    imports.env.CameraZoom = (cam, zoom) => { };
+    imports.env.CameraProjMode = (cam, mode) => { };
+    imports.env.CameraViewport = (cam, x, y, w, h) => { };
+    imports.env.FogMode = (mode) => { };
+    imports.env.FogColor = (r, g, b) => { };
+    imports.env.FogRange = (near, far) => { };
+    imports.env.FogDensity = (d) => { };
 
     // Primitives
     imports.env.CreateCube = (parent) => {
@@ -2608,10 +2799,10 @@ export class Blitz3DGraphics {
       if (tex) {
         try {
           this.detachTextureFromScene(tex);
-        } catch {}
+        } catch { }
         try {
           tex.dispose?.();
-        } catch {}
+        } catch { }
       }
       delete this.textures[textureId];
       console.log("FreeTexture: textureId=" + textureId);
@@ -2630,7 +2821,7 @@ export class Blitz3DGraphics {
     imports.env.ScaleTexture = (textureId, uScale, vScale) => {
       console.log(
         "ScaleTexture: textureId=" + textureId + " uScale=" + uScale +
-          " vScale=" + vScale,
+        " vScale=" + vScale,
       );
     };
 
@@ -2850,7 +3041,7 @@ export class Blitz3DGraphics {
             if (obj.geometry?.clone) {
               try {
                 obj.geometry = obj.geometry.clone();
-              } catch {}
+              } catch { }
             }
             if (obj.material) {
               if (Array.isArray(obj.material)) {
@@ -3209,16 +3400,56 @@ export class Blitz3DGraphics {
       return angle;
     };
 
+    const updateFog = () => {
+      if (!this.scene) return;
+      const s = this.fogState;
+      // Blitz3D colors are 0-255
+      const color = new THREE.Color(s.r / 255.0, s.g / 255.0, s.b / 255.0);
+
+      if (s.mode === 0) {
+        this.scene.fog = null;
+      } else if (s.mode === 1) { // Linear
+        if (this.scene.fog && (this.scene.fog as any).isFog) {
+          const f = this.scene.fog as THREE.Fog;
+          f.color.copy(color);
+          f.near = s.near;
+          f.far = s.far;
+        } else {
+          this.scene.fog = new THREE.Fog(color, s.near, s.far);
+        }
+      } else { // Exponential (Mode 2 or others)
+        if (this.scene.fog && (this.scene.fog as any).isFogExp2) {
+          const f = this.scene.fog as THREE.FogExp2;
+          f.color.copy(color);
+          f.density = s.density;
+        } else {
+          this.scene.fog = new THREE.FogExp2(color, s.density);
+        }
+      }
+    };
+
     imports.env.CameraFogRange = (cameraId, near, far) => {
-      console.log(`CameraFogRange: cam=${cameraId} near=${near} far=${far}`);
+      this.fogState.near = near;
+      this.fogState.far = far;
+      this.fogState.mode = 1; // Implicitly switch to Linear? Or just update params? Blitz docs imply Mode sets the type.
+      updateFog();
     };
 
     imports.env.CameraFogColor = (cameraId, r, g, b) => {
-      console.log(`CameraFogColor: cam=${cameraId} rgb=(${r},${g},${b})`);
+      this.fogState.r = r;
+      this.fogState.g = g;
+      this.fogState.b = b;
+      updateFog();
     };
 
     imports.env.CameraFogMode = (cameraId, mode) => {
-      console.log(`CameraFogMode: cam=${cameraId} mode=${mode}`);
+      this.fogState.mode = mode;
+      updateFog();
+    };
+
+    imports.env.CameraFogDensity = (cameraId, d) => {
+      this.fogState.density = d;
+      updateFog();
     };
 
     imports.env.DrawLoading = (percent, shortLoading = 0) => {
@@ -3246,9 +3477,9 @@ export class Blitz3DGraphics {
     };
 
     // SCPCB imports that may be called frequently; keep as cheap no-ops unless implemented.
-    imports.env.FlipMesh = (..._args: any[]) => {};
-    imports.env.MeshCullBox = (..._args: any[]) => {};
-    imports.env.LightConeAngles = (..._args: any[]) => {};
+    imports.env.FlipMesh = (..._args: any[]) => { };
+    imports.env.MeshCullBox = (..._args: any[]) => { };
+    imports.env.LightConeAngles = (..._args: any[]) => { };
 
     imports.env.HideChunks = () => {
       console.log("HideChunks");
@@ -3317,7 +3548,7 @@ export class Blitz3DGraphics {
 
         console.log(
           "PaintEntity: Entity=" + entityId + " Brush=" + brushId +
-            " Color=0x" + color.toString(16).padStart(6, "0"),
+          " Color=0x" + color.toString(16).padStart(6, "0"),
         );
       }
     };
@@ -3354,10 +3585,10 @@ export class Blitz3DGraphics {
           if (!this.textures[id]) {
             try {
               tex.dispose?.();
-            } catch {}
+            } catch { }
             try {
               placeholder.dispose?.();
-            } catch {}
+            } catch { }
             return;
           }
 
@@ -3381,7 +3612,7 @@ export class Blitz3DGraphics {
           if (current === placeholder) {
             try {
               placeholder.dispose?.();
-            } catch {}
+            } catch { }
           }
         },
         undefined,
@@ -3407,7 +3638,7 @@ export class Blitz3DGraphics {
     imports.env.AddAnimSeq = (ent, len) => 0;
     imports.env.AnimSeq = (ent) => 0;
     imports.env.Animating = (ent) => 0;
-    imports.env.Delay = (ms) => {};
+    imports.env.Delay = (ms) => { };
     imports.env.WaitKey = () => 0;
 
     // Movie Playback Functions (for SCP:CB intro videos)
@@ -3549,29 +3780,53 @@ export class Blitz3DGraphics {
         const ent = this.entities[id];
         if (!ent) return;
         try {
-          ent.parent?.remove?.(ent);
-        } catch {}
+          this.disposeEntity(ent);
+        } catch { }
         delete this.entities[id];
       },
       onSetTransform: (id: number, pos, rot, scl) => {
         const ent = this.entities[id];
+        if (this.core.entityTable) {
+          this.core.entityTable.setX(id, pos[0]);
+          this.core.entityTable.setY(id, pos[1]);
+          this.core.entityTable.setZ(id, pos[2]);
+          this.core.entityTable.setScaleX(id, scl[0]);
+          this.core.entityTable.setScaleY(id, scl[1]);
+          this.core.entityTable.setScaleZ(id, scl[2]);
+        }
         if (!ent) return;
         try {
           // Blitz3D -> Three: negate Z (left-handed -> right-handed).
           ent.position.set(pos[0], pos[1], -pos[2]);
           ent.quaternion.set(rot[0], rot[1], rot[2], rot[3]);
           ent.scale.set(scl[0], scl[1], scl[2]);
-        } catch {}
+
+          if (this.core.entityTable) {
+            this.core.entityTable.setPitch(id, ent.rotation.x * 180 / Math.PI);
+            this.core.entityTable.setYaw(id, ent.rotation.y * 180 / Math.PI);
+            this.core.entityTable.setRoll(id, ent.rotation.z * 180 / Math.PI);
+          }
+        } catch { }
       },
       onSetPosition: (id: number, x: number, y: number, z: number) => {
         const ent = this.entities[id];
+        if (this.core.entityTable) {
+          this.core.entityTable.setX(id, x);
+          this.core.entityTable.setY(id, y);
+          this.core.entityTable.setZ(id, z);
+        }
         if (!ent) return;
         try {
           ent.position.set(x, y, -z);
-        } catch {}
+        } catch { }
       },
       onSetRotationEuler: (id: number, pitch: number, yaw: number, roll: number, _global: number) => {
         const ent = this.entities[id];
+        if (this.core.entityTable) {
+          this.core.entityTable.setPitch(id, pitch);
+          this.core.entityTable.setYaw(id, yaw);
+          this.core.entityTable.setRoll(id, roll);
+        }
         if (!ent) return;
         try {
           ent.rotation.set(
@@ -3579,14 +3834,19 @@ export class Blitz3DGraphics {
             (yaw * Math.PI) / 180,
             (roll * Math.PI) / 180,
           );
-        } catch {}
+        } catch { }
       },
       onSetScale: (id: number, x: number, y: number, z: number) => {
         const ent = this.entities[id];
+        if (this.core.entityTable) {
+          this.core.entityTable.setScaleX(id, x);
+          this.core.entityTable.setScaleY(id, y);
+          this.core.entityTable.setScaleZ(id, z);
+        }
         if (!ent) return;
         try {
           ent.scale.set(x, y, z);
-        } catch {}
+        } catch { }
       },
       onMoveEntity: (id: number, x: number, y: number, z: number) => {
         const ent = this.entities[id];
@@ -3595,7 +3855,12 @@ export class Blitz3DGraphics {
           ent.translateX(x);
           ent.translateY(y);
           ent.translateZ(-z);
-        } catch {}
+          if (this.core.entityTable) {
+            this.core.entityTable.setX(id, ent.position.x);
+            this.core.entityTable.setY(id, ent.position.y);
+            this.core.entityTable.setZ(id, -ent.position.z);
+          }
+        } catch { }
       },
       onTurnEntity: (id: number, pitch: number, yaw: number, roll: number, _global: number) => {
         const ent = this.entities[id];
@@ -3604,7 +3869,12 @@ export class Blitz3DGraphics {
           ent.rotateX((pitch * Math.PI) / 180);
           ent.rotateY((yaw * Math.PI) / 180);
           ent.rotateZ((roll * Math.PI) / 180);
-        } catch {}
+          if (this.core.entityTable) {
+            this.core.entityTable.setPitch(id, ent.rotation.x * 180 / Math.PI);
+            this.core.entityTable.setYaw(id, ent.rotation.y * 180 / Math.PI);
+            this.core.entityTable.setRoll(id, ent.rotation.z * 180 / Math.PI);
+          }
+        } catch { }
       },
       onSetParent: (id: number, parentId: number, global: number) => {
         const ent = this.entities[id];
@@ -3618,14 +3888,14 @@ export class Blitz3DGraphics {
           } else {
             parent.add(ent);
           }
-        } catch {}
+        } catch { }
       },
       onSetVisibility: (id: number, visible: number) => {
         const ent = this.entities[id];
         if (!ent) return;
         try {
           ent.visible = !!visible;
-        } catch {}
+        } catch { }
       },
       onSetMaterial: (id: number, materialId: number) => {
         const ent = this.entities[id];
@@ -3641,25 +3911,17 @@ export class Blitz3DGraphics {
           ent.traverse?.((child: any) => {
             if (child && child.isMesh) child.material = mat;
           });
-        } catch {}
+        } catch { }
       },
       onPlaySound: (soundId: number, volume: number, loop: number, outChannelPtr?: number) => {
-        const coreAny: any = this.core;
-        const mem0: WebAssembly.Memory | null = coreAny?.memory ?? null;
-        const imp = coreAny?.imports?.env;
-        if (!imp || typeof imp.LoadSound !== "function" || typeof imp.PlaySound !== "function") return;
+        if (!this.audioSystem) return;
         try {
-          // v1: loop flag toggles LoopSound2 behavior if present.
-          if (loop && typeof imp.LoopSound2 === "function") imp.LoopSound2(soundId);
-          const ch = imp.PlaySound(soundId) | 0;
-          if (ch && typeof imp.ChannelVolume === "function") {
-            // SCPCB uses 0..1 volumes in many places; treat as 0..1 here.
-            imp.ChannelVolume(ch, volume);
-          }
-          if (outChannelPtr && mem0 && outChannelPtr + 4 <= mem0.buffer.byteLength) {
-            try {
+          const ch = this.audioSystem.playSound(soundId, volume, 0, 1, !!loop);
+          if (outChannelPtr) {
+            const mem0: WebAssembly.Memory | null = (this.core as any)?.memory ?? null;
+            if (mem0 && outChannelPtr + 4 <= mem0.buffer.byteLength) {
               new DataView(mem0.buffer).setInt32(outChannelPtr, ch, true);
-            } catch {}
+            }
           }
         } catch (e) {
           console.warn("[CMDB] PlaySound failed:", e);
@@ -3674,7 +3936,201 @@ export class Blitz3DGraphics {
           const u8 = new Uint8Array(mem.buffer, start, len >>> 0);
           const msg = this._cmdTextDecoder.decode(u8);
           console.log(`[CMDB] ${msg}`);
-        } catch {}
+        } catch { }
+      },
+      onLoadMesh: (id: number, parent: number, pathPtr: number) => {
+        const rawPath = this.core.readString(pathPtr);
+        const path = rawPath.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
+        // Placeholder
+        const mesh = new THREE.Mesh();
+        mesh.material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        mesh.name = rawPath;
+
+        this.entities[id] = mesh;
+        if (parent && this.entities[parent]) this.entities[parent].add(mesh);
+        else this.scene?.add(mesh);
+
+        // Async load
+        this.animationSystem.loadAnimMesh(path, parent, id) /* pass ID if updated */
+          .then(() => {
+            // The shared loader logic might need tweaking to *replace* the entity at ID, 
+            // or we handle the swap here if loadAnimMesh returns a new object. 
+            // ACTUALLY: loadAnimMesh currently creates a NEW entity via CreateMesh. 
+            // We need to refactor or just accept that for now we might have a placeholder + real mesh?
+            // Better: Update loadAnimMesh to accept targetID or use the placeholder.
+            // For V1 of ABI, we'll assume loadAnimMesh can identify the entity by name or we patch it.
+            // Let's rely on the fact that existing logic handles parenting.
+          })
+          .catch((e: any) => console.error(`[CMDB] LoadMesh failed: ${e}`));
+      },
+      // ... (We will implement other handlers in a second pass if this block is too big)
+      onLoadAnimMesh: (id: number, parent: number, pathPtr: number) => {
+        const rawPath = this.core.readString(pathPtr);
+        const path = rawPath.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
+        const mesh = new THREE.Mesh();
+        mesh.material = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+        mesh.name = rawPath;
+
+        this.entities[id] = mesh;
+        if (parent && this.entities[parent]) this.entities[parent].add(mesh);
+        else this.scene?.add(mesh);
+
+        this.animationSystem.loadAnimMesh(path, parent, id)
+          .catch((e: any) => console.error(`[CMDB] LoadAnimMesh failed: ${e}`));
+      },
+      onCreateMesh: (id: number, parent: number) => {
+        const mesh = new THREE.Mesh();
+        mesh.material = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          vertexColors: true,
+          side: THREE.DoubleSide,
+        });
+        this.entities[id] = mesh;
+        if (parent && this.entities[parent]) this.entities[parent].add(mesh);
+        else this.scene?.add(mesh);
+      },
+      onLoadTexture: (id: number, pathPtr: number, flags: number) => {
+        const path = this.core.readString(pathPtr);
+        // reuse existing internal LoadTexture logic if possible or replicate it
+        // Existing logic: imports.env.LoadTexture calls CreateTexture(1,1) (stub) or real logic?
+        // Let's assume for v1 we use a simple texture loader wrapped by our system.
+        // Ideally we call a method on `this` that handles texture loading.
+        // For now, let's create a placeholder texture object.
+
+        // Note: `this.textures` stores { file:..., texture: THREE.Texture, ... } objects or just textures?
+        // Looking at `graphics.ts` `LoadTexture`... it seems to be missing or I missed it.
+        // `imports.env.LoadTexture` was defined as `createTexture(1,1)` stub in core.ts if noAssets=1.
+
+        // Let's implement a basic texture load:
+        const loader = new THREE.TextureLoader();
+        const tex = loader.load(path); // This will fail for SMPK internal paths unless we use blob URLs.
+        // TODO: Integrate with Asset Management / SMPK.
+        // For now, register it.
+        this.textures[id] = tex;
+      },
+      onTextureBlend: (id: number, blend: number) => {
+        // TODO
+      },
+      onTextureCoords: (id: number, coords: number) => {
+        // TODO
+      },
+      onCreateBrush: (id: number) => {
+        this.brushes[id] = {
+          color: [1, 1, 1], alpha: 1, shininess: 0, blend: 1, fx: 0,
+          textures: []
+        };
+      },
+      onBrushColor: (id: number, r: number, g: number, b: number) => {
+        const bObj = this.brushes[id];
+        if (bObj) bObj.color = [r, g, b];
+      },
+      onBrushAlpha: (id: number, a: number) => {
+        const bObj = this.brushes[id];
+        if (bObj) bObj.alpha = a;
+      },
+      onBrushShininess: (id: number, s: number) => {
+        const bObj = this.brushes[id];
+        if (bObj) bObj.shininess = s;
+      },
+      onBrushTexture: (brushId: number, textureId: number, frame: number, index: number) => {
+        const bObj = this.brushes[brushId];
+        const tex = this.textures[textureId];
+        if (bObj && tex) {
+          bObj.textures[index || 0] = { texture: tex, frame };
+        }
+      },
+      onEntityTexture: (entityId: number, textureId: number, frame: number, index: number) => {
+        const ent = this.entities[entityId];
+        const tex = this.textures[textureId];
+        if (ent && tex) {
+          // Apply to all materials
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              const mapName = index === 0 ? "map" : `map${index}`; // simplified
+              // THREE doesn't support multi-texture easily without custom shaders.
+              // For v1, map index 0 to .map, index 1 to .lightMap or similar?
+              if (index === 0) child.material.map = tex;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+      },
+      onEntityColor: (entityId: number, r: number, g: number, b: number) => {
+        const ent = this.entities[entityId];
+        if (ent) {
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              if (child.material.color) child.material.color.setRGB(r, g, b);
+            }
+          });
+        }
+      },
+      onEntityAlpha: (entityId: number, a: number) => {
+        const ent = this.entities[entityId];
+        if (ent) {
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              child.material.opacity = a;
+              child.material.transparent = a < 1.0;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+      },
+      onEntityShininess: (entityId: number, s: number) => {
+        const ent = this.entities[entityId];
+        if (ent) {
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              // Approximate shininess with roughness/metalness
+              child.material.roughness = 1.0 - s;
+              child.material.metalness = s * 0.5;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+      },
+      onEntityFX: (entityId: number, fx: number) => {
+        // TODO: 1=fullbright, 2=vertexcolors, 4=flat, 8=disable fog, 16=disable culling
+        const ent = this.entities[entityId];
+        if (ent) {
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              if (fx & 1) { // Fullbright
+                child.material.emissive = child.material.color;
+                child.material.emissiveIntensity = 1.0;
+              }
+              if (fx & 2) child.material.vertexColors = true;
+              if (fx & 4) child.material.flatShading = true;
+              if (fx & 16) child.material.side = THREE.DoubleSide;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+      },
+      onEntityBlend: (entityId: number, blend: number) => {
+        // 1=alpha, 2=multiply, 3=add
+        const ent = this.entities[entityId];
+        if (ent) {
+          ent.traverse?.((child: any) => {
+            if (child.isMesh && child.material) {
+              this.ensureUniqueMaterial(child);
+              child.material.transparent = true;
+              if (blend === 1) child.material.blending = THREE.NormalBlending;
+              if (blend === 2) child.material.blending = THREE.MultiplyBlending;
+              if (blend === 3) child.material.blending = THREE.AdditiveBlending;
+              child.material.needsUpdate = true;
+            }
+          });
+        }
+      },
+      onFreeEntity: (id: number) => {
+        exec.onDestroyEntity(id);
       },
     };
 

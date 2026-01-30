@@ -70,13 +70,13 @@ export class Blitz3DAnimation {
         }
     }
 
-    async loadAnimMesh(path: string, parentId: number) {
+    async loadAnimMesh(path: string, parentId: number, targetId?: number) {
         console.log(`[Animation] Loading animated mesh: ${path}`);
 
         // Check file extension
         const lowerPath = path.toLowerCase();
         if (lowerPath.endsWith('.smpk')) {
-            const entityId = await this.smpkLoader.loadFile(path, parentId);
+            const entityId = await this.smpkLoader.loadFile(path, parentId, targetId);
             return entityId;
         } else if (lowerPath.endsWith('.b3d') || lowerPath.endsWith('.x')) {
             throw new Error(`[Animation] Refusing to load source mesh at runtime: ${path} (convert offline to .smpk)`);

@@ -8,9 +8,39 @@ The Command Buffer System is a binary protocol for efficient WebAssembly to Java
 
 - **Minimal Overhead**: Reduce function call overhead between WASM and JS
 - **Batch Processing**: Group multiple operations per frame
+- **Authoritative State**: WASM-side entity tables via shared memory
+- **Mirroring**: High-performance Three.js mirroring via CMDB
 - **Type Safety**: Binary format with strict typing
 - **Extensibility**: Versioned protocol for future features
 - **Debugging**: Built-in debugging and validation support
+
+## Shared Memory Entity Table
+
+For the Game Runtime to be authoritative, it maintains entity transforms in a dedicated shared memory region. This allows high-frequency property getters (like `EntityX`) to run with zero JS-WASM boundary overhead.
+
+### Memory Layout
+
+The table supports up to 8,192 entities. Each entry is 36 bytes (9 x Float32).
+
+| Offset | Field | Description |
+|--------|-------|-------------|
+| 0      | X     | Local X Position |
+| 4      | Y     | Local Y Position |
+| 8      | Z     | Local Z Position |
+| 12     | Pitch | Local Euler Pitch |
+| 16     | Yaw   | Local Euler Yaw |
+| 20     | Roll  | Local Euler Roll |
+| 24     | SX    | X Scale |
+| 28     | SY    | Y Scale |
+| 32     | SZ    | Z Scale |
+
+### ABI Handshake
+
+The compiler or runtime exports the following global to register the table:
+
+```wasm
+(global $__EntityTablePtr i32 (i32.const ...))
+```
 
 ## Protocol Specification
 

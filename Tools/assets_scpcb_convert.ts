@@ -64,7 +64,18 @@ const main = async () => {
   }
 
   console.log(`[assets] root=${args.root}`);
+  console.log(`[assets] root=${args.root}`);
   console.log(`[assets] found b3d=${b3dFiles.length} x=${xFiles.length} rmesh=${rmeshFiles.length}`);
+
+  // Optimize textures first
+  const texArgs = ["deno", "run", "-A", "Tools/optimize_textures.ts", "--root", args.root];
+  if (args.deleteSource) texArgs.push("--delete-source");
+  await run(texArgs);
+
+  // Optimize audio
+  const audArgs = ["deno", "run", "-A", "Tools/optimize_audio.ts", "--root", args.root];
+  if (args.deleteSource) audArgs.push("--delete-source");
+  await run(audArgs);
 
   let converted = 0;
 

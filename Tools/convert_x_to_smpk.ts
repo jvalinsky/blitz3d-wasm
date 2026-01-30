@@ -1,7 +1,9 @@
 #!/usr/bin/env -S deno run -A
-import { parseTextX } from "./x/parse_text_x.ts";
+import { parseX } from "./x/parse_x.ts";
+import { XFile, XMesh } from "./x/types.ts";
 import { encodeSmpk } from "./smpk/codec.ts";
-import type { SmpkAccessor, SmpkFile, SmpkJson } from "./smpk/types.ts";
+import { SmpkFile, SmpkMaterial, SmpkMesh, SmpkNode } from "./smpk/types.ts";
+import { resolveTextureName, buildCaseInsensitiveMap } from "./texture_utils.ts";
 
 type Args = {
   input: string;
@@ -52,8 +54,19 @@ const quatFromRowMajorMat4 = (m: Float32Array): [number, number, number, number]
 
 const main = async () => {
   const args = parseArgs();
-  const text = await Deno.readTextFile(args.input);
-  const x = parseTextX(text);
+
+  let x: any; // parseX returns XFile.
+
+  try {
+    const data = await Deno.readFile(args.input);
+    const xFile = await parseX(data);
+    x = xFile;
+  } catch (e) {
+    throw new Error(`Failed to parse ${args.input}: ${e}`);
+  }
+
+  // existing logic uses 'x' variable.
+  // x.root, x.meshes.
   const mesh = findFirstMesh(x) ?? x.meshes[0];
   if (!mesh) throw new Error("No Mesh found in X file");
 
@@ -160,11 +173,18 @@ const main = async () => {
   };
   const rootIdx = addFrame(x.root, undefined);
 
-  const materials = (mesh.materials ?? []).map((m, i) => ({
-    name: m.name ?? `mat${i}`,
-    baseColorTexture: m.texture,
-    alphaMode: (m.diffuse[3] ?? 1) < 1 ? "BLEND" : "OPAQUE",
-  }));
+  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") || ".";
+  const lowerNameToActual = await buildCaseInsensitiveMap(inputDir);
+
+  const materials = [];
+  for (let i = 0; i < (mesh.materials ?? []).length; i++) {
+    const m = mesh.materials[i];
+    materials.push({
+      name: m.name ?? `mat${i}`,
+      baseColorTexture: await resolveTextureName(inputDir, lowerNameToActual, m.texture),
+      alphaMode: (m.diffuse[3] ?? 1) < 1 ? "BLEND" : "OPAQUE",
+    });
+  }
 
   // Attach mesh to root
   nodes[rootIdx]!.mesh = 0;

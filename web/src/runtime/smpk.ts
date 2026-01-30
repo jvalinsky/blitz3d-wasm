@@ -56,11 +56,12 @@ type SmpkJson = {
     alphaMode?: string;
   }>;
   sceneRoots?: number[];
+  extras?: any;
 };
 
 const MAGIC = [0x53, 0x4d, 0x50, 0x4b]; // "SMPK"
 
-const decodeSmpk = (bytes: Uint8Array): { json: SmpkJson; bin: Uint8Array } => {
+export const decodeSmpk = (bytes: Uint8Array): { json: SmpkJson; bin: Uint8Array } => {
   if (bytes.byteLength < 16) throw new Error("SMPK too small");
   for (let i = 0; i < 4; i++) if (bytes[i] !== MAGIC[i]) throw new Error("Invalid SMPK magic");
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
@@ -91,14 +92,14 @@ const accessorView = (bin: Uint8Array, acc: SmpkAccessor): ArrayBufferView => {
   const comps = t === "SCALAR"
     ? 1
     : t === "VEC2"
-    ? 2
-    : t === "VEC3"
-    ? 3
-    : t === "VEC4"
-    ? 4
-    : t === "MAT4"
-    ? 16
-    : 1;
+      ? 2
+      : t === "VEC3"
+        ? 3
+        : t === "VEC4"
+          ? 4
+          : t === "MAT4"
+            ? 16
+            : 1;
 
   const n = count * comps;
   if (ct === "f32") return new Float32Array(buf, base, n);
@@ -118,24 +119,50 @@ export class SMPKLoader {
     this.core = core;
   }
 
-  async loadFile(filePath: string, parentId: number) {
+  async loadFile(filePath: string, parentId: number, targetId?: number) {
     const handle = this.core.fileIO.openFile(filePath);
     if (!handle) throw new Error(`SMPKLoader: failed to open ${filePath}`);
     try {
       const data = this.core.fileIO.readRemaining(handle);
       if (!data?.length) throw new Error(`SMPKLoader: empty ${filePath}`);
-      return this.loadFromBytes(data, parentId, filePath);
+      return this.loadFromBytes(data, parentId, filePath, targetId);
     } finally {
       this.core.fileIO.closeFile(handle);
     }
   }
 
-  loadFromBytes(bytes: Uint8Array, parentId: number, name?: string) {
+  loadFromBytes(bytes: Uint8Array, parentId: number, name?: string, targetId?: number) {
     const { json, bin } = decodeSmpk(bytes);
 
     const root = new THREE.Group();
     root.name = name ?? "smpk";
-    const rootId = this.graphics.nextEntityId++;
+
+    let rootId: number;
+    if (typeof targetId === "number") {
+      rootId = targetId;
+      // If an entity exists at targetId (placeholder), we should ideally replace it 
+      // OR add our content to it.
+      // For now, let's assume we replace the entry in `this.graphics.entities` 
+      // AND handle the scene graph replacement.
+      const placeholder = this.graphics.entities[targetId];
+      if (placeholder) {
+        // Transfer parent
+        if (placeholder.parent) {
+          placeholder.parent.add(root);
+          placeholder.parent.remove(placeholder);
+        }
+        // Copy transform? 
+        root.position.copy(placeholder.position);
+        root.quaternion.copy(placeholder.quaternion);
+        root.scale.copy(placeholder.scale);
+
+        // Dispose placeholder geometry/material if any?
+        // (Minimal cleanup)
+      }
+    } else {
+      rootId = this.graphics.nextEntityId++;
+    }
+
     this.graphics.entities[rootId] = root;
     root.userData.entityId = rootId;
 

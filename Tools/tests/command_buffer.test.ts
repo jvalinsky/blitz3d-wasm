@@ -27,13 +27,38 @@ Deno.test("command buffer roundtrip encodes/decodes in order", () => {
   writeCmd(dv, { op: CmdOpcode.SetVisibility, id: 42, visible: 0 });
   writeCmd(dv, { op: CmdOpcode.SetMaterial, id: 42, materialId: 2 });
   writeCmd(dv, { op: CmdOpcode.PlaySound, soundId: 12, volume: 0.75, loop: 1 });
+
+  // New Opcodes
+  writeCmd(dv, { op: CmdOpcode.LoadMesh, id: 100, parent: 0, pathPtr: 1024 });
+  writeCmd(dv, { op: CmdOpcode.LoadAnimMesh, id: 101, parent: 100, pathPtr: 2048 });
+  writeCmd(dv, { op: CmdOpcode.CreateMesh, id: 102, parent: 0 });
+  writeCmd(dv, { op: CmdOpcode.LoadTexture, id: 200, pathPtr: 3000, flags: 1 });
+  writeCmd(dv, { op: CmdOpcode.TextureBlend, id: 200, blend: 2 });
+  writeCmd(dv, { op: CmdOpcode.TextureCoords, id: 200, coords: 1 });
+  writeCmd(dv, { op: CmdOpcode.CreateBrush, id: 300 });
+  writeCmd(dv, { op: CmdOpcode.BrushColor, id: 300, r: 1, g: 0, b: 0 });
+  writeCmd(dv, { op: CmdOpcode.BrushAlpha, id: 300, a: 0.5 });
+  writeCmd(dv, { op: CmdOpcode.BrushShininess, id: 300, s: 0.8 });
+  writeCmd(dv, { op: CmdOpcode.BrushTexture, brushId: 300, textureId: 200, frame: 0, index: 0 });
+  writeCmd(dv, { op: CmdOpcode.EntityTexture, entityId: 100, textureId: 200, frame: 0, index: 1 });
+  writeCmd(dv, { op: CmdOpcode.EntityColor, entityId: 100, r: 0, g: 1, b: 0 });
+  writeCmd(dv, { op: CmdOpcode.EntityAlpha, entityId: 100, a: 0.9 });
+  writeCmd(dv, { op: CmdOpcode.EntityShininess, entityId: 100, s: 0.2 });
+  writeCmd(dv, { op: CmdOpcode.EntityFX, entityId: 100, fx: 3 });
+  writeCmd(dv, { op: CmdOpcode.EntityBlend, entityId: 100, blend: 3 });
+  writeCmd(dv, { op: CmdOpcode.FreeEntity, id: 102 });
+
   writeCmd(dv, { op: CmdOpcode.DestroyEntity, id: 99 });
 
   const ops: number[] = [];
   drainCmds(dv, (c) => ops.push(c.op));
   assert(
     ops.join(",") ===
-      `${CmdOpcode.CreateEntity},${CmdOpcode.SetPosition},${CmdOpcode.SetRotationEuler},${CmdOpcode.SetScale},${CmdOpcode.MoveEntity},${CmdOpcode.TurnEntity},${CmdOpcode.SetVisibility},${CmdOpcode.SetMaterial},${CmdOpcode.PlaySound},${CmdOpcode.DestroyEntity}`,
+    `${CmdOpcode.CreateEntity},${CmdOpcode.SetPosition},${CmdOpcode.SetRotationEuler},${CmdOpcode.SetScale},${CmdOpcode.MoveEntity},${CmdOpcode.TurnEntity},${CmdOpcode.SetVisibility},${CmdOpcode.SetMaterial},${CmdOpcode.PlaySound},` +
+    `${CmdOpcode.LoadMesh},${CmdOpcode.LoadAnimMesh},${CmdOpcode.CreateMesh},${CmdOpcode.LoadTexture},${CmdOpcode.TextureBlend},${CmdOpcode.TextureCoords},` +
+    `${CmdOpcode.CreateBrush},${CmdOpcode.BrushColor},${CmdOpcode.BrushAlpha},${CmdOpcode.BrushShininess},${CmdOpcode.BrushTexture},` +
+    `${CmdOpcode.EntityTexture},${CmdOpcode.EntityColor},${CmdOpcode.EntityAlpha},${CmdOpcode.EntityShininess},${CmdOpcode.EntityFX},${CmdOpcode.EntityBlend},${CmdOpcode.FreeEntity},` +
+    `${CmdOpcode.DestroyEntity}`,
   );
 });
 
@@ -62,7 +87,7 @@ Deno.test("command buffer throws on unknown opcode during drain", () => {
 
   let threw = false;
   try {
-    drainCmds(dv, () => {});
+    drainCmds(dv, () => { });
   } catch {
     threw = true;
   }

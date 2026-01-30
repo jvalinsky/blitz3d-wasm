@@ -6,10 +6,11 @@ Implementation roadmaps and phase plans.
 
 | Phase | File | Status |
 |-------|------|--------|
-| 1 | PHASE_1_LANGUAGE_COMPLETION.md | In Progress |
-| 2 | PHASE_2_GRAPHICS_API_EXPANSION.md | Planned |
-| 3 | PHASE_3_UTILITY_IMPORTS.md | Planned |
+| 1 | PHASE_1_LANGUAGE_COMPLETION.md | Complete |
+| 2 | PHASE_2_GRAPHICS_API_EXPANSION.md | Complete |
+| 3 | PHASE_3_UTILITY_IMPORTS.md | In Progress |
 | 4 | PHASE_4_RUNTIME_CONNECTIVITY.md | Planned |
+| 5 | scpcb-web-track-b/ | In Progress |
 
 ## Long-term Plans
 

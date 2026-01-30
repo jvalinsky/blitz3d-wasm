@@ -5,6 +5,61 @@ import type { SmpkAccessor, SmpkFile, SmpkJson, SmpkMaterial, SmpkPrimitive } fr
 
 type Args = { input: string; output: string };
 
+const normalizeRel = (p: string) => p.replace(/\\/g, "/");
+const basename = (p: string) => {
+  const n = normalizeRel(p);
+  const i = n.lastIndexOf("/");
+  return i >= 0 ? n.slice(i + 1) : n;
+};
+
+const buildCaseInsensitiveMap = async (dir: string) => {
+  const map = new Map<string, string>();
+  try {
+    for await (const e of Deno.readDir(dir)) {
+      if (!e.isFile) continue;
+      map.set(e.name.toLowerCase(), e.name);
+    }
+  } catch {
+    // ignore
+  }
+  return map;
+};
+
+const resolveTextureName = async (
+  dir: string,
+  lowerNameToActual: Map<string, string>,
+  rawName: string,
+): Promise<string> => {
+  const raw = (rawName ?? "").split("\0", 1)[0]!.trim();
+  const cleaned = raw.replace(/[\u0000-\u001f\u007f]/g, "");
+  if (!cleaned) return "";
+  const base = basename(cleaned).replace(/[\u0000-\u001f\u007f]/g, "");
+  if (!base) return "";
+
+  const candidates: string[] = [base];
+  // SCPCB assets sometimes ship as PNG while formats reference BMP.
+  if (base.toLowerCase().endsWith(".bmp")) {
+    candidates.push(base.replace(/\.bmp$/i, ".png"));
+  }
+
+  for (const c of candidates) {
+    // Prefer the actual on-disk casing if we can find it (important on case-sensitive deploys,
+    // and also avoids silently persisting wrong casing on case-insensitive dev filesystems).
+    const actual = lowerNameToActual.get(c.toLowerCase());
+    if (actual) return actual;
+
+    try {
+      const st = await Deno.stat(`${dir}/${c}`);
+      if (st.isFile) return c;
+    } catch {
+      // fall through
+    }
+  }
+
+  // Give up: keep the basename as-is (better error messages downstream).
+  return base;
+};
+
 const parseArgs = (): Args => {
   const input = Deno.args[0];
   if (!input) throw new Error("usage: Tools/convert_rmesh_to_smpk.ts <input.rmesh> [-o out.smpk]");
@@ -47,6 +102,9 @@ const main = async () => {
   const st = await Deno.stat(args.input);
   if (st.size === 0) throw new Error(`RMESH is empty: ${args.input}`);
 
+  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") || ".";
+  const lowerNameToActual = await buildCaseInsensitiveMap(inputDir);
+
   const bytes = await Deno.readFile(args.input);
   const rm = parseRMesh(bytes);
 
@@ -88,8 +146,8 @@ const main = async () => {
     const idxAcc = push(`INDICES_s${s}`, surf.indices, "u32", "SCALAR", surf.indices.length);
 
     // Materials: slot0 is base, slot1 is lightmap (in SCPCB convention).
-    const tex0 = surf.textures[0].name;
-    const tex1 = surf.textures[1].name;
+    const tex0 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[0].name);
+    const tex1 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[1].name);
     const alphaMode = surf.textures[0].kind === 3 ? "BLEND" : "OPAQUE";
     const matIdx = materials.length;
     materials.push({
@@ -123,4 +181,3 @@ const main = async () => {
 };
 
 if (import.meta.main) await main();
-

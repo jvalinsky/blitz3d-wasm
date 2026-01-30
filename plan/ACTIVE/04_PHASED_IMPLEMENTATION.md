@@ -27,7 +27,7 @@ Consolidated implementation roadmap combining the original 5-phase plan with cur
 Complete the production-ready web runtime with robust error handling, optimization, and deployment tools.
 
 ### Success Criteria
-- [ ] 100% compiler success rate (from current 94.2%)
+- [ ] Compiler/test metrics stay accurate (see `docs/COMPILER_STATUS_ANALYSIS.md`)
 - [ ] Zero browser freezes in production usage
 - [ ] Sub-second WASM loading times
 - [ ] Comprehensive debugging tools
@@ -35,7 +35,7 @@ Complete the production-ready web runtime with robust error handling, optimizati
 
 ### Implementation Tasks
 
-#### 5.1: Compiler Completion (1-2 weeks)
+#### 5.1: Compiler Maintenance + Regression Coverage (1-2 weeks)
 ```typescript
 interface CompilerCompletionTasks {
   parserFixes: {
@@ -57,11 +57,10 @@ interface CompilerCompletionTasks {
 ```
 
 **Tasks:**
-1. [ ] Fix remaining 3 failing compilation cases
-2. [ ] Resolve parser edge cases in complex type expressions
-3. [ ] Optimize WASM generation for nested loops
-4. [ ] Enhance function signature resolution
-5. [ ] Add comprehensive regression tests
+1. [ ] Keep compiler status/metrics consistent with `docs/COMPILER_STATUS_ANALYSIS.md`
+2. [ ] Add regression tests for any newly observed SCPCB patterns
+3. [ ] Fix any newly discovered parser/codegen edge cases (with minimal fixtures)
+4. [ ] Keep import/signature changes aligned with the web runtime contract
 
 #### 5.2: Web Runtime Optimization (1-2 weeks)
 ```typescript

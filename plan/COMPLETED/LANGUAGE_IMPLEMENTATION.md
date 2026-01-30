@@ -3,7 +3,7 @@
 ## Status
 **Type**: Completed
 **Completion Date**: January 2026
-**Final Success Rate**: 94.2% (49/52 files compile successfully)
+**Final Success Rate**: See `docs/COMPILER_STATUS_ANALYSIS.md` (historical “94.2% (49/52)” figures were based on older test/fixture accounting)
 
 ## Overview
 
@@ -173,7 +173,7 @@ class WASMCodeGenerator {
 - **Q1 2025**: 75% after type system improvements
 - **Q2 2025**: 85% after parser robustness
 - **Q3 2025**: 90% after code generation fixes
-- **Q4 2025**: 94.2% after optimization (current)
+- **Q4 2025**: historical milestone (see `docs/COMPILER_STATUS_ANALYSIS.md` for current accounting)
 
 ### Performance Metrics
 - **Compilation Speed**: ~1000 lines/second
@@ -239,7 +239,7 @@ class WASMCodeGenerator {
 ## Integration Impact
 
 ### Compiler Success Impact
-- **Web Runtime**: 94.2% of user code can now run in browser
+- **Web Runtime**: historical milestone (see `docs/COMPILER_STATUS_ANALYSIS.md` for current accounting)
 - **Asset Pipeline**: Assets can be loaded and processed efficiently
 - **Testing Framework**: Comprehensive test coverage of language features
 - **Documentation**: Complete language reference and examples

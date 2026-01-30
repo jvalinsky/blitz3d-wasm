@@ -8,6 +8,12 @@
 - **WASM Validation**: 100% compliance with WebAssembly specification
 - **Performance**: 60fps particle system with 1000+ entities
 
+## Source Of Truth (Plans + Status)
+
+- **Compiler status + metrics**: `COMPILER_STATUS_ANALYSIS.md`
+- **Project plan index**: `../plan/README.md`
+- **SCPCB web port execution (Track B)**: `../plan/scpcb-web-track-b/README.md`
+
 The compiler successfully translates Blitz3D BASIC to WebAssembly. Recent achievements include:
 - Advanced typed IR pipeline with proper control flow
 - Complete WASM validation compliance
@@ -38,11 +44,8 @@ These documents analyze the target game for porting:
 - [FILE_FORMAT_LOADERS.md](FILE_FORMAT_LOADERS.md) - Asset formats (RMesh, B3D)
 
 ### Implementation Plans
-- [NEXT_STEPS_DETAILED_PLAN.md](NEXT_STEPS_DETAILED_PLAN.md) - Current priorities
-- [ASSET_PIPELINE.md](ASSET_PIPELINE.md) - Asset handling strategy
-
-### Implementation Plans
-- [NEXT_STEPS_DETAILED_PLAN.md](NEXT_STEPS_DETAILED_PLAN.md) - Current priorities
+- `../plan/README.md` - Plan index
+- `../plan/scpcb-web-track-b/README.md` - Track B execution checklists
 - [ASSET_PIPELINE.md](ASSET_PIPELINE.md) - Asset handling strategy
 
 ### Recent Achievements

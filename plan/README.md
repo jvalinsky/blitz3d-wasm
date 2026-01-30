@@ -6,9 +6,8 @@ This document serves as the central index for all project plans, organized by cu
 
 ## 🎯 Current Project Status
 
-- **Compiler Success Rate**: 94.2% (49/52 files compile successfully)
-- **Web Runtime**: Production-ready with thin runtime (~517 lines)
-- **SCPCB Integration**: 76% pass rate on complex game codebase
+- **Compiler Status**: See `docs/COMPILER_STATUS_ANALYSIS.md`
+- **Web Runtime**: Track B (`plan/scpcb-web-track-b/README.md`) is the canonical SCPCB web-port execution plan
 - **Browser Testing**: Working particle demo at https://blitz3d.exe.xyz:8000/test.html
 - **CI/CD Pipeline**: Enterprise-grade with comprehensive testing
 
@@ -18,7 +17,7 @@ This document serves as the central index for all project plans, organized by cu
 Plans that are currently being worked on or are critical for immediate completion.
 
 #### 1. Critical Path (Execute Immediately)
-- **[Compiler Completion](ACTIVE/01_COMPILER_COMPLETION.md)** - Complete remaining 3 failing files
+- **[Compiler Completion](ACTIVE/01_COMPILER_COMPLETION.md)** - Verify remaining gaps and keep metrics accurate
 - **[Web Freeze Mitigation](ACTIVE/02_WEB_FREEZE_MITIGATION.md)** - Resolve browser freezing issues
 - **[Runtime Integration](ACTIVE/03_RUNTIME_INTEGRATION.md)** - Connect working components
 
@@ -44,10 +43,15 @@ Successfully implemented plans that are now part of the codebase.
 - **[Runtime Architecture](COMPLETED/RUNTIME_ARCHITECTURE.md)** - Thin runtime design
 - **[Asset Pipeline](COMPLETED/ASSET_PIPELINE.md)** - SMPK format implementation
 
+### ARCHIVED (Historical Context)
+Older plans that are retained for background and forensics, but are not the current execution source of truth.
+
+- **[Archived Root Plans](ARCHIVED/root-plans/README.md)** - Former root-level plans preserved under `plan/ARCHIVED/`
+
 ## 🎯 Immediate Action Items
 
 ### Priority 1: Complete Core Implementation
-1. **Fix remaining 3 compiler files** to achieve 100% compilation success
+1. **Validate compiler/test metrics** (keep status synced with `docs/COMPILER_STATUS_ANALYSIS.md`)
 2. **Implement web freeze mitigation** for production browser deployment
 3. **Integrate runtime components** into cohesive system
 

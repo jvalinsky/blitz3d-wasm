@@ -12,8 +12,8 @@
 - **Total Files**: 57 files evaluated
 - **Actual Compiler Failures**: 0 (no real compiler errors)
 - **Test Suite Failures**: 3 (100% syntax-only issues)
-- **Documented Success Rate**: 94.2% (49/52 files)
-- **Real Success Rate**: ~100% (54/54 actual game files)
+- **Documented Success Rate**: historically reported as 94.2% (49/52) in older plan docs
+- **Real Success Rate**: see `docs/COMPILER_STATUS_ANALYSIS.md` (canonical, current accounting)
 
 ### Root Cause Analysis
 
@@ -60,7 +60,7 @@ The compiler **correctly handles both** but our test suite was written using the
 ## Success Criteria
 
 ### Updated Success Targets
-- [ ] **100% Compiler Success Rate**: Correct from misleading 94.2% to actual ~100%
+- [ ] **Compiler Success Rate**: Ensure plan docs don’t quote stale metrics (use `docs/COMPILER_STATUS_ANALYSIS.md`)
 - [ ] **0 Test Suite Errors**: Fix 3 syntax-only issues
 - [ ] **Accurate Metrics**: Realistic performance measurements
 - [ ] **Modern Test Suite**: Updated for current Blitz3D syntax

@@ -8,6 +8,12 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 **Runtime**: Sophisticated TypeScript runtime (~2000 lines) with command buffers  
 **Target**: Successfully running SCP: Containment Breach in browser
 
+## 📌 Source Of Truth (Plans + Status)
+
+- **Plan index**: `plan/README.md`
+- **SCPCB Web Port (Track B execution checklists)**: `plan/scpcb-web-track-b/README.md`
+- **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
+
 ### ✅ Working Demo
 
 **Particle System**: https://blitz3d.exe.xyz:8000/test.html
@@ -110,6 +116,13 @@ blitz3d-wasm/
 ├── Tests/                     # Swift unit tests
 └── docs/                      # Documentation
 ```
+
+## 🗺️ Key Entry Points
+
+- Compiler source: `Sources/Compiler/`
+- SCPCB web runtime/loader: `web/src/main.ts`
+- Worker harness (stepping + VFS + safe stubs): `web/src/worker/scpcb_worker.ts`
+- Thin demo runtime (particle demo): `Sources/Runtime/thin/`
 
 ## 🎮 Language Support
 

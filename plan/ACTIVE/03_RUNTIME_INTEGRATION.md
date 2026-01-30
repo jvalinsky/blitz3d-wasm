@@ -13,7 +13,7 @@ Connect all the working components (compiler, web runtime, asset pipeline) into 
 ## Current Components Status
 
 ### ✅ Working Components
-1. **Compiler**: 94.2% success rate, generates valid WASM
+1. **Compiler**: See `docs/COMPILER_STATUS_ANALYSIS.md` (generates valid WASM; keep metrics centralized)
 2. **Web Runtime**: Thin TypeScript runtime with command buffers
 3. **Asset Pipeline**: SMPK format and conversion tools
 4. **Testing Suite**: Comprehensive testing and leak detection

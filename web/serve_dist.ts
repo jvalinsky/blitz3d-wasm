@@ -2,7 +2,12 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { extname, join } from "https://deno.land/std@0.224.0/path/mod.ts";
 
 const port = Number(Deno.env.get("PORT") ?? 8082);
-const root = new URL("../dist/", import.meta.url).pathname;
+
+// Serve from public/ for demos, or dist/ for production
+const usePublic = Deno.env.get("SERVE_PUBLIC") === "1";
+const root = usePublic
+    ? new URL("./public/", import.meta.url).pathname
+    : new URL("../dist/", import.meta.url).pathname;
 
 const contentTypes: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -23,7 +28,8 @@ const handler = async (req: Request) => {
   const url = new URL(req.url);
   let path = url.pathname;
   if (path === "/") {
-    path = "/index.html";
+    // Default to NPC demo
+    path = "/npc_smpk_demo.html";
   }
 
   const filePath = join(root, decodeURIComponent(path));
@@ -47,5 +53,5 @@ const handler = async (req: Request) => {
   }
 };
 
-console.log(`Serving dist/ on http://localhost:${port}`);
+console.log(`Serving ${usePublic ? "public/" : "dist/"} on http://localhost:${port}`);
 serve(handler, { port, hostname: "0.0.0.0" });

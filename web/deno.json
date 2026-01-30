@@ -5,6 +5,8 @@
     "setup": "deno run -A setup.ts",
     "setup:convert": "deno run -A setup.ts --convert",
     "setup:convert:clean": "deno run -A setup.ts --convert --delete-source",
-    "preview": "deno run -A --node-modules-dir npm:vite preview"
+    "preview": "deno run -A --node-modules-dir npm:vite preview",
+    "serve:demos": "SERVE_PUBLIC=1 deno run -A serve_dist.ts",
+    "serve:dist": "deno run -A serve_dist.ts"
   }
 }

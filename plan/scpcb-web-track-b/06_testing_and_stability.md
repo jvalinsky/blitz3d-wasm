@@ -21,8 +21,8 @@ Goal: catch regressions early and ensure the port can run for long sessions with
   - [x] preload a manifest group (boot-style preload) (2026-01-29: `Tools/tests/scpcb_worker_preload_step_integration.test.ts`)
   - [x] run `InitOnce()` (or equivalent) (2026-01-29: `Tools/tests/scpcb_worker_preload_step_integration.test.ts`)
   - [x] step `UpdateGame()` 300 frames (2026-01-29: `Tools/tests/scpcb_worker_preload_step_integration.test.ts`)
-- [ ] Add “no tab freeze” watchdog:
-  - [ ] fails test if RAF loop stalls unexpectedly
+- [x] Add “no tab freeze” watchdog. (2026-01-30: `Tools/tests/no_tab_freeze_watchdog.test.ts`)
+  - [x] fails test if main-thread message handling/timers stall unexpectedly during heavy stepping. (2026-01-30)
 
 ## C) Leak + Resource Lifetime Tests
 

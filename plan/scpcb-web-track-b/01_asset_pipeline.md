@@ -8,7 +8,7 @@ Goal: all model/room assets are converted offline into `.smpk`, and the web buil
 ## A) Inventory + Coverage
 
 - [x] Run `Tools/scpcb_audit.ts` on `../scpcb` and save a snapshot report (paths + callsites). (2026-01-29: `docs/scpcb/scpcb_audit_2026-01-29_1539.json`)
-- [ ] Classify load sites into:
+- [x] Classify load sites into: (2026-01-30: `docs/scpcb/scpcb_loadsite_classification_2026-01-30.md`)
   - [x] static string literals (convert automatically) (2026-01-30: `docs/scpcb/scpcb_loadsite_classification_2026-01-30.md`)
   - [x] dynamic path construction (needs manual mapping rules) (2026-01-30: `docs/scpcb/scpcb_loadsite_classification_2026-01-30.md`)
   - [ ] optional/unused content (can defer)

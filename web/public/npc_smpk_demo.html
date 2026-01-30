@@ -376,20 +376,6 @@
                 log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
             }
         }
-                } else if (channel.path === "scale" && outputAcc.type === "VEC3") {
-                    tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
-                }
-            }
-            
-            if (tracks.length > 0) {
-                const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
-                mixer = new THREE.AnimationMixer(group);
-                npcAction = mixer.clipAction(clip);
-                npcAction.setLoop(THREE.LoopRepeat);
-                npcAction.play();
-                log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
-            }
-        }
         
         return group;
     };

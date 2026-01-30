@@ -323,7 +323,11 @@
 
             // Helper to build clips (needed for bind pose)
             const buildClips = () => {
-                if (!json.animations || json.animations.length === 0) return [];
+                log(`[buildClips] Starting... animations: ${json.animations?.length || 0}`);
+                if (!json.animations || json.animations.length === 0) {
+                    log('[buildClips] No animations found');
+                    return [];
+                }
                 const clips = [];
                 for (let i = 0; i < json.animations.length; i++) {
                     const anim = json.animations[i];
@@ -348,9 +352,14 @@
                         }
                     }
                     if (tracks.length > 0) {
-                        clips.push(new THREE.AnimationClip(anim.name || `clip_${i}`, -1, tracks));
+                        const clip = new THREE.AnimationClip(anim.name || `clip_${i}`, -1, tracks);
+                        clips.push(clip);
+                        log(`[buildClips] Created clip: ${clip.name}, ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+                    } else {
+                        log(`[buildClips] No tracks created for animation ${i}`);
                     }
                 }
+                log(`[buildClips] Returning ${clips.length} clips`);
                 return clips;
             };
 
@@ -676,6 +685,7 @@
             }
 
             // Add bones to scene
+            log(`[Debug] Adding bones to scene, skeletons: ${skeletons.length}`);
             for (const sk of skeletons) {
                 for (const bone of sk.skeleton.bones) {
                     if (bone.parent === group || bone.parent === null) {
@@ -685,8 +695,11 @@
             }
 
             // Setup animation
+            log(`[Animation Setup] Checking animations... found: ${json.animations?.length || 0}`);
             if (json.animations && json.animations.length > 0) {
+                log('[Animation Setup] Calling buildClips()');
                 const clips = buildClips();
+                log(`[Animation Setup] buildClips returned ${clips.length} clips`);
 
                 if (clips.length > 0) {
                     try {
@@ -797,7 +810,15 @@
                     const fps = npcGroup.userData.fps || 30;
 
                     npcAction = npcGroup.userData.action; // Already playing from loader
+                    
+                    // Ensure the action is playing with proper settings
+                    if (npcAction && !npcAction.isRunning()) {
+                        npcAction.setLoop(THREE.LoopRepeat, Infinity);
+                        npcAction.setEffectiveTimeScale(1.0);
+                        npcAction.play();
+                    }
                     animPlaying = true;
+                    animSpeed = 1.0;
 
                     // Show Controls
                     animControls.style.display = 'block';
@@ -1026,8 +1047,18 @@
             // Update animation mixer if valid
             if (mixer && npcAction) {
                 // Ensure we update even if paused (to allow scrubbing), but mainly when running
-                if (npcAction.isRunning()) {
+                if (npcAction.isRunning() && !npcAction.paused) {
                     mixer.update(dt);
+                    
+                    // Update slider to match current animation time
+                    const frameSlider = document.getElementById('frameSlider');
+                    const frameDisplay = document.getElementById('frameDisplay');
+                    if (frameSlider && !frameSlider.matches(':hover, :active')) {
+                        const fps = npcEntity?.userData?.fps || 30;
+                        const currentFrame = npcAction.time * fps;
+                        frameSlider.value = currentFrame;
+                        frameDisplay.textContent = `Frame: ${currentFrame.toFixed(1)} / ${frameSlider.max}`;
+                    }
                 }
             }
 

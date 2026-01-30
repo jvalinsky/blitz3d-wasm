@@ -22,6 +22,7 @@
     "memleak:scpcb:churn": "deno run -A --sloppy-imports --node-modules-dir Tools/memleak/scpcb_churn.ts",
     "memleak:wasm:timeout": "deno run -A Tools/memleak/wasm_timeout_probe.ts",
     "memleak:fxsnapshot:strings": "deno run -A Tools/memleak/fxsnapshot_strings.ts",
+    "scpcb:audit": "deno run -A Tools/scpcb_audit_gate.ts --require-root",
     "web:setup": "cd web && deno task setup",
     "web:dev": "cd web && deno task dev",
     "web:build": "cd web && deno task build",

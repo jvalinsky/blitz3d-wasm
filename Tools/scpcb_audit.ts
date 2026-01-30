@@ -1,4 +1,3 @@
-#!/usr/bin/env -S deno run -A
 /**
  * SCPCB audit helper
  *
@@ -27,13 +26,22 @@ type DynamicCallHit = {
   text: string;
 };
 
-const args = new Set(Deno.args);
-const rootArgIdx = Deno.args.findIndex((a) => a === "--root");
-const root = rootArgIdx >= 0 ? (Deno.args[rootArgIdx + 1] ?? "../scpcb") : "../scpcb";
-const jsonOut = args.has("--json");
-const maxPerFile = 5000;
+export type ScpcbAuditResult = {
+  summary: {
+    root: string;
+    totals: { assetHits: number; dynamicMeshCalls: number };
+    extensions: {
+      b3d: { hits: number; unique: number };
+      x: { hits: number; unique: number };
+      rmesh: { hits: number; unique: number };
+    };
+  };
+  assets: AssetHit[];
+  dynamicCalls: DynamicCallHit[];
+};
 
 const exts = new Set(["b3d", "x", "rmesh"]);
+const maxPerFile = 5000;
 
 const normalizePath = (p: string) => p.replaceAll("\\", "/");
 
@@ -126,7 +134,7 @@ const extractDynamicMeshCallsFromLine = (
   return hits;
 };
 
-const main = async () => {
+export const scanScpcb = async (root: string): Promise<ScpcbAuditResult> => {
   const assets: AssetHit[] = [];
   const dynamicCalls: DynamicCallHit[] = [];
 
@@ -173,10 +181,16 @@ const main = async () => {
     },
   };
 
-  if (jsonOut) {
-    console.log(JSON.stringify({ summary, assets, dynamicCalls }, null, 2));
-    return;
-  }
+  return { summary, assets, dynamicCalls };
+};
+
+const args = new Set(Deno.args);
+const rootArgIdx = Deno.args.findIndex((a) => a === "--root");
+const root = rootArgIdx >= 0 ? (Deno.args[rootArgIdx + 1] ?? "../scpcb") : "../scpcb";
+const jsonOut = args.has("--json");
+
+const main = async () => {
+  const { summary, assets, dynamicCalls } = await scanScpcb(root);
 
   const printTop = (title: string, items: string[], limit = 40) => {
     console.log(`\n${title} (${items.length})`);
@@ -208,5 +222,10 @@ const main = async () => {
 };
 
 if (import.meta.main) {
-  await main();
+  if (jsonOut) {
+    const r = await scanScpcb(root);
+    console.log(JSON.stringify(r, null, 2));
+  } else {
+    await main();
+  }
 }

@@ -30,7 +30,7 @@ Goal: build outputs are reproducible and enforce Track B constraints automatical
   - [x] `deno task test:deno` (exists in `deno.json`). (2026-01-29)
   - [x] `deno task test:web:build` (exists in `deno.json`). (2026-01-29)
   - [x] `deno task test:wasm` (exists in `deno.json`). (2026-01-29)
-- [ ] Add “audit gate” to detect new source-format references in BB code.
+- [x] Add “audit gate” to detect new source-format references in BB code. (2026-01-30: `Tools/scpcb_audit_gate.ts` + baseline `docs/scpcb/scpcb_audit_baseline.json` + task `deno task scpcb:audit`)
 - [x] Add progress reporting for long compiles (NDJSON) so wrappers can show a progress bar. (2026-01-29: `Tools/wasm-cli/main.swift` `--progress ndjson`, includes per-function codegen progress; used by `Tools/compile_scpcb_main.ts`)
 
 Acceptance Criteria:

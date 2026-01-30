@@ -72,35 +72,46 @@ export type SmpkAnimation = {
 };
 
 export type SmpkMaterial = {
+  /** Material name from B3D brush */
   name?: string;
-  // Albedo
+  /** Diffuse/albedo texture path */
   baseColorTexture?: string;
-  color?: [number, number, number]; // RGB, defaults to white
-  // PBR
-  roughness?: number; // 0-1, defaults to 0.8 (inverse of shininess)
-  metalness?: number; // 0-1, defaults to 0.0
-  // Normal
-  normalTexture?: string;
-  normalScale?: number; // 0-2, defaults to 1
-  // Emissive
+  /** Detail texture (texIds[1]), mapped to roughnessMap */
+  detailTexture?: string;
+  /** Detail texture 2 (texIds[2]), requires custom shader */
+  detailTexture2?: string;
+  /** Detail texture 3 (texIds[3]), requires custom shader */
+  detailTexture3?: string;
+  /** Environment/cube map (texIds[7]), requires envMap */
+  cubeTexture?: string;
+  /** Normal map path */
+  normalTexture?: number;
+  /** Normal intensity (0-2), default 1 */
+  normalScale?: number;
+  /** 0-1, default 0.8, derived from B3D shininess as 1-shininess */
+  roughness?: number;
+  /** 0-1, default 0.0 */
+  metalness?: number;
+  /** B3D shininess 0-1, stored for reference */
+  shininess?: number;
+  /** Emissive map path */
   emissiveTexture?: string;
-  emissiveFactor?: [number, number, number]; // RGB, defaults to black
-  // Lighting
+  /** RGB emissive color, default [0,0,0] */
+  emissiveFactor?: [number, number, number];
+  /** Lightmap path */
   lightmapTexture?: string;
-  shininess?: number; // B3D shininess (0-1), used to derive roughness
-  // Alpha/Transparency
-  alpha?: number; // 0-1, defaults to 1.0
+  /** RGB color override, default white */
+  color?: [number, number, number];
+  /** 0-1, default 1.0 */
+  alpha?: number;
+  /** "OPAQUE" | "BLEND" | "MASK", default "OPAQUE" */
   alphaMode?: "OPAQUE" | "BLEND" | "MASK";
-  alphaCutoff?: number; // for MASK mode, defaults to 0.5
-  // FX flags (from B3D)
-  fx?: number; // FX_* flags
-  // Multi-texturing (additional texture slots)
-  detailTexture?: string; // texIds[1]
-  detailTexture2?: string; // texIds[2]
-  detailTexture3?: string; // texIds[3]
-  cubeTexture?: string; // texIds[7] (environment map)
-  // Blend mode (B3D brush blend field)
-  blendMode?: number; // 0-7 (as per B3D spec)
+  /** Alpha cutoff for MASK mode, default 0.5 */
+  alphaCutoff?: number;
+  /** B3D blend mode 0-7 */
+  blendMode?: number;
+  /** B3D FX_* flags, bitmask */
+  fx?: number;
 };
 
 export type SmpkRmeshTriggerAabb = {

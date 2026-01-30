@@ -69,6 +69,80 @@ SMPK (Simple Package) is a custom binary format for optimized web asset delivery
 - **Alignment**: 4-byte alignment for efficient loading
 - **Indexing**: Metadata provides byte offsets for seeking
 
+## Material Schema
+
+SMPK models include a `materials` array for mesh materials. Each material maps B3D brush properties to glTF-style PBR.
+
+### Material Fields
+
+```typescript
+{
+  // Name
+  name?: string;
+
+  // Base Color / Albedo
+  baseColorTexture?: string;  // Diffuse texture path
+  color?: [r, g, b];          // RGB, defaults to [1,1,1]
+
+  // PBR Properties
+  roughness?: number;         // 0-1, default 0.8 (1 - shininess)
+  metalness?: number;         // 0-1, default 0.0
+  shininess?: number;         // B3D shininess 0-1, stored for reference
+
+  // Normal Mapping
+  normalTexture?: string;     // Normal map path
+  normalScale?: number;       // Intensity, default 1
+
+  // Emissive
+  emissiveTexture?: string;   // Emissive map path
+  emissiveFactor?: [r, g, b]; // RGB intensity, default [0,0,0]
+
+  // Lightmap
+  lightmapTexture?: string;   // Lightmap path
+
+  // Alpha / Transparency
+  alpha?: number;             // 0-1, default 1.0
+  alphaMode?: "OPAQUE" | "BLEND" | "MASK";
+  alphaCutoff?: number;       // For MASK mode, default 0.5
+
+  // B3D Properties
+  blendMode?: number;         // B3D blend 0-7
+  fx?: number;                // B3D FX_* flags
+
+  // Multi-Texturing (texIds[1-7])
+  detailTexture?: string;     // texIds[1] - as roughnessMap
+  detailTexture2?: string;    // texIds[2] - logged only
+  detailTexture3?: string;    // texIds[3] - logged only
+  cubeTexture?: string;       // texIds[7] - environment map
+}
+```
+
+### B3D Brush to SMPK Material Mapping
+
+| B3D Brush Field | SMPK Material Field | Conversion |
+|-----------------|---------------------|------------|
+| name | name | Direct |
+| color[0-3] | color, alpha | RGB + alpha |
+| shininess | roughness, shininess | roughness = 1 - shininess |
+| blend | blendMode | Direct |
+| fx | fx | Direct |
+| texIds[0] | baseColorTexture | Texture lookup |
+| texIds[1] | detailTexture | As roughnessMap |
+| texIds[2-3] | detailTexture2/3 | Logged only |
+| texIds[7] | cubeTexture | Logged only |
+
+### Alpha Mode Mapping
+
+B3D blend modes to SMPK alphaMode:
+
+| B3D blend | Name | alphaMode | Three.js Behavior |
+|-----------|------|-----------|-------------------|
+| 0 | NONE | OPAQUE | transparent=false, depthWrite=true |
+| 1 | ALPHA | BLEND | transparent=true, depthWrite=false |
+| 2 | ADD | BLEND | Additive blending |
+| 3 | MASK | MASK | alphaTest=0.5, depthWrite=true |
+| 4 | MUL | OPAQUE | Multiplicative |
+
 ## Conversion Tools
 
 ### B3D to SMPK

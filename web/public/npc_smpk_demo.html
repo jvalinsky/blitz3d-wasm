@@ -43,12 +43,11 @@
         <select id="modelSelect">
             <option value="173_2.smpk">SCP-173 (The Sculpture)</option>
             <option value="035.smpk">SCP-035 (Containment Pod)</option>
-            <option value="scp-049.smpk">SCP-049 (The Doctor)</option>
+            <option value="049.smpk">SCP-049 (The Doctor)</option>
             <option value="106_2.smpk">SCP-106 (The Old Man)</option>
-            <option value="scp-939.smpk">SCP-939 (Hounds)</option>
-            <option value="scp-966.smpk">SCP-966 (Sleep Killers)</option>
+            <option value="939.smpk">SCP-939 (Hounds)</option>
+            <option value="966.smpk">SCP-966 (Sleep Killers)</option>
             <option value="372.smpk">SCP-372 (Phantom)</option>
-            <option value="scp096.smpk">SCP-096 (Shy Guy)</option>
             <option value="guard.smpk">MTF Guard</option>
             <option value="classd.smpk">Class D Personnel</option>
         </select>
@@ -80,36 +79,6 @@
     let animTime = 0;
     let animSpeed = 1.0;
     let clock = new THREE.Clock();
-    let animLoopRunning = false;
-    let modelName = '';
-    
-    // Mouse look state for flashlight aiming
-    let isMouseLook = false;
-    let mouseX = 0, mouseY = 0;
-    const targetRotation = new THREE.Vector2();
-    const currentRotation = new THREE.Vector2();
-    
-    // Camera orbit state
-    let isOrbiting = false;
-    let orbitAngleH = 0;
-    let orbitAngleV = 0.3;
-    let orbitRadius = 6;
-    const orbitTarget = new THREE.Vector3(0, 1, 0);
-    const orbitCenter = new THREE.Vector2();
-    const ORBIT_MIN = 2.5;
-    const ORBIT_MAX = 15;
-    const dtScale = 1.0;
-
-    // Loading manager for texture progress tracking
-    const loadingManager = new THREE.LoadingManager();
-    loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-        const pct = itemsTotal > 0 ? Math.round((itemsLoaded / itemsTotal) * 100) : 0;
-        statsDiv.textContent = `Loading textures... ${pct}%`;
-    };
-    loadingManager.onLoad = () => {
-        statsDiv.textContent = `Textures loaded`;
-    };
-    const texLoader = new THREE.TextureLoader(loadingManager);
 
     function log(msg) { console.log(msg); }
 
@@ -428,154 +397,64 @@
                 geometry.computeVertexNormals();
                 
                 // Material
+                let material;
                 const meshColors = [0x6a7a8a, 0x7a8a9a, 0x5a6a7a, 0x8a9aaa, 0x4a5a6a];
                 const fallbackColor = meshColors[mi % meshColors.length];
-                const dirPath = path.substring(0, path.lastIndexOf('/') + 1);
-
-                let material;
-
+                
                 if (prim.material !== undefined && json.materials && json.materials[prim.material]) {
-                    const m = json.materials[prim.material];
-
-                    // Determine alpha mode from blendMode if not explicitly set
-                    let alphaMode = m.alphaMode;
-                    if (!alphaMode && m.blendMode !== undefined) {
-                        if (m.blendMode === 1 || m.blendMode === 2) {
-                            alphaMode = "BLEND";
-                        } else if (m.blendMode === 3) {
-                            alphaMode = "MASK";
-                        }
-                    }
-
-                    // Calculate roughness from shininess if available
-                    const roughness = m.roughness !== undefined 
-                        ? m.roughness 
-                        : (m.shininess !== undefined ? (1 - m.shininess) : 0.8);
-
-                    // Calculate color from brush color if provided
-                    const color = m.color 
-                        ? new THREE.Color(m.color[0], m.color[1], m.color[2])
-                        : (m.baseColorTexture ? 0xffffff : fallbackColor);
-
+                    const matInfo = json.materials[prim.material];
                     material = new THREE.MeshStandardMaterial({
-                        color: color,
-                        side: THREE.DoubleSide,
-                        transparent: alphaMode === "BLEND",
-                        depthWrite: alphaMode !== "BLEND",
-                        alphaTest: alphaMode === "MASK" ? (m.alphaCutoff ?? 0.5) : 0,
-                        roughness: roughness,
-                        metalness: m.metalness ?? 0.0,
-                        emissive: m.emissiveFactor
-                            ? new THREE.Color(m.emissiveFactor[0], m.emissiveFactor[1], m.emissiveFactor[2])
-                            : new THREE.Color(0x000000)
+                        color: 0x888888,
+                        side: THREE.DoubleSide
                     });
-                    material.name = m.name || `material_${prim.material}`;
-
-                    const loadedTextures = [];
-
-                    // Helper to load and configure texture
-                    const loadTexture = (url, targetProp, logName) => {
-                        if (!url) return;
-                        const texPath = dirPath + url;
+                    if (matInfo.baseColorTexture) {
+                        const texLoader = new THREE.TextureLoader();
+                        const dirPath = path.substring(0, path.lastIndexOf('/') + 1);
+                        const texPath = dirPath + matInfo.baseColorTexture;
                         try {
-                            const texture = texLoader.load(texPath);
-                            texture.colorSpace = THREE.SRGBColorSpace;
-                            texture.wrapS = THREE.RepeatWrapping;
-                            texture.wrapT = THREE.RepeatWrapping;
-                            if (renderer && renderer.capabilities) {
-                                texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                            }
-                            material[targetProp] = texture;
-                            loadedTextures.push(texPath);
-                            log(`Loaded ${logName}: ${texPath}`);
-                        } catch (e) {
-                            // Silently fail for auto-detected textures
+                            material.map = texLoader.load(texPath);
+                            material.color.setHex(0xffffff);
+                            log(`Loaded texture: ${texPath}`);
+                        } catch (e) { 
+                            material.color.setHex(fallbackColor);
+                            log(`Texture load failed: ${texPath}`);
                         }
-                    };
-
-                    // Load all texture types from material
-                    loadTexture(m.baseColorTexture, "map", "baseColorTexture");
-                    loadTexture(m.normalTexture, "normalMap", "normalTexture");
-                    loadTexture(m.lightmapTexture, "lightMap", "lightmapTexture");
-                    loadTexture(m.emissiveTexture, "emissiveMap", "emissiveTexture");
-                    loadTexture(m.detailTexture, "roughnessMap", "detailTexture");
-                    
-                    // Log multi-texture info
-                    if (m.detailTexture2) log(`detailTexture2: ${m.detailTexture2} (requires custom shader)`);
-                    if (m.detailTexture3) log(`detailTexture3: ${m.detailTexture3} (requires custom shader)`);
-                    if (m.cubeTexture) log(`cubeTexture: ${m.cubeTexture} (requires envMap)`);
-                    if (m.fx) log(`FX flags: 0x${m.fx.toString(16)}`);
-
-                    // Auto-detect normal and specular maps based on base texture name
-                    if (m.baseColorTexture && !material.normalMap) {
-                        const baseName = m.baseColorTexture.replace(/\.[^.]+$/, '');
-                        
-                        // Generate patterns in order of preference
-                        const patterns = [];
-                        
-                        // Pattern 1: extract identifier before "texture" (e.g., "173" from "173texture")
-                        const textureMatch = baseName.match(/^(.+?)texture$/i);
-                        if (textureMatch) {
-                            patterns.push(textureMatch[1]); // e.g., "173"
-                        }
-                        
-                        // Pattern 2: use base name as-is (e.g., "173texture")
-                        patterns.push(baseName);
-                        
-                        // Try common normal map suffixes (silently)
-                        const normalSuffixes = ["_Norm.jpg", "_Norm.png", "_normal.jpg", "_normal.png", "_N.jpg", "_N.png"];
-                        for (const pattern of patterns) {
-                            for (const suffix of normalSuffixes) {
-                                const texName = `${pattern}${suffix}`;
-                                loadTexture(texName, "normalMap", "normalTexture");
-                                if (material.normalMap) {
-                                    material.normalScale.set(1, 1);
-                                    log(`Auto-detected normal map: ${texName}`);
-                                    break;
-                                }
-                            }
-                            if (material.normalMap) break;
-                        }
-                        
-                        // Try common specular map suffixes (silently)
-                        const specSuffixes = ["_Spec.jpg", "_Spec.png", "_spec.jpg", "_spec.png", "_S.jpg", "_S.png"];
-                        for (const pattern of patterns) {
-                            for (const suffix of specSuffixes) {
-                                const texName = `${pattern}${suffix}`;
-                                loadTexture(texName, "roughnessMap", "specularTexture");
-                                if (material.roughnessMap) break;
-                            }
-                            if (material.roughnessMap) break;
-                        }
-                    }
-
-                    if (m.normalTexture || m.normalScale !== undefined || material.normalMap) {
-                        material.normalScale.set(m.normalScale ?? 1, m.normalScale ?? 1);
-                    }
-
-                    if (loadedTextures.length === 0) {
+                    } else {
                         material.color.setHex(fallbackColor);
                     }
                 } else {
-                    // Fallback material with SCPCB-style appearance
                     material = new THREE.MeshStandardMaterial({
                         color: fallbackColor,
                         side: THREE.DoubleSide,
-                        skinning: true,
-                        roughness: 0.75,
-                        metalness: 0.1
+                        skinning: true
                     });
                 }
                 
-                // Use regular Mesh for static display (SkinnedMesh causes distortion without proper bind pose)
-                const mesh = new THREE.Mesh(geometry, material);
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-                meshGroup.add(mesh);
+                const mesh = new THREE.SkinnedMesh(geometry, material);
                 
-                // Log skeleton info if present
-                if (skeletons.length > 0 && skeletons[0].skeleton) {
-                    log(`Skeleton available: ${skeletons[0].skeleton.bones.length} bones (static display)`);
+                // Attach skeleton to skinned mesh if available
+                let skeletonValid = false;
+                for (const sk of skeletons) {
+                    if (sk.skeleton && sk.skeleton.bones && sk.skeleton.bones.length > 0) {
+                        try {
+                            mesh.bind(sk.skeleton);
+                            skeletonValid = true;
+                            log(`Bound skeleton with ${sk.skeleton.bones.length} bones`);
+                            break;
+                        } catch (e) {
+                            log(`Failed to bind skeleton: ${e.message}`);
+                        }
+                    }
+                }
+                
+                if (!skeletonValid) {
+                    // Convert to regular mesh if skeleton binding fails
+                    log(`No valid skeleton, using regular mesh`);
+                    const regularMesh = new THREE.Mesh(geometry, material);
+                    meshGroup.add(regularMesh);
+                    meshGroup.remove(mesh);
+                } else {
+                    meshGroup.add(mesh);
                 }
             }
             
@@ -660,105 +539,46 @@
         document.getElementById('btnLoad').disabled = true;
         document.getElementById('btnLoad').innerHTML = '<span class="loading">Loading...</span>';
         
-        // Cleanup previous state
-        if (renderer) {
-            renderer.dispose();
-            renderer = null;
-        }
-        if (scene) {
-            scene.traverse((obj) => {
-                if (obj.geometry) obj.geometry.dispose();
-                if (obj.material) {
-                    if (Array.isArray(obj.material)) {
-                        obj.material.forEach(m => m.dispose());
-                    } else {
-                        obj.material.dispose();
-                    }
-                }
-            });
-            scene = null;
-        }
-        mixer = null;
-        npcEntity = null;
-        npcAction = null;
-        animPlaying = false;
-        animTime = 0;
-        
         log('=== SCPCB NPC Model Demo ===');
         log(`Model: ${modelName}`);
         log('');
         
-        // SCPCB brightness setting (default ~140/255)
-        const SCPCB_BRIGHTNESS = 140;
-        const SCPCB_AMBIENT = new THREE.Color(SCPCB_BRIGHTNESS / 255, SCPCB_BRIGHTNESS / 255, SCPCB_BRIGHTNESS / 255);
-        
-        // Setup Three.js with SCPCB-style rendering
+        // Setup Three.js
         const canvas = document.getElementById('canvas');
         renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         renderer.setSize(800, 500);
-        renderer.setClearColor(0x0a0a12);  // SCPCB-style dark background
+        renderer.setClearColor(0x1a1a2e);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.7;
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
         
         scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a12);
-        // SCPCB-style exponential fog for atmosphere
-        scene.fog = new THREE.FogExp2(0x0a0a12, 0.035);
         
         camera = new THREE.PerspectiveCamera(60, 800/500, 0.1, 1000);
-        camera.position.set(0, 1.7, -5);  // Player height
-        camera.lookAt(0, 1.5, 0);
+        camera.position.set(0, 2, -6);
+        camera.lookAt(0, 1, 0);
         
-        // SCPCB ambient lighting (gray ~140/255)
-        const ambient = new THREE.AmbientLight(SCPCB_AMBIENT, 0.4);
+        // Lights
+        const ambient = new THREE.AmbientLight(0x404050, 0.6);
         scene.add(ambient);
         
-        // Flashlight - warm white, attached to camera
-        // SCPCB-style: cone angle ~40 degrees, falloff
-        const flashlight = new THREE.SpotLight(0xfff5e0, 8, 20, Math.PI / 5, 0.4, 1.5);
-        flashlight.position.set(0.15, -0.1, 0.3);  // Slightly right, down, forward (held position)
-        flashlight.target.position.set(0, 0, -10);
-        flashlight.castShadow = true;
-        flashlight.shadow.mapSize.width = 1024;
-        flashlight.shadow.mapSize.height = 1024;
-        flashlight.shadow.bias = -0.0005;
-        flashlight.shadow.radius = 2;
-        camera.add(flashlight);
-        camera.add(flashlight.target);
-        scene.add(camera);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        dirLight.position.set(5, 10, -5);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
         
-        // SCPCB room light (point light like ceiling lamps)
-        // Range ~500 units * RoomScale (~0.02) = ~10 world units
-        const roomLight = new THREE.PointLight(0xfff5e0, 1.5, 12, 1.5);
-        roomLight.position.set(0, 4, 0);
-        roomLight.castShadow = true;
-        roomLight.shadow.mapSize.width = 512;
-        roomLight.shadow.mapSize.height = 512;
-        scene.add(roomLight);
-        
-        // Secondary fill light (cooler tint, dimmer)
-        const fillLight = new THREE.PointLight(0x405060, 0.3, 20, 1);
-        fillLight.position.set(-5, 3, 5);
+        const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+        fillLight.position.set(-5, 5, 5);
         scene.add(fillLight);
         
-        // Ground - dark concrete floor like SCPCB corridors
-        const groundGeom = new THREE.PlaneGeometry(50, 50);
-        const groundMat = new THREE.MeshStandardMaterial({
-            color: 0x1a1a22,
-            roughness: 0.9,
-            metalness: 0.05
-        });
+        // Ground
+        const groundGeom = new THREE.PlaneGeometry(30, 30);
+        const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.9 });
         const ground = new THREE.Mesh(groundGeom, groundMat);
         ground.rotation.x = -Math.PI / 2;
         ground.receiveShadow = true;
         scene.add(ground);
         
-        // Subtle grid for depth perception
-        const grid = new THREE.GridHelper(50, 50, 0x252530, 0x151520);
-        grid.position.y = 0.01;
+        // Grid helper
+        const grid = new THREE.GridHelper(30, 30, 0x3a3a4a, 0x2a2a3a);
         scene.add(grid);
         
         // Load NPC model
@@ -769,18 +589,6 @@
             const npcGroup = await loadSmpkModel(modelPath);
             npcEntity = npcGroup;
             npcGroup.position.set(0, 0, 0);
-            
-            // Check if model needs Y-axis flip (some B3D exports are backwards)
-            const box = new THREE.Box3().setFromObject(npcGroup);
-            const center = box.getCenter(new THREE.Vector3());
-            log(`Model center: ${center.x.toFixed(2)}, ${center.y.toFixed(2)}, ${center.z.toFixed(2)}`);
-            
-            // If center Z is positive, model faces wrong way - flip it
-            if (center.z > 0) {
-                npcGroup.rotation.y = Math.PI;
-                log('Flipped model 180 degrees');
-            }
-            
             scene.add(npcGroup);
             
             // Auto-scale if needed
@@ -791,42 +599,24 @@
                 }
             });
             
-            // Calculate model dimensions for camera fitting
+            // Auto-fit camera
+            const box = new THREE.Box3().setFromObject(npcGroup);
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            
-            // Set orbit radius proportional to model size (keep similar visual size)
-            // Base reference: SCP-173 with maxDim=22.15, we want orbitRadius~7
-            // So scale factor = 7 / reference_maxDim
-            const referenceMaxDim = 22.0;
-            const targetRadius = Math.max(ORBIT_MIN, Math.min(ORBIT_MAX, maxDim * 0.35));
-            orbitRadius = targetRadius;
-            orbitAngleH = 0;
-            orbitAngleV = 0.3;
-            orbitTarget.set(0, box.min.y + size.y * 0.4, 0);
-            
-            // Position camera to see full model
-            camera.position.set(0, box.min.y + size.y * 0.4, -targetRadius);
-            camera.lookAt(0, box.min.y + size.y * 0.4, 0);
-            
-            // Reset rotation state
-            currentRotation.set(0, 0);
-            targetRotation.set(0, 0);
-            cameraMode = 'free';
+            if (maxDim > 4) {
+                camera.position.z = -maxDim * 2;
+            }
             
             log('');
             log(`Model loaded successfully!`);
             log(`Bounding box: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
-            log(`Camera distance: ${targetRadius.toFixed(2)}`);
         } catch (e) {
             log(`Failed to load: ${e.message}`);
             log('Using placeholder...');
             createPlaceholderNPC();
         }
         
-        // Re-enable load button and controls
-        document.getElementById('btnLoad').disabled = false;
-        document.getElementById('btnLoad').innerHTML = 'Load NPC Model';
+        // Enable controls
         document.getElementById('btnAnim').disabled = true;
         document.getElementById('btnSlow').disabled = true;
         document.getElementById('btnNormal').disabled = true;
@@ -841,21 +631,12 @@
         statsDiv.textContent = `Model: ${modelName}`;
         log('');
         log('Controls:');
-        log('  WASD/Arrows - Move camera/target');
-        log('  Q/E - Move up/down (free mode)');
-        log('  Right-drag - Orbit around model');
-        log('  Left-drag - Aim flashlight');
-        log('  Scroll - Zoom (orbit mode)');
-        log('  1-6 - View presets');
-        log('  M - Cycle camera modes');
-        log('  R - Reset view');
-        log('  SPACE - Toggle NPC rotation');
+        log('  WASD/Arrows - Move camera');
+        log('  SPACE - Toggle animation');
+        log('  1/2/3 - Animation speed');
         
-        // Start render loop (only if not already running)
-        if (!animLoopRunning) {
-            animLoopRunning = true;
-            animate();
-        }
+        // Start render loop
+        animate();
     }
     
     function createPlaceholderNPC() {
@@ -931,31 +712,12 @@
 
     let lastTime = performance.now();
     let frame = 0;
-    
-    // Camera modes: 'orbit', 'free', 'flashlight'
-    let cameraMode = 'free';
-    
+
     function animate() {
         requestAnimationFrame(animate);
         
+        const now = performance.now();
         const dt = clock.getDelta();
-        
-        // Camera mode updates
-        if (cameraMode === 'orbit') {
-            // Smooth orbit
-            const targetX = orbitTarget.x + orbitRadius * Math.sin(orbitAngleH) * Math.cos(orbitAngleV);
-            const targetY = orbitTarget.y + orbitRadius * Math.sin(orbitAngleV) + 1.5;
-            const targetZ = orbitTarget.z + orbitRadius * Math.cos(orbitAngleH) * Math.cos(orbitAngleV);
-            camera.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.1);
-            camera.lookAt(orbitTarget.x, orbitTarget.y + 1, orbitTarget.z);
-        } else if (cameraMode === 'flashlight') {
-            // Smooth flashlight aiming
-            currentRotation.x += (targetRotation.x - currentRotation.x) * 0.08;
-            currentRotation.y += (targetRotation.y - currentRotation.y) * 0.08;
-            camera.rotation.set(0, 0, 0);
-            camera.rotateY(-currentRotation.x);
-            camera.rotateX(currentRotation.y);
-        }
         
         // Update animation mixer if valid
         if (mixer && npcAction && npcAction.isRunning()) {
@@ -975,223 +737,33 @@
             npcEntity.userData.body.position.y = 1.1 + Math.abs(Math.sin(t * Math.PI * 2)) * 0.05;
         }
         
-        // Slow NPC rotation when not animating
-        if (npcEntity && !animPlaying) {
-            npcEntity.rotation.y += 0.003;
+        // Slow NPC rotation
+        if (npcEntity) {
+            npcEntity.rotation.y += 0.002;
         }
         
         renderer.render(scene, camera);
         
         frame++;
         if (frame % 30 === 0) {
-            const modeNames = { orbit: 'Orbit', free: 'Free', flashlight: 'Flashlight' };
-            statsDiv.textContent = `Model: ${modelName || 'None'} | Mode: ${modeNames[cameraMode] || 'Free'}`;
+            const animStatus = animPlaying ? 'ON' : 'OFF';
+            statsDiv.textContent = `Model loaded | Anim: ${animStatus} | Speed: ${animSpeed}x`;
         }
     }
 
-    // Preset views
-    function setView(preset) {
-        orbitTarget.set(0, 1, 0);
-        switch(preset) {
-            case 'front':
-                orbitAngleH = 0;
-                orbitAngleV = 0.15;
-                orbitRadius = 7;
-                break;
-            case 'back':
-                orbitAngleH = Math.PI;
-                orbitAngleV = 0.15;
-                orbitRadius = 7;
-                break;
-            case 'top':
-                orbitAngleH = 0;
-                orbitAngleV = Math.PI / 2.1;
-                orbitRadius = 10;
-                break;
-            case 'side':
-                orbitAngleH = Math.PI / 2;
-                orbitAngleV = 0.15;
-                orbitRadius = 7;
-                break;
-            case 'close':
-                orbitAngleH = 0;
-                orbitAngleV = 0.1;
-                orbitRadius = 4;
-                break;
-            case 'feet':
-                orbitAngleH = 0;
-                orbitAngleV = -0.3;
-                orbitRadius = 7;
-                break;
-        }
-        cameraMode = 'orbit';
-        isOrbiting = true;
-        isMouseLook = false;
-    }
-    
-    function resetView() {
-        orbitAngleH = 0;
-        orbitAngleV = 0.3;
-        orbitRadius = 6;
-        orbitTarget.set(0, 1, 0);
-        camera.position.set(0, 1.7, -5);
-        camera.rotation.set(0, 0, 0);
-        currentRotation.set(0, 0);
-        targetRotation.set(0, 0);
-        cameraMode = 'free';
-        isOrbiting = false;
-        isMouseLook = false;
-        log('Camera reset');
-    }
-    
-    // Mouse wheel zoom
-    canvas.addEventListener('wheel', (e) => {
-        e.preventDefault();
-        orbitRadius = Math.max(ORBIT_MIN, Math.min(ORBIT_MAX, orbitRadius + e.deltaY * 0.015));
-    }, { passive: false });
-    
     document.addEventListener('keydown', (e) => {
-        const moveSpeed = 0.12 * dtScale;
+        const speed = 0.15;
         switch(e.key.toLowerCase()) {
-            // Movement
-            case 'w': case 'arrowup': 
-                if (cameraMode === 'orbit') {
-                    orbitTarget.z -= moveSpeed;
-                } else {
-                    camera.translateZ(-moveSpeed * 30);
-                }
-                break;
-            case 's': case 'arrowdown': 
-                if (cameraMode === 'orbit') {
-                    orbitTarget.z += moveSpeed;
-                } else {
-                    camera.translateZ(moveSpeed * 30);
-                }
-                break;
-            case 'a': case 'arrowleft': 
-                if (cameraMode === 'orbit') {
-                    orbitTarget.x -= moveSpeed;
-                } else {
-                    camera.translateX(-moveSpeed * 30);
-                }
-                break;
-            case 'd': case 'arrowright': 
-                if (cameraMode === 'orbit') {
-                    orbitTarget.x += moveSpeed;
-                } else {
-                    camera.translateX(moveSpeed * 30);
-                }
-                break;
-            // Vertical movement (free mode)
-            case 'q':
-                if (cameraMode !== 'orbit') {
-                    camera.position.y += moveSpeed * 20;
-                }
-                break;
-            case 'e':
-                if (cameraMode !== 'orbit') {
-                    camera.position.y -= moveSpeed * 20;
-                }
-                break;
-            // View presets
-            case '1': setView('front'); log('View: Front'); break;
-            case '2': setView('back'); log('View: Back'); break;
-            case '3': setView('top'); log('View: Top'); break;
-            case '4': setView('side'); log('View: Side'); break;
-            case '5': setView('close'); log('View: Close'); break;
-            case '6': setView('feet'); log('View: Feet'); break;
-            case '0': setView('front'); break;
-            // Mode toggle
-            case 'm':
-                if (cameraMode === 'free') {
-                    cameraMode = 'orbit';
-                    isOrbiting = true;
-                    isMouseLook = false;
-                    log('Mode: Orbit');
-                } else if (cameraMode === 'orbit') {
-                    cameraMode = 'flashlight';
-                    isOrbiting = false;
-                    isMouseLook = true;
-                    log('Mode: Flashlight');
-                } else {
-                    cameraMode = 'free';
-                    isOrbiting = false;
-                    isMouseLook = false;
-                    camera.rotation.set(0, 0, 0);
-                    log('Mode: Free');
-                }
-                break;
-            // Reset
-            case 'r': resetView(); break;
-            // Toggle rotation
-            case ' ': 
-                e.preventDefault(); 
-                animPlaying = !animPlaying; 
-                log(`NPC rotation: ${animPlaying ? 'ON' : 'OFF'}`); 
-                break;
+            case 'w': case 'arrowup': camera.position.z += speed; break;
+            case 's': case 'arrowdown': camera.position.z -= speed; break;
+            case 'a': case 'arrowleft': camera.position.x -= speed; break;
+            case 'd': case 'arrowright': camera.position.x += speed; break;
+            case ' ': e.preventDefault(); toggleAnimation(); break;
         }
     });
-    
-    // Mouse controls
-    document.addEventListener('mousedown', (e) => {
-        const isOverCanvas = e.target === canvas;
-        if (!isOverCanvas) return;
-        
-        if (e.button === 0) {  // Left click
-            if (cameraMode === 'orbit') {
-                cameraMode = 'flashlight';
-                isOrbiting = false;
-                isMouseLook = true;
-            }
-        } else if (e.button === 2) {  // Right click
-            if (cameraMode !== 'orbit') {
-                cameraMode = 'orbit';
-                isOrbiting = true;
-                isMouseLook = false;
-                orbitCenter.set(e.clientX / canvas.clientWidth, e.clientY / canvas.clientHeight);
-            } else {
-                cameraMode = 'free';
-                isOrbiting = false;
-            }
-        }
-    });
-    
-    document.addEventListener('mouseup', () => {
-        isMouseLook = false;
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX / canvas.clientWidth;
-        mouseY = e.clientY / canvas.clientHeight;
-        
-        if (isOrbiting && cameraMode === 'orbit') {
-            const deltaX = mouseX - orbitCenter.x;
-            const deltaY = mouseY - orbitCenter.y;
-            orbitAngleH -= deltaX * 0.8;
-            orbitAngleV = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, orbitAngleV - deltaY * 0.8));
-            orbitCenter.set(mouseX, mouseY);
-        } else if (isMouseLook && cameraMode === 'flashlight') {
-            targetRotation.x = (mouseX - 0.5) * 1.2;
-            targetRotation.y = (mouseY - 0.5) * 0.8;
-        }
-    });
-    
-    // Prevent context menu
-    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
-    
-    log('Blitz3D WASM - SCPCB NPC Demo');
+
+    log('Blitz3D WASM SCPCB NPC Demo');
     log('Select a model and click "Load NPC Model"');
-    log('');
-    log('Controls:');
-    log('  WASD/Arrows - Move forward/back/strafe');
-    log('  Q/E - Move up/down (free mode)');
-    log('  Right-click drag - Orbit around model');
-    log('  Left-click drag - Aim flashlight');
-    log('  Scroll - Zoom in orbit mode');
-    log('  1-6 - Views (front/back/top/side/close/feet)');
-    log('  M - Cycle camera modes (Free/Orbit/Flashlight)');
-    log('  R - Reset camera');
-    log('  SPACE - Toggle NPC rotation');
     </script>
 </body>
 </html>

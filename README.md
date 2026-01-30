@@ -14,13 +14,19 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 - **SCPCB Web Port (Track B execution checklists)**: `plan/scpcb-web-track-b/README.md`
 - **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
 
-### ✅ Working Demo
+### ✅ Working Demos
 
 **Particle System**: https://blitz3d.exe.xyz:8000/test.html
 - Real-time particle physics with gravity
-- Alpha blending and lifecycle management  
+- Alpha blending and lifecycle management
 - All game logic in compiled BB → WASM
 - Browser rendering via Three.js integration
+
+**NPC Model Viewer**: https://blitz3d.exe.xyz:8000/npc_smpk_demo.html
+- SCPCB NPC models (SCP-173, SCP-049, SCP-939, etc.)
+- Full material/texture support (baseColor, normal, specular)
+- SCPCB-style lighting (brightness 140/255, warm flashlight)
+- Camera controls: orbit, free, flashlight modes with view presets
 
 ## 🏗️ Building
 

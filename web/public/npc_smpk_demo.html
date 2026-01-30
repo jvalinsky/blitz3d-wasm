@@ -760,10 +760,10 @@
             camera.lookAt(0, 1, 0);
 
             // Lights
-            const ambient = new THREE.AmbientLight(0x404050, 0.6);
+            const ambient = new THREE.AmbientLight(0x808080, 1.2);
             scene.add(ambient);
 
-            const dirLight = new THREE.DirectionalLight(0xffffff, 1.0);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
             dirLight.position.set(5, 10, -5);
             dirLight.castShadow = true;
             scene.add(dirLight);

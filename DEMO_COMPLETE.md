@@ -1,5 +1,7 @@
 # 🎮 Browser Demo Ready!
 
+> **Note**: This is a historical session summary. For current status, see `docs/COMPILER_STATUS_ANALYSIS.md` (94.7% pass rate as of Jan 2026).
+
 ## What You Have Now
 
 A **complete browser-based test environment** for the Blitz3D WASM runtime with:

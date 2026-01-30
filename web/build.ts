@@ -106,6 +106,9 @@ for await (const entry of walkFiles(assetsRoot)) {
   files.push({ path: `assets/${rel}`, size });
 }
 
+// Deterministic build outputs: sort manifest entries so `scpcb_manifest.json` is stable.
+files.sort((a, b) => a.path.localeCompare(b.path));
+
 const manifest = {
   basePath: "/",
   groups: {
@@ -117,8 +120,12 @@ const manifest = {
         f.path === "options.ini" || f.path.startsWith("Data/") ||
         f.path.startsWith("assets/Data/")
       )
-      .map((f) => f.path),
-    facility_assets: files.filter((f) => f.path.startsWith("assets/")).map((f) => f.path)
+      .map((f) => f.path)
+      .sort(),
+    facility_assets: files
+      .filter((f) => f.path.startsWith("assets/"))
+      .map((f) => f.path)
+      .sort(),
   },
   files
 };

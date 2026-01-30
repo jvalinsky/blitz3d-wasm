@@ -35,4 +35,4 @@ Goal: build outputs are reproducible and enforce Track B constraints automatical
 
 Acceptance Criteria:
 - [ ] CI fails immediately if `.b3d/.x/.rmesh` would be shipped.
-- [ ] CI produces a stable artifact with the same manifest hash given the same inputs.
+- [x] CI produces a stable artifact with the same manifest hash given the same inputs. (2026-01-30: sort `files` and group lists in `web/build.ts`)

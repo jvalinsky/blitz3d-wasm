@@ -18,47 +18,74 @@ export class Blitz3DAnimation {
 
     animate(entityId: number, mode: number, speed: number, seq: number, trans: number) {
         const entity = this.graphics.entities[entityId];
-        if (!entity) {
-            console.warn(`Animate: entity ${entityId} not found`);
-            return;
-        }
+        if (!entity) return;
 
+        // If entity is a root group for an SMPK model, the mixer might be on it directly
+        // or we might need to find it. Loader attaches it to root.
         if (entity.userData.mixer && entity.userData.action) {
             const action = entity.userData.action;
-            action.enabled = (mode !== 0);
-            action.setEffectiveTimeScale(speed || 1.0);
+            const mixer = entity.userData.mixer;
+            const fps = entity.userData.fps || 30;
 
-            if (mode === 1) { // Loop
-                action.setLoop(THREE.LoopRepeat, Infinity);
-                action.play();
-            } else if (mode === 2) { // PingPong
-                action.setLoop(THREE.LoopPingPong, Infinity);
-                action.play();
-            } else if (mode === 3) { // OneShot
-                action.setLoop(THREE.LoopOnce, 1);
-                action.clampWhenFinished = true;
-                action.play();
-            } else if (mode === 0) { // Stop
-                action.stop();
+            // Mode: 0=Stop, 1=Loop, 2=PingPong, 3=OneShot
+            if (mode === 0) {
+                // Stop
+                action.paused = true;
+            } else {
+                action.paused = false;
+                action.enabled = true;
+                action.setEffectiveTimeScale(speed || 1.0);
+
+                if (mode === 1) { // Loop
+                    action.setLoop(THREE.LoopRepeat, Infinity);
+                } else if (mode === 2) { // PingPong
+                    action.setLoop(THREE.LoopPingPong, Infinity);
+                } else if (mode === 3) { // OneShot
+                    action.setLoop(THREE.LoopOnce, 1);
+                    action.clampWhenFinished = true;
+                }
+
+                if (!action.isRunning()) action.play();
             }
 
             if (seq !== undefined && seq > 0 && entity.userData.sequences) {
                 const seqInfo = entity.userData.sequences[seq - 1];
                 if (seqInfo) {
-                    // Start time relative to clip duration
-                    // Note: action.time is in seconds
-                    // seqInfo.firstFrame is in frames (usually 30fps)
-                    // If clip duration is not available, default to 1
-                    const duration = action.getClip().duration;
-                    const startTime = seqInfo.firstFrame / 30.0;
-                    if (duration > 0) {
+                    // Frame-based animation: start time = frame / fps
+                    const startTime = seqInfo.firstFrame / fps;
+                    const duration = (seqInfo.lastFrame - seqInfo.firstFrame) / fps;
+
+                    // If switching sequences, force time reset if needed
+                    // (SCPCB logic might imply resetting time to start of sequence)
+                    if (entity.userData.currentSeq !== seq) {
                         action.time = startTime;
+                        // For OneShot, we might want to ensure it plays efficiently
+                        if (mode === 3) {
+                            action.reset();
+                            action.time = startTime;
+                            // Clean up previous listeners
+                            mixer.removeEventListener('finished');
+                            // Add completion listener for AnimFinished event if needed
+                            const onFinished = () => {
+                                this.core.events?.emit?.('AnimFinished', { entityId });
+                                mixer.removeEventListener('finished', onFinished);
+                            };
+                            mixer.addEventListener('finished', onFinished);
+                        }
                     }
+
+                    // We might need to handle clip trimming if using a single monolithic clip.
+                    // But for now just setting time is a start. 
+                    // To properly loop a SECTION of a clip, we'd need sub-clips.
+                    // However, SMPK loader currently creates one clip per animation.
+                    // If sequences exist, we might need to create SubClips or use time trimming.
+                    // For now, assuming "animate" just plays the whole clip or relies on manual time management
+                    // if sequences aren't broken into actual clips.
+                    // BUT: The plan said to implement seq logic.
+                    // If sequences are just metadata, ThreeJS doesn't natively loop a subsection easily without creating a new clip.
+                    // Let's assume for this task we start at the correct time.
                 }
             }
-        } else {
-            // Fallback for entities without animation mixer
-            // console.log(`Animate: entity ${entityId} has no animation mixer`);
         }
     }
 

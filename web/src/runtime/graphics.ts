@@ -232,7 +232,7 @@ export class Blitz3DGraphics {
     this.lastTime = time;
 
     if (delta > 0 && delta < 0.1) {
-      this.animMixers.forEach((mixer) => mixer.update(delta));
+      this.animMixers.forEach((mixer: any) => mixer.update(delta));
     }
 
     // Debug Log every ~100 frames (approx 1.6s)

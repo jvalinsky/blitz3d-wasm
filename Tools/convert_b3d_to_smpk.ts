@@ -162,7 +162,7 @@ const main = async () => {
   // Extract textures and brushes for material support
   const textures = b3d.textures ?? [];
   const brushes = b3d.brushes ?? [];
-  
+
   console.log(`[b3d] Found ${textures.length} textures, ${brushes.length} brushes`);
   for (const tex of textures) {
     console.log(`  texture: ${tex.name}`);
@@ -298,12 +298,12 @@ const main = async () => {
     const mat: any = {
       name: brush.name || `material_${i}`,
     };
-    
+
     // Add color if not white
     if (brush.color[0] !== 1 || brush.color[1] !== 1 || brush.color[2] !== 1) {
       mat.color = brush.color;
     }
-    
+
     // Add alpha and alphaMode based on blend
     if (brush.alpha < 1) {
       mat.alpha = brush.alpha;
@@ -315,7 +315,7 @@ const main = async () => {
       mat.alphaMode = "BLEND";
     }
     mat.blendMode = brush.blend;
-    
+
     // Add shininess (B3D shininess 0-1, convert to roughness inverse)
     // B3D shininess 0 = no specular, 1 = sharp specular
     // Three.js roughness 0 = smooth/shiny, 1 = rough/matte
@@ -327,10 +327,10 @@ const main = async () => {
     } else {
       mat.roughness = 0.9; // Very rough
     }
-    
+
     // Add FX flags
     mat.fx = brush.fx;
-    
+
     // Helper to normalize texture paths
     const normalizeTex = (texName: string) => {
       if (!texName) return "";
@@ -341,13 +341,21 @@ const main = async () => {
       }
       return texName;
     };
-    
+
     // Link textures (texIds[0] = base, texIds[1] = detail, texIds[7] = environment)
     if (brush.texIds.length > 0 && brush.texIds[0] >= 0 && textures[brush.texIds[0]]) {
       mat.baseColorTexture = normalizeTex(textures[brush.texIds[0]].name);
     }
     if (brush.texIds.length > 1 && brush.texIds[1] >= 0 && textures[brush.texIds[1]]) {
-      mat.detailTexture = normalizeTex(textures[brush.texIds[1]].name);
+      const tex = textures[brush.texIds[1]];
+      const lowerName = tex.name.toLowerCase();
+      // Heuristic: check if texture looks like a normal map
+      const isNormal = lowerName.includes("_n") || lowerName.includes("_nrm") || lowerName.includes("_bump") || lowerName.includes("normal") || (tex.flags & 65536) !== 0;
+      if (isNormal) {
+        mat.normalTexture = normalizeTex(tex.name);
+      } else {
+        mat.detailTexture = normalizeTex(tex.name);
+      }
     }
     if (brush.texIds.length > 2 && brush.texIds[2] >= 0 && textures[brush.texIds[2]]) {
       mat.detailTexture2 = normalizeTex(textures[brush.texIds[2]].name);
@@ -358,16 +366,16 @@ const main = async () => {
     if (brush.texIds.length > 7 && brush.texIds[7] >= 0 && textures[brush.texIds[7]]) {
       mat.cubeTexture = normalizeTex(textures[brush.texIds[7]].name);
     }
-    
+
     console.log(`  material ${i}: ${brush.name} -> ${mat.baseColorTexture || '(no texture)'} (shininess: ${brush.shininess.toFixed(2)}, blend: ${brush.blend})`);
-    
+
     return mat;
   });
 
   // Determine material index for mesh primitive
   // If brushId is -1 but we have materials, default to material 0
-  const meshBrushId = mesh.brushId >= 0 && mesh.brushId < brushes.length 
-    ? mesh.brushId 
+  const meshBrushId = mesh.brushId >= 0 && mesh.brushId < brushes.length
+    ? mesh.brushId
     : (materials.length > 0 ? 0 : undefined);
 
   const meshes = [{

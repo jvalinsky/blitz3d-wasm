@@ -149,7 +149,7 @@ export class SMPKLoader {
 
   private buildAnimationClips(json: any, bin: Uint8Array, objs: any[]): THREE.AnimationClip[] {
     if (!json.animations?.length) return [];
-    
+
     const clips: THREE.AnimationClip[] = [];
     for (const a of json.animations) {
       const tracks: THREE.KeyframeTrack[] = [];
@@ -259,7 +259,7 @@ export class SMPKLoader {
           alphaMode = "MASK";
         }
       }
-      
+
       const mat = new THREE.MeshStandardMaterial({
         color: m.color ? new THREE.Color(m.color[0], m.color[1], m.color[2]) : (m.baseColorTexture ? 0xffffff : 0x888888),
         side: THREE.DoubleSide,
@@ -294,7 +294,7 @@ export class SMPKLoader {
       loadTex(m.normalTexture, "normalMap");
       loadTex(m.lightmapTexture, "lightMap");
       loadTex(m.emissiveTexture, "emissiveMap");
-      
+
       // Load detail textures (would need custom shader for proper multi-texturing)
       // For now, these are logged for debugging
       if (m.detailTexture) {
@@ -406,21 +406,18 @@ export class SMPKLoader {
           }
 
           const sk = new THREE.Skeleton(bones, boneInverses.length ? boneInverses : undefined);
-          
-          // IMPORTANT: Apply bind pose (frame 0) before binding SkinnedMesh
-          // This prevents mesh distortion caused by unposed bone transforms
-          const tempMixer = new THREE.AnimationMixer(root);
-          const tempClips = this.buildAnimationClips(json, bin, objs);
-          if (tempClips.length > 0) {
-            const bindAction = tempMixer.clipAction(tempClips[0]);
-            bindAction.time = 0;  // Frame 0
-            tempMixer.update(0);  // Apply bind pose to bones
-          }
-          
+
           const sm = new THREE.SkinnedMesh(geo, mat);
-          sm.add(bones[0] ?? new THREE.Bone());
-          sm.bind(sk);  // Now bones are in correct bind pose
+          // Do NOT reparent bones to SkinnedMesh — bones must remain in the
+          // original node hierarchy so their world matrices include all ancestor
+          // transforms (non-joint intermediate nodes like Root1).
           objs[nodeIdx]!.add(sm);
+
+          // Update all world matrices before binding
+          root.updateMatrixWorld(true);
+
+          // Pass explicit bind matrix to preserve file-provided boneInverses
+          sm.bind(sk, sm.matrixWorld);
           root.userData.isAnimMesh = true;
         } else {
           objs[nodeIdx]!.add(new THREE.Mesh(geo, mat));

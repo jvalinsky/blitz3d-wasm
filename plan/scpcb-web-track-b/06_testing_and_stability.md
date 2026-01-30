@@ -16,7 +16,7 @@ Goal: catch regressions early and ensure the port can run for long sessions with
 
 ## B) Browser Integration Tests
 
-- [ ] Add smoke test scenario:
+- [x] Add smoke test scenario. (2026-01-30)
   - [x] load WASM + manifest in a Worker and call an export repeatedly (protocol smoke). (2026-01-29: `Tools/tests/scpcb_worker_smoke_integration.test.ts`)
   - [x] preload a manifest group (boot-style preload) (2026-01-29: `Tools/tests/scpcb_worker_preload_step_integration.test.ts`)
   - [x] run `InitOnce()` (or equivalent) (2026-01-29: `Tools/tests/scpcb_worker_preload_step_integration.test.ts`)

@@ -158,6 +158,7 @@ const writeString = (
 
 // Minimal VFS for init/config reads.
 const vfs = new Map<string, Uint8Array>();
+const vfsIndexLower = new Map<string, string>();
 const openFiles = new Map<number, { data: Uint8Array; pos: number; path: string }>();
 let nextHandle = 1;
 
@@ -193,24 +194,87 @@ const primeInput = () => {
 const resolvePath = (p: string) =>
   String(p || "").replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
 
+const rewriteSourceModelPath = (p: string) => p.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
+
+const openFileCandidates = (path: string): string[] => {
+  const rp = resolvePath(path);
+  const rpLower = rp.toLowerCase();
+  const rewritten = rewriteSourceModelPath(rp);
+
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (p: string) => {
+    const r = resolvePath(p);
+    if (!r) return;
+    const k = r.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k);
+    out.push(r);
+  };
+
+  push(rp);
+  if (rewritten !== rp) push(rewritten);
+
+  if (!rpLower.startsWith("assets/")) {
+    push(`assets/${rp}`);
+    if (rewritten !== rp) push(`assets/${rewritten}`);
+  } else {
+    const stripped = rp.slice("assets/".length);
+    push(stripped);
+    const strippedRewritten = rewriteSourceModelPath(stripped);
+    if (strippedRewritten !== stripped) push(strippedRewritten);
+  }
+
+  // Dev convenience: some older manifests/servers place Data/* at root.
+  if (rpLower.startsWith("data/")) {
+    const stripped = rp.slice("data/".length);
+    push(stripped);
+    const strippedRewritten = rewriteSourceModelPath(stripped);
+    if (strippedRewritten !== stripped) push(strippedRewritten);
+    if (!rpLower.startsWith("assets/")) {
+      push(`assets/${stripped}`);
+      if (strippedRewritten !== stripped) push(`assets/${strippedRewritten}`);
+    }
+  }
+
+  return out;
+};
+
+const vfsSet = (path: string, data: Uint8Array) => {
+  const rp = resolvePath(path);
+  vfs.set(rp, data);
+  vfsIndexLower.set(rp.toLowerCase(), rp);
+};
+
+const vfsGet = (path: string): { key: string; data: Uint8Array } | null => {
+  const rp = resolvePath(path);
+  const exact = vfs.get(rp);
+  if (exact) return { key: rp, data: exact };
+  const actual = vfsIndexLower.get(rp.toLowerCase());
+  if (!actual) return null;
+  const data = vfs.get(actual);
+  return data ? { key: actual, data } : null;
+};
+
 let instance: WebAssembly.Instance | null = null;
 let module: WebAssembly.Module | null = null;
 let memory: WebAssembly.Memory | null = null;
 let stringAlloc: ((len: number) => number) | null = null;
 
 const openFile = (path: string) => {
-  const rp = resolvePath(path);
-  const data = vfs.get(rp);
-  if (!data) {
-    status.lastFileReq = rp;
+  const candidates = openFileCandidates(path);
+  for (const rp of candidates) {
+    const hit = vfsGet(rp);
+    if (!hit) continue;
+    const h = nextHandle++;
+    openFiles.set(h, { data: hit.data, pos: 0, path: hit.key });
+    status.lastFileReq = hit.key;
     maybePostStatus();
-    return 0;
+    return h;
   }
-  const h = nextHandle++;
-  openFiles.set(h, { data, pos: 0, path: rp });
-  status.lastFileReq = rp;
+  status.lastFileReq = candidates[0] ?? resolvePath(path);
   maybePostStatus();
-  return h;
+  return 0;
 };
 
 const readByte = (h: number) => {
@@ -330,17 +394,35 @@ const buildImports = () => {
   };
   imports.env.FileType = (pathPtr: number) => {
     if (!memory) return 0;
-    const p = resolvePath(readString(memory, pathPtr));
-    status.lastFileReq = p;
+    const req = resolvePath(readString(memory, pathPtr));
+    const candidates = openFileCandidates(req);
+    for (const p of candidates) {
+      const hit = vfsGet(p);
+      if (hit) {
+        status.lastFileReq = hit.key;
+        maybePostStatus();
+        return 1;
+      }
+    }
+    status.lastFileReq = candidates[0] ?? req;
     maybePostStatus();
-    return vfs.has(p) ? 1 : 0;
+    return 0;
   };
   imports.env.FileSize = (pathPtr: number) => {
     if (!memory) return 0;
-    const p = resolvePath(readString(memory, pathPtr));
-    status.lastFileReq = p;
+    const req = resolvePath(readString(memory, pathPtr));
+    const candidates = openFileCandidates(req);
+    for (const p of candidates) {
+      const hit = vfsGet(p);
+      if (hit) {
+        status.lastFileReq = hit.key;
+        maybePostStatus();
+        return hit.data.length ?? 0;
+      }
+    }
+    status.lastFileReq = candidates[0] ?? req;
     maybePostStatus();
-    return vfs.get(p)?.length ?? 0;
+    return 0;
   };
   imports.env.ReadString = (h: number) => {
     if (!memory) return 0;
@@ -729,7 +811,7 @@ const preloadGroup = async (manifest: AssetManifest, group: string) => {
     status.preload = { loaded: i, total: list.length, file: e.path };
     postStatus();
     const data = await fetchFile(base, e);
-    vfs.set(resolvePath(e.path), data);
+    vfsSet(e.path, data);
     // Yield to keep worker responsive for status updates.
     await new Promise((r) => setTimeout(r, 0));
   }
@@ -815,6 +897,7 @@ const dispose = () => {
   memory = null;
   stringAlloc = null;
   vfs.clear();
+  vfsIndexLower.clear();
   openFiles.clear();
   nextHandle = 1;
   keysHit.clear();

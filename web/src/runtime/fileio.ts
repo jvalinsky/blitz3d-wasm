@@ -401,57 +401,107 @@ export class Blitz3DFileIO {
    * @param {string} filePath - Path to the file
    * @returns {number} File handle (0 on failure)
    */
-  openFile(filePath) {
-    const resolvedPath = this.resolvePath(filePath);
+  _rewriteSourceModelPath(resolvedPath: string) {
+    return resolvedPath.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
+  }
 
-    // Check virtual file system first
-    if (this.fileSystem.has(resolvedPath)) {
-      const file = this.fileSystem.get(resolvedPath);
-      file.position = 0;
-      const handle = this.nextFileHandle++;
-      this.openFiles.set(handle, {
-        ...file,
-        path: resolvedPath,
-        eof: false,
-      });
-      console.log(`Opened file from VFS: ${resolvedPath} (handle: ${handle})`);
-      return handle;
+  _openFileCandidates(filePath: string) {
+    const rp = this.resolvePath(filePath);
+    const rpLower = rp.toLowerCase();
+    const rewritten = this._rewriteSourceModelPath(rp);
+
+    const out: string[] = [];
+    const seen = new Set<string>();
+    const push = (p: string) => {
+      const r = this.resolvePath(p);
+      if (!r) return;
+      const k = r.toLowerCase();
+      if (seen.has(k)) return;
+      seen.add(k);
+      out.push(r);
+    };
+
+    push(rp);
+    if (rewritten !== rp) push(rewritten);
+
+    if (!rpLower.startsWith("assets/")) {
+      push(`assets/${rp}`);
+      if (rewritten !== rp) push(`assets/${rewritten}`);
+    } else {
+      const stripped = rp.slice("assets/".length);
+      push(stripped);
+      const strippedRewritten = this._rewriteSourceModelPath(stripped);
+      if (strippedRewritten !== stripped) push(strippedRewritten);
     }
 
-    // Check asset bundle
-    if (this.assetBundle && this.assetBundle.files) {
-      const bundleFile = this.assetBundle.files.find((f) =>
-        f.path === resolvedPath
-      );
-      if (bundleFile) {
+    // Dev convenience: some older manifests/servers place Data/* at root.
+    if (rpLower.startsWith("data/")) {
+      const stripped = rp.slice("data/".length);
+      push(stripped);
+      const strippedRewritten = this._rewriteSourceModelPath(stripped);
+      if (strippedRewritten !== stripped) push(strippedRewritten);
+      if (!rpLower.startsWith("assets/")) {
+        push(`assets/${stripped}`);
+        if (strippedRewritten !== stripped) push(`assets/${strippedRewritten}`);
+      }
+    }
+
+    return out;
+  }
+
+  openFile(filePath) {
+    const candidates = this._openFileCandidates(filePath);
+
+    for (const resolvedPath of candidates) {
+      // Check virtual file system first
+      if (this.fileSystem.has(resolvedPath)) {
+        const file = this.fileSystem.get(resolvedPath);
+        file.position = 0;
         const handle = this.nextFileHandle++;
         this.openFiles.set(handle, {
-          data: new Uint8Array(bundleFile.data),
-          size: bundleFile.size,
-          position: 0,
+          ...file,
           path: resolvedPath,
           eof: false,
         });
-        console.log(
-          `Opened file from bundle: ${resolvedPath} (handle: ${handle})`,
-        );
+        console.log(`Opened file from VFS: ${resolvedPath} (handle: ${handle})`);
         return handle;
       }
-    }
 
-    // Try manifest-driven fetch on demand
-    const entry = this._getManifestEntry(resolvedPath);
-    if (entry) {
-      if (this._syncFetchAndRegister(entry, resolvedPath)) {
-        return this.openFile(resolvedPath);
+      // Check asset bundle
+      if (this.assetBundle && this.assetBundle.files) {
+        const bundleFile = this.assetBundle.files.find((f) =>
+          f.path === resolvedPath
+        );
+        if (bundleFile) {
+          const handle = this.nextFileHandle++;
+          this.openFiles.set(handle, {
+            data: new Uint8Array(bundleFile.data),
+            size: bundleFile.size,
+            position: 0,
+            path: resolvedPath,
+            eof: false,
+          });
+          console.log(
+            `Opened file from bundle: ${resolvedPath} (handle: ${handle})`,
+          );
+          return handle;
+        }
       }
-      this._logMissing(resolvedPath, "ReadFile requested missing asset");
-      this._queueAsyncFetch(entry, resolvedPath);
-      return 0;
+
+      // Try manifest-driven fetch on demand
+      const entry = this._getManifestEntry(resolvedPath);
+      if (entry) {
+        if (this._syncFetchAndRegister(entry, resolvedPath)) {
+          return this.openFile(resolvedPath);
+        }
+        this._logMissing(resolvedPath, "ReadFile requested missing asset");
+        this._queueAsyncFetch(entry, resolvedPath);
+        return 0;
+      }
     }
 
     // Try to read from disk directly (Node.js only)
-    console.warn(`File not found: ${resolvedPath}`);
+    console.warn(`File not found: ${candidates[0] ?? this.resolvePath(filePath)}`);
     return 0;
   }
 

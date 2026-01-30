@@ -85,7 +85,7 @@ export type SmpkMaterial = {
   /** Environment/cube map (texIds[7]), requires envMap */
   cubeTexture?: string;
   /** Normal map path */
-  normalTexture?: number;
+  normalTexture?: string;
   /** Normal intensity (0-2), default 1 */
   normalScale?: number;
   /** 0-1, default 0.8, derived from B3D shininess as 1-shininess */

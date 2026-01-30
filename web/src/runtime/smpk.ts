@@ -147,6 +147,33 @@ export class SMPKLoader {
     }
   }
 
+  private buildAnimationClips(json: any, bin: Uint8Array, objs: any[]): THREE.AnimationClip[] {
+    if (!json.animations?.length) return [];
+    
+    const clips: THREE.AnimationClip[] = [];
+    for (const a of json.animations) {
+      const tracks: THREE.KeyframeTrack[] = [];
+      for (const ch of a.channels) {
+        const samp = a.samplers[ch.sampler]!;
+        const tAcc = json.accessors[samp.input]!;
+        const oAcc = json.accessors[samp.output]!;
+        const times = accessorView(bin, tAcc) as Float32Array;
+        const values = accessorView(bin, oAcc) as Float32Array;
+        const target = objs[ch.targetNode]!;
+        const path = ch.path;
+        if (path === "translation") {
+          tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.position`, times, values));
+        } else if (path === "scale") {
+          tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.scale`, times, values));
+        } else if (path === "rotation") {
+          tracks.push(new THREE.QuaternionKeyframeTrack(`${target.name}.quaternion`, times, values));
+        }
+      }
+      clips.push(new THREE.AnimationClip(a.name ?? "clip", -1, tracks));
+    }
+    return clips;
+  }
+
   loadFromBytes(bytes: Uint8Array, parentId: number, name?: string, targetId?: number) {
     const { json, bin } = decodeSmpk(bytes);
 
@@ -379,9 +406,20 @@ export class SMPKLoader {
           }
 
           const sk = new THREE.Skeleton(bones, boneInverses.length ? boneInverses : undefined);
+          
+          // IMPORTANT: Apply bind pose (frame 0) before binding SkinnedMesh
+          // This prevents mesh distortion caused by unposed bone transforms
+          const tempMixer = new THREE.AnimationMixer(root);
+          const tempClips = this.buildAnimationClips(json, bin, objs);
+          if (tempClips.length > 0) {
+            const bindAction = tempMixer.clipAction(tempClips[0]);
+            bindAction.time = 0;  // Frame 0
+            tempMixer.update(0);  // Apply bind pose to bones
+          }
+          
           const sm = new THREE.SkinnedMesh(geo, mat);
           sm.add(bones[0] ?? new THREE.Bone());
-          sm.bind(sk);
+          sm.bind(sk);  // Now bones are in correct bind pose
           objs[nodeIdx]!.add(sm);
           root.userData.isAnimMesh = true;
         } else {
@@ -392,32 +430,14 @@ export class SMPKLoader {
 
     // Animations: attach mixer/action
     if (json.animations?.length) {
-      const clips: THREE.AnimationClip[] = [];
-      for (const a of json.animations) {
-        const tracks: THREE.KeyframeTrack[] = [];
-        for (const ch of a.channels) {
-          const samp = a.samplers[ch.sampler]!;
-          const tAcc = json.accessors[samp.input]!;
-          const oAcc = json.accessors[samp.output]!;
-          const times = accessorView(bin, tAcc) as Float32Array;
-          const values = accessorView(bin, oAcc) as Float32Array;
-          const target = objs[ch.targetNode]!;
-          const path = ch.path;
-          if (path === "translation") {
-            tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.position`, times, values));
-          } else if (path === "scale") {
-            tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.scale`, times, values));
-          } else if (path === "rotation") {
-            tracks.push(new THREE.QuaternionKeyframeTrack(`${target.name}.quaternion`, times, values));
-          }
-        }
-        clips.push(new THREE.AnimationClip(a.name ?? "clip", -1, tracks));
-      }
+      const clips = this.buildAnimationClips(json, bin, objs);
       const mixer = new THREE.AnimationMixer(root);
       root.userData.mixer = mixer;
       root.userData.animationClips = clips;
-      root.userData.action = mixer.clipAction(clips[0]!);
-      root.userData.action.play();
+      root.userData.fps = json.animations[0]?.fps || 30;
+      const action = mixer.clipAction(clips[0]!);
+      root.userData.action = action;
+      action.play();
       if (json.animations[0]?.sequences) root.userData.sequences = json.animations[0].sequences;
     }
 

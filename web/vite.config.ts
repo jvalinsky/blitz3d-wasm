@@ -5,7 +5,8 @@ export default defineConfig({
     root: '.',
     server: {
         port: 3000,
-        open: true,
+        open: false,
+        allowedHosts: ['blitz3d.exe.xyz', 'localhost'],
     },
     build: {
         outDir: '../dist',

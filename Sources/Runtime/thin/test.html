@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Blitz3D Thin Runtime - BB Particle System</title>
+    <title>Blitz3D Thin Runtime - Demo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
@@ -20,7 +20,7 @@
         }
         #log {
             width: 800px;
-            height: 120px;
+            height: 150px;
             background: #0a0a1a;
             border: 1px solid #333;
             padding: 10px;
@@ -31,115 +31,134 @@
         }
         h1 { color: #4af; margin: 10px; font-size: 18px; }
         .info { color: #888; }
+        #controls {
+            margin: 10px;
+        }
+        button {
+            background: #2a4a6a;
+            color: #fff;
+            border: 1px solid #4a6a8a;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+        button:hover { background: #3a5a7a; }
     </style>
 </head>
 <body>
-    <h1>Blitz3D WASM - Particle System (BB Logic + JS Rendering)</h1>
+    <h1>Blitz3D WASM - Thin Runtime Demo</h1>
+    <div id="controls">
+        <button onclick="listExports()">List Exports</button>
+        <button onclick="runMain()">Run Main()</button>
+    </div>
     <canvas id="canvas" width="800" height="500"></canvas>
-    <div id="log"></div>
+    <div id="log">Loading...</div>
     
     <script src="runtime.js"></script>
     <script>
     const logDiv = document.getElementById('log');
+    logDiv.innerHTML = '';
+    const origLog = console.log;
     console.log = (...args) => {
+        origLog(...args);
         logDiv.innerHTML += args.join(' ') + '\n';
         logDiv.scrollTop = logDiv.scrollHeight;
     };
     
-    async function main() {
-        console.log('Loading WASM particle system...');
-        
-        const canvas = document.getElementById('canvas');
-        const runtime = new Blitz3DThinRuntime(canvas);
-        
-        // Load WASM
-        const response = await fetch('particles.wasm');
-        const bytes = await response.arrayBuffer();
-        const imports = runtime.getImports();
-        const { instance } = await WebAssembly.instantiate(bytes, imports);
-        window.wasmInstance = instance;  // For debugging
-        runtime.memory = instance.exports.memory;
-        
-        // Run Main() - this creates 5 particles via BB code
-        // The BB code calls CreateSprite(), PositionEntity(), etc.
-        // which are handled by our thin runtime
-        if (instance.exports.Main) {
-            instance.exports.Main();
+    let runtime, instance;
+    
+    function listExports() {
+        if (!instance) {
+            console.log('WASM not loaded yet');
+            return;
         }
-        
-        const initialCount = instance.exports['GetParticleCount%']();
-        console.log(`BB created ${initialCount} particles`);
-        console.log(`Entities in scene: ${runtime.entities.size}`);
-        
-        // Setup camera
-        const camId = imports.env.CreateCamera(0);
-        imports.env.PositionEntity(camId, 0, 2, -6);
-        runtime.activeCamera.lookAt(0, 1, 0);
-        
-        // Add light
-        imports.env.CreateLight(0, 0); // Ambient
-        
-        // Add ground plane for reference
-        const groundGeom = new THREE.PlaneGeometry(10, 10);
-        const groundMat = new THREE.MeshBasicMaterial({ 
-            color: 0x222244, 
-            side: THREE.DoubleSide,
-            transparent: true,
-            opacity: 0.5
+        console.log('\n=== WASM Exports ===');
+        const exports = Object.keys(instance.exports).sort();
+        exports.forEach(name => {
+            const exp = instance.exports[name];
+            const type = typeof exp === 'function' ? 'func' : (exp instanceof WebAssembly.Memory ? 'memory' : 'global');
+            console.log(`  ${name}: ${type}`);
         });
-        const ground = new THREE.Mesh(groundGeom, groundMat);
-        ground.rotation.x = Math.PI / 2;
-        ground.position.y = -0.5;
-        runtime.scene.add(ground);
-        
-        // Set FPSfactor global (if exported)
-        if (instance.exports.FPSfactor) {
-            instance.exports.FPSfactor.value = 1.0;
-        }
-        
-        console.log('Starting game loop - particles managed by BB code');
-        
-        let frame = 0;
-        let lastSpawn = 0;
-        
-        function gameLoop() {
-            // Update particles - this is the BB function that:
-            // - Applies gravity (BB logic)
-            // - Updates positions (calls PositionEntity -> JS)
-            // - Fades alpha (calls EntityAlpha -> JS)
-            // - Removes expired particles (calls FreeEntity -> JS, Delete -> BB)
-            instance.exports.UpdateParticles();
-            
-            // Spawn new particles periodically via BB
-            if (frame - lastSpawn > 30) {
-                // Call BB function to create particle
-                // The BB code handles all the logic
-                const x = (Math.random() - 0.5) * 3;
-                const z = (Math.random() - 0.5) * 3;
-                instance.exports['CreateParticleAt%'](x, 2.5, z);
-                lastSpawn = frame;
-            }
-            
-            // Fixed camera looking at spawn point
-            // (no rotation so we can see particles fall)
-            
-            // Render
-            runtime.render();
-            
-            // Stats every 60 frames
-            if (frame % 60 === 0) {
-                const count = instance.exports['GetParticleCount%']();
-                console.log(`Frame ${frame}: ${count} particles, ${runtime.entities.size} entities`);
-            }
-            
-            frame++;
-            requestAnimationFrame(gameLoop);
-        }
-        
-        gameLoop();
+        console.log(`Total: ${exports.length} exports`);
     }
     
-    main().catch(e => console.log('Error:', e.message));
+    function runMain() {
+        if (!instance) {
+            console.log('WASM not loaded yet');
+            return;
+        }
+        if (instance.exports.Main) {
+            console.log('\nRunning Main()...');
+            try {
+                instance.exports.Main();
+                console.log('Main() completed');
+                console.log(`Entities in scene: ${runtime.entities.size}`);
+            } catch (e) {
+                console.log('Main() error: ' + e.message);
+            }
+        } else {
+            console.log('No Main export found');
+        }
+    }
+    
+    async function init() {
+        console.log('Initializing Blitz3D Thin Runtime...');
+        
+        const canvas = document.getElementById('canvas');
+        runtime = new Blitz3DThinRuntime(canvas);
+        
+        // Load WASM
+        console.log('Loading particles.wasm...');
+        try {
+            const response = await fetch('particles.wasm');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const bytes = await response.arrayBuffer();
+            console.log(`Loaded ${bytes.byteLength} bytes`);
+            
+            const imports = runtime.getImports();
+            const result = await WebAssembly.instantiate(bytes, imports);
+            instance = result.instance;
+            window.wasmInstance = instance;
+            runtime.memory = instance.exports.memory;
+            
+            console.log('WASM instantiated successfully');
+            console.log(`Found ${Object.keys(instance.exports).length} exports`);
+            
+            // Setup basic scene
+            const camId = imports.env.CreateCamera(0);
+            imports.env.PositionEntity(camId, 0, 2, -6);
+            runtime.activeCamera.lookAt(0, 1, 0);
+            imports.env.CreateLight(0, 0);
+            
+            // Add ground plane
+            const groundGeom = new THREE.PlaneGeometry(10, 10);
+            const groundMat = new THREE.MeshBasicMaterial({ 
+                color: 0x222244, 
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            const ground = new THREE.Mesh(groundGeom, groundMat);
+            ground.rotation.x = Math.PI / 2;
+            ground.position.y = -0.5;
+            runtime.scene.add(ground);
+            
+            console.log('\nReady! Click "List Exports" or "Run Main()"');
+            
+            // Start render loop
+            function gameLoop() {
+                runtime.render();
+                requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+            
+        } catch (e) {
+            console.log('Error: ' + e.message);
+        }
+    }
+    
+    init();
     </script>
 </body>
 </html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blitz3D Thin Runtime - Simple Visual Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #canvas { border: 1px solid #333; background: #000; }
+        #log {
+            width: 800px; height: 120px;
+            background: #0a0a1a; border: 1px solid #333;
+            padding: 10px; overflow-y: auto; white-space: pre;
+            margin-top: 10px; font-size: 11px;
+        }
+        h1 { color: #4af; margin: 10px; font-size: 18px; }
+        #controls { margin: 10px; }
+        button {
+            background: #2a4a6a; color: #fff;
+            border: 1px solid #4a6a8a;
+            padding: 8px 16px; margin: 5px;
+            cursor: pointer; font-family: monospace;
+        }
+        button:hover { background: #3a5a7a; }
+        #stats { color: #4af; margin: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Blitz3D Thin Runtime - Visual Demo (No WASM)</h1>
+    <div id="controls">
+        <button onclick="spawnCube()">Spawn Cube</button>
+        <button onclick="spawnSphere()">Spawn Sphere</button>
+        <button onclick="spawn10()">Spawn 10 Random</button>
+        <button onclick="clearAll()">Clear All</button>
+    </div>
+    <div id="stats">Entities: 0</div>
+    <canvas id="canvas" width="800" height="500"></canvas>
+    <div id="log">Initializing...</div>
+    
+    <script src="runtime.js"></script>
+    <script>
+    const logDiv = document.getElementById('log');
+    const statsDiv = document.getElementById('stats');
+    logDiv.innerHTML = '';
+    const origLog = console.log;
+    console.log = (...args) => {
+        origLog(...args);
+        logDiv.innerHTML += args.join(' ') + '\n';
+        logDiv.scrollTop = logDiv.scrollHeight;
+    };
+    
+    let runtime, imports;
+    const entities = [];
+    
+    function randomColor() {
+        const colors = [0xff4444, 0x44ff44, 0x4444ff, 0xffff44, 0xff44ff, 0x44ffff, 0xff8844, 0x88ff44];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+    
+    function spawnCube() {
+        const id = imports.env.CreateCube(0);
+        const x = (Math.random() - 0.5) * 8;
+        const y = Math.random() * 3 + 2;
+        const z = (Math.random() - 0.5) * 8;
+        imports.env.PositionEntity(id, x, y, z);
+        imports.env.RotateEntity(id, Math.random()*360, Math.random()*360, 0);
+        
+        // Set random color
+        const ent = runtime.entities.get(id);
+        if (ent && ent.material) ent.material.color.setHex(randomColor());
+        
+        entities.push({id, vy: 0, y});
+        console.log(`Created cube #${id} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`);
+    }
+    
+    function spawnSphere() {
+        const id = imports.env.CreateSphere(16, 0);
+        const x = (Math.random() - 0.5) * 8;
+        const y = Math.random() * 3 + 2;
+        const z = (Math.random() - 0.5) * 8;
+        imports.env.PositionEntity(id, x, y, z);
+        imports.env.ScaleEntity(id, 0.5, 0.5, 0.5);
+        
+        // Set random color
+        const ent = runtime.entities.get(id);
+        if (ent && ent.material) ent.material.color.setHex(randomColor());
+        
+        entities.push({id, vy: 0, y});
+        console.log(`Created sphere #${id} at (${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)})`);
+    }
+    
+    function spawn10() {
+        for (let i = 0; i < 10; i++) {
+            Math.random() > 0.5 ? spawnCube() : spawnSphere();
+        }
+    }
+    
+    function clearAll() {
+        entities.forEach(e => imports.env.FreeEntity(e.id));
+        entities.length = 0;
+        console.log('Cleared all entities');
+    }
+    
+    function init() {
+        console.log('Initializing Blitz3D Thin Runtime...');
+        
+        const canvas = document.getElementById('canvas');
+        runtime = new Blitz3DThinRuntime(canvas);
+        imports = runtime.getImports();
+        
+        // Setup camera - position it to look down at the scene
+        const camId = imports.env.CreateCamera(0);
+        imports.env.PositionEntity(camId, 0, 8, -15);
+        runtime.activeCamera.lookAt(0, 1, 0);
+        
+        // Add directional light
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(5, 10, -5);
+        runtime.scene.add(dirLight);
+        
+        // Add ambient light
+        const ambLight = new THREE.AmbientLight(0x404060, 0.5);
+        runtime.scene.add(ambLight);
+        
+        // Add ground plane with grid
+        const groundGeom = new THREE.PlaneGeometry(20, 20, 20, 20);
+        const groundMat = new THREE.MeshStandardMaterial({ 
+            color: 0x225588,
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const ground = new THREE.Mesh(groundGeom, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.position.y = 0;
+        runtime.scene.add(ground);
+        
+        // Add grid helper for visibility
+        const grid = new THREE.GridHelper(20, 20, 0x444488, 0x333366);
+        grid.position.y = 0.01;
+        runtime.scene.add(grid);
+        
+        console.log('Ready! Click buttons to spawn entities.');
+        console.log('Entities will fall with gravity and bounce.\n');
+        
+        // Physics + render loop
+        let frame = 0;
+        const gravity = 0.015;
+        const bounce = 0.6;
+        const groundY = 0.5;
+        
+        function gameLoop() {
+            // Simple physics for each entity
+            entities.forEach(e => {
+                e.vy -= gravity;
+                e.y += e.vy;
+                
+                // Bounce off ground
+                if (e.y < groundY) {
+                    e.y = groundY;
+                    e.vy = -e.vy * bounce;
+                    if (Math.abs(e.vy) < 0.01) e.vy = 0;
+                }
+                
+                // Get current position and update Y
+                const ent = runtime.entities.get(e.id);
+                if (ent && ent.obj) {
+                    ent.obj.position.y = e.y;
+                    ent.obj.rotation.x += 0.02;
+                    ent.obj.rotation.y += 0.01;
+                }
+            });
+            
+            runtime.render();
+            
+            if (frame % 30 === 0) {
+                statsDiv.textContent = `Entities: ${entities.length} | Frame: ${frame}`;
+            }
+            
+            frame++;
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    }
+    
+    init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Blitz3D Thin Runtime - WASM Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #canvas { border: 1px solid #333; background: #000; }
+        #log {
+            width: 800px; height: 180px;
+            background: #0a0a1a; border: 1px solid #333;
+            padding: 10px; overflow-y: auto; white-space: pre;
+            margin-top: 10px; font-size: 11px;
+        }
+        h1 { color: #4af; margin: 10px; font-size: 18px; }
+        #controls { margin: 10px; }
+        button {
+            background: #2a4a6a; color: #fff;
+            border: 1px solid #4a6a8a;
+            padding: 8px 16px; margin: 5px;
+            cursor: pointer; font-family: monospace;
+        }
+        button:hover { background: #3a5a7a; }
+        button:disabled { background: #333; color: #666; }
+        #stats { color: #4af; margin: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Blitz3D WASM - SCPCB Particles Module (Limited)</h1>
+    <p style="color:#f88;margin:0 10px;font-size:12px;">    <p style="color:#f88;margin:0 10px;font-size:12px;">⚠️ This WASM is from SCPCB and needs textures + full runtime. CreateParticle() won't work without them.<br>
+    For a working visual demo, see <a href="simple_demo.html" style="color:#4af">simple_demo.html</a></p>
+    <div id="controls">
+        <button onclick="runMain()" id="btnMain">Run Main()</button>
+        <button onclick="callCreateParticle()" id="btnParticle" disabled>CreateParticle()</button>
+        <button onclick="callUpdateWorld()" id="btnUpdate" disabled>UpdateWorld()</button>
+        <button onclick="listExports()">List Exports</button>
+    </div>
+    <div id="stats">Loading...</div>
+    <canvas id="canvas" width="800" height="500"></canvas>
+    <div id="log"></div>
+    
+    <script src="runtime.js"></script>
+    <script>
+    const logDiv = document.getElementById('log');
+    const statsDiv = document.getElementById('stats');
+    const origLog = console.log;
+    console.log = (...args) => {
+        origLog(...args);
+        logDiv.innerHTML += args.join(' ') + '\n';
+        logDiv.scrollTop = logDiv.scrollHeight;
+    };
+    
+    let runtime, instance, imports;
+    let mainRan = false;
+    
+    function runMain() {
+        if (!instance || mainRan) return;
+        console.log('\n>>> Running Main()...');
+        try {
+            instance.exports.Main();
+            mainRan = true;
+            document.getElementById('btnMain').disabled = true;
+            document.getElementById('btnParticle').disabled = false;
+            document.getElementById('btnUpdate').disabled = false;
+            console.log('<<< Main() completed');
+            console.log(`Entities created: ${runtime.entities.size}`);
+        } catch (e) {
+            console.log('Main() error: ' + e.message);
+        }
+    }
+    
+    function callCreateParticle() {
+        if (!instance) return;
+        console.log('\nCalling CreateParticle()...');
+        try {
+            const result = instance.exports.CreateParticle();
+            console.log(`CreateParticle returned: ${result}`);
+            console.log(`Entities now: ${runtime.entities.size}`);
+        } catch (e) {
+            console.log('Error: ' + e.message);
+        }
+    }
+    
+    function callUpdateWorld() {
+        if (!instance) return;
+        try {
+            instance.exports.updateworld();
+        } catch (e) {
+            console.log('UpdateWorld error: ' + e.message);
+        }
+    }
+    
+    function listExports() {
+        if (!instance) return;
+        const funcs = Object.keys(instance.exports)
+            .filter(n => typeof instance.exports[n] === 'function')
+            .sort();
+        console.log(`\n=== ${funcs.length} Function Exports ===`);
+        // Show interesting ones
+        const interesting = funcs.filter(n => 
+            /^(main|create|update|particle|load|free)/i.test(n)
+        );
+        interesting.forEach(n => console.log(`  ${n}`));
+        console.log(`... and ${funcs.length - interesting.length} more`);
+    }
+    
+    async function init() {
+        console.log('Blitz3D Thin Runtime - WASM Demo');
+        console.log('================================\n');
+        
+        const canvas = document.getElementById('canvas');
+        runtime = new Blitz3DThinRuntime(canvas);
+        imports = runtime.getImports();
+        
+        // Load WASM
+        statsDiv.textContent = 'Loading particles.wasm...';
+        try {
+            const response = await fetch('particles.wasm');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const bytes = await response.arrayBuffer();
+            console.log(`Loaded ${bytes.byteLength} bytes`);
+            
+            const result = await WebAssembly.instantiate(bytes, imports);
+            instance = result.instance;
+            window.wasmInstance = instance;
+            runtime.memory = instance.exports.memory;
+            
+            console.log('WASM instantiated OK');
+            console.log(`Exports: ${Object.keys(instance.exports).length}`);
+            
+            // Setup scene
+            const camId = imports.env.CreateCamera(0);
+            imports.env.PositionEntity(camId, 0, 5, -10);
+            runtime.activeCamera.lookAt(0, 0, 0);
+            
+            // Lights
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+            dirLight.position.set(5, 10, -5);
+            runtime.scene.add(dirLight);
+            runtime.scene.add(new THREE.AmbientLight(0x404060, 0.5));
+            
+            // Ground
+            const grid = new THREE.GridHelper(20, 20, 0x444488, 0x333366);
+            runtime.scene.add(grid);
+            
+            statsDiv.textContent = 'Ready - Click "Run Main()" to initialize';
+            console.log('\nReady! Click "Run Main()" to start.\n');
+            
+            // Render loop
+            let frame = 0;
+            function gameLoop() {
+                runtime.render();
+                if (frame % 60 === 0) {
+                    statsDiv.textContent = `Entities: ${runtime.entities.size} | Frame: ${frame}`;
+                }
+                frame++;
+                requestAnimationFrame(gameLoop);
+            }
+            gameLoop();
+            
+        } catch (e) {
+            console.log('Error: ' + e.message);
+            statsDiv.textContent = 'Error: ' + e.message;
+        }
+    }
+    
+    init();
+    </script>
+</body>
+</html>

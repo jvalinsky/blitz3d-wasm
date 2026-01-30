@@ -2,11 +2,11 @@
 
 ## Overview
 
-Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in WASM with a thin JavaScript runtime for browser API bindings.
+Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in WASM with a TypeScript runtime for browser API bindings.
 
 ## Design Principle
 
-**WASM does game logic. JS only wraps browser APIs.**
+**WASM does game logic. TypeScript provides browser API bindings.**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -20,10 +20,10 @@ Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in W
 │ • Memory management (heap allocation)                        │
 └─────────────────────────────────────────────────────────────┘
                               │
-                              │ imports ~10 functions
+                              │ imports runtime functions
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                     JS Runtime (~500 lines)                  │
+│              TypeScript Runtime (~12K lines)                 │
 ├─────────────────────────────────────────────────────────────┤
 │ • CreateSprite() → new THREE.Sprite()                       │
 │ • PositionEntity(id,x,y,z) → obj.position.set(x,y,z)       │
@@ -31,8 +31,40 @@ Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in W
 │ • FreeEntity(id) → scene.remove(obj)                        │
 │ • CreateCamera/Light → Three.js camera/light                │
 │ • Audio → Web Audio API                                      │
+│ • Command buffer → batch WASM→JS calls                      │
+│ • Virtual filesystem → manifest-based asset loading         │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+## Runtime Implementations
+
+### TypeScript Runtime (Production)
+
+The main runtime in `web/src/runtime/` (~9K lines) plus loader/worker (~3K lines):
+
+| Module | Lines | Purpose |
+|--------|-------|--------|
+| `core.ts` | ~2066 | Core runtime functions |
+| `graphics.ts` | ~3695 | Three.js integration |
+| `fileio.ts` | ~1010 | Virtual filesystem |
+| `b3d.ts` | ~880 | B3D format parser |
+| `smpk.ts` | ~332 | SMPK format loader |
+| `animation.ts` | ~144 | Animation system |
+| `mesh.ts` | ~278 | Mesh utilities |
+| `xloader.ts` | ~402 | X format loader |
+
+Plus shared systems:
+- `shared/command_buffer.ts` - Binary WASM→JS protocol
+- `shared/boot_state_machine.ts` - Startup sequencing
+- `shared/path_alias.ts` - Legacy path resolution
+- `worker/scpcb_worker.ts` - Web Worker harness
+
+### Thin Demo Runtime
+
+For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
+- Basic Three.js entity management
+- Simple input handling
+- Timer and frame management
 
 ## What Goes Where
 
@@ -41,13 +73,14 @@ Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in W
 - **Data Structures**: Types, arrays, linked lists
 - **Math**: Distance calculations, interpolation
 - **State Management**: Player position, inventory, game flags
-- **File Parsing**: RMesh loader, B3D parser (from SCPCB's BB code)
+- **Control Flow**: Loops, conditionals, function calls
 
-### In JS Runtime (browser bindings only)
+### In TypeScript Runtime (browser bindings)
 - **3D Rendering**: Three.js wrapper (CreateMesh, PositionEntity, etc.)
 - **Audio**: Web Audio API wrapper (LoadSound, PlaySound)
 - **Input**: DOM events → KeyDown, MouseX, etc.
-- **File I/O**: Fetch API → ReadFile, WriteFile
+- **File I/O**: Virtual filesystem with manifest-based loading
+- **Asset Loading**: SMPK, B3D, X format parsers
 
 ## Example: Particle System
 
@@ -69,26 +102,26 @@ Function UpdateParticles()
         p\vy = p\vy - p\gravity * FPSfactor
         p\y = p\y + p\vy * FPSfactor
         
-        ; Calls JS runtime
+        ; Calls TypeScript runtime
         PositionEntity(p\obj, p\x, p\y, p\z)
         
         ; More WASM logic
         If p\lifetime <= 0 Then
-            FreeEntity(p\obj)  ; JS call
+            FreeEntity(p\obj)  ; TS call
             Delete p           ; WASM linked list management
         End If
     Next
 End Function
 ```
 
-**JS Runtime** - only implements the imports:
-```javascript
-PositionEntity: (id, x, y, z) => {
+**TypeScript Runtime** - implements the imports:
+```typescript
+export function PositionEntity(id: number, x: number, y: number, z: number): void {
     const entity = entities.get(id);
     if (entity) entity.obj.position.set(x, y, -z);
-},
+}
 
-FreeEntity: (id) => {
+export function FreeEntity(id: number): void {
     const entity = entities.get(id);
     if (entity) {
         scene.remove(entity.obj);
@@ -100,10 +133,10 @@ FreeEntity: (id) => {
 ## Why This Architecture?
 
 1. **Use existing code**: SCPCB has 52K lines of working BB code
-2. **Battle-tested logic**: Don't reimplement AI/physics/parsing in JS
-3. **Smaller JS footprint**: ~500 lines vs 11K+ lines
-4. **Easier debugging**: Game logic in one place (WASM)
-5. **Better performance**: WASM runs closer to native speed
+2. **Battle-tested logic**: Don't reimplement AI/physics/parsing in TS
+3. **Better separation**: Game logic in WASM, browser APIs in TS
+4. **Performance**: WASM runs closer to native speed
+5. **Easier debugging**: Game logic in one place (WASM)
 
 ## Compiler Pipeline
 
@@ -116,31 +149,78 @@ BB Source → Lexer → Parser → AST → IR → WASM Binary
                               - Linked lists
 ```
 
+**Compiler**: ~17K lines Swift
+- Lexer: Tokenizer
+- Parser: Recursive descent (~2.2K lines)
+- AST: Abstract syntax tree
+- IR: Intermediate representation
+- Lowering: AST → IR (~1.3K lines)
+- CodeGen: IR → WASM
+
 ## Import Modules
 
-The WASM module imports from three namespaces:
+The WASM module imports from namespaces:
 
 | Module | Purpose | Example Functions |
 |--------|---------|-------------------|
 | `env` | Core Blitz3D API | PositionEntity, CreateSprite, Print |
-| `blitz3d` | Bank/mesh operations | CreateBank, PeekInt, ParseB3D |
+| `blitz3d` | Bank/mesh operations | CreateBank, PeekInt |
 | `al` | OpenAL audio | alCreateSource, alSourcePlay |
 
 ## File Structure
 
 ```
 Sources/
-├── Compiler/           # Swift compiler (14K lines)
-│   ├── Lexer/         # Tokenizer
-│   ├── Parser/        # Recursive descent parser
-│   ├── AST/           # Abstract syntax tree
-│   ├── IR/            # Intermediate representation
-│   ├── Lowering/      # AST → IR
-│   └── CodeGen/       # IR → WASM
+├── Compiler/           # Swift compiler (~17K lines)
+│   ├── Lexer/          # Tokenizer
+│   ├── Parser/         # Recursive descent parser
+│   ├── AST/            # Abstract syntax tree
+│   ├── IR/             # Intermediate representation
+│   ├── Lowering/       # AST → IR
+│   └── CodeGen/        # IR → WASM
 │
 └── Runtime/
-    ├── thin/          # Minimal runtime (~500 lines)
-    │   ├── runtime.js # Browser API bindings
-    │   └── test.html  # Demo page
-    └── modules/       # Full runtime (legacy, 11K lines)
+    └── thin/           # Minimal demo runtime (~500 lines)
+        ├── runtime.js  # Browser API bindings
+        └── test.html   # Demo page
+
+web/
+├── src/
+│   ├── main.ts         # SCPCB loader (~2K lines)
+│   ├── runtime/        # TypeScript runtime (~9K lines)
+│   ├── shared/         # Command buffer, boot state
+│   └── worker/         # Web Worker harness
+└── public/             # Built assets and manifests
 ```
+
+## Command Buffer System
+
+For high-frequency operations, the runtime uses a binary command buffer protocol:
+
+```
+┌─────────────────────────────────────┐
+│ Header (24 bytes)               │
+├─────────────────────────────────────┤
+│ Command #1 (variable length)    │
+├─────────────────────────────────────┤
+│ Command #2 (variable length)    │
+├─────────────────────────────────────┤
+│ ... (more commands)             │
+└─────────────────────────────────────┘
+```
+
+See `docs/COMMAND_BUFFER_SYSTEM.md` for full protocol specification.
+
+## Asset Pipeline
+
+Assets are converted offline to SMPK format:
+
+```
+Source Formats → Converters → SMPK → Web Deploy
+
+.b3d  ──┬── convert_b3d_to_smpk.ts  ──┬── .smpk
+.x    ──┼── convert_x_to_smpk.ts    ──┤
+.rmesh──┴── convert_rmesh_to_smpk.ts──┘
+```
+
+See `docs/SMPK_SYSTEM.md` for format specification.

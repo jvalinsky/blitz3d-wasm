@@ -291,7 +291,11 @@
                 ibm.fromArray(ibmData, ji * 16);
                 
                 const bone = new THREE.Bone();
-                bone.name = node ? node.name : `bone_${ji}`;
+                // Use the original node name for animation targeting
+                const nodeName = node && node.name ? node.name : `bone_${nodeIndex}`;
+                bone.name = nodeName;
+                bone.userData.originalNodeIndex = nodeIndex; // For debugging
+                
                 if (node) {
                     bone.position.copy(node.position);
                     bone.quaternion.copy(node.quaternion);
@@ -491,7 +495,9 @@
                 const times = readFloat32ArrayAnim(bin, inputAcc);
                 const values = readFloat32ArrayAnimValues(bin, outputAcc);
                 
-                const trackName = targetNode.uuid + (channel.path === "translation" ? ".position" : channel.path === "rotation" ? ".quaternion" : ".scale");
+                // Use node name for track targeting (bones have their original node names)
+                const trackName = (targetNode.name || `bone_${channel.targetNode}`) + '.' + 
+                    (channel.path === "translation" ? "position" : channel.path === "rotation" ? "quaternion" : "scale");
                 
                 if (channel.path === "translation" && outputAcc.type === "VEC3") {
                     tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
@@ -504,22 +510,23 @@
             
             if (tracks.length > 0) {
                 try {
-                    const clip = new THREE.AnimationClip('SMPKAnim', json.animations[0].fps ? json.animations[0].fps : 1, tracks);
-                    if (clip.duration > 0) {
-                        mixer = new THREE.AnimationMixer(group);
-                        npcAction = mixer.clipAction(clip);
-                        npcAction.setLoop(THREE.LoopRepeat);
-                        npcAction.play();
-                        log(`Animation prepared: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+                    const clip = new THREE.AnimationClip('SMPKAnim', fps, tracks);
+                    if (clip.duration > 0 && clip.tracks.length > 0) {
+                        // Don't auto-play - skeletal animation setup is complex
+                        // and requires the mixer to resolve track names to actual bone objects
+                        log(`Animation clip ready: ${tracks.length} tracks, ${clip.duration.toFixed(2)}s (disabled by default)`);
+                        log(`To enable: Add animation playback code that binds tracks to bones`);
                     } else {
-                        log(`Animation clip has zero duration, skipping`);
+                        log(`Animation clip has no valid tracks, skipping`);
                     }
                 } catch (e) {
                     log(`Animation setup failed: ${e.message}`);
                 }
             } else {
-                log(`No animation tracks (model has ${json.animations?.length || 0} animations)`);
+                log(`No animation tracks (${anim.channels?.length || 0} channels)`);
             }
+        } else {
+            log(`No animations in model`);
         }
         
         return group;
@@ -610,15 +617,16 @@
         }
         
         // Enable controls
-        document.getElementById('btnAnim').disabled = false;
-        document.getElementById('btnSlow').disabled = false;
-        document.getElementById('btnNormal').disabled = false;
-        document.getElementById('btnFast').disabled = false;
+        document.getElementById('btnAnim').disabled = true;
+        document.getElementById('btnSlow').disabled = true;
+        document.getElementById('btnNormal').disabled = true;
+        document.getElementById('btnFast').disabled = true;
         
-        animPlaying = true;
-        if (npcAction) {
-            npcAction.play();
-        }
+        // Animation not supported for skeletal models yet
+        animPlaying = false;
+        log('');
+        log('Note: Skeletal animation requires WASM runtime integration');
+        log('Model displayed as static mesh');
         
         statsDiv.textContent = `Model: ${modelName}`;
         log('');

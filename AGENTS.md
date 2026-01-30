@@ -117,6 +117,33 @@ blitz3d-wasm/
 - Deno (for web development and testing)
 - wabt (for wasm-validate)
 
+### Development Workflow for Demos
+
+**IMPORTANT**: When editing demo HTML files (e.g., `web/public/npc_smpk_demo.html`), always run the deployment script after making changes:
+
+```bash
+cd /home/exedev/Software/blitz3d-wasm
+./deploy.sh
+```
+
+This script:
+1. Builds TypeScript sources (if needed)
+2. Creates/updates web root at `/var/www/blitz3d`
+3. Copies HTML and static assets
+4. Copies built JavaScript/TypeScript dist
+5. Converts and copies NPC models (if source B3D files exist)
+
+**Do NOT manually copy files to `/var/www/blitz3d`** - use the deploy script to ensure all changes are properly deployed.
+
+After deployment, the demo is available at:
+- Local: `http://localhost:8000/npc_smpk_demo.html`
+- Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
+
+Start the web server with:
+```bash
+cd /var/www/blitz3d && busybox httpd -f -p 8000 -h .
+```
+
 ### Linux Note
 
 Comment out the macOS linker flag in Package.swift:
@@ -138,13 +165,33 @@ swift build
 wasm-validate output.wasm
 ```
 
-### Run Demo
+### Run Thin Demo (Minimal Particle Demo)
 
 ```bash
 cd Sources/Runtime/thin
 python3 -m http.server 8000
 # Open http://localhost:8000/test.html
 ```
+
+### Run NPC Demo (SCPCB Models)
+
+The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models with skeletal animation:
+
+1. Deploy to web root:
+   ```bash
+   cd /home/exedev/Software/blitz3d-wasm
+   ./deploy.sh
+   ```
+
+2. Start server:
+   ```bash
+   cd /var/www/blitz3d
+   busybox httpd -f -p 8000 -h .
+   ```
+
+3. Open in browser:
+   - Local: `http://localhost:8000/npc_smpk_demo.html`
+   - Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
 
 ## Web UI (SCPCB Loader)
 

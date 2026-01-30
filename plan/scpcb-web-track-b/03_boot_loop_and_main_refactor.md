@@ -1,7 +1,7 @@
 # Plan 03 — Boot/Init + Main Loop Refactor (No Tab Freezes)
 
 Created: 2026-01-29
-Last updated: 2026-01-29 17:13 EST
+Last updated: 2026-01-30
 
 Goal: prevent blocking loops; make initialization resumable; keep the tab responsive.
 
@@ -17,8 +17,8 @@ Goal: prevent blocking loops; make initialization resumable; keep the tab respon
 ## B) Preload + Sync IO Requirements
 
 - [ ] Identify files required before init completes:
-  - [ ] `options.ini`
-  - [ ] `Data/rooms.ini` and other room defs
+  - [x] `options.ini` (2026-01-30: in `web/public/scpcb_manifest.json` boot group)
+  - [x] `Data/rooms.ini` and other room defs (2026-01-30: `Data/rooms.ini` in `web/public/scpcb_manifest.json` init group)
   - [ ] any early textures/fonts/sfx used during init
 - [x] Ensure manifest groups cover these and preload completes before calling init steps. (2026-01-29: loader preloads `init` group before `Main()` when `?init=main` is used.)
 

@@ -5,8 +5,8 @@ execution.
 
 ## Project Status (January 2026)
 
-**Compiler**: Working - compiles Blitz3D code to valid WASM\
-**Runtime**: Thin runtime (~500 lines JS) for browser API bindings\
+**Compiler**: Production-ready (~17K lines Swift) — 94.7% SCPCB pass rate\
+**Runtime**: Sophisticated TypeScript runtime (~12K lines) with command buffers\
 **Target**: Run SCP: Containment Breach in browser
 
 ### Working Demo
@@ -20,7 +20,7 @@ execution.
 
 ## Architecture
 
-**WASM does game logic. JS only wraps browser APIs.**
+**WASM does game logic. JS provides browser API bindings.**
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -34,16 +34,18 @@ execution.
 │ • Memory management                                          │
 └─────────────────────────────────────────────────────────────┘
                               │
-                              │ imports ~10-50 functions
+                              │ imports runtime functions
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                   JS Runtime (~500 lines)                    │
+│                TypeScript Runtime (~12K lines)               │
 ├─────────────────────────────────────────────────────────────┤
 │ • CreateSprite/Mesh → Three.js objects                      │
 │ • PositionEntity → obj.position.set()                       │
 │ • EntityAlpha → material.opacity                            │
 │ • LoadSound/PlaySound → Web Audio                           │
 │ • KeyDown/MouseX → DOM events                               │
+│ • Command buffer system → batch WASM→JS calls               │
+│ • Virtual filesystem → ZIP-based asset loading              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -52,40 +54,59 @@ execution.
 ```
 blitz3d-wasm/
 ├── Sources/
-│   ├── Compiler/          # Swift compiler (14K lines)
+│   ├── Compiler/          # Swift compiler (~17K lines)
 │   │   ├── Lexer/         # Tokenizer
-│   │   ├── Parser/        # Recursive descent (2K lines)
+│   │   ├── Parser/        # Recursive descent (~2.2K lines)
 │   │   ├── AST/           # Syntax tree nodes
 │   │   ├── IR/            # Intermediate representation
-│   │   ├── Lowering/      # AST → IR
-│   │   └── CodeGen/       # WASM generation (5K lines)
+│   │   ├── Lowering/      # AST → IR (~1.3K lines)
+│   │   └── CodeGen/       # WASM generation
 │   │
 │   ├── Runtime/
-│   │   ├── thin/          # Minimal runtime ← USE THIS
-│   │   │   ├── runtime.js # ~500 lines, browser bindings
+│   │   ├── thin/          # Minimal demo runtime (~500 lines JS)
+│   │   │   ├── runtime.js # Browser bindings for particle demo
 │   │   │   ├── test.html  # Working particle demo
 │   │   │   └── particles.bb
-│   │   ├── JS/            # TS/JS runtime bindings
-│   │   └── modules/       # Legacy full runtime (11K lines)
+│   │   ├── JS/            # Legacy TS/JS runtime bindings
+│   │   └── modules/       # Legacy full runtime
 │   │
 │   └── Blitz3DEngine/     # Swift asset parsers
+│
+├── web/                   # Modern web frontend
+│   ├── src/
+│   │   ├── main.ts        # SCPCB loader (~2K lines)
+│   │   ├── runtime/       # TypeScript runtime (~9K lines)
+│   │   │   ├── core.ts    # Core runtime functions
+│   │   │   ├── graphics.ts # Three.js integration (~3.7K lines)
+│   │   │   ├── fileio.ts  # Virtual filesystem (~1K lines)
+│   │   │   ├── b3d.ts     # B3D format parser
+│   │   │   └── smpk.ts    # SMPK format loader
+│   │   ├── shared/        # Command buffer, boot state (~560 lines)
+│   │   └── worker/        # Web worker harness (~935 lines)
+│   └── public/            # Built assets and manifests
+│
+├── Tools/                 # Development and testing tools
+│   ├── memleak/           # Memory leak detection suite
+│   ├── smpk/              # Asset format tools
+│   ├── analyzer/          # WASM analysis and visualization
+│   └── tests/             # Comprehensive test suite
 │
 ├── Tests/
 │   ├── CompilerTests/     # Swift unit tests
 │   ├── fixtures/          # Test .bb files
 │   └── IntegrationTests/  # Browser tests
 │
-├── Tools/
-│   ├── wasm-cli/          # CLI compiler
-│   └── analyzer/          # WASM debugging
-│
-├── Examples/              # Demo projects
 ├── docs/                  # Documentation
-│   ├── compiler/          # Compiler docs
-│   └── archive/           # Old session notes
-├── notes/                 # SCPCB analysis
+│   ├── COMPILER_STATUS_ANALYSIS.md  # Compiler metrics
+│   ├── COMMAND_BUFFER_SYSTEM.md     # Binary protocol spec
+│   ├── SMPK_SYSTEM.md               # Asset format spec
+│   └── compiler_improvements/       # Compiler design docs
+│
 ├── plan/                  # Implementation phases
-└── web/                   # Web frontend app
+│   ├── README.md          # Plan index
+│   └── scpcb-web-track-b/ # SCPCB web port execution plans
+│
+└── Examples/              # Demo projects
 ```
 
 ## Building
@@ -93,7 +114,7 @@ blitz3d-wasm/
 ### Prerequisites
 
 - Swift 6.0+ (`swift --version`)
-- Deno (for serving)
+- Deno (for web development and testing)
 - wabt (for wasm-validate)
 
 ### Linux Note
@@ -149,9 +170,9 @@ and step through initialization safely:
   - run init (safe; does not call `Main()` by default) and
   - step `UpdateGame()` manually.
 - SCPCB uses `options.ini` very early (for `GraphicWidth/RealGraphicWidth/...`); ensure it is in the manifest `boot` group (`web/public/scpcb_manifest.json`) so it is available before running init/steps.
-- SCPCB’s built-in launcher is a blocking UI loop; it’s disabled by default in `web/public/options.ini` and the loader also forces `LauncherEnabled=0` unless you opt in with `?launcher=1`.
+- SCPCB's built-in launcher is a blocking UI loop; it's disabled by default in `web/public/options.ini` and the loader also forces `LauncherEnabled=0` unless you opt in with `?launcher=1`.
 - SCPCB `Main()` often contains a blocking loop; the loader will only call it if you opt in with `?init=main` (init once) or `?run=main` (run forever; will freeze the tab).
-- SCPCB init contains a tight “press any key” loop; when opting into `?init=main`, the loader primes a synthetic key/mouse hit so init can complete without freezing.
+- SCPCB init contains a tight "press any key" loop; when opting into `?init=main`, the loader primes a synthetic key/mouse hit so init can complete without freezing.
 - For debugging init hangs, the web build includes SCPCB `DebugLog` markers like `WEBINIT: ...` (compiled into `web/public/scpcb.wasm`).
 - SCPCB init expects synchronous file IO; the web port preloads `facility_assets` before calling `Main()` when using `?init=main` to avoid hangs from async-on-demand fetches.
 - Current SCPCB web build short-circuits `Main()` early (`WEBINIT: short-circuit...`) to avoid blocking the tab while we refactor init into resumable steps.
@@ -172,7 +193,7 @@ and step through initialization safely:
 deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestStep%" --steps 2000
 
 # Triage a Firefox heap snapshot (quick string scan, not a dominator parser)
-deno task memleak:fxsnapshot:strings -- /Users/jack/Desktop/693042.fxsnapshot --kind both --match "WebAssembly|THREE|wasm"
+deno task memleak:fxsnapshot:strings -- /path/to/snapshot.fxsnapshot --kind both --match "WebAssembly|THREE|wasm"
 ```
 
 ## Headless Leak Checks (No Browser)
@@ -213,11 +234,12 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 - Types (custom types with fields)
 - Type operations (New, Delete, First, Last, After, Before)
 - For Each iteration
-- Functions with return types
+- Functions with return types and parameter defaults
 - Control flow (If/Then/Else, For/Next, While/Wend, Select/Case)
 - Operators (arithmetic, comparison, logical, string)
-- Field access (obj\field)
+- Field access (obj\field, case-insensitive)
 - Include files
+- Data/Read/Restore statements
 
 ### Known Issues
 
@@ -226,18 +248,31 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 
 ## Key Files
 
-| File                                                  | Purpose                |
-| ----------------------------------------------------- | ---------------------- |
-| `Sources/Compiler/Parser/Parser.swift`                | Main parser (2K lines) |
-| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | WASM generation        |
-| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | Statement codegen      |
-| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression codegen     |
-| `Sources/Runtime/thin/runtime.js`                     | Thin JS runtime        |
-| `Sources/Runtime/thin/particles.bb`                   | Working demo source    |
+| File                                                  | Purpose                       |
+| ----------------------------------------------------- | ----------------------------- |
+| `Sources/Compiler/Parser/Parser.swift`                | Main parser (~2.2K lines)     |
+| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | WASM generation               |
+| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | Statement codegen             |
+| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression codegen            |
+| `web/src/main.ts`                                     | SCPCB loader (~2K lines)      |
+| `web/src/runtime/core.ts`                             | Core runtime (~2K lines)      |
+| `web/src/runtime/graphics.ts`                         | Three.js integration (~3.7K)  |
+| `web/src/worker/scpcb_worker.ts`                      | Worker harness (~935 lines)   |
+| `Sources/Runtime/thin/runtime.js`                     | Minimal demo runtime          |
+| `Sources/Runtime/thin/particles.bb`                   | Working demo source           |
 
-## Recent Fixes (Jan 2026)
+## Recent Achievements (Jan 2026)
 
-- Type system: `New` allocation, `Delete` linked list management
-- Field access: case-insensitive lookups
-- Function exports: user functions no longer shadowed by imports
-- For Each: proper iteration over type instances
+- 94.7% SCPCB compilation success rate (54/57 files)
+- Complete asset pipeline: B3D/X/RMESH → SMPK conversion
+- Command buffer system for efficient WASM→JS batching
+- Virtual filesystem with path aliasing for SCPCB compatibility
+- Memory leak detection tooling (scan, churn, WebGPU smoke tests)
+- CI gates for no-source-model deployment
+- Track B execution plans for SCPCB web port
+
+## Source of Truth
+
+- **Plan index**: `plan/README.md`
+- **SCPCB web port (Track B)**: `plan/scpcb-web-track-b/README.md`
+- **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`

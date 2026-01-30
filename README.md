@@ -4,8 +4,8 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 
 ## 🎯 Current Status (January 2026)
 
-**Compiler**: Production-ready with 76% SCPCB pass rate  
-**Runtime**: Sophisticated TypeScript runtime (~2000 lines) with command buffers  
+**Compiler**: Production-ready (~17K lines Swift) — 94.7% SCPCB pass rate\
+**Runtime**: Sophisticated TypeScript runtime (~12K lines) with command buffers\
 **Target**: Successfully running SCP: Containment Breach in browser
 
 ## 📌 Source Of Truth (Plans + Status)
@@ -28,7 +28,7 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 
 - **Swift 6.0+** (`swift --version`)
 - **Deno** for web development and testing
-- **wabt** (for WASM validation): `brew install wabt`
+- **wabt** (for WASM validation): `brew install wabt` or `apt install wabt`
 
 ### Quick Start
 
@@ -46,6 +46,14 @@ deno task web:dev    # Development server
 deno task web:build   # Production build
 ```
 
+### Linux Note
+
+Comment out the macOS linker flag in Package.swift:
+
+```swift
+// linkerSettings: [.unsafeFlags(["-Xlinker", "-stack_size", "-Xlinker", "0x10000000"])]
+```
+
 ## 🌐 Web Frontend
 
 The `web/` directory contains the modern TypeScript runtime and development tools.
@@ -56,7 +64,7 @@ The `web/` directory contains the modern TypeScript runtime and development tool
 # From project root
 deno task web:setup    # Install dependencies
 deno task web:dev      # Start development server
-deno task web:build     # Build for production
+deno task web:build    # Build for production
 ```
 
 ### Features
@@ -67,6 +75,7 @@ deno task web:build     # Build for production
 - **Virtual Filesystem**: ZIP-based asset loading with manifest system
 - **Debug HUD**: Real-time performance and debugging overlay
 - **Progressive Loading**: Staged asset loading with bandwidth optimization
+- **Path Aliasing**: Case-insensitive VFS with legacy SCPCB path resolution
 
 ## 🧪 Testing
 
@@ -78,7 +87,7 @@ deno task test:all
 
 # Individual categories
 deno task test:swift          # Swift compiler tests
-deno task test:deno          # Deno/TypeScript tests
+deno task test:deno           # Deno/TypeScript tests
 deno task test:web:build      # Web build validation
 deno task memleak:scan        # Static leak detection
 deno task memleak:run         # Runtime leak testing
@@ -91,10 +100,10 @@ deno task memleak:run         # Runtime leak testing
 deno task memleak:scan --root web/src/runtime --fail
 
 # Runtime testing
-deno task memleak:run --cycles 5 --wasm test.wasm --verbose
+deno task memleak:run -- --cycles 5 --wasm test.wasm --verbose
 
 # SCPCB-specific testing
-deno task memleak:scpcb:churn --steps 2000 --export "__LeakTestStep%"
+deno task memleak:scpcb:churn -- --steps 2000 --export "__LeakTestStep%"
 ```
 
 ## 📁 Project Structure
@@ -102,19 +111,26 @@ deno task memleak:scpcb:churn --steps 2000 --export "__LeakTestStep%"
 ```
 blitz3d-wasm/
 ├── Sources/                    # Swift compiler source
-│   ├── Compiler/            # Lexer, Parser, AST, CodeGen (14K lines)
-│   └── Runtime/            # Legacy runtime (preserved)
-├── web/                      # Modern web frontend
-│   ├── src/runtime/        # TypeScript runtime implementation
-│   ├── src/shared/         # Core systems (command buffer, boot state)
-│   └── public/            # Built assets and WASM
-├── Tools/                     # Development and testing tools
-│   ├── memleak/          # Memory leak detection suite
-│   ├── smpk/             # Asset format tools
-│   ├── analyzer/          # WASM analysis and visualization
-│   └── tests/             # Comprehensive test suite
-├── Tests/                     # Swift unit tests
-└── docs/                      # Documentation
+│   ├── Compiler/               # Lexer, Parser, AST, CodeGen (~17K lines)
+│   └── Runtime/                # Legacy runtime (preserved)
+├── web/                        # Modern web frontend
+│   ├── src/runtime/            # TypeScript runtime (~9K lines)
+│   ├── src/shared/             # Command buffer, boot state
+│   ├── src/worker/             # Web worker harness
+│   └── public/                 # Built assets and manifests
+├── Tools/                      # Development and testing tools
+│   ├── memleak/                # Memory leak detection suite
+│   ├── smpk/                   # Asset format converters
+│   ├── analyzer/               # WASM analysis and visualization
+│   └── tests/                  # Comprehensive test suite
+├── Tests/                      # Swift unit tests
+├── docs/                       # Documentation
+│   ├── COMPILER_STATUS_ANALYSIS.md
+│   ├── COMMAND_BUFFER_SYSTEM.md
+│   └── SMPK_SYSTEM.md
+└── plan/                       # Implementation phases
+    ├── README.md               # Plan index
+    └── scpcb-web-track-b/      # SCPCB web port execution plans
 ```
 
 ## 🗺️ Key Entry Points
@@ -135,6 +151,7 @@ blitz3d-wasm/
 - **Functions**: With return values and parameter defaults
 - **Field Access**: Case-insensitive `object\field` syntax
 - **Include Files**: Modular code organization
+- **Data/Read/Restore**: Data statements and read operations
 
 ### 🚧 Known Issues
 
@@ -163,26 +180,31 @@ deno task scpcb:compile:main
 # Development
 deno task web:dev              # Development server with hot reload
 deno task web:build            # Production build
-deno task serve                 # Simple file server
+deno task serve                # Simple file server
 
 # Testing
-deno task test:deno             # Run Deno test suite
-deno task test:all              # Run all tests
+deno task test:deno            # Run Deno test suite
+deno task test:all             # Run all tests
 
 # Memory leak detection
-deno task memleak:scan          # Static code analysis
-deno task memleak:run           # Runtime testing
+deno task memleak:scan         # Static code analysis
+deno task memleak:run          # Runtime testing
 deno task memleak:scpcb:churn  # SCPCB validation
+
+# Asset pipeline
+deno task assets:scpcb:convert # Convert SCPCB assets to SMPK
+deno task deploy:staging       # Build and validate for deployment
 ```
 
 ## 🎯 Achievements
 
-### Recent Milestones
+### Recent Milestones (Jan 2026)
 
 - **✅ Particle Demo**: Fully functional real-time particle system
-- **✅ SCPCB Compilation**: 76% pass rate on complex game codebase  
+- **✅ SCPCB Compilation**: 94.7% pass rate (54/57 files)
 - **✅ WASM Validation**: 100% compliance with WebAssembly specification
 - **✅ Memory Management**: Zero memory leaks in runtime tests
+- **✅ Asset Pipeline**: B3D/X/RMESH → SMPK offline conversion
 - **✅ CI/CD Pipeline**: Enterprise-grade testing and deployment
 
 ### Performance Metrics
@@ -201,6 +223,15 @@ Access `https://localhost:8000/test.html?debug=1` for:
 - Performance metrics display
 - WASM instruction stepping
 - Memory usage visualization
+
+### URL Flags
+
+- `?debug` - On-screen log feed
+- `?safe` - Load WASM without executing (inspect exports only)
+- `?nogl=1` - Skip WebGL init
+- `?noassets=1` - Stub asset loaders
+- `?noaudio=1` - Stub audio
+- `?fps=10` - Limit render loop
 
 ### Command Line Debugging
 
@@ -221,9 +252,8 @@ wasm-objdump output.wasm | head -50
 # Build for production
 deno task web:build
 
-# Deploy built assets
-# The build/ directory contains all necessary files
-# Upload build/ directory contents to your web server
+# The dist/ directory contains all necessary files
+# Upload dist/ directory contents to your web server
 ```
 
 ### CI/CD Pipeline
@@ -237,17 +267,10 @@ GitHub Actions provides:
 
 ## 📚 Documentation
 
-- **[API Guide](docs/API.md)**: Runtime function reference
-- **[Compiler Internals](docs/compiler/)**: Technical architecture
-- **[Testing Guide](docs/testing.md)**: Testing strategies
-- **[Memory Management](docs/memory.md)**: Leak detection and prevention
-
-## 🤝 Contributing
-
-We welcome contributions! Please see:
-- Development workflow in `CONTRIBUTING.md`
-- Code style guidelines in `docs/style.md`
-- Architecture decisions in `docs/architecture.md`
+- **[Compiler Status](docs/COMPILER_STATUS_ANALYSIS.md)**: Current metrics and analysis
+- **[Command Buffer System](docs/COMMAND_BUFFER_SYSTEM.md)**: Binary protocol specification
+- **[SMPK System](docs/SMPK_SYSTEM.md)**: Asset format specification
+- **[Compiler Architecture](docs/compiler_architecture.md)**: Technical internals
 
 ## 📄 License
 

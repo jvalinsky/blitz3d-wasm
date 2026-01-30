@@ -219,7 +219,6 @@
     const loadSmpkModel = async (path) => {
         log(`Loading SMPK: ${path}`);
         
-        // The HTML is served from web/public, so path is relative to that
         const response = await fetch(path);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const bytes = new Uint8Array(await response.arrayBuffer());
@@ -227,10 +226,12 @@
         const { json, bin } = decodeSmpk(bytes);
         log(`SMPK loaded: ${json.meshes?.length || 0} meshes, ${json.nodes?.length || 0} nodes`);
         if (json.animations) log(`Animations: ${json.animations.length}`);
+        if (json.skins) log(`Skins: ${json.skins.length}`);
         
         const group = new THREE.Group();
         const meshes = [];
         const nodes = json.nodes || [];
+        const skins = json.skins || [];
         
         // Build node hierarchy
         const nodeObjects = [];
@@ -255,6 +256,58 @@
             if (node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
                 nodeObjects[node.parent].add(nodeObjects[i]);
             }
+        }
+        
+        // Setup skins (skeletal animation)
+        const skeletons = [];
+        for (let si = 0; si < skins.length; si++) {
+            const skin = skins[si];
+            const joints = skin.joints;
+            const ibmAcc = json.accessors[skin.inverseBindMatrices];
+            
+            // Read inverse bind matrices
+            const ibmData = new Float32Array(joints.length * 16);
+            const ibmSrc = new Uint8Array(bin.buffer, bin.byteOffset + ibmAcc.offset, ibmAcc.count * 16 * 4);
+            const ibmView = new DataView(ibmSrc.buffer, ibmSrc.byteOffset, ibmSrc.byteLength);
+            for (let j = 0; j < joints.length * 16; j++) {
+                ibmData[j] = ibmView.getFloat32(j * 4, true);
+            }
+            
+            // Create bones
+            const bones = [];
+            for (let ji = 0; ji < joints.length; ji++) {
+                const nodeIndex = joints[ji];
+                const node = nodeObjects[nodeIndex];
+                const ibm = new THREE.Matrix4();
+                ibm.fromArray(ibmData, ji * 16);
+                
+                const bone = new THREE.Bone();
+                bone.name = node.name || `bone_${ji}`;
+                bone.position.copy(node.position);
+                bone.quaternion.copy(node.quaternion);
+                bone.scale.copy(node.scale);
+                bone.bindMatrixInverse = ibm;
+                
+                bones.push(bone);
+                nodeObjects[nodeIndex] = bone; // Replace Object3D with Bone
+            }
+            
+            // Build bone hierarchy
+            for (let ji = 0; ji < joints.length; ji++) {
+                const nodeIndex = joints[ji];
+                const node = nodes[nodeIndex];
+                const bone = bones[ji];
+                
+                if (node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
+                    const parentBone = nodeObjects[node.parent];
+                    if (parentBone && parentBone instanceof THREE.Bone) {
+                        parentBone.add(bone);
+                    }
+                }
+            }
+            
+            const skeleton = new THREE.Skeleton(bones);
+            skeletons.push({ skeleton, meshIndex: -1, skin });
         }
         
         // Create meshes
@@ -288,6 +341,30 @@
                     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
                 }
                 
+                // Skinning: joints and weights
+                if (prim.attributes.JOINTS_0 !== undefined && prim.attributes.WEIGHTS_0 !== undefined) {
+                    const jointAcc = json.accessors[prim.attributes.JOINTS_0];
+                    const weightAcc = json.accessors[prim.attributes.WEIGHTS_0];
+                    
+                    const jointData = new Uint16Array(jointAcc.count * 4);
+                    const weightData = new Float32Array(weightAcc.count * 4);
+                    
+                    const jointSrc = new Uint8Array(bin.buffer, bin.byteOffset + jointAcc.offset, jointAcc.count * 4 * 2);
+                    const jointView = new DataView(jointSrc.buffer, jointSrc.byteOffset, jointSrc.byteLength);
+                    for (let j = 0; j < jointAcc.count * 4; j++) {
+                        jointData[j] = jointView.getUint16(j * 2, true);
+                    }
+                    
+                    const weightSrc = new Uint8Array(bin.buffer, bin.byteOffset + weightAcc.offset, weightAcc.count * 4 * 4);
+                    const weightView = new DataView(weightSrc.buffer, weightSrc.byteOffset, weightSrc.byteLength);
+                    for (let j = 0; j < weightAcc.count * 4; j++) {
+                        weightData[j] = weightView.getFloat32(j * 4, true);
+                    }
+                    
+                    geometry.setAttribute('skinIndex', new THREE.BufferAttribute(jointData, 4));
+                    geometry.setAttribute('skinWeight', new THREE.BufferAttribute(weightData, 4));
+                }
+                
                 // Indices
                 if (prim.indices !== undefined) {
                     const acc = json.accessors[prim.indices];
@@ -304,6 +381,9 @@
                 
                 // Material
                 let material;
+                const meshColors = [0x6a7a8a, 0x7a8a9a, 0x5a6a7a, 0x8a9aaa, 0x4a5a6a];
+                const fallbackColor = meshColors[mi % meshColors.length];
+                
                 if (prim.material !== undefined && json.materials && json.materials[prim.material]) {
                     const matInfo = json.materials[prim.material];
                     material = new THREE.MeshStandardMaterial({
@@ -312,19 +392,37 @@
                     });
                     if (matInfo.baseColorTexture) {
                         const texLoader = new THREE.TextureLoader();
-                        const texPath = path.replace(/[^/]+$/, '') + matInfo.baseColorTexture;
+                        const dirPath = path.substring(0, path.lastIndexOf('/') + 1);
+                        const texPath = dirPath + matInfo.baseColorTexture;
                         try {
                             material.map = texLoader.load(texPath);
-                        } catch (e) { log(`Texture load failed: ${texPath}`); }
+                            material.color.setHex(0xffffff);
+                            log(`Loaded texture: ${texPath}`);
+                        } catch (e) { 
+                            material.color.setHex(fallbackColor);
+                            log(`Texture load failed: ${texPath}`);
+                        }
+                    } else {
+                        material.color.setHex(fallbackColor);
                     }
                 } else {
                     material = new THREE.MeshStandardMaterial({
-                        color: 0x6a7a8a,
-                        side: THREE.DoubleSide
+                        color: fallbackColor,
+                        side: THREE.DoubleSide,
+                        skinning: true
                     });
                 }
                 
-                const mesh = new THREE.Mesh(geometry, material);
+                const mesh = new THREE.SkinnedMesh(geometry, material);
+                
+                // Attach skeleton to skinned mesh
+                for (const sk of skeletons) {
+                    if (sk.skeleton.bones.length > 0) {
+                        mesh.bind(sk.skeleton);
+                        break;
+                    }
+                }
+                
                 meshGroup.add(mesh);
             }
             
@@ -336,6 +434,15 @@
             }
             
             meshes.push(meshGroup);
+        }
+        
+        // Add bones to scene
+        for (const sk of skeletons) {
+            for (const bone of sk.skeleton.bones) {
+                if (bone.parent === group || bone.parent === null) {
+                    group.add(bone);
+                }
+            }
         }
         
         // Setup animation

@@ -1099,8 +1099,37 @@ class CodeGenerator {
             return;
         this.emit('(func $main (export "main")');
         this.indent++;
+        // First pass: collect all local declarations
+        const localDecls = [];
+        const stmtOutputs = [];
         for (const stmt of topLevelStmts) {
+            const beforeLocals = this.localIndex;
+            const beforeOutput = this.output.length;
             this.generateStatement(stmt);
+            // Extract any local declarations that were added
+            const newOutput = this.output.slice(beforeOutput);
+            const locals = [];
+            const nonLocals = [];
+            for (const line of newOutput) {
+                if (line.trim().startsWith('(local ')) {
+                    locals.push(line);
+                }
+                else {
+                    nonLocals.push(line);
+                }
+            }
+            // Remove the output we just processed
+            this.output = this.output.slice(0, beforeOutput);
+            localDecls.push(...locals);
+            stmtOutputs.push(nonLocals);
+        }
+        // Emit all locals first
+        for (const local of localDecls) {
+            this.output.push(local);
+        }
+        // Then emit all statement code
+        for (const stmtOutput of stmtOutputs) {
+            this.output.push(...stmtOutput);
         }
         this.indent--;
         this.emit(')');
@@ -1114,8 +1143,18 @@ class CodeGenerator {
                 this.generateVariableDeclaration(stmt);
                 break;
             case 'ExpressionStatement':
-                this.generateExpression(stmt.expression);
-                this.emit('drop'); // Discard result
+                // Check if this is an assignment or function call (which don't return values in statement context)
+                if (stmt.expression.type === 'Assignment') {
+                    this.generateAssignmentStatement(stmt.expression);
+                }
+                else if (stmt.expression.type === 'FunctionCall') {
+                    this.generateFunctionCall(stmt.expression);
+                    // Don't drop - Print and other void functions don't return a value
+                }
+                else {
+                    this.generateExpression(stmt.expression);
+                    this.emit('drop'); // Discard result
+                }
                 break;
             case 'IfStatement':
                 this.generateIfStatement(stmt);
@@ -1375,6 +1414,32 @@ class CodeGenerator {
         if (expr.name.type === 'Identifier') {
             const funcName = expr.name.name;
             this.emit(`call $${funcName}`);
+        }
+    }
+    generateAssignmentStatement(expr) {
+        // Assignment as a statement (no return value)
+        if (expr.target.type === 'Identifier') {
+            const varName = expr.target.name;
+            let local = this.locals.get(varName);
+            // Auto-declare variable if it doesn't exist
+            if (!local && !this.globals.has(varName)) {
+                const wasmType = 'i32';
+                const localIndex = this.localIndex++;
+                this.locals.set(varName, { index: localIndex, type: wasmType });
+                this.emit(`(local $${varName} ${wasmType})`);
+                local = this.locals.get(varName);
+            }
+            // Generate value and set
+            this.generateExpression(expr.value);
+            if (local) {
+                this.emit(`local.set $${varName}`);
+            }
+            else {
+                const global = this.globals.get(varName);
+                if (global) {
+                    this.emit(`global.set $${varName}`);
+                }
+            }
         }
     }
     generateAssignment(expr) {

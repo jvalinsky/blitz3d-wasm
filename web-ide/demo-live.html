@@ -119,7 +119,10 @@ x% = 5
 y% = 10
 z% = x + y
 Print z</textarea>
-                <button onclick="compile()">▶️ Compile to WASM</button>
+                <div style="display: flex; gap: 10px;">
+                    <button onclick="compile()" style="flex: 1">▶️ Compile to WASM</button>
+                    <button onclick="runWasm()" style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);">▶️ Run Program</button>
+                </div>
             </div>
             <div class="panel">
                 <div class="panel-header">⚙️ Compilation Output</div>
@@ -127,6 +130,7 @@ Print z</textarea>
                 <div class="tabs">
                     <div class="tab active" onclick="switchTab('wasm')">WebAssembly (WAT)</div>
                     <div class="tab" onclick="switchTab('ast')">AST (JSON)</div>
+                    <div class="tab" onclick="switchTab('console')">Program Output</div>
                 </div>
                 <div id="wasm-output" class="tab-content active">
                     <pre id="output">Click "Compile" to generate WebAssembly...</pre>
@@ -134,13 +138,18 @@ Print z</textarea>
                 <div id="ast-output" class="tab-content">
                     <pre id="ast">Abstract Syntax Tree will appear here...</pre>
                 </div>
+                <div id="console-output" class="tab-content">
+                    <pre id="console" style="background: #1e1e1e; color: #d4d4d4;">Click "Run Program" to execute compiled WASM...</pre>
+                </div>
             </div>
         </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
     <script src="dist/compiler-final.js"></script>
     <script>
         // Compiler classes are already available globally from the bundle
+        let compiledWat = null; // Store the compiled WAT for execution
         
         window.switchTab = function(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -152,6 +161,9 @@ Print z</textarea>
             } else if (tab === 'ast') {
                 document.querySelectorAll('.tab')[1].classList.add('active');
                 document.getElementById('ast-output').classList.add('active');
+            } else if (tab === 'console') {
+                document.querySelectorAll('.tab')[2].classList.add('active');
+                document.getElementById('console-output').classList.add('active');
             }
         };
         
@@ -188,7 +200,8 @@ Print z</textarea>
                 const endTime = performance.now();
                 const compileTime = (endTime - startTime).toFixed(2);
                 
-                // Display results
+                // Store and display results
+                compiledWat = wat;
                 outputElement.textContent = wat;
                 astElement.textContent = JSON.stringify(ast, null, 2);
                 
@@ -208,6 +221,71 @@ Print z</textarea>
                 astElement.textContent = 'No AST generated due to errors.';
                 statusElement.innerHTML = `<div class="error">❌ Compilation Error:\n\n${e.message}</div>`;
                 console.error('Compilation error:', e);
+            }
+        };
+        
+        // Run compiled WASM
+        window.runWasm = async function() {
+            const consoleElement = document.getElementById('console');
+            const statusElement = document.getElementById('output-status');
+            
+            if (!compiledWat) {
+                statusElement.innerHTML = '<div class="error">❌ Please compile the code first!</div>';
+                return;
+            }
+            
+            try {
+                // Switch to console tab
+                switchTab('console');
+                consoleElement.textContent = 'Executing WASM...\n\n';
+                
+                // Program output buffer
+                let output = [];
+                
+                // Runtime imports for Blitz3D functions
+                const imports = {
+                    env: {
+                        print: (value) => {
+                            output.push(`${value}`);
+                            consoleElement.textContent += `${value}\n`;
+                        },
+                        printFloat: (value) => {
+                            output.push(`${value}`);
+                            consoleElement.textContent += `${value}\n`;
+                        },
+                        printString: (ptr) => {
+                            // Read string from memory (simplified)
+                            output.push(`[String at ${ptr}]`);
+                            consoleElement.textContent += `[String at ${ptr}]\n`;
+                        }
+                    }
+                };
+                
+                // Strip error comments (temporary - need to fix variable lookup)
+                const cleanWat = compiledWat.split('\n')
+                    .filter(line => !line.includes('; ERROR:'))
+                    .join('\n');
+                
+                // Convert WAT to WASM using wabt
+                const wabt = await WabtModule();
+                const wasmModule = wabt.parseWat('program.wat', cleanWat);
+                const { buffer } = wasmModule.toBinary({});
+                
+                // Instantiate and run
+                const module = await WebAssembly.instantiate(buffer, imports);
+                
+                // The start function runs automatically, but we can also call main
+                if (module.instance.exports.main) {
+                    module.instance.exports.main();
+                }
+                
+                consoleElement.textContent += '\n\u2705 Program executed successfully!';
+                statusElement.innerHTML = '<div class="success">✅ Program executed! Check Program Output tab.</div>';
+                
+            } catch (e) {
+                consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;
+                statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
+                console.error('WASM execution error:', e);
             }
         };
         

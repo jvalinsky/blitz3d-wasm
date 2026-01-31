@@ -29,6 +29,10 @@ The compiler successfully translates Blitz3D BASIC to WebAssembly. Recent achiev
 - [compiler_architecture.md](compiler_architecture.md) - Compiler pipeline details
 - [RUNTIME_ARCHITECTURE.md](RUNTIME_ARCHITECTURE.md) - TypeScript runtime design
 
+### Setup & Build
+- [SWIFT_WASM_SETUP.md](SWIFT_WASM_SETUP.md) - Swift WebAssembly compilation on Linux
+- [GETTING_STARTED.md](GETTING_STARTED.md) - General project setup
+
 ### Compiler Internals
 - [compiler/](compiler/) - Detailed compiler documentation
 - [STACK_BALANCE_HEURISTICS.md](STACK_BALANCE_HEURISTICS.md) - WASM stack management

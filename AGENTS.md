@@ -114,6 +114,7 @@ blitz3d-wasm/
 ### Prerequisites
 
 - Swift 6.0+ (`swift --version`)
+  - For WebAssembly compilation support, see [docs/SWIFT_WASM_SETUP.md](docs/SWIFT_WASM_SETUP.md)
 - Deno (for web development and testing)
 - wabt (for wasm-validate)
 

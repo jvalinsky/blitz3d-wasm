@@ -17,6 +17,7 @@ export class ParseError extends Error {
 export class Parser {
   private tokens: Token[];
   private current = 0;
+  public errors: string[] = [];
 
   constructor(source: string) {
     const lexer = new Lexer(source);
@@ -38,6 +39,7 @@ export class Parser {
         if (stmt) statements.push(stmt);
       } catch (e) {
         if (e instanceof ParseError) {
+          this.errors.push(e.message);
           console.error(e.message);
           this.synchronize();
         } else {

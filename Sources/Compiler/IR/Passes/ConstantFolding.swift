@@ -6,6 +6,8 @@
 //  Evaluates compile-time constant expressions
 //
 
+import Foundation
+
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
     import Darwin
 #elseif os(Linux) || os(Android) || os(FreeBSD) || os(OpenBSD) || os(Windows)

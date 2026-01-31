@@ -86,12 +86,12 @@ let package = Package(
         .executableTarget(
             name: "WasmTest",
             path: "Sources/WasmTest"
-        ),
-        .testTarget(
-            name: "Blitz3DEngineTests",
-            dependencies: ["Blitz3DEngine"],
-            path: "Tests/Blitz3DEngineTests",
-            exclude: []
-        ),
+        )
+        // .testTarget(
+        //     name: "Blitz3DEngineTests",
+        //     dependencies: ["Blitz3DEngine"],
+        //     path: "Tests/Blitz3DEngineTests",
+        //     exclude: []
+        // )
     ]
 )

@@ -214,7 +214,7 @@ public final class ASTLowering {
             }
         }
         
-        let segment = IRDataSegment(offset: DATA_POOL_ADDR, data: buffer)
+        let segment = IRDataSegment(offset: DATA_POOL_ADDR, data: Array(buffer))
         irModuleData.append(segment)
     }
     
@@ -313,7 +313,7 @@ public final class ASTLowering {
         buffer.append(0)
         
         let offset = nextStringOffset
-        let data = IRDataSegment(offset: offset, data: buffer)
+        let data = IRDataSegment(offset: offset, data: Array(buffer))
         irModuleData.append(data)
         
         // Align next offset to 4 bytes

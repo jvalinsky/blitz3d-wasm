@@ -42,7 +42,10 @@ public enum CompilerLogger {
 
     private static func log(_ at: CompilerLogLevel, _ message: String) {
         guard level >= at else { return }
-        #if os(Windows)
+        #if os(WASI)
+            // WASM/WASI doesn't support stderr
+            print(message)
+        #elseif os(Windows)
             // Handle Windows if needed
         #else
             fputs(message + "\n", stderr)

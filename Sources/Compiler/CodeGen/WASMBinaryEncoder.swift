@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Dispatch
 
 public struct WASMBinaryEncoder {
     private var bytes: [UInt8] = []

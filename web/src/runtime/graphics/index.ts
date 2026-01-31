@@ -1,16 +1,18 @@
+/// <reference lib="dom" />
 /**
  * Blitz3D Runtime Graphics Module
  * WebGL/Three.js integration for 3D rendering
  */
 import * as THREE from "three";
-import { Blitz3DMesh, Blitz3DSurface } from "../mesh";
-import { decodeSmpk, SMPKLoader } from "../smpk";
-import { Blitz3DAnimation } from "../animation";
-import { XLoader } from "../xloader";
-import { Blitz3DAudio } from "../audio";
-import { CmdOpcode, drainCmds } from "../../shared/command_buffer";
-import { dispatchCmd } from "../command_executor";
-import type { EngineExports } from "../../engine/bridge";
+import { Blitz3DMesh, Blitz3DSurface } from "../mesh.ts";
+import { decodeSmpk, SMPKLoader } from "../smpk.ts";
+import { Blitz3DAnimation } from "../animation.ts";
+import { XLoader } from "../xloader.ts";
+import { Blitz3DAudio } from "../audio.ts";
+import { CmdOpcode, drainCmds } from "../../shared/command_buffer.ts";
+import { dispatchCmd } from "../command_executor.ts";
+import { EngineExports, EngineBridge } from "../../engine/bridge.ts";
+import { WasmSceneManager } from "../../engine/wasm_scene_manager.ts"; // IMPORT ADDED
 
 import {
     GraphicsCore,
@@ -20,147 +22,98 @@ import {
     Blitz3DEntity,
     PickResult,
     AAFontData,
-    ENGINE_ENTITY_TYPE
-} from "./types";
+    ENGINE_ENTITY_TYPE,
+    Blitz3DGraphicsInterface
+} from "./types.ts";
 
-import { InputManager } from "./input";
-import { setupAllImports } from "./setup/index";
+import { InputManager } from "./input.ts";
+import { setupAllImports } from "./setup/index.ts";
 
-export class Blitz3DGraphics {
+export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     [key: string]: unknown;
     core: GraphicsCore;
-    animationSystem: Blitz3DAnimation;
-    audioSystem: Blitz3DAudio;
-    meshSystem: ReturnType<typeof Blitz3DMesh>;
-    xLoader: XLoader | null;
-    smpkLoader: SMPKLoader | null = null;
-    scene: THREE.Scene | null;
-    camera: THREE.Camera | null;
-    renderer: THREE.WebGLRenderer | null;
-    entities: Record<number, Blitz3DEntity>;
-    textures: Record<number, Blitz3DTexture>;
-    animMixers: Set<THREE.AnimationMixer>;
-    images: Record<number, Blitz3DImage>;
-    nextImageId: number;
-    nextEntityId: number;
-    surfaces: Record<number, Blitz3DSurface>;
-    nextSurfaceId: number;
-    brushes: Record<number, Blitz3DBrush>;
-    nextBrushId: number;
+    // ... items ...
+
+    // Physics / Picking
+    collisions: { srcType: number, destType: number, method: number, response: number }[] = [];
+    lastPick: PickResult | null = null;
+
+    // ID Counters
+    nextImageId: number = 1;
     nextTextureId: number = 1;
+    nextEntityId: number = 1;
 
-    lastPick: PickResult;
-    aaFonts: Record<number, AAFontData>;
-    currentAAFont: number | null;
-    currentFont: string;
-    currentFontSize: number;
-    currentColor: [number, number, number, number];
-    clearColor: [number, number, number, number];
-    lastTime: number;
-    ambientLight: THREE.AmbientLight | null;
-    fog: THREE.Fog | THREE.FogExp2 | null;
-    fogState: { mode: number; r: number; g: number; b: number; near: number; far: number; density: number };
+    // Thin Client Manager
+    wasmManager: WasmSceneManager | null = null;
+    inputManager: InputManager | null = null; // Added typed property
 
-    // Input
-    inputManager: InputManager;
-    enablePointerLock: boolean;
+    // Three.js
+    renderer: THREE.WebGLRenderer | null = null;
+    scene: THREE.Scene | null = null;
+    camera: THREE.Camera | null = null;
 
-    _stopped: boolean;
-    _rafHandle: number | null;
+    // Animation
+    animationSystem: any = null; // Typed properly if possible
+    animMixers: Set<any> = new Set();
+
+    // State
+    _stopped: boolean = false;
+    _rafHandle: number | null = null;
+    lastTime: number = 0;
     frameCount: number = 0;
 
-    // Game-specific caches (refactoring note: these should likely be moved to game state in future)
-    emitters: Record<number, any> = {};
-    decals: any[] = [];
-    movies: Map<number, any> = new Map();
-    nextMovieId: number = 1;
-    collisions: any[] = []; // simple collision store
+    // Resources
+    entities: Record<number, any> = {};
+    textures: Record<number, any> = {};
+    images: Record<number, any> = {};
+    surfaces: Record<number, any> = {};
+    brushes: Record<number, any> = {};
 
-    // Transformed coords storage
-    tformedX: number = 0;
-    tformedY: number = 0;
-    tformedZ: number = 0;
+    // Audio
+    audioSystem: Blitz3DAudio | null = null;
 
-    // Swift engine WASM dual storage (Phase 1)
-    _engine: EngineExports | null;
-    _engineIds: Map<number, number>;  // gameEntityId -> engineEntityId
-    _cmdTextDecoder: TextDecoder;
+    // Engine
+    _engine: EngineExports | null = null;
+    _engineIds: Map<number, number> = new Map();
+    _cmdTextDecoder: TextDecoder = new TextDecoder("latin1");
 
-    // Class references for modules
-    Blitz3DSurface = Blitz3DSurface;
+    // Imports
     Blitz3DAnimation = Blitz3DAnimation;
-    XLoader = XLoader;
 
     constructor(core: GraphicsCore) {
+        // ... existing constructor ...
         this.core = core;
-
-        this.animationSystem = new this.Blitz3DAnimation(this, core);
-        this.audioSystem = new Blitz3DAudio(core);
-        this.meshSystem = Blitz3DMesh(this);
-        this.xLoader = null; // Initialized lazily when first needed
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.entities = {};
-        this.textures = {};
-        this.animMixers = new Set();
-        this.images = {};
-        this.nextImageId = 1;
-        this.nextEntityId = 1;
-        this.surfaces = {};
-        this.nextSurfaceId = 1;
-        this.textures = {};
-        this.nextTextureId = 1;
-        this.brushes = {};
-        this.nextBrushId = 1;
-        this.lastPick = {
-            entity: 0,
-            x: 0,
-            y: 0,
-            z: 0,
-            nx: 0,
-            ny: 0,
-            nz: 0,
-            surface: 0,
-            triangle: 0,
-        };
-        this.aaFonts = {};
-        this.currentAAFont = null;
-        this.currentFont = "arial";
-        this.currentFontSize = 12;
-        this.currentColor = [255, 255, 255, 255];
-        this.clearColor = [0, 0, 0, 1];
-        this.lastTime = 0;
-        this.ambientLight = null;
-        this.fog = null;
-        this.fogState = { mode: 0, r: 0, g: 0, b: 0, near: 0, far: 1000, density: 0.001 };
-
-        this._stopped = false;
-        this._rafHandle = null;
-
-        // Input
-        this.inputManager = new InputManager(this);
-        this.enablePointerLock = true;
-
-        // Engine dual storage (Phase 1: entities exist in both Three.js and Swift engine)
+        this.animationSystem = new this.Blitz3DAnimation(this as any, core);
+        // ...
+        // Engine dual storage
         this._engine = null;
         this._engineIds = new Map();
         this._cmdTextDecoder = new TextDecoder("latin1");
     }
 
     /**
-     * Set the Swift engine WASM exports for dual storage.
-     * Call this after loading the engine WASM module.
+     * Set the Swift engine WASM exports.
+     * Initializes WasmSceneManager for Thin Client mode.
      */
     setEngine(exports: EngineExports): void {
         this._engine = exports;
+
+        // Initialize Thin Client Manager
+        if (this.core.canvas) {
+            const bridge = new EngineBridge(exports);
+            this.wasmManager = new WasmSceneManager(bridge, this.core.canvas);
+        }
     }
+
+    // ------------------------------------------------------------------
+    // Engine Integration
+    // ------------------------------------------------------------------
 
     /** Create an engine entity and track the mapping. Returns engine ID (0 if engine not loaded). */
     engineCreate(gameId: number, type: number, parentGameId?: number): number {
-        if (!this._engine) return 0;
+        if (!this.wasmManager) return 0;
         const parentEngineId = parentGameId ? (this._engineIds.get(parentGameId) ?? 0) : 0;
-        const engineId = this._engine.EngineCreateEntity(type, parentEngineId);
+        const engineId = this.wasmManager.createEntity(type, parentEngineId);
         this._engineIds.set(gameId, engineId);
         return engineId;
     }
@@ -238,14 +191,14 @@ export class Blitz3DGraphics {
         const createMockRenderer = () => {
             // Minimal mock renderer for environments without WebGL (e.g. Deno headless tooling).
             this.renderer = {
-                setSize: (w, h) => {
+                setSize: (w: number, h: number) => {
                     if (this.core && this.core.canvas) {
                         this.core.canvas.width = w;
                         this.core.canvas.height = h;
                     }
                 },
-                render: (_scene, _camera) => { },
-                setClearColor: (_color, _alpha) => { },
+                render: (_scene: any, _camera: any) => { },
+                setClearColor: (_color: any, _alpha: any) => { },
                 clear: () => { },
                 setPixelRatio: () => { },
                 capabilities: { getMaxAnisotropy: () => 1 },
@@ -305,14 +258,16 @@ export class Blitz3DGraphics {
                     throw new Error("Renderer missing render method");
                 }
 
-                // Set size
+                if (!this.core.canvas) return;
                 this.renderer.setSize(this.core.canvas.width, this.core.canvas.height);
+                if (this.wasmManager) this.wasmManager.resize(this.core.canvas.width, this.core.canvas.height);
+                if (this.core.env?.DebugLog) {
+                    console.log(
+                        "Renderer size set to: " + this.core.canvas.width + "x" +
+                        this.core.canvas.height
+                    );
+                }
                 this.renderer.autoClear = false;
-                console.log(
-                    "Renderer size set to: " + this.core.canvas.width + "x" +
-                    this.core.canvas.height,
-                );
-
                 const gl = this.renderer.getContext?.();
                 if (gl) {
                     console.log("WebGL context verified");
@@ -368,6 +323,12 @@ export class Blitz3DGraphics {
             if (this.scene) {
                 console.log("Scene Children:", this.scene.children.length);
             }
+        }
+
+        if (this.wasmManager) {
+            this.wasmManager.render(this.inputManager);
+            // We can also render 2D on top if needed, using core.ctx2d
+            return;
         }
 
         if (this.renderer && this.scene && this.camera) {
@@ -518,10 +479,18 @@ export class Blitz3DGraphics {
         // Line 11: `import { CmdOpcode, drainCmds } from "../shared/command_buffer";`
         // So I can just call `drainCmds(this.core, (cmd, ...args) => dispatchCmd(this, cmd, ...args))`.
 
-        if (!this.core.memory) return 0;
+        if (!this.core.memory || !this._engine) return 0;
         const view = new DataView(this.core.memory.buffer);
+        const exec = {
+            onCreateEntity: (type: number, parent: number, id: number) => {
+                this.engineCreate(id, type, parent);
+            },
+            onFreeEntity: (id: number) => {
+                this.wasmManager?.freeEntity(this.eid(id));
+            }
+        };
         drainCmds(view, (cmd: any) => {
-            dispatchCmd(this as any, cmd);
+            dispatchCmd(exec, cmd);
         });
     }
 

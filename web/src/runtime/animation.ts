@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import { SMPKLoader } from "./smpk";
+import { decodeSmpk, SMPKLoader } from "./smpk.ts";
 
 export class Blitz3DAnimation {
     [key: string]: any;

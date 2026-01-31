@@ -1,80 +1,115 @@
-import { Blitz3DGraphics } from "../index";
+import { Blitz3DGraphicsInterface } from "../types.ts";
 import * as THREE from "three";
 
-export function setupCollision(this: Blitz3DGraphics, imports: any) {
-    // --- Collision System (Stubs) ---
+export function setupCollision(graphics: Blitz3DGraphicsInterface, imports: any) {
+    // --- Collision System ---
 
     // Setup
     imports.env.Collisions = (srcType: number, destType: number, method: number, response: number) => {
-        (this as any).collisions.push({ srcType, destType, method, response });
+        if (graphics.wasmManager) {
+            graphics.wasmManager.bridge.collisions(srcType, destType, method, response);
+            return;
+        }
+        (graphics as any).collisions.push({ srcType, destType, method, response });
     };
 
     imports.env.EntityType = (entId: number, typeId: number, recurs: number) => {
-        const ent = this.entities[entId];
+        if (graphics.wasmManager) {
+            graphics.wasmManager.bridge.entityType(entId, typeId);
+            // TODO: Recursion not yet handled in bridge simple call, 
+            // but usually EntityType in Blitz3D is recursive by default or has a flag?
+            // The WASM export EngineEntityType sets it for ID.
+            return;
+        }
+        const ent = graphics.entities[entId];
         if (ent) {
             ent.userData.typeId = typeId;
-            // recursive...
+            // simple recursive
+            ent.traverse((child: any) => {
+                child.userData.typeId = typeId;
+            });
         }
     };
 
     imports.env.EntityRadius = (entId: number, radiusX: number, radiusY: number) => {
-        const ent = this.entities[entId];
+        if (graphics.wasmManager) {
+            graphics.wasmManager.bridge.entityRadius(entId, radiusX, radiusY);
+            return;
+        }
+        const ent = graphics.entities[entId];
         if (ent) ent.userData.radius = [radiusX, radiusY || radiusX];
     };
 
     imports.env.EntityBox = (entId: number, x: number, y: number, z: number, w: number, h: number, d: number) => {
-        const ent = this.entities[entId];
+        if (graphics.wasmManager) {
+            graphics.wasmManager.bridge.entityBox(entId, x, y, z, w, h, d);
+            return;
+        }
+        const ent = graphics.entities[entId];
         if (ent) ent.userData.box = [x, y, z, w, h, d];
     };
 
     imports.env.ResetEntity = (entId: number) => {
-        // Reset collision history
+        if (graphics.wasmManager) {
+            graphics.wasmManager.bridge.resetEntity(entId);
+            return;
+        }
     };
 
     imports.env.ClearCollisions = () => {
-        // Clear current frame collisions
+
     };
 
     imports.env.UpdateWorld = (step: number) => {
-        // Perform physics/collision steps
-        // 1. Move entities based on velocity/gravity? (Blitz3D handles this internally or user does?)
-        // Blitz3D UpdateWorld typically handles animation and collisions.
-        // We need to implement simple collision detection here if we want gameplay.
-        // For now: Animation update
+        if (graphics.wasmManager) {
+            graphics.wasmManager.updateWorld(step);
+            // Also need to update animations if they were separate
+        }
 
-        // Update animations
+        // Update animations (legacy/shared)
         const now = performance.now();
-        const delta = (now - this.lastTime) * 0.001;
-        this.lastTime = now;
+        const delta = (now - graphics.lastTime) * 0.001;
+        graphics.lastTime = now;
 
-        if (this.animationSystem) {
-            this.animationSystem.update(delta * step);
+        if (graphics.animationSystem) {
+            graphics.animationSystem.update(delta * step);
         }
     };
 
     // Query
     imports.env.EntityCollided = (entId: number, typeId: number) => {
-        // Return entity ID that collided with entId of type typeId
+        if (graphics.wasmManager) {
+            return graphics.wasmManager.bridge.entityCollided(entId, typeId);
+        }
         return 0;
     };
 
     imports.env.CountCollisions = (entId: number) => {
+        if (graphics.wasmManager) {
+            return graphics.wasmManager.bridge.countCollisions(entId);
+        }
         return 0;
     };
 
-    imports.env.CollisionX = (entId: number, index: number) => 0;
-    imports.env.CollisionY = (entId: number, index: number) => 0;
-    imports.env.CollisionZ = (entId: number, index: number) => 0;
-    imports.env.CollisionNX = (entId: number, index: number) => 0;
-    imports.env.CollisionNY = (entId: number, index: number) => 0;
-    imports.env.CollisionNZ = (entId: number, index: number) => 0;
-    imports.env.CollisionTime = (entId: number, index: number) => 0;
-    imports.env.CollisionEntity = (entId: number, index: number) => 0;
+    imports.env.CollisionX = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionX(entId, index) : 0;
+    imports.env.CollisionY = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionY(entId, index) : 0;
+    imports.env.CollisionZ = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionZ(entId, index) : 0;
+    imports.env.CollisionNX = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionNX(entId, index) : 0;
+    imports.env.CollisionNY = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionNY(entId, index) : 0;
+    imports.env.CollisionNZ = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionNZ(entId, index) : 0;
+    imports.env.CollisionEntity = (entId: number, index: number) => graphics.wasmManager ? graphics.wasmManager.bridge.collisionEntity(entId, index) : 0;
+
+    // Stub methods
     imports.env.CollisionSurface = (entId: number, index: number) => 0;
     imports.env.CollisionTriangle = (entId: number, index: number) => 0;
+    imports.env.CollisionTime = (entId: number, index: number) => 0;
 
     imports.env.GetEntityType = (entId: number) => {
-        const ent = this.entities[entId];
+        if (graphics.wasmManager) {
+            // Not exposed in bridge yet, but usually not critical?
+            return 0;
+        }
+        const ent = graphics.entities[entId];
         return ent ? (ent.userData.typeId || 0) : 0;
     };
 }

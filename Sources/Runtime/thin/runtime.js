@@ -1,13 +1,35 @@
 /**
  * Blitz3D Thin Runtime
- * Minimal JS layer - only browser API bindings
- * All game logic runs in compiled BB -> WASM
+ * Minimal JS layer - browser API bindings for Blitz3D compiled to WebAssembly
+ *
+ * Architecture:
+ * - All game logic runs in compiled BB -> WASM
+ * - This runtime provides Three.js graphics bindings
+ * - A Swift engine WASM module provides scene graph, transforms, materials
+ * - DUAL STORAGE: Each entity exists in both Three.js AND the Swift engine
+ * - Audio uses WebAudio API with lazy initialization (browser autoplay policy)
+ * - TextDecoder is cached for string operations
+ * - Animated entities are tracked in a Set for performance optimization
+ *
+ * String Format:
+ * - Strings are stored with [refCount:i32][length:i32][bytes...][0] header
+ * - Pointer points to the start of the header
+ *
+ * Coordinate System:
+ * - Blitz3D uses +Z forward, Three.js uses -Z forward
+ * - PositionEntity negates Z when converting to Three.js
+ * - Swift engine uses Blitz3D convention (+Z forward) natively
+ *
+ * Entity Type IDs (matching Swift EntityType enum):
+ *   0=pivot, 1=mesh, 2=camera, 3=light, 4=sprite, 5=terrain
  */
+
+const ENGINE_TYPE = { PIVOT: 0, MESH: 1, CAMERA: 2, LIGHT: 3, SPRITE: 4, TERRAIN: 5 };
 
 class Blitz3DThinRuntime {
     constructor(canvas) {
         this.canvas = canvas;
-        this.entities = new Map();  // id -> {obj, type, ...}
+        this.entities = new Map();  // id -> {obj, type, engineId, ...}
         this.textures = new Map();  // id -> THREE.Texture
         this.sounds = new Map();    // id -> AudioBuffer
         this.channels = new Map();  // id -> AudioBufferSourceNode
@@ -15,16 +37,26 @@ class Blitz3DThinRuntime {
         this.nextTextureId = 1;
         this.nextSoundId = 1;
         this.nextChannelId = 1;
-        
+
         // Three.js
         this.scene = new THREE.Scene();
         this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
         this.renderer.setSize(canvas.width, canvas.height);
         this.activeCamera = null;
-        
-        // Audio
-        this.audioCtx = null;  // Lazy init on user interaction
-        
+
+        // Swift engine WASM exports (set by loadEngine())
+        this.engine = null;
+
+        // Animated entities tracking for performance optimization
+        this.animatedEntities = new Set();
+
+        // Audio - lazy init on user interaction (required by browser autoplay policy)
+        this.audioCtx = null;
+        this.audioInitAttempted = false;
+
+        this._setupInput();
+        this._setupAudioListeners();
+
         // Input state
         this.keys = new Set();
         this.keysHit = new Set();
@@ -32,12 +64,45 @@ class Blitz3DThinRuntime {
         this.mouseY = 0;
         this.mouseButtons = 0;
         this.mouseButtonsHit = 0;
-        
+
         // Memory for WASM string handling
         this.memory = null;
         this.stringHeapPtr = 65536;
-        
-        this._setupInput();
+
+        // Cached TextDecoder for string operations
+        this.textDecoder = new TextDecoder('latin1');
+    }
+
+    /**
+     * Setup user interaction listeners for audio initialization
+     * AudioContext requires user gesture to start (browser autoplay policy)
+     * @private
+     */
+    _setupAudioListeners() {
+        const initAudio = () => {
+            if (this.audioInitAttempted) return;
+            this.audioInitAttempted = true;
+            this._initAudio();
+        };
+        document.addEventListener('click', initAudio, { once: true });
+        document.addEventListener('keydown', initAudio, { once: true });
+        document.addEventListener('touchstart', initAudio, { once: true });
+    }
+
+    /**
+     * Ensure AudioContext is created and resumed
+     * Handles both lazy init and suspended state
+     * @private
+     */
+    _ensureAudioContext() {
+        if (!this.audioCtx) {
+            this._initAudio();
+        }
+        if (this.audioCtx && this.audioCtx.state === 'suspended') {
+            this.audioCtx.resume().catch(e => {
+                console.warn('AudioContext resume failed:', e);
+            });
+        }
     }
     
     _setupInput() {
@@ -62,6 +127,10 @@ class Blitz3DThinRuntime {
         });
     }
     
+    /**
+     * Initialize AudioContext on user interaction
+     * @private
+     */
     _initAudio() {
         if (!this.audioCtx) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -74,7 +143,51 @@ class Blitz3DThinRuntime {
         const len = view.getInt32(ptr + 4, true);
         if (len <= 0 || len > 10000) return "";
         const bytes = new Uint8Array(this.memory.buffer, ptr + 8, len);
-        return new TextDecoder().decode(bytes);
+        return this.textDecoder.decode(bytes);
+    }
+
+    /**
+     * Load the Swift engine WASM module for dual storage.
+     * Call this before loadAndRun() to enable the engine scene graph.
+     */
+    async loadEngine(engineWasmUrl) {
+        const response = await fetch(engineWasmUrl);
+        const bytes = await response.arrayBuffer();
+        const { instance } = await WebAssembly.instantiate(bytes, {
+            env: {},
+            wasi_snapshot_preview1: {
+                fd_write: () => 0,
+                fd_seek: () => 0,
+                fd_close: () => 0,
+                proc_exit: () => {},
+            },
+        });
+        this.engine = instance.exports;
+        console.log('Swift engine WASM loaded');
+    }
+
+    /** Create an entity in the Swift engine. Returns engine entity ID or 0 if engine not loaded. */
+    _engineCreate(type, parentEngineId) {
+        if (!this.engine) return 0;
+        return this.engine.EngineCreateEntity(type, parentEngineId || 0);
+    }
+
+    /** Update position in Swift engine. Blitz3D convention (no Z negation). */
+    _engineSetPosition(engineId, x, y, z) {
+        if (!this.engine || !engineId) return;
+        this.engine.EngineSetPosition(engineId, x, y, z);
+    }
+
+    /** Update rotation in Swift engine. Degrees. */
+    _engineSetRotation(engineId, pitch, yaw, roll) {
+        if (!this.engine || !engineId) return;
+        this.engine.EngineSetRotation(engineId, pitch, yaw, roll);
+    }
+
+    /** Update scale in Swift engine. */
+    _engineSetScale(engineId, sx, sy, sz) {
+        if (!this.engine || !engineId) return;
+        this.engine.EngineSetScale(engineId, sx, sy, sz);
     }
     
     clearHitStates() {
@@ -82,6 +195,10 @@ class Blitz3DThinRuntime {
         this.mouseButtonsHit = 0;
     }
     
+    /**
+     * Main render loop - updates animations and renders scene
+     * Called via requestAnimationFrame
+     */
     render() {
         this.updateAnimations();
         if (this.activeCamera) {
@@ -159,12 +276,15 @@ class Blitz3DThinRuntime {
                 CreateCamera: (parent) => {
                     const cam = new THREE.PerspectiveCamera(75, self.canvas.width / self.canvas.height, 0.1, 1000);
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: cam, type: 'camera' });
-                    self.scene.add(cam);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.CAMERA, parentEnt?.engineId);
+                    self.entities.set(id, { obj: cam, type: 'camera', engineId });
+                    if (parentEnt) parentEnt.obj.add(cam);
+                    else self.scene.add(cam);
                     if (!self.activeCamera) self.activeCamera = cam;
                     return id;
                 },
-                
+
                 CreateLight: (type, parent) => {
                     let light;
                     switch (type) {
@@ -174,57 +294,74 @@ class Blitz3DThinRuntime {
                         default: light = new THREE.AmbientLight(0xffffff, 0.5);
                     }
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: light, type: 'light' });
-                    self.scene.add(light);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.LIGHT, parentEnt?.engineId);
+                    self.entities.set(id, { obj: light, type: 'light', engineId });
+                    if (parentEnt) parentEnt.obj.add(light);
+                    else self.scene.add(light);
                     return id;
                 },
-                
+
                 CreatePivot: (parent) => {
                     const pivot = new THREE.Object3D();
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: pivot, type: 'pivot' });
-                    self.scene.add(pivot);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.PIVOT, parentEnt?.engineId);
+                    self.entities.set(id, { obj: pivot, type: 'pivot', engineId });
+                    if (parentEnt) parentEnt.obj.add(pivot);
+                    else self.scene.add(pivot);
                     return id;
                 },
-                
+
                 CreateSprite: (parent) => {
                     const material = new THREE.SpriteMaterial({ color: 0x00ff00, sizeAttenuation: true });
                     const sprite = new THREE.Sprite(material);
-                    sprite.scale.set(0.5, 0.5, 1); // Make visible
+                    sprite.scale.set(0.5, 0.5, 1);
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: sprite, type: 'sprite', material });
-                    self.scene.add(sprite);
-                    console.log(`CreateSprite() -> id=${id}`);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.SPRITE, parentEnt?.engineId);
+                    self.entities.set(id, { obj: sprite, type: 'sprite', material, engineId });
+                    if (parentEnt) parentEnt.obj.add(sprite);
+                    else self.scene.add(sprite);
                     return id;
                 },
-                
+
                 CreateMesh: (parent) => {
                     const geometry = new THREE.BufferGeometry();
                     const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
                     const mesh = new THREE.Mesh(geometry, material);
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material });
-                    self.scene.add(mesh);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.MESH, parentEnt?.engineId);
+                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material, engineId });
+                    if (parentEnt) parentEnt.obj.add(mesh);
+                    else self.scene.add(mesh);
                     return id;
                 },
-                
+
                 CreateCube: (parent) => {
                     const geometry = new THREE.BoxGeometry(1, 1, 1);
                     const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
                     const mesh = new THREE.Mesh(geometry, material);
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material });
-                    self.scene.add(mesh);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.MESH, parentEnt?.engineId);
+                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material, engineId });
+                    if (parentEnt) parentEnt.obj.add(mesh);
+                    else self.scene.add(mesh);
                     return id;
                 },
-                
+
                 CreateSphere: (segments, parent) => {
                     const geometry = new THREE.SphereGeometry(1, segments || 16, segments || 16);
                     const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
                     const mesh = new THREE.Mesh(geometry, material);
                     const id = self.nextEntityId++;
-                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material });
-                    self.scene.add(mesh);
+                    const parentEnt = parent ? self.entities.get(parent) : null;
+                    const engineId = self._engineCreate(ENGINE_TYPE.MESH, parentEnt?.engineId);
+                    self.entities.set(id, { obj: mesh, type: 'mesh', geometry, material, engineId });
+                    if (parentEnt) parentEnt.obj.add(mesh);
+                    else self.scene.add(mesh);
                     return id;
                 },
                 
@@ -234,13 +371,11 @@ class Blitz3DThinRuntime {
                 PositionEntity: (e, x, y, z, global) => {
                     const ent = self.entities.get(e);
                     if (ent) {
-                        ent.obj.position.set(x, y, -z);  // Blitz3D uses -Z forward
-                        console.log(`PositionEntity(${e}, ${x}, ${y}, ${z})`);
-                    } else {
-                        console.warn(`PositionEntity: entity ${e} not found`);
+                        ent.obj.position.set(x, y, -z);  // Three.js: negate Z
+                        self._engineSetPosition(ent.engineId, x, y, z);  // Engine: native Blitz3D coords
                     }
                 },
-                
+
                 RotateEntity: (e, pitch, yaw, roll, global) => {
                     const ent = self.entities.get(e);
                     if (ent) {
@@ -249,62 +384,81 @@ class Blitz3DThinRuntime {
                             yaw * Math.PI / 180,
                             roll * Math.PI / 180
                         );
+                        self._engineSetRotation(ent.engineId, pitch, yaw, roll);
                     }
                 },
-                
+
                 ScaleEntity: (e, x, y, z, global) => {
                     const ent = self.entities.get(e);
-                    if (ent) ent.obj.scale.set(x, y, z);
+                    if (ent) {
+                        ent.obj.scale.set(x, y, z);
+                        self._engineSetScale(ent.engineId, x, y, z);
+                    }
                 },
-                
+
                 MoveEntity: (e, x, y, z) => {
                     const ent = self.entities.get(e);
-                    if (ent) ent.obj.translateX(x).translateY(y).translateZ(-z);
+                    if (ent) {
+                        ent.obj.translateX(x).translateY(y).translateZ(-z);
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineMoveEntity(ent.engineId, x, y, z);
+                        }
+                    }
                 },
-                
+
                 TranslateEntity: (e, x, y, z, global) => {
                     const ent = self.entities.get(e);
                     if (ent) {
                         ent.obj.position.x += x;
                         ent.obj.position.y += y;
                         ent.obj.position.z -= z;
+                        // Engine: read back position and set (translate is relative)
+                        if (self.engine && ent.engineId) {
+                            const ex = self.engine.EngineEntityX(ent.engineId, 0);
+                            const ey = self.engine.EngineEntityY(ent.engineId, 0);
+                            const ez = self.engine.EngineEntityZ(ent.engineId, 0);
+                            self.engine.EngineSetPosition(ent.engineId, ex + x, ey + y, ez + z);
+                        }
                     }
                 },
-                
+
                 TurnEntity: (e, pitch, yaw, roll, global) => {
                     const ent = self.entities.get(e);
                     if (ent) {
                         ent.obj.rotation.x += pitch * Math.PI / 180;
                         ent.obj.rotation.y += yaw * Math.PI / 180;
                         ent.obj.rotation.z += roll * Math.PI / 180;
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineTurnEntity(ent.engineId, pitch, yaw, roll);
+                        }
                     }
                 },
-                
+
                 EntityX: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? ent.obj.position.x : 0;
                 },
-                
+
                 EntityY: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? ent.obj.position.y : 0;
                 },
-                
+
                 EntityZ: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? -ent.obj.position.z : 0;
                 },
-                
+
                 EntityPitch: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? ent.obj.rotation.x * 180 / Math.PI : 0;
                 },
-                
+
                 EntityYaw: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? ent.obj.rotation.y * 180 / Math.PI : 0;
                 },
-                
+
                 EntityRoll: (e, global) => {
                     const ent = self.entities.get(e);
                     return ent ? ent.obj.rotation.z * 180 / Math.PI : 0;
@@ -319,15 +473,21 @@ class Blitz3DThinRuntime {
                         ent.material.opacity = alpha;
                         ent.material.transparent = alpha < 1;
                     }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineEntityAlpha(ent.engineId, alpha);
+                    }
                 },
-                
+
                 EntityColor: (e, r, g, b) => {
                     const ent = self.entities.get(e);
                     if (ent && ent.material) {
                         ent.material.color.setRGB(r / 255, g / 255, b / 255);
                     }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineEntityColor(ent.engineId, r, g, b);
+                    }
                 },
-                
+
                 EntityBlend: (e, mode) => {
                     const ent = self.entities.get(e);
                     if (ent && ent.material) {
@@ -337,16 +497,21 @@ class Blitz3DThinRuntime {
                             case 3: ent.material.blending = THREE.AdditiveBlending; break;
                         }
                     }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineEntityBlend(ent.engineId, mode);
+                    }
                 },
-                
+
                 EntityFX: (e, fx) => {
                     const ent = self.entities.get(e);
                     if (ent && ent.material) {
-                        // 1 = fullbright, 8 = disable fog, etc.
                         if (fx & 1) ent.material.emissive = ent.material.color;
                     }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineEntityFX(ent.engineId, fx);
+                    }
                 },
-                
+
                 EntityTexture: (e, tex) => {
                     const ent = self.entities.get(e);
                     const texture = self.textures.get(tex);
@@ -354,33 +519,65 @@ class Blitz3DThinRuntime {
                         ent.material.map = texture;
                         ent.material.needsUpdate = true;
                     }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineEntityTexture(ent.engineId, tex, 0, 0);
+                    }
                 },
-                
+
                 EntityParent: (e, parent, global) => {
                     const ent = self.entities.get(e);
                     const parentEnt = self.entities.get(parent);
                     if (ent && parentEnt) {
                         parentEnt.obj.add(ent.obj);
+                        if (self.engine && ent.engineId && parentEnt.engineId) {
+                            self.engine.EngineSetParent(ent.engineId, parentEnt.engineId);
+                        }
                     }
                 },
-                
+
                 FreeEntity: (e) => {
                     const ent = self.entities.get(e);
                     if (ent) {
                         if (ent.obj.parent) ent.obj.parent.remove(ent.obj);
                         else self.scene.remove(ent.obj);
+
+                        if (ent.geometry) ent.geometry.dispose();
+                        if (ent.material) {
+                            if (Array.isArray(ent.material)) {
+                                ent.material.forEach(m => m.dispose());
+                            } else {
+                                ent.material.dispose();
+                            }
+                        }
+                        if (ent.texture) ent.texture.dispose();
+
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineFreeEntity(ent.engineId);
+                        }
+
+                        self.animatedEntities.delete(e);
                         self.entities.delete(e);
                     }
                 },
-                
+
                 HideEntity: (e) => {
                     const ent = self.entities.get(e);
-                    if (ent) ent.obj.visible = false;
+                    if (ent) {
+                        ent.obj.visible = false;
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineHideEntity(ent.engineId);
+                        }
+                    }
                 },
-                
+
                 ShowEntity: (e) => {
                     const ent = self.entities.get(e);
-                    if (ent) ent.obj.visible = true;
+                    if (ent) {
+                        ent.obj.visible = true;
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineShowEntity(ent.engineId);
+                        }
+                    }
                 },
                 
                 //--------------------------------------------------------------
@@ -407,21 +604,31 @@ class Blitz3DThinRuntime {
                         ent.obj.near = near;
                         ent.obj.far = far;
                         ent.obj.updateProjectionMatrix();
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineCameraRange(ent.engineId, near, far);
+                        }
                     }
                 },
-                
+
                 CameraZoom: (cam, zoom) => {
                     const ent = self.entities.get(cam);
                     if (ent && ent.type === 'camera') {
-                        ent.obj.fov = 75 / zoom;
+                        const fov = 75 / zoom;
+                        ent.obj.fov = fov;
                         ent.obj.updateProjectionMatrix();
+                        if (self.engine && ent.engineId) {
+                            self.engine.EngineCameraFOV(ent.engineId, fov);
+                        }
                     }
                 },
                 
                 //--------------------------------------------------------------
                 // Rendering
                 //--------------------------------------------------------------
-                RenderWorld: () => self.render(),
+                RenderWorld: () => {
+                    if (self.engine) self.engine.EngineUpdateTransforms();
+                    self.render();
+                },
                 Flip: (sync) => {},  // Handled by requestAnimationFrame
                 Cls: () => self.renderer.clear(),
                 
@@ -450,19 +657,21 @@ class Blitz3DThinRuntime {
                 // Audio (lazy init)
                 //--------------------------------------------------------------
                 LoadSound: (pathPtr) => {
-                    // Async load - return placeholder ID
                     const id = self.nextSoundId++;
-                    self._initAudio();
+                    self._ensureAudioContext();
                     const path = self._readString(pathPtr);
-                    fetch(path)
-                        .then(r => r.arrayBuffer())
-                        .then(buf => self.audioCtx.decodeAudioData(buf))
-                        .then(audioBuffer => self.sounds.set(id, audioBuffer))
-                        .catch(e => console.warn(`Failed to load sound: ${path}`));
+                    if (self.audioCtx) {
+                        fetch(path)
+                            .then(r => r.arrayBuffer())
+                            .then(buf => self.audioCtx.decodeAudioData(buf))
+                            .then(audioBuffer => self.sounds.set(id, audioBuffer))
+                            .catch(e => console.warn(`Failed to load sound: ${path}`));
+                    }
                     return id;
                 },
                 
                 PlaySound: (snd) => {
+                    self._ensureAudioContext();
                     const buffer = self.sounds.get(snd);
                     if (buffer && self.audioCtx) {
                         const source = self.audioCtx.createBufferSource();
@@ -521,7 +730,14 @@ class Blitz3DThinRuntime {
                         ent.animSeq = seq || 0;
                         ent.animTime = 0;
                         ent.animPlaying = mode !== 0;
-                        console.log(`Animate entity ${entityId}: mode=${mode}, speed=${speed}`);
+                        if (mode !== 0) {
+                            self.animatedEntities.add(entityId);
+                        } else {
+                            self.animatedEntities.delete(entityId);
+                        }
+                    }
+                    if (self.engine && ent?.engineId) {
+                        self.engine.EngineAnimate(ent.engineId, mode, speed || 1.0, seq || 0, trans || 0);
                     }
                 },
                 
@@ -532,11 +748,19 @@ class Blitz3DThinRuntime {
                 
                 AnimTime: (entityId) => {
                     const ent = self.entities.get(entityId);
+                    // Prefer engine value when available
+                    if (self.engine && ent?.engineId) {
+                        return self.engine.EngineAnimTime(ent.engineId);
+                    }
                     return ent ? (ent.animTime || 0) : 0;
                 },
-                
+
                 Animating: (entityId) => {
                     const ent = self.entities.get(entityId);
+                    // Prefer engine value when available
+                    if (self.engine && ent?.engineId) {
+                        return self.engine.EngineAnimating(ent.engineId);
+                    }
                     return (ent && ent.animPlaying) ? 1 : 0;
                 },
                 
@@ -601,12 +825,14 @@ class Blitz3DThinRuntime {
             }
         }
         
-        // Create Three.js objects
+        // Create Three.js objects + engine entity
         const root = new THREE.Group();
         const rootId = this.nextEntityId++;
-        this.entities.set(rootId, { 
-            obj: root, 
+        const engineId = this._engineCreate(ENGINE_TYPE.PIVOT, 0);
+        this.entities.set(rootId, {
+            obj: root,
             type: 'model',
+            engineId,
             animations: animations,
             animMode: 0,
             animSpeed: 1.0,
@@ -816,13 +1042,14 @@ class Blitz3DThinRuntime {
         const geometry = new THREE.BoxGeometry(1, 2, 1);
         const material = new THREE.MeshStandardMaterial({ color: 0x888888 });
         const mesh = new THREE.Mesh(geometry, material);
-        
+
         const root = new THREE.Group();
         const rootId = this.nextEntityId++;
-        this.entities.set(rootId, { obj: root, type: 'model' });
+        const engineId = this._engineCreate(ENGINE_TYPE.MESH, 0);
+        this.entities.set(rootId, { obj: root, type: 'model', engineId });
         root.add(mesh);
         this.scene.add(root);
-        
+
         return rootId;
     }
     
@@ -830,11 +1057,21 @@ class Blitz3DThinRuntime {
     // Animation Update (called each frame)
     //==================================================================
     
+    /**
+     * Update animated entities
+     * Only iterates over animatedEntities Set for performance
+     * Handles loop, ping-pong, and one-shot animation modes
+     */
     updateAnimations() {
-        for (const [id, ent] of this.entities) {
+        for (const entityId of this.animatedEntities) {
+            const ent = this.entities.get(entityId);
+            if (!ent) {
+                this.animatedEntities.delete(entityId);
+                continue;
+            }
             if (ent.animations && ent.animPlaying && ent.animMode !== 0) {
                 ent.animTime += ent.animSpeed;
-                
+
                 const length = ent.animLength || 30;
                 if (ent.animTime >= length) {
                     if (ent.animMode === 1) { // Loop
@@ -842,6 +1079,7 @@ class Blitz3DThinRuntime {
                     } else if (ent.animMode === 3) { // OneShot
                         ent.animTime = length;
                         ent.animPlaying = false;
+                        this.animatedEntities.delete(entityId);
                     } else if (ent.animMode === 2) { // PingPong
                         ent.animTime = length;
                         ent.animMode = -2; // Reverse
@@ -850,7 +1088,7 @@ class Blitz3DThinRuntime {
                     ent.animTime = 0;
                     ent.animMode = 2; // Forward
                 }
-                
+
                 // Apply animation to entity (simple: rotate based on time)
                 if (ent.obj) {
                     ent.obj.rotation.y = (ent.animTime / length) * Math.PI * 2;
@@ -859,23 +1097,34 @@ class Blitz3DThinRuntime {
         }
     }
     
-    async loadAndRun(wasmUrl, entryPoint = 'Main') {
+    /**
+     * Load and run a game WASM module.
+     * @param {string} wasmUrl - URL to the game .wasm file
+     * @param {string} entryPoint - Export name to call (default: 'Main')
+     * @param {string} [engineWasmUrl] - Optional URL to the engine .wasm file for dual storage
+     */
+    async loadAndRun(wasmUrl, entryPoint = 'Main', engineWasmUrl) {
+        // Optionally load engine WASM first
+        if (engineWasmUrl) {
+            await this.loadEngine(engineWasmUrl);
+        }
+
         const response = await fetch(wasmUrl);
         const bytes = await response.arrayBuffer();
         const imports = this.getImports();
-        
+
         const { instance } = await WebAssembly.instantiate(bytes, imports);
-        
+
         // Get memory reference
         this.memory = instance.exports.memory || imports.env.memory;
-        
+
         // Run entry point
         if (instance.exports[entryPoint]) {
             instance.exports[entryPoint]();
         } else if (instance.exports._start) {
             instance.exports._start();
         }
-        
+
         return instance;
     }
 }

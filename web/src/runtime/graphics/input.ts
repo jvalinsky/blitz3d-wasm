@@ -1,5 +1,5 @@
-import { InputHandlers } from "./types";
-import { Blitz3DGraphics } from "./index";
+import { PickResult, Blitz3DGraphicsInterface as Blitz3DGraphics, InputHandlers } from "./types.ts";
+import { Blitz3DGraphics as IBlitz3DGraphics } from "./index.ts";
 
 export class InputManager {
     graphics: Blitz3DGraphics;

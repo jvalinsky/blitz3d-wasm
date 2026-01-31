@@ -1,17 +1,20 @@
 {
   "imports": {
     "jszip": "npm:jszip@3.10.1",
-    "three": "npm:three@0.182.0"
+    "three": "npm:three@0.182.0",
+    "std/": "https://deno.land/std@0.224.0/"
   },
   "tasks": {
+    "engine:build": "swift build --product blitz3d-engine --swift-sdk swift-6.2.3-RELEASE_wasm --triple wasm32-unknown-wasip1 -Xlinker --export-all -Xlinker --no-entry -Xswiftc -enable-experimental-feature -Xswiftc Extern -c release && cp .build/wasm32-unknown-wasip1/release/blitz3d-engine.wasm dist/engine.wasm",
     "serve": "deno run -A Tools/serve_dir.ts --root . --port 8000",
     "assets:scpcb:convert": "deno run -A Tools/assets_scpcb_convert.ts",
     "test:deno": "deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests",
-    "dist:report": "deno run -A Tools/dist_report.ts dist --top 20",
-    "test:web:build": "deno task web:build && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno run -A Tools/validate_smpk_material_textures.ts dist && deno task dist:report",
+    "test:web:unit": "deno test --allow-read web/src/runtime/runtime.test.ts",
+    "test:web:build": "cd web && deno task build && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno run -A Tools/validate_smpk_material_textures.ts dist && deno task dist:report",
     "test:wasm": "deno run -A browser_tests.js",
     "test:swift": "swift test",
-    "test:all": "deno task test:swift && deno task test:deno && deno task test:web:build && deno task test:wasm",
+    "test:all": "deno task test:swift && deno task test:deno && deno task test:web:build && deno task test:wasm && deno task engine:build",
+    "test:web:unit:run": "deno test --allow-read --allow-net web/src/runtime/runtime.test.ts",
     "memleak:scan": "deno run -A Tools/memleak/scan.ts",
     "memleak:run": "deno run -A --sloppy-imports --node-modules-dir Tools/memleak/leakcheck.ts",
     "memleak:webgpu": "deno run -A --unstable-webgpu Tools/memleak/webgpu_smoke.ts --skip-if-unavailable",

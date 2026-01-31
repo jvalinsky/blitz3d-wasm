@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Blitz3D Thin Runtime - Demo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="console.error('Failed to load Three.js')"></script>
     <style>
         body {
             margin: 0;
@@ -44,11 +44,13 @@
             font-family: monospace;
         }
         button:hover { background: #3a5a7a; }
+        #loading { color: #fa0; }
     </style>
 </head>
 <body>
     <h1>Blitz3D WASM - Thin Runtime Demo</h1>
-    <div id="controls">
+    <div id="loading">Loading Three.js...</div>
+    <div id="controls" style="display:none">
         <button onclick="listExports()">List Exports</button>
         <button onclick="runMain()">Run Main()</button>
     </div>
@@ -103,10 +105,42 @@
     }
     
     async function init() {
+        // Wait for Three.js to be available
+        const waitForThree = () => {
+            return new Promise((resolve, reject) => {
+                if (typeof THREE !== 'undefined') {
+                    resolve(THREE);
+                } else {
+                    setTimeout(() => {
+                        if (typeof THREE !== 'undefined') {
+                            resolve(THREE);
+                        } else {
+                            reject(new Error('Three.js failed to load'));
+                        }
+                    }, 100);
+                }
+            });
+        };
+        
+        try {
+            await waitForThree();
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('controls').style.display = 'block';
+        } catch (e) {
+            console.error('Three.js not available:', e.message);
+            document.getElementById('loading').textContent = 'Error: Three.js failed to load';
+            return;
+        }
+        
         console.log('Initializing Blitz3D Thin Runtime...');
         
         const canvas = document.getElementById('canvas');
-        runtime = new Blitz3DThinRuntime(canvas);
+        try {
+            runtime = new Blitz3DThinRuntime(canvas);
+        } catch (e) {
+            console.error('Failed to create runtime:', e.message);
+            return;
+        }
         
         // Load WASM
         console.log('Loading particles.wasm...');

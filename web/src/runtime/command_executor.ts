@@ -1,5 +1,5 @@
-import type { Cmd } from "../shared/command_buffer";
-import { CmdOpcode } from "../shared/command_buffer";
+import type { Cmd } from "../shared/command_buffer.ts";
+import { CmdOpcode } from "../shared/command_buffer.ts";
 
 export type CommandExecutor = {
   onCreateEntity?: (entityType: number, parent: number, id: number) => void;

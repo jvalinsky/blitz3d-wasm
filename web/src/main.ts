@@ -1,10 +1,10 @@
-import { Blitz3DCore } from "./runtime/core";
-import { Blitz3DGraphics } from "./runtime/graphics";
-import { Blitz3DFileIO } from "./runtime/fileio";
-import { initCmdBuf } from "./shared/command_buffer";
-import { assertCmdBufAbi } from "./shared/cmdbuf_abi";
-import { EntityTableView } from "./shared/entity_table";
-import { BootStateMachine } from "./shared/boot_state_machine";
+import { Blitz3DCore } from "./runtime/core.ts";
+import { Blitz3DGraphics } from "./runtime/graphics/index.ts";
+import { Blitz3DFileIO } from "./runtime/fileio.ts";
+import { initCmdBuf } from "./shared/command_buffer.ts";
+import { assertCmdBufAbi } from "./shared/cmdbuf_abi.ts";
+import { EntityTableView } from "./shared/entity_table.ts";
+import { BootStateMachine } from "./shared/boot_state_machine.ts";
 
 type LoaderElements = {
   overlay: HTMLElement;
@@ -1101,7 +1101,7 @@ const runInitIfPresent = async (
     let lastLog = 0;
     await fileIO.preloadAssetGroup(group, {
       concurrency: 4,
-      onProgress: (loaded, total, file) => {
+      onProgress: (loaded: number, total: number, file: string) => {
         const now = performance.now();
         if (now - last < 50 && loaded !== total) return;
         last = now;
@@ -1359,7 +1359,7 @@ async function init() {
     );
 
     const manifestPromise = fileIO.loadAssetManifest(BOOT_MANIFEST_PATH).then(
-      (success) => {
+      (success: boolean) => {
         boot.setPhase("LOAD_MANIFEST", success ? "loaded" : "failed");
         if (success) {
           console.log("Manifest loaded early");
@@ -1373,7 +1373,7 @@ async function init() {
           let lastUpdate = 0;
           bootPreload = fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
             concurrency: 4,
-            onProgress: (loaded, total, file) => {
+            onProgress: (loaded: number, total: number, file: string) => {
               const now = performance.now();
               if (now - lastUpdate > 32 || loaded === total) {
                 const ratio = total ? loaded / total : 0;
@@ -1403,7 +1403,7 @@ async function init() {
             },
           });
 
-          bootPreload.catch((err) => {
+          bootPreload?.catch((err: unknown) => {
             console.error("Boot asset preload failed:", err);
             diagnosticsState.Assets = "error";
             loader.diagnostics.innerHTML = formatDiagnostics(diagnosticsState);
@@ -1997,6 +1997,11 @@ async function init() {
     updateLoader(loader, { section: "wasm", text: "Running", progress: 1 });
     loader.overlay.style.display = "none";
 
+    // Launch Thin Client Demo if active
+    if (graphics.wasmManager) {
+      runThinClientDemo(graphics);
+    }
+
     // Continue with facility assets if available
     if (
       manifestLoaded && fileIO.assetManifest?.groups?.facility_assets?.length
@@ -2007,7 +2012,7 @@ async function init() {
 
       fileIO.preloadAssetGroup("facility_assets", {
         concurrency: 2, // Reduced concurrency
-        onProgress: (loaded, total, file) => {
+        onProgress: (loaded: number, total: number, file: string) => {
           loadedAssets = loaded;
           const now = performance.now();
 
@@ -2028,7 +2033,7 @@ async function init() {
             lastUpdate = now;
           }
         },
-      }).catch((err) => console.error("Facility asset preload failed:", err));
+      }).catch((err: unknown) => console.error("Facility asset preload failed:", err));
     }
   } catch (e: any) {
     console.error("Game Launch Error:", e);
@@ -2064,4 +2069,72 @@ async function init() {
   }
 }
 
+// Demo Scene (Thin Client)
+function runThinClientDemo(graphics: Blitz3DGraphics) {
+  console.log("Starting Thin Client Demo (Physics Verification)...");
+  const bridge = graphics.wasmManager!.bridge;
+
+  // 1. Create Camera (Player)
+  const cam = bridge.createCamera(0);
+  bridge.setPosition(cam, 0, 5, -20);
+  bridge.cameraRange(cam, 0.1, 100);
+  bridge.entityRadius(cam, 1, 1);
+  bridge.entityType(cam, 1); // Type 1 = Player
+  bridge.collisions(1, 2, 2, 2); // Player(1) -> Level(2) : Method 2 (Poly), Response 2 (Slide)
+
+  // 2. Attach FPS Controller
+  bridge.createFPSController(cam);
+
+  // 3. Create Light
+  const light = bridge.createLight(2, 0); // Point light
+  bridge.setPosition(light, 0, 20, 0);
+  bridge.lightRange(light, 50);
+
+  // 4. Create Floor (Manual Mesh)
+  const floor = bridge.createMeshEntity(0);
+  const surf = bridge.exports.AddSurface(floor, 4, 6);
+  // Manual quad (indices 0,1,2,3)
+  const size = 50;
+  bridge.exports.SetVertex(floor, surf, 0, -size, 0, -size, 0, 0);
+  bridge.exports.SetVertex(floor, surf, 1, size, 0, -size, 1, 0);
+  bridge.exports.SetVertex(floor, surf, 2, size, 0, size, 1, 1);
+  bridge.exports.SetVertex(floor, surf, 3, -size, 0, size, 0, 1);
+
+  // Triangles (indices 0,1)
+  bridge.exports.SetTriangle(floor, surf, 0, 0, 2, 1);
+  bridge.exports.SetTriangle(floor, surf, 1, 0, 3, 2);
+
+  bridge.entityType(floor, 2); // Level
+  bridge.entityColor(floor, 100, 100, 100); // Gray
+
+  // 5. Create "Corner" (2 Walls)
+  const wall = bridge.createMeshEntity(0);
+  const wSurf = bridge.exports.AddSurface(wall, 4 + 4, 6 + 6);
+
+  // Wall 1 (X-axis face)
+  bridge.exports.SetVertex(wall, wSurf, 0, -10, 0, 5, 0, 0);
+  bridge.exports.SetVertex(wall, wSurf, 1, 10, 0, 5, 1, 0);
+  bridge.exports.SetVertex(wall, wSurf, 2, 10, 10, 5, 1, 1);
+  bridge.exports.SetVertex(wall, wSurf, 3, -10, 10, 5, 0, 1);
+  bridge.exports.SetTriangle(wall, wSurf, 0, 0, 2, 1);
+  bridge.exports.SetTriangle(wall, wSurf, 1, 0, 3, 2);
+
+  // Wall 2 (Z-axis face, forming a corner) at x=5
+  bridge.exports.SetVertex(wall, wSurf, 4, 10, 0, 5, 0, 0);
+  bridge.exports.SetVertex(wall, wSurf, 5, 10, 0, 25, 1, 0);
+  bridge.exports.SetVertex(wall, wSurf, 6, 10, 10, 25, 1, 1);
+  bridge.exports.SetVertex(wall, wSurf, 7, 10, 10, 5, 0, 1); // Overlaps with Wall 1
+  bridge.exports.SetTriangle(wall, wSurf, 2, 4, 6, 5); // Index offset for triangles? No, raw indices
+  bridge.exports.SetTriangle(wall, wSurf, 3, 4, 7, 6);
+
+  bridge.entityType(wall, 2); // Level
+  bridge.entityColor(wall, 200, 50, 50); // Red
+
+  console.log("Demo setup complete. Use WASD to move into the red corner and verify sliding.");
+}
+
+// 6. Test Sound (Async stub)
+// bridge.exports.EngineLoadSound(...) // Not exposed in bridge class yet, use exports
+// const snd = bridge.exports.EngineLoadSound(ptr...);
+// Skipped for now to keep demo simple.
 init();

@@ -247,7 +247,7 @@ export class XLoader {
     }
 
     parseTextureCoords(block: string) {
-        const uvs = [];
+        const uvs: number[] = [];
         // First number is count
         const countMatch = block.match(/^\s*(\d+)\s*;/);
         if (!countMatch) return uvs;
@@ -268,7 +268,7 @@ export class XLoader {
     }
 
     parseMeshNormals(block: string) {
-        const normals = [];
+        const normals: number[] = [];
         // First number is count
         const countMatch = block.match(/^\s*(\d+)\s*;/);
         if (!countMatch) return normals;

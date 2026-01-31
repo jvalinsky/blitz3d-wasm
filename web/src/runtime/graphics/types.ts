@@ -5,13 +5,16 @@ export const ENGINE_ENTITY_TYPE = { PIVOT: 0, MESH: 1, CAMERA: 2, LIGHT: 3, SPRI
 
 export interface GraphicsCore {
     canvas?: HTMLCanvasElement;
-    ctx2d?: CanvasRenderingContext2D; // Add proper type
+    ctx2d?: CanvasRenderingContext2D;
     memory?: WebAssembly.Memory;
     readString(ptr: number): string;
     allocString: ((str: string) => number) | null;
     entityTable?: any;
     banks?: Map<number, DataView>;
     textCanvas?: HTMLCanvasElement | null;
+    env: any; // Add env for DebugLog etc.
+    cmdBufPtr?: number;
+    cmdBufBytes?: number;
     [key: string]: unknown;
 }
 
@@ -88,4 +91,35 @@ export interface InputHandlers {
     mousemove: (e: MouseEvent) => void;
     mousedown?: (e: MouseEvent) => void;
     mouseup?: (e: MouseEvent) => void;
+}
+
+export interface Blitz3DGraphicsInterface {
+    core: GraphicsCore;
+    renderer: THREE.WebGLRenderer | null;
+    scene: THREE.Scene | null;
+    camera: THREE.Camera | null;
+    animationSystem: any;
+    audioSystem: any;
+    wasmManager: any;
+    inputManager: any;
+
+    entities: Record<number, any>;
+    textures: Record<number, any>;
+    images: Record<number, any>;
+    brushes: Record<number, any>;
+    surfaces: Record<number, any>;
+
+    nextImageId: number;
+    nextTextureId: number;
+    nextEntityId: number;
+
+    lastTime: number;
+    lastPick: PickResult | null;
+
+    enablePointerLock?: boolean;
+
+    engineCreate(gameId: number, type: number, parentGameId?: number): number;
+    eid(gameId: number): number;
+    engineCall(gameId: number, fn: (engineId: number) => void): void;
+    [key: string]: any;
 }

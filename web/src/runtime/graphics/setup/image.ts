@@ -1,16 +1,15 @@
-import { Blitz3DGraphics } from "../index";
-import { Blitz3DImage } from "../types";
+import { Blitz3DGraphicsInterface, Blitz3DImage } from "../types.ts";
 import * as THREE from "three";
 
-export function setupImage(this: Blitz3DGraphics, imports: any) {
+export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     // Helpers for buffer-backed pixel operations (ImageBuffer/TextureBuffer/etc).
     const getBufferContext = (bufferId: number) => {
         // BackBuffer/front buffer use the shared text canvas
         if (!bufferId || bufferId === -1) {
-            return this.core.ctx2d || null;
+            return graphics.core.ctx2d || null;
         }
 
-        const img = this.images[bufferId];
+        const img = graphics.images[bufferId];
         if (!img) return null;
 
         // Lazily create an offscreen canvas for writable images
@@ -31,11 +30,11 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
 
     // Image Functions
     imports.env.LoadImage = (pathPtr: number) => {
-        const path = this.core.readString(pathPtr);
+        const path = graphics.core.readString(pathPtr);
         const img = new Image();
-        const id = this.nextImageId++;
+        const id = graphics.nextImageId++;
 
-        this.images[id] = {
+        graphics.images[id] = {
             type: "image",
             element: img,
             width: 0,
@@ -43,9 +42,9 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
             loaded: false,
             loading: new Promise<void>((resolve) => {
                 img.onload = () => {
-                    this.images[id].width = img.width;
-                    this.images[id].height = img.height;
-                    this.images[id].loaded = true;
+                    graphics.images[id].width = img.width;
+                    graphics.images[id].height = img.height;
+                    graphics.images[id].loaded = true;
                     resolve();
                 };
             }),
@@ -66,11 +65,11 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.CreateImage = (width: number, height: number, frames: number) => {
-        const id = this.nextImageId++;
+        const id = graphics.nextImageId++;
         const canvas = document.createElement("canvas");
         canvas.width = Math.max(1, width);
         canvas.height = Math.max(1, height);
-        this.images[id] = {
+        graphics.images[id] = {
             type: "image",
             element: canvas as any,
             width: canvas.width,
@@ -85,8 +84,8 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
             loading: Promise.resolve(),
         };
         // Add custom properties
-        (this.images[id] as any).canvas = canvas;
-        (this.images[id] as any).canvasCtx = canvas.getContext("2d");
+        (graphics.images[id] as any).canvas = canvas;
+        (graphics.images[id] as any).canvasCtx = canvas.getContext("2d");
         return id;
     };
 
@@ -95,9 +94,9 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
         const tex = new THREE.DataTexture(data, width || 1, height || 1);
         tex.needsUpdate = true;
         tex.image = { width: width || 1, height: height || 1, data: data as any };
-        tex.name = `runtime_texture_${this.nextTextureId}`;
-        const id = this.nextTextureId++;
-        this.textures[id] = {
+        tex.name = `runtime_texture_${graphics.nextTextureId}`;
+        const id = graphics.nextTextureId++;
+        graphics.textures[id] = {
             type: "texture",
             texture: tex,
             width: width || 1,
@@ -127,31 +126,31 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.DrawImage = (imgId: number, x: number, y: number, frame: number) => {
-        const img = this.images[imgId];
-        if (img && img.type === "image" && img.loaded && this.core.ctx2d) {
-            drawImageTransformed(this.core.ctx2d, img, x, y, (dx, dy) => {
-                this.core.ctx2d!.drawImage(img.element, dx, dy);
+        const img = graphics.images[imgId];
+        if (img && img.type === "image" && img.loaded && graphics.core.ctx2d) {
+            drawImageTransformed(graphics.core.ctx2d, img, x, y, (dx, dy) => {
+                graphics.core.ctx2d!.drawImage(img.element, dx, dy);
             });
         }
     };
 
     imports.env.DrawBlock = (imgId: number, x: number, y: number, frame: number) => {
-        const img = this.images[imgId];
-        if (img && img.type === "image" && img.loaded && this.core.ctx2d) {
-            const oldOp = this.core.ctx2d.globalCompositeOperation;
-            this.core.ctx2d.globalCompositeOperation = "source-over";
-            drawImageTransformed(this.core.ctx2d, img, x, y, (dx, dy) => {
-                this.core.ctx2d!.drawImage(img.element, dx, dy);
+        const img = graphics.images[imgId];
+        if (img && img.type === "image" && img.loaded && graphics.core.ctx2d) {
+            const oldOp = graphics.core.ctx2d.globalCompositeOperation;
+            graphics.core.ctx2d.globalCompositeOperation = "source-over";
+            drawImageTransformed(graphics.core.ctx2d, img, x, y, (dx, dy) => {
+                graphics.core.ctx2d!.drawImage(img.element, dx, dy);
             });
-            this.core.ctx2d.globalCompositeOperation = oldOp;
+            graphics.core.ctx2d.globalCompositeOperation = oldOp;
         }
     };
 
     imports.env.DrawImageRect = (imgId: number, x: number, y: number, rx: number, ry: number, rw: number, rh: number, frame: number) => {
-        const img = this.images[imgId];
-        if (img && img.type === "image" && img.loaded && this.core.ctx2d) {
-            drawImageTransformed(this.core.ctx2d, img, x, y, (dx, dy) => {
-                this.core.ctx2d!.drawImage(
+        const img = graphics.images[imgId];
+        if (img && img.type === "image" && img.loaded && graphics.core.ctx2d) {
+            drawImageTransformed(graphics.core.ctx2d, img, x, y, (dx, dy) => {
+                graphics.core.ctx2d!.drawImage(
                     img.element,
                     rx,
                     ry,
@@ -167,38 +166,38 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.TileImage = (imgId: number, x: number, y: number, frame: number) => {
-        const img = this.images[imgId];
-        if (img && img.type === "image" && img.loaded && this.core.ctx2d) {
+        const img = graphics.images[imgId];
+        if (img && img.type === "image" && img.loaded && graphics.core.ctx2d) {
             // TileImage usually ignores rotation/scale in basic implementations,
             // but checking if we need to support it.
             // For now, standard implementation.
-            const pattern = this.core.ctx2d.createPattern(img.element, "repeat");
-            if (pattern && this.core.canvas) {
-                this.core.ctx2d.fillStyle = pattern;
-                this.core.ctx2d.translate(x, y); // Offset pattern
-                this.core.ctx2d.fillRect(
+            const pattern = graphics.core.ctx2d.createPattern(img.element, "repeat");
+            if (pattern && graphics.core.canvas) {
+                graphics.core.ctx2d.fillStyle = pattern;
+                graphics.core.ctx2d.translate(x, y); // Offset pattern
+                graphics.core.ctx2d.fillRect(
                     -x,
                     -y,
-                    this.core.canvas.width,
-                    this.core.canvas.height,
+                    graphics.core.canvas.width,
+                    graphics.core.canvas.height,
                 );
-                this.core.ctx2d.translate(-x, -y);
+                graphics.core.ctx2d.translate(-x, -y);
             }
         }
     };
 
     imports.env.ImageWidth = (imgId: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         return (img && img.type === "image") ? img.width : 0;
     };
 
     imports.env.ImageHeight = (imgId: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         return (img && img.type === "image") ? img.height : 0;
     };
 
     imports.env.HandleImage = (imgId: number, x: number, y: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img && img.type === "image") {
             img.handleX = x;
             img.handleY = y;
@@ -206,7 +205,7 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.MidHandle = (imgId: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img && img.type === "image") {
             img.handleX = img.width / 2;
             img.handleY = img.height / 2;
@@ -218,14 +217,14 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.RotateImage = (imgId: number, angle: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img && img.type === "image") {
             img.rotation = angle;
         }
     };
 
     imports.env.ScaleImage = (imgId: number, xs: number, ys: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img && img.type === "image") {
             img.scaleX = xs;
             img.scaleY = ys;
@@ -233,7 +232,7 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.ResizeImage = (imgId: number, w: number, h: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img && img.type === "image") {
             // Resize logic ideally needs to resample.
             // For now, hack using scale if not strictly required to be destructive
@@ -250,8 +249,8 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     };
 
     imports.env.FreeImage = (imgId: number) => {
-        if (this.images[imgId]) {
-            const img = this.images[imgId];
+        if (graphics.images[imgId]) {
+            const img = graphics.images[imgId];
             try {
                 if (img?.element && img.element instanceof HTMLImageElement) {
                     img.element.onload = null;
@@ -259,12 +258,12 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
                     img.element.src = "";
                 }
             } catch { }
-            delete this.images[imgId];
+            delete graphics.images[imgId];
         }
     };
 
     imports.env.Handle = (imgId: number) => {
-        const img = this.images[imgId];
+        const img = graphics.images[imgId];
         if (img) {
             // Blitz3D exposes handleX/handleY; here we pack X in low 16 bits, Y in high 16 bits.
             return ((img.handleY & 0xffff) << 16) | (img.handleX & 0xffff);
@@ -282,8 +281,8 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
     imports.env.ImageBuffer = (imgId: number, frame: number) => imgId || -1;
     imports.env.TextureBuffer = (texId: number) => texId || -1;
     imports.env.SetBuffer = (bufferId: number) => {
-        (this as any).currentBuffer = bufferId;
-        if (this.core.ctx2d) {
+        (graphics as any).currentBuffer = bufferId;
+        if (graphics.core.ctx2d) {
             // Future: switch active context if bufferId is an image
         }
     };
@@ -340,4 +339,68 @@ export function setupImage(this: Blitz3DGraphics, imports: any) {
         }
     };
     imports.env.CopyPixelFast = imports.env.CopyPixel;
+
+    imports.env.js_ReadImagePixels = (imgId: number, bufferPtr: number) => {
+        const img = graphics.images[imgId];
+        if (!img || img.type !== "image") return;
+
+        const ctx = getBufferContext(imgId);
+        if (!ctx) return;
+
+        const width = img.width || 1;
+        const height = img.height || 1;
+        const imageData = ctx.getImageData(0, 0, width, height);
+
+        // Copy to WASM memory
+        // bufferPtr points to Int32 array (ARGB)
+        // imageData.data is Uint8ClampedArray (RGBA)
+
+        if (graphics.core.memory) {
+            const memView = new DataView(graphics.core.memory.buffer);
+            // Verify bounds?
+
+            for (let i = 0; i < width * height; i++) {
+                const r = imageData.data[i * 4];
+                const g = imageData.data[i * 4 + 1];
+                const b = imageData.data[i * 4 + 2];
+                const a = imageData.data[i * 4 + 3];
+
+                // ARGB
+                const argb = (a << 24) | (r << 16) | (g << 8) | b;
+                memView.setInt32(bufferPtr + i * 4, argb, true); // Little endian
+            }
+        }
+    };
+
+    imports.env.js_WriteImagePixels = (imgId: number, bufferPtr: number) => {
+        const img = graphics.images[imgId];
+        if (!img || img.type !== "image") return;
+
+        const ctx = getBufferContext(imgId);
+        if (!ctx) return;
+
+        const width = img.width || 1;
+        const height = img.height || 1;
+        // Create fresh ImageData
+        const imageData = ctx.createImageData(width, height);
+
+        if (graphics.core.memory) {
+            const memView = new DataView(graphics.core.memory.buffer);
+
+            for (let i = 0; i < width * height; i++) {
+                const argb = memView.getInt32(bufferPtr + i * 4, true);
+
+                const a = (argb >>> 24) & 0xFF; // Unsigned shift
+                const r = (argb >> 16) & 0xFF;
+                const g = (argb >> 8) & 0xFF;
+                const b = argb & 0xFF;
+
+                imageData.data[i * 4] = r;
+                imageData.data[i * 4 + 1] = g;
+                imageData.data[i * 4 + 2] = b;
+                imageData.data[i * 4 + 3] = a;
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+    };
 }

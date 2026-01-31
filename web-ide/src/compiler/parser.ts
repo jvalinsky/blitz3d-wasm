@@ -79,6 +79,23 @@ export class Parser {
     if (this.match(TokenType.SELECT)) return this.selectStatement();
     if (this.match(TokenType.RETURN)) return this.returnStatement();
 
+    // Check for Print statement (special case - can be called without parens)
+    if (this.check(TokenType.IDENTIFIER)) {
+      const name = this.peek().value.toLowerCase();
+      if (name === 'print') {
+        this.advance(); // consume 'Print'
+        const arg = this.expression();
+        return {
+          type: 'ExpressionStatement',
+          expression: {
+            type: 'FunctionCall',
+            name: { type: 'Identifier', name: 'Print' },
+            arguments: [arg]
+          } as AST.FunctionCall
+        };
+      }
+    }
+
     // Expression statement (assignment or function call)
     return this.expressionStatement();
   }

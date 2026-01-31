@@ -146,9 +146,9 @@ Print result</textarea>
         </div>
     </div>
     
-    <script src="dist/compiler.bundle.js"></script>
+    <script src="dist/compiler-final.js"></script>
     <script>
-        const { Lexer, Parser, CodeGenerator } = window.Blitz3DCompiler;
+        // Compiler classes are already available globally from the bundle
         
         window.switchTab = function(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -175,6 +175,7 @@ Print result</textarea>
                 const startTime = performance.now();
                 
                 // Lexical analysis
+                const { Lexer, Parser, CodeGenerator } = window.Blitz3DCompiler;
                 const lexer = new Lexer(source);
                 const tokenResult = lexer.tokenize();
                 

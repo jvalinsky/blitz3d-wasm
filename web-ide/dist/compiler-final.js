@@ -1303,17 +1303,33 @@ class CodeGenerator {
                 break;
             }
             case 'Identifier': {
-                const local = this.locals.get(expr.name);
+                const varName = expr.name;
+                // Try to find variable with or without type suffix
+                let local = this.locals.get(varName);
+                if (!local) {
+                    // Try with % suffix (int)
+                    local = this.locals.get(varName + '%');
+                }
+                if (!local) {
+                    // Try with # suffix (float)
+                    local = this.locals.get(varName + '#');
+                }
+                if (!local) {
+                    // Try with $ suffix (string)
+                    local = this.locals.get(varName + '$');
+                }
                 if (local) {
-                    this.emit(`local.get $${expr.name}`);
+                    // Use the actual variable name with suffix
+                    const actualName = Array.from(this.locals.keys()).find(k => k === varName || k.startsWith(varName) && k.length === varName.length + 1);
+                    this.emit(`local.get $${actualName}`);
                 }
                 else {
-                    const global = this.globals.get(expr.name);
+                    const global = this.globals.get(varName);
                     if (global) {
-                        this.emit(`global.get $${expr.name}`);
+                        this.emit(`global.get $${varName}`);
                     }
                     else {
-                        this.emit(`; ERROR: Unknown identifier ${expr.name}`);
+                        this.emit(`; ERROR: Unknown identifier ${varName}`);
                         this.emit('i32.const 0');
                     }
                 }

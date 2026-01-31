@@ -11,6 +11,10 @@ let package = Package(
             name: "blitz3d-wasm",
             targets: ["blitz3d-wasm"]
         ),
+        .executable(
+            name: "blitz3d-compiler-wasm",
+            targets: ["blitz3d-compiler-wasm"]
+        ),
         .library(
             name: "Blitz3DCompiler",
             targets: ["Blitz3DCompiler"]
@@ -23,6 +27,11 @@ let package = Package(
             path: "Tools/wasm-cli",
             exclude: ["AGENTs.md"]
             // Note: -stack_size linker flag only works on macOS
+        ),
+        .executableTarget(
+            name: "blitz3d-compiler-wasm",
+            dependencies: ["Blitz3DCompiler"],
+            path: "Tools/compiler-wasm"
         ),
         .target(
             name: "Blitz3DEngine",

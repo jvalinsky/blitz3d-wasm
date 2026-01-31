@@ -337,11 +337,17 @@ export class Lexer {
       this.advance();
     }
     
+    // Include type suffix if present (%, #, $)
+    if (this.peek() === '%' || this.peek() === '#' || this.peek() === '$') {
+      this.advance();
+    }
+    
     const value = this.source.substring(start, this.pos);
     const lowerValue = value.toLowerCase();
     
-    // Check for keyword
-    const type = KEYWORDS[lowerValue] || TokenType.IDENTIFIER;
+    // Check for keyword (without type suffix)
+    const baseValue = value.replace(/[%#$]$/, '').toLowerCase();
+    const type = KEYWORDS[baseValue] || TokenType.IDENTIFIER;
     
     return this.makeToken(type, value, startLine, startColumn);
   }

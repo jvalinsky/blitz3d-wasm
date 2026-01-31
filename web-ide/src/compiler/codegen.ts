@@ -456,13 +456,22 @@ export class CodeGenerator {
   }
 
   private generateAssignment(expr: AST.Assignment): void {
-    // Generate value
-    this.generateExpression(expr.value);
-    
     // Set target
     if (expr.target.type === 'Identifier') {
       const varName = expr.target.name;
-      const local = this.locals.get(varName);
+      let local = this.locals.get(varName);
+      
+      // Auto-declare variable if it doesn't exist (Blitz3D implicit declaration)
+      if (!local && !this.globals.has(varName)) {
+        const wasmType = 'i32'; // Default to int for now
+        const localIndex = this.localIndex++;
+        this.locals.set(varName, { index: localIndex, type: wasmType });
+        this.emit(`(local $${varName} ${wasmType})`);
+        local = this.locals.get(varName);
+      }
+      
+      // Generate value
+      this.generateExpression(expr.value);
       if (local) {
         this.emit(`local.set $${varName}`);
       } else {

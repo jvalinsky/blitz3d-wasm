@@ -7,6 +7,8 @@ import { EntityTableView } from "../shared/entity_table";
 
 export class Blitz3DCore {
   [key: string]: any;
+  allocString: ((str: string) => number) | null;
+  textCanvas: HTMLCanvasElement | null;
 
   constructor() {
     this.memory = null;
@@ -1424,7 +1426,7 @@ export class Blitz3DCore {
         if (index >= 0 && index < entries.length) {
           const filename = entries[index];
           if (this.allocString) {
-            return this.allocString(filename);
+            return this.allocString(filename as string);
           }
         }
       }

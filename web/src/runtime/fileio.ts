@@ -21,6 +21,52 @@ type PreloadOptions = {
   onProgress?: (loaded: number, total: number | null, file?: string) => void;
 };
 
+interface VirtualFile {
+  data: Uint8Array;
+  size: number;
+  position: number;
+  path: string;
+  eof: boolean;
+}
+
+interface Core {
+  readString(ptr: number): string;
+  allocString: ((str: string) => number) | null;
+  memory?: WebAssembly.Memory;
+}
+
+interface AssetBundleFile {
+  path: string;
+  data: Uint8Array;
+  size: number;
+}
+
+interface WASMImportsEnv {
+  ReadFile?: (pathPtr: number) => number;
+  WriteFile?: (pathPtr: number) => number;
+  CloseFile?: (stream: number) => void;
+  ReadInt?: (stream: number) => number;
+  ReadFloat?: (stream: number) => number;
+  ReadString?: (stream: number) => number;
+  ReadByte?: (stream: number) => number;
+  ReadShort?: (stream: number) => number;
+  ReadUShort?: (stream: number) => number;
+  ReadUInt?: (stream: number) => number;
+  ReadDouble?: (stream: number) => number;
+  Eof?: (stream: number) => number;
+  FileSize?: (pathPtr: number) => number;
+  FileType?: (pathPtr: number) => number;
+  ReadData?: (stream: number, buf: number, count: number) => number;
+  FileSeek?: (stream: number, position: number) => number;
+  FileTell?: (stream: number) => number;
+  ReadPString?: (stream: number) => number;
+  ReadLString?: (stream: number) => number;
+}
+
+interface WASMImports {
+  env: WASMImportsEnv;
+}
+
 // Browser shim for path
 const path = {
   join: (...args: string[]) => args.join("/").replace(/\/+/g, "/"),
@@ -28,8 +74,24 @@ const path = {
 };
 
 export class Blitz3DFileIO {
-  [key: string]: any;
-  constructor(core) {
+  [key: string]: unknown;
+  core: Core;
+  fileSystem: Map<string, VirtualFile>;
+  _fileSystemByLower: Map<string, string>;
+  openFiles: Map<number, VirtualFile>;
+  nextFileHandle: number;
+  assetBundle: { files: AssetBundleFile[] } | null;
+  assetManifest: AssetManifest | null;
+  pendingLoads: Map<string, Promise<void>>;
+  basePath: string;
+  _manifestByPath: Map<string, AssetManifestEntry> | null;
+  _manifestByPathLower: Map<string, AssetManifestEntry> | null;
+  _missingCounts: Map<string, number>;
+  _missingLastLogMs: Map<string, number>;
+  _missingGlobalLastMs: number;
+  _registeredCount: number;
+
+  constructor(core: Core = { readString: () => "", allocString: () => 0 }) {
     this.core = core;
     this.fileSystem = new Map();
     this._fileSystemByLower = new Map();
@@ -39,12 +101,12 @@ export class Blitz3DFileIO {
     this.assetManifest = null;
     this.pendingLoads = new Map();
     this.basePath = "";
-    this.syncFetchEnabled = false;
     this._manifestByPath = null;
     this._manifestByPathLower = null;
     this._missingCounts = new Map();
     this._missingLastLogMs = new Map();
     this._missingGlobalLastMs = 0;
+    this._registeredCount = 0;
   }
 
   /**
@@ -54,7 +116,7 @@ export class Blitz3DFileIO {
    */
   init(
     basePath = "",
-    assetBundle = null,
+    assetBundle: { files: AssetBundleFile[] } | null = null,
     assetManifest: AssetManifest | null = null,
   ) {
     this.basePath = basePath;
@@ -65,7 +127,7 @@ export class Blitz3DFileIO {
 
     if (assetBundle) {
       console.log(
-        `Asset bundle loaded with ${assetBundle.fileCount || 0} files`,
+        `Asset bundle loaded: ${assetBundle.files.length} files`,
       );
     }
 
@@ -85,12 +147,13 @@ export class Blitz3DFileIO {
       const response = await fetch(bundlePath);
       const data = await response.json();
       this.assetBundle = data;
+      const fileCount = data.files.length;
       console.log(
-        `Asset bundle loaded: ${this.assetBundle.files.length} files`,
+        `Asset bundle loaded: ${fileCount} files`,
       );
       return true;
-    } catch (error: any) {
-      console.error(`Failed to load asset bundle: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`Failed to load asset bundle: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   }
@@ -99,7 +162,7 @@ export class Blitz3DFileIO {
     try {
       const response = await fetch(manifestPath);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const data = (await response.json()) as AssetManifest;
+      const data = await response.json() as AssetManifest;
       this.assetManifest = data;
       if (data.basePath) {
         this.basePath = data.basePath;
@@ -107,8 +170,8 @@ export class Blitz3DFileIO {
       this._rebuildManifestIndex();
       console.log(`Asset manifest loaded: ${data.files?.length ?? 0} files`);
       return true;
-    } catch (error: any) {
-      console.error(`Failed to load asset manifest: ${error.message}`);
+    } catch (error: unknown) {
+      console.error(`Failed to load asset manifest: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }
   }
@@ -152,9 +215,8 @@ export class Blitz3DFileIO {
     const count = (this._missingCounts.get(resolvedPath) ?? 0) + 1;
     this._missingCounts.set(resolvedPath, count);
 
-    (globalThis as any).__SCPCB_LAST_FILE_REQ = resolvedPath;
+    (globalThis as { __SCPCB_LAST_FILE_REQ?: string }).__SCPCB_LAST_FILE_REQ = resolvedPath;
 
-    // Throttle per-path logs to avoid a log storm in tight loops.
     if (count === 1 || now - prev > 500) {
       this._missingLastLogMs.set(resolvedPath, now);
       console.warn(`[FileIO] ${context}: ${resolvedPath} (count=${count})`);
@@ -164,30 +226,19 @@ export class Blitz3DFileIO {
     }
   }
 
-  _syncFetchAndRegister(entry: AssetManifestEntry, resolvedPath: string) {
-    if (!this.syncFetchEnabled) return false;
-    if (!entry) return false;
-    if (this.fileSystem.has(resolvedPath)) return true;
-    if (this.pendingLoads.has(resolvedPath)) return false;
-
-    const url = entry.url ?? path.join(this.basePath, entry.path);
-    try {
-      const xhr = new XMLHttpRequest();
-      xhr.open("GET", url, false);
-      xhr.responseType = "arraybuffer";
-      xhr.send(null);
-      if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
-        const buf = new Uint8Array(xhr.response as ArrayBuffer);
-        this.registerFile(resolvedPath, buf);
-        return true;
-      }
-      console.warn(
-        `[FileIO] sync fetch failed: ${resolvedPath} (HTTP ${xhr.status})`,
-      );
-    } catch (e) {
-      console.warn(`[FileIO] sync fetch error: ${resolvedPath}`, e);
+  _dispatchErrorEvent(error: Error, filePath: string) {
+    const event = new CustomEvent("blitz3d-file-error", {
+      detail: {
+        error,
+        filePath,
+        timestamp: Date.now(),
+      },
+      bubbles: true,
+    });
+    console.error(`[FileIO] Error loading ${filePath}:`, error.message);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(event);
     }
-    return false;
   }
 
   _queueAsyncFetch(entry: AssetManifestEntry, resolvedPath: string) {
@@ -195,7 +246,7 @@ export class Blitz3DFileIO {
     if (this.fileSystem.has(resolvedPath)) return;
     if (this.pendingLoads.has(resolvedPath)) return;
     this.fetchAndRegister(entry).catch((error) => {
-      console.error(`Failed to fetch asset ${resolvedPath}:`, error);
+      this._dispatchErrorEvent(error instanceof Error ? error : new Error(String(error)), resolvedPath);
     });
   }
 
@@ -236,18 +287,15 @@ export class Blitz3DFileIO {
         const entry = queue.shift();
         if (!entry) return;
         try {
-          (globalThis as any).__SCPCB_INIT_FILE = entry.path;
+          (globalThis as { __SCPCB_INIT_FILE?: string }).__SCPCB_INIT_FILE = entry.path;
         } catch {}
-        // IMPORTANT: for group preloads, we want progress in *files*, not per-network-chunk bytes.
-        // Passing the callback into `fetchAndRegister` can generate a huge volume of progress events
-        // (and in debug mode, a lot of DOM/log work). Keep it simple: emit one progress event per file.
         await this.fetchAndRegister(entry);
         completed += 1;
         if (options.onProgress) {
           options.onProgress(completed, total, entry.path);
         }
         try {
-          (globalThis as any).__SCPCB_ASSET_PRELOAD = {
+          (globalThis as { __SCPCB_ASSET_PRELOAD?: { loaded: number; total: number; file: string } }).__SCPCB_ASSET_PRELOAD = {
             loaded: completed,
             total,
             file: entry.path,
@@ -259,6 +307,42 @@ export class Blitz3DFileIO {
     };
 
     await Promise.all(new Array(concurrency).fill(0).map(() => pump()));
+  }
+
+  async fetchWithRetry(
+    url: string,
+    maxRetries = 3,
+    baseDelay = 1000,
+  ): Promise<Response> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          if (response.status >= 500 && attempt < maxRetries - 1) {
+            const delay = baseDelay * Math.pow(2, attempt);
+            console.warn(`[FileIO] Server error ${response.status}, retrying in ${delay}ms...`);
+            await new Promise((r) => setTimeout(r, delay));
+            continue;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+
+        if (attempt < maxRetries - 1) {
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.warn(`[FileIO] Fetch failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+        }
+      }
+    }
+
+    throw lastError ?? new Error("Fetch failed after all retries");
   }
 
   async fetchAndRegister(
@@ -277,21 +361,18 @@ export class Blitz3DFileIO {
     }
 
     const loadPromise = (async () => {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const response = await this.fetchWithRetry(url);
 
       const totalHint = (typeof entry.size === "number" && entry.size > 0)
         ? entry.size
         : (() => {
-          const contentLength = response.headers.get("Content-Length");
-          return contentLength ? Number(contentLength) : null;
-        })();
+            const contentLength = response.headers.get("Content-Length");
+            return contentLength ? Number(contentLength) : null;
+          })();
 
-      // Fast path for small files (INI/config/etc): avoid streaming loops which can
-      // generate many tiny chunks and trip Firefox's long-task watchdog.
       if ((totalHint ?? 0) > 0 && (totalHint as number) <= 1024 * 1024) {
         try {
-          (globalThis as any).__SCPCB_FETCH_STATUS = {
+          (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
             file: resolvedPath,
             loaded: 0,
             total: totalHint,
@@ -300,7 +381,7 @@ export class Blitz3DFileIO {
 
         const buffer = new Uint8Array(await response.arrayBuffer());
         try {
-          (globalThis as any).__SCPCB_FETCH_STATUS = {
+          (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
             file: resolvedPath,
             loaded: buffer.byteLength,
             total: totalHint,
@@ -308,7 +389,6 @@ export class Blitz3DFileIO {
         } catch {}
         if (onProgress) onProgress(buffer.byteLength, totalHint, resolvedPath);
         this.registerFile(resolvedPath, buffer);
-        // Yield once after registering to keep UI responsive.
         await new Promise((r) => setTimeout(r, 0));
         return;
       }
@@ -334,13 +414,12 @@ export class Blitz3DFileIO {
           loaded += value.length;
           if (onProgress) onProgress(loaded, total, resolvedPath);
           try {
-            (globalThis as any).__SCPCB_FETCH_STATUS = {
+            (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
               file: resolvedPath,
               loaded,
               total,
             };
           } catch {}
-          // Yield occasionally to keep the browser responsive (Firefox can otherwise warn/kill).
           const now = performance.now();
           if (loaded - lastYieldLoaded >= 256 * 1024 || now - lastYield >= 16) {
             lastYield = now;
@@ -373,16 +452,16 @@ export class Blitz3DFileIO {
    * @param {string} filePath - Virtual file path
    * @param {Uint8Array} data - File contents
    */
-  registerFile(filePath, data) {
+  registerFile(filePath: string, data: Uint8Array) {
     const resolvedPath = this.resolvePath(filePath);
     this.fileSystem.set(resolvedPath, {
       data: data,
       size: data.length,
       position: 0,
+      path: resolvedPath,
+      eof: false,
     });
     this._fileSystemByLower.set(resolvedPath.toLowerCase(), resolvedPath);
-    // Asset preloads can register thousands of files; per-file logging can freeze the tab,
-    // especially when `?debug` mirrors logs into the DOM. Keep this low-noise.
     this._registeredCount = (this._registeredCount ?? 0) + 1;
     const n = this._registeredCount as number;
     if (n <= 50 || (n <= 500 && n % 50 === 0) || n % 500 === 0) {
@@ -391,18 +470,12 @@ export class Blitz3DFileIO {
   }
 
   /**
-   * Register a directory of files
-   * @param {string} dirPath - Directory path
-   * @param {Array<string>} extensions - File extensions to include
-   */
-  /**
    * Register a directory of files (Stubbed for Web)
    * @param {string} dirPath - Directory path
    * @param {Array<string>} extensions - File extensions to include
    */
   registerDirectory(
     dirPath: string,
-    // Track B: prefer packed assets; avoid encouraging source model formats in the web build.
     extensions = [".smpk", ".png", ".jpg", ".jpeg", ".bmp", ".ogg", ".wav"],
   ) {
     console.warn("registerDirectory is not supported in browser environment");
@@ -446,7 +519,6 @@ export class Blitz3DFileIO {
       if (strippedRewritten !== stripped) push(strippedRewritten);
     }
 
-    // Dev convenience: some older manifests/servers place Data/* at root.
     if (rpLower.startsWith("data/")) {
       const stripped = rp.slice("data/".length);
       push(stripped);
@@ -461,26 +533,25 @@ export class Blitz3DFileIO {
     return out;
   }
 
-  openFile(filePath) {
+  openFile(filePath: string): number {
+    if (!this._validatePath(filePath)) {
+      console.warn(`[FileIO] Invalid path rejected: ${filePath}`);
+      return 0;
+    }
+
     const candidates = this._openFileCandidates(filePath);
 
     for (const resolvedPath of candidates) {
       const vfsKey = this._fileSystemByLower.get(resolvedPath.toLowerCase()) ?? resolvedPath;
-      // Check virtual file system first
       if (this.fileSystem.has(vfsKey)) {
-        const file = this.fileSystem.get(vfsKey);
+        const file = this.fileSystem.get(vfsKey)!;
         file.position = 0;
         const handle = this.nextFileHandle++;
-        this.openFiles.set(handle, {
-          ...file,
-          path: vfsKey,
-          eof: false,
-        });
+        this.openFiles.set(handle, { ...file, path: vfsKey, eof: false });
         console.log(`Opened file from VFS: ${vfsKey} (handle: ${handle})`);
         return handle;
       }
 
-      // Check asset bundle
       if (this.assetBundle && this.assetBundle.files) {
         const bundleFile = this.assetBundle.files.find((f) =>
           f.path === resolvedPath
@@ -501,19 +572,14 @@ export class Blitz3DFileIO {
         }
       }
 
-      // Try manifest-driven fetch on demand
       const entry = this._getManifestEntry(resolvedPath);
       if (entry) {
-        if (this._syncFetchAndRegister(entry, resolvedPath)) {
-          return this.openFile(resolvedPath);
-        }
-        this._logMissing(resolvedPath, "ReadFile requested missing asset");
+        this._logMissing(resolvedPath, "ReadFile: asset not preloaded, queuing async fetch");
         this._queueAsyncFetch(entry, resolvedPath);
         return 0;
       }
     }
 
-    // Try to read from disk directly (Node.js only)
     console.warn(`File not found: ${candidates[0] ?? this.resolvePath(filePath)}`);
     return 0;
   }
@@ -522,10 +588,11 @@ export class Blitz3DFileIO {
    * Close a file handle
    * @param {number} handle - File handle
    */
-  closeFile(handle) {
+  closeFile(handle: number) {
     if (this.openFiles.has(handle)) {
+      const file = this.openFiles.get(handle)!;
       this.openFiles.delete(handle);
-      console.log(`Closed file handle: ${handle}`);
+      console.log(`Closed file handle: ${handle} (${file.path})`);
     }
   }
 
@@ -534,10 +601,10 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} Byte value (0-255), -1 on EOF
    */
-  readByte(handle) {
+  readByte(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file || file.position >= file.size) {
-      file.eof = true;
+      file!.eof = true;
       return -1;
     }
     return file.data[file.position++];
@@ -548,17 +615,17 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} Signed byte value (-128 to 127)
    */
-  readSignedByte(handle) {
+  readSignedByte(handle: number): number {
     const byte = this.readByte(handle);
     return byte > 127 ? byte - 256 : byte;
   }
 
   /**
-   * Read a short (16-bit integer) from a file
+   * Read a short (16-bit integer)
    * @param {number} handle - File handle
    * @returns {number} Short value
    */
-  readShort(handle) {
+  readShort(handle: number): number {
     const b1 = this.readByte(handle);
     const b2 = this.readByte(handle);
     if (b1 < 0 || b2 < 0) return 0;
@@ -566,11 +633,11 @@ export class Blitz3DFileIO {
   }
 
   /**
-   * Read an unsigned short from a file
+   * Read an unsigned short
    * @param {number} handle - File handle
    * @returns {number} Unsigned short value
    */
-  readUShort(handle) {
+  readUShort(handle: number): number {
     const b1 = this.readByte(handle);
     const b2 = this.readByte(handle);
     if (b1 < 0 || b2 < 0) return 0;
@@ -578,11 +645,11 @@ export class Blitz3DFileIO {
   }
 
   /**
-   * Read a 32-bit integer from a file
+   * Read a 32-bit integer
    * @param {number} handle - File handle
    * @returns {number} Integer value
    */
-  readInt(handle) {
+  readInt(handle: number): number {
     const b1 = this.readByte(handle);
     const b2 = this.readByte(handle);
     const b3 = this.readByte(handle);
@@ -592,16 +659,15 @@ export class Blitz3DFileIO {
       return 0;
     }
 
-    // Little-endian
     return b1 | (b2 << 8) | (b3 << 16) | (b4 << 24);
   }
 
   /**
-   * Read a 32-bit unsigned integer from a file
+   * Read a 32-bit unsigned integer
    * @param {number} handle - File handle
    * @returns {number} Unsigned integer value
    */
-  readUInt(handle) {
+  readUInt(handle: number): number {
     const b1 = this.readByte(handle);
     const b2 = this.readByte(handle);
     const b3 = this.readByte(handle);
@@ -616,28 +682,27 @@ export class Blitz3DFileIO {
   }
 
   /**
-   * Read a 64-bit floating point number from a file
+   * Read a 64-bit floating point number
    * @param {number} handle - File handle
    * @returns {number} Double precision float
    */
-  readDouble(handle) {
+  readDouble(handle: number): number {
     const bytes = new Uint8Array(8);
     for (let i = 0; i < 8; i++) {
       bytes[i] = this.readByte(handle);
       if (bytes[i] < 0) return 0;
     }
 
-    // Little-endian double
     const view = new DataView(bytes.buffer);
     return view.getFloat64(0, true);
   }
 
   /**
-   * Read a 32-bit floating point number from a file
+   * Read a 32-bit floating point number
    * @param {number} handle - File handle
    * @returns {number} Single precision float
    */
-  readFloat(handle) {
+  readFloat(handle: number): number {
     const b1 = this.readByte(handle);
     const b2 = this.readByte(handle);
     const b3 = this.readByte(handle);
@@ -647,10 +712,9 @@ export class Blitz3DFileIO {
       return 0.0;
     }
 
-    // Little-endian float - create bytes array and use DataView
     const bytes = new Uint8Array([b1, b2, b3, b4]);
     const view = new DataView(bytes.buffer);
-    return view.getFloat32(0, true); // true = little-endian
+    return view.getFloat32(0, true);
   }
 
   /**
@@ -658,13 +722,13 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} Pointer to string in WASM memory (0 on failure)
    */
-  readString(handle) {
+  readString(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
 
     let str = "";
     let bytesRead = 0;
-    const maxStringLen = 65536; // 64KB max string length
+    const maxStringLen = 65536;
 
     while (file.position < file.size && bytesRead < maxStringLen) {
       const byte = this.readByte(handle);
@@ -678,8 +742,7 @@ export class Blitz3DFileIO {
       console.warn(`String too long in file: ${file.path}`);
     }
 
-    // Allocate string in WASM memory and return pointer
-    if (this.core && this.core.allocString) {
+    if (this.core && typeof this.core.allocString === "function") {
       return this.core.allocString(str);
     }
 
@@ -688,11 +751,11 @@ export class Blitz3DFileIO {
   }
 
   /**
-   * Read a Pascal-style string (length byte followed by data)
+   * Read a Pascal-style string
    * @param {number} handle - File handle
    * @returns {number} Pointer to string in WASM memory
    */
-  readPString(handle) {
+  readPString(handle: number): number {
     const length = this.readByte(handle);
     if (length < 0) return 0;
 
@@ -703,7 +766,7 @@ export class Blitz3DFileIO {
       str += String.fromCharCode(byte);
     }
 
-    if (this.core && this.core.allocString) {
+    if (this.core && typeof this.core.allocString === "function") {
       return this.core.allocString(str);
     }
     return 0;
@@ -714,7 +777,7 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} Pointer to string in WASM memory
    */
-  readLString(handle) {
+  readLString(handle: number): number {
     const length = this.readInt(handle);
     if (length <= 0) return 0;
 
@@ -725,7 +788,7 @@ export class Blitz3DFileIO {
       str += String.fromCharCode(byte);
     }
 
-    if (this.core && this.core.allocString) {
+    if (this.core && typeof this.core.allocString === "function") {
       return this.core.allocString(str);
     }
     return 0;
@@ -738,17 +801,18 @@ export class Blitz3DFileIO {
    * @param {number} count - Number of bytes to read
    * @returns {number} Number of bytes actually read
    */
-  readData(handle, bufferPtr, count) {
+  readData(handle: number, bufferPtr: number, count: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
 
     const bytesToRead = Math.min(count, file.size - file.position);
     if (bytesToRead <= 0) return 0;
 
-    // Write directly to WASM memory
-    const memory = new Uint8Array(this.core.memory.buffer);
-    for (let i = 0; i < bytesToRead; i++) {
-      memory[bufferPtr + i] = file.data[file.position + i];
+    if (this.core.memory) {
+      const memory = new Uint8Array(this.core.memory.buffer);
+      for (let i = 0; i < bytesToRead; i++) {
+        memory[bufferPtr + i] = file.data[file.position + i];
+      }
     }
 
     file.position += bytesToRead;
@@ -760,7 +824,7 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} 1 if EOF, 0 otherwise
    */
-  eof(handle) {
+  eof(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 1;
     return file.position >= file.size ? 1 : 0;
@@ -771,19 +835,16 @@ export class Blitz3DFileIO {
    * @param {string} filePath - File path
    * @returns {number} File size in bytes (0 if not found)
    */
-  fileSize(filePath) {
+  fileSize(filePath: string): number {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this.fileSystem.has(resolvedPath)) {
-      return this.fileSystem.get(resolvedPath).size;
+      return this.fileSystem.get(resolvedPath)!.size;
     }
 
     const entry = this._getManifestEntry(resolvedPath);
     if (entry) {
-      if (this._syncFetchAndRegister(entry, resolvedPath)) {
-        return this.fileSystem.get(resolvedPath)?.size ?? 0;
-      }
-      this._logMissing(resolvedPath, "FileSize requested missing asset");
+      this._logMissing(resolvedPath, "FileSize: asset not preloaded, queuing async fetch");
       this._queueAsyncFetch(entry, resolvedPath);
       return entry.size ?? 0;
     }
@@ -796,24 +857,21 @@ export class Blitz3DFileIO {
    * @param {string} filePath - File path
    * @returns {number} 0=unknown, 1=file, 2=directory
    */
-  fileType(filePath: string) {
+  fileType(filePath: string): number {
     const resolvedPath = this.resolvePath(filePath);
 
     if (this.fileSystem.has(resolvedPath)) {
-      return 1; // File
+      return 1;
     }
 
     const entry = this._getManifestEntry(resolvedPath);
     if (entry) {
-      if (this._syncFetchAndRegister(entry, resolvedPath)) {
-        return 1;
-      }
-      this._logMissing(resolvedPath, "FileType requested missing asset");
+      this._logMissing(resolvedPath, "FileType: asset not preloaded, queuing async fetch");
       this._queueAsyncFetch(entry, resolvedPath);
       return 0;
     }
 
-    return 0; // Unknown
+    return 0;
   }
 
   /**
@@ -822,7 +880,7 @@ export class Blitz3DFileIO {
    * @param {number} position - Position to seek to
    * @returns {number} New position
    */
-  seek(handle, position) {
+  seek(handle: number, position: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
 
@@ -835,10 +893,37 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {number} Current position
    */
-  tell(handle) {
+  tell(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
     return file.position;
+  }
+
+  _validatePath(filePath: string): boolean {
+    if (filePath.startsWith("/") || filePath.startsWith("\\")) {
+      console.warn(`[FileIO] Rejected absolute path: ${filePath}`);
+      return false;
+    }
+
+    const resolved = this.resolvePath(filePath);
+
+    if (resolved.startsWith("/") || resolved.startsWith("\\")) {
+      console.warn(`[FileIO] Rejected absolute path: ${filePath}`);
+      return false;
+    }
+
+    const normalized = resolved.replace(/\\/g, "/");
+    if (normalized.includes("..")) {
+      console.warn(`[FileIO] Rejected path with traversal: ${filePath}`);
+      return false;
+    }
+
+    if (normalized.includes(":") || normalized.includes("//")) {
+      console.warn(`[FileIO] Rejected unsafe path: ${filePath}`);
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -846,13 +931,9 @@ export class Blitz3DFileIO {
    * @param {string} filePath - Input file path
    * @returns {string} Resolved absolute path
    */
-  resolvePath(filePath) {
-    // Normalize path separators
+  resolvePath(filePath: string): string {
     let resolved = filePath.replace(/\\/g, "/");
-
-    // Remove leading/trailing slashes for consistency
     resolved = resolved.replace(/^\/+|\/+$/g, "");
-
     return resolved;
   }
 
@@ -862,7 +943,7 @@ export class Blitz3DFileIO {
    * @param {number} count - Number of bytes to peek
    * @returns {Uint8Array} Peeked bytes
    */
-  peekBytes(handle, count) {
+  peekBytes(handle: number, count: number): Uint8Array {
     const file = this.openFiles.get(handle);
     if (!file) return new Uint8Array(0);
 
@@ -878,7 +959,7 @@ export class Blitz3DFileIO {
    * @param {number} handle - File handle
    * @returns {Uint8Array} Remaining file data
    */
-  readRemaining(handle) {
+  readRemaining(handle: number): Uint8Array {
     const file = this.openFiles.get(handle);
     if (!file) return new Uint8Array(0);
 
@@ -895,89 +976,89 @@ export class Blitz3DFileIO {
    * Setup import functions for WASM
    * @param {Object} imports - WASM imports object to populate
    */
-  setupImports(imports) {
+  setupImports(imports: WASMImports) {
     const self = this;
 
     Object.assign(imports.env, {
-      ReadFile: (pathPtr) => {
-        const path = this.core.readString(pathPtr);
-        return this.openFile(path);
+      ReadFile: (pathPtr: number) => {
+        const path = self.core.readString(pathPtr);
+        return self.openFile(path);
       },
 
-      WriteFile: (pathPtr) => {
-        const path = this.core.readString(pathPtr);
+      WriteFile: (pathPtr: number) => {
+        const path = self.core.readString(pathPtr);
         console.log(`WriteFile not fully implemented: ${path}`);
         return 0;
       },
 
-      CloseFile: (stream) => {
-        this.closeFile(stream);
+      CloseFile: (stream: number) => {
+        self.closeFile(stream);
       },
 
-      ReadInt: (stream) => {
-        return this.readInt(stream);
+      ReadInt: (stream: number) => {
+        return self.readInt(stream);
       },
 
-      ReadFloat: (stream) => {
-        return this.readFloat(stream);
+      ReadFloat: (stream: number) => {
+        return self.readFloat(stream);
       },
 
-      ReadString: (stream) => {
-        return this.readString(stream);
+      ReadString: (stream: number) => {
+        return self.readString(stream);
       },
 
-      ReadByte: (stream) => {
-        return this.readByte(stream);
+      ReadByte: (stream: number) => {
+        return self.readByte(stream);
       },
 
-      ReadShort: (stream) => {
-        return this.readShort(stream);
+      ReadShort: (stream: number) => {
+        return self.readShort(stream);
       },
 
-      ReadUShort: (stream) => {
-        return this.readUShort(stream);
+      ReadUShort: (stream: number) => {
+        return self.readUShort(stream);
       },
 
-      ReadUInt: (stream) => {
-        return this.readUInt(stream);
+      ReadUInt: (stream: number) => {
+        return self.readUInt(stream);
       },
 
-      ReadDouble: (stream) => {
-        return this.readDouble(stream);
+      ReadDouble: (stream: number) => {
+        return self.readDouble(stream);
       },
 
-      Eof: (stream) => {
-        return this.eof(stream);
+      Eof: (stream: number) => {
+        return self.eof(stream);
       },
 
-      FileSize: (pathPtr) => {
-        const path = this.core.readString(pathPtr);
-        return this.fileSize(path);
+      FileSize: (pathPtr: number) => {
+        const path = self.core.readString(pathPtr);
+        return self.fileSize(path);
       },
 
-      FileType: (pathPtr) => {
-        const path = this.core.readString(pathPtr);
-        return this.fileType(path);
+      FileType: (pathPtr: number) => {
+        const path = self.core.readString(pathPtr);
+        return self.fileType(path);
       },
 
-      ReadData: (stream, buf, count) => {
-        return this.readData(stream, buf, count);
+      ReadData: (stream: number, buf: number, count: number) => {
+        return self.readData(stream, buf, count);
       },
 
-      FileSeek: (stream, position) => {
-        return this.seek(stream, position);
+      FileSeek: (stream: number, position: number) => {
+        return self.seek(stream, position);
       },
 
-      FileTell: (stream) => {
-        return this.tell(stream);
+      FileTell: (stream: number) => {
+        return self.tell(stream);
       },
 
-      ReadPString: (stream) => {
-        return this.readPString(stream);
+      ReadPString: (stream: number) => {
+        return self.readPString(stream);
       },
 
-      ReadLString: (stream) => {
-        return this.readLString(stream);
+      ReadLString: (stream: number) => {
+        return self.readLString(stream);
       },
     });
   }
@@ -986,8 +1067,8 @@ export class Blitz3DFileIO {
    * Get memory access for readData operations
    * @param {WebAssembly.Memory} memory - WASM memory instance
    */
-  setMemory(memory) {
-    this.memory = memory;
+  setMemory(memory: WebAssembly.Memory) {
+    this.core.memory = memory;
   }
 
   dispose(options: { clearCache?: boolean } = {}) {
@@ -1005,6 +1086,6 @@ export class Blitz3DFileIO {
       this.assetBundle = null;
       this.assetManifest = null;
     }
-    this.memory = null;
+    this.core.memory = undefined;
   }
 }

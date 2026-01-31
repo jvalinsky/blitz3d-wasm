@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blitz3D Web Compiler - Live</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 { margin: 0; font-size: 2.5rem; }
+        .subtitle { margin-top: 10px; opacity: 0.9; font-size: 1.1rem; }
+        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
+        .panel { display: flex; flex-direction: column; gap: 10px; }
+        .panel-header {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #667eea;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        textarea {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 400px;
+            line-height: 1.5;
+        }
+        textarea:focus { outline: none; border-color: #667eea; }
+        pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            padding: 15px;
+            background: #f8f8f8;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            overflow: auto;
+            min-height: 400px;
+            max-height: 600px;
+            line-height: 1.4;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
+        button:active { transform: translateY(0); }
+        .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; border-left: 4px solid #d32f2f; font-family: monospace; white-space: pre-wrap; }
+        .success { color: #2e7d32; background: #e8f5e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin-bottom: 10px; }
+        .info { color: #1976d2; background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-bottom: 10px; font-size: 0.9rem; }
+        @media (max-width: 1024px) { .content { grid-template-columns: 1fr; } }
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Blitz3D Web Compiler</h1>
+            <div class="subtitle">Real TypeScript Compiler - Fully Client-Side</div>
+        </header>
+        <div class="content">
+            <div class="panel">
+                <div class="panel-header">📝 Blitz3D Source Code</div>
+                <textarea id="source" spellcheck="false">; Simple Blitz3D Example
+x% = 5
+y% = 10
+z% = x + y
+Print z
+
+; Function example
+Function Add%(a%, b%)
+    Return a + b
+End Function
+
+result% = Add(15, 25)
+Print result</textarea>
+                <button onclick="compile()">▶️ Compile to WASM</button>
+            </div>
+            <div class="panel">
+                <div class="panel-header">⚙️ Compilation Output</div>
+                <div id="output-status"></div>
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('wasm')">WebAssembly (WAT)</div>
+                    <div class="tab" onclick="switchTab('ast')">AST (JSON)</div>
+                </div>
+                <div id="wasm-output" class="tab-content active">
+                    <pre id="output">Click "Compile" to generate WebAssembly...</pre>
+                </div>
+                <div id="ast-output" class="tab-content">
+                    <pre id="ast">Abstract Syntax Tree will appear here...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="dist/compiler.bundle.js"></script>
+    <script>
+        const { Lexer, Parser, CodeGenerator } = window.Blitz3DCompiler;
+        
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            if (tab === 'wasm') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('wasm-output').classList.add('active');
+            } else if (tab === 'ast') {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('ast-output').classList.add('active');
+            }
+        };
+        
+        window.compile = function() {
+            const sourceElement = document.getElementById('source');
+            const outputElement = document.getElementById('output');
+            const astElement = document.getElementById('ast');
+            const statusElement = document.getElementById('output-status');
+            
+            const source = sourceElement.value;
+            
+            try {
+                const startTime = performance.now();
+                
+                // Lexical analysis
+                const lexer = new Lexer(source);
+                const tokenResult = lexer.tokenize();
+                
+                if (tokenResult.errors.length > 0) {
+                    throw new Error('Lexer errors:\n' + tokenResult.errors.map(e => e.message).join('\n'));
+                }
+                
+                const tokenCount = tokenResult.tokens.length - 1; // -1 for EOF
+                
+                // Parsing
+                const parser = new Parser(source);
+                const ast = parser.parse();
+                
+                // Code generation
+                const codegen = new CodeGenerator();
+                const wat = codegen.generate(ast);
+                
+                const endTime = performance.now();
+                const compileTime = (endTime - startTime).toFixed(2);
+                
+                // Display results
+                outputElement.textContent = wat;
+                astElement.textContent = JSON.stringify(ast, null, 2);
+                
+                const lines = source.split('\n').length;
+                statusElement.innerHTML = `
+                    <div class="success">✅ Compilation successful!</div>
+                    <div class="info">
+                        📊 Statistics:<br>
+                        • Source lines: ${lines}<br>
+                        • Tokens: ${tokenCount}<br>
+                        • Compile time: ${compileTime}ms<br>
+                        • WASM size: ${wat.length} bytes
+                    </div>
+                `;
+            } catch (e) {
+                outputElement.textContent = 'Compilation failed. See error above.';
+                astElement.textContent = 'No AST generated due to errors.';
+                statusElement.innerHTML = `<div class="error">❌ Compilation Error:\n\n${e.message}</div>`;
+                console.error('Compilation error:', e);
+            }
+        };
+        
+        // Auto-compile on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, compiling example...');
+            compile();
+        });
+        
+        // Real-time compilation on typing (debounced)
+        let compileTimeout;
+        document.getElementById('source').addEventListener('input', () => {
+            clearTimeout(compileTimeout);
+            compileTimeout = setTimeout(() => {
+                compile();
+            }, 1000); // Compile after 1 second of no typing
+        });
+    </script>
+</body>
+</html>

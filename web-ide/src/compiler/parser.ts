@@ -442,7 +442,7 @@ export class Parser {
   private comparison(): AST.Expression {
     let expr = this.additive();
 
-    while (this.match(TokenType.LESS_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_EQUAL)) {
+    while (this.match(TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE)) {
       const operator = this.previous().value;
       const right = this.additive();
       expr = { type: 'BinaryOp', left: expr, operator, right };

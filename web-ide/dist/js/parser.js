@@ -14,6 +14,7 @@ export class ParseError extends Error {
 export class Parser {
     constructor(source) {
         this.current = 0;
+        this.errors = [];
         const lexer = new Lexer(source);
         const result = lexer.tokenize();
         this.tokens = result.tokens;
@@ -32,6 +33,7 @@ export class Parser {
             }
             catch (e) {
                 if (e instanceof ParseError) {
+                    this.errors.push(e.message);
                     console.error(e.message);
                     this.synchronize();
                 }
@@ -378,7 +380,7 @@ export class Parser {
     }
     comparison() {
         let expr = this.additive();
-        while (this.match(TokenType.LESS_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_EQUAL)) {
+        while (this.match(TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE)) {
             const operator = this.previous().value;
             const right = this.additive();
             expr = { type: 'BinaryOp', left: expr, operator, right };

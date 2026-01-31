@@ -1,4 +1,4 @@
-import Foundation
+
 
 public struct CollisionPair: Sendable {
     public let srcType: Int32

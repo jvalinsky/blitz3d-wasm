@@ -1,12 +1,19 @@
 {
   "tasks": {
     "dev": "deno run -A --node-modules-dir npm:vite",
-    "build": "deno run -A --node-modules-dir build.ts",
-    "setup": "deno run -A setup.ts",
-    "setup:convert": "deno run -A setup.ts --convert",
-    "setup:convert:clean": "deno run -A setup.ts --convert --delete-source",
+    "build": "deno run -A --node-modules-dir npm:vite build",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
-    "serve:demos": "SERVE_PUBLIC=1 deno run -A serve_dist.ts",
-    "serve:dist": "deno run -A serve_dist.ts"
-  }
+    "check": "deno check src/main.ts",
+    "setup": "deno install"
+  },
+  "compilerOptions": {
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "dom.asynciterable",
+      "deno.ns"
+    ],
+    "strict": true
+  },
+  "nodeModulesDir": true
 }

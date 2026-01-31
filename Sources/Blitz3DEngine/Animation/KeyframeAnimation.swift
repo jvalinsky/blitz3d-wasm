@@ -1,4 +1,4 @@
-import Foundation
+
 
 /// A single keyframe for one bone.
 public struct BoneKeyframe {

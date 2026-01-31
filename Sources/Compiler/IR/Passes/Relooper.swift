@@ -9,8 +9,6 @@
 //  that emitted IR is expressible in structured WASM via a dispatch loop.
 //
 
-import Foundation
-
 public final class Relooper {
     private let cfg: ControlFlowGraph
     private let localAllocator: (() -> Int)?
@@ -108,15 +106,19 @@ public final class Relooper {
         // Default: exit the dispatch loop.
         let dispatch: IREffect = .selectStmt(value: stateValue, cases: cases, default: [.breakStmt])
 
-        return .block(label: "relooper_exit", body: [
-            initState,
-            .loop(label: "relooper_dispatch", body: [dispatch])
-        ])
+        return .block(
+            label: "relooper_exit",
+            body: [
+                initState,
+                .loop(label: "relooper_dispatch", body: [dispatch]),
+            ])
     }
 
     // MARK: - Reachability
 
-    private func findReachable(from start: BasicBlock, within scope: Set<BasicBlock>) -> Set<BasicBlock> {
+    private func findReachable(from start: BasicBlock, within scope: Set<BasicBlock>) -> Set<
+        BasicBlock
+    > {
         var reachable: Set<BasicBlock> = [start]
         var queue = Array(start.successors.intersection(scope))
 

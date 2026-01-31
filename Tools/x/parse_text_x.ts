@@ -596,7 +596,7 @@ export const parseTextX = (text: string): XFile => {
   const head = text.slice(0, 16).toLowerCase();
   if (!head.includes("xof")) throw new Error("Not an X file (missing xof header)");
   if (!head.includes("txt")) {
-    console.warn(`[x-convert] Skipping ${input.substring(input.lastIndexOf("/") + 1)} (format ${head.substring(4, 16).trim()} not supported)`);
+    console.warn(`[x-convert] Skipping unsupported format: ${head.substring(4, 16).trim()}`);
     return { root: { name: "__skipped", children: [] }, meshes: [] }; // Return empty/ignored
   }
   const p = new Parser(text);

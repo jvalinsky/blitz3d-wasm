@@ -1,47 +1,45 @@
-import Foundation
-
 /// GL command opcodes matching web/src/renderer/gl_replay.ts GLCmd enum.
 public enum GLCmdOpcode: UInt32 {
-    case clearColor      = 0x01
-    case clear           = 0x02
-    case bindShader      = 0x03
-    case setUniform4f    = 0x04
-    case setUniformMat4  = 0x05
-    case setUniform1i    = 0x06
-    case setUniform1f    = 0x07
-    case setUniform3f    = 0x08
-    case bindVAO         = 0x09
-    case bindTexture     = 0x0A
-    case drawElements    = 0x0B
-    case drawArrays      = 0x0C
-    case enable          = 0x0D
-    case disable         = 0x0E
-    case blendFunc       = 0x0F
-    case depthMask       = 0x10
-    case cullFace        = 0x11
-    case uploadVB        = 0x12
-    case uploadIB        = 0x13
-    case setViewport     = 0x14
-    case setUniformMat3  = 0x15
+    case clearColor = 0x01
+    case clear = 0x02
+    case bindShader = 0x03
+    case setUniform4f = 0x04
+    case setUniformMat4 = 0x05
+    case setUniform1i = 0x06
+    case setUniform1f = 0x07
+    case setUniform3f = 0x08
+    case bindVAO = 0x09
+    case bindTexture = 0x0A
+    case drawElements = 0x0B
+    case drawArrays = 0x0C
+    case enable = 0x0D
+    case disable = 0x0E
+    case blendFunc = 0x0F
+    case depthMask = 0x10
+    case cullFace = 0x11
+    case uploadVB = 0x12
+    case uploadIB = 0x13
+    case setViewport = 0x14
+    case setUniformMat3 = 0x15
 }
 
 /// WebGL constant values (subset used by the command buffer).
 public enum GLConst {
-    public static let DEPTH_BUFFER_BIT: UInt32    = 0x00000100
-    public static let COLOR_BUFFER_BIT: UInt32    = 0x00004000
-    public static let TRIANGLES: UInt32           = 0x0004
-    public static let UNSIGNED_SHORT: UInt32      = 0x1403
-    public static let UNSIGNED_INT: UInt32        = 0x1405
-    public static let DEPTH_TEST: UInt32          = 0x0B71
-    public static let BLEND: UInt32               = 0x0BE2
-    public static let CULL_FACE: UInt32           = 0x0B44
-    public static let BACK: UInt32                = 0x0405
-    public static let FRONT: UInt32               = 0x0404
-    public static let SRC_ALPHA: UInt32           = 0x0302
+    public static let DEPTH_BUFFER_BIT: UInt32 = 0x0000_0100
+    public static let COLOR_BUFFER_BIT: UInt32 = 0x0000_4000
+    public static let TRIANGLES: UInt32 = 0x0004
+    public static let UNSIGNED_SHORT: UInt32 = 0x1403
+    public static let UNSIGNED_INT: UInt32 = 0x1405
+    public static let DEPTH_TEST: UInt32 = 0x0B71
+    public static let BLEND: UInt32 = 0x0BE2
+    public static let CULL_FACE: UInt32 = 0x0B44
+    public static let BACK: UInt32 = 0x0405
+    public static let FRONT: UInt32 = 0x0404
+    public static let SRC_ALPHA: UInt32 = 0x0302
     public static let ONE_MINUS_SRC_ALPHA: UInt32 = 0x0303
-    public static let ONE: UInt32                 = 0x0001
-    public static let DST_COLOR: UInt32           = 0x0306
-    public static let ZERO: UInt32                = 0x0000
+    public static let ONE: UInt32 = 0x0001
+    public static let DST_COLOR: UInt32 = 0x0306
+    public static let ZERO: UInt32 = 0x0000
 }
 
 /// Builds a flat GL command buffer in WASM memory.
@@ -113,7 +111,10 @@ public class GLCommandBuffer {
 
     public func clearColor(_ r: Float, _ g: Float, _ b: Float, _ a: Float) {
         writeU32(GLCmdOpcode.clearColor.rawValue)
-        writeF32(r); writeF32(g); writeF32(b); writeF32(a)
+        writeF32(r)
+        writeF32(g)
+        writeF32(b)
+        writeF32(a)
         commandCount += 1
     }
 
@@ -146,14 +147,19 @@ public class GLCommandBuffer {
     public func setUniform3f(_ loc: UInt32, _ x: Float, _ y: Float, _ z: Float) {
         writeU32(GLCmdOpcode.setUniform3f.rawValue)
         writeU32(loc)
-        writeF32(x); writeF32(y); writeF32(z)
+        writeF32(x)
+        writeF32(y)
+        writeF32(z)
         commandCount += 1
     }
 
     public func setUniform4f(_ loc: UInt32, _ x: Float, _ y: Float, _ z: Float, _ w: Float) {
         writeU32(GLCmdOpcode.setUniform4f.rawValue)
         writeU32(loc)
-        writeF32(x); writeF32(y); writeF32(z); writeF32(w)
+        writeF32(x)
+        writeF32(y)
+        writeF32(z)
+        writeF32(w)
         commandCount += 1
     }
 
@@ -200,7 +206,8 @@ public class GLCommandBuffer {
         commandCount += 1
     }
 
-    public func drawElements(_ mode: UInt32, _ count: UInt32, _ type: UInt32, _ byteOffset: UInt32) {
+    public func drawElements(_ mode: UInt32, _ count: UInt32, _ type: UInt32, _ byteOffset: UInt32)
+    {
         writeU32(GLCmdOpcode.drawElements.rawValue)
         writeU32(mode)
         writeU32(count)
@@ -250,7 +257,10 @@ public class GLCommandBuffer {
 
     public func setViewport(_ x: Int32, _ y: Int32, _ w: Int32, _ h: Int32) {
         writeU32(GLCmdOpcode.setViewport.rawValue)
-        writeI32(x); writeI32(y); writeI32(w); writeI32(h)
+        writeI32(x)
+        writeI32(y)
+        writeI32(w)
+        writeI32(h)
         commandCount += 1
     }
 

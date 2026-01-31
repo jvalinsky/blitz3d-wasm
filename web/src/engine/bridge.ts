@@ -79,6 +79,42 @@ export interface EngineExports {
   // World matrix readback
   EngineGetWorldMatrix(id: number, outPtr: number): number;
 
+  // Entity enumeration for rendering
+  EngineCollectRenderables(outPtr: number, maxCount: number): number;
+  EngineCollectLights(outPtr: number, maxCount: number): number;
+  EngineGetActiveCameraId(): number;
+
+  // Per-entity property getters
+  EngineGetEntityType(id: number): number;
+  EngineGetEntityMeshId(id: number): number;
+  EngineSetEntityMesh(id: number, meshId: number): void;
+  EngineGetEntityBrushColor(id: number, outPtr: number): void;
+  EngineGetEntityAlpha(id: number): number;
+  EngineGetEntityFX(id: number): number;
+  EngineGetEntityBlend(id: number): number;
+  EngineGetEntityShininess(id: number): number;
+  EngineGetEntityTextureId(id: number, slot: number): number;
+  EngineGetEntityTextureBlend(id: number, slot: number): number;
+  EngineGetEntityOrder(id: number): number;
+
+  // Light property getters
+  EngineGetLightType(id: number): number;
+  EngineGetLightColor(id: number, outPtr: number): void;
+  EngineGetLightRange(id: number): number;
+  EngineGetLightCones(id: number, outPtr: number): void;
+
+  // Camera property getter
+  EngineGetCameraParams(id: number, outPtr: number): void;
+
+  // Global state getters
+  EngineGetFogState(outPtr: number): void;
+  EngineGetAmbientColor(outPtr: number): void;
+
+  // Light type/cone setters
+  EngineSetLightType(id: number, type: number): void;
+  EngineSetLightCones(id: number, inner: number, outer: number): void;
+  EngineCameraAspect(camId: number, aspect: number): void;
+
   // Existing engine exports (banks, collision, mesh, parsers)
   CreateBank(size: number): number;
   FreeBank(id: number): void;
@@ -548,5 +584,201 @@ export class EngineBridge {
 
   entityPickMode(entityId: number, mode: number) {
     this.exports.EngineEntityPickMode(entityId, mode);
+  }
+
+  // ------------------------------------------------------------------
+  // Entity enumeration for rendering
+  // ------------------------------------------------------------------
+
+  /** Scratch buffer for writing entity IDs (max 4096 entities). */
+  private _scratchBank = 0;
+  private _scratchPtr = 0;
+  private _scratchFloat3Bank = 0;
+  private _scratchFloat3Ptr = 0;
+  private _scratchFloat8Bank = 0;
+  private _scratchFloat8Ptr = 0;
+  private _scratchFloat4Bank = 0;
+  private _scratchFloat4Ptr = 0;
+  private _scratchFloat16Bank = 0;
+  private _scratchFloat16Ptr = 0;
+
+  /** Ensure scratch buffers exist. Call once after WASM is loaded. */
+  initScratchBuffers(): void {
+    // Int32 buffer for entity ID lists (4096 * 4 = 16KB)
+    this._scratchBank = this.exports.CreateBank(4096 * 4);
+    this._scratchPtr = this.exports.GetBankPtr(this._scratchBank);
+    // Float buffer for 3-component readback (12 bytes)
+    this._scratchFloat3Bank = this.exports.CreateBank(3 * 4);
+    this._scratchFloat3Ptr = this.exports.GetBankPtr(this._scratchFloat3Bank);
+    // Float buffer for 4-component readback (16 bytes)
+    this._scratchFloat4Bank = this.exports.CreateBank(4 * 4);
+    this._scratchFloat4Ptr = this.exports.GetBankPtr(this._scratchFloat4Bank);
+    // Float buffer for 8-component readback (32 bytes)
+    this._scratchFloat8Bank = this.exports.CreateBank(8 * 4);
+    this._scratchFloat8Ptr = this.exports.GetBankPtr(this._scratchFloat8Bank);
+    // Float buffer for 16-component readback (64 bytes)
+    this._scratchFloat16Bank = this.exports.CreateBank(16 * 4);
+    this._scratchFloat16Ptr = this.exports.GetBankPtr(this._scratchFloat16Bank);
+  }
+
+  /** Collect visible renderable entity IDs. */
+  collectRenderables(): Int32Array {
+    const count = this.exports.EngineCollectRenderables(this._scratchPtr, 4096);
+    return new Int32Array(this.memoryBuffer, this._scratchPtr, count);
+  }
+
+  /** Collect visible light entity IDs. */
+  collectLights(): Int32Array {
+    const count = this.exports.EngineCollectLights(this._scratchPtr, 4096);
+    return new Int32Array(this.memoryBuffer, this._scratchPtr, count);
+  }
+
+  /** Get the active camera entity ID, or 0 if none. */
+  getActiveCameraId(): number {
+    return this.exports.EngineGetActiveCameraId();
+  }
+
+  // ------------------------------------------------------------------
+  // Per-entity property getters
+  // ------------------------------------------------------------------
+
+  getEntityType(id: number): number {
+    return this.exports.EngineGetEntityType(id);
+  }
+
+  getEntityMeshId(id: number): number {
+    return this.exports.EngineGetEntityMeshId(id);
+  }
+
+  setEntityMesh(id: number, meshId: number): void {
+    this.exports.EngineSetEntityMesh(id, meshId);
+  }
+
+  getEntityBrushColor(id: number): Float32Array {
+    this.exports.EngineGetEntityBrushColor(id, this._scratchFloat3Ptr);
+    return new Float32Array(this.memoryBuffer, this._scratchFloat3Ptr, 3);
+  }
+
+  getEntityAlpha(id: number): number {
+    return this.exports.EngineGetEntityAlpha(id);
+  }
+
+  getEntityFX(id: number): number {
+    return this.exports.EngineGetEntityFX(id);
+  }
+
+  getEntityBlend(id: number): number {
+    return this.exports.EngineGetEntityBlend(id);
+  }
+
+  getEntityShininess(id: number): number {
+    return this.exports.EngineGetEntityShininess(id);
+  }
+
+  getEntityTextureId(id: number, slot: number): number {
+    return this.exports.EngineGetEntityTextureId(id, slot);
+  }
+
+  getEntityTextureBlend(id: number, slot: number): number {
+    return this.exports.EngineGetEntityTextureBlend(id, slot);
+  }
+
+  getEntityOrder(id: number): number {
+    return this.exports.EngineGetEntityOrder(id);
+  }
+
+  // ------------------------------------------------------------------
+  // Light property getters
+  // ------------------------------------------------------------------
+
+  getLightType(id: number): number {
+    return this.exports.EngineGetLightType(id);
+  }
+
+  getLightColor(id: number): Float32Array {
+    this.exports.EngineGetLightColor(id, this._scratchFloat3Ptr);
+    return new Float32Array(this.memoryBuffer, this._scratchFloat3Ptr, 3);
+  }
+
+  getLightRange(id: number): number {
+    return this.exports.EngineGetLightRange(id);
+  }
+
+  getLightCones(id: number): { inner: number; outer: number } {
+    this.exports.EngineGetLightCones(id, this._scratchFloat3Ptr);
+    const f = new Float32Array(this.memoryBuffer, this._scratchFloat3Ptr, 2);
+    return { inner: f[0], outer: f[1] };
+  }
+
+  // ------------------------------------------------------------------
+  // Camera property getter
+  // ------------------------------------------------------------------
+
+  getCameraParams(id: number): { fov: number; near: number; far: number; aspect: number } {
+    this.exports.EngineGetCameraParams(id, this._scratchFloat4Ptr);
+    const f = new Float32Array(this.memoryBuffer, this._scratchFloat4Ptr, 4);
+    return { fov: f[0], near: f[1], far: f[2], aspect: f[3] };
+  }
+
+  // ------------------------------------------------------------------
+  // Global state getters
+  // ------------------------------------------------------------------
+
+  getFogState(): { mode: number; r: number; g: number; b: number; start: number; end: number; density: number } {
+    this.exports.EngineGetFogState(this._scratchFloat8Ptr);
+    const f = new Float32Array(this.memoryBuffer, this._scratchFloat8Ptr, 8);
+    return { mode: f[0], r: f[1], g: f[2], b: f[3], start: f[4], end: f[5], density: f[6] };
+  }
+
+  getAmbientColor(): Float32Array {
+    this.exports.EngineGetAmbientColor(this._scratchFloat3Ptr);
+    return new Float32Array(this.memoryBuffer, this._scratchFloat3Ptr, 3);
+  }
+
+  /** Read world matrix into the scratch buffer, returns 16-float view. */
+  getWorldMatrix(id: number): Float32Array | null {
+    const ok = this.exports.EngineGetWorldMatrix(id, this._scratchFloat16Ptr);
+    if (!ok) return null;
+    return new Float32Array(this.memoryBuffer, this._scratchFloat16Ptr, 16);
+  }
+
+  // ------------------------------------------------------------------
+  // Light/camera setters
+  // ------------------------------------------------------------------
+
+  setLightType(id: number, type: number): void {
+    this.exports.EngineSetLightType(id, type);
+  }
+
+  setLightCones(id: number, inner: number, outer: number): void {
+    this.exports.EngineSetLightCones(id, inner, outer);
+  }
+
+  cameraAspect(camId: number, aspect: number): void {
+    this.exports.EngineCameraAspect(camId, aspect);
+  }
+
+  // ------------------------------------------------------------------
+  // Mesh data access
+  // ------------------------------------------------------------------
+
+  getMeshSurfaceCount(meshId: number): number {
+    return this.exports.GetMeshSurfaceCount(meshId);
+  }
+
+  getSurfaceVertexCount(meshId: number, surfaceIdx: number): number {
+    return this.exports.GetSurfaceVertexCount(meshId, surfaceIdx);
+  }
+
+  getSurfaceIndexCount(meshId: number, surfaceIdx: number): number {
+    return this.exports.GetSurfaceIndexCount(meshId, surfaceIdx);
+  }
+
+  createMesh(): number {
+    return this.exports.CreateMesh();
+  }
+
+  addSurface(meshId: number, vertexCount: number, indexCount: number): number {
+    return this.exports.AddSurface(meshId, vertexCount, indexCount);
   }
 }

@@ -5,8 +5,6 @@
 //  Data structures and builder for Relooper CFG analysis
 //
 
-import Foundation
-
 public class BasicBlock: Hashable, Identifiable {
     public let id: Int
     public var label: String?
@@ -155,8 +153,11 @@ public final class CFGBuilder {
         currentBlock = createBlock()
     }
 
-    private func terminateWithCondBranch(condition: IRValue, trueTarget: BasicBlock, falseTarget: BasicBlock) {
-        currentBlock.terminator = .condBranch(condition: condition, trueTarget: trueTarget, falseTarget: falseTarget)
+    private func terminateWithCondBranch(
+        condition: IRValue, trueTarget: BasicBlock, falseTarget: BasicBlock
+    ) {
+        currentBlock.terminator = .condBranch(
+            condition: condition, trueTarget: trueTarget, falseTarget: falseTarget)
         currentBlock = falseTarget
     }
 
@@ -179,7 +180,8 @@ public final class CFGBuilder {
             case .branchIf(let condition, let label):
                 let trueTarget = getOrCreateLabelBlock(label)
                 let fallthroughBlock = createBlock()
-                terminateWithCondBranch(condition: condition, trueTarget: trueTarget, falseTarget: fallthroughBlock)
+                terminateWithCondBranch(
+                    condition: condition, trueTarget: trueTarget, falseTarget: fallthroughBlock)
 
             case .returnStmt(let value):
                 terminateWithReturn(value)
@@ -204,9 +206,11 @@ public final class CFGBuilder {
                 let elseBlock = elseBody != nil ? createBlock() : nil
 
                 if let elseBlock {
-                    currentBlock.terminator = .condBranch(condition: condition, trueTarget: thenBlock, falseTarget: elseBlock)
+                    currentBlock.terminator = .condBranch(
+                        condition: condition, trueTarget: thenBlock, falseTarget: elseBlock)
                 } else {
-                    currentBlock.terminator = .condBranch(condition: condition, trueTarget: thenBlock, falseTarget: mergeBlock)
+                    currentBlock.terminator = .condBranch(
+                        condition: condition, trueTarget: thenBlock, falseTarget: mergeBlock)
                 }
 
                 currentBlock = thenBlock
@@ -234,7 +238,8 @@ public final class CFGBuilder {
                     currentBlock.terminator = .branch(target: headerBlock)
                 }
 
-                headerBlock.terminator = .condBranch(condition: condition, trueTarget: bodyBlock, falseTarget: exitBlock)
+                headerBlock.terminator = .condBranch(
+                    condition: condition, trueTarget: bodyBlock, falseTarget: exitBlock)
 
                 let ctx = LoopContext(breakTarget: exitBlock, continueTarget: headerBlock)
                 loopStack.append(ctx)
@@ -269,7 +274,8 @@ public final class CFGBuilder {
 
                 _ = loopStack.popLast()
 
-                condBlock.terminator = .condBranch(condition: condition, trueTarget: exitBlock, falseTarget: bodyBlock)
+                condBlock.terminator = .condBranch(
+                    condition: condition, trueTarget: exitBlock, falseTarget: bodyBlock)
                 currentBlock = exitBlock
 
             case .forStmt(let index, let start, let end, let step, let body):
@@ -304,11 +310,18 @@ public final class CFGBuilder {
                     let zero: IRValue = .constI32(0)
                     let stepGT0 = IRValue.binary(op: ">", lhs: stepVal, rhs: zero, resultType: .i32)
                     let stepLT0 = IRValue.binary(op: "<", lhs: stepVal, rhs: zero, resultType: .i32)
-                    let pos = IRValue.binary(op: "And", lhs: stepGT0, rhs: IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32), resultType: .i32)
-                    let neg = IRValue.binary(op: "And", lhs: stepLT0, rhs: IRValue.binary(op: ">=", lhs: loopVar, rhs: end, resultType: .i32), resultType: .i32)
+                    let pos = IRValue.binary(
+                        op: "And", lhs: stepGT0,
+                        rhs: IRValue.binary(op: "<=", lhs: loopVar, rhs: end, resultType: .i32),
+                        resultType: .i32)
+                    let neg = IRValue.binary(
+                        op: "And", lhs: stepLT0,
+                        rhs: IRValue.binary(op: ">=", lhs: loopVar, rhs: end, resultType: .i32),
+                        resultType: .i32)
                     cond = IRValue.binary(op: "Or", lhs: pos, rhs: neg, resultType: .i32)
                 }
-                headerBlock.terminator = .condBranch(condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
+                headerBlock.terminator = .condBranch(
+                    condition: cond, trueTarget: bodyBlock, falseTarget: exitBlock)
 
                 let ctx = LoopContext(breakTarget: exitBlock, continueTarget: latchBlock)
                 loopStack.append(ctx)
@@ -323,7 +336,8 @@ public final class CFGBuilder {
 
                 currentBlock = latchBlock
                 let incStep = step ?? .constI32(1)
-                let inc = IRValue.binary(op: "+", lhs: loopVar, rhs: incStep, resultType: loopVarType)
+                let inc = IRValue.binary(
+                    op: "+", lhs: loopVar, rhs: incStep, resultType: loopVarType)
                 currentBlock.instructions.append(.assignLocal(index: index, value: inc))
                 currentBlock.terminator = .branch(target: headerBlock)
 

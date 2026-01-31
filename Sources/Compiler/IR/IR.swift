@@ -1,5 +1,4 @@
 
-import Foundation
 
 public indirect enum IRValue {
     case constI32(Int32)
@@ -91,7 +90,7 @@ public struct IRFunction {
 
 public struct IRDataSegment {
     public let offset: Int32
-    public let data: Data
+    public let data: [UInt8]
 }
 
 public struct IRModule {

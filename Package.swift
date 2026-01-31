@@ -3,9 +3,9 @@ import PackageDescription
 
 let package = Package(
     name: "Blitz3DCompiler",
-//    platforms: [
-//        .macOS(.v14)
-//    ],
+    //    platforms: [
+    //        .macOS(.v14)
+    //    ],
     products: [
         .executable(
             name: "blitz3d-wasm",
@@ -16,9 +16,13 @@ let package = Package(
             targets: ["blitz3d-compiler-wasm"]
         ),
         .library(
+            name: "blitz3d-engine",
+            targets: ["Blitz3DEngineWASM"]
+        ),
+        .library(
             name: "Blitz3DCompiler",
             targets: ["Blitz3DCompiler"]
-        )
+        ),
     ],
     targets: [
         .executableTarget(
@@ -34,6 +38,14 @@ let package = Package(
             path: "Tools/compiler-wasm"
         ),
         .target(
+            name: "Blitz3DEngineWASM",
+            dependencies: [
+                "Blitz3DEngine"
+            ],
+            path: "Tools/engine-wasm",
+            exclude: []
+        ),
+        .target(
             name: "Blitz3DEngine",
             dependencies: [],
             path: "Sources/Blitz3DEngine",
@@ -43,7 +55,9 @@ let package = Package(
                 "Graphics/AGENTs.md",
                 "Parsers/AGENTs.md",
                 "Physics/AGENTs.md",
-                "Utils/AGENTs.md"
+                "Utils/AGENTs.md",
+                "SceneGraph/AGENTs.md",  // Future proofing
+                "Renderer/AGENTs.md",  // Future proofing
             ]
         ),
         .target(
@@ -60,7 +74,7 @@ let package = Package(
                 "Lexer/AGENTs.md",
                 "Lowering/AGENTs.md",
                 "Parser/AGENTs.md",
-                "Preprocessor/AGENTs.md"
+                "Preprocessor/AGENTs.md",
             ]
         ),
         .testTarget(
@@ -68,6 +82,16 @@ let package = Package(
             dependencies: ["Blitz3DCompiler"],
             path: "Tests/CompilerTests",
             exclude: ["AGENTs.md"]
-        )
+        ),
+        .executableTarget(
+            name: "WasmTest",
+            path: "Sources/WasmTest"
+        ),
+        .testTarget(
+            name: "Blitz3DEngineTests",
+            dependencies: ["Blitz3DEngine"],
+            path: "Tests/Blitz3DEngineTests",
+            exclude: []
+        ),
     ]
 )

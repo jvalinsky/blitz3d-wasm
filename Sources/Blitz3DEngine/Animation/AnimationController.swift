@@ -1,4 +1,4 @@
-import Foundation
+
 
 /// Blitz3D animation modes.
 public enum AnimMode: Int32 {

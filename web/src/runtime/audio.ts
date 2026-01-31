@@ -1,9 +1,11 @@
 /**
  * Blitz3D Runtime Audio Module
  * WebAudio integration for 2D/3D sound playback
+ *
+ * No Three.js dependency — uses entity IDs and world matrices from EngineBridge.
  */
 
-import * as THREE from "three";
+import type { EngineBridge } from "../engine/bridge.ts";
 
 interface SoundMetadata {
     loop?: boolean;
@@ -25,7 +27,7 @@ interface ChannelEntry {
     rate: number;
     loop: boolean;
     is3D: boolean;
-    entity?: THREE.Object3D;
+    entityId?: number;
 }
 
 export class Blitz3DAudio {
@@ -36,6 +38,7 @@ export class Blitz3DAudio {
     nextSoundId = 1;
     nextChannelId = 1;
     masterGain: GainNode | null = null;
+    bridge: EngineBridge | null = null;
 
     constructor(private core: any) {
         if (typeof window !== "undefined" && (window.AudioContext || (window as any).webkitAudioContext)) {
@@ -89,11 +92,11 @@ export class Blitz3DAudio {
         return this._playSoundInternal(soundId, volume, pan, rate, loopOverride, false);
     }
 
-    playSound3D(soundId: number, x: number, y: number, z: number, volume: number = 1.0, rate: number = 1.0, loopOverride?: boolean, entity?: THREE.Object3D): number {
-        const chanId = this._playSoundInternal(soundId, volume, 0, rate, loopOverride, true, entity);
+    playSound3D(soundId: number, x: number, y: number, z: number, volume: number = 1.0, rate: number = 1.0, loopOverride?: boolean, entityId?: number): number {
+        const chanId = this._playSoundInternal(soundId, volume, 0, rate, loopOverride, true, entityId);
         const entry = this.channels[chanId];
         if (entry) {
-            entry.entity = entity;
+            entry.entityId = entityId;
             if (entry.panner instanceof PannerNode) {
                 entry.panner.positionX.setTargetAtTime(x, this.context!.currentTime, 0.02);
                 entry.panner.positionY.setTargetAtTime(y, this.context!.currentTime, 0.02);
@@ -103,7 +106,7 @@ export class Blitz3DAudio {
         return chanId;
     }
 
-    private _playSoundInternal(soundId: number, volume: number, pan: number, rate: number, loopOverride: boolean | undefined, is3D: boolean, entity?: THREE.Object3D): number {
+    private _playSoundInternal(soundId: number, volume: number, pan: number, rate: number, loopOverride: boolean | undefined, is3D: boolean, entityId?: number): number {
         if (!this.context || !this.sounds[soundId]) return 0;
 
         const meta = this.soundMetadata[soundId];
@@ -221,38 +224,51 @@ export class Blitz3DAudio {
         return !!this.channels[chanId];
     }
 
-    updateListener(camera: THREE.Camera) {
-        if (!this.context) return;
+    /**
+     * Update audio listener from camera entity ID via bridge world matrix readback.
+     * Also updates positions of 3D sound emitters.
+     */
+    updateListenerFromBridge(camId: number) {
+        if (!this.context || !this.bridge) return;
         const l = this.context.listener;
-        const p = camera.position;
-        const q = camera.quaternion;
-        const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(q);
-        const up = new THREE.Vector3(0, 1, 0).applyQuaternion(q);
 
+        // Read camera world matrix
+        const m = this.bridge.getWorldMatrix(camId);
+        if (!m) return;
+
+        // Position = column 3
+        const px = m[12], py = m[13], pz = m[14];
+        // Forward = column 2 (Blitz3D convention, Z axis)
+        const fx = m[8], fy = m[9], fz = m[10];
+        // Up = column 1
+        const ux = m[4], uy = m[5], uz = m[6];
+
+        const t = this.context.currentTime;
         if (l.positionX) {
-            l.positionX.setTargetAtTime(p.x, this.context.currentTime, 0.02);
-            l.positionY.setTargetAtTime(p.y, this.context.currentTime, 0.02);
-            l.positionZ.setTargetAtTime(p.z, this.context.currentTime, 0.02);
-            l.forwardX.setTargetAtTime(forward.x, this.context.currentTime, 0.02);
-            l.forwardY.setTargetAtTime(forward.y, this.context.currentTime, 0.02);
-            l.forwardZ.setTargetAtTime(forward.z, this.context.currentTime, 0.02);
-            l.upX.setTargetAtTime(up.x, this.context.currentTime, 0.02);
-            l.upY.setTargetAtTime(up.y, this.context.currentTime, 0.02);
-            l.upZ.setTargetAtTime(up.z, this.context.currentTime, 0.02);
+            l.positionX.setTargetAtTime(px, t, 0.02);
+            l.positionY.setTargetAtTime(py, t, 0.02);
+            l.positionZ.setTargetAtTime(pz, t, 0.02);
+            l.forwardX.setTargetAtTime(fx, t, 0.02);
+            l.forwardY.setTargetAtTime(fy, t, 0.02);
+            l.forwardZ.setTargetAtTime(fz, t, 0.02);
+            l.upX.setTargetAtTime(ux, t, 0.02);
+            l.upY.setTargetAtTime(uy, t, 0.02);
+            l.upZ.setTargetAtTime(uz, t, 0.02);
         } else {
-            l.setPosition(p.x, p.y, p.z);
-            l.setOrientation(forward.x, forward.y, forward.z, up.x, up.y, up.z);
+            l.setPosition(px, py, pz);
+            l.setOrientation(fx, fy, fz, ux, uy, uz);
         }
 
-        // Update 3D emitters
-        const worldPos = new THREE.Vector3();
+        // Update 3D emitter positions
         for (const chanId in this.channels) {
             const entry = this.channels[chanId];
-            if (entry.is3D && entry.entity && entry.panner instanceof PannerNode) {
-                entry.entity.getWorldPosition(worldPos);
-                entry.panner.positionX.setTargetAtTime(worldPos.x, this.context.currentTime, 0.02);
-                entry.panner.positionY.setTargetAtTime(worldPos.y, this.context.currentTime, 0.02);
-                entry.panner.positionZ.setTargetAtTime(worldPos.z, this.context.currentTime, 0.02);
+            if (entry.is3D && entry.entityId && entry.panner instanceof PannerNode) {
+                const em = this.bridge.getWorldMatrix(entry.entityId);
+                if (em) {
+                    entry.panner.positionX.setTargetAtTime(em[12], t, 0.02);
+                    entry.panner.positionY.setTargetAtTime(em[13], t, 0.02);
+                    entry.panner.positionZ.setTargetAtTime(em[14], t, 0.02);
+                }
             }
         }
     }

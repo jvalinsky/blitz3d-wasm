@@ -46,7 +46,10 @@
       "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm push)",
       "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm add Sources/Compiler/CodeGen/ExpressionGeneration.swift)",
       "Bash(git -C /Users/jack/Software/scp_port/blitz3d-wasm commit -m \"$\\(cat <<''EOF''\nfix\\(codegen\\): upgrade MoveEntity to full YXZ Euler rotation\n\nReplace yaw-only rotation with full roll->pitch->yaw \\(Ry*Rx*Rz*v\\)\nto match Blitz3D convention. Prevents WASM-side position drift vs\nThree.js renderer when entities move while pitched or rolled.\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(.build/arm64-apple-macosx/debug/blitz3d-wasm:*)"
+      "Bash(.build/arm64-apple-macosx/debug/blitz3d-wasm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(deno task:*)",
+      "Bash(du:*)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import Foundation
+
 
 public struct Vec3: Sendable {
     public var x: Float

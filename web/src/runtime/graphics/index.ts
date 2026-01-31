@@ -12,7 +12,8 @@ import { Blitz3DAudio } from "../audio.ts";
 import { CmdOpcode, drainCmds } from "../../shared/command_buffer.ts";
 import { dispatchCmd } from "../command_executor.ts";
 import { EngineExports, EngineBridge } from "../../engine/bridge.ts";
-import { WasmSceneManager } from "../../engine/wasm_scene_manager.ts"; // IMPORT ADDED
+import { WasmSceneManager } from "../../engine/wasm_scene_manager.ts"; // IMPORT ADDED (legacy)
+import { SceneManager } from "../../engine/scene_manager.ts";
 
 import {
     GraphicsCore,
@@ -43,8 +44,10 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     nextTextureId: number = 1;
     nextEntityId: number = 1;
 
-    // Thin Client Manager
+    // Thin Client Manager (legacy Three.js path)
     wasmManager: WasmSceneManager | null = null;
+    // New native WebGL2 scene manager (Three.js-free)
+    nativeManager: SceneManager | null = null;
     inputManager: InputManager | null = null; // Added typed property
 
     // Three.js
@@ -95,13 +98,21 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
      * Set the Swift engine WASM exports.
      * Initializes WasmSceneManager for Thin Client mode.
      */
-    setEngine(exports: EngineExports): void {
+    setEngine(exports: EngineExports, shaderSources?: any): void {
         this._engine = exports;
 
-        // Initialize Thin Client Manager
+        // Initialize scene manager
         if (this.core.canvas) {
             const bridge = new EngineBridge(exports);
-            this.wasmManager = new WasmSceneManager(bridge, this.core.canvas);
+
+            if (shaderSources) {
+                // New native WebGL2 path (Three.js-free)
+                this.nativeManager = new SceneManager(bridge, this.core.canvas, shaderSources);
+                this.wasmManager = null;
+            } else {
+                // Legacy Three.js path (fallback)
+                this.wasmManager = new WasmSceneManager(bridge, this.core.canvas);
+            }
         }
     }
 
@@ -111,9 +122,10 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
 
     /** Create an engine entity and track the mapping. Returns engine ID (0 if engine not loaded). */
     engineCreate(gameId: number, type: number, parentGameId?: number): number {
-        if (!this.wasmManager) return 0;
+        const manager = this.nativeManager ?? this.wasmManager;
+        if (!manager) return 0;
         const parentEngineId = parentGameId ? (this._engineIds.get(parentGameId) ?? 0) : 0;
-        const engineId = this.wasmManager.createEntity(type, parentEngineId);
+        const engineId = manager.createEntity(type, parentEngineId);
         this._engineIds.set(gameId, engineId);
         return engineId;
     }
@@ -325,9 +337,13 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
             }
         }
 
+        if (this.nativeManager) {
+            this.nativeManager.render(this.inputManager);
+            return;
+        }
+
         if (this.wasmManager) {
             this.wasmManager.render(this.inputManager);
-            // We can also render 2D on top if needed, using core.ctx2d
             return;
         }
 

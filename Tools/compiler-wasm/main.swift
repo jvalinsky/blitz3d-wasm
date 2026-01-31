@@ -6,8 +6,8 @@
 //  for running entirely in the browser
 //
 
-import Foundation
 import Blitz3DCompiler
+import Foundation
 
 /// Read entire stdin
 func readStdin() -> String? {
@@ -27,49 +27,51 @@ struct CompilerMain {
             fputs("Error: No input provided\n", stderr)
             exit(1)
         }
-        
+
         // Parse command line arguments
         let args = CommandLine.arguments.dropFirst()
-        var optimize = false
-        var outputFormat = "binary" // or "wat" for text format
-        
+        var outputFormat = "binary"  // or "wat" for text format
+
         for arg in args {
-            if arg == "--optimize" || arg == "-O" {
-                optimize = true
-            } else if arg == "--wat" {
+            if arg == "--wat" {
                 outputFormat = "wat"
             }
         }
-        
-        do {
-            // Parse the Blitz3D source
-            let parser = Parser()
-            let program = try parser.parse(source: source)
-            
-            // Generate WebAssembly
-            var codeGen = CodeGenerator()
-            let wasmModule = try codeGen.generateFromIR(program)
-            
-            if outputFormat == "wat" {
-                // Output WebAssembly text format
-                let watWriter = WASMTextWriter()
-                let watText = watWriter.write(wasmModule)
-                print(watText)
-            } else {
-                // Output binary format
-                let encoder = WASMBinaryEncoder()
-                let binary = try encoder.encode(wasmModule)
-                
-                // Write binary to stdout
-                FileHandle.standardOutput.write(binary)
+
+        // Parse the Blitz3D source
+        var parser = Parser(source: source)
+        let program = parser.parse()
+
+        if parser.hasErrors {
+            for error in parser.errors {
+                fputs("\(error.description)\n", stderr)
             }
-            
-        } catch let error as CompilerError {
-            fputs("Compilation error: \(error.description)\n", stderr)
             exit(1)
-        } catch {
-            fputs("Compilation failed: \(error)\n", stderr)
+        }
+
+        // Generate WebAssembly
+        var codeGen = CodeGenerator()
+        let wasmModule = codeGen.generateFromIR(program)
+
+        if codeGen.hasDiagnostics {
+            for diagnostic in codeGen.diagnostics {
+                fputs("\(diagnostic.description)\n", stderr)
+            }
             exit(1)
+        }
+
+        if outputFormat == "wat" {
+            // Output WebAssembly text format
+            var watWriter = WASMTextWriter()
+            let watText = watWriter.write(wasmModule)
+            print(watText)
+        } else {
+            // Output binary format
+            var encoder = WASMBinaryEncoder()
+            let binary = encoder.encode(wasmModule)
+
+            // Write binary to stdout
+            FileHandle.standardOutput.write(Data(binary))
         }
     }
 }

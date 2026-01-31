@@ -1,3 +1,5 @@
+// Three.js import kept for legacy code path compatibility.
+// New native code path (SceneManager) does not use Three.js.
 import * as THREE from "three";
 
 /** Engine entity type IDs matching Swift EntityType enum */

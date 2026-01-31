@@ -1,11 +1,8 @@
-//
-//  CompilerLogger.swift
-//  Blitz3DCompiler
-//
-//  Lightweight logging utilities for compiler internals.
-//
-
-import Foundation
+#if os(macOS) || os(iOS) || os(tvOS) || os(watchOS)
+    import Darwin
+#elseif os(Linux) || os(Android) || os(FreeBSD) || os(OpenBSD) || os(Windows)
+    import Glibc
+#endif
 
 public enum CompilerLogLevel: Int, Comparable {
     case error = 0
@@ -22,9 +19,6 @@ public enum CompilerLogLevel: Int, Comparable {
 public enum CompilerLogger {
     /// Default to warnings to keep compiler output clean unless explicitly requested.
     public nonisolated(unsafe) static var level: CompilerLogLevel = .warn
-    
-    /// Serial queue for thread-safe logging
-    private static let logQueue = DispatchQueue(label: "com.blitz3d.compiler.logger")
 
     public static func error(_ message: @autoclosure () -> String) {
         log(.error, message())
@@ -48,11 +42,10 @@ public enum CompilerLogger {
 
     private static func log(_ at: CompilerLogLevel, _ message: String) {
         guard level >= at else { return }
-        logQueue.sync {
-            message + "\n"
-        }
-        if let data = (message + "\n").data(using: .utf8) {
-            FileHandle.standardError.write(data)
-        }
+        #if os(Windows)
+            // Handle Windows if needed
+        #else
+            fputs(message + "\n", stderr)
+        #endif
     }
 }

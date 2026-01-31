@@ -269,79 +269,44 @@ class BinaryParser {
             if (this.peekToken() === T.TOKEN_NAME) {
                 const kind = this.readName();
                 if (kind === "FrameTransformMatrix") {
-                    // ...
-                } else {
-                    // ...
-                }
-
-                let nFaces = 0;
-                if (this.peekToken() === T.TOKEN_INTEGER_LIST) {
-                    // Implict nFaces: count derived from list processing (or inferred later)
-                    nFaces = -1;
-                } else {
-                    nFaces = this.readInteger();
-                }
-                // ...
-                // Check for optional name (MeshFace is a template)
-                if (this.peekToken() === T.TOKEN_NAME) {
-                    const name = this.readName();
-                }
-                // ...
-                // Child objects
-                while (this.peekToken() !== T.TOKEN_CBRACE && this.pos < this.view.byteLength) {
-                    if (this.peekToken() === T.TOKEN_NAME) {
-                        const kind = this.readName();
-                        if (kind === "MeshNormals") {
-                            this.eatToken(T.TOKEN_OBRACE);
-                            // 16 floats.
-                            // Usually standard Templates use strict lists?
-                            // FrameTransformMatrix { Matrix4x4 frameMatrix; }
-                            // Matrix4x4 { array float matrix[16]; }
-                            // So expected: TOKEN_FLOAT_LIST (16)? or 16 floats?
-                            // Depends on encoding. Binary X often expands arrays to LIST tokens.
-                            const m = new Float32Array(16);
-                            if (this.peekToken() === T.TOKEN_FLOAT_LIST) {
-                                const list = this.readFloatList();
-                                m.set(list);
-                            } else {
-                                // Maybe a Matrix4x4 object?
-                                // If so, we might see NAME "Matrix4x4" ? Or just data?
-                                // Assuming optimized list.
-                                // If not, read 16 floats?
-                                for (let i = 0; i < 16; i++) m[i] = this.readFloat();
-                            }
-                            this.eatToken(T.TOKEN_CBRACE);
-                            frame.transform = m;
-                            continue;
-                        }
-                        if (kind === "Frame") {
-                            let cname: string | undefined;
-                            if (this.peekToken() === T.TOKEN_NAME) cname = this.readName();
-                            this.eatToken(T.TOKEN_OBRACE);
-                            frame.children.push(this.parseFrameBody(cname));
-                            continue;
-                        }
-                        if (kind === "Mesh") {
-                            let cname: string | undefined;
-                            if (this.peekToken() === T.TOKEN_NAME) cname = this.readName();
-                            this.eatToken(T.TOKEN_OBRACE);
-                            frame.mesh = this.parseMeshBody(cname);
-                            continue;
-                        }
-
-                        // Skip unknown
-                        if (this.peekToken() === T.TOKEN_NAME) this.readName();
-                        if (this.maybeEatToken(T.TOKEN_OBRACE)) {
-                            this.skipBalancedInternal(1);
-                        }
+                    this.eatToken(T.TOKEN_OBRACE);
+                    const m = new Float32Array(16);
+                    if (this.peekToken() === T.TOKEN_FLOAT_LIST) {
+                        m.set(this.readFloatList());
                     } else {
-                        // unexpected token
-                        this.readU16();
+                        for (let i = 0; i < 16; i++) m[i] = this.readFloat();
                     }
+                    this.eatToken(T.TOKEN_CBRACE);
+                    frame.transform = m;
+                    continue;
                 }
-                this.eatToken(T.TOKEN_CBRACE);
-                return frame;
+                if (kind === "Frame") {
+                    let cname: string | undefined;
+                    if (this.peekToken() === T.TOKEN_NAME) cname = this.readName();
+                    this.eatToken(T.TOKEN_OBRACE);
+                    frame.children.push(this.parseFrameBody(cname));
+                    continue;
+                }
+                if (kind === "Mesh") {
+                    let cname: string | undefined;
+                    if (this.peekToken() === T.TOKEN_NAME) cname = this.readName();
+                    this.eatToken(T.TOKEN_OBRACE);
+                    frame.mesh = this.parseMeshBody(cname);
+                    continue;
+                }
+
+                // Unknown object
+                if (this.peekToken() === T.TOKEN_NAME) this.readName(); // obj name
+                if (this.maybeEatToken(T.TOKEN_OBRACE)) {
+                    this.skipBalancedInternal(1);
+                }
+            } else {
+                this.readU16(); // Skip unknown token
             }
+        }
+        this.eatToken(T.TOKEN_CBRACE);
+        return frame;
+    }
 
     private parseMeshBody(name?: string): XMesh {
         // Mesh { nVertices; vertices[n]; nFaces; faces[n]; ... }

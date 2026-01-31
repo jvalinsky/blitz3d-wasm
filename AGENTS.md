@@ -322,3 +322,69 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 - **Plan index**: `plan/README.md`
 - **SCPCB web port (Track B)**: `plan/scpcb-web-track-b/README.md`
 - **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
+
+## Breaking Changes (January 2026)
+
+### Synchronous XHR Removal
+
+**What changed**: The `_syncFetchAndRegister` fallback was removed. Synchronous
+XMLHttpRequest is deprecated and being removed from browsers.
+
+**Impact**:
+- `?init=main` mode now requires ALL init-required files to be in the 'init'
+  or 'facility_assets' asset groups (as defined in scpcb_manifest.json)
+- Files not in preload groups will cause SCPCB init to hang or return 0
+
+**Migration**:
+1. Ensure your manifest includes all files SCPCB reads during init
+2. Add missing files to the 'init' asset group
+3. Test with `?init=main` before deploying
+
+**Alternative**: For partial initialization without preloading all assets,
+use the non-blocking mode (default, no `?init=main`) with lazy loading.
+
+### AudioContext Lazy Initialization
+
+**What changed**: AudioContext is no longer created in the constructor. It
+is now lazily initialized on first user interaction (click/keydown/touch).
+
+**Impact**: Audio won't play until the user interacts with the page.
+
+**Reason**: Browser autoplay policies require user gesture for audio.
+
+### Three.js Update
+
+**What changed**: Updated from r128 to r170 in `Sources/Runtime/thin/test.html`.
+
+**Impact**: Some deprecated Three.js APIs may behave differently. Test the
+particle demo after updates.
+
+## Code Cleanup Summary (January 2026)
+
+### Completed Fixes
+
+| Issue | File | Status |
+|-------|------|--------|
+| Memory leak in FreeEntity | `Sources/Runtime/thin/runtime.js` | Fixed |
+| AudioContext autoplay | `Sources/Runtime/thin/runtime.js` | Fixed |
+| Sync XHR deprecated | `web/src/runtime/fileio.ts` | Removed |
+| Three.js outdated | `Sources/Runtime/thin/test.html` | Updated to r170 |
+| Duplicate functions | `web/src/runtime/graphics.ts` | Removed |
+| Debug logging | `web/src/runtime/fileio.ts` | Fixed |
+| TextDecoder caching | `Sources/Runtime/thin/runtime.js` | Fixed |
+| Animation iteration | `Sources/Runtime/thin/runtime.js` | Optimized |
+| Path validation | `web/src/runtime/fileio.ts` | Added |
+
+### New Features
+
+- **Error handling**: `fetchWithRetry()` with exponential backoff
+- **Error events**: CustomEvent dispatched on file load failures
+- **Type safety**: Proper TypeScript types for fileio.ts
+- **Unit tests**: 25 passing tests in `web/src/runtime/runtime.test.ts`
+
+### Test Coverage
+
+Run tests with:
+```bash
+deno test --allow-read --allow-net web/src/runtime/runtime.test.ts
+```

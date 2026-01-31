@@ -283,6 +283,13 @@ export class GPUResources {
     return this.textures.get(id);
   }
 
+  /** Register an externally-created WebGL texture for tracking. */
+  registerTexture(glTexture: WebGLTexture, width: number, height: number): number {
+    const id = this.nextTextureId++;
+    this.textures.set(id, { glTexture, width, height });
+    return id;
+  }
+
   freeTexture(id: number): void {
     const t = this.textures.get(id);
     if (!t) return;

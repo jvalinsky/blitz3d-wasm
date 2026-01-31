@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Compiler Bundle</title>
+</head>
+<body>
+    <h1>Testing Blitz3D Compiler Bundle</h1>
+    <pre id="output"></pre>
+    
+    <script src="dist/compiler.bundle.js"></script>
+    <script>
+        const output = document.getElementById('output');
+        
+        try {
+            output.textContent = 'Blitz3DCompiler object: ' + JSON.stringify(Object.keys(Blitz3DCompiler), null, 2) + '\n\n';
+            
+            // Test the compiler
+            const code = `x% = 10\nPrint x`;
+            
+            const lexer = new Blitz3DCompiler.Lexer(code);
+            const tokens = lexer.tokenize();
+            output.textContent += 'Tokens: ' + tokens.length + '\n\n';
+            
+            const parser = new Blitz3DCompiler.Parser(tokens);
+            const ast = parser.parse();
+            output.textContent += 'AST nodes: ' + ast.statements.length + '\n\n';
+            
+            const codegen = new Blitz3DCompiler.CodeGenerator(ast);
+            const wat = codegen.generate();
+            output.textContent += 'WAT output:\n' + wat.substring(0, 500) + '...\n';
+            
+        } catch (error) {
+            output.textContent += 'ERROR: ' + error.message + '\n' + error.stack;
+        }
+    </script>
+</body>
+</html>

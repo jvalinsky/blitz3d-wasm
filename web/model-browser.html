@@ -172,14 +172,15 @@
                 in vec2 v_uv;
                 out vec4 color;
                 void main() {
-                    vec4 texColor = texture(u_texture, v_uv);
+                    // DEBUG: Show UVs as colors
+                    // U = Red channel, V = Green channel
+                    // If UVs are correct: smooth red-green gradient
+                    // If UVs are wrong: random colors or black
+                    color = vec4(v_uv.x, v_uv.y, 0.0, 1.0);
                     
-                    // ALPHA DEBUG: Ignore alpha channel (transparency)
-                    // Show RGB only, force alpha to 1.0
-                    color = vec4(texColor.rgb, 1.0);
-                    
-                    // If black areas persist = actual black in RGB
-                    // If black areas disappear = alpha transparency issue
+                    // Texture mode (comment out debug above to use):
+                    // vec4 texColor = texture(u_texture, v_uv);
+                    // color = vec4(texColor.rgb, 1.0);
                 }
             `;
             

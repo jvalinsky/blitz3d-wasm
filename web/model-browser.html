@@ -159,7 +159,9 @@
                 void main() {
                     gl_Position = u_mvp * vec4(position, 1.0);
                     v_normal = normal;
-                    v_uv = uv;
+                    
+                    // FLIP V coordinate (common UV issue)
+                    v_uv = vec2(uv.x, 1.0 - uv.y);
                 }
             `;
             

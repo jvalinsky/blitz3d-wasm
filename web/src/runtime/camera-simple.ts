@@ -11,7 +11,7 @@ export class SimpleCamera {
   fov = 45; // degrees
   aspect = 1.0;
   near = 0.1;
-  far = 100.0;
+  far = 20000.0; // Increased for large rooms (was 100)
 
   /**
    * Get MVP matrix (combines model, view, projection)

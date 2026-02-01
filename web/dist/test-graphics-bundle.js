@@ -1207,8 +1207,9 @@ var SimpleCamera = class {
     // degrees
     __publicField(this, "aspect", 1);
     __publicField(this, "near", 0.1);
-    __publicField(this, "far", 100);
+    __publicField(this, "far", 2e4);
   }
+  // Increased for large rooms (was 100)
   /**
    * Get MVP matrix (combines model, view, projection)
    * Model is assumed to be identity

@@ -917,11 +917,23 @@ export class CodeGenerator {
       return;
     }
 
-    // Regular user-defined function call
+    // Regular user-defined function call - try with and without type suffix
+    let funcName = rawName;
+    if (!this.functions.has(rawName)) {
+      // Try with type suffixes (%, #, $)
+      const suffixes = ['%', '#', '$'];
+      for (const suffix of suffixes) {
+        if (this.functions.has(rawName + suffix)) {
+          funcName = rawName + suffix;
+          break;
+        }
+      }
+    }
+    
     for (const arg of expr.arguments) {
       this.generateExpression(arg);
     }
-    this.emit(`call $${rawName}`);
+    this.emit(`call $${funcName}`);
   }
 
   private generateAssignmentStatement(expr: any): void {

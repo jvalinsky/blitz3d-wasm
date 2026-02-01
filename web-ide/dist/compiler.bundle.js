@@ -1718,10 +1718,20 @@ ${this.errors.join("\n")}`);
         this.emit(`call $b3d_${builtinKey}`);
         return;
       }
+      let funcName = rawName;
+      if (!this.functions.has(rawName)) {
+        const suffixes = ["%", "#", "$"];
+        for (const suffix of suffixes) {
+          if (this.functions.has(rawName + suffix)) {
+            funcName = rawName + suffix;
+            break;
+          }
+        }
+      }
       for (const arg of expr.arguments) {
         this.generateExpression(arg);
       }
-      this.emit(`call $${rawName}`);
+      this.emit(`call $${funcName}`);
     }
     generateAssignmentStatement(expr) {
       if (expr.target.type === "ArrayAccess") {

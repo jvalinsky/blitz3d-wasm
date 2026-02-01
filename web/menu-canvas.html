@@ -845,6 +845,28 @@
                 skipVideo();
             }
         });
+        
+        // Load settings from localStorage on startup
+        function loadSettings() {
+            const saved = localStorage.getItem('scpcb_settings');
+            if (saved) {
+                try {
+                    const loaded = JSON.parse(saved);
+                    settings = {...settings, ...loaded};
+                    console.log('[Settings] Loaded from localStorage:', settings);
+                } catch (e) {
+                    console.error('[Settings] Failed to load:', e);
+                }
+            }
+            
+            // Load intro enabled setting
+            const introSetting = localStorage.getItem('introEnabled');
+            if (introSetting !== null) {
+                introEnabled = introSetting !== 'false';
+            }
+        }
+        
+        loadSettings();
     </script>
 </body>
 </html>

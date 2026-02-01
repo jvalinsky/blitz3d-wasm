@@ -170,17 +170,17 @@
                 in vec2 v_uv;
                 out vec4 color;
                 void main() {
-                    vec3 norm = normalize(v_normal);
                     vec4 texColor = texture(u_texture, v_uv);
                     
-                    vec3 light1 = normalize(vec3(0.5, 1.0, 0.5));
-                    vec3 light2 = normalize(vec3(-0.5, 0.5, 0.3));
-                    float diff1 = max(dot(norm, light1), 0.0);
-                    float diff2 = max(dot(norm, light2), 0.0) * 0.5;
+                    // Brighter lighting to show textures clearly
+                    vec3 norm = normalize(v_normal);
+                    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
+                    float diff = max(dot(norm, lightDir), 0.0);
                     
-                    vec3 ambient = vec3(0.3, 0.3, 0.3);
-                    vec3 finalColor = ambient * texColor.rgb + texColor.rgb * (diff1 + diff2);
-                    color = vec4(finalColor, texColor.a);
+                    // High ambient (0.7) + moderate diffuse (0.3)
+                    float lighting = 0.7 + diff * 0.3;
+                    
+                    color = vec4(texColor.rgb * lighting, texColor.a);
                 }
             `;
             

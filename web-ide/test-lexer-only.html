@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lexer Test - Blitz3D Web IDE</title>
+    <style>
+        body {
+            font-family: monospace;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1 { color: #333; }
+        textarea {
+            width: 100%;
+            height: 200px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover { background: #45a049; }
+        .output {
+            background: #f5f5f5;
+            padding: 15px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .error { background: #ffe6e6; border-color: #ff0000; }
+        .success { background: #e6ffe6; border-color: #00cc00; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Lexer Test (Tokenization Only)</h1>
+    <p>Tests only the lexer - tokenization phase. Should never crash.</p>
+    
+    <textarea id="source">; Test the lexer
+x% = 10
+Print x</textarea>
+    
+    <button onclick="testLexer()">▶️ Tokenize</button>
+    
+    <div id="output" class="output">Click "Tokenize" to test...</div>
+    
+    <script src="dist/compiler.bundle.js"></script>
+    <script>
+        function testLexer() {
+            const source = document.getElementById('source').value;
+            const output = document.getElementById('output');
+            
+            try {
+                const startTime = performance.now();
+                const { Lexer } = window.Blitz3DCompiler;
+                const lexer = new Lexer(source);
+                const result = lexer.tokenize();
+                const endTime = performance.now();
+                
+                const { tokens, errors } = result;
+                const time = (endTime - startTime).toFixed(2);
+                
+                if (errors.length > 0) {
+                    output.className = 'output error';
+                    output.textContent = `❌ Lexer Errors (${time}ms):\n\n${errors.map(e => 
+                        `Line ${e.line}, Col ${e.column}: ${e.message}`
+                    ).join('\n')}`;
+                } else {
+                    output.className = 'output success';
+                    output.textContent = `✅ Success! (${time}ms)\n\n`;
+                    output.textContent += `Tokens (${tokens.length}):\n`;
+                    output.textContent += tokens.map(t => 
+                        `${t.type.padEnd(15)} "${t.value}" (${t.line}:${t.column})`
+                    ).join('\n');
+                }
+            } catch (error) {
+                output.className = 'output error';
+                output.textContent = `💥 Fatal Error:\n\n${error.message}\n\n${error.stack}`;
+            }
+        }
+        
+        // Auto-run on load
+        testLexer();
+    </script>
+</body>
+</html>

@@ -1770,8 +1770,14 @@ ${this.errors.join("\n")}`);
       }
       const builtinKey = lowerName.replace(/[%#$]$/, "");
       if (BUILTIN_FUNCTIONS[builtinKey]) {
-        for (const arg of expr.arguments) {
+        const funcSig = BUILTIN_FUNCTIONS[builtinKey];
+        for (let i = 0; i < expr.arguments.length; i++) {
+          const arg = expr.arguments[i];
+          const expectedType = funcSig.params[i] || "i32";
           this.generateExpression(arg);
+          if (expectedType === "f32" && this.isIntegerExpression(arg)) {
+            this.emit("f32.convert_i32_s");
+          }
         }
         this.emit(`call $b3d_${builtinKey}`);
         return;
@@ -1890,6 +1896,30 @@ ${this.errors.join("\n")}`);
     }
     emit(line) {
       this.output.push("  ".repeat(this.indent) + line);
+    }
+    // Helper to detect if an expression will produce i32
+    isIntegerExpression(expr) {
+      if (!expr) return false;
+      switch (expr.type) {
+        case "IntegerLiteral":
+          return true;
+        case "FloatLiteral":
+          return false;
+        case "UnaryOp":
+          return this.isIntegerExpression(expr.operand);
+        case "BinaryOp":
+          return this.isIntegerExpression(expr.left) && this.isIntegerExpression(expr.right);
+        case "Identifier":
+          const varName = expr.name.toLowerCase();
+          const local = this.locals.get(varName);
+          if (local) return local.type === "i32";
+          const global = this.globals.get(varName);
+          if (global) return global.type === "i32";
+          return true;
+        // Default to integer
+        default:
+          return true;
+      }
     }
   };
 

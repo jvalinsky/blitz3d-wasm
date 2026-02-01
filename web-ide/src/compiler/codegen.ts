@@ -949,9 +949,21 @@ export class CodeGenerator {
     // Check for built-in function
     const builtinKey = lowerName.replace(/[%#$]$/, '');
     if (BUILTIN_FUNCTIONS[builtinKey]) {
-      for (const arg of expr.arguments) {
+      const funcSig = BUILTIN_FUNCTIONS[builtinKey];
+      
+      // Generate arguments with type coercion
+      for (let i = 0; i < expr.arguments.length; i++) {
+        const arg = expr.arguments[i];
+        const expectedType = funcSig.params[i] || 'i32';
+        
         this.generateExpression(arg);
+        
+        // Type coercion: if we generated i32 but need f32, convert
+        if (expectedType === 'f32' && this.isIntegerExpression(arg)) {
+          this.emit('f32.convert_i32_s'); // Convert signed i32 to f32
+        }
       }
+      
       this.emit(`call $b3d_${builtinKey}`);
       return;
     }
@@ -1091,5 +1103,33 @@ export class CodeGenerator {
 
   private emit(line: string): void {
     this.output.push('  '.repeat(this.indent) + line);
+  }
+  
+  // Helper to detect if an expression will produce i32
+  private isIntegerExpression(expr: any): boolean {
+    if (!expr) return false;
+    
+    switch (expr.type) {
+      case 'IntegerLiteral':
+        return true;
+      case 'FloatLiteral':
+        return false;
+      case 'UnaryOp':
+        // -5 is still integer if operand is integer
+        return this.isIntegerExpression(expr.operand);
+      case 'BinaryOp':
+        // Both sides integer = result integer
+        return this.isIntegerExpression(expr.left) && this.isIntegerExpression(expr.right);
+      case 'Identifier':
+        // Check variable type if we can
+        const varName = expr.name.toLowerCase();
+        const local = this.locals.get(varName);
+        if (local) return local.type === 'i32';
+        const global = this.globals.get(varName);
+        if (global) return global.type === 'i32';
+        return true; // Default to integer
+      default:
+        return true; // Default to integer for unknown expressions
+    }
   }
 }

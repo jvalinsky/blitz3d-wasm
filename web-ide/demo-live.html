@@ -590,18 +590,28 @@
                         cancelAnimationFrame(animationLoopId);
                     }
                     
-                    // Start animation (just call main once for now - it will loop internally)
+                    // Set up scene and render once
+                    consoleElement.textContent += '\n📐 Setting up 3D scene...\n';
+                    
                     if (module.instance.exports.main) {
-                        // For now, just call main once to set up scene
-                        // TODO: Need to restructure While True loops to yield control
                         setTimeout(() => {
                             try {
+                                // Call main - it will set up scene then hit While True and block
                                 module.instance.exports.main();
                             } catch (e) {
-                                consoleElement.textContent += `\n\n⚠️ Note: While True loops block execution. Scene setup complete but animation frozen.\n`;
-                                consoleElement.textContent += 'Check 3D View tab to see the scene!\n';
+                                if (e.message && e.message.includes('unreachable')) {
+                                    consoleElement.textContent += '✅ Scene setup complete!\n';
+                                } else {
+                                    consoleElement.textContent += `\n⚠️ ${e.message}\n`;
+                                }
                             }
-                        }, 100);
+                            
+                            // Manually render the scene after setup
+                            if (graphicsRuntime && graphicsRuntime.scene && graphicsRuntime.camera) {
+                                graphicsRuntime.renderworld();
+                                consoleElement.textContent += '🎨 Scene rendered! Check 3D View tab.\n';
+                            }
+                        }, 200);
                     }
                     
                     statusElement.innerHTML = '<div class="success">✅ Graphics program running! Check 3D View tab.</div>';

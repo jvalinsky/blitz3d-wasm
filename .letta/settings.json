@@ -134,7 +134,8 @@
       "Bash(curl -s http://localhost:8000/web/test-graphics.html | head -5 && echo \"✅ Server responding\")",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test 2>&1 | tail -5)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test 2>&1 | tail -3)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test 2>&1 | tail -3)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno fmt web/src/runtime/camera-simple.ts)"
     ]
   }
 }

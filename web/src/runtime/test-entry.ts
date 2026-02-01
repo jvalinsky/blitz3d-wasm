@@ -35,6 +35,7 @@ export { WasmStringHelper } from './wasm-string-helper.ts';
 
 // Camera
 export { Camera } from './camera.ts';
+export { SimpleCamera } from './camera-simple.ts';
 
 // Types
 export type {

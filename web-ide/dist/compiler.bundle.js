@@ -426,20 +426,9 @@ var Blitz3DCompiler = (() => {
         return { type: "LabelStatement", name: labelName };
       }
       if (this.check("IDENTIFIER" /* IDENTIFIER */)) {
-        const name = this.peek().value.toLowerCase();
-        if (name === "print") {
-          this.advance();
-          const arg = this.expression();
-          return {
-            type: "ExpressionStatement",
-            expression: {
-              type: "FunctionCall",
-              name: { type: "Identifier", name: "Print" },
-              arguments: [arg]
-            }
-          };
-        }
-        if (this.peekNext().type === "EQ" /* EQ */) {
+        const name = this.peek().value;
+        const nextToken = this.peekNext();
+        if (nextToken.type === "EQ" /* EQ */) {
           const varName = this.advance().value;
           this.advance();
           const value = this.expression();
@@ -447,6 +436,23 @@ var Blitz3DCompiler = (() => {
             type: "Assignment",
             target: { type: "Identifier", name: varName },
             value
+          };
+        }
+        if (nextToken.type !== "LPAREN" /* LPAREN */ && nextToken.type !== "NEWLINE" /* NEWLINE */ && nextToken.type !== "EOF" /* EOF */ && !this.isEndOfStatement(nextToken)) {
+          this.advance();
+          const args = [];
+          if (!this.check("NEWLINE" /* NEWLINE */) && !this.isAtEnd()) {
+            do {
+              args.push(this.expression());
+            } while (this.match("COMMA" /* COMMA */) && !this.check("NEWLINE" /* NEWLINE */));
+          }
+          return {
+            type: "ExpressionStatement",
+            expression: {
+              type: "FunctionCall",
+              name: { type: "Identifier", name },
+              arguments: args
+            }
           };
         }
       }
@@ -980,6 +986,9 @@ var Blitz3DCompiler = (() => {
     }
     peekNext() {
       return this.tokens[this.current + 1] || this.peek();
+    }
+    isEndOfStatement(token) {
+      return token.type === "NEWLINE" /* NEWLINE */ || token.type === "EOF" /* EOF */ || token.type === "THEN" /* THEN */ || token.type === "END" /* END */ || token.type === "ELSE" /* ELSE */ || token.type === "ELSEIF" /* ELSEIF */ || token.type === "NEXT" /* NEXT */ || token.type === "WEND" /* WEND */ || token.type === "UNTIL" /* UNTIL */ || token.type === "FOREVER" /* FOREVER */;
     }
     previous() {
       return this.tokens[this.current - 1];

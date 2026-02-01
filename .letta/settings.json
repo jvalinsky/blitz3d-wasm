@@ -7,7 +7,9 @@
       "Bash(git add:*)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A --node-modules-dir=auto web-ide/build_bundle.js)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A --node-modules-dir=auto web-ide/build_bundle.js && deno run --allow-read web-ide/test_examples.ts)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read web-ide/test_examples.ts)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read web-ide/test_examples.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read <<'EOF'\nimport { Lexer, Parser, CodeGenerator } from './src/compiler/all.ts';\n\nconst source = await Deno.readTextFile('test_graphics.bb');\n\ntry {\n  const lexer = new Lexer(source);\n  const { tokens, errors: lexerErrors } = lexer.tokenize();\n  \n  if (lexerErrors.length > 0) {\n    console.log('❌ Lexer errors:', lexerErrors);\n    Deno.exit(1);\n  }\n  \n  const parser = new Parser(source);\n  const ast = parser.parse();\n  \n  if (parser.errors.length > 0) {\n    console.log('❌ Parser errors:', parser.errors);\n    Deno.exit(1);\n  }\n  \n  const codegen = new CodeGenerator();\n  const wat = codegen.generate(ast);\n  \n  console.log('✅ Graphics example compiled successfully!');\n  console.log(`   Tokens: ${tokens.length}, Lines: ${source.split('\\\\n').length}, WAT: ${wat.length} bytes`);\n  console.log('\\\\nFirst 20 lines of WAT:');\n  console.log(wat.split('\\\\n').slice(0, 20).join('\\\\n'));\n} catch (error) {\n  console.log('❌ Compilation error:', error.message);\n  Deno.exit(1);\n}\nEOF)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read test_graphics_compile.ts)"
     ]
   }
 }

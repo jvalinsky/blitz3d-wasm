@@ -110,23 +110,14 @@ export class Parser {
       return { type: 'LabelStatement', name: labelName };
     }
 
-    // Check for Print statement (special case - can be called without parens)
+    // Check for function calls without parentheses (Blitz3D feature)
+    // Examples: Print "hello", Graphics3D 800, 600, PositionEntity camera, 0, 0, -5
     if (this.check(TokenType.IDENTIFIER)) {
-      const name = this.peek().value.toLowerCase();
-      if (name === 'print') {
-        this.advance(); // consume 'Print'
-        const arg = this.expression();
-        return {
-          type: 'ExpressionStatement',
-          expression: {
-            type: 'FunctionCall',
-            name: { type: 'Identifier', name: 'Print' },
-            arguments: [arg]
-          } as AST.FunctionCall
-        };
-      }
+      const name = this.peek().value;
+      const nextToken = this.peekNext();
+      
       // Check for implicit variable assignment (identifier followed by =)
-      if (this.peekNext().type === TokenType.EQ) {
+      if (nextToken.type === TokenType.EQ) {
         const varName = this.advance().value; // consume identifier
         this.advance(); // consume =
         const value = this.expression();
@@ -135,6 +126,30 @@ export class Parser {
           target: { type: 'Identifier', name: varName },
           value: value
         } as AST.Assignment;
+      }
+      
+      // Check if this looks like a function call without parentheses
+      // (identifier followed by something that could be an argument)
+      if (nextToken.type !== TokenType.LPAREN && nextToken.type !== TokenType.NEWLINE && 
+          nextToken.type !== TokenType.EOF && !this.isEndOfStatement(nextToken)) {
+        this.advance(); // consume function name
+        
+        // Parse comma-separated arguments
+        const args: AST.Expression[] = [];
+        if (!this.check(TokenType.NEWLINE) && !this.isAtEnd()) {
+          do {
+            args.push(this.expression());
+          } while (this.match(TokenType.COMMA) && !this.check(TokenType.NEWLINE));
+        }
+        
+        return {
+          type: 'ExpressionStatement',
+          expression: {
+            type: 'FunctionCall',
+            name: { type: 'Identifier', name: name },
+            arguments: args
+          } as AST.FunctionCall
+        };
       }
     }
 
@@ -810,6 +825,20 @@ export class Parser {
 
   private peekNext(): Token {
     return this.tokens[this.current + 1] || this.peek();
+  }
+  
+  private isEndOfStatement(token: Token): boolean {
+    // Tokens that typically end a statement
+    return token.type === TokenType.NEWLINE ||
+           token.type === TokenType.EOF ||
+           token.type === TokenType.THEN ||
+           token.type === TokenType.END ||
+           token.type === TokenType.ELSE ||
+           token.type === TokenType.ELSEIF ||
+           token.type === TokenType.NEXT ||
+           token.type === TokenType.WEND ||
+           token.type === TokenType.UNTIL ||
+           token.type === TokenType.FOREVER;
   }
 
   private previous(): Token {

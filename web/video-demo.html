@@ -230,6 +230,10 @@
             const path = `./dist/assets/${name}.mp4`;
             status.textContent = `Loading: ${name}.mp4...`;
             
+            // Stop current playback and reset
+            videoPlayer.pause();
+            videoPlayer.currentTime = 0;
+            
             videoPlayer.src = path;
             videoPlayer.load();
             

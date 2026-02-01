@@ -64,19 +64,21 @@
                     in vec3 v_normal;
                     out vec4 color;
                     void main() {
-                        // Simple directional lighting with more contrast
-                        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
                         vec3 norm = normalize(v_normal);
+                        
+                        // DEBUG: Show normals as RGB colors
+                        // X (red), Y (green), Z (blue)
+                        color = vec4(norm * 0.5 + 0.5, 1.0);
+                        
+                        // Lighting mode (uncomment to use)
+                        /*
+                        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
                         float diff = max(dot(norm, lightDir), 0.0);
-                        
-                        // Show normals as colors for debugging
-                        // color = vec4(abs(norm), 1.0);
-                        
-                        // Gray with lighting
                         vec3 baseColor = vec3(0.6, 0.6, 0.6);
                         vec3 ambient = vec3(0.2, 0.2, 0.2);
                         vec3 finalColor = ambient + baseColor * diff;
                         color = vec4(finalColor, 1.0);
+                        */
                     }
                 `;
                 

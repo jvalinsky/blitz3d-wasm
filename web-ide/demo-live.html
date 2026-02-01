@@ -117,14 +117,29 @@
                     <span>📝 Blitz3D Source Code</span>
                     <select id="examples" onchange="loadExample()" style="padding: 5px 10px; border-radius: 3px; border: 1px solid #ccc;">
                         <option value="">📚 Load Example...</option>
-                        <option value="hello">Hello World</option>
-                        <option value="math">Math Operations</option>
-                        <option value="loops">Loops (For/While/Repeat)</option>
-                        <option value="functions">Functions</option>
-                        <option value="types">Custom Types</option>
-                        <option value="arrays">Arrays & Dim</option>
-                        <option value="strings">String Operations</option>
-                        <option value="conditionals">If/Else/Select</option>
+                        <optgroup label="🎓 Basics">
+                            <option value="hello">Hello World</option>
+                            <option value="math">Math Operations</option>
+                            <option value="loops">Loops (For/While/Repeat)</option>
+                            <option value="functions">Functions</option>
+                            <option value="types">Custom Types</option>
+                            <option value="arrays">Arrays & Dim</option>
+                            <option value="strings">String Operations</option>
+                            <option value="conditionals">If/Else/Select</option>
+                        </optgroup>
+                        <optgroup label="🎮 3D Graphics">
+                            <option value="cube3d">Rotating Cube</option>
+                            <option value="colorfulCube">Colorful Cube</option>
+                            <option value="particles">Particle System</option>
+                            <option value="textureLoad">Texture Loading</option>
+                            <option value="meshLoad">3D Model Loading</option>
+                            <option value="lighting">Lighting Effects</option>
+                            <option value="skybox">Skybox Scene</option>
+                        </optgroup>
+                        <optgroup label="🎨 2D Graphics">
+                            <option value="sprite2d">Sprite Movement</option>
+                            <option value="collision">Collision Detection</option>
+                        </optgroup>
                     </select>
                 </div>
                 <div id="editor" style="height: 400px; border: 2px solid #e0e0e0; border-radius: 5px;"></div>
@@ -162,10 +177,13 @@
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <script src="dist/compiler.bundle.js?v=2"></script>
     <script type="module">
         import { registerBlitz3DLanguage } from './blitz3d-language.js';
+        import { graphicsExamples } from './graphics-examples.js';
         window.registerBlitz3DLanguage = registerBlitz3DLanguage;
+        window.graphicsExamples = graphicsExamples;
     </script>
     <script>
         // Compiler classes are already available globally from the bundle

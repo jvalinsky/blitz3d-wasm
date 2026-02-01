@@ -8,6 +8,7 @@
 import Foundation
 
 /// Manages random number generation state
+@MainActor
 public class MathManager {
     public static let shared = MathManager()
     

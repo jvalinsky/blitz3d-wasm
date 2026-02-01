@@ -44,7 +44,8 @@
       "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"blitz3d\\.(Len|Upper|Lower|Mid|Left|Right|Trim|Chr|Hex|Bin|Asc|Instr)\" | head -20)",
       "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"blitz3d\\.(Sin|Cos|Sqrt|Rand|Floor|Max)\" | head -15)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/FileIO)",
-      "Bash(wasm-objdump -x /tmp/fileio_test.wasm 2>&1 | grep -E \"blitz3d\\.(ReadFile|WriteFile|OpenFile|CloseFile|ReadLine|ReadInt|ReadFloat|WriteLine|FileSize|FileType)\" | head -15)"
+      "Bash(wasm-objdump -x /tmp/fileio_test.wasm 2>&1 | grep -E \"blitz3d\\.(ReadFile|WriteFile|OpenFile|CloseFile|ReadLine|ReadInt|ReadFloat|WriteLine|FileSize|FileType)\" | head -15)",
+      "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics)"
     ]
   }
 }

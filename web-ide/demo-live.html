@@ -216,6 +216,11 @@
             // Get source from Monaco editor if available, otherwise from textarea
             const source = editor ? editor.getValue() : document.getElementById('source').value;
             
+            // Clear previous error markers
+            if (editor && monaco) {
+                monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', []);
+            }
+            
             try {
                 const startTime = performance.now();
                 
@@ -225,7 +230,21 @@
                 const tokenResult = lexer.tokenize();
                 
                 if (tokenResult.errors.length > 0) {
-                    throw new Error('Lexer errors:\n' + tokenResult.errors.map(e => e.message).join('\n'));
+                    // Show lexer errors in Monaco
+                    if (editor && monaco) {
+                        const markers = tokenResult.errors.map(e => ({
+                            severity: monaco.MarkerSeverity.Error,
+                            message: e.message,
+                            startLineNumber: e.line,
+                            startColumn: e.column,
+                            endLineNumber: e.line,
+                            endColumn: e.column + 10
+                        }));
+                        monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', markers);
+                    }
+                    throw new Error('Lexer errors:\n' + tokenResult.errors.map(e => 
+                        `Line ${e.line}, Col ${e.column}: ${e.message}`
+                    ).join('\n'));
                 }
                 
                 const tokenCount = tokenResult.tokens.length - 1; // -1 for EOF
@@ -233,6 +252,27 @@
                 // Parsing
                 const parser = new Parser(source);
                 const ast = parser.parse();
+                
+                if (parser.errors.length > 0) {
+                    // Show parser errors in Monaco
+                    if (editor && monaco) {
+                        const markers = parser.errors.map(err => {
+                            // Extract line number from error message if available
+                            const lineMatch = err.match(/line (\d+)/i);
+                            const line = lineMatch ? parseInt(lineMatch[1]) : 1;
+                            return {
+                                severity: monaco.MarkerSeverity.Error,
+                                message: err,
+                                startLineNumber: line,
+                                startColumn: 1,
+                                endLineNumber: line,
+                                endColumn: 100
+                            };
+                        });
+                        monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', markers);
+                    }
+                    throw new Error('Parser errors:\n' + parser.errors.join('\n'));
+                }
                 
                 // Code generation
                 const codegen = new CodeGenerator();

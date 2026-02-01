@@ -307,7 +307,18 @@
                         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
                         document.getElementById('tex').textContent = currentMesh.texturePath;
                     };
-                    img.src = './dist/GFX/' + currentMesh.texturePath;
+                    img.onerror = () => {
+                        console.warn('Texture not found:', currentMesh.texturePath);
+                        document.getElementById('tex').textContent = currentMesh.texturePath + ' (missing)';
+                    };
+                    // Try multiple possible texture locations
+                    const texPaths = [
+                        './dist/GFX/map/' + currentMesh.texturePath,
+                        './dist/GFX/npcs/' + currentMesh.texturePath,
+                        './dist/GFX/' + currentMesh.texturePath,
+                        './dist/assets/' + currentMesh.texturePath
+                    ];
+                    img.src = texPaths[0]; // Try first path
                 }
                 
                 // Update UI

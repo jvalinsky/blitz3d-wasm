@@ -174,6 +174,7 @@ export class Lexer {
   private line = 1;
   private column = 1;
   private errors: LexerError[] = [];
+  private readonly MAX_TOKENS = 100000; // Prevent infinite tokenization
   
   constructor(source: string) {
     this.source = source;
@@ -182,23 +183,60 @@ export class Lexer {
   tokenize(): { tokens: Token[]; errors: LexerError[] } {
     const tokens: Token[] = [];
     
-    while (!this.isAtEnd()) {
-      this.skipWhitespace();
+    try {
+      let tokenCount = 0;
       
-      if (this.isAtEnd()) break;
-      
-      const token = this.nextToken();
-      if (token) {
-        tokens.push(token);
+      while (!this.isAtEnd() && tokenCount < this.MAX_TOKENS) {
+        this.skipWhitespace();
+        
+        if (this.isAtEnd()) break;
+        
+        try {
+          const token = this.nextToken();
+          if (token) {
+            tokens.push(token);
+            tokenCount++;
+          }
+        } catch (error) {
+          // Record error but continue tokenizing
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          this.errors.push({
+            message: errorMsg,
+            line: this.line,
+            column: this.column
+          });
+          
+          // Skip to next line to recover
+          while (!this.isAtEnd() && this.peek() !== '\n') {
+            this.advance();
+          }
+          if (!this.isAtEnd()) this.advance(); // Skip newline
+        }
       }
+
+      if (tokenCount >= this.MAX_TOKENS) {
+        this.errors.push({
+          message: 'Maximum token count exceeded (possible infinite loop in source)',
+          line: this.line,
+          column: this.column
+        });
+      }
+
+      tokens.push({
+        type: TokenType.EOF,
+        value: '',
+        line: this.line,
+        column: this.column,
+      });
+    } catch (error) {
+      // Catastrophic error - record and return what we have
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      this.errors.push({
+        message: `Fatal lexer error: ${errorMsg}`,
+        line: this.line,
+        column: this.column
+      });
     }
-    
-    tokens.push({
-      type: TokenType.EOF,
-      value: '',
-      line: this.line,
-      column: this.column,
-    });
     
     return { tokens, errors: this.errors };
   }

@@ -62,34 +62,77 @@ export class CodeGenerator {
   private nextStringIndex = 0;
   private dimArrays = new Map<string, { dimensions: number[] }>();
   private stringDataSize = 0; // Total bytes used by string data section
+  private errors: string[] = [];
 
   generate(program: AST.Program): string {
-    this.emit('(module');
-    this.indent++;
-
-    // Import JavaScript runtime functions
-    this.emitRuntimeImports();
-
-    // Memory
-    this.emit('(memory (export "memory") 1)');
-
-    // String data section
-    this.emitStringData(program);
-
-    // Generate functions
-    for (const stmt of program.statements) {
-      if (stmt.type === 'FunctionDeclaration') {
-        this.generateFunction(stmt);
+    try {
+      // Validate AST before generation
+      this.validateAST(program);
+      
+      if (this.errors.length > 0) {
+        throw new Error(`CodeGen validation failed:\n${this.errors.join('\n')}`);
       }
+
+      this.emit('(module');
+      this.indent++;
+
+      // Import JavaScript runtime functions
+      this.emitRuntimeImports();
+
+      // Memory
+      this.emit('(memory (export "memory") 1)');
+
+      // String data section
+      this.emitStringData(program);
+
+      // Generate functions
+      for (const stmt of program.statements) {
+        if (stmt.type === 'FunctionDeclaration') {
+          try {
+            this.generateFunction(stmt);
+          } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            throw new Error(`Error in function '${stmt.name}': ${msg}`);
+          }
+        }
+      }
+
+      // Generate main entry point if needed
+      this.generateMainFunction(program);
+
+      this.indent--;
+      this.emit(')');
+
+      return this.output.join('\n');
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      throw new Error(`Code generation failed: ${msg}`);
+    }
+  }
+
+  private validateAST(program: AST.Program): void {
+    // Basic validation to catch common issues early
+    if (!program || typeof program !== 'object') {
+      this.errors.push('Invalid program: not an object');
+      return;
     }
 
-    // Generate main entry point if needed
-    this.generateMainFunction(program);
+    if (!Array.isArray(program.statements)) {
+      this.errors.push('Invalid program: statements is not an array');
+      return;
+    }
 
-    this.indent--;
-    this.emit(')');
-
-    return this.output.join('\n');
+    // Check for duplicate function names
+    const functionNames = new Set<string>();
+    for (const stmt of program.statements) {
+      if (stmt.type === 'FunctionDeclaration') {
+        const funcName = stmt.name.toLowerCase();
+        if (functionNames.has(funcName)) {
+          this.errors.push(`Duplicate function declaration: ${stmt.name}`);
+        }
+        functionNames.add(funcName);
+      }
+    }
   }
 
   private emitRuntimeImports(): void {

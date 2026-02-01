@@ -3,6 +3,15 @@ export { Parser } from './parser.js';
 export { CodeGenerator } from './codegen.js';
 export * as AST from './ast.js';
 export { withTimeout, TimeoutChecker, CompilationTimeout } from './timeout.js';
+export {
+  CompilerError,
+  LexerError,
+  ParseError,
+  CodeGenError,
+  ValidationError,
+  ErrorCollector,
+  type SourceLocation
+} from './errors.js';
 
 declare global {
   interface Window {

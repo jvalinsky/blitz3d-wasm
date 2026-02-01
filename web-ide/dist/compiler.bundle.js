@@ -24,11 +24,17 @@ var Blitz3DCompiler = (() => {
   var all_exports = {};
   __export(all_exports, {
     AST: () => ast_exports,
+    CodeGenError: () => CodeGenError,
     CodeGenerator: () => CodeGenerator,
     CompilationTimeout: () => CompilationTimeout,
+    CompilerError: () => CompilerError,
+    ErrorCollector: () => ErrorCollector,
     Lexer: () => Lexer,
+    LexerError: () => LexerError,
+    ParseError: () => ParseError2,
     Parser: () => Parser,
     TimeoutChecker: () => TimeoutChecker,
+    ValidationError: () => ValidationError,
     withTimeout: () => withTimeout
   });
 
@@ -86,30 +92,63 @@ var Blitz3DCompiler = (() => {
     "sar": "SAR" /* SAR */
   };
   var Lexer = class {
+    // Prevent infinite tokenization
     constructor(source) {
       __publicField(this, "source");
       __publicField(this, "pos", 0);
       __publicField(this, "line", 1);
       __publicField(this, "column", 1);
       __publicField(this, "errors", []);
+      __publicField(this, "MAX_TOKENS", 1e5);
       this.source = source;
     }
     tokenize() {
       const tokens = [];
-      while (!this.isAtEnd()) {
-        this.skipWhitespace();
-        if (this.isAtEnd()) break;
-        const token = this.nextToken();
-        if (token) {
-          tokens.push(token);
+      try {
+        let tokenCount = 0;
+        while (!this.isAtEnd() && tokenCount < this.MAX_TOKENS) {
+          this.skipWhitespace();
+          if (this.isAtEnd()) break;
+          try {
+            const token = this.nextToken();
+            if (token) {
+              tokens.push(token);
+              tokenCount++;
+            }
+          } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            this.errors.push({
+              message: errorMsg,
+              line: this.line,
+              column: this.column
+            });
+            while (!this.isAtEnd() && this.peek() !== "\n") {
+              this.advance();
+            }
+            if (!this.isAtEnd()) this.advance();
+          }
         }
+        if (tokenCount >= this.MAX_TOKENS) {
+          this.errors.push({
+            message: "Maximum token count exceeded (possible infinite loop in source)",
+            line: this.line,
+            column: this.column
+          });
+        }
+        tokens.push({
+          type: "EOF" /* EOF */,
+          value: "",
+          line: this.line,
+          column: this.column
+        });
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        this.errors.push({
+          message: `Fatal lexer error: ${errorMsg}`,
+          line: this.line,
+          column: this.column
+        });
       }
-      tokens.push({
-        type: "EOF" /* EOF */,
-        value: "",
-        line: this.line,
-        column: this.column
-      });
       return { tokens, errors: this.errors };
     }
     nextToken() {
@@ -1017,23 +1056,59 @@ var Blitz3DCompiler = (() => {
       __publicField(this, "nextStringIndex", 0);
       __publicField(this, "dimArrays", /* @__PURE__ */ new Map());
       __publicField(this, "stringDataSize", 0);
+      // Total bytes used by string data section
+      __publicField(this, "errors", []);
     }
-    // Total bytes used by string data section
     generate(program) {
-      this.emit("(module");
-      this.indent++;
-      this.emitRuntimeImports();
-      this.emit('(memory (export "memory") 1)');
-      this.emitStringData(program);
+      try {
+        this.validateAST(program);
+        if (this.errors.length > 0) {
+          throw new Error(`CodeGen validation failed:
+${this.errors.join("\n")}`);
+        }
+        this.emit("(module");
+        this.indent++;
+        this.emitRuntimeImports();
+        this.emit('(memory (export "memory") 1)');
+        this.emitStringData(program);
+        for (const stmt of program.statements) {
+          if (stmt.type === "FunctionDeclaration") {
+            try {
+              this.generateFunction(stmt);
+            } catch (error) {
+              const msg = error instanceof Error ? error.message : String(error);
+              throw new Error(`Error in function '${stmt.name}': ${msg}`);
+            }
+          }
+        }
+        this.generateMainFunction(program);
+        this.indent--;
+        this.emit(")");
+        return this.output.join("\n");
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        throw new Error(`Code generation failed: ${msg}`);
+      }
+    }
+    validateAST(program) {
+      if (!program || typeof program !== "object") {
+        this.errors.push("Invalid program: not an object");
+        return;
+      }
+      if (!Array.isArray(program.statements)) {
+        this.errors.push("Invalid program: statements is not an array");
+        return;
+      }
+      const functionNames = /* @__PURE__ */ new Set();
       for (const stmt of program.statements) {
         if (stmt.type === "FunctionDeclaration") {
-          this.generateFunction(stmt);
+          const funcName = stmt.name.toLowerCase();
+          if (functionNames.has(funcName)) {
+            this.errors.push(`Duplicate function declaration: ${stmt.name}`);
+          }
+          functionNames.add(funcName);
         }
       }
-      this.generateMainFunction(program);
-      this.indent--;
-      this.emit(")");
-      return this.output.join("\n");
     }
     emitRuntimeImports() {
       this.emit('(import "env" "print" (func $print (param i32)))');
@@ -1845,6 +1920,105 @@ var Blitz3DCompiler = (() => {
     }
     elapsed() {
       return Date.now() - this.startTime;
+    }
+  };
+
+  // web-ide/src/compiler/errors.ts
+  var CompilerError = class extends Error {
+    constructor(message, location, source) {
+      super(message);
+      this.location = location;
+      this.source = source;
+      this.name = "CompilerError";
+    }
+    toString() {
+      if (!this.location) {
+        return `${this.name}: ${this.message}`;
+      }
+      const { line, column, length } = this.location;
+      let result = `${this.name} at line ${line}, column ${column}: ${this.message}`;
+      if (this.source) {
+        const lines = this.source.split("\n");
+        if (line > 0 && line <= lines.length) {
+          const sourceLine = lines[line - 1];
+          result += `
+
+${line} | ${sourceLine}`;
+          result += `
+${" ".repeat(String(line).length)} | ${" ".repeat(column - 1)}^`;
+          if (length && length > 1) {
+            result += "~".repeat(Math.min(length - 1, sourceLine.length - column));
+          }
+        }
+      }
+      return result;
+    }
+  };
+  var LexerError = class extends CompilerError {
+    constructor(message, location, source) {
+      super(message, location, source);
+      this.name = "LexerError";
+    }
+  };
+  var ParseError2 = class extends CompilerError {
+    constructor(message, location, source) {
+      super(message, location, source);
+      this.name = "ParseError";
+    }
+  };
+  var CodeGenError = class extends CompilerError {
+    constructor(message, location, source) {
+      super(message, location, source);
+      this.name = "CodeGenError";
+    }
+  };
+  var ValidationError = class extends CompilerError {
+    constructor(message, location, source) {
+      super(message, location, source);
+      this.name = "ValidationError";
+    }
+  };
+  var ErrorCollector = class {
+    constructor() {
+      __publicField(this, "errors", []);
+      __publicField(this, "warnings", []);
+    }
+    addError(error) {
+      this.errors.push(error);
+    }
+    addWarning(warning) {
+      this.warnings.push(warning);
+    }
+    hasErrors() {
+      return this.errors.length > 0;
+    }
+    hasWarnings() {
+      return this.warnings.length > 0;
+    }
+    getErrors() {
+      return this.errors;
+    }
+    getWarnings() {
+      return this.warnings;
+    }
+    clear() {
+      this.errors = [];
+      this.warnings = [];
+    }
+    toString() {
+      let result = "";
+      if (this.errors.length > 0) {
+        result += `${this.errors.length} error(s):
+`;
+        result += this.errors.map((e) => e.toString()).join("\n\n");
+      }
+      if (this.warnings.length > 0) {
+        if (result) result += "\n\n";
+        result += `${this.warnings.length} warning(s):
+`;
+        result += this.warnings.map((w) => w.toString()).join("\n\n");
+      }
+      return result || "No errors or warnings";
     }
   };
   return __toCommonJS(all_exports);

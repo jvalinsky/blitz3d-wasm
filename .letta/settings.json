@@ -46,7 +46,17 @@
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/FileIO)",
       "Bash(wasm-objdump -x /tmp/fileio_test.wasm 2>&1 | grep -E \"blitz3d\\.(ReadFile|WriteFile|OpenFile|CloseFile|ReadLine|ReadInt|ReadFloat|WriteLine|FileSize|FileType)\" | head -15)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Graphics)",
-      "Bash(wasm-objdump -x /tmp/graphics_test.wasm 2>&1 | grep -E \"blitz3d\\.(FreeMesh|FreeTexture|FreeImage|CopyImage|TextureHeight|ImageHeight)\" | head -10)"
+      "Bash(wasm-objdump -x /tmp/graphics_test.wasm 2>&1 | grep -E \"blitz3d\\.(FreeMesh|FreeTexture|FreeImage|CopyImage|TextureHeight|ImageHeight)\" | head -10)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | head -50)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | tail -30)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | grep \"WARNING\" | wc -l)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | grep \"WARNING\" | sed 's/.*Function \\([^ ]*\\) not found.*/\\1/' | sort -u | head -30)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | grep \"WARNING.*Function\" | sed 's/.*Function \\([^ ]*\\) not found.*/\\1/' | sort -u | wc -l)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_full.wasm 2>&1 | grep \"WARNING.*Function\" | sed 's/.*Function \\([^ ]*\\) not found.*/\\1/' | sort -u > /tmp/missing_funcs.txt && head -50 /tmp/missing_funcs.txt)",
+      "Bash(wasm-validate /tmp/scpcb_full.wasm 2>&1)",
+      "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep \"blitz3d\\.\" | head -30)",
+      "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep -E \"blitz3d\\.(Len|Upper|Mid|ReadFile|WriteFile|LoadMesh|LoadTexture)\" | head -20)",
+      "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep \"Import\\[\" | head -5)"
     ]
   }
 }

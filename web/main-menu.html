@@ -187,6 +187,14 @@
         <video id="introVideo"></video>
         <button class="skipButton" onclick="skipVideo()">Skip Intro</button>
     </div>
+    
+    <div id="startScreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 2000;">
+        <h1 style="color: #fff; font-size: 48px; margin-bottom: 30px; text-shadow: 0 0 20px #fff;">SCP: Containment Breach</h1>
+        <button id="startButton" style="padding: 20px 60px; font-size: 24px; background: rgba(255,255,255,0.2); color: #fff; border: 3px solid #fff; font-family: 'Courier New', monospace; cursor: pointer; transition: all 0.3s;">
+            CLICK TO START
+        </button>
+        <p style="color: #888; margin-top: 20px; font-size: 14px;">Press any key or click to begin</p>
+    </div>
 
     <script>
         // Custom cursor
@@ -373,27 +381,53 @@
             console.log('[MainMenu]', msg);
         }
         
-        // Auto-play intro on load (if enabled in settings)
-        window.addEventListener('load', () => {
+        // Start screen (required for autoplay policy)
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        
+        function startGame() {
+            startScreen.style.display = 'none';
+            
             const introEnabled = localStorage.getItem('introEnabled') !== 'false';
             
             if (introEnabled) {
-                setTimeout(() => {
-                    playIntroVideos();
-                }, 500);
+                playIntroVideos();
             } else {
                 updateStatus('Main menu ready (intro disabled)');
             }
+        }
+        
+        // Click to start
+        startButton.addEventListener('click', startGame);
+        
+        // Any key to start
+        document.addEventListener('keydown', (e) => {
+            if (startScreen.style.display !== 'none') {
+                startGame();
+            }
         });
         
-        // ESC key handling
+        // Hover effect for start button
+        startButton.addEventListener('mouseenter', () => {
+            startButton.style.background = 'rgba(255,255,255,0.4)';
+            startButton.style.transform = 'scale(1.1)';
+            startButton.style.boxShadow = '0 0 30px rgba(255,255,255,0.5)';
+        });
+        
+        startButton.addEventListener('mouseleave', () => {
+            startButton.style.background = 'rgba(255,255,255,0.2)';
+            startButton.style.transform = 'scale(1)';
+            startButton.style.boxShadow = 'none';
+        });
+        
+        // ESC key handling  
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (videoOverlay.style.display === 'flex') {
                     skipVideo();
                 }
             }
-        });
+        }, { passive: true });
     </script>
 </body>
 </html>

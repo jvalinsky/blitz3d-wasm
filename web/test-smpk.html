@@ -64,12 +64,17 @@
                     in vec3 v_normal;
                     out vec4 color;
                     void main() {
-                        // Simple directional lighting
+                        // Simple directional lighting with more contrast
                         vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
                         vec3 norm = normalize(v_normal);
                         float diff = max(dot(norm, lightDir), 0.0);
-                        vec3 baseColor = vec3(0.7, 0.7, 0.7);
-                        vec3 ambient = vec3(0.3, 0.3, 0.3);
+                        
+                        // Show normals as colors for debugging
+                        // color = vec4(abs(norm), 1.0);
+                        
+                        // Gray with lighting
+                        vec3 baseColor = vec3(0.6, 0.6, 0.6);
+                        vec3 ambient = vec3(0.2, 0.2, 0.2);
                         vec3 finalColor = ambient + baseColor * diff;
                         color = vec4(finalColor, 1.0);
                     }
@@ -140,11 +145,36 @@
                 
                 const mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
                 
-                // Create camera (move back more to see whole door)
+                // Calculate bounding box to determine camera distance
+                let minX = Infinity, minY = Infinity, minZ = Infinity;
+                let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+                for (let i = 0; i < mesh.positions.length; i += 3) {
+                    minX = Math.min(minX, mesh.positions[i]);
+                    minY = Math.min(minY, mesh.positions[i + 1]);
+                    minZ = Math.min(minZ, mesh.positions[i + 2]);
+                    maxX = Math.max(maxX, mesh.positions[i]);
+                    maxY = Math.max(maxY, mesh.positions[i + 1]);
+                    maxZ = Math.max(maxZ, mesh.positions[i + 2]);
+                }
+                const centerX = (minX + maxX) / 2;
+                const centerY = (minY + maxY) / 2;
+                const centerZ = (minZ + maxZ) / 2;
+                const sizeX = maxX - minX;
+                const sizeY = maxY - minY;
+                const sizeZ = maxZ - minZ;
+                const maxSize = Math.max(sizeX, sizeY, sizeZ);
+                
+                print(`📏 Bounds: X[${minX.toFixed(2)}, ${maxX.toFixed(2)}], Y[${minY.toFixed(2)}, ${maxY.toFixed(2)}], Z[${minZ.toFixed(2)}, ${maxZ.toFixed(2)}]`);
+                print(`📐 Size: ${sizeX.toFixed(2)} x ${sizeY.toFixed(2)} x ${sizeZ.toFixed(2)}, max=${maxSize.toFixed(2)}`);
+                print(`🎯 Center: (${centerX.toFixed(2)}, ${centerY.toFixed(2)}, ${centerZ.toFixed(2)})`);
+                
+                // Create camera - move back based on model size
                 const camera = new SimpleCamera();
-                camera.position = [0, 1, 5]; // Further back to see whole model
-                camera.target = [0, 1, 0]; // Look at center of door
+                const distance = maxSize * 2.5; // 2.5x the model size
+                camera.position = [centerX, centerY, centerZ + distance];
+                camera.target = [centerX, centerY, centerZ];
                 camera.aspect = canvas.width / canvas.height;
+                print(`📷 Camera at z=${camera.position[2].toFixed(2)}, looking at (${centerX.toFixed(2)}, ${centerY.toFixed(2)}, ${centerZ.toFixed(2)})`);
                 print('✅ Camera ready');
                 
                 // Mouse controls

@@ -232,6 +232,14 @@
                     // Get MVP matrix from camera
                     const mvp = camera.getMVPMatrix();
                     
+                    // DEBUG: Try identity matrix first to isolate camera issues
+                    // const mvp = new Float32Array([
+                    //     1, 0, 0, 0,
+                    //     0, 1, 0, 0,
+                    //     0, 0, 1, 0,
+                    //     0, 0, 0, 1
+                    // ]);
+                    
                     // Clear and render
                     gl.clearColor(0.2, 0.3, 0.4, 1.0);
                     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);

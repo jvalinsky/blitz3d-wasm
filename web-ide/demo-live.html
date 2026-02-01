@@ -184,6 +184,10 @@
         import { graphicsExamples } from './graphics-examples.js';
         window.registerBlitz3DLanguage = registerBlitz3DLanguage;
         window.graphicsExamples = graphicsExamples;
+        
+        // Signal that modules are loaded
+        window.modulesLoaded = true;
+        window.dispatchEvent(new Event('modulesReady'));
     </script>
     <script>
         // Compiler classes are already available globally from the bundle
@@ -202,16 +206,27 @@
             conditionals: `; If/ElseIf/Else + Select/Case\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf\n\nSelect x\n    Case 85\n        Print "Eighty-five!"\n    Case 90\n        Print "Ninety!"\n    Default\n        Print "Something else"\nEnd Select`
         };
         
-        // Merge with graphics examples when loaded
-        if (window.graphicsExamples) {
-            examples = { ...examples, ...window.graphicsExamples };
+        // Function to merge graphics examples
+        function mergeGraphicsExamples() {
+            if (window.graphicsExamples) {
+                examples = { ...examples, ...window.graphicsExamples };
+                console.log('Graphics examples loaded:', Object.keys(window.graphicsExamples).length, 'examples');
+            }
         }
+        
+        // Try to merge immediately if already loaded
+        mergeGraphicsExamples();
+        
+        // Also listen for the modules ready event
+        window.addEventListener('modulesReady', mergeGraphicsExamples);
         
         window.loadExample = function() {
             const sel = document.getElementById('examples');
             if (sel.value && examples[sel.value] && editor) {
                 editor.setValue(examples[sel.value]);
                 sel.value = '';
+            } else if (sel.value && !examples[sel.value]) {
+                console.error('Example not found:', sel.value, 'Available:', Object.keys(examples));
             }
         };
         

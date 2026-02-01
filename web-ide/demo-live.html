@@ -190,8 +190,8 @@
         let compiledWat = null; // Store the compiled WAT for execution
         let editor = null; // Monaco editor instance
         
-        // Example programs
-        const examples = {
+        // Example programs - will merge with graphics examples
+        let examples = {
             hello: `; Hello World\nPrint "Hello from Blitz3D!"`,
             math: `; Math Operations\nx% = 10\ny% = 5\nPrint x + y\nPrint x - y\nPrint x * y`,
             loops: `; For loop\nFor i% = 1 To 5\n    Print i\nNext`,
@@ -201,6 +201,11 @@
             strings: `; String Printing\nPrint "Hello World"\nPrint "Strings work!"`,
             conditionals: `; If/ElseIf/Else + Select/Case\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf\n\nSelect x\n    Case 85\n        Print "Eighty-five!"\n    Case 90\n        Print "Ninety!"\n    Default\n        Print "Something else"\nEnd Select`
         };
+        
+        // Merge with graphics examples when loaded
+        if (window.graphicsExamples) {
+            examples = { ...examples, ...window.graphicsExamples };
+        }
         
         window.loadExample = function() {
             const sel = document.getElementById('examples');

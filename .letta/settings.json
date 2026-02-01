@@ -63,7 +63,8 @@
       "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_complete.wasm 2>&1 | grep \"WARNING\" | head -20)",
       "Bash(wasm-validate /tmp/scpcb_complete.wasm 2>&1)",
       "Bash(wasm-objdump -x /tmp/scpcb_complete.wasm 2>&1 | grep \"Import\\[\")",
-      "Bash(wasm-objdump -x /tmp/scpcb_complete.wasm 2>&1 | grep -E \"blitz3d\\.(ColorRed|GetKey|ErrorLog|CameraClsMode|AddMesh)\" | head -10)"
+      "Bash(wasm-objdump -x /tmp/scpcb_complete.wasm 2>&1 | grep -E \"blitz3d\\.(ColorRed|GetKey|ErrorLog|CameraClsMode|AddMesh)\" | head -10)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -5)"
     ]
   }
 }

@@ -5,6 +5,8 @@
 
 import type { Blitz3DEngineExports, Blitz3DEngineImports } from './wasm-types.ts';
 import { WasmStringHelper } from './wasm-string-helper.ts';
+import type { GraphicsAPI } from './graphics-api.ts';
+import { createGraphicsAPI } from './graphics-factory.ts';
 
 export interface LoadedEngine {
     /** Raw WASM instance */
@@ -109,14 +111,55 @@ function createWasiStubs() {
     };
 }
 
+// Global graphics API instance (initialized in loadBlitz3DEngine)
+let graphicsAPI: GraphicsAPI | null = null;
+
 /**
- * Create WASM import object with stub implementations
- * These will be replaced with real implementations in Phase 2
+ * Create WASM import object with real and stub implementations
+ * Phase 2: Graphics imports now implemented
  */
-function createStubImports(): Blitz3DEngineImports {
+function createEngineImports(): Blitz3DEngineImports {
     return {
         env: {
-            // Audio stubs
+            // === Graphics Imports (Phase 2 - IMPLEMENTED) ===
+            
+            js_Graphics3D: (width: number, height: number, depth: number, mode: number): number => {
+                console.log(`Graphics3D(${width}x${height}, ${depth}bit, mode ${mode})`);
+                // Graphics API initialization happens in loadBlitz3DEngine before WASM loads
+                if (!graphicsAPI) {
+                    console.error('Graphics API not initialized!');
+                    return 0; // Failure
+                }
+                return 1; // Success
+            },
+            
+            js_ClearScreen: (): void => {
+                if (!graphicsAPI) return;
+                // Clear to black by default
+                graphicsAPI.clear(0, 0, 0, 1);
+            },
+            
+            js_RenderWorld: (tween: number): void => {
+                if (!graphicsAPI) return;
+                console.log(`RenderWorld(tween: ${tween})`);
+                graphicsAPI.endFrame();
+                graphicsAPI.beginFrame();
+            },
+            
+            js_Flip: (vsync: number): void => {
+                if (!graphicsAPI) return;
+                console.log(`Flip(vsync: ${vsync})`);
+                // End current frame and present
+                graphicsAPI.endFrame();
+            },
+            
+            js_SetBuffer: (buffer: number): void => {
+                console.log(`SetBuffer(${buffer})`);
+                // WebGPU/WebGL don't need explicit buffer selection
+                // Always rendering to canvas
+            },
+            
+            // === Audio Stubs (Phase 2 - TODO) ===
             js_LoadSound: (pathPtr: number, flags: number): number => {
                 console.warn('js_LoadSound stub called');
                 return 0; // Invalid handle

@@ -77,7 +77,7 @@
         const consoleDiv = document.getElementById('console');
         
         const camera = new Camera();
-        camera.position = [0, 0, 5]; // Move back to see triangle
+        camera.position = [0, 0, -5]; // Negative Z to move back (camera looks down +Z)
         camera.updateAspect(canvas.width, canvas.height);
         
         let isDragging = false;
@@ -196,6 +196,12 @@
                 gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
                 
                 log('✅ Triangle created');
+                
+                // Debug: Log initial camera state
+                log(`Camera position: ${camera.position.join(', ')}`);
+                log(`Camera rotation: ${camera.rotation.join(', ')}`);
+                const testMVP = camera.getMVPMatrix();
+                log(`MVP matrix sample: ${testMVP.slice(0, 4).join(', ')}...`);
                 
                 statusDiv.textContent = 'Success! Drag to rotate camera ✅';
                 statusDiv.className = 'status success';

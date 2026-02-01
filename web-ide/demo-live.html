@@ -132,6 +132,11 @@
                     <button onclick="compile()" style="flex: 1">▶️ Compile to WASM</button>
                     <button onclick="runWasm()" style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);">▶️ Run Program</button>
                 </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button onclick="shareURL()" style="flex: 1; background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);">🔗 Share URL</button>
+                    <button onclick="saveLocal()" style="flex: 1; background: linear-gradient(135deg, #FF5722 0%, #FF8A65 100%);">💾 Save</button>
+                    <button onclick="loadLocal()" style="flex: 1; background: linear-gradient(135deg, #607D8B 0%, #90A4AE 100%);">📂 Load</button>
+                </div>
             </div>
             <div class="panel">
                 <div class="panel-header">⚙️ Compilation Output</div>
@@ -156,6 +161,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="dist/compiler.bundle.js?v=2"></script>
     <script>
         // Compiler classes are already available globally from the bundle

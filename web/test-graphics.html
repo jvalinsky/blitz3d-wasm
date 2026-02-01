@@ -151,8 +151,13 @@
     </div>
 
     <script type="module">
-        import { loadBlitz3DEngine } from './src/runtime/wasm-loader.ts';
-        import { createStandardVertexLayout, BufferUsage, toArrayBuffer } from './src/runtime/graphics-api.ts';
+        // Use our custom test bundle (all runtime functions exported)
+        import { 
+            loadBlitz3DEngine,
+            createStandardVertexLayout,
+            BufferUsage,
+            toArrayBuffer
+        } from './dist/test-graphics-bundle.js';
 
         // Console logging to page
         const consoleDiv = document.getElementById('console');

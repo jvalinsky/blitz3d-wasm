@@ -188,6 +188,13 @@
             `;
             
             prog = createProgram(vs, fs);
+            
+            // Firefox: Bind attributes BEFORE linking
+            gl.bindAttribLocation(prog, 0, 'position');
+            gl.bindAttribLocation(prog, 1, 'normal');
+            gl.bindAttribLocation(prog, 2, 'uv');
+            gl.linkProgram(prog); // Re-link with explicit locations
+            
             gl.useProgram(prog);
             
             mvpLoc = gl.getUniformLocation(prog, 'u_mvp');

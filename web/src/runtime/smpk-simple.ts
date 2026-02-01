@@ -7,10 +7,12 @@ export interface SMPKPrimitive {
     positions: Float32Array;
     normals?: Float32Array;
     uvs?: Float32Array;
+    uv2?: Float32Array;           // Second UV set for lightmaps
     indices?: Uint16Array | Uint32Array;
     vertexCount: number;
     indexCount: number;
-    texturePath?: string; // Path to base color texture
+    texturePath?: string;         // Path to base color texture (diffuse)
+    lightmapPath?: string;        // Path to lightmap texture
 }
 
 export interface SMPKMesh {
@@ -38,6 +40,7 @@ interface SMPKJson {
     materials?: Array<{
         name?: string;
         baseColorTexture?: string;
+        lightmapTexture?: string;
     }>;
 }
 
@@ -94,12 +97,14 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
         // Extract vertex data
         const positionIdx = primitive.attributes.POSITION;
         const normalIdx = primitive.attributes.NORMAL;
-        const texcoordIdx = primitive.attributes.TEXCOORD_0;
+        const texcoord0Idx = primitive.attributes.TEXCOORD_0;
+        const texcoord1Idx = primitive.attributes.TEXCOORD_1;
         const indicesIdx = primitive.indices;
         
         let positions: Float32Array | undefined;
         let normals: Float32Array | undefined;
         let uvs: Float32Array | undefined;
+        let uv2: Float32Array | undefined;
         let indices: Uint16Array | Uint32Array | undefined;
         
         // Read positions
@@ -112,9 +117,14 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
             normals = readAccessor(bin, json.accessors[normalIdx]) as Float32Array;
         }
         
-        // Read UVs
-        if (texcoordIdx !== undefined) {
-            uvs = readAccessor(bin, json.accessors[texcoordIdx]) as Float32Array;
+        // Read first UV set (diffuse)
+        if (texcoord0Idx !== undefined) {
+            uvs = readAccessor(bin, json.accessors[texcoord0Idx]) as Float32Array;
+        }
+        
+        // Read second UV set (lightmap)
+        if (texcoord1Idx !== undefined) {
+            uv2 = readAccessor(bin, json.accessors[texcoord1Idx]) as Float32Array;
         }
         
         // Read indices
@@ -126,12 +136,16 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
             continue; // Skip primitives without positions
         }
         
-        // Get texture path from material
+        // Get texture paths from material
         let texturePath: string | undefined;
+        let lightmapPath: string | undefined;
         if (primitive.material !== undefined && json.materials) {
             const material = json.materials[primitive.material];
             if (material?.baseColorTexture) {
                 texturePath = material.baseColorTexture;
+            }
+            if (material?.lightmapTexture) {
+                lightmapPath = material.lightmapTexture;
             }
         }
         
@@ -139,10 +153,12 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
             positions,
             normals,
             uvs,
+            uv2,
             indices,
             vertexCount: positions.length / 3,
             indexCount: indices ? indices.length : 0,
-            texturePath
+            texturePath,
+            lightmapPath
         });
     }
     

@@ -1350,11 +1350,13 @@ async function loadSMPK(url) {
   for (const primitive of mesh.primitives) {
     const positionIdx = primitive.attributes.POSITION;
     const normalIdx = primitive.attributes.NORMAL;
-    const texcoordIdx = primitive.attributes.TEXCOORD_0;
+    const texcoord0Idx = primitive.attributes.TEXCOORD_0;
+    const texcoord1Idx = primitive.attributes.TEXCOORD_1;
     const indicesIdx = primitive.indices;
     let positions;
     let normals;
     let uvs;
+    let uv2;
     let indices;
     if (positionIdx !== void 0) {
       positions = readAccessor(bin, json.accessors[positionIdx]);
@@ -1362,8 +1364,11 @@ async function loadSMPK(url) {
     if (normalIdx !== void 0) {
       normals = readAccessor(bin, json.accessors[normalIdx]);
     }
-    if (texcoordIdx !== void 0) {
-      uvs = readAccessor(bin, json.accessors[texcoordIdx]);
+    if (texcoord0Idx !== void 0) {
+      uvs = readAccessor(bin, json.accessors[texcoord0Idx]);
+    }
+    if (texcoord1Idx !== void 0) {
+      uv2 = readAccessor(bin, json.accessors[texcoord1Idx]);
     }
     if (indicesIdx !== void 0) {
       indices = readAccessor(bin, json.accessors[indicesIdx]);
@@ -1372,20 +1377,26 @@ async function loadSMPK(url) {
       continue;
     }
     let texturePath;
+    let lightmapPath;
     if (primitive.material !== void 0 && json.materials) {
       const material = json.materials[primitive.material];
       if (material?.baseColorTexture) {
         texturePath = material.baseColorTexture;
+      }
+      if (material?.lightmapTexture) {
+        lightmapPath = material.lightmapTexture;
       }
     }
     primitives.push({
       positions,
       normals,
       uvs,
+      uv2,
       indices,
       vertexCount: positions.length / 3,
       indexCount: indices ? indices.length : 0,
-      texturePath
+      texturePath,
+      lightmapPath
     });
   }
   return { primitives };

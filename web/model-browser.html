@@ -210,14 +210,13 @@
                 void main() {
                     vec4 texColor = texture(u_texture, v_uv);
                     
-                    // Boost lightmaps heavily (5x) - they're very dark
-                    // SCPCB rooms use lightmaps without diffuse textures
-                    vec3 brightened = texColor.rgb * 5.0;
+                    // Simple lighting
+                    vec3 norm = normalize(v_normal);
+                    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
+                    float diff = max(dot(norm, lightDir), 0.0);
+                    float lighting = 0.7 + diff * 0.3;
                     
-                    // Clamp to prevent over-brightening
-                    brightened = min(brightened, vec3(1.0));
-                    
-                    color = vec4(brightened, 1.0);
+                    color = vec4(texColor.rgb * lighting, 1.0);
                 }
             `;
             

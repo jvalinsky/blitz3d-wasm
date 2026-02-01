@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minimal Triangle Test</title>
+    <style>
+        body { margin: 0; background: #1a1a1a; }
+        canvas { border: 2px solid #4CAF50; display: block; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <h1 style="color: #fff; text-align: center;">Absolute Minimal Test</h1>
+    <canvas id="c" width="800" height="600"></canvas>
+    <div id="log" style="color: #4CAF50; font-family: monospace; padding: 20px;"></div>
+    
+    <script>
+        const canvas = document.getElementById('c');
+        const log = document.getElementById('log');
+        
+        function print(msg) {
+            console.log(msg);
+            log.innerHTML += msg + '<br>';
+        }
+        
+        print('Starting minimal test...');
+        
+        const gl = canvas.getContext('webgl2');
+        if (!gl) {
+            print('ERROR: WebGL 2 not supported');
+        } else {
+            print('✅ WebGL 2 OK');
+        }
+        
+        // Simplest possible shaders - NO TRANSFORMS
+        const vs = `#version 300 es
+            in vec3 pos;
+            void main() {
+                gl_Position = vec4(pos, 1.0);
+            }
+        `;
+        
+        const fs = `#version 300 es
+            precision mediump float;
+            out vec4 color;
+            void main() {
+                color = vec4(1.0, 0.0, 0.0, 1.0);
+            }
+        `;
+        
+        // Compile shaders
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vShader, vs);
+        gl.compileShader(vShader);
+        if (!gl.getShaderParameter(vShader, gl.COMPILE_STATUS)) {
+            print('Vertex shader error: ' + gl.getShaderInfoLog(vShader));
+        } else {
+            print('✅ Vertex shader OK');
+        }
+        
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fs);
+        gl.compileShader(fShader);
+        if (!gl.getShaderParameter(fShader, gl.COMPILE_STATUS)) {
+            print('Fragment shader error: ' + gl.getShaderInfoLog(fShader));
+        } else {
+            print('✅ Fragment shader OK');
+        }
+        
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vShader);
+        gl.attachShader(prog, fShader);
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+            print('Program error: ' + gl.getProgramInfoLog(prog));
+        } else {
+            print('✅ Program linked');
+        }
+        
+        gl.useProgram(prog);
+        
+        // Triangle vertices in clip space (-1 to 1)
+        const verts = new Float32Array([
+            0.0,  0.5, 0.0,
+           -0.5, -0.5, 0.0,
+            0.5, -0.5, 0.0
+        ]);
+        
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+        print('✅ Buffer created');
+        
+        const posLoc = gl.getAttribLocation(prog, 'pos');
+        print('Attribute location: ' + posLoc);
+        gl.enableVertexAttribArray(posLoc);
+        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+        print('✅ Attribute set');
+        
+        // Clear and draw
+        gl.clearColor(0.2, 0.3, 0.4, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        
+        const err = gl.getError();
+        if (err !== gl.NO_ERROR) {
+            print('Draw error: ' + err);
+        } else {
+            print('✅ Draw call OK');
+            print('');
+            print('RED TRIANGLE SHOULD BE VISIBLE ABOVE');
+        }
+    </script>
+</body>
+</html>

@@ -64,25 +64,39 @@ public class Bank {
 @MainActor
 public class BankManager {
     public static let shared = BankManager()
-    private var banks: [Int32: Bank] = [:]
+    // Use Array instead of Dictionary to avoid WASM memory growth issues
+    private var banks: [Bank?] = []
     private var nextId: Int32 = 1
     
     public func createBank(size: Int32) -> Int32 {
         let id = nextId
         nextId += 1
-        banks[id] = Bank(size: Int(size))
+        let bank = Bank(size: Int(size))
+        
+        // Grow array if needed (IDs start at 1, so index = id - 1)
+        let index = Int(id) - 1
+        while banks.count <= index {
+            banks.append(nil)
+        }
+        banks[index] = bank
         return id
     }
     
     public func freeBank(id: Int32) {
-        banks.removeValue(forKey: id)
+        let index = Int(id) - 1
+        guard index >= 0 && index < banks.count else { return }
+        banks[index] = nil
     }
     
     public func getBank(id: Int32) -> Bank? {
-        return banks[id]
+        let index = Int(id) - 1
+        guard index >= 0 && index < banks.count else { return nil }
+        return banks[index]
     }
     
     public func bankSize(id: Int32) -> Int32 {
-        return Int32(banks[id]?.size ?? 0)
+        let index = Int(id) - 1
+        guard index >= 0 && index < banks.count else { return 0 }
+        return Int32(banks[index]?.size ?? 0)
     }
 }

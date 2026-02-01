@@ -56,7 +56,11 @@
       "Bash(wasm-validate /tmp/scpcb_full.wasm 2>&1)",
       "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep \"blitz3d\\.\" | head -30)",
       "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep -E \"blitz3d\\.(Len|Upper|Mid|ReadFile|WriteFile|LoadMesh|LoadTexture)\" | head -20)",
-      "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep \"Import\\[\" | head -5)"
+      "Bash(wasm-objdump -x /tmp/scpcb_full.wasm 2>&1 | grep \"Import\\[\" | head -5)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_complete.wasm 2>&1 | grep \"WARNING.*Function\" | sed 's/.*Function \\([^ ]*\\) not found.*/\\1/' | sort -u | wc -l)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_complete.wasm 2>&1 | grep \"WARNING.*Function\" | sed 's/.*Function \\([^ ]*\\) not found.*/\\1/' | sort -u)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_complete.wasm 2>&1 | tail -20)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_complete.wasm 2>&1 | grep \"WARNING\" | head -20)"
     ]
   }
 }

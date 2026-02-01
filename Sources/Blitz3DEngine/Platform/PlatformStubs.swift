@@ -196,7 +196,8 @@ public func BlitzMovie_Open(_ path: Int32) -> Int32 {
 
 @_cdecl("BlitzMovie_Close")
 @MainActor
-public func BlitzMovie_Close(_ movie: Int32) {
+public func BlitzMovie_Close(_ movie: Int32) -> Int32 {
+    return 1
 }
 
 @_cdecl("BlitzMovie_GetWidth")
@@ -219,10 +220,12 @@ public func BlitzMovie_OpenDecodeToImage(_ movie: Int32, _ image: Int32) -> Int3
 
 @_cdecl("BlitzMovie_Play")
 @MainActor
-public func BlitzMovie_Play(_ movie: Int32) {
+public func BlitzMovie_Play(_ movie: Int32) -> Int32 {
+    return 1
 }
 
 @_cdecl("BlitzMovie_Stop")
 @MainActor
-public func BlitzMovie_Stop(_ movie: Int32) {
+public func BlitzMovie_Stop(_ movie: Int32) -> Int32 {
+    return 1
 }

@@ -736,7 +736,7 @@ public struct CodeGenerator {
             ("MouseZSpeed", "MouseZSpeed", [], [.i32], "blitz3d"),
             
             // System Functions
-            ("ErrorLog", "ErrorLog", [.i32], [], "blitz3d"),
+            ("ErrorLog", "ErrorLog", [.i32], [.i32], "blitz3d"),
             ("TotalVidMem", "TotalVidMem", [], [.i32], "blitz3d"),
             ("AvailVidMem", "AvailVidMem", [], [.i32], "blitz3d"),
             ("GlobalMemoryStatus", "GlobalMemoryStatus", [.i32, .i32, .i32, .i32, .i32, .i32, .i32], [], "blitz3d"),
@@ -775,12 +775,12 @@ public struct CodeGenerator {
             
             // Video Playback Stubs
             ("BlitzMovie_Open", "BlitzMovie_Open", [.i32], [.i32], "blitz3d"),
-            ("BlitzMovie_Close", "BlitzMovie_Close", [.i32], [], "blitz3d"),
+            ("BlitzMovie_Close", "BlitzMovie_Close", [.i32], [.i32], "blitz3d"),
             ("BlitzMovie_GetWidth", "BlitzMovie_GetWidth", [.i32], [.i32], "blitz3d"),
             ("BlitzMovie_GetHeight", "BlitzMovie_GetHeight", [.i32], [.i32], "blitz3d"),
             ("BlitzMovie_OpenDecodeToImage", "BlitzMovie_OpenDecodeToImage", [.i32, .i32], [.i32], "blitz3d"),
-            ("BlitzMovie_Play", "BlitzMovie_Play", [.i32], [], "blitz3d"),
-            ("BlitzMovie_Stop", "BlitzMovie_Stop", [.i32], [], "blitz3d"),
+            ("BlitzMovie_Play", "BlitzMovie_Play", [.i32], [.i32], "blitz3d"),
+            ("BlitzMovie_Stop", "BlitzMovie_Stop", [.i32], [.i32], "blitz3d"),
             
             // Miscellaneous Functions
             ("Forest_Pivot", "Forest_Pivot", [], [.i32], "blitz3d"),

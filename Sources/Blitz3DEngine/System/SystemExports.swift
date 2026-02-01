@@ -9,10 +9,11 @@ import Foundation
 
 @_cdecl("ErrorLog")
 @MainActor
-public func ErrorLog(_ messageID: Int32) {
+public func ErrorLog(_ messageID: Int32) -> Int32 {
     // Log error message
-    guard let message = StringManager.shared.getString(messageID) else { return }
+    guard let message = StringManager.shared.getString(messageID) else { return 0 }
     print("ERROR: \(message)")
+    return 1
 }
 
 @_cdecl("TotalVidMem")

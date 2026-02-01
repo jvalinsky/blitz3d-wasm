@@ -24,6 +24,8 @@ const mimeFor = (path: string): string => {
       return "text/html; charset=utf-8";
     case ".js":
       return "text/javascript; charset=utf-8";
+    case ".ts":
+      return "text/javascript; charset=utf-8"; // Serve TypeScript as JavaScript for browser imports
     case ".css":
       return "text/css; charset=utf-8";
     case ".json":

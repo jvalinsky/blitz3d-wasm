@@ -1775,8 +1775,12 @@ ${this.errors.join("\n")}`);
           const arg = expr.arguments[i];
           const expectedType = funcSig.params[i] || "i32";
           this.generateExpression(arg);
-          if (expectedType === "f32" && this.isIntegerExpression(arg)) {
+          const isInt = this.isIntegerExpression(arg);
+          const isFloat = this.isFloatExpression(arg);
+          if (expectedType === "f32" && isInt) {
             this.emit("f32.convert_i32_s");
+          } else if (expectedType === "i32" && isFloat) {
+            this.emit("i32.trunc_f32_s");
           }
         }
         this.emit(`call $b3d_${builtinKey}`);
@@ -1915,10 +1919,34 @@ ${this.errors.join("\n")}`);
           if (local) return local.type === "i32";
           const global = this.globals.get(varName);
           if (global) return global.type === "i32";
-          return true;
-        // Default to integer
+          return false;
+        // Unknown - don't assume
         default:
+          return false;
+      }
+    }
+    // Helper to detect if an expression will produce f32
+    isFloatExpression(expr) {
+      if (!expr) return false;
+      switch (expr.type) {
+        case "FloatLiteral":
           return true;
+        case "IntegerLiteral":
+          return false;
+        case "UnaryOp":
+          return this.isFloatExpression(expr.operand);
+        case "BinaryOp":
+          return this.isFloatExpression(expr.left) || this.isFloatExpression(expr.right);
+        case "Identifier":
+          const varName = expr.name.toLowerCase();
+          const local = this.locals.get(varName);
+          if (local) return local.type === "f32";
+          const global = this.globals.get(varName);
+          if (global) return global.type === "f32";
+          return false;
+        // Unknown - don't assume
+        default:
+          return false;
       }
     }
   };

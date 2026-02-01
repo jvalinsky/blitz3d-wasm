@@ -951,16 +951,23 @@ export class CodeGenerator {
     if (BUILTIN_FUNCTIONS[builtinKey]) {
       const funcSig = BUILTIN_FUNCTIONS[builtinKey];
       
-      // Generate arguments with type coercion
+      // Generate arguments with bidirectional type coercion
       for (let i = 0; i < expr.arguments.length; i++) {
         const arg = expr.arguments[i];
         const expectedType = funcSig.params[i] || 'i32';
         
         this.generateExpression(arg);
         
-        // Type coercion: if we generated i32 but need f32, convert
-        if (expectedType === 'f32' && this.isIntegerExpression(arg)) {
-          this.emit('f32.convert_i32_s'); // Convert signed i32 to f32
+        const isInt = this.isIntegerExpression(arg);
+        const isFloat = this.isFloatExpression(arg);
+        
+        // Type coercion: i32 → f32
+        if (expectedType === 'f32' && isInt) {
+          this.emit('f32.convert_i32_s');
+        }
+        // Type coercion: f32 → i32 (truncate)
+        else if (expectedType === 'i32' && isFloat) {
+          this.emit('i32.trunc_f32_s');
         }
       }
       
@@ -1115,21 +1122,45 @@ export class CodeGenerator {
       case 'FloatLiteral':
         return false;
       case 'UnaryOp':
-        // -5 is still integer if operand is integer
         return this.isIntegerExpression(expr.operand);
       case 'BinaryOp':
         // Both sides integer = result integer
         return this.isIntegerExpression(expr.left) && this.isIntegerExpression(expr.right);
       case 'Identifier':
-        // Check variable type if we can
         const varName = expr.name.toLowerCase();
         const local = this.locals.get(varName);
         if (local) return local.type === 'i32';
         const global = this.globals.get(varName);
         if (global) return global.type === 'i32';
-        return true; // Default to integer
+        return false; // Unknown - don't assume
       default:
-        return true; // Default to integer for unknown expressions
+        return false;
+    }
+  }
+  
+  // Helper to detect if an expression will produce f32
+  private isFloatExpression(expr: any): boolean {
+    if (!expr) return false;
+    
+    switch (expr.type) {
+      case 'FloatLiteral':
+        return true;
+      case 'IntegerLiteral':
+        return false;
+      case 'UnaryOp':
+        return this.isFloatExpression(expr.operand);
+      case 'BinaryOp':
+        // If either side is float, result is float
+        return this.isFloatExpression(expr.left) || this.isFloatExpression(expr.right);
+      case 'Identifier':
+        const varName = expr.name.toLowerCase();
+        const local = this.locals.get(varName);
+        if (local) return local.type === 'f32';
+        const global = this.globals.get(varName);
+        if (global) return global.type === 'f32';
+        return false; // Unknown - don't assume
+      default:
+        return false;
     }
   }
 }

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test - 3D Triangle</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: monospace;
+        }
+        #canvas {
+            border: 2px solid #4CAF50;
+            display: block;
+            margin: 20px auto;
+            background: #000;
+            cursor: grab;
+        }
+        #canvas:active {
+            cursor: grabbing;
+        }
+        #info {
+            text-align: center;
+            margin: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .loading { background: #ff9800; color: #000; }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+        #console {
+            background: #000;
+            padding: 15px;
+            margin: 20px;
+            border: 1px solid #333;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .controls div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">🎥 Camera Test - 3D Perspective</h1>
+    <div id="info">
+        <div id="status" class="status loading">Initializing...</div>
+    </div>
+    <div class="controls">
+        <div><strong>Controls:</strong> Drag mouse to rotate camera</div>
+        <div>Position: <span id="pos">-</span></div>
+        <div>Rotation: <span id="rot">-</span></div>
+        <div>FPS: <span id="fps">-</span></div>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="console"></div>
+
+    <script type="module">
+        import { Camera } from './dist/test-graphics-bundle.js';
+        
+        const canvas = document.getElementById('canvas');
+        const statusDiv = document.getElementById('status');
+        const consoleDiv = document.getElementById('console');
+        
+        const camera = new Camera();
+        camera.position = [0, 0, 5]; // Move back to see triangle
+        camera.updateAspect(canvas.width, canvas.height);
+        
+        let isDragging = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        function log(msg, type = 'info') {
+            console.log(msg);
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? '#f44' : type === 'warn' ? '#fa0' : '#4CAF50';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleDiv.appendChild(div);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        // Mouse controls
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastX = e.clientX;
+            lastY = e.clientY;
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                camera.handleMouseMove(dx, dy);
+                lastX = e.clientX;
+                lastY = e.clientY;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+        });
+        
+        async function init() {
+            try {
+                log('🔍 Checking WebGL 2 support...');
+                const gl = canvas.getContext('webgl2');
+                if (!gl) {
+                    throw new Error('WebGL 2 not supported');
+                }
+                log('✅ WebGL 2 supported');
+                
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                gl.enable(gl.DEPTH_TEST);
+                
+                // Shaders with MVP uniform
+                log('📝 Compiling shaders with MVP support...');
+                const vertexShaderSource = `#version 300 es
+                    uniform mat4 u_mvp;
+                    in vec3 position;
+                    void main() {
+                        gl_Position = u_mvp * vec4(position, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `#version 300 es
+                    precision mediump float;
+                    out vec4 fragColor;
+                    void main() {
+                        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                    }
+                `;
+                
+                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vertexShader, vertexShaderSource);
+                gl.compileShader(vertexShader);
+                
+                if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                    throw new Error('Vertex shader: ' + gl.getShaderInfoLog(vertexShader));
+                }
+                
+                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                gl.compileShader(fragmentShader);
+                
+                if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+                    throw new Error('Fragment shader: ' + gl.getShaderInfoLog(fragmentShader));
+                }
+                
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    throw new Error('Program: ' + gl.getProgramInfoLog(program));
+                }
+                
+                gl.useProgram(program);
+                log('✅ Shaders compiled');
+                
+                // Get uniform location
+                const mvpLoc = gl.getUniformLocation(program, 'u_mvp');
+                
+                // Create triangle
+                log('🔺 Creating triangle...');
+                const vertices = new Float32Array([
+                    0.0,  0.5, 0.0,
+                   -0.5, -0.5, 0.0,
+                    0.5, -0.5, 0.0,
+                ]);
+                
+                const vbo = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+                
+                const posLoc = gl.getAttribLocation(program, 'position');
+                gl.enableVertexAttribArray(posLoc);
+                gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+                
+                log('✅ Triangle created');
+                
+                statusDiv.textContent = 'Success! Drag to rotate camera ✅';
+                statusDiv.className = 'status success';
+                
+                // Render loop
+                let frameCount = 0;
+                let lastFpsTime = performance.now();
+                
+                function render() {
+                    // Update FPS
+                    frameCount++;
+                    const now = performance.now();
+                    if (now - lastFpsTime >= 1000) {
+                        document.getElementById('fps').textContent = frameCount.toFixed(0);
+                        frameCount = 0;
+                        lastFpsTime = now;
+                    }
+                    
+                    // Update UI
+                    const pos = camera.position;
+                    const rot = camera.rotation;
+                    document.getElementById('pos').textContent = 
+                        `x=${pos[0].toFixed(1)}, y=${pos[1].toFixed(1)}, z=${pos[2].toFixed(1)}`;
+                    document.getElementById('rot').textContent = 
+                        `pitch=${(rot[0] * 180 / Math.PI).toFixed(0)}°, yaw=${(rot[1] * 180 / Math.PI).toFixed(0)}°`;
+                    
+                    // Get MVP matrix from camera
+                    const mvp = camera.getMVPMatrix();
+                    
+                    // Clear and render
+                    gl.clearColor(0.2, 0.3, 0.4, 1.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+                    
+                    // Set MVP uniform
+                    gl.uniformMatrix4fv(mvpLoc, false, mvp);
+                    
+                    // Draw triangle
+                    gl.drawArrays(gl.TRIANGLES, 0, 3);
+                    
+                    requestAnimationFrame(render);
+                }
+                
+                log('🎬 Starting render loop...');
+                render();
+                
+            } catch (error) {
+                statusDiv.textContent = 'Error: ' + error.message;
+                statusDiv.className = 'status error';
+                log('❌ Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>

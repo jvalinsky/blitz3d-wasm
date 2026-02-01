@@ -154,6 +154,32 @@
             }
         });
         
+        // Keyboard input for InputBox
+        document.addEventListener('keydown', (e) => {
+            if (selectedInputBox !== 0) {
+                e.preventDefault();
+                
+                const id = selectedInputBox;
+                let text = inputBoxText[id] || "";
+                
+                if (e.key === 'Backspace') {
+                    text = text.slice(0, -1);
+                } else if (e.key === 'Enter') {
+                    selectedInputBox = 0;  // Deselect
+                } else if (e.key.length === 1) {
+                    // Allow alphanumeric characters
+                    if (text.length < 15) {  // Max 15 chars (from Menu.bb)
+                        text += e.key;
+                    }
+                }
+                
+                inputBoxText[id] = text;
+                
+                // Update randomSeed directly
+                if (id === 3) randomSeed = text;
+            }
+        });
+        
         // Assets (loaded images)
         const assets = {
             menuBack: null,

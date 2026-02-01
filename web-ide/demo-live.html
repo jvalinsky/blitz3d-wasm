@@ -239,14 +239,19 @@
             if (window.graphicsExamples) {
                 examples = { ...examples, ...window.graphicsExamples };
                 console.log('Graphics examples loaded:', Object.keys(window.graphicsExamples).length, 'examples');
+                console.log('Total examples now:', Object.keys(examples).length);
+            } else {
+                console.log('Graphics examples not yet available');
             }
         }
         
         // Try to merge immediately if already loaded
-        mergeGraphicsExamples();
+        setTimeout(mergeGraphicsExamples, 100);
         
         // Also listen for the modules ready event
-        window.addEventListener('modulesReady', mergeGraphicsExamples);
+        window.addEventListener('modulesReady', () => {
+            setTimeout(mergeGraphicsExamples, 50);
+        });
         
         window.loadExample = function() {
             const sel = document.getElementById('examples');

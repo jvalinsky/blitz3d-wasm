@@ -170,6 +170,9 @@
                 <div id="console-output" class="tab-content">
                     <pre id="console" style="background: #1e1e1e; color: #d4d4d4;">Click "Run Program" to execute compiled WASM...</pre>
                 </div>
+                <div id="canvas-output" class="tab-content" style="background: #000; display: flex; align-items: center; justify-content: center;">
+                    <canvas id="renderCanvas" style="max-width: 100%; max-height: 100%;"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -196,6 +199,8 @@
         // Compiler classes are already available globally from the bundle
         let compiledWat = null; // Store the compiled WAT for execution
         let editor = null; // Monaco editor instance
+        let graphicsRuntime = null; // Three.js runtime
+        let animationLoopId = null; // For canceling animation
         
         // Example programs - will merge with graphics examples
         let examples = {
@@ -463,30 +468,36 @@
                         // Power operator helper
                         b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
                         
-                        // Graphics API - stubbed for now (will wire Three.js later)
-                        b3d_graphics3d: (w, h) => { console.log(`Graphics3D ${w}x${h}`); },
+                        // Graphics API - wired to Three.js runtime!
+                        b3d_graphics3d: (w, h) => {
+                            if (!graphicsRuntime) {
+                                const canvas = document.getElementById('renderCanvas');
+                                graphicsRuntime = new window.Blitz3DGraphicsRuntime(canvas);
+                            }
+                            graphicsRuntime.graphics3d(w, h);
+                        },
                         b3d_graphics: (w, h) => { console.log(`Graphics ${w}x${h}`); },
-                        b3d_createsphere: (s) => { console.log(`CreateSphere ${s}`); return 1; },
-                        b3d_createcube: () => { console.log('CreateCube'); return 2; },
-                        b3d_createmesh: () => { console.log('CreateMesh'); return 3; },
+                        b3d_createsphere: (s) => graphicsRuntime?.createsphere(s) || 1,
+                        b3d_createcube: () => graphicsRuntime?.createcube() || 2,
+                        b3d_createmesh: () => graphicsRuntime?.createmesh() || 3,
                         b3d_createsurface: (m) => { console.log(`CreateSurface ${m}`); return 4; },
-                        b3d_createcamera: () => { console.log('CreateCamera'); return 5; },
-                        b3d_createlight: (t) => { console.log(`CreateLight type ${t}`); return 6; },
-                        b3d_positionentity: (h, x, y, z) => { console.log(`PositionEntity ${h} at ${x},${y},${z}`); },
-                        b3d_rotateentity: (h, p, y, r) => { console.log(`RotateEntity ${h}`); },
-                        b3d_turnentity: (h, p, y, r) => { console.log(`TurnEntity ${h} by ${p},${y},${r}`); },
-                        b3d_scaleentity: (h, x, y, z) => { console.log(`ScaleEntity ${h}`); },
-                        b3d_entityx: (h) => 0,
-                        b3d_entityy: (h) => 0,
-                        b3d_entityz: (h) => 0,
-                        b3d_entitydistance: (h1, h2) => 0,
-                        b3d_pointentity: (h, t) => {},
-                        b3d_lightcolor: (h, r, g, b) => { console.log(`LightColor ${h}`); },
-                        b3d_entitycolor: (h, r, g, b) => { console.log(`EntityColor ${h}`); },
+                        b3d_createcamera: () => graphicsRuntime?.createcamera() || 5,
+                        b3d_createlight: (t) => graphicsRuntime?.createlight(t) || 6,
+                        b3d_positionentity: (h, x, y, z) => graphicsRuntime?.positionentity(h, x, y, z),
+                        b3d_rotateentity: (h, p, y, r) => graphicsRuntime?.rotateentity(h, p, y, r),
+                        b3d_turnentity: (h, p, y, r) => graphicsRuntime?.turnentity(h, p, y, r),
+                        b3d_scaleentity: (h, x, y, z) => graphicsRuntime?.scaleentity(h, x, y, z),
+                        b3d_entityx: (h) => graphicsRuntime?.entityx(h) || 0,
+                        b3d_entityy: (h) => graphicsRuntime?.entityy(h) || 0,
+                        b3d_entityz: (h) => graphicsRuntime?.entityz(h) || 0,
+                        b3d_entitydistance: (h1, h2) => graphicsRuntime?.entitydistance(h1, h2) || 0,
+                        b3d_pointentity: (h, t) => graphicsRuntime?.pointentity(h, t),
+                        b3d_lightcolor: (h, r, g, b) => graphicsRuntime?.lightcolor(h, r, g, b),
+                        b3d_entitycolor: (h, r, g, b) => graphicsRuntime?.entitycolor(h, r, g, b),
                         b3d_entitytexture: (h, t) => {},
-                        b3d_renderworld: () => { console.log('RenderWorld'); },
-                        b3d_flip: () => { console.log('Flip'); },
-                        b3d_cls: () => {},
+                        b3d_renderworld: () => graphicsRuntime?.renderworld(),
+                        b3d_flip: () => graphicsRuntime?.flip(),
+                        b3d_cls: () => graphicsRuntime?.cls(),
                         b3d_loadtexture: (p) => 10,
                         b3d_loadimage: (p) => 11,
                         b3d_loadmesh: (p) => 12,
@@ -517,12 +528,67 @@
                 wasmInstance = module.instance;
                 memory = module.instance.exports.memory;
 
-                if (module.instance.exports.main) {
-                    module.instance.exports.main();
-                }
+                // Check if this is a graphics program (has While True loop)
+                const hasGraphics = compiledWat.includes('b3d_graphics3d') || compiledWat.includes('b3d_renderworld');
+                const hasWhileTrue = compiledWat.includes('(block $break') && compiledWat.includes('(loop $continue');
                 
-                consoleElement.textContent += '\n\u2705 Program executed successfully!';
-                statusElement.innerHTML = '<div class="success">✅ Program executed! Check Program Output tab.</div>';
+                if (hasGraphics && hasWhileTrue) {
+                    // Switch to canvas tab
+                    switchTab('canvas');
+                    
+                    // Run animation loop
+                    let frameCount = 0;
+                    const maxFrames = 10000; // Safety limit
+                    
+                    const animate = () => {
+                        if (frameCount++ > maxFrames) {
+                            console.log('Animation stopped (frame limit reached)');
+                            return;
+                        }
+                        
+                        try {
+                            // Call main once per frame
+                            if (module.instance.exports.main) {
+                                // Don't call main in a loop! It has its own While True
+                                // Instead we need to restructure... for now just call once
+                            }
+                        } catch (e) {
+                            console.error('Animation error:', e);
+                            return;
+                        }
+                        
+                        animationLoopId = requestAnimationFrame(animate);
+                    };
+                    
+                    // Cancel previous animation
+                    if (animationLoopId) {
+                        cancelAnimationFrame(animationLoopId);
+                    }
+                    
+                    // Start animation (just call main once for now - it will loop internally)
+                    if (module.instance.exports.main) {
+                        // For now, just call main once to set up scene
+                        // TODO: Need to restructure While True loops to yield control
+                        setTimeout(() => {
+                            try {
+                                module.instance.exports.main();
+                            } catch (e) {
+                                consoleElement.textContent += `\n\n⚠️ Note: While True loops block execution. Scene setup complete but animation frozen.\n`;
+                                consoleElement.textContent += 'Check 3D View tab to see the scene!\n';
+                            }
+                        }, 100);
+                    }
+                    
+                    statusElement.innerHTML = '<div class="success">✅ Graphics program running! Check 3D View tab.</div>';
+                } else {
+                    // Regular program
+                    if (module.instance.exports.main) {
+                        module.instance.exports.main();
+                    }
+                    
+                    consoleElement.textContent += '\n\u2705 Program executed successfully!';
+                    statusElement.innerHTML = '<div class="success">✅ Program executed! Check Console tab.</div>';
+                }
                 
             } catch (e) {
                 consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;

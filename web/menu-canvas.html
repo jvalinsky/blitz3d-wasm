@@ -191,6 +191,14 @@
         
         // Menu state
         let mainMenuTab = 0;  // 0 = main, 1 = new game, 2 = load, 3 = options
+        let randomSeed = "";
+        let selectedDifficulty = 1;  // 0=safe, 1=euclid, 2=keter
+        let introEnabled = true;
+        const difficulties = [
+            { name: "SAFE", color: "rgb(120,200,120)", description: "For beginners. Easier to survive." },
+            { name: "EUCLID", color: "rgb(200,200,120)", description: "Normal difficulty. Balanced challenge." },
+            { name: "KETER", color: "rgb(200,120,120)", description: "For experts. Very difficult to survive." }
+        ];
         
         // SCP-173 blink effect (matches original timing)
         let menuBlinkTimer = [1, 700 + Math.random() * 100];
@@ -496,6 +504,18 @@
                     }
                 }
             }
+            // NEW GAME screen
+            else if (mainMenuTab === 1) {
+                DrawNewGameMenu();
+            }
+            // LOAD GAME screen
+            else if (mainMenuTab === 2) {
+                DrawLoadGameMenu();
+            }
+            // OPTIONS screen
+            else if (mainMenuTab === 3) {
+                DrawOptionsMenu();
+            }
             
             // Reset mouse hit state
             mouseHit1 = false;
@@ -508,19 +528,125 @@
             console.log('[Menu] Button clicked:', index);
             switch (index) {
                 case 0: // NEW GAME
-                    alert('NEW GAME - Would show difficulty selection');
+                    mainMenuTab = 1;
+                    randomSeed = "";
                     break;
                 case 1: // LOAD GAME
-                    alert('LOAD GAME - Would show save files');
+                    mainMenuTab = 2;
                     break;
                 case 2: // OPTIONS
-                    alert('OPTIONS - Would show settings');
+                    mainMenuTab = 3;
                     break;
                 case 3: // QUIT
                     if (confirm('Are you sure you want to quit?')) {
                         window.close();
                     }
                     break;
+            }
+        }
+        
+        // NEW GAME submenu
+        function DrawNewGameMenu() {
+            const x = 159 * menuScale;
+            const y = 286 * menuScale;
+            const width = 580 * menuScale;
+            const height = 400 * menuScale;
+            
+            // Title
+            ctx.fillStyle = 'white';
+            ctx.font = '32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('NEW GAME', canvas.width / 2, y - 40 * menuScale);
+            
+            // Map seed input
+            ctx.font = '18px Courier New';
+            ctx.textAlign = 'left';
+            ctx.fillText('Map seed:', x + 20 * menuScale, y + 60 * menuScale);
+            randomSeed = InputBox(x + 150 * menuScale, y + 55 * menuScale, 
+                                  200 * menuScale, 30 * menuScale, randomSeed, 3);
+            
+            // Intro enabled checkbox
+            ctx.fillText('Enable intro sequence:', x + 20 * menuScale, y + 110 * menuScale);
+            introEnabled = DrawTick(x + 280 * menuScale, y + 110 * menuScale, introEnabled);
+            
+            // Difficulty selection
+            ctx.fillText('Difficulty:', x + 20 * menuScale, y + 150 * menuScale);
+            
+            for (let i = 0; i < difficulties.length; i++) {
+                const isSelected = selectedDifficulty === i;
+                const result = DrawTick(x + 20 * menuScale, y + (180 + 30 * i) * menuScale, isSelected);
+                if (result !== isSelected) {
+                    selectedDifficulty = i;
+                }
+                
+                ctx.fillStyle = difficulties[i].color;
+                ctx.fillText(difficulties[i].name, x + 60 * menuScale, y + (180 + 30 * i) * menuScale);
+            }
+            
+            // Difficulty description box
+            ctx.fillStyle = 'white';
+            DrawFrame(x + 150 * menuScale, y + 155 * menuScale, 410 * menuScale, 150 * menuScale);
+            ctx.fillStyle = 'white';
+            RowText(difficulties[selectedDifficulty].description, 
+                   x + 160 * menuScale, y + 165 * menuScale, 
+                   390 * menuScale, 130 * menuScale, false);
+            
+            // BACK button
+            if (DrawButton(x, y + height + 20 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
+                mainMenuTab = 0;
+            }
+            
+            // START button
+            ctx.font = '28px Courier New';
+            if (DrawButton(x + 420 * menuScale, y + height + 20 * menuScale, 160 * menuScale, 70 * menuScale, 'START', true)) {
+                // Generate seed if empty
+                if (randomSeed === "") {
+                    randomSeed = Math.floor(Math.random() * 1000000).toString();
+                }
+                
+                console.log('[NewGame] Starting game with seed:', randomSeed, 'difficulty:', difficulties[selectedDifficulty].name);
+                alert(`Starting new game!\nSeed: ${randomSeed}\nDifficulty: ${difficulties[selectedDifficulty].name}\n\n(Would initialize game world)`);
+            }
+        }
+        
+        // LOAD GAME submenu
+        function DrawLoadGameMenu() {
+            const x = 159 * menuScale;
+            const y = 286 * menuScale;
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('LOAD GAME', canvas.width / 2, y - 40 * menuScale);
+            
+            ctx.font = '18px Courier New';
+            ctx.fillText('No saved games found', canvas.width / 2, y + 100 * menuScale);
+            ctx.fillText('(Save system not yet implemented)', canvas.width / 2, y + 130 * menuScale);
+            
+            // BACK button
+            if (DrawButton(x, y + 300 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
+                mainMenuTab = 0;
+            }
+        }
+        
+        // OPTIONS submenu
+        function DrawOptionsMenu() {
+            const x = 159 * menuScale;
+            const y = 286 * menuScale;
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '32px Courier New';
+            ctx.textAlign = 'center';
+            ctx.fillText('OPTIONS', canvas.width / 2, y - 40 * menuScale);
+            
+            ctx.font = '18px Courier New';
+            ctx.textAlign = 'left';
+            ctx.fillText('Graphics, audio, and control settings', x + 20 * menuScale, y + 100 * menuScale);
+            ctx.fillText('(Settings UI not yet implemented)', x + 20 * menuScale, y + 130 * menuScale);
+            
+            // BACK button
+            if (DrawButton(x, y + 300 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
+                mainMenuTab = 0;
             }
         }
         

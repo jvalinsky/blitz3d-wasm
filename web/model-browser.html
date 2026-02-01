@@ -338,10 +338,24 @@
                 
                 console.log(`📐 Bounds: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], [${minY.toFixed(2)}, ${maxY.toFixed(2)}], [${minZ.toFixed(2)}, ${maxZ.toFixed(2)}]`);
                 console.log(`📏 Size: ${size.toFixed(2)}, Center: (${cx.toFixed(2)}, ${cy.toFixed(2)}, ${cz.toFixed(2)})`);
-                console.log(`📷 Camera: pos=(${cx.toFixed(2)}, ${cy.toFixed(2)}, ${(cz + size * 2.5).toFixed(2)}), target=(${cx.toFixed(2)}, ${cy.toFixed(2)}, ${cz.toFixed(2)})`);
                 
-                camera.position = [cx, cy, cz + size * 2.5];
-                camera.target = [cx, cy, cz];
+                // For large rooms (size > 1000), put camera INSIDE looking around
+                // For small objects, put camera outside looking at them
+                let camPos, camTarget;
+                if (size > 1000) {
+                    // Room - camera inside, slightly above floor, looking forward
+                    camPos = [cx, cy * 0.3, cz]; // Lower camera (30% of center height)
+                    camTarget = [cx, cy * 0.3, cz - 500]; // Look forward into room
+                } else {
+                    // Object - camera outside looking at object
+                    camPos = [cx, cy, cz + size * 2.5];
+                    camTarget = [cx, cy, cz];
+                }
+                
+                console.log(`📷 Camera: pos=(${camPos[0].toFixed(2)}, ${camPos[1].toFixed(2)}, ${camPos[2].toFixed(2)}), target=(${camTarget[0].toFixed(2)}, ${camTarget[1].toFixed(2)}, ${camTarget[2].toFixed(2)})`);
+                
+                camera.position = camPos;
+                camera.target = camTarget;
                 
                 // Process each primitive
                 for (const prim of currentMesh.primitives) {

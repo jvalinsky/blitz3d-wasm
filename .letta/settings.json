@@ -64,7 +64,12 @@
       "Bash(wasm-validate /tmp/scpcb_complete.wasm 2>&1)",
       "Bash(wasm-objdump -x /tmp/scpcb_complete.wasm 2>&1 | grep \"Import\\[\")",
       "Bash(wasm-objdump -x /tmp/scpcb_complete.wasm 2>&1 | grep -E \"blitz3d\\.(ColorRed|GetKey|ErrorLog|CameraClsMode|AddMesh)\" | head -10)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -5)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -5)",
+      "Bash(grep:*)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && /usr/bin/swift build 2>&1 | tail -20)",
+      "Bash(cd /tmp && git clone https://github.com/swiftwasm/skills.git swiftwasm-skills 2>&1 | head -20)",
+      "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-javascriptkit)",
+      "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-bridgejs /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-porting)"
     ]
   }
 }

@@ -24,6 +24,9 @@ let package = Package(
             targets: ["Blitz3DCompiler"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.37.0")
+    ],
     targets: [
         .executableTarget(
             name: "blitz3d-wasm",
@@ -47,7 +50,9 @@ let package = Package(
         ),
         .target(
             name: "Blitz3DEngine",
-            dependencies: [],
+            dependencies: [
+                .product(name: "JavaScriptKit", package: "JavaScriptKit", condition: .when(platforms: [.wasi, .linux]))
+            ],
             path: "Sources/Blitz3DEngine",
             exclude: [
                 "AGENTs.md",

@@ -32,31 +32,32 @@ public func ErrorLog(_ messageID: Int32) -> Int32 {
 ///
 /// - Returns: Total video memory in megabytes
 ///
-/// - Note: In web contexts, returns an estimate (1024MB) since browsers don't
-///         expose actual GPU memory. Useful for performance profiling and
-///         determining if high-resolution textures can be loaded.
+/// - Note: Uses WebGL debug info to detect GPU and estimate VRAM. Results are
+///         heuristic-based but much better than hardcoded values. Conservative
+///         estimates are preferred to avoid memory issues.
 @_cdecl("TotalVidMem")
 @MainActor
 public func TotalVidMem() -> Int32 {
-    // Return reasonable estimate for web (1GB)
-    return 1024
+    // Query actual GPU via WebGL and estimate VRAM
+    return queryAvailableVRAM()
 }
 
 /// Returns the available (free) video memory on the graphics card.
 ///
 /// - Returns: Available video memory in megabytes
 ///
-/// - Note: In web contexts, returns an estimate (512MB). In native builds,
-///         this would query actual GPU memory. Useful for detecting memory
-///         pressure and adjusting texture quality dynamically.
+/// - Note: Uses WebGL debug info to detect GPU and estimate VRAM. Browsers don't
+///         expose actual free VRAM, so we return the total estimate. Games should
+///         use this conservatively for texture loading decisions.
 @_cdecl("AvailVidMem")
 @MainActor
 public func AvailVidMem() -> Int32 {
-    // Return reasonable estimate for web (512MB free)
-    return 512
+    // Query actual GPU via WebGL and estimate VRAM
+    // Return full estimate since we can't measure actual free memory
+    return queryAvailableVRAM()
 }
 
-/// Retrieves system memory statistics.
+/// Retrieves system memory statistics using Web APIs.
 ///
 /// - Parameters:
 ///   - memoryLoad: Percentage of physical memory in use (0-100)
@@ -67,15 +68,30 @@ public func AvailVidMem() -> Int32 {
 ///   - totalVirtual: Total virtual memory in bytes
 ///   - availVirtual: Available virtual memory in bytes
 ///
-/// - Note: This is a Windows API-style function. In web contexts, most values
-///         are stubbed since browsers don't expose detailed memory information.
-///         Maintained for compatibility with Windows-based Blitz3D code.
+/// - Note: Uses navigator.deviceMemory and performance.memory to provide
+///         real estimates. Values are approximate due to browser privacy
+///         restrictions, but much better than hardcoded stubs.
 @_cdecl("GlobalMemoryStatus")
 @MainActor
-public func GlobalMemoryStatus(_ memoryLoad: Int32, _ totalPhys: Int32, _ availPhys: Int32,
-                                _ totalPageFile: Int32, _ availPageFile: Int32,
-                                _ totalVirtual: Int32, _ availVirtual: Int32) {
-    // Stubbed for web - browsers don't expose detailed memory stats
+public func GlobalMemoryStatus(_ memoryLoad: UnsafeMutablePointer<Int32>,
+                                _ totalPhys: UnsafeMutablePointer<Int32>,
+                                _ availPhys: UnsafeMutablePointer<Int32>,
+                                _ totalPageFile: UnsafeMutablePointer<Int32>,
+                                _ availPageFile: UnsafeMutablePointer<Int32>,
+                                _ totalVirtual: UnsafeMutablePointer<Int32>,
+                                _ availVirtual: UnsafeMutablePointer<Int32>) {
+    let (totalRAM, availableRAM, load) = querySystemMemory()
+    
+    // Set all output parameters
+    memoryLoad.pointee = load
+    totalPhys.pointee = totalRAM
+    availPhys.pointee = availableRAM
+    
+    // Web doesn't use page files - mirror RAM values for compatibility
+    totalPageFile.pointee = totalRAM
+    availPageFile.pointee = availableRAM
+    totalVirtual.pointee = totalRAM
+    availVirtual.pointee = availableRAM
 }
 
 /// Returns the number of textures currently loaded in video memory.

@@ -69,7 +69,8 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && /usr/bin/swift build 2>&1 | tail -20)",
       "Bash(cd /tmp && git clone https://github.com/swiftwasm/skills.git swiftwasm-skills 2>&1 | head -20)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-javascriptkit)",
-      "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-bridgejs /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-porting)"
+      "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-bridgejs /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-porting)",
+      "Bash(find:*)"
     ]
   }
 }

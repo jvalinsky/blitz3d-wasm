@@ -170,17 +170,12 @@
                 in vec2 v_uv;
                 out vec4 color;
                 void main() {
+                    // PURE TEXTURE - NO LIGHTING
                     vec4 texColor = texture(u_texture, v_uv);
+                    color = texColor;
                     
-                    // Brighter lighting to show textures clearly
-                    vec3 norm = normalize(v_normal);
-                    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
-                    float diff = max(dot(norm, lightDir), 0.0);
-                    
-                    // High ambient (0.7) + moderate diffuse (0.3)
-                    float lighting = 0.7 + diff * 0.3;
-                    
-                    color = vec4(texColor.rgb * lighting, texColor.a);
+                    // Debug: show pure texture to verify no black patterns
+                    // If still black = texture issue, not lighting
                 }
             `;
             

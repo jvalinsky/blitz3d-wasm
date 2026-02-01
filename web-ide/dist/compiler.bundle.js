@@ -1158,11 +1158,22 @@ ${this.errors.join("\n")}`);
     }
     // Register function signature (first pass - for forward references)
     registerFunction(func) {
+      let returnType = func.returnType;
+      if (!returnType && func.name) {
+        const suffix = func.name.charAt(func.name.length - 1);
+        if (suffix === "%") {
+          returnType = { kind: "primitive", name: "Int" };
+        } else if (suffix === "#") {
+          returnType = { kind: "primitive", name: "Float" };
+        } else if (suffix === "$") {
+          returnType = { kind: "primitive", name: "String" };
+        }
+      }
       const funcIndex = this.nextFunctionIndex++;
       this.functions.set(func.name, {
         index: funcIndex,
         params: func.parameters.map((p) => this.typeToWasm(p.type)),
-        returns: func.returnType ? this.typeToWasm(func.returnType) : ""
+        returns: returnType ? this.typeToWasm(returnType) : ""
       });
     }
     // Generate function body (second pass - after all signatures registered)
@@ -1175,7 +1186,18 @@ ${this.errors.join("\n")}`);
         this.localIndex++;
         return `(param $${p.name} ${wasmType})`;
       }).join(" ");
-      const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : "";
+      let returnType = func.returnType;
+      if (!returnType && func.name) {
+        const suffix = func.name.charAt(func.name.length - 1);
+        if (suffix === "%") {
+          returnType = { kind: "primitive", name: "Int" };
+        } else if (suffix === "#") {
+          returnType = { kind: "primitive", name: "Float" };
+        } else if (suffix === "$") {
+          returnType = { kind: "primitive", name: "String" };
+        }
+      }
+      const returns = returnType ? `(result ${this.typeToWasm(returnType)})` : "";
       this.emit(`(func $${func.name} (export "${func.name}") ${params} ${returns}`);
       this.indent++;
       const localDecls = [];

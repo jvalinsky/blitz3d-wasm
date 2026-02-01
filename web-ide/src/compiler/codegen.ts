@@ -199,11 +199,24 @@ export class CodeGenerator {
 
   // Register function signature (first pass - for forward references)
   private registerFunction(func: AST.FunctionDeclaration): void {
+    // Infer return type from function name suffix if not explicitly provided
+    let returnType = func.returnType;
+    if (!returnType && func.name) {
+      const suffix = func.name.charAt(func.name.length - 1);
+      if (suffix === '%') {
+        returnType = { kind: 'primitive', name: 'Int' };
+      } else if (suffix === '#') {
+        returnType = { kind: 'primitive', name: 'Float' };
+      } else if (suffix === '$') {
+        returnType = { kind: 'primitive', name: 'String' };
+      }
+    }
+    
     const funcIndex = this.nextFunctionIndex++;
     this.functions.set(func.name, {
       index: funcIndex,
       params: func.parameters.map(p => this.typeToWasm(p.type)),
-      returns: func.returnType ? this.typeToWasm(func.returnType) : ''
+      returns: returnType ? this.typeToWasm(returnType) : ''
     });
   }
 
@@ -220,7 +233,20 @@ export class CodeGenerator {
       return `(param $${p.name} ${wasmType})`;
     }).join(' ');
 
-    const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : '';
+    // Infer return type from function name suffix if not explicitly provided
+    let returnType = func.returnType;
+    if (!returnType && func.name) {
+      const suffix = func.name.charAt(func.name.length - 1);
+      if (suffix === '%') {
+        returnType = { kind: 'primitive', name: 'Int' };
+      } else if (suffix === '#') {
+        returnType = { kind: 'primitive', name: 'Float' };
+      } else if (suffix === '$') {
+        returnType = { kind: 'primitive', name: 'String' };
+      }
+    }
+
+    const returns = returnType ? `(result ${this.typeToWasm(returnType)})` : '';
 
     this.emit(`(func $${func.name} (export "${func.name}") ${params} ${returns}`);
     this.indent++;

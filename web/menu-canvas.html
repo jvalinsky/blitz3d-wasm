@@ -675,7 +675,8 @@
         
         // OPTIONS submenu
         function DrawOptionsMenu() {
-            const x = 159 * menuScale;
+            // Move options menu more to the right to avoid overlap
+            const x = 250 * menuScale;  // Was 159, now 250
             const y = 286 * menuScale;
             
             ctx.fillStyle = 'white';
@@ -706,8 +707,8 @@
                 optionsMenu = 3;
             }
             
-            // Content area - add padding from left edge
-            const contentX = x + 40 * menuScale;  // More left padding
+            // Content area
+            const contentX = x + 20 * menuScale;  // Content offset from x
             let optY = y + 50 * menuScale;
             ctx.font = '18px Courier New';
             ctx.textAlign = 'left';

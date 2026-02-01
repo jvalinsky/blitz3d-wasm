@@ -170,12 +170,14 @@
                 in vec2 v_uv;
                 out vec4 color;
                 void main() {
-                    // PURE TEXTURE - NO LIGHTING
                     vec4 texColor = texture(u_texture, v_uv);
-                    color = texColor;
                     
-                    // Debug: show pure texture to verify no black patterns
-                    // If still black = texture issue, not lighting
+                    // ALPHA DEBUG: Ignore alpha channel (transparency)
+                    // Show RGB only, force alpha to 1.0
+                    color = vec4(texColor.rgb, 1.0);
+                    
+                    // If black areas persist = actual black in RGB
+                    // If black areas disappear = alpha transparency issue
                 }
             `;
             

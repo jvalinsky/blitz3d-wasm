@@ -291,10 +291,16 @@
                 primitiveData = [];
                 
                 // Load mesh
+                console.log('Loading:', path);
                 currentMesh = await loadSMPK('./dist/' + path);
+                console.log('Loaded mesh:', currentMesh);
                 
                 if (currentMesh.primitives.length === 0) {
                     throw new Error('No primitives in mesh');
+                }
+                
+                if (!currentMesh.primitives[0].positions) {
+                    throw new Error('No positions in first primitive!');
                 }
                 
                 console.log(`📦 Loaded ${currentMesh.primitives.length} primitive(s)`);

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build only the Blitz3DEngine library target for WASM
-# Key: Remove --triple flag, let SDK determine the triple automatically
+# Uses temporary Package.wasm.swift with only libraries (no executables)
 
 set -e
 
@@ -8,14 +8,30 @@ echo "Building Blitz3DEngine for WebAssembly..."
 
 cd "$(dirname "$0")"
 
-# Build with SDK auto-determining the triple (no --triple flag!)
+# Temporarily swap Package.swift to avoid building executables for WASM
+if [ -f "Package.swift" ]; then
+    mv Package.swift Package.swift.orig
+fi
+cp Package.wasm.swift Package.swift
+
+# Build with WASM-only package manifest
+# Use 6.2-RELEASE SDK (better compatibility than 6.2.3)
 swift build \
-  --swift-sdk swift-6.2.3-RELEASE_wasm \
+  --swift-sdk 6.2-RELEASE-wasm32-unknown-wasip1 \
   -c release \
   -Xswiftc -enable-experimental-feature \
   -Xswiftc Extern \
   -Xlinker --export-all \
   -Xlinker --no-entry 2>&1
+
+BUILD_RESULT=$?
+
+# Restore original Package.swift
+if [ -f "Package.swift.orig" ]; then
+    mv Package.swift.orig Package.swift
+fi
+
+exit $BUILD_RESULT
 
 # The SDK determines the output path, check both possible locations
 if [ -f ".build/wasm32-unknown-wasip1/release/libBlitz3DEngine.a" ]; then

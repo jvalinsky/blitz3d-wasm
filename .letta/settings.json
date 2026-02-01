@@ -73,7 +73,12 @@
       "Bash(find:*)",
       "Bash(swift sdk list 2>/dev/null || echo \"Swift SDK command not available\")",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build --help 2>&1 | grep -A 3 \"swift-sdk\")",
-      "Bash(swift build --help 2>&1 | grep -i plugin)"
+      "Bash(swift build --help 2>&1 | grep -i plugin)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift package describe 2>&1 | grep -A 2 \"Name: blitz3d\")",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift package dump-package 2>&1 | jq -r '.products[] | \"\\(.name): \\(.type.executable // .type.library)\"' 2>/dev/null || echo \"jq not available\")",
+      "Bash(swift sdk list | grep swift-6.2.3)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && ./build-engine-wasm.sh 2>&1 | tail -50)",
+      "Bash(swift sdk list --configuration-path 2>&1 || echo \"checking alternate locations...\")"
     ]
   }
 }

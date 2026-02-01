@@ -1,22 +1,13 @@
 {
-  "originHash" : "4c3deac4e43ecaefae69241e8c1488b9a1d299d157eedd6b0fce3ae439cb1314",
+  "originHash" : "68bf256768ff30da0c3d82805b540cf2f1fe33c05e7d2b891cc3406d3aea7c95",
   "pins" : [
     {
       "identity" : "javascriptkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftwasm/JavaScriptKit.git",
       "state" : {
-        "revision" : "7b0ef7862b8278beda913786a61441f6e26c1313",
-        "version" : "0.39.0"
-      }
-    },
-    {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax",
-      "state" : {
-        "revision" : "4799286537280063c85a32f09884cfbca301b1a1",
-        "version" : "602.0.0"
+        "revision" : "3b5af3d442179900455307c725fe6a111a714b27",
+        "version" : "0.19.2"
       }
     }
   ],

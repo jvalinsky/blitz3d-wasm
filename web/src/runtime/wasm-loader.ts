@@ -219,7 +219,7 @@ export async function loadBlitz3DEngine(wasmPath: string): Promise<LoadedEngine>
     console.log(`Loaded ${wasmBytes.byteLength} bytes of WASM`);
     
     // Create imports
-    const imports = createStubImports();
+    const imports = createEngineImports();
     
     // Compile and instantiate WASM module
     const module = await WebAssembly.compile(wasmBytes);

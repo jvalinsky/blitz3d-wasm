@@ -118,7 +118,11 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read --no-check web/src/runtime/wasm-engine.test.ts 2>&1 | grep -E \"^(WASM|Bank|String|Math|Memory|Multiple)\" | head -20)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read --no-check web/src/runtime/wasm-engine.test.ts 2>&1 | tail -5)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read --no-check web/src/runtime/wasm-engine.test.ts 2>&1 | tail -10)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read --no-check web/src/runtime/wasm-engine.test.ts 2>&1 | grep -E \"(ok|passed|failed)\" | tail -20)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read --no-check web/src/runtime/wasm-engine.test.ts 2>&1 | grep -E \"(ok|passed|failed)\" | tail -20)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/graphics-api.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/webgpu-graphics.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/wasm-loader.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/wasm-loader.ts 2>&1 | head -40)"
     ]
   }
 }

@@ -135,7 +135,8 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test 2>&1 | tail -5)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test 2>&1 | tail -3)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno fmt web/src/runtime/camera-simple.ts)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno fmt web/src/runtime/camera-simple.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && node -e \"\nconst fs = require('fs');\nconst buf = fs.readFileSync('web/dist/assets/Door01.smpk');\nconst dv = new DataView(buf.buffer);\nconst jsonLen = dv.getUint32(8, true);\nconst jsonStart = 16;\nconst jsonText = buf.slice(jsonStart, jsonStart + jsonLen).toString();\nconst json = JSON.parse(jsonText);\nconsole.log('Materials:', JSON.stringify(json.materials, null, 2));\n\")"
     ]
   }
 }

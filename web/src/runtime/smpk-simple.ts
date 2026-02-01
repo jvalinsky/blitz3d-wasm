@@ -10,6 +10,7 @@ export interface SMPKMesh {
     indices?: Uint16Array | Uint32Array;
     vertexCount: number;
     indexCount: number;
+    texturePath?: string; // Path to base color texture
 }
 
 interface SMPKAccessor {
@@ -27,7 +28,12 @@ interface SMPKJson {
         primitives: Array<{
             attributes: Record<string, number>; // attribute name -> accessor index
             indices?: number; // accessor index
+            material?: number; // material index
         }>;
+    }>;
+    materials?: Array<{
+        name?: string;
+        baseColorTexture?: string;
     }>;
 }
 
@@ -114,13 +120,23 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
         throw new Error('No position data in SMPK');
     }
     
+    // Get texture path from material
+    let texturePath: string | undefined;
+    if (primitive.material !== undefined && json.materials) {
+        const material = json.materials[primitive.material];
+        if (material?.baseColorTexture) {
+            texturePath = material.baseColorTexture;
+        }
+    }
+    
     return {
         positions,
         normals,
         uvs,
         indices,
         vertexCount: positions.length / 3,
-        indexCount: indices ? indices.length : 0
+        indexCount: indices ? indices.length : 0,
+        texturePath
     };
 }
 

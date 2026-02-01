@@ -1369,13 +1369,21 @@ async function loadSMPK(url) {
   if (!positions) {
     throw new Error("No position data in SMPK");
   }
+  let texturePath;
+  if (primitive.material !== void 0 && json.materials) {
+    const material = json.materials[primitive.material];
+    if (material?.baseColorTexture) {
+      texturePath = material.baseColorTexture;
+    }
+  }
   return {
     positions,
     normals,
     uvs,
     indices,
     vertexCount: positions.length / 3,
-    indexCount: indices ? indices.length : 0
+    indexCount: indices ? indices.length : 0,
+    texturePath
   };
 }
 function readAccessor(bin, accessor) {

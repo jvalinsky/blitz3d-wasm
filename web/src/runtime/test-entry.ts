@@ -33,6 +33,9 @@ export {
 // String helper
 export { WasmStringHelper } from './wasm-string-helper.ts';
 
+// Camera
+export { Camera } from './camera.ts';
+
 // Types
 export type {
     Blitz3DEngineExports,

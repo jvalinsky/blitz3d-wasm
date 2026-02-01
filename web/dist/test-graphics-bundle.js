@@ -1066,11 +1066,122 @@ async function loadBlitz3DEngine(wasmPath, canvas) {
   };
 }
 
+// src/runtime/camera.ts
+var Camera = class {
+  constructor() {
+    // Position in world space
+    __publicField(this, "position", [0, 0, -5]);
+    // Rotation (pitch, yaw) in radians
+    __publicField(this, "rotation", [0, 0]);
+    // Projection parameters
+    __publicField(this, "fov", 60);
+    // Field of view in degrees
+    __publicField(this, "near", 0.1);
+    __publicField(this, "far", 1e3);
+    __publicField(this, "aspect", 1);
+  }
+  /**
+   * Get view matrix (world to camera space)
+   */
+  getViewMatrix() {
+    const mat = new Float32Array(16);
+    mat[0] = 1;
+    mat[5] = 1;
+    mat[10] = 1;
+    mat[15] = 1;
+    const pitch = this.rotation[0];
+    const yaw = this.rotation[1];
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const cy = Math.cos(yaw);
+    const sy = Math.sin(yaw);
+    mat[0] = cy;
+    mat[1] = sp * sy;
+    mat[2] = cp * sy;
+    mat[4] = 0;
+    mat[5] = cp;
+    mat[6] = -sp;
+    mat[8] = -sy;
+    mat[9] = sp * cy;
+    mat[10] = cp * cy;
+    mat[12] = -this.position[0];
+    mat[13] = -this.position[1];
+    mat[14] = -this.position[2];
+    return mat;
+  }
+  /**
+   * Get projection matrix (perspective)
+   */
+  getProjectionMatrix() {
+    const mat = new Float32Array(16);
+    const fovRad = this.fov * Math.PI / 180;
+    const f = 1 / Math.tan(fovRad / 2);
+    const rangeInv = 1 / (this.near - this.far);
+    mat[0] = f / this.aspect;
+    mat[5] = f;
+    mat[10] = (this.near + this.far) * rangeInv;
+    mat[11] = -1;
+    mat[14] = this.near * this.far * rangeInv * 2;
+    return mat;
+  }
+  /**
+   * Get combined MVP matrix (Model-View-Projection)
+   */
+  getMVPMatrix(modelMatrix) {
+    const view = this.getViewMatrix();
+    const proj = this.getProjectionMatrix();
+    const model = modelMatrix || this.identity();
+    const vp = this.multiply(proj, view);
+    return this.multiply(vp, model);
+  }
+  /**
+   * Handle mouse movement for camera rotation
+   */
+  handleMouseMove(dx, dy, sensitivity = 2e-3) {
+    this.rotation[1] += dx * sensitivity;
+    this.rotation[0] += dy * sensitivity;
+    this.rotation[0] = Math.max(
+      -Math.PI / 2 + 0.1,
+      Math.min(Math.PI / 2 - 0.1, this.rotation[0])
+    );
+  }
+  /**
+   * Update aspect ratio (call when canvas resizes)
+   */
+  updateAspect(width, height) {
+    this.aspect = width / height;
+  }
+  // Helper: 4x4 identity matrix
+  identity() {
+    const mat = new Float32Array(16);
+    mat[0] = 1;
+    mat[5] = 1;
+    mat[10] = 1;
+    mat[15] = 1;
+    return mat;
+  }
+  // Helper: multiply two 4x4 matrices
+  multiply(a, b) {
+    const result = new Float32Array(16);
+    for (let row = 0; row < 4; row++) {
+      for (let col = 0; col < 4; col++) {
+        let sum = 0;
+        for (let i = 0; i < 4; i++) {
+          sum += a[row * 4 + i] * b[i * 4 + col];
+        }
+        result[row * 4 + col] = sum;
+      }
+    }
+    return result;
+  }
+};
+
 // src/runtime/test-entry.ts
 console.log("\u2705 Graphics test bundle loaded");
 export {
   BlendMode,
   BufferUsage,
+  Camera,
   CompareFunction,
   CullMode,
   TextureFormat,

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Graphics Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: monospace;
+        }
+        #canvas {
+            border: 2px solid #4CAF50;
+            display: block;
+            margin: 20px auto;
+            background: #000;
+        }
+        #info {
+            text-align: center;
+            margin: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .loading { background: #ff9800; color: #000; }
+        .success { background: #4CAF50; }
+        .error { background: #f44336; }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Simple Graphics Test</h1>
+    <div id="info">
+        <div id="status" class="status loading">Initializing...</div>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="console" style="background: #000; padding: 15px; margin: 20px; border: 1px solid #333; max-height: 300px; overflow-y: auto;"></div>
+
+    <script type="module">
+        const canvas = document.getElementById('canvas');
+        const statusDiv = document.getElementById('status');
+        const consoleDiv = document.getElementById('console');
+        
+        function log(msg, type = 'info') {
+            console.log(msg);
+            const div = document.createElement('div');
+            div.style.color = type === 'error' ? '#f44' : type === 'warn' ? '#fa0' : '#4CAF50';
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleDiv.appendChild(div);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        async function init() {
+            try {
+                log('🔍 Checking WebGL 2 support...');
+                const gl = canvas.getContext('webgl2');
+                if (!gl) {
+                    throw new Error('WebGL 2 not supported');
+                }
+                log('✅ WebGL 2 supported');
+                
+                // Set viewport
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                
+                // Create vertex shader
+                log('📝 Compiling shaders...');
+                const vertexShaderSource = `#version 300 es
+                    in vec3 position;
+                    void main() {
+                        gl_Position = vec4(position, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `#version 300 es
+                    precision mediump float;
+                    out vec4 fragColor;
+                    void main() {
+                        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                    }
+                `;
+                
+                // Compile shaders
+                const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+                gl.shaderSource(vertexShader, vertexShaderSource);
+                gl.compileShader(vertexShader);
+                
+                if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+                    throw new Error('Vertex shader compilation failed: ' + gl.getShaderInfoLog(vertexShader));
+                }
+                
+                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                gl.compileShader(fragmentShader);
+                
+                if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+                    throw new Error('Fragment shader compilation failed: ' + gl.getShaderInfoLog(fragmentShader));
+                }
+                
+                // Link program
+                const program = gl.createProgram();
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                
+                if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                    throw new Error('Program linking failed: ' + gl.getProgramInfoLog(program));
+                }
+                
+                gl.useProgram(program);
+                log('✅ Shaders compiled and linked');
+                
+                // Create triangle vertices
+                log('🔺 Creating triangle...');
+                const vertices = new Float32Array([
+                    0.0,  0.5, 0.0,   // top
+                   -0.5, -0.5, 0.0,   // bottom-left
+                    0.5, -0.5, 0.0,   // bottom-right
+                ]);
+                
+                const vbo = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+                gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+                
+                const positionLoc = gl.getAttribLocation(program, 'position');
+                gl.enableVertexAttribArray(positionLoc);
+                gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
+                
+                log('✅ Triangle vertex buffer created');
+                
+                // Render
+                log('🎬 Rendering...');
+                gl.clearColor(0.2, 0.3, 0.4, 1.0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+                
+                statusDiv.textContent = 'Success! Triangle rendered ✅';
+                statusDiv.className = 'status success';
+                log('🎉 Triangle rendered successfully!');
+                
+                // Animate (rotate colors)
+                let time = 0;
+                function animate() {
+                    time += 0.01;
+                    const r = Math.sin(time) * 0.5 + 0.5;
+                    const g = Math.sin(time + 2) * 0.5 + 0.5;
+                    const b = Math.sin(time + 4) * 0.5 + 0.5;
+                    
+                    gl.clearColor(r * 0.2, g * 0.3, b * 0.4, 1.0);
+                    gl.clear(gl.COLOR_BUFFER_BIT);
+                    gl.drawArrays(gl.TRIANGLES, 0, 3);
+                    
+                    requestAnimationFrame(animate);
+                }
+                animate();
+                
+            } catch (error) {
+                statusDiv.textContent = 'Error: ' + error.message;
+                statusDiv.className = 'status error';
+                log('❌ Error: ' + error.message, 'error');
+                console.error(error);
+            }
+        }
+        
+        init();
+    </script>
+</body>
+</html>

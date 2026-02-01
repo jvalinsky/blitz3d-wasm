@@ -163,6 +163,10 @@
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="dist/compiler.bundle.js?v=2"></script>
+    <script type="module">
+        import { registerBlitz3DLanguage } from './blitz3d-language.js';
+        window.registerBlitz3DLanguage = registerBlitz3DLanguage;
+    </script>
     <script>
         // Compiler classes are already available globally from the bundle
         let compiledWat = null; // Store the compiled WAT for execution
@@ -439,14 +443,22 @@
                 }
             }
             
+            // Register Blitz3D language
+            if (window.registerBlitz3DLanguage) {
+                window.registerBlitz3DLanguage(monaco);
+            }
+            
             editor = monaco.editor.create(document.getElementById('editor'), {
                 value: initialCode,
-                language: 'vb',
-                theme: 'vs',
+                language: 'blitz3d',
+                theme: 'blitz3d-dark',
                 minimap: { enabled: false },
                 fontSize: 14,
                 lineNumbers: 'on',
-                automaticLayout: true
+                automaticLayout: true,
+                'bracketPairColorization.enabled': true,
+                smoothScrolling: true,
+                cursorBlinking: 'smooth'
             });
             
             // Auto-compile on change

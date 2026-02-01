@@ -34,7 +34,13 @@
       "Bash(cd /tmp/blitz3d-test && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm math_test.bb -o math_test.wasm 2>&1 | tail -20)",
       "Bash(wasm-objdump -x /tmp/math_test.wasm 2>/dev/null | grep -E \"import.*blitz3d.*\\(Sin|Cos|Sqrt|Rand|Floor|Max\\)\" | head -10)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Strings)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -20)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -20)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>/dev/null | grep -E \"import.*blitz3d.*(Len|Upper|Left|Trim|Hex|Chr)\" | head -10)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>/dev/null | grep \"import\" | grep -i \"string\\|len\\|upper\" | head -10)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | head -30)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -A 5 \"Import\\[\" | head -40)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"func\\[[0-9]+\\].*<(Len|Upper|Left|Mid|Trim|Chr|Hex|Bin)\" | head -20)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep \"blitz3d\" | head -20)"
     ]
   }
 }

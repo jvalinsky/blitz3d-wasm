@@ -493,6 +493,14 @@
             }
         };
         
+        // Log available examples after a short delay
+        setTimeout(() => {
+            console.log('📚 Available examples:', Object.keys(examples).length);
+            console.log('   Basics:', ['hello', 'math', 'loops', 'functions', 'types', 'arrays', 'strings', 'conditionals'].filter(k => examples[k]).length);
+            const graphicsKeys = ['cube3d', 'colorfulCube', 'particles', 'textureLoad', 'meshLoad', 'lighting', 'skybox', 'sprite2d', 'collision'];
+            console.log('   Graphics:', graphicsKeys.filter(k => examples[k]).length);
+        }, 100);
+        
         // Initialize Monaco Editor
         require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
         require(['vs/editor/editor.main'], function() {

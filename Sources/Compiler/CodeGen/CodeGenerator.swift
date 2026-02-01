@@ -674,6 +674,129 @@ public struct CodeGenerator {
             ("ImagesOverlap", "ImagesOverlap", [.i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
             ("ImagesCollide", "ImagesCollide", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
             
+            // Camera Functions
+            ("CameraClsMode", "CameraClsMode", [.i32, .i32, .i32], [], "blitz3d"),
+            ("CameraPick", "CameraPick", [.i32, .f32, .f32], [.i32], "blitz3d"),
+            ("ProjectedX", "ProjectedX", [], [.f32], "blitz3d"),
+            ("ProjectedY", "ProjectedY", [], [.f32], "blitz3d"),
+            ("CameraProject", "CameraProject", [.i32, .f32, .f32, .f32], [], "blitz3d"),
+            
+            // Mesh Operations
+            ("AddMesh", "AddMesh", [.i32, .i32], [], "blitz3d"),
+            ("CopyMesh", "CopyMesh", [.i32, .i32], [.i32], "blitz3d"),
+            ("PositionMesh", "PositionMesh", [.i32, .f32, .f32, .f32], [], "blitz3d"),
+            ("RotateMesh", "RotateMesh", [.i32, .f32, .f32, .f32], [], "blitz3d"),
+            ("ScaleMesh", "ScaleMesh", [.i32, .f32, .f32, .f32], [], "blitz3d"),
+            ("CountVertices", "CountVertices", [.i32], [.i32], "blitz3d"),
+            ("VertexCoords", "VertexCoords", [.i32, .i32, .f32, .f32, .f32], [], "blitz3d"),
+            ("VertexX", "VertexX", [.i32, .i32], [.f32], "blitz3d"),
+            ("VertexY", "VertexY", [.i32, .i32], [.f32], "blitz3d"),
+            ("VertexZ", "VertexZ", [.i32, .i32], [.f32], "blitz3d"),
+            
+            // Display/Graphics Functions
+            ("ClearSurface", "ClearSurface", [.i32, .i32, .i32], [], "blitz3d"),
+            ("ClearWorld", "ClearWorld", [.i32, .i32, .i32], [], "blitz3d"),
+            ("AntiAlias", "AntiAlias", [.i32], [], "blitz3d"),
+            ("WireFrame", "WireFrame", [.i32], [], "blitz3d"),
+            ("GraphicsBuffer", "GraphicsBuffer", [], [.i32], "blitz3d"),
+            ("GfxModeWidth", "GfxModeWidth", [.i32], [.i32], "blitz3d"),
+            ("GfxModeHeight", "GfxModeHeight", [.i32], [.i32], "blitz3d"),
+            ("CountGfxDrivers", "CountGfxDrivers", [], [.i32], "blitz3d"),
+            ("GfxDriverName", "GfxDriverName", [.i32], [.i32], "blitz3d"),
+            ("CopyRect", "CopyRect", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [], "blitz3d"),
+            ("TrisRendered", "TrisRendered", [], [.i32], "blitz3d"),
+            
+            // Color Functions
+            ("ColorRed", "ColorRed", [.i32], [.i32], "blitz3d"),
+            ("ColorGreen", "ColorGreen", [.i32], [.i32], "blitz3d"),
+            ("ColorBlue", "ColorBlue", [.i32], [.i32], "blitz3d"),
+            
+            // Font/Text Functions
+            ("FontWidth", "FontWidth", [.i32], [.i32], "blitz3d"),
+            ("FontHeight", "FontHeight", [.i32], [.i32], "blitz3d"),
+            ("StringWidth", "StringWidth", [.i32], [.i32], "blitz3d"),
+            ("StringHeight", "StringHeight", [.i32], [.i32], "blitz3d"),
+            
+            // Audio Channel Functions
+            ("ChannelPitch", "ChannelPitch", [.i32, .f32], [], "blitz3d"),
+            ("LoopSound", "LoopSound", [.i32], [.i32], "blitz3d"),
+            ("SoundVolume", "SoundVolume", [.i32, .f32], [], "blitz3d"),
+            ("SoundPan", "SoundPan", [.i32, .f32], [], "blitz3d"),
+            
+            // Entity Functions
+            ("EntityName", "EntityName", [.i32], [.i32], "blitz3d"),
+            ("GetEntityType", "GetEntityType", [.i32], [.i32], "blitz3d"),
+            ("DeltaPitch", "DeltaPitch", [.i32, .i32], [.f32], "blitz3d"),
+            ("DeltaYaw", "DeltaYaw", [.i32, .i32], [.f32], "blitz3d"),
+            ("DeltaRoll", "DeltaRoll", [.i32, .i32], [.f32], "blitz3d"),
+            ("VectorYaw", "VectorYaw", [.f32, .f32, .f32], [.f32], "blitz3d"),
+            
+            // Input Functions
+            ("GetKey", "GetKey", [], [.i32], "blitz3d"),
+            ("MouseZSpeed", "MouseZSpeed", [], [.i32], "blitz3d"),
+            
+            // System Functions
+            ("ErrorLog", "ErrorLog", [.i32], [], "blitz3d"),
+            ("TotalVidMem", "TotalVidMem", [], [.i32], "blitz3d"),
+            ("AvailVidMem", "AvailVidMem", [], [.i32], "blitz3d"),
+            ("GlobalMemoryStatus", "GlobalMemoryStatus", [.i32, .i32, .i32, .i32, .i32, .i32, .i32], [], "blitz3d"),
+            ("ActiveTextures", "ActiveTextures", [], [.i32], "blitz3d"),
+            
+            // Platform Stubs (Windows API)
+            ("API_SetWindowLong", "API_SetWindowLong", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("API_SetWindowPos", "API_SetWindowPos", [.i32, .i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("API_GetFocus", "API_GetFocus", [], [.i32], "blitz3d"),
+            ("API_GetModuleFilename", "API_GetModuleFilename", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            
+            // ZIP Library Stubs
+            ("ZlibWapi_CompressBound", "ZlibWapi_CompressBound", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_Compress2", "ZlibWapi_Compress2", [.i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_Uncompress", "ZlibWapi_Uncompress", [.i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzOpen", "ZlibWapi_UnzOpen", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzClose", "ZlibWapi_UnzClose", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzLocateFile", "ZlibWapi_UnzLocateFile", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzOpenCurrentFile", "ZlibWapi_UnzOpenCurrentFile", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzOpenCurrentFilePassword", "ZlibWapi_UnzOpenCurrentFilePassword", [.i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzReadCurrentFile", "ZlibWapi_UnzReadCurrentFile", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzCloseCurrentFile", "ZlibWapi_UnzCloseCurrentFile", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzGetCurrentFileInfo", "ZlibWapi_UnzGetCurrentFileInfo", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzGoToFirstFile", "ZlibWapi_UnzGoToFirstFile", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzGoToNextFile", "ZlibWapi_UnzGoToNextFile", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzGetGlobalInfo", "ZlibWapi_UnzGetGlobalInfo", [.i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_UnzGetGlobalComment", "ZlibWapi_UnzGetGlobalComment", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipOpen", "ZlibWapi_ZipOpen", [.i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipClose", "ZlibWapi_ZipClose", [.i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipOpenNewFileInZip", "ZlibWapi_ZipOpenNewFileInZip", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipOpenNewFileInZip3", "ZlibWapi_ZipOpenNewFileInZip3", [.i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipWriteFileInZip", "ZlibWapi_ZipWriteFileInZip", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_ZipCloseFileInZip", "ZlibWapi_ZipCloseFileInZip", [.i32], [.i32], "blitz3d"),
+            ("ZlibWapi_Crc32", "ZlibWapi_Crc32", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            ("ZlibWapi_Adler32", "ZlibWapi_Adler32", [.i32, .i32, .i32], [.i32], "blitz3d"),
+            
+            // Video Playback Stubs
+            ("BlitzMovie_Open", "BlitzMovie_Open", [.i32], [.i32], "blitz3d"),
+            ("BlitzMovie_Close", "BlitzMovie_Close", [.i32], [], "blitz3d"),
+            ("BlitzMovie_GetWidth", "BlitzMovie_GetWidth", [.i32], [.i32], "blitz3d"),
+            ("BlitzMovie_GetHeight", "BlitzMovie_GetHeight", [.i32], [.i32], "blitz3d"),
+            ("BlitzMovie_OpenDecodeToImage", "BlitzMovie_OpenDecodeToImage", [.i32, .i32], [.i32], "blitz3d"),
+            ("BlitzMovie_Play", "BlitzMovie_Play", [.i32], [], "blitz3d"),
+            ("BlitzMovie_Stop", "BlitzMovie_Stop", [.i32], [], "blitz3d"),
+            
+            // Miscellaneous Functions
+            ("Forest_Pivot", "Forest_Pivot", [], [.i32], "blitz3d"),
+            ("SX", "SX", [.i32], [.f32], "blitz3d"),
+            ("SY", "SY", [.i32], [.f32], "blitz3d"),
+            ("ParticlePiv", "ParticlePiv", [.i32], [.i32], "blitz3d"),
+            ("D", "D", [.f32], [.f32], "blitz3d"),
+            ("Temp", "Temp", [], [.f32], "blitz3d"),
+            ("TextureBumpEnvMat", "TextureBumpEnvMat", [.i32, .f32, .f32, .f32, .f32], [], "blitz3d"),
+            ("TextureBumpEnvOffset", "TextureBumpEnvOffset", [.i32, .f32], [], "blitz3d"),
+            ("TextureBumpEnvScale", "TextureBumpEnvScale", [.i32, .f32], [], "blitz3d"),
+            ("TextureLODBias", "TextureLODBias", [.i32, .f32], [], "blitz3d"),
+            ("CloseDir", "CloseDir", [.i32], [], "blitz3d"),
+            ("ReadBytes", "ReadBytes", [.i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            ("WriteBytes", "WriteBytes", [.i32, .i32, .i32, .i32], [.i32], "blitz3d"),
+            
             ("ParseB3D", "ParseB3D", [.i32], [.i32], "blitz3d"),
             ("ParseRMesh", "ParseRMesh", [.i32], [.i32], "blitz3d"),
             ("GetMeshSurfaceCount", "GetMeshSurfaceCount", [.i32], [.i32], "blitz3d"),

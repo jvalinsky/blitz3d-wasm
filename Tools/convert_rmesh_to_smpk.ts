@@ -133,15 +133,15 @@ const main = async () => {
     const uv1Acc = push(`TEXCOORD_1_s${s}`, surf.uvs1, "f32", "VEC2", vCount);
     const idxAcc = push(`INDICES_s${s}`, surf.indices, "u32", "SCALAR", surf.indices.length);
 
-    // Materials: slot0 is base, slot1 is lightmap (in SCPCB convention).
+    // Materials: RMESH slot0 is LIGHTMAP, slot1 is DIFFUSE (SCPCB actual convention)
     const tex0 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[0].name);
     const tex1 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[1].name);
     const alphaMode = surf.textures[0].kind === 3 ? "BLEND" : "OPAQUE";
     const matIdx = materials.length;
     materials.push({
       name: `surf_${s}`,
-      baseColorTexture: tex0,
-      lightmapTexture: tex1,
+      baseColorTexture: tex1,     // SWAPPED: slot1 is diffuse
+      lightmapTexture: tex0,      // SWAPPED: slot0 is lightmap
       alphaMode,
     });
 

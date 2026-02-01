@@ -5,6 +5,8 @@
 //  Recursive descent parser for Blitz3D BASIC
 //
 
+import Foundation
+
 /// Represents a parsing error with location information
 public struct ParseError: CustomStringConvertible {
     public let message: String
@@ -38,6 +40,8 @@ public struct Parser {
     private var sourceFile: String
     private var lineMap: [Int: (file: String, line: Int)]?
     private(set) public var errors: [ParseError] = []
+    private var includedFiles: Set<String> = []
+    private var includeSearchPaths: [String] = ["./", "Data/", "../"]
 
     public init(
         source: String, sourceFile: String = "unknown",
@@ -493,12 +497,7 @@ public struct Parser {
         case .keywordDim:
             return parseDimDeclaration()
         case .keywordInclude:
-            advance()
-            if currentToken.type == .stringLiteral {
-                advance()
-                return .empty(endSpan(from: startSpan()))
-            }
-            return nil
+            return parseInclude()
         default:
             return parseStatement()
         }
@@ -2234,5 +2233,88 @@ public struct Parser {
         }
 
         return false
+    }
+    
+    // MARK: - Include File Support
+    
+    private mutating func parseInclude() -> StatementNode? {
+        let start = startSpan()
+        advance()  // Skip 'Include'
+        
+        guard case .stringLiteral = currentToken.type else {
+            reportError("Expected filename after Include")
+            return nil
+        }
+        
+        let filename = currentToken.text
+        advance()
+        
+        // Resolve the full path
+        guard let fullPath = resolveIncludePath(filename) else {
+            reportError("Include file not found: \(filename)")
+            return .empty(endSpan(from: start))
+        }
+        
+        // Check if already included (prevent duplicates and circular includes)
+        if includedFiles.contains(fullPath) {
+            return .empty(endSpan(from: start))
+        }
+        includedFiles.insert(fullPath)
+        
+        // Load the file
+        guard let source = try? String(contentsOfFile: fullPath, encoding: .utf8) else {
+            reportError("Failed to read include file: \(fullPath)")
+            return .empty(endSpan(from: start))
+        }
+        
+        // Save current parser state
+        let savedLexer = lexer
+        let savedCurrentToken = currentToken
+        let savedPreviousToken = previousToken
+        let savedSourceFile = sourceFile
+        let savedLineMap = lineMap
+        
+        // Parse the included file
+        var includeParser = Parser(source: source, sourceFile: fullPath, lineMap: lineMap)
+        includeParser.includedFiles = self.includedFiles  // Share included files set
+        includeParser.includeSearchPaths = self.includeSearchPaths  // Share search paths
+        
+        let includedStatements = includeParser.parseProgram()
+        
+        // Merge errors from included file
+        self.errors.append(contentsOf: includeParser.errors)
+        
+        // Update shared included files set
+        self.includedFiles = includeParser.includedFiles
+        
+        // Restore parser state
+        lexer = savedLexer
+        currentToken = savedCurrentToken
+        previousToken = savedPreviousToken
+        sourceFile = savedSourceFile
+        lineMap = savedLineMap
+        
+        return .include(fullPath, includedStatements, endSpan(from: start))
+    }
+    
+    private func resolveIncludePath(_ filename: String) -> String? {
+        // Try relative to current source file first
+        if sourceFile != "unknown" {
+            let currentDir = URL(fileURLWithPath: sourceFile).deletingLastPathComponent().path
+            let relativePath = URL(fileURLWithPath: currentDir).appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: relativePath) {
+                return relativePath
+            }
+        }
+        
+        // Try search paths
+        for searchPath in includeSearchPaths {
+            let fullPath = URL(fileURLWithPath: searchPath).appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: fullPath) {
+                return fullPath
+            }
+        }
+        
+        return nil
     }
 }

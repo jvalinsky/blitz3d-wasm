@@ -32,6 +32,7 @@ public indirect enum StatementNode {
     case label(String, SourceSpan)
     case delete(ExpressionNode, SourceSpan)  // Delete expr - removes instance from type collection
     case insert(ExpressionNode, InsertPosition, SourceSpan)  // Insert a Before/After b
+    case include(String, [StatementNode], SourceSpan)  // Include "file.bb" - file inclusion
     case empty(SourceSpan)
     
     public var span: SourceSpan {
@@ -62,6 +63,7 @@ public indirect enum StatementNode {
              .label(_, let s),
              .delete(_, let s),
              .insert(_, _, let s),
+             .include(_, _, let s),
              .empty(let s):
             return s
         }

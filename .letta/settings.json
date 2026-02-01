@@ -12,7 +12,11 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read test_graphics_compile.ts)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read <<'EOF'\nimport { Lexer, Parser, CodeGenerator } from './src/compiler/all.ts';\nconst source = await Deno.readTextFile('test_graphics2.bb');\ntry {\n  const lexer = new Lexer(source);\n  const { errors: lexerErrors } = lexer.tokenize();\n  if (lexerErrors.length > 0) throw new Error('Lexer: ' + lexerErrors[0].message);\n  const parser = new Parser(source);\n  const ast = parser.parse();\n  if (parser.errors.length > 0) throw new Error('Parser: ' + parser.errors[0]);\n  const codegen = new CodeGenerator();\n  const wat = codegen.generate(ast);\n  console.log('✅ Graphics example compiles!');\n  console.log('WAT size:', wat.length, 'bytes');\n  console.log('\\nImports (first 50 lines):');\n  console.log(wat.split('\\n').slice(0, 50).join('\\n'));\n} catch (e) {\n  console.log('❌', e.message);\n  Deno.exit(1);\n}\nEOF)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read test_graphics_final.ts)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read test_float_literals.ts)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web-ide && deno run --allow-read test_float_literals.ts)",
+      "Bash(wc:*)",
+      "Bash(mkdir -p plan/compiler-runtime-comparison-2026-02-01)",
+      "Bash(cat:*)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task test:swift 2>&1 | head -100)"
     ]
   }
 }

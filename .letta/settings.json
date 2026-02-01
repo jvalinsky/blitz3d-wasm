@@ -175,7 +175,11 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets && ffmpeg -i startup_Undertow.avi -c:v libx264 -c:a aac -movflags +faststart startup_Undertow.mp4 -y 2>&1 | tail -10)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets && ffmpeg -i startup_TSS.avi -c:v libx264 -preset fast -crf 23 -c:a aac startup_TSS.mp4 2>&1 | grep -E \"Output|Duration|Stream\")",
       "Bash(ffmpeg -i /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets/startup_Undertow.mp4 2>&1 | grep -E \"Duration|Stream|Invalid|Error\" | head -10)",
-      "Bash(curl -I http://localhost:8000/web/dist/assets/startup_Undertow.mp4 2>&1 | grep -E \"HTTP|content\")"
+      "Bash(curl -I http://localhost:8000/web/dist/assets/startup_Undertow.mp4 2>&1 | grep -E \"HTTP|content\")",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && git checkout main)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build 2>&1 | head -20)",
+      "Bash(sleep 5 && curl -s http://localhost:5173/ | head -20)",
+      "Bash(curl -s http://localhost:5173/launcher.html 2>&1 | head -30)"
     ]
   }
 }

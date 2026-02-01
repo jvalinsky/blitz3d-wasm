@@ -1082,28 +1082,10 @@ var Camera = class {
   }
   /**
    * Get view matrix (world to camera space)
+   * Simplified: just translate by negative camera position
    */
   getViewMatrix() {
-    const mat = new Float32Array(16);
-    mat[0] = 1;
-    mat[5] = 1;
-    mat[10] = 1;
-    mat[15] = 1;
-    const pitch = this.rotation[0];
-    const yaw = this.rotation[1];
-    const cp = Math.cos(pitch);
-    const sp = Math.sin(pitch);
-    const cy = Math.cos(yaw);
-    const sy = Math.sin(yaw);
-    mat[0] = cy;
-    mat[1] = sp * sy;
-    mat[2] = cp * sy;
-    mat[4] = 0;
-    mat[5] = cp;
-    mat[6] = -sp;
-    mat[8] = -sy;
-    mat[9] = sp * cy;
-    mat[10] = cp * cy;
+    const mat = this.identity();
     mat[12] = -this.position[0];
     mat[13] = -this.position[1];
     mat[14] = -this.position[2];

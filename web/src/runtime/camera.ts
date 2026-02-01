@@ -18,40 +18,19 @@ export class Camera {
     
     /**
      * Get view matrix (world to camera space)
+     * Simplified: just translate by negative camera position
      */
     getViewMatrix(): Float32Array {
-        const mat = new Float32Array(16);
+        const mat = this.identity();
         
-        // Create identity matrix
-        mat[0] = 1; mat[5] = 1; mat[10] = 1; mat[15] = 1;
-        
-        // Apply rotation (pitch, yaw)
-        const pitch = this.rotation[0];
-        const yaw = this.rotation[1];
-        
-        // Simplified rotation matrix (yaw then pitch)
-        const cp = Math.cos(pitch);
-        const sp = Math.sin(pitch);
-        const cy = Math.cos(yaw);
-        const sy = Math.sin(yaw);
-        
-        // Rotation matrix
-        mat[0] = cy;
-        mat[1] = sp * sy;
-        mat[2] = cp * sy;
-        
-        mat[4] = 0;
-        mat[5] = cp;
-        mat[6] = -sp;
-        
-        mat[8] = -sy;
-        mat[9] = sp * cy;
-        mat[10] = cp * cy;
-        
-        // Apply translation
+        // For now, just translate
+        // View matrix moves world in opposite direction of camera
         mat[12] = -this.position[0];
         mat[13] = -this.position[1];
         mat[14] = -this.position[2];
+        
+        // TODO: Add rotation support
+        // For now, camera always looks down +Z axis
         
         return mat;
     }

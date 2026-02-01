@@ -5,7 +5,7 @@
     "std/": "https://deno.land/std@0.224.0/"
   },
   "tasks": {
-    "engine:build": "swift build --product blitz3d-engine --swift-sdk swift-6.2.3-RELEASE_wasm --triple wasm32-unknown-wasip1 -Xlinker --export-all -Xlinker --no-entry -Xswiftc -enable-experimental-feature -Xswiftc Extern -c release && cp .build/wasm32-unknown-wasip1/release/blitz3d-engine.wasm dist/engine.wasm",
+    "engine:build": "swift build --product blitz3d-engine --swift-sdk swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1 --triple wasm32-unknown-wasip1 -Xlinker --export-all -Xlinker --no-entry -Xswiftc -enable-experimental-feature -Xswiftc Extern -c release && cp .build/wasm32-unknown-wasip1/release/blitz3d-engine.wasm dist/engine.wasm",
     "serve": "deno run -A Tools/serve_dir.ts --root . --port 8000",
     "assets:scpcb:convert": "deno run -A Tools/assets_scpcb_convert.ts",
     "test:deno": "deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests",

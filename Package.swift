@@ -25,7 +25,9 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", from: "0.37.0")
+        // Use 0.19.2 - last version before BridgeJS plugin was added
+        // BridgeJS requires SwiftSyntax which can't compile for WASM
+        .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.19.2")
     ],
     targets: [
         .executableTarget(

@@ -70,7 +70,10 @@
       "Bash(cd /tmp && git clone https://github.com/swiftwasm/skills.git swiftwasm-skills 2>&1 | head -20)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-javascriptkit)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-bridgejs /Users/jack/Software/scp_port/blitz3d-wasm/.skills/swiftwasm-porting)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(swift sdk list 2>/dev/null || echo \"Swift SDK command not available\")",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build --help 2>&1 | grep -A 3 \"swift-sdk\")",
+      "Bash(swift build --help 2>&1 | grep -i plugin)"
     ]
   }
 }

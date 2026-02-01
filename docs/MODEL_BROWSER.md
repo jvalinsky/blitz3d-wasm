@@ -185,13 +185,46 @@ void main() {
 - Red = U coordinate (horizontal)
 - Green = V coordinate (vertical)
 
+## Multi-Texture Rendering (Feb 1, 2026)
+
+### Dual Texture System
+Rooms use **TWO textures per primitive**:
+- **Diffuse texture** - Repeating wall/floor pattern (tilefloor.jpg, metal.jpg)
+- **Lightmap texture** - Baked lighting/shadows (room_lm1.png)
+
+### Shader Formula
+```glsl
+finalColor = diffuse.rgb × lightmap.rgb × 2.0
+```
+
+### RMESH Texture Slots
+**CRITICAL**: RMESH files store textures in reverse order!
+- Slot 0: Lightmap (NOT diffuse!)
+- Slot 1: Diffuse (NOT lightmap!)
+
+Converter swaps them correctly to:
+```typescript
+baseColorTexture: slot1  // Diffuse
+lightmapTexture: slot0   // Lightmap
+```
+
+### UV Sets
+- **TEXCOORD_0**: UVs for diffuse texture (repeating)
+- **TEXCOORD_1**: UVs for lightmap (unique per room)
+
+### Fallback for Objects
+NPCs/props without lightmaps use single-texture rendering:
+```glsl
+finalColor = diffuse.rgb × lighting
+```
+Where lighting = 70% ambient + 30% directional.
+
 ## Known Limitations
 
-1. **No normal maps** - Only diffuse textures (baseColorTexture)
-2. **Single texture per primitive** - No multi-texturing
-3. **Simple lighting** - No shadows, no specular
-4. **No animations** - Static meshes only
-5. **No lightmaps** - Baked lighting not implemented
+1. **No normal maps** - Only diffuse + lightmap
+2. **Simple lighting** - No dynamic shadows, no specular
+3. **No animations** - Static meshes only
+4. **room1062 incomplete** - Unfinished test content (no textures)
 
 ## Future Enhancements
 

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCP: Containment Breach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Menu canvas */
+        #menuCanvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            z-index: 100;
+        }
+        
+        /* Game canvas (Three.js will create this) */
+        #canvas {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        /* Loader overlay */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        #loader h1 {
+            color: #0f0;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #0f0;
+        }
+        
+        #loader .progress {
+            width: 400px;
+            height: 30px;
+            border: 2px solid #0f0;
+            position: relative;
+        }
+        
+        #loader .progress-bar {
+            height: 100%;
+            background: #0f0;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        #loader .progress-text {
+            color: #0f0;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        #startScreen h1 {
+            color: #fff;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #fff;
+        }
+        
+        #startScreen button {
+            padding: 20px 60px;
+            font-size: 24px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 3px solid #fff;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #startScreen button:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu canvas (shows first) -->
+    <canvas id="menuCanvas"></canvas>
+    
+    <!-- Game canvas (Three.js, hidden initially) -->
+    <canvas id="canvas" style="display: none;"></canvas>
+    
+    <!-- Start screen (autoplay policy) -->
+    <div id="startScreen">
+        <h1>SCP: Containment Breach</h1>
+        <button id="startButton">CLICK TO START</button>
+        <p style="color: #888; margin-top: 20px; font-size: 14px;">Press any key or click to begin</p>
+    </div>
+    
+    <!-- Loading overlay -->
+    <div id="loader">
+        <h1>INITIALIZING...</h1>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Loading game world...</div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            phase: 'menu',  // 'menu', 'loading', 'game'
+            seed: '',
+            difficulty: 1,
+            introEnabled: true
+        };
+        
+        // Show start screen, then menu
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const menuCanvas = document.getElementById('menuCanvas');
+        const gameCanvas = document.getElementById('canvas');
+        const loader = document.getElementById('loader');
+        
+        function showMenu() {
+            startScreen.style.display = 'none';
+            menuCanvas.style.display = 'block';
+            gameCanvas.style.display = 'none';
+            loader.style.display = 'none';
+            
+            // TODO: Initialize menu rendering (load menu-canvas.html code)
+            console.log('[Game] Menu shown');
+        }
+        
+        function showLoader(text) {
+            menuCanvas.style.display = 'none';
+            gameCanvas.style.display = 'none';
+            loader.style.display = 'flex';
+            document.getElementById('progressText').textContent = text;
+            console.log('[Game] Loader shown:', text);
+        }
+        
+        function updateProgress(percent, text) {
+            document.getElementById('progressBar').style.width = percent + '%';
+            if (text) {
+                document.getElementById('progressText').textContent = text;
+            }
+        }
+        
+        function showGame() {
+            menuCanvas.style.display = 'none';
+            loader.style.display = 'none';
+            gameCanvas.style.display = 'block';
+            gameState.phase = 'game';
+            console.log('[Game] Game shown');
+        }
+        
+        // Initialize game world (called when user clicks START in menu)
+        async function initGameWorld(seed, difficulty) {
+            console.log('[Game] Initializing game world...', { seed, difficulty });
+            
+            showLoader('Loading WASM module...');
+            updateProgress(10, 'Loading WASM module...');
+            
+            try {
+                // Simulate loading steps
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(30, 'Loading room templates...');
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(50, 'Loading assets...');
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(70, 'Initializing world...');
+                
+                // TODO: Actually load WASM and initialize
+                // This is where we'd call the real main.ts init() function
+                // For now, just simulate
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(90, 'Spawning player...');
+                
+                await new Promise(resolve => setTimeout(resolve, 500));
+                updateProgress(100, 'Complete!');
+                
+                console.log('[Game] Initialization complete!');
+                
+                // Show game canvas
+                setTimeout(() => {
+                    showGame();
+                    alert(`Game initialized!\\n\\nSeed: ${seed}\\nDifficulty: ${difficulty}\\n\\n(Full WASM integration pending)`);
+                }, 500);
+                
+            } catch (error) {
+                console.error('[Game] Initialization failed:', error);
+                alert('Failed to initialize game: ' + error.message);
+                showMenu();
+            }
+        }
+        
+        // Expose for menu to call
+        window.startNewGame = function(seed, difficulty) {
+            gameState.seed = seed;
+            gameState.difficulty = difficulty;
+            gameState.phase = 'loading';
+            
+            initGameWorld(seed, difficulty);
+        };
+        
+        // Start button
+        startButton.addEventListener('click', () => {
+            showMenu();
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (startScreen.style.display !== 'none') {
+                showMenu();
+            }
+        });
+        
+        console.log('[Game] Ready. Click to start.');
+    </script>
+    
+    <!-- TODO: Load menu system inline or via module -->
+    <script>
+        // This will eventually load the menu canvas system
+        // For now, placeholder that shows menu works
+        console.log('[Game] Menu system will be loaded here');
+    </script>
+</body>
+</html>

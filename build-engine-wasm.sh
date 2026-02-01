@@ -15,9 +15,9 @@ fi
 cp Package.wasm.swift Package.swift
 
 # Build with WASM-only package manifest
-# Use 6.2-RELEASE SDK (better compatibility than 6.2.3)
+# Use official Swift 6.2.3 WASM SDK (matches Apple Swift 6.2.3)
 swift build \
-  --swift-sdk 6.2-RELEASE-wasm32-unknown-wasip1 \
+  --swift-sdk swift-6.2.3-RELEASE_wasm \
   -c release \
   -Xswiftc -enable-experimental-feature \
   -Xswiftc Extern \

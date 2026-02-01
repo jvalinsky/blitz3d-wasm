@@ -1,18 +1,14 @@
 // swift-tools-version:6.0
-// WASM-only Package.swift - only library products, no executables
+// WASM-only Package.swift - ONLY the engine, no compiler
 import PackageDescription
 
 let package = Package(
-    name: "Blitz3DCompiler",
+    name: "Blitz3DEngine",
     products: [
-        // Only libraries for WASM build
+        // Only the engine library for WASM build
         .library(
             name: "blitz3d-engine",
             targets: ["Blitz3DEngineWASM"]
-        ),
-        .library(
-            name: "Blitz3DCompiler",
-            targets: ["Blitz3DCompiler"]
         ),
     ],
     dependencies: [
@@ -44,23 +40,6 @@ let package = Package(
                 "Utils/AGENTs.md",
                 "SceneGraph/AGENTs.md",
                 "Renderer/AGENTs.md",
-            ]
-        ),
-        .target(
-            name: "Blitz3DCompiler",
-            dependencies: [],
-            path: "Sources/Compiler",
-            exclude: [
-                "CodeGen/REFACTORING_PLAN.md",
-                "IR/PLACEHOLDER.md",
-                "AGENTs.md",
-                "AST/AGENTs.md",
-                "CodeGen/AGENTs.md",
-                "IR/AGENTs.md",
-                "Lexer/AGENTs.md",
-                "Lowering/AGENTs.md",
-                "Parser/AGENTs.md",
-                "Preprocessor/AGENTs.md",
             ]
         ),
     ]

@@ -154,8 +154,13 @@ public func StoreString(_ cString: UnsafePointer<CChar>) -> Int32 {
 @MainActor
 public func GetStringPtr(_ stringID: Int32) -> UnsafePointer<CChar>? {
     guard let string = StringManager.shared.getString(stringID) else { return nil }
-    // Note: This is a simplified version. In production, you'd need proper memory management
+    #if arch(wasm32)
+    // For WASM, use withCString (caller must copy if needed to persist)
+    return string.withCString { $0 }
+    #else
+    // For native builds with Objective-C runtime
     return (string as NSString).utf8String
+    #endif
 }
 
 @_cdecl("FreeString")

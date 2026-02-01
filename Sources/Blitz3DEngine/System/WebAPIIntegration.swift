@@ -101,18 +101,21 @@ func getGPURenderer() -> String {
         return "Unknown GPU (no canvas)"
     }
     
-    guard let gl = canvas.getContext("webgl").object else {
+    let glContext = canvas.getContext!("webgl")
+    guard let gl = glContext.object else {
         return "Unknown GPU (no WebGL)"
     }
     
     // Get the WEBGL_debug_renderer_info extension
-    guard let debugInfo = gl.getExtension("WEBGL_debug_renderer_info").object else {
+    let ext = gl.getExtension!("WEBGL_debug_renderer_info")
+    guard let debugInfo = ext.object else {
         return "Unknown GPU (no debug info)"
     }
     
     // Get the unmasked renderer string
     let rendererParam = JSValue.number(0x9246) // UNMASKED_RENDERER_WEBGL
-    guard let renderer = gl.getParameter(rendererParam).string else {
+    let param = gl.getParameter!(rendererParam)
+    guard let renderer = param.string else {
         return "Unknown GPU (no renderer string)"
     }
     
@@ -144,7 +147,7 @@ func getJSHeapStats() -> (used: Int64, limit: Int64) {
         return (used: 0, limit: estimatedLimit)
     }
     
-    let mem = performance.memory
+    let mem = performance.memory.object!
     let used = Int64(mem.usedJSHeapSize.number ?? 0)
     let limit = Int64(mem.jsHeapSizeLimit.number ?? 0)
     

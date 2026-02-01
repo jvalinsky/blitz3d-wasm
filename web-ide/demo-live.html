@@ -414,8 +414,33 @@
         // Initialize Monaco Editor
         require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
         require(['vs/editor/editor.main'], function() {
+            let initialCode = '; Simple Blitz3D Example\nx% = 5\ny% = 10\nz% = x + y\nPrint z';
+            
+            // Check for URL parameter (shared code)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('code')) {
+                try {
+                    const base64 = decodeURIComponent(urlParams.get('code'));
+                    const compressed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+                    initialCode = pako.inflate(compressed, { to: 'string' });
+                } catch (error) {
+                    console.error('Error loading shared code:', error);
+                    alert('Error loading shared code. Using default example.');
+                }
+            } else {
+                // Try to restore auto-saved code
+                try {
+                    const autosaved = localStorage.getItem('blitz3d-web-ide-autosave');
+                    if (autosaved) {
+                        initialCode = autosaved;
+                    }
+                } catch (e) {
+                    console.warn('Could not restore auto-saved code:', e);
+                }
+            }
+            
             editor = monaco.editor.create(document.getElementById('editor'), {
-                value: '; Simple Blitz3D Example\nx% = 5\ny% = 10\nz% = x + y\nPrint z',
+                value: initialCode,
                 language: 'vb',
                 theme: 'vs',
                 minimap: { enabled: false },

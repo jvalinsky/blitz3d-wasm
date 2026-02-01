@@ -334,7 +334,8 @@ export class WebGLGraphics implements GraphicsAPI {
         this.gl.viewport(x, y, width, height);
     }
     
-    setDepthTest(enabled: boolean, compareFunc: CompareFunction = 'less'): void {
+    setDepthTest(enabled: boolean, compareFunc?: CompareFunction): void {
+        const func = compareFunc || 'less';
         if (enabled) {
             this.gl.enable(this.gl.DEPTH_TEST);
             
@@ -347,7 +348,7 @@ export class WebGLGraphics implements GraphicsAPI {
                 'notequal': this.gl.NOTEQUAL,
                 'gequal': this.gl.GEQUAL,
                 'always': this.gl.ALWAYS,
-            }[compareFunc];
+            }[func];
             
             this.gl.depthFunc(glFunc);
         } else {

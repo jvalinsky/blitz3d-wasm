@@ -1823,7 +1823,7 @@ ${this.errors.join("\n")}`);
         const varName = expr.target.name;
         let local = this.locals.get(varName);
         if (!local && !this.globals.has(varName)) {
-          const wasmType = "i32";
+          const wasmType = this.isFloatExpression(expr.value) ? "f32" : "i32";
           const localIndex = this.localIndex++;
           this.locals.set(varName, { index: localIndex, type: wasmType });
           this.emit(`(local $${varName} ${wasmType})`);
@@ -1845,7 +1845,7 @@ ${this.errors.join("\n")}`);
         const varName = expr.target.name;
         let local = this.locals.get(varName);
         if (!local && !this.globals.has(varName)) {
-          const wasmType = "i32";
+          const wasmType = this.isFloatExpression(expr.value) ? "f32" : "i32";
           const localIndex = this.localIndex++;
           this.locals.set(varName, { index: localIndex, type: wasmType });
           this.emit(`(local $${varName} ${wasmType})`);

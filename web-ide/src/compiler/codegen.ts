@@ -1025,7 +1025,8 @@ export class CodeGenerator {
 
       // Auto-declare variable if it doesn't exist
       if (!local && !this.globals.has(varName)) {
-        const wasmType = 'i32';
+        // Infer type from expression
+        const wasmType = this.isFloatExpression(expr.value) ? 'f32' : 'i32';
         const localIndex = this.localIndex++;
         this.locals.set(varName, { index: localIndex, type: wasmType });
         this.emit(`(local $${varName} ${wasmType})`);
@@ -1053,7 +1054,8 @@ export class CodeGenerator {
       
       // Auto-declare variable if it doesn't exist (Blitz3D implicit declaration)
       if (!local && !this.globals.has(varName)) {
-        const wasmType = 'i32'; // Default to int for now
+        // Infer type from expression
+        const wasmType = this.isFloatExpression(expr.value) ? 'f32' : 'i32';
         const localIndex = this.localIndex++;
         this.locals.set(varName, { index: localIndex, type: wasmType });
         this.emit(`(local $${varName} ${wasmType})`);

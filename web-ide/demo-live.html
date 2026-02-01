@@ -462,6 +462,41 @@
 
                         // Power operator helper
                         b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
+                        
+                        // Graphics API - stubbed for now (will wire Three.js later)
+                        b3d_graphics3d: (w, h) => { console.log(`Graphics3D ${w}x${h}`); },
+                        b3d_graphics: (w, h) => { console.log(`Graphics ${w}x${h}`); },
+                        b3d_createsphere: (s) => { console.log(`CreateSphere ${s}`); return 1; },
+                        b3d_createcube: () => { console.log('CreateCube'); return 2; },
+                        b3d_createmesh: () => { console.log('CreateMesh'); return 3; },
+                        b3d_createsurface: (m) => { console.log(`CreateSurface ${m}`); return 4; },
+                        b3d_createcamera: () => { console.log('CreateCamera'); return 5; },
+                        b3d_createlight: (t) => { console.log(`CreateLight type ${t}`); return 6; },
+                        b3d_positionentity: (h, x, y, z) => { console.log(`PositionEntity ${h} at ${x},${y},${z}`); },
+                        b3d_rotateentity: (h, p, y, r) => { console.log(`RotateEntity ${h}`); },
+                        b3d_turnentity: (h, p, y, r) => { console.log(`TurnEntity ${h} by ${p},${y},${r}`); },
+                        b3d_scaleentity: (h, x, y, z) => { console.log(`ScaleEntity ${h}`); },
+                        b3d_entityx: (h) => 0,
+                        b3d_entityy: (h) => 0,
+                        b3d_entityz: (h) => 0,
+                        b3d_entitydistance: (h1, h2) => 0,
+                        b3d_pointentity: (h, t) => {},
+                        b3d_lightcolor: (h, r, g, b) => { console.log(`LightColor ${h}`); },
+                        b3d_entitycolor: (h, r, g, b) => { console.log(`EntityColor ${h}`); },
+                        b3d_entitytexture: (h, t) => {},
+                        b3d_renderworld: () => { console.log('RenderWorld'); },
+                        b3d_flip: () => { console.log('Flip'); },
+                        b3d_cls: () => {},
+                        b3d_loadtexture: (p) => 10,
+                        b3d_loadimage: (p) => 11,
+                        b3d_loadmesh: (p) => 12,
+                        b3d_drawimage: (i, x, y) => {},
+                        b3d_addvertex: (s, x, y, z) => { console.log(`AddVertex ${s}`); return 0; },
+                        b3d_addtriangle: (s, v0, v1, v2) => { console.log(`AddTriangle ${s}`); },
+                        b3d_animate: (e, m, s, f) => {},
+                        b3d_createplane: () => 20,
+                        b3d_createskybox: (t) => 21,
+                        b3d_keydown: (k) => 0,
                     }
                 };
                 

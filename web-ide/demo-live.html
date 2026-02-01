@@ -182,8 +182,11 @@
     <script type="module">
         import { registerBlitz3DLanguage } from './blitz3d-language.js';
         import { graphicsExamples } from './graphics-examples.js';
+        import { Blitz3DGraphicsRuntime } from './threejs-runtime.js';
+        
         window.registerBlitz3DLanguage = registerBlitz3DLanguage;
         window.graphicsExamples = graphicsExamples;
+        window.Blitz3DGraphicsRuntime = Blitz3DGraphicsRuntime;
         
         // Signal that modules are loaded
         window.modulesLoaded = true;

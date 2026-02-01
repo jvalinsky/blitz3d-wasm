@@ -227,8 +227,8 @@
         
         // Load video file
         function loadVideo(name) {
-            const path = `./dist/assets/${name}.avi`;
-            status.textContent = `Loading: ${name}.avi...`;
+            const path = `./dist/assets/${name}.mp4`;
+            status.textContent = `Loading: ${name}.mp4...`;
             
             videoPlayer.src = path;
             videoPlayer.load();
@@ -238,10 +238,10 @@
                 const height = videoPlayer.videoHeight;
                 const duration = videoPlayer.duration.toFixed(2);
                 
-                status.textContent = `Loaded: ${name}.avi (${width}×${height}, ${duration}s)`;
+                status.textContent = `Loaded: ${name}.mp4 (${width}×${height}, ${duration}s)`;
                 
                 // Simulate WASM API calls
-                logAPI(`=== Loading ${name}.avi ===`);
+                logAPI(`=== Loading ${name}.mp4 ===`);
                 const handle = WasmVideoAPI.BlitzMovie_Open(path);
                 WasmVideoAPI.BlitzMovie_GetWidth(handle);
                 WasmVideoAPI.BlitzMovie_GetHeight(handle);
@@ -254,7 +254,7 @@
             };
             
             videoPlayer.onerror = (e) => {
-                status.textContent = `Error loading ${name}.avi - ${e.message || 'File not found'}`;
+                status.textContent = `Error loading ${name}.mp4 - ${e.message || 'File not found'}`;
             };
         }
         

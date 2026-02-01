@@ -133,6 +133,10 @@
         let isDragging = false;
         let lastX = 0, lastY = 0;
         
+        function log(msg) {
+            console.log(msg);
+        }
+        
         // Initialize WebGL
         async function init() {
             gl = canvas.getContext('webgl2');

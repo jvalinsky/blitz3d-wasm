@@ -114,6 +114,16 @@ function createWasiStubs() {
 // Global graphics API instance (initialized in loadBlitz3DEngine)
 let graphicsAPI: GraphicsAPI | null = null;
 
+// Expose globally for test pages
+declare global {
+    interface Window {
+        graphicsAPI: GraphicsAPI | null;
+    }
+}
+if (typeof window !== 'undefined') {
+    window.graphicsAPI = null;
+}
+
 /**
  * Create WASM import object with real and stub implementations
  * Phase 2: Graphics imports now implemented

@@ -299,18 +299,6 @@
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128,128,128,255]));
                 
                 if (currentMesh.texturePath) {
-                    const img = new Image();
-                    img.onload = () => {
-                        gl.bindTexture(gl.TEXTURE_2D, currentTexture);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-                        gl.generateMipmap(gl.TEXTURE_2D);
-                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-                        document.getElementById('tex').textContent = currentMesh.texturePath;
-                    };
-                    img.onerror = () => {
-                        console.warn('Texture not found:', currentMesh.texturePath);
-                        document.getElementById('tex').textContent = currentMesh.texturePath + ' (missing)';
-                    };
                     // Try multiple possible texture locations
                     const texPaths = [
                         './dist/GFX/map/' + currentMesh.texturePath,
@@ -318,7 +306,30 @@
                         './dist/GFX/' + currentMesh.texturePath,
                         './dist/assets/' + currentMesh.texturePath
                     ];
-                    img.src = texPaths[0]; // Try first path
+                    
+                    let pathIndex = 0;
+                    const img = new Image();
+                    
+                    img.onload = () => {
+                        gl.bindTexture(gl.TEXTURE_2D, currentTexture);
+                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+                        gl.generateMipmap(gl.TEXTURE_2D);
+                        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+                        document.getElementById('tex').textContent = currentMesh.texturePath;
+                    };
+                    
+                    img.onerror = () => {
+                        pathIndex++;
+                        if (pathIndex < texPaths.length) {
+                            // Try next path
+                            img.src = texPaths[pathIndex];
+                        } else {
+                            console.warn('Texture not found:', currentMesh.texturePath);
+                            document.getElementById('tex').textContent = currentMesh.texturePath + ' (missing)';
+                        }
+                    };
+                    
+                    img.src = texPaths[0]; // Start with first path
                 }
                 
                 // Update UI

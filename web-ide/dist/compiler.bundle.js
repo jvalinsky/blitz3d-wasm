@@ -487,21 +487,35 @@ var Blitz3DCompiler = (() => {
       return this.expressionStatement();
     }
     functionDeclaration() {
-      const name = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected function name").value;
+      let name = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected function name").value;
       let returnType;
-      if (this.peek().value.includes("#") || this.peek().value.includes("$") || this.peek().value.includes("%")) {
-        const suffix = this.peek().value[this.peek().value.length - 1];
-        returnType = this.suffixToType(suffix);
+      const lastChar = name[name.length - 1];
+      if (lastChar === "%") {
+        returnType = { kind: "primitive", name: "Int" };
+        name = name.slice(0, -1);
+      } else if (lastChar === "#") {
+        returnType = { kind: "primitive", name: "Float" };
+        name = name.slice(0, -1);
+      } else if (lastChar === "$") {
+        returnType = { kind: "primitive", name: "String" };
+        name = name.slice(0, -1);
       }
       this.consume("LPAREN" /* LPAREN */, 'Expected "(" after function name');
       const parameters = [];
       if (!this.check("RPAREN" /* RPAREN */)) {
         do {
-          const paramName = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected parameter name").value;
+          let paramName = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected parameter name").value;
           let paramType = { kind: "primitive", name: "Int" };
-          const lastChar = paramName[paramName.length - 1];
-          if (["#", "$", "%"].includes(lastChar)) {
-            paramType = this.suffixToType(lastChar);
+          const lastChar2 = paramName[paramName.length - 1];
+          if (lastChar2 === "%") {
+            paramType = { kind: "primitive", name: "Int" };
+            paramName = paramName.slice(0, -1);
+          } else if (lastChar2 === "#") {
+            paramType = { kind: "primitive", name: "Float" };
+            paramName = paramName.slice(0, -1);
+          } else if (lastChar2 === "$") {
+            paramType = { kind: "primitive", name: "String" };
+            paramName = paramName.slice(0, -1);
           }
           let defaultValue;
           if (this.match("EQ" /* EQ */)) {
@@ -1158,22 +1172,12 @@ ${this.errors.join("\n")}`);
     }
     // Register function signature (first pass - for forward references)
     registerFunction(func) {
-      let returnType = func.returnType;
-      if (!returnType && func.name) {
-        const suffix = func.name.charAt(func.name.length - 1);
-        if (suffix === "%") {
-          returnType = { kind: "primitive", name: "Int" };
-        } else if (suffix === "#") {
-          returnType = { kind: "primitive", name: "Float" };
-        } else if (suffix === "$") {
-          returnType = { kind: "primitive", name: "String" };
-        }
-      }
       const funcIndex = this.nextFunctionIndex++;
-      this.functions.set(func.name, {
+      this.functions.set(func.name.toLowerCase(), {
+        // LOWERCASE for case-insensitive lookup
         index: funcIndex,
         params: func.parameters.map((p) => this.typeToWasm(p.type)),
-        returns: returnType ? this.typeToWasm(returnType) : ""
+        returns: func.returnType ? this.typeToWasm(func.returnType) : ""
       });
     }
     // Generate function body (second pass - after all signatures registered)
@@ -1182,23 +1186,12 @@ ${this.errors.join("\n")}`);
       this.localIndex = 0;
       const params = func.parameters.map((p, i) => {
         const wasmType = this.typeToWasm(p.type);
-        this.locals.set(p.name, { index: i, type: wasmType });
+        this.locals.set(p.name.toLowerCase(), { index: i, type: wasmType });
         this.localIndex++;
         return `(param $${p.name} ${wasmType})`;
       }).join(" ");
-      let returnType = func.returnType;
-      if (!returnType && func.name) {
-        const suffix = func.name.charAt(func.name.length - 1);
-        if (suffix === "%") {
-          returnType = { kind: "primitive", name: "Int" };
-        } else if (suffix === "#") {
-          returnType = { kind: "primitive", name: "Float" };
-        } else if (suffix === "$") {
-          returnType = { kind: "primitive", name: "String" };
-        }
-      }
-      const returns = returnType ? `(result ${this.typeToWasm(returnType)})` : "";
-      this.emit(`(func $${func.name} (export "${func.name}") ${params} ${returns}`);
+      const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : "";
+      this.emit(`(func $${func.name.toLowerCase()} (export "${func.name}") ${params} ${returns}`);
       this.indent++;
       const localDecls = [];
       for (const stmt of func.body) {
@@ -1740,20 +1733,16 @@ ${this.errors.join("\n")}`);
         this.emit(`call $b3d_${builtinKey}`);
         return;
       }
-      let funcName = rawName;
-      if (!this.functions.has(rawName)) {
-        const suffixes = ["%", "#", "$"];
-        for (const suffix of suffixes) {
-          if (this.functions.has(rawName + suffix)) {
-            funcName = rawName + suffix;
-            break;
-          }
-        }
+      let callName = rawName;
+      const lastChar = callName[callName.length - 1];
+      if (lastChar === "%" || lastChar === "#" || lastChar === "$") {
+        callName = callName.slice(0, -1);
       }
+      callName = callName.toLowerCase();
       for (const arg of expr.arguments) {
         this.generateExpression(arg);
       }
-      this.emit(`call $${funcName}`);
+      this.emit(`call $${callName}`);
     }
     generateAssignmentStatement(expr) {
       if (expr.target.type === "ArrayAccess") {

@@ -184,13 +184,20 @@ export class Parser {
   }
 
   private functionDeclaration(): AST.FunctionDeclaration {
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected function name').value;
+    let name = this.consume(TokenType.IDENTIFIER, 'Expected function name').value;
     
-    // Check for type suffix
+    // Check for type suffix and STRIP IT from name (like Swift compiler does)
     let returnType: AST.TypeAnnotation | undefined;
-    if (this.peek().value.includes('#') || this.peek().value.includes('$') || this.peek().value.includes('%')) {
-      const suffix = this.peek().value[this.peek().value.length - 1];
-      returnType = this.suffixToType(suffix);
+    const lastChar = name[name.length - 1];
+    if (lastChar === '%') {
+      returnType = { kind: 'primitive', name: 'Int' };
+      name = name.slice(0, -1); // STRIP SUFFIX
+    } else if (lastChar === '#') {
+      returnType = { kind: 'primitive', name: 'Float' };
+      name = name.slice(0, -1); // STRIP SUFFIX
+    } else if (lastChar === '$') {
+      returnType = { kind: 'primitive', name: 'String' };
+      name = name.slice(0, -1); // STRIP SUFFIX
     }
 
     this.consume(TokenType.LPAREN, 'Expected "(" after function name');
@@ -198,13 +205,20 @@ export class Parser {
     const parameters: AST.Parameter[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        const paramName = this.consume(TokenType.IDENTIFIER, 'Expected parameter name').value;
+        let paramName = this.consume(TokenType.IDENTIFIER, 'Expected parameter name').value;
         let paramType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
         
-        // Check for type suffix in parameter name
+        // Check for type suffix in parameter name and STRIP IT
         const lastChar = paramName[paramName.length - 1];
-        if (['#', '$', '%'].includes(lastChar)) {
-          paramType = this.suffixToType(lastChar);
+        if (lastChar === '%') {
+          paramType = { kind: 'primitive', name: 'Int' };
+          paramName = paramName.slice(0, -1); // STRIP SUFFIX
+        } else if (lastChar === '#') {
+          paramType = { kind: 'primitive', name: 'Float' };
+          paramName = paramName.slice(0, -1); // STRIP SUFFIX
+        } else if (lastChar === '$') {
+          paramType = { kind: 'primitive', name: 'String' };
+          paramName = paramName.slice(0, -1); // STRIP SUFFIX
         }
 
         // Default value

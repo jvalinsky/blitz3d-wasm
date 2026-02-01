@@ -199,24 +199,13 @@ export class CodeGenerator {
 
   // Register function signature (first pass - for forward references)
   private registerFunction(func: AST.FunctionDeclaration): void {
-    // Infer return type from function name suffix if not explicitly provided
-    let returnType = func.returnType;
-    if (!returnType && func.name) {
-      const suffix = func.name.charAt(func.name.length - 1);
-      if (suffix === '%') {
-        returnType = { kind: 'primitive', name: 'Int' };
-      } else if (suffix === '#') {
-        returnType = { kind: 'primitive', name: 'Float' };
-      } else if (suffix === '$') {
-        returnType = { kind: 'primitive', name: 'String' };
-      }
-    }
-    
+    // Function name already has suffix stripped by parser
+    // Return type is already in AST from parser
     const funcIndex = this.nextFunctionIndex++;
-    this.functions.set(func.name, {
+    this.functions.set(func.name.toLowerCase(), {  // LOWERCASE for case-insensitive lookup
       index: funcIndex,
       params: func.parameters.map(p => this.typeToWasm(p.type)),
-      returns: returnType ? this.typeToWasm(returnType) : ''
+      returns: func.returnType ? this.typeToWasm(func.returnType) : ''
     });
   }
 
@@ -225,30 +214,19 @@ export class CodeGenerator {
     this.locals.clear();
     this.localIndex = 0;
 
-    // Function signature
+    // Function signature (name already has suffix stripped by parser)
     const params = func.parameters.map((p, i) => {
       const wasmType = this.typeToWasm(p.type);
-      this.locals.set(p.name, { index: i, type: wasmType });
+      this.locals.set(p.name.toLowerCase(), { index: i, type: wasmType }); // LOWERCASE
       this.localIndex++;
       return `(param $${p.name} ${wasmType})`;
     }).join(' ');
 
-    // Infer return type from function name suffix if not explicitly provided
-    let returnType = func.returnType;
-    if (!returnType && func.name) {
-      const suffix = func.name.charAt(func.name.length - 1);
-      if (suffix === '%') {
-        returnType = { kind: 'primitive', name: 'Int' };
-      } else if (suffix === '#') {
-        returnType = { kind: 'primitive', name: 'Float' };
-      } else if (suffix === '$') {
-        returnType = { kind: 'primitive', name: 'String' };
-      }
-    }
+    // Return type is already in AST from parser
+    const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : '';
 
-    const returns = returnType ? `(result ${this.typeToWasm(returnType)})` : '';
-
-    this.emit(`(func $${func.name} (export "${func.name}") ${params} ${returns}`);
+    // Use lowercase name for WASM function
+    this.emit(`(func $${func.name.toLowerCase()} (export "${func.name}") ${params} ${returns}`);
     this.indent++;
 
     // Local variables (we'll add them as we encounter them)
@@ -943,23 +921,19 @@ export class CodeGenerator {
       return;
     }
 
-    // Regular user-defined function call - try with and without type suffix
-    let funcName = rawName;
-    if (!this.functions.has(rawName)) {
-      // Try with type suffixes (%, #, $)
-      const suffixes = ['%', '#', '$'];
-      for (const suffix of suffixes) {
-        if (this.functions.has(rawName + suffix)) {
-          funcName = rawName + suffix;
-          break;
-        }
-      }
+    // Regular user-defined function call
+    // Strip any suffix from call name and lookup by lowercase base name
+    let callName = rawName;
+    const lastChar = callName[callName.length - 1];
+    if (lastChar === '%' || lastChar === '#' || lastChar === '$') {
+      callName = callName.slice(0, -1); // Strip suffix
     }
+    callName = callName.toLowerCase(); // Lowercase for case-insensitive lookup
     
     for (const arg of expr.arguments) {
       this.generateExpression(arg);
     }
-    this.emit(`call $${funcName}`);
+    this.emit(`call $${callName}`);
   }
 
   private generateAssignmentStatement(expr: any): void {

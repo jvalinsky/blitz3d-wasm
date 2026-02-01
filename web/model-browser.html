@@ -367,7 +367,8 @@
                     // Load texture for this primitive
                     primData.texture = gl.createTexture();
                     gl.bindTexture(gl.TEXTURE_2D, primData.texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([128,128,128,255]));
+                    // Light gray fallback for untextured primitives (was too dark)
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200,200,200,255]));
                     
                     if (prim.texturePath) {
                         const texPaths = [

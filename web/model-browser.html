@@ -161,13 +161,46 @@
         const statusEl = document.getElementById('status');
         
         let gl, prog, camera, currentMesh;
-        let mvpLoc, texLoc;
-        let primitiveData = []; // Array of {vbo, nbo, ubo, ibo, texture}
+        let mvpLoc, diffuseLoc, lightmapLoc, hasLightmapLoc;
+        let primitiveData = []; // Array of {vbo, nbo, ubo, uv2bo, ibo, diffuseTexture, lightmapTexture}
         let isDragging = false;
         let lastX = 0, lastY = 0;
         
         function log(msg) {
             console.log(msg);
+        }
+        
+        // Async texture loader
+        function loadTextureAsync(texturePath, glTexture) {
+            const texPaths = [
+                './dist/GFX/map/' + texturePath,
+                './dist/GFX/npcs/' + texturePath,
+                './dist/GFX/' + texturePath,
+                './dist/assets/' + texturePath
+            ];
+            
+            let pathIndex = 0;
+            const img = new Image();
+            
+            img.onload = () => {
+                gl.bindTexture(gl.TEXTURE_2D, glTexture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+            };
+            
+            img.onerror = () => {
+                pathIndex++;
+                if (pathIndex < texPaths.length) {
+                    img.src = texPaths[pathIndex];
+                } else {
+                    console.warn('❌ Texture not found:', texturePath);
+                }
+            };
+            
+            img.src = texPaths[0];
         }
         
         // Initialize WebGL
@@ -192,31 +225,42 @@
                 in vec3 position;
                 in vec3 normal;
                 in vec2 uv;
+                in vec2 uv2;  // Second UV set for lightmaps
                 out vec3 v_normal;
                 out vec2 v_uv;
+                out vec2 v_uv2;
                 void main() {
                     gl_Position = u_mvp * vec4(position, 1.0);
                     v_normal = normal;
                     v_uv = uv;
+                    v_uv2 = uv2;
                 }
             `;
             
             const fs = `#version 300 es
                 precision mediump float;
-                uniform sampler2D u_texture;
+                uniform sampler2D u_diffuse;
+                uniform sampler2D u_lightmap;
+                uniform int u_hasLightmap;  // 0 or 1
                 in vec3 v_normal;
                 in vec2 v_uv;
+                in vec2 v_uv2;
                 out vec4 color;
                 void main() {
-                    vec4 texColor = texture(u_texture, v_uv);
+                    vec4 diffuse = texture(u_diffuse, v_uv);
                     
-                    // Simple lighting
-                    vec3 norm = normalize(v_normal);
-                    vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
-                    float diff = max(dot(norm, lightDir), 0.0);
-                    float lighting = 0.7 + diff * 0.3;
-                    
-                    color = vec4(texColor.rgb * lighting, 1.0);
+                    if (u_hasLightmap == 1) {
+                        // Multi-texture: diffuse × lightmap × 2.0
+                        vec4 lightmap = texture(u_lightmap, v_uv2);
+                        color = vec4(diffuse.rgb * lightmap.rgb * 2.0, diffuse.a);
+                    } else {
+                        // Single texture: just diffuse with lighting
+                        vec3 norm = normalize(v_normal);
+                        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
+                        float diff = max(dot(norm, lightDir), 0.0);
+                        float lighting = 0.7 + diff * 0.3;
+                        color = vec4(diffuse.rgb * lighting, 1.0);
+                    }
                 }
             `;
             
@@ -231,7 +275,9 @@
             gl.useProgram(prog);
             
             mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
-            texLoc = gl.getUniformLocation(prog, 'u_texture');
+            diffuseLoc = gl.getUniformLocation(prog, 'u_diffuse');
+            lightmapLoc = gl.getUniformLocation(prog, 'u_lightmap');
+            hasLightmapLoc = gl.getUniformLocation(prog, 'u_hasLightmap');
             
             // Setup camera
             camera = new SimpleCamera();
@@ -288,8 +334,10 @@
                     if (prim.vbo) gl.deleteBuffer(prim.vbo);
                     if (prim.nbo) gl.deleteBuffer(prim.nbo);
                     if (prim.ubo) gl.deleteBuffer(prim.ubo);
+                    if (prim.uv2bo) gl.deleteBuffer(prim.uv2bo);
                     if (prim.ibo) gl.deleteBuffer(prim.ibo);
-                    if (prim.texture) gl.deleteTexture(prim.texture);
+                    if (prim.diffuseTexture) gl.deleteTexture(prim.diffuseTexture);
+                    if (prim.lightmapTexture) gl.deleteTexture(prim.lightmapTexture);
                 }
                 primitiveData = [];
                 
@@ -381,6 +429,12 @@
                         gl.bufferData(gl.ARRAY_BUFFER, prim.uvs, gl.STATIC_DRAW);
                     }
                     
+                    if (prim.uv2) {
+                        primData.uv2bo = gl.createBuffer();
+                        gl.bindBuffer(gl.ARRAY_BUFFER, primData.uv2bo);
+                        gl.bufferData(gl.ARRAY_BUFFER, prim.uv2, gl.STATIC_DRAW);
+                    }
+                    
                     if (prim.indices) {
                         primData.ibo = gl.createBuffer();
                         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primData.ibo);
@@ -391,45 +445,21 @@
                         primData.vertexCount = prim.vertexCount;
                     }
                     
-                    // Load texture for this primitive
-                    primData.texture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, primData.texture);
-                    // Light gray fallback for untextured primitives (was too dark)
+                    // Load diffuse texture
+                    primData.diffuseTexture = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, primData.diffuseTexture);
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200,200,200,255]));
                     
                     if (prim.texturePath) {
-                        const texPaths = [
-                            './dist/GFX/map/' + prim.texturePath,
-                            './dist/GFX/npcs/' + prim.texturePath,
-                            './dist/GFX/' + prim.texturePath,
-                            './dist/assets/' + prim.texturePath
-                        ];
-                        
-                        let pathIndex = 0;
-                        const img = new Image();
-                        const tex = primData.texture;
-                        
-                        img.onload = () => {
-                            gl.bindTexture(gl.TEXTURE_2D, tex);
-                            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-                            
-                            // No mipmaps - simpler filtering
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-                        };
-                        
-                        img.onerror = () => {
-                            pathIndex++;
-                            if (pathIndex < texPaths.length) {
-                                img.src = texPaths[pathIndex];
-                            } else {
-                                console.warn('❌ Texture not found after trying all paths:', prim.texturePath);
-                            }
-                        };
-                        
-                        img.src = texPaths[0];
+                        loadTextureAsync(prim.texturePath, primData.diffuseTexture);
+                    }
+                    
+                    // Load lightmap texture
+                    if (prim.lightmapPath) {
+                        primData.lightmapTexture = gl.createTexture();
+                        gl.bindTexture(gl.TEXTURE_2D, primData.lightmapTexture);
+                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
+                        loadTextureAsync(prim.lightmapPath, primData.lightmapTexture);
                     }
                     
                     primitiveData.push(primData);
@@ -470,7 +500,7 @@
                 
                 gl.uniformMatrix4fv(mvpLoc, false, mvp);
                 
-                // Draw each primitive with its own texture
+                // Draw each primitive with its textures
                 for (const prim of primitiveData) {
                     // Bind vertex data
                     gl.bindBuffer(gl.ARRAY_BUFFER, prim.vbo);
@@ -483,16 +513,34 @@
                         gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
                     }
                     
+                    // Bind first UV set (diffuse)
                     if (prim.ubo) {
                         gl.bindBuffer(gl.ARRAY_BUFFER, prim.ubo);
                         gl.enableVertexAttribArray(2);
                         gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
                     }
                     
-                    // Bind texture
+                    // Bind second UV set (lightmap)
+                    if (prim.uv2bo) {
+                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.uv2bo);
+                        gl.enableVertexAttribArray(3);
+                        gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
+                    }
+                    
+                    // Bind diffuse texture (unit 0)
                     gl.activeTexture(gl.TEXTURE0);
-                    gl.bindTexture(gl.TEXTURE_2D, prim.texture);
-                    gl.uniform1i(texLoc, 0);
+                    gl.bindTexture(gl.TEXTURE_2D, prim.diffuseTexture);
+                    gl.uniform1i(diffuseLoc, 0);
+                    
+                    // Bind lightmap texture (unit 1) if exists
+                    if (prim.lightmapTexture) {
+                        gl.activeTexture(gl.TEXTURE1);
+                        gl.bindTexture(gl.TEXTURE_2D, prim.lightmapTexture);
+                        gl.uniform1i(lightmapLoc, 1);
+                        gl.uniform1i(hasLightmapLoc, 1);
+                    } else {
+                        gl.uniform1i(hasLightmapLoc, 0);
+                    }
                     
                     // Draw
                     if (prim.ibo) {

@@ -2279,7 +2279,8 @@ public struct Parser {
         includeParser.includedFiles = self.includedFiles  // Share included files set
         includeParser.includeSearchPaths = self.includeSearchPaths  // Share search paths
         
-        let includedStatements = includeParser.parseProgram()
+        let includedProgram = includeParser.parse()
+        let includedStatements = includedProgram.statements
         
         // Merge errors from included file
         self.errors.append(contentsOf: includeParser.errors)

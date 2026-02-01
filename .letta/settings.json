@@ -16,7 +16,9 @@
       "Bash(wc:*)",
       "Bash(mkdir -p plan/compiler-runtime-comparison-2026-02-01)",
       "Bash(cat:*)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task test:swift 2>&1 | head -100)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task test:swift 2>&1 | head -100)",
+      "Bash(git commit:*)",
+      "Bash(export PATH=/usr/bin:$PATH && cd /Users/jack/Software/scp_port/blitz3d-wasm && swift test 2>&1 | head -100)"
     ]
   }
 }

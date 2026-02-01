@@ -1082,13 +1082,52 @@ var Camera = class {
   }
   /**
    * Get view matrix (world to camera space)
-   * Simplified: just translate by negative camera position
+   * Simple lookAt-style matrix
    */
   getViewMatrix() {
-    const mat = this.identity();
-    mat[12] = -this.position[0];
-    mat[13] = -this.position[1];
-    mat[14] = -this.position[2];
+    const eye = this.position;
+    const center = [0, 0, 0];
+    const up = [0, 1, 0];
+    const f = [
+      center[0] - eye[0],
+      center[1] - eye[1],
+      center[2] - eye[2]
+    ];
+    const fLen = Math.sqrt(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
+    f[0] /= fLen;
+    f[1] /= fLen;
+    f[2] /= fLen;
+    const r = [
+      f[1] * up[2] - f[2] * up[1],
+      f[2] * up[0] - f[0] * up[2],
+      f[0] * up[1] - f[1] * up[0]
+    ];
+    const rLen = Math.sqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
+    r[0] /= rLen;
+    r[1] /= rLen;
+    r[2] /= rLen;
+    const u = [
+      r[1] * f[2] - r[2] * f[1],
+      r[2] * f[0] - r[0] * f[2],
+      r[0] * f[1] - r[1] * f[0]
+    ];
+    const mat = new Float32Array(16);
+    mat[0] = r[0];
+    mat[1] = u[0];
+    mat[2] = -f[0];
+    mat[3] = 0;
+    mat[4] = r[1];
+    mat[5] = u[1];
+    mat[6] = -f[1];
+    mat[7] = 0;
+    mat[8] = r[2];
+    mat[9] = u[2];
+    mat[10] = -f[2];
+    mat[11] = 0;
+    mat[12] = -(r[0] * eye[0] + r[1] * eye[1] + r[2] * eye[2]);
+    mat[13] = -(u[0] * eye[0] + u[1] * eye[1] + u[2] * eye[2]);
+    mat[14] = f[0] * eye[0] + f[1] * eye[1] + f[2] * eye[2];
+    mat[15] = 1;
     return mat;
   }
   /**
@@ -1098,12 +1137,12 @@ var Camera = class {
     const mat = new Float32Array(16);
     const fovRad = this.fov * Math.PI / 180;
     const f = 1 / Math.tan(fovRad / 2);
-    const rangeInv = 1 / (this.near - this.far);
+    const nf = 1 / (this.near - this.far);
     mat[0] = f / this.aspect;
     mat[5] = f;
-    mat[10] = (this.near + this.far) * rangeInv;
+    mat[10] = (this.far + this.near) * nf;
     mat[11] = -1;
-    mat[14] = this.near * this.far * rangeInv * 2;
+    mat[14] = 2 * this.far * this.near * nf;
     return mat;
   }
   /**

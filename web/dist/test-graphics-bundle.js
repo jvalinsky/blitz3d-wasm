@@ -1345,46 +1345,49 @@ async function loadSMPK(url) {
     throw new Error("No meshes in SMPK file");
   }
   const mesh = json.meshes[0];
-  const primitive = mesh.primitives[0];
-  const positionIdx = primitive.attributes.POSITION;
-  const normalIdx = primitive.attributes.NORMAL;
-  const texcoordIdx = primitive.attributes.TEXCOORD_0;
-  const indicesIdx = primitive.indices;
-  let positions;
-  let normals;
-  let uvs;
-  let indices;
-  if (positionIdx !== void 0) {
-    positions = readAccessor(bin, json.accessors[positionIdx]);
-  }
-  if (normalIdx !== void 0) {
-    normals = readAccessor(bin, json.accessors[normalIdx]);
-  }
-  if (texcoordIdx !== void 0) {
-    uvs = readAccessor(bin, json.accessors[texcoordIdx]);
-  }
-  if (indicesIdx !== void 0) {
-    indices = readAccessor(bin, json.accessors[indicesIdx]);
-  }
-  if (!positions) {
-    throw new Error("No position data in SMPK");
-  }
-  let texturePath;
-  if (primitive.material !== void 0 && json.materials) {
-    const material = json.materials[primitive.material];
-    if (material?.baseColorTexture) {
-      texturePath = material.baseColorTexture;
+  const primitives = [];
+  for (const primitive of mesh.primitives) {
+    const positionIdx = primitive.attributes.POSITION;
+    const normalIdx = primitive.attributes.NORMAL;
+    const texcoordIdx = primitive.attributes.TEXCOORD_0;
+    const indicesIdx = primitive.indices;
+    let positions;
+    let normals;
+    let uvs;
+    let indices;
+    if (positionIdx !== void 0) {
+      positions = readAccessor(bin, json.accessors[positionIdx]);
     }
+    if (normalIdx !== void 0) {
+      normals = readAccessor(bin, json.accessors[normalIdx]);
+    }
+    if (texcoordIdx !== void 0) {
+      uvs = readAccessor(bin, json.accessors[texcoordIdx]);
+    }
+    if (indicesIdx !== void 0) {
+      indices = readAccessor(bin, json.accessors[indicesIdx]);
+    }
+    if (!positions) {
+      continue;
+    }
+    let texturePath;
+    if (primitive.material !== void 0 && json.materials) {
+      const material = json.materials[primitive.material];
+      if (material?.baseColorTexture) {
+        texturePath = material.baseColorTexture;
+      }
+    }
+    primitives.push({
+      positions,
+      normals,
+      uvs,
+      indices,
+      vertexCount: positions.length / 3,
+      indexCount: indices ? indices.length : 0,
+      texturePath
+    });
   }
-  return {
-    positions,
-    normals,
-    uvs,
-    indices,
-    vertexCount: positions.length / 3,
-    indexCount: indices ? indices.length : 0,
-    texturePath
-  };
+  return { primitives };
 }
 function readAccessor(bin, accessor) {
   const { offset, count, componentType, type } = accessor;

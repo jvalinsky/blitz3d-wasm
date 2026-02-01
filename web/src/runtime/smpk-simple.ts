@@ -3,7 +3,7 @@
  * SMPK format: MAGIC(4) + VERSION(4) + JSON_LEN(4) + BIN_LEN(4) + JSON + BIN
  */
 
-export interface SMPKMesh {
+export interface SMPKPrimitive {
     positions: Float32Array;
     normals?: Float32Array;
     uvs?: Float32Array;
@@ -11,6 +11,10 @@ export interface SMPKMesh {
     vertexCount: number;
     indexCount: number;
     texturePath?: string; // Path to base color texture
+}
+
+export interface SMPKMesh {
+    primitives: SMPKPrimitive[];
 }
 
 interface SMPKAccessor {
@@ -40,7 +44,7 @@ interface SMPKJson {
 const MAGIC = [0x53, 0x4D, 0x50, 0x4B]; // "SMPK"
 
 /**
- * Load SMPK file and extract first mesh data
+ * Load SMPK file and extract all mesh primitives
  */
 export async function loadSMPK(url: string): Promise<SMPKMesh> {
     const response = await fetch(url);
@@ -77,67 +81,72 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
     const json: SMPKJson = JSON.parse(jsonText);
     const bin = bytes.subarray(binStart);
     
-    // Get first mesh, first primitive
+    // Get first mesh and all its primitives
     if (!json.meshes || json.meshes.length === 0) {
         throw new Error('No meshes in SMPK file');
     }
     
     const mesh = json.meshes[0];
-    const primitive = mesh.primitives[0];
+    const primitives: SMPKPrimitive[] = [];
     
-    // Extract vertex data
-    const positionIdx = primitive.attributes.POSITION;
-    const normalIdx = primitive.attributes.NORMAL;
-    const texcoordIdx = primitive.attributes.TEXCOORD_0;
-    const indicesIdx = primitive.indices;
-    
-    let positions: Float32Array | undefined;
-    let normals: Float32Array | undefined;
-    let uvs: Float32Array | undefined;
-    let indices: Uint16Array | Uint32Array | undefined;
-    
-    // Read positions
-    if (positionIdx !== undefined) {
-        positions = readAccessor(bin, json.accessors[positionIdx]) as Float32Array;
-    }
-    
-    // Read normals
-    if (normalIdx !== undefined) {
-        normals = readAccessor(bin, json.accessors[normalIdx]) as Float32Array;
-    }
-    
-    // Read UVs
-    if (texcoordIdx !== undefined) {
-        uvs = readAccessor(bin, json.accessors[texcoordIdx]) as Float32Array;
-    }
-    
-    // Read indices
-    if (indicesIdx !== undefined) {
-        indices = readAccessor(bin, json.accessors[indicesIdx]) as Uint16Array;
-    }
-    
-    if (!positions) {
-        throw new Error('No position data in SMPK');
-    }
-    
-    // Get texture path from material
-    let texturePath: string | undefined;
-    if (primitive.material !== undefined && json.materials) {
-        const material = json.materials[primitive.material];
-        if (material?.baseColorTexture) {
-            texturePath = material.baseColorTexture;
+    // Process each primitive (each can have its own material/texture)
+    for (const primitive of mesh.primitives) {
+        // Extract vertex data
+        const positionIdx = primitive.attributes.POSITION;
+        const normalIdx = primitive.attributes.NORMAL;
+        const texcoordIdx = primitive.attributes.TEXCOORD_0;
+        const indicesIdx = primitive.indices;
+        
+        let positions: Float32Array | undefined;
+        let normals: Float32Array | undefined;
+        let uvs: Float32Array | undefined;
+        let indices: Uint16Array | Uint32Array | undefined;
+        
+        // Read positions
+        if (positionIdx !== undefined) {
+            positions = readAccessor(bin, json.accessors[positionIdx]) as Float32Array;
         }
+        
+        // Read normals
+        if (normalIdx !== undefined) {
+            normals = readAccessor(bin, json.accessors[normalIdx]) as Float32Array;
+        }
+        
+        // Read UVs
+        if (texcoordIdx !== undefined) {
+            uvs = readAccessor(bin, json.accessors[texcoordIdx]) as Float32Array;
+        }
+        
+        // Read indices
+        if (indicesIdx !== undefined) {
+            indices = readAccessor(bin, json.accessors[indicesIdx]) as Uint16Array | Uint32Array;
+        }
+        
+        if (!positions) {
+            continue; // Skip primitives without positions
+        }
+        
+        // Get texture path from material
+        let texturePath: string | undefined;
+        if (primitive.material !== undefined && json.materials) {
+            const material = json.materials[primitive.material];
+            if (material?.baseColorTexture) {
+                texturePath = material.baseColorTexture;
+            }
+        }
+        
+        primitives.push({
+            positions,
+            normals,
+            uvs,
+            indices,
+            vertexCount: positions.length / 3,
+            indexCount: indices ? indices.length : 0,
+            texturePath
+        });
     }
     
-    return {
-        positions,
-        normals,
-        uvs,
-        indices,
-        vertexCount: positions.length / 3,
-        indexCount: indices ? indices.length : 0,
-        texturePath
-    };
+    return { primitives };
 }
 
 /**

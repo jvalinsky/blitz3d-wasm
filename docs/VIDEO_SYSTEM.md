@@ -63,12 +63,18 @@ Stops playback and resets position to 0.
 
 ## Video Files
 
-SCPCB includes two startup videos:
+SCPCB includes two startup videos (converted to MP4 for web):
 
-- `GFX/menu/startup_TSS.avi` (8.1 MB)
-- `GFX/menu/startup_Undertow.avi` (12 MB)
+- `startup_TSS.mp4` (1.3 MB) - Converted from AVI
+- `startup_Undertow.mp4` (3 MB) - Converted from AVI
 
-Both are AVI format (supported by most browsers via native codecs).
+**Original Format:** AVI (MPEG-4/XviD codec) - NOT supported by modern browsers
+**Web Format:** MP4 (H.264 + AAC) - Universal browser support
+
+**Conversion Command:**
+```bash
+ffmpeg -i startup_TSS.avi -c:v libx264 -preset fast -crf 23 -c:a aac startup_TSS.mp4
+```
 
 ## Usage
 
@@ -143,11 +149,11 @@ Features:
 
 | Feature | Chrome | Firefox | Safari | Edge |
 |---------|--------|---------|--------|------|
-| AVI playback | ✅ | ✅ | ⚠️ * | ✅ |
+| MP4 (H.264) | ✅ | ✅ | ✅ | ✅ |
 | HTML5 video | ✅ | ✅ | ✅ | ✅ |
 | Async play() | ✅ | ✅ | ✅ | ✅ |
 
-*Safari may require codec conversion (AVI → MP4/WebM)
+**Note:** AVI format is NOT supported by modern browsers. All videos must be converted to MP4/WebM.
 
 ## Known Limitations
 

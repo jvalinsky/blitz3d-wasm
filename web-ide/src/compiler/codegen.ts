@@ -85,11 +85,18 @@ export class CodeGenerator {
       // String data section
       this.emitStringData(program);
 
-      // Generate functions
+      // First pass: Register all function signatures (for forward references)
+      for (const stmt of program.statements) {
+        if (stmt.type === 'FunctionDeclaration') {
+          this.registerFunction(stmt);
+        }
+      }
+
+      // Second pass: Generate function bodies
       for (const stmt of program.statements) {
         if (stmt.type === 'FunctionDeclaration') {
           try {
-            this.generateFunction(stmt);
+            this.generateFunctionBody(stmt);
           } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             throw new Error(`Error in function '${stmt.name}': ${msg}`);
@@ -190,17 +197,20 @@ export class CodeGenerator {
     }
   }
 
-  private generateFunction(func: AST.FunctionDeclaration): void {
-    this.locals.clear();
-    this.localIndex = 0;
-
-    // Register function
+  // Register function signature (first pass - for forward references)
+  private registerFunction(func: AST.FunctionDeclaration): void {
     const funcIndex = this.nextFunctionIndex++;
     this.functions.set(func.name, {
       index: funcIndex,
       params: func.parameters.map(p => this.typeToWasm(p.type)),
       returns: func.returnType ? this.typeToWasm(func.returnType) : ''
     });
+  }
+
+  // Generate function body (second pass - after all signatures registered)
+  private generateFunctionBody(func: AST.FunctionDeclaration): void {
+    this.locals.clear();
+    this.localIndex = 0;
 
     // Function signature
     const params = func.parameters.map((p, i) => {

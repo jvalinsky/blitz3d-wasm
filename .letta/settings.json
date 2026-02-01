@@ -5,7 +5,8 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A web-ide/build_bundle.js)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno install)",
       "Bash(git add:*)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A --node-modules-dir=auto web-ide/build_bundle.js)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A --node-modules-dir=auto web-ide/build_bundle.js)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A --node-modules-dir=auto web-ide/build_bundle.js && deno run --allow-read web-ide/test_examples.ts)"
     ]
   }
 }

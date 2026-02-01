@@ -1073,8 +1073,13 @@ ${this.errors.join("\n")}`);
         this.emitStringData(program);
         for (const stmt of program.statements) {
           if (stmt.type === "FunctionDeclaration") {
+            this.registerFunction(stmt);
+          }
+        }
+        for (const stmt of program.statements) {
+          if (stmt.type === "FunctionDeclaration") {
             try {
-              this.generateFunction(stmt);
+              this.generateFunctionBody(stmt);
             } catch (error) {
               const msg = error instanceof Error ? error.message : String(error);
               throw new Error(`Error in function '${stmt.name}': ${msg}`);
@@ -1151,15 +1156,19 @@ ${this.errors.join("\n")}`);
         }
       }
     }
-    generateFunction(func) {
-      this.locals.clear();
-      this.localIndex = 0;
+    // Register function signature (first pass - for forward references)
+    registerFunction(func) {
       const funcIndex = this.nextFunctionIndex++;
       this.functions.set(func.name, {
         index: funcIndex,
         params: func.parameters.map((p) => this.typeToWasm(p.type)),
         returns: func.returnType ? this.typeToWasm(func.returnType) : ""
       });
+    }
+    // Generate function body (second pass - after all signatures registered)
+    generateFunctionBody(func) {
+      this.locals.clear();
+      this.localIndex = 0;
       const params = func.parameters.map((p, i) => {
         const wasmType = this.typeToWasm(p.type);
         this.locals.set(p.name, { index: i, type: wasmType });

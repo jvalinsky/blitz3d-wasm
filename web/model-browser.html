@@ -33,7 +33,7 @@
             border: 1px solid #555;
             border-radius: 4px;
             font-size: 14px;
-            min-width: 250px;
+            min-width: 300px;
         }
         canvas {
             display: block;
@@ -58,50 +58,83 @@
             color: #4CAF50;
             font-weight: bold;
         }
-        .loading {
-            color: #ff9800;
-        }
-        .success {
-            color: #4CAF50;
-        }
-        .error {
-            color: #f44;
-        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🎮 SCP: Containment Breach - Model Browser</h1>
-        <p style="margin: 5px 0 0 0; color: #aaa;">Explore all game assets in 3D</p>
+        <p style="margin: 5px 0 0 0; color: #aaa;">285 models available • Cross-browser compatible</p>
     </div>
     
     <div class="controls">
         <label>Model:</label>
         <select id="modelSelect">
-            <optgroup label="🚪 Doors & Props">
-                <option value="GFX/map/Door01.smpk" selected>Door01 - Standard Door</option>
+            <optgroup label="🚪 Doors">
+                <option value="assets/Door01.smpk" selected>Door01 - Standard Door</option>
                 <option value="GFX/map/heavydoor1.smpk">Heavy Door 1</option>
                 <option value="GFX/map/heavydoor2.smpk">Heavy Door 2</option>
                 <option value="GFX/map/ContDoorLeft.smpk">Containment Door Left</option>
                 <option value="GFX/map/ContDoorRight.smpk">Containment Door Right</option>
+                <option value="GFX/map/DoorFrame.smpk">Door Frame</option>
+                <option value="GFX/map/DoorColl.smpk">Door Collision</option>
             </optgroup>
-            <optgroup label="👤 NPCs (Available)">
-                <option value="GFX/npcs/scp-1048.smpk">SCP-1048</option>
+            <optgroup label="👤 NPCs - SCPs">
+                <option value="GFX/npcs/173_2.smpk">SCP-173</option>
+                <option value="GFX/npcs/scp-049.smpk">SCP-049</option>
+                <option value="GFX/npcs/scp096.smpk">SCP-096</option>
+                <option value="GFX/npcs/106_2.smpk">SCP-106</option>
                 <option value="GFX/npcs/scp-939.smpk">SCP-939</option>
-                <option value="GFX/npcs/bll.smpk">Bll</option>
-                <option value="GFX/npcs/zombie1.smpk">Zombie</option>
+                <option value="GFX/npcs/scp-966.smpk">SCP-966</option>
+                <option value="GFX/npcs/scp-1048.smpk">SCP-1048</option>
+                <option value="GFX/npcs/scp-1048a.smpk">SCP-1048-A</option>
+                <option value="GFX/npcs/scp-066.smpk">SCP-066</option>
+                <option value="GFX/npcs/035.smpk">SCP-035</option>
+                <option value="GFX/npcs/372.smpk">SCP-372</option>
                 <option value="GFX/npcs/1499-1.smpk">SCP-1499-1</option>
             </optgroup>
-            <optgroup label="🏢 Sample Rooms">
+            <optgroup label="👤 NPCs - Humans">
+                <option value="GFX/npcs/guard.smpk">Guard</option>
+                <option value="GFX/npcs/MTF2.smpk">MTF Soldier</option>
+                <option value="GFX/npcs/classd.smpk">Class-D Personnel</option>
+                <option value="GFX/npcs/clerk.smpk">Clerk</option>
+                <option value="GFX/npcs/naziofficer.smpk">Nazi Officer</option>
+            </optgroup>
+            <optgroup label="👤 NPCs - Monsters">
+                <option value="GFX/npcs/zombie1.smpk">Zombie</option>
+                <option value="GFX/npcs/zombiesurgeon.smpk">Zombie Surgeon</option>
+                <option value="GFX/npcs/bll.smpk">Bll</option>
+                <option value="GFX/npcs/forestmonster.smpk">Forest Monster</option>
+                <option value="GFX/npcs/205_demon1.smpk">205 Demon 1</option>
+                <option value="GFX/npcs/205_woman.smpk">205 Woman</option>
+            </optgroup>
+            <optgroup label="🏢 Rooms - Small">
                 <option value="assets/testroom_opt.smpk">Test Room</option>
+                <option value="GFX/map/room1062.smpk">Room 1062</option>
+                <option value="GFX/map/checkpoint1_opt.smpk">Checkpoint 1</option>
+                <option value="GFX/map/checkpoint2_opt.smpk">Checkpoint 2</option>
+            </optgroup>
+            <optgroup label="🏢 Rooms - Large">
                 <option value="assets/room2offices3_opt.smpk">Offices</option>
                 <option value="assets/room2cafeteria_opt.smpk">Cafeteria</option>
                 <option value="assets/room2_opt.smpk">Room 2</option>
                 <option value="assets/room2tunnel_opt.smpk">Tunnel</option>
             </optgroup>
-            <optgroup label="📦 SCP Objects">
+            <optgroup label="📦 Props">
+                <option value="GFX/map/Props/monitor.smpk">Monitor</option>
+                <option value="GFX/map/Props/keyboard.smpk">Keyboard</option>
+                <option value="GFX/map/Props/lamp1.smpk">Lamp 1</option>
+                <option value="GFX/map/Props/lamp2.smpk">Lamp 2</option>
+                <option value="GFX/map/Props/crate1.smpk">Crate 1</option>
+                <option value="GFX/map/Button.smpk">Button</option>
+                <option value="GFX/map/ButtonScanner.smpk">Scanner Button</option>
+                <option value="GFX/map/CamHead.smpk">Camera Head</option>
+                <option value="GFX/map/fan.smpk">Fan</option>
+            </optgroup>
+            <optgroup label="🎯 SCP Chambers">
                 <option value="assets/173.smpk">SCP-173 Chamber</option>
                 <option value="GFX/173box.smpk">SCP-173 Box</option>
+                <option value="GFX/map/079.smpk">SCP-079</option>
+                <option value="GFX/map/294.smpk">SCP-294</option>
             </optgroup>
         </select>
         <span id="status" style="margin-left: auto;">Ready</span>
@@ -113,7 +146,7 @@
         <div class="info-row"><span class="info-label">Model:</span> <span id="modelName">-</span></div>
         <div class="info-row"><span class="info-label">Vertices:</span> <span id="verts">-</span></div>
         <div class="info-row"><span class="info-label">Triangles:</span> <span id="tris">-</span></div>
-        <div class="info-row"><span class="info-label">Texture:</span> <span id="tex">-</span></div>
+        <div class="info-row"><span class="info-label">Primitives:</span> <span id="prims">-</span></div>
         <div class="info-row"><span class="info-label">FPS:</span> <span id="fps">-</span></div>
         <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px; color: #888;">
             💡 Drag to rotate
@@ -164,7 +197,7 @@
                 void main() {
                     gl_Position = u_mvp * vec4(position, 1.0);
                     v_normal = normal;
-                    v_uv = uv; // Use UVs directly (un-flipped)
+                    v_uv = uv;
                 }
             `;
             
@@ -175,14 +208,11 @@
                 in vec2 v_uv;
                 out vec4 color;
                 void main() {
-                    // Show texture with simple lighting
                     vec4 texColor = texture(u_texture, v_uv);
-                    
                     vec3 norm = normalize(v_normal);
                     vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
                     float diff = max(dot(norm, lightDir), 0.0);
                     float lighting = 0.7 + diff * 0.3;
-                    
                     color = vec4(texColor.rgb * lighting, 1.0);
                 }
             `;
@@ -242,14 +272,13 @@
             const program = gl.createProgram();
             gl.attachShader(program, vShader);
             gl.attachShader(program, fShader);
-            gl.linkProgram(program);
             return program;
         }
         
         async function loadModel(path) {
             try {
                 statusEl.textContent = 'Loading...';
-                statusEl.className = 'loading';
+                statusEl.style.color = '#ff9800';
                 
                 // Clean up old data
                 for (const prim of primitiveData) {
@@ -356,7 +385,7 @@
                             gl.bindTexture(gl.TEXTURE_2D, tex);
                             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
                             
-                            // NO MIPMAPS - test if mipmaps cause banding
+                            // No mipmaps - simpler filtering
                             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
                             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
@@ -380,15 +409,15 @@
                 
                 // Update UI
                 document.getElementById('modelName').textContent = path.split('/').pop();
-                document.getElementById('verts').textContent = totalVerts;
-                document.getElementById('tris').textContent = Math.floor(totalTris);
-                document.getElementById('tex').textContent = currentMesh.primitives.map(p => p.texturePath || 'none').join(', ');
+                document.getElementById('verts').textContent = totalVerts.toLocaleString();
+                document.getElementById('tris').textContent = Math.floor(totalTris).toLocaleString();
+                document.getElementById('prims').textContent = currentMesh.primitives.length;
                 
                 statusEl.textContent = 'Ready';
-                statusEl.className = 'success';
+                statusEl.style.color = '#4CAF50';
             } catch (e) {
                 statusEl.textContent = 'Error: ' + e.message;
-                statusEl.className = 'error';
+                statusEl.style.color = '#f44';
                 console.error(e);
             }
         }

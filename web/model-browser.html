@@ -254,6 +254,11 @@
                     throw new Error('No primitives in mesh');
                 }
                 
+                console.log(`📦 Loaded ${currentMesh.primitives.length} primitive(s)`);
+                for (let i = 0; i < currentMesh.primitives.length; i++) {
+                    const p = currentMesh.primitives[i];
+                    console.log(`  Primitive ${i}: ${p.vertexCount} verts, texture: ${p.texturePath || 'none'}`);
+                }
                 print(`📦 Loaded ${currentMesh.primitives.length} primitive(s)`);
                 
                 // Calculate total stats

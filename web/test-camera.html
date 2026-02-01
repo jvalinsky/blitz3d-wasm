@@ -128,7 +128,8 @@
                 log('✅ WebGL 2 supported');
                 
                 gl.viewport(0, 0, canvas.width, canvas.height);
-                gl.enable(gl.DEPTH_TEST);
+                // Disable depth test for now to debug
+                // gl.enable(gl.DEPTH_TEST);
                 
                 // Shaders with MVP uniform
                 log('📝 Compiling shaders with MVP support...');
@@ -144,7 +145,7 @@
                     precision mediump float;
                     out vec4 fragColor;
                     void main() {
-                        fragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                        fragColor = vec4(1.0, 0.0, 0.0, 1.0); // Red for visibility
                     }
                 `;
                 
@@ -240,6 +241,12 @@
                     
                     // Draw triangle
                     gl.drawArrays(gl.TRIANGLES, 0, 3);
+                    
+                    // Debug: check for GL errors
+                    const err = gl.getError();
+                    if (err !== gl.NO_ERROR && frameCount === 1) {
+                        log(`WebGL error: ${err}`, 'error');
+                    }
                     
                     requestAnimationFrame(render);
                 }

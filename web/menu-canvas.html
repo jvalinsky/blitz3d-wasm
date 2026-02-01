@@ -706,6 +706,8 @@
                 optionsMenu = 3;
             }
             
+            // Content area - add padding from left edge
+            const contentX = x + 40 * menuScale;  // More left padding
             let optY = y + 50 * menuScale;
             ctx.font = '18px Courier New';
             ctx.textAlign = 'left';
@@ -714,66 +716,66 @@
             if (optionsMenu === 1) {
                 // GRAPHICS
                 ctx.fillStyle = 'white';
-                ctx.fillText('VSync:', x, optY);
-                settings.vsync = DrawTick(x + 270 * menuScale, optY, settings.vsync);
+                ctx.fillText('VSync:', contentX, optY);
+                settings.vsync = DrawTick(contentX + 270 * menuScale, optY, settings.vsync);
                 optY += 30 * menuScale;
                 
-                ctx.fillText('Anti-aliasing:', x, optY);
-                settings.antiAlias = DrawTick(x + 270 * menuScale, optY, settings.antiAlias);
+                ctx.fillText('Anti-aliasing:', contentX, optY);
+                settings.antiAlias = DrawTick(contentX + 270 * menuScale, optY, settings.antiAlias);
                 optY += 30 * menuScale;
                 
-                ctx.fillText('Enable room lights:', x, optY);
-                settings.roomLights = DrawTick(x + 270 * menuScale, optY, settings.roomLights);
+                ctx.fillText('Enable room lights:', contentX, optY);
+                settings.roomLights = DrawTick(contentX + 270 * menuScale, optY, settings.roomLights);
                 optY += 30 * menuScale;
                 
-                ctx.fillText('Screen gamma:', x, optY);
-                settings.screenGamma = SlideBar(x + 270 * menuScale, optY + 6 * menuScale, 
+                ctx.fillText('Screen gamma:', contentX, optY);
+                settings.screenGamma = SlideBar(contentX + 270 * menuScale, optY + 6 * menuScale, 
                                                100 * menuScale, settings.screenGamma * 100) / 100;
                 optY += 50 * menuScale;
                 
-                ctx.fillText('Particle amount:', x, optY);
+                ctx.fillText('Particle amount:', contentX, optY);
                 const particleLabels = ['MINIMAL', 'REDUCED', 'FULL'];
                 ctx.font = '14px Courier New';
-                ctx.fillText(particleLabels[settings.particleAmount], x + 270 * menuScale, optY);
+                ctx.fillText(particleLabels[settings.particleAmount], contentX + 270 * menuScale, optY);
                 // Simple left/right arrows for particle amount
                 optY += 50 * menuScale;
                 
                 ctx.font = '18px Courier New';
-                ctx.fillText('Texture quality:', x, optY);
+                ctx.fillText('Texture quality:', contentX, optY);
                 const qualityLabels = ['LOWEST', 'LOW', 'MEDIUM', 'HIGH', 'HIGHEST'];
                 ctx.font = '14px Courier New';
-                ctx.fillText(qualityLabels[settings.textureQuality], x + 270 * menuScale, optY);
+                ctx.fillText(qualityLabels[settings.textureQuality], contentX + 270 * menuScale, optY);
                 
             } else if (optionsMenu === 2) {
                 // AUDIO
                 ctx.fillStyle = 'white';
-                ctx.fillText('Music volume:', x, optY);
-                settings.musicVolume = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                ctx.fillText('Music volume:', contentX, optY);
+                settings.musicVolume = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
                                                100 * menuScale, settings.musicVolume * 100) / 100;
                 optY += 30 * menuScale;
                 
-                ctx.fillText('Sound volume:', x, optY);
-                settings.soundVolume = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                ctx.fillText('Sound volume:', contentX, optY);
+                settings.soundVolume = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
                                                100 * menuScale, settings.soundVolume * 100) / 100;
                 optY += 30 * menuScale;
                 
-                ctx.fillText(`Music: ${Math.round(settings.musicVolume * 100)}%`, x, optY + 40 * menuScale);
-                ctx.fillText(`Sound: ${Math.round(settings.soundVolume * 100)}%`, x, optY + 70 * menuScale);
+                ctx.fillText(`Music: ${Math.round(settings.musicVolume * 100)}%`, contentX, optY + 40 * menuScale);
+                ctx.fillText(`Sound: ${Math.round(settings.soundVolume * 100)}%`, contentX, optY + 70 * menuScale);
                 
             } else if (optionsMenu === 3) {
                 // CONTROLS
                 ctx.fillStyle = 'white';
-                ctx.fillText('Mouse sensitivity:', x, optY);
-                settings.mouseSensitivity = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                ctx.fillText('Mouse sensitivity:', contentX, optY);
+                settings.mouseSensitivity = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
                                                     100 * menuScale, settings.mouseSensitivity * 100) / 100;
                 optY += 30 * menuScale;
                 
-                ctx.fillText('Invert Y axis:', x, optY);
-                settings.invertY = DrawTick(x + 270 * menuScale, optY, settings.invertY);
+                ctx.fillText('Invert Y axis:', contentX, optY);
+                settings.invertY = DrawTick(contentX + 270 * menuScale, optY, settings.invertY);
                 optY += 30 * menuScale;
                 
-                ctx.fillText(`Sensitivity: ${Math.round(settings.mouseSensitivity * 100)}%`, x, optY + 40 * menuScale);
-                ctx.fillText('(Key bindings not yet implemented)', x, optY + 70 * menuScale);
+                ctx.fillText(`Sensitivity: ${Math.round(settings.mouseSensitivity * 100)}%`, contentX, optY + 40 * menuScale);
+                ctx.fillText('(Key bindings not yet implemented)', contentX, optY + 70 * menuScale);
             }
             
             // BACK button

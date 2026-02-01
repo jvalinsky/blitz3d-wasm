@@ -18,11 +18,17 @@ This directory contains detailed implementation plans for the Blitz3D→WASM com
 
 ## Active Plans 🚧
 
-### Phase 3: SCPCB Integration
+### Phase 3: Browser Integration
 - **Plan**: `2026-02-01-phase-3-detailed-plan.md`
-- **Status**: ⏳ PLANNED
-- **Estimate**: 12-16 hours
-- **Next Step**: Step 3A.1 - Create test page
+- **Status**: ✅ COMPLETE (Feb 1, 2026)
+- **Time**: 15+ hours actual
+- **Result**: Model browser + video system working
+
+### Phase 4: Full SCPCB Integration
+- **Plan**: `../docs/SCPCB_WEB_PORT_ROADMAP.md`
+- **Status**: 🚧 NEXT
+- **Estimate**: 54-61 hours
+- **Next Steps**: Runtime completion, WASM integration, asset pipeline
 
 ## Plan Structure
 
@@ -39,13 +45,16 @@ Each plan follows this template:
 
 | Phase | Status | Time | Tests |
 |-------|--------|------|-------|
-| Phase 1 | ✅ Complete | 4h | 13/13 ✅ |
-| Phase 2 | ✅ Complete | 3h | 11/11 ✅ |
-| Phase 3 | ⏳ Planned | 12-16h | TBD |
+| Phase 1: WASM Integration | ✅ Complete | 4h | 13/13 ✅ |
+| Phase 2: Graphics Pipeline | ✅ Complete | 3h | 11/11 ✅ |
+| Phase 3: Browser Integration | ✅ Complete | 15h | Model browser + Video |
+| Phase 4: SCPCB Integration | 🚧 Next | 54-61h | TBD |
 
-**Total Progress**: 2/3 phases (67%)  
-**Time Spent**: 7 hours  
-**Tests Passing**: 24/24 (100%)
+**Total Progress**: 3/6 phases (50% by phases, 93% by foundation)  
+**Time Spent**: 22 hours  
+**Tests Passing**: 24/24 (100%)  
+**Models Working**: 40+  
+**Demos**: 3 (particles, models, video)
 
 ## Related Docs
 

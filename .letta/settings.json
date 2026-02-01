@@ -166,7 +166,16 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read --allow-write Tools/convert_rmesh_to_smpk.ts /Users/jack/Software/scp_port/scpcb/GFX/map/checkpoint1_opt.rmesh /tmp/checkpoint1_opt.smpk && cp /tmp/checkpoint1_opt.smpk web/dist/GFX/map/)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read --allow-write Tools/convert_rmesh_to_smpk.ts /Users/jack/Software/scp_port/scpcb/GFX/map/checkpoint2_opt.rmesh /tmp/checkpoint2_opt.smpk && cp /tmp/checkpoint2_opt.smpk web/dist/GFX/map/)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read --allow-write Tools/convert_b3d_to_smpk.ts /Users/jack/Software/scp_port/scpcb/GFX/map/room1062.b3d /tmp/room1062.smpk && cp /tmp/room1062.smpk web/dist/GFX/map/)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && node -e \"\nconst fs = require('fs');\nconst buf = fs.readFileSync('web/dist/GFX/map/checkpoint1_opt.smpk');\nconst dv = new DataView(buf.buffer);\nconst jsonLen = dv.getUint32(8, true);\nconst jsonStart = 16;\nconst jsonText = buf.slice(jsonStart, jsonStart + jsonLen).toString();\nconst json = JSON.parse(jsonText);\nconsole.log('checkpoint1 after reconvert:');\nconsole.log('  Material 0:', json.materials[0]);\n\")"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && node -e \"\nconst fs = require('fs');\nconst buf = fs.readFileSync('web/dist/GFX/map/checkpoint1_opt.smpk');\nconst dv = new DataView(buf.buffer);\nconst jsonLen = dv.getUint32(8, true);\nconst jsonStart = 16;\nconst jsonText = buf.slice(jsonStart, jsonStart + jsonLen).toString();\nconst json = JSON.parse(jsonText);\nconsole.log('checkpoint1 after reconvert:');\nconsole.log('  Material 0:', json.materials[0]);\n\")",
+      "Bash(curl -I http://localhost:8000/web/video-demo.html 2>&1 | head -5)",
+      "Bash(ps aux | grep -E \"deno.*serve|python.*http.server|nginx\" | grep -v grep | head -5)",
+      "Bash(ffmpeg -i /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets/startup_TSS.avi 2>&1 | grep -E \"Stream|Video|Audio|Duration\" | head -10)",
+      "Bash(brew install ffmpeg 2>&1 | tail -5)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets && ffmpeg -i startup_TSS.avi -c:v libx264 -c:a aac -movflags +faststart startup_TSS.mp4 -y 2>&1 | tail -10)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets && ffmpeg -i startup_Undertow.avi -c:v libx264 -c:a aac -movflags +faststart startup_Undertow.mp4 -y 2>&1 | tail -10)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets && ffmpeg -i startup_TSS.avi -c:v libx264 -preset fast -crf 23 -c:a aac startup_TSS.mp4 2>&1 | grep -E \"Output|Duration|Stream\")",
+      "Bash(ffmpeg -i /Users/jack/Software/scp_port/blitz3d-wasm/web/dist/assets/startup_Undertow.mp4 2>&1 | grep -E \"Duration|Stream|Invalid|Error\" | head -10)",
+      "Bash(curl -I http://localhost:8000/web/dist/assets/startup_Undertow.mp4 2>&1 | grep -E \"HTTP|content\")"
     ]
   }
 }

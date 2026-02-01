@@ -92,7 +92,7 @@
                 
                 // Load SMPK file
                 print('📦 Loading Door01.smpk...');
-                const mesh = await loadSMPK('./assets/Door01.smpk');
+                const mesh = await loadSMPK('./dist/assets/Door01.smpk');
                 print(`✅ Loaded: ${mesh.vertexCount} vertices`);
                 
                 document.getElementById('verts').textContent = mesh.vertexCount;

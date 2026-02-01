@@ -226,6 +226,24 @@
             { name: "KETER", color: "rgb(200,120,120)", description: "For experts. Very difficult to survive." }
         ];
         
+        // Options state
+        let optionsMenu = 1;  // 1=graphics, 2=audio, 3=controls, 4=advanced
+        let settings = {
+            // Graphics
+            vsync: true,
+            antiAlias: true,
+            roomLights: true,
+            screenGamma: 1.0,
+            particleAmount: 2,  // 0=minimal, 1=reduced, 2=full
+            textureQuality: 2,  // 0-4
+            // Audio
+            musicVolume: 0.5,
+            soundVolume: 0.7,
+            // Controls
+            mouseSensitivity: 0.5,
+            invertY: false
+        };
+        
         // SCP-173 blink effect (matches original timing)
         let menuBlinkTimer = [1, 700 + Math.random() * 100];
         let menuBlinkDuration = [0, 0];
@@ -665,14 +683,105 @@
             ctx.textAlign = 'center';
             ctx.fillText('OPTIONS', canvas.width / 2, y - 40 * menuScale);
             
+            // Draw tab selection bar
+            if (optionsMenu === 1) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x - 10 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
+            } else if (optionsMenu === 2) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x + 100 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
+            } else if (optionsMenu === 3) {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(x + 210 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
+            }
+            
+            // Tab buttons
+            if (DrawButton(x - 5 * menuScale, y, 100 * menuScale, 30 * menuScale, 'GRAPHICS', false)) {
+                optionsMenu = 1;
+            }
+            if (DrawButton(x + 105 * menuScale, y, 100 * menuScale, 30 * menuScale, 'AUDIO', false)) {
+                optionsMenu = 2;
+            }
+            if (DrawButton(x + 215 * menuScale, y, 100 * menuScale, 30 * menuScale, 'CONTROLS', false)) {
+                optionsMenu = 3;
+            }
+            
+            let optY = y + 50 * menuScale;
             ctx.font = '18px Courier New';
             ctx.textAlign = 'left';
-            ctx.fillText('Graphics, audio, and control settings', x + 20 * menuScale, y + 100 * menuScale);
-            ctx.fillText('(Settings UI not yet implemented)', x + 20 * menuScale, y + 130 * menuScale);
+            
+            // Tab content
+            if (optionsMenu === 1) {
+                // GRAPHICS
+                ctx.fillStyle = 'white';
+                ctx.fillText('VSync:', x, optY);
+                settings.vsync = DrawTick(x + 270 * menuScale, optY, settings.vsync);
+                optY += 30 * menuScale;
+                
+                ctx.fillText('Anti-aliasing:', x, optY);
+                settings.antiAlias = DrawTick(x + 270 * menuScale, optY, settings.antiAlias);
+                optY += 30 * menuScale;
+                
+                ctx.fillText('Enable room lights:', x, optY);
+                settings.roomLights = DrawTick(x + 270 * menuScale, optY, settings.roomLights);
+                optY += 30 * menuScale;
+                
+                ctx.fillText('Screen gamma:', x, optY);
+                settings.screenGamma = SlideBar(x + 270 * menuScale, optY + 6 * menuScale, 
+                                               100 * menuScale, settings.screenGamma * 100) / 100;
+                optY += 50 * menuScale;
+                
+                ctx.fillText('Particle amount:', x, optY);
+                const particleLabels = ['MINIMAL', 'REDUCED', 'FULL'];
+                ctx.font = '14px Courier New';
+                ctx.fillText(particleLabels[settings.particleAmount], x + 270 * menuScale, optY);
+                // Simple left/right arrows for particle amount
+                optY += 50 * menuScale;
+                
+                ctx.font = '18px Courier New';
+                ctx.fillText('Texture quality:', x, optY);
+                const qualityLabels = ['LOWEST', 'LOW', 'MEDIUM', 'HIGH', 'HIGHEST'];
+                ctx.font = '14px Courier New';
+                ctx.fillText(qualityLabels[settings.textureQuality], x + 270 * menuScale, optY);
+                
+            } else if (optionsMenu === 2) {
+                // AUDIO
+                ctx.fillStyle = 'white';
+                ctx.fillText('Music volume:', x, optY);
+                settings.musicVolume = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                                               100 * menuScale, settings.musicVolume * 100) / 100;
+                optY += 30 * menuScale;
+                
+                ctx.fillText('Sound volume:', x, optY);
+                settings.soundVolume = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                                               100 * menuScale, settings.soundVolume * 100) / 100;
+                optY += 30 * menuScale;
+                
+                ctx.fillText(`Music: ${Math.round(settings.musicVolume * 100)}%`, x, optY + 40 * menuScale);
+                ctx.fillText(`Sound: ${Math.round(settings.soundVolume * 100)}%`, x, optY + 70 * menuScale);
+                
+            } else if (optionsMenu === 3) {
+                // CONTROLS
+                ctx.fillStyle = 'white';
+                ctx.fillText('Mouse sensitivity:', x, optY);
+                settings.mouseSensitivity = SlideBar(x + 250 * menuScale, optY - 4 * menuScale, 
+                                                    100 * menuScale, settings.mouseSensitivity * 100) / 100;
+                optY += 30 * menuScale;
+                
+                ctx.fillText('Invert Y axis:', x, optY);
+                settings.invertY = DrawTick(x + 270 * menuScale, optY, settings.invertY);
+                optY += 30 * menuScale;
+                
+                ctx.fillText(`Sensitivity: ${Math.round(settings.mouseSensitivity * 100)}%`, x, optY + 40 * menuScale);
+                ctx.fillText('(Key bindings not yet implemented)', x, optY + 70 * menuScale);
+            }
             
             // BACK button
-            if (DrawButton(x, y + 300 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
+            if (DrawButton(x + 101 * menuScale, y + 390 * menuScale, 230 * menuScale, 60 * menuScale, 'BACK', false)) {
                 mainMenuTab = 0;
+                // Save settings to localStorage
+                localStorage.setItem('scpcb_settings', JSON.stringify(settings));
+                console.log('[Options] Settings saved:', settings);
             }
         }
         

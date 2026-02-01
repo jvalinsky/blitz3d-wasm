@@ -40,7 +40,9 @@
       "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | head -30)",
       "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -A 5 \"Import\\[\" | head -40)",
       "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"func\\[[0-9]+\\].*<(Len|Upper|Left|Mid|Trim|Chr|Hex|Bin)\" | head -20)",
-      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep \"blitz3d\" | head -20)"
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep \"blitz3d\" | head -20)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"blitz3d\\.(Len|Upper|Lower|Mid|Left|Right|Trim|Chr|Hex|Bin|Asc|Instr)\" | head -20)",
+      "Bash(wasm-objdump -x /tmp/string_test.wasm 2>&1 | grep -E \"blitz3d\\.(Sin|Cos|Sqrt|Rand|Floor|Max)\" | head -15)"
     ]
   }
 }

@@ -20,7 +20,15 @@
       "Bash(git commit:*)",
       "Bash(export PATH=/usr/bin:$PATH && cd /Users/jack/Software/scp_port/blitz3d-wasm && swift test 2>&1 | head -100)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && awk '/private func generateStatementImpl/,/^    \\}$/' Sources/Compiler/CodeGen/StatementGeneration.swift | tail -20)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && awk '/private func lowerStatement.*into body.*IREffect/,/^    \\}$/' Sources/Compiler/Lowering/ASTLowering.swift | tail -20)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && awk '/private func lowerStatement.*into body.*IREffect/,/^    \\}$/' Sources/Compiler/Lowering/ASTLowering.swift | tail -20)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -50)",
+      "Bash(cd /tmp/blitz3d-test && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm main.bb -o test.wasm 2>&1)",
+      "Bash(echo:*)",
+      "Bash(cd /tmp/blitz3d-test && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm main.bb -o test.wasm --verbose 2>&1 | head -50)",
+      "Bash(cd /tmp/blitz3d-test && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm game.bb -o nested.wasm 2>&1 | grep -E \"(Compiling|functions found|Functions found|Wrote)\")",
+      "Bash(ls:*)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_main.wasm 2>&1 | head -100)",
+      "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_main.wasm 2>&1 | tail -30)"
     ]
   }
 }

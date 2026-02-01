@@ -29,6 +29,7 @@
     "web:setup": "cd web && deno task setup",
     "web:dev": "cd web && deno task dev",
     "web:build": "cd web && deno task build",
+    "web:build:test": "cd web && ./build-test.ts",
     "web:preview": "cd web && deno task preview",
     "scpcb:compile:main": "deno run -A Tools/compile_scpcb_main.ts",
     "deploy:staging": "deno task assets:scpcb:convert && deno task test:web:build",

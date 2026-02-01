@@ -52,16 +52,26 @@
                     uniform mat4 u_mvp;
                     in vec3 position;
                     in vec3 normal;
+                    out vec3 v_normal;
                     void main() {
                         gl_Position = u_mvp * vec4(position, 1.0);
+                        v_normal = normal;
                     }
                 `;
                 
                 const fs = `#version 300 es
                     precision mediump float;
+                    in vec3 v_normal;
                     out vec4 color;
                     void main() {
-                        color = vec4(0.8, 0.8, 0.8, 1.0); // Gray
+                        // Simple directional lighting
+                        vec3 lightDir = normalize(vec3(0.5, 1.0, 0.5));
+                        vec3 norm = normalize(v_normal);
+                        float diff = max(dot(norm, lightDir), 0.0);
+                        vec3 baseColor = vec3(0.7, 0.7, 0.7);
+                        vec3 ambient = vec3(0.3, 0.3, 0.3);
+                        vec3 finalColor = ambient + baseColor * diff;
+                        color = vec4(finalColor, 1.0);
                     }
                 `;
                 
@@ -98,7 +108,7 @@
                 document.getElementById('verts').textContent = mesh.vertexCount;
                 document.getElementById('tris').textContent = mesh.indexCount ? (mesh.indexCount / 3) : (mesh.vertexCount / 3);
                 
-                // Create vertex buffer
+                // Create position buffer
                 const vbo = gl.createBuffer();
                 gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
                 gl.bufferData(gl.ARRAY_BUFFER, mesh.positions, gl.STATIC_DRAW);
@@ -106,6 +116,18 @@
                 const posLoc = gl.getAttribLocation(prog, 'position');
                 gl.enableVertexAttribArray(posLoc);
                 gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+                
+                // Create normal buffer
+                if (mesh.normals) {
+                    const nbo = gl.createBuffer();
+                    gl.bindBuffer(gl.ARRAY_BUFFER, nbo);
+                    gl.bufferData(gl.ARRAY_BUFFER, mesh.normals, gl.STATIC_DRAW);
+                    
+                    const normLoc = gl.getAttribLocation(prog, 'normal');
+                    gl.enableVertexAttribArray(normLoc);
+                    gl.vertexAttribPointer(normLoc, 3, gl.FLOAT, false, 0, 0);
+                    print(`✅ Normal buffer: ${mesh.normals.length / 3} normals`);
+                }
                 
                 // Create index buffer if present
                 let ibo = null;
@@ -118,10 +140,10 @@
                 
                 const mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
                 
-                // Create camera
+                // Create camera (move back more to see whole door)
                 const camera = new SimpleCamera();
-                camera.position = [0, 1, 3]; // Back and slightly up
-                camera.target = [0, 0, 0];
+                camera.position = [0, 1, 5]; // Further back to see whole model
+                camera.target = [0, 1, 0]; // Look at center of door
                 camera.aspect = canvas.width / canvas.height;
                 print('✅ Camera ready');
                 

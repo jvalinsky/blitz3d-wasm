@@ -122,7 +122,12 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/graphics-api.ts)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/webgpu-graphics.ts)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/wasm-loader.ts)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/wasm-loader.ts 2>&1 | head -40)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno check web/src/runtime/wasm-loader.ts 2>&1 | head -40)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read web/src/runtime/graphics-api.test.ts 2>&1 | tail -30)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read web/src/runtime/graphics-api.test.ts 2>&1 | tail -50)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read web/src/runtime/graphics-api.test.ts 2>&1 | tail -40)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && perl -pi -e 's/\\$\\{e\\.message\\}/\\$\\{(e as Error)\\.message || String(e)\\}/g' web/src/runtime/graphics-api.test.ts && echo \"✅ Fixed error casts\")",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno test --allow-read web/src/runtime/graphics-api.test.ts 2>&1 | grep -E \"(ok|passed|failed|FAILED)\" | tail -15)"
     ]
   }
 }

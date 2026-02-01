@@ -735,7 +735,7 @@ export class CodeGenerator {
         break;
       }
       case 'Identifier': {
-        const varName = expr.name;
+        const varName = expr.name.toLowerCase(); // Lowercase for case-insensitive lookup
         
         // Try to find variable with or without type suffix
         let local = this.locals.get(varName);

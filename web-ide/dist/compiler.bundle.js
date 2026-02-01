@@ -1583,7 +1583,7 @@ ${this.errors.join("\n")}`);
           break;
         }
         case "Identifier": {
-          const varName = expr.name;
+          const varName = expr.name.toLowerCase();
           let local = this.locals.get(varName);
           if (!local) {
             local = this.locals.get(varName + "%");

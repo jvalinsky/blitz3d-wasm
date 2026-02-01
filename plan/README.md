@@ -1,177 +1,59 @@
-# Blitz3D-WASM Plan Organization
+# Project Planning Index
 
-## Overview
+This directory contains detailed implementation plans for the Blitz3D→WASM compiler project.
 
-This document serves as the central index for all project plans, organized by current status and priority. The project maintains 24 plan files total, categorized by relevance and completion status.
+## Completed Plans ✅
 
-## 🎯 Current Project Status
+### Phase 1: WASM Integration
+- **Plan**: `2026-02-01-wasm-integration.md`
+- **Status**: ✅ COMPLETE (Feb 1, 2026)
+- **Time**: 4 hours actual
+- **Result**: 13/13 tests passing, Array refactor solved Dictionary memory issue
 
-- **Compiler Status**: See `docs/COMPILER_STATUS_ANALYSIS.md`
-- **Web Runtime**: Track B (`plan/scpcb-web-track-b/README.md`) is the canonical SCPCB web-port execution plan
-- **Browser Testing**: Working particle demo at https://blitz3d.exe.xyz:8000/test.html
-- **CI/CD Pipeline**: Enterprise-grade with comprehensive testing
+### Phase 2: Graphics Migration
+- **Plan**: `2026-02-01-phase-2-graphics-migration.md`
+- **Status**: ✅ COMPLETE (Feb 1, 2026)
+- **Time**: 3 hours actual
+- **Result**: 1,302 lines, 11/11 tests passing, WebGPU + WebGL working
 
-## 📁 Plan Categories
+## Active Plans 🚧
 
-### ACTIVE PLANS (Keep & Execute)
-Plans that are currently being worked on or are critical for immediate completion.
+### Phase 3: SCPCB Integration
+- **Plan**: `2026-02-01-phase-3-detailed-plan.md`
+- **Status**: ⏳ PLANNED
+- **Estimate**: 12-16 hours
+- **Next Step**: Step 3A.1 - Create test page
 
-#### 1. Critical Path (Execute Immediately)
-- **[Compiler Completion](ACTIVE/01_COMPILER_COMPLETION.md)** - Verify remaining gaps and keep metrics accurate
-- **[Web Freeze Mitigation](ACTIVE/02_WEB_FREEZE_MITIGATION.md)** - Resolve browser freezing issues
-- **[Runtime Integration](ACTIVE/03_RUNTIME_INTEGRATION.md)** - Connect working components
+## Plan Structure
 
-#### 2. Implementation Roadmaps
-- **[Phased Implementation](ACTIVE/04_PHASED_IMPLEMENTATION.md)** - Consolidated phases 1-5 roadmap
+Each plan follows this template:
 
-### REFERENCE PLANS (Keep for Context)
-Completed or superseded plans that contain valuable technical context and patterns.
+1. **Overview** - Goals and scope
+2. **Detailed Steps** - Granular tasks with code examples
+3. **Success Criteria** - Measurable outcomes
+4. **Risk Mitigation** - Known issues and solutions
+5. **Timeline** - Time estimates per task
+6. **Testing Strategy** - How to validate
 
-#### 1. Strategy Documents
-- **[SCPCB Strategy](REFERENCE/SCPCB_STRATEGY/)** - Comprehensive game implementation strategy
-- **[Debugging Patterns](REFERENCE/DEBUG_PATTERNS/)** - Problem-solving methodologies
-- **[Architecture Decisions](REFERENCE/ARCHITECTURE_DECISIONS/)** - Technical design rationale
+## Quick Reference
 
-#### 2. Historical Archives
-- **[Archived Decisions](REFERENCE/ARCHIVED_DECISIONS/)** - Evolution of project decisions
+| Phase | Status | Time | Tests |
+|-------|--------|------|-------|
+| Phase 1 | ✅ Complete | 4h | 13/13 ✅ |
+| Phase 2 | ✅ Complete | 3h | 11/11 ✅ |
+| Phase 3 | ⏳ Planned | 12-16h | TBD |
 
-### COMPLETED PLANS (Archive)
-Successfully implemented plans that are now part of the codebase.
+**Total Progress**: 2/3 phases (67%)  
+**Time Spent**: 7 hours  
+**Tests Passing**: 24/24 (100%)
 
-#### 1. Implementation Achievements
-- **[Language Implementation](COMPLETED/LANGUAGE_IMPLEMENTATION.md)** - Core language features
-- **[Runtime Architecture](COMPLETED/RUNTIME_ARCHITECTURE.md)** - Thin runtime design
-- **[Asset Pipeline](COMPLETED/ASSET_PIPELINE.md)** - SMPK format implementation
+## Related Docs
 
-### ARCHIVED (Historical Context)
-Older plans that are retained for background and forensics, but are not the current execution source of truth.
-
-- **[Archived Root Plans](ARCHIVED/root-plans/README.md)** - Former root-level plans preserved under `plan/ARCHIVED/`
-
-## 🎯 Immediate Action Items
-
-### Priority 1: Complete Core Implementation
-1. **Validate compiler/test metrics** (keep status synced with `docs/COMPILER_STATUS_ANALYSIS.md`)
-2. **Implement web freeze mitigation** for production browser deployment
-3. **Integrate runtime components** into cohesive system
-
-### Priority 2: Consolidate Documentation
-1. **Merge overlapping plans** into unified documents
-2. **Extract current action items** from long-term strategy documents
-3. **Create actionable task lists** from reference materials
-
-### Priority 3: Archive Management
-1. **Move completed plans** to appropriate archive sections
-2. **Consolidate phase plans** into unified roadmap
-3. **Update status tracking** for all active plans
-
-## 📊 Plan Evolution Timeline
-
-```
-Initial Concept → Debug Plans → Phased Implementation → Current Completion Status
-     ↓              ↓              ↓                        ↓
-2024-01      2024-06        2024-09-2025-01         2026-01
-```
-
-## 🔄 Planning Process
-
-### Creating New Plans
-1. **Assess current needs** through testing and user feedback
-2. **Review existing plans** to avoid duplication
-3. **Create focused, actionable** documents with clear success criteria
-4. **Set timeline and dependencies** for realistic completion
-
-### Updating Existing Plans
-1. **Review current implementation** status
-2. **Mark completed items** and identify blockers
-3. **Update timelines** based on actual progress
-4. **Escalate critical issues** to active plan status
-
-### Completing Plans
-1. **Verify all criteria** met through testing
-2. **Move to reference section** with completion notes
-3. **Document lessons learned** for future reference
-4. **Archive implementation details** for knowledge base
-
-## 📋 Plan Templates
-
-### Active Plan Template
-```markdown
-# [Plan Title]
-
-## Status
-**Type**: [Implementation/Fix/Mitigation]
-**Priority**: [Critical/High/Medium/Low]
-**Timeline**: [X days/weeks]
-**Progress**: [0-100%]
-
-## Success Criteria
-- [ ] Specific, measurable completion criteria
-- [ ] Test verification procedures
-- [ ] Integration requirements
-
-## Action Items
-1. [ ] Task with clear deliverable
-2. [ ] Task with clear deliverable
-3. [ ] Task with clear deliverable
-
-## Dependencies
-- [ ] Required components or prerequisites
-- [ ] External factors affecting completion
-- [ ] Related plans that impact this work
-
-## Notes
-[Implementation notes, discoveries, blockers]
-```
-
-### Reference Plan Template
-```markdown
-# [Historical Plan Title]
-
-## Original Status
-**Period**: [Date range]
-**Goal**: [Original objective]
-**Outcome**: [Completed/Superseded/Archived]
-
-## Key Insights
-- [ ] Valuable technical approach
-- [ ] Problem-solving pattern
-- [ ] Decision rationale
-
-## Applicable Today
-- [ ] Still relevant techniques
-- [ ] Applicable design patterns
-- [ ] Transferable solutions
-
-## Related Documents
-- [ ] Current plans that reference this
-- [ ] Documentation that incorporated lessons
-- [ ] Similar patterns in other areas
-```
-
-## 🎯 Decision Framework
-
-### When to Create New Plans
-1. **Complex multi-component features** requiring coordination
-2. **Critical bug fixes** affecting production deployment
-3. **Major architectural changes** impacting multiple systems
-4. **Performance optimizations** requiring multi-step approach
-
-### When to Update Existing Plans
-1. **Implementation progress** changes completion status
-2. **New discoveries** modify approach or requirements
-3. **Timeline adjustments** based on actual velocity
-4. **Dependency changes** affect plan relationships
-
-### When to Archive Plans
-1. **Full completion** with successful implementation
-2. **Superseded by newer approaches** with better solutions
-3. **No longer relevant** due to project direction changes
-4. **Consolidated into other plans** with better organization
+- `../docs/COMPILER_STATUS_ANALYSIS.md` - Compiler metrics
+- `../PHASE_1_COMPLETE_SUCCESS.md` - Phase 1 results
+- `../PHASE_2_COMPLETE.md` - Phase 2 results
+- `../README.md` - Project overview
 
 ---
 
-This plan organization provides clarity on current project priorities, reduces duplication, and ensures focus on completion over planning. Regular review and updates maintain alignment with actual project needs and progress.
-
-**Last Updated**: January 29, 2026
-**Next Review**: February 5, 2026
+*Last updated: February 1, 2026*

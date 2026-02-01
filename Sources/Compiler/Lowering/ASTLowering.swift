@@ -725,6 +725,12 @@ public final class ASTLowering {
                 body.append(firstIf)
             }
             
+        case .include(_, let statements, _):
+            // Lower all statements from the included file
+            for statement in statements {
+                lowerStatement(statement, into: &body)
+            }
+            
         case .function, .forEach, .data, .empty:
             break
         }

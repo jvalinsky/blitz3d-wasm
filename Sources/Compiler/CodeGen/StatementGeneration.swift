@@ -1236,6 +1236,12 @@ public final class StatementGeneration: ValidatorTypeContext {
                 function.body.append(.i32Store(2, 4))
             }
 
+        case .include(_, let statements, _):
+            // Generate code for all statements in the included file
+            for statement in statements {
+                generateStatementImpl(statement, function: &function)
+            }
+            
         case .data, .empty, .function:
             break
         }

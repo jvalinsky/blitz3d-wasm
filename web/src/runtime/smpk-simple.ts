@@ -7,7 +7,7 @@ export interface SMPKMesh {
     positions: Float32Array;
     normals?: Float32Array;
     uvs?: Float32Array;
-    indices?: Uint16Array;
+    indices?: Uint16Array | Uint32Array;
     vertexCount: number;
     indexCount: number;
 }
@@ -88,7 +88,7 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
     let positions: Float32Array | undefined;
     let normals: Float32Array | undefined;
     let uvs: Float32Array | undefined;
-    let indices: Uint16Array | undefined;
+    let indices: Uint16Array | Uint32Array | undefined;
     
     // Read positions
     if (positionIdx !== undefined) {
@@ -127,7 +127,7 @@ export async function loadSMPK(url: string): Promise<SMPKMesh> {
 /**
  * Read typed array from accessor
  */
-function readAccessor(bin: Uint8Array, accessor: SMPKAccessor): Float32Array | Uint16Array {
+function readAccessor(bin: Uint8Array, accessor: SMPKAccessor): Float32Array | Uint16Array | Uint32Array {
     const { offset, count, componentType, type } = accessor;
     
     // Determine component count
@@ -151,6 +151,12 @@ function readAccessor(bin: Uint8Array, accessor: SMPKAccessor): Float32Array | U
         const result = new Uint16Array(totalCount);
         for (let i = 0; i < totalCount; i++) {
             result[i] = dv.getUint16(i * 2, true);
+        }
+        return result;
+    } else if (componentType === 'u32') {
+        const result = new Uint32Array(totalCount);
+        for (let i = 0; i < totalCount; i++) {
+            result[i] = dv.getUint32(i * 4, true);
         }
         return result;
     } else {

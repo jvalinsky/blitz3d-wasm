@@ -172,7 +172,9 @@
                     gl.uniformMatrix4fv(mvpLoc, false, mvp);
                     
                     if (ibo) {
-                        gl.drawElements(gl.TRIANGLES, mesh.indexCount, gl.UNSIGNED_SHORT, 0);
+                        // Check index type
+                        const indexType = mesh.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
+                        gl.drawElements(gl.TRIANGLES, mesh.indexCount, indexType, 0);
                     } else {
                         gl.drawArrays(gl.TRIANGLES, 0, mesh.vertexCount);
                     }

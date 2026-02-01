@@ -1401,6 +1401,12 @@ function readAccessor(bin, accessor) {
       result[i] = dv.getUint16(i * 2, true);
     }
     return result;
+  } else if (componentType === "u32") {
+    const result = new Uint32Array(totalCount);
+    for (let i = 0; i < totalCount; i++) {
+      result[i] = dv.getUint32(i * 4, true);
+    }
+    return result;
   } else {
     throw new Error(`Unsupported component type: ${componentType}`);
   }

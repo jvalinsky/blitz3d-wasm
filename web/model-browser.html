@@ -148,6 +148,11 @@
             gl.enable(gl.DEPTH_TEST);
             gl.depthFunc(gl.LEQUAL);
             
+            // Firefox WebGL compatibility
+            console.log('Browser:', navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Chrome/Other');
+            console.log('WebGL Vendor:', gl.getParameter(gl.VENDOR));
+            console.log('WebGL Renderer:', gl.getParameter(gl.RENDERER));
+            
             // Compile shaders
             const vs = `#version 300 es
                 uniform mat4 u_mvp;

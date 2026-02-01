@@ -1,9 +1,12 @@
+"use strict";
 /**
  * Blitz3D Lexer - Tokenization
  *
  * Converts source code into tokens for parsing
  */
-export var TokenType;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Lexer = exports.TokenType = void 0;
+var TokenType;
 (function (TokenType) {
     // Literals
     TokenType["INTEGER"] = "INTEGER";
@@ -86,7 +89,7 @@ export var TokenType;
     TokenType["PERCENT"] = "PERCENT";
     TokenType["HASH"] = "HASH";
     TokenType["DOLLAR"] = "DOLLAR";
-})(TokenType || (TokenType = {}));
+})(TokenType || (exports.TokenType = TokenType = {}));
 const KEYWORDS = {
     'if': TokenType.IF,
     'then': TokenType.THEN,
@@ -134,7 +137,7 @@ const KEYWORDS = {
     'shr': TokenType.SHR,
     'sar': TokenType.SAR,
 };
-export class Lexer {
+class Lexer {
     constructor(source) {
         this.pos = 0;
         this.line = 1;
@@ -370,3 +373,4 @@ export class Lexer {
         return { type, value, line, column };
     }
 }
+exports.Lexer = Lexer;

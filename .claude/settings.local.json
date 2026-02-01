@@ -49,7 +49,9 @@
       "Bash(.build/arm64-apple-macosx/debug/blitz3d-wasm:*)",
       "Bash(npx tsc:*)",
       "Bash(deno task:*)",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "Bash(deno:*)",
+      "Bash(DENO_NO_PACKAGE_JSON=1 deno run:*)"
     ]
   }
 }

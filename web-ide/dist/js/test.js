@@ -1,9 +1,11 @@
+"use strict";
 /**
  * Test the Blitz3D TypeScript Compiler
  */
-import { Lexer } from './lexer';
-import { Parser } from './parser';
-import { CodeGenerator } from './codegen';
+Object.defineProperty(exports, "__esModule", { value: true });
+const lexer_1 = require("./lexer");
+const parser_1 = require("./parser");
+const codegen_1 = require("./codegen");
 const testProgram = `
 ; Simple Blitz3D program
 x% = 5
@@ -23,20 +25,20 @@ console.log('=== Blitz3D TypeScript Compiler Test ===\n');
 // Lexer test
 console.log('1. LEXER TEST');
 console.log('Input:', testProgram);
-const lexer = new Lexer(testProgram);
+const lexer = new lexer_1.Lexer(testProgram);
 const tokens = lexer.tokenize();
 console.log('Tokens:', tokens.length);
 console.log('');
 // Parser test
 console.log('2. PARSER TEST');
-const parser = new Parser(testProgram);
+const parser = new parser_1.Parser(testProgram);
 try {
     const ast = parser.parse();
     console.log('AST:', JSON.stringify(ast, null, 2));
     console.log('');
     // Code generator test
     console.log('3. CODE GENERATION TEST');
-    const codegen = new CodeGenerator();
+    const codegen = new codegen_1.CodeGenerator();
     const wat = codegen.generate(ast);
     console.log('WebAssembly Text Format:\n');
     console.log(wat);

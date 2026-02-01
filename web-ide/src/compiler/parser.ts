@@ -33,7 +33,11 @@ export class Parser {
   parse(): AST.Program {
     const statements: AST.Statement[] = [];
     
-    while (!this.isAtEnd()) {
+    // Safety guard: prevent infinite parsing loops
+    let iterations = 0;
+    const MAX_STATEMENTS = 10000; // Max statements in a program
+    
+    while (!this.isAtEnd() && iterations++ < MAX_STATEMENTS) {
       try {
         const stmt = this.statement();
         if (stmt) statements.push(stmt);
@@ -46,6 +50,12 @@ export class Parser {
           throw e;
         }
       }
+    }
+
+    if (iterations >= MAX_STATEMENTS) {
+      const error = 'Parser exceeded maximum statement count (possible infinite loop or extremely large program)';
+      this.errors.push(error);
+      console.error(error);
     }
 
     return { type: 'Program', statements };
@@ -81,6 +91,25 @@ export class Parser {
     if (this.match(TokenType.SELECT)) return this.selectStatement();
     if (this.match(TokenType.RETURN)) return this.returnStatement();
 
+    // Goto statement
+    if (this.match(TokenType.GOTO)) {
+      const label = this.consume(TokenType.IDENTIFIER, 'Expected label name after Goto').value;
+      return { type: 'GotoStatement', label };
+    }
+
+    // Gosub statement
+    if (this.match(TokenType.GOSUB)) {
+      const label = this.consume(TokenType.IDENTIFIER, 'Expected label name after Gosub').value;
+      return { type: 'GosubStatement', label };
+    }
+
+    // Dot-prefix labels (e.g. .labelName)
+    if (this.check(TokenType.DOT) && this.peekNext().type === TokenType.IDENTIFIER) {
+      this.advance(); // consume DOT
+      const labelName = this.advance().value; // consume IDENTIFIER
+      return { type: 'LabelStatement', name: labelName };
+    }
+
     // Check for Print statement (special case - can be called without parens)
     if (this.check(TokenType.IDENTIFIER)) {
       const name = this.peek().value.toLowerCase();
@@ -96,6 +125,58 @@ export class Parser {
           } as AST.FunctionCall
         };
       }
+      // Check for implicit variable assignment (identifier followed by =)
+      if (this.peekNext().type === TokenType.EQ) {
+        const varName = this.advance().value; // consume identifier
+        this.advance(); // consume =
+        const value = this.expression();
+        return {
+          type: 'Assignment',
+          target: { type: 'Identifier', name: varName },
+          value: value
+        } as AST.Assignment;
+      }
+    }
+
+    // Check for loop/section terminators - return null to signal end of block
+    if (this.check(TokenType.NEXT, TokenType.WEND, TokenType.UNTIL, TokenType.FOREVER,
+                   TokenType.CASE, TokenType.DEFAULT, TokenType.ENDIF)) {
+      return null;
+    }
+
+    // END: if followed by FUNCTION/TYPE/IF/SELECT/WHILE it's a block terminator,
+    // otherwise it's a standalone End statement (program termination)
+    if (this.check(TokenType.END)) {
+      const next = this.peekNext();
+      if (next.type === TokenType.FUNCTION || next.type === TokenType.TYPE ||
+          next.type === TokenType.IF || next.type === TokenType.SELECT ||
+          next.type === TokenType.WHILE) {
+        return null; // Block terminator — caller consumes it
+      }
+      // Standalone End statement
+      this.advance(); // consume END
+      return { type: 'EndStatement' };
+    }
+
+    // ELSE / ELSEIF as block terminator
+    if (this.check(TokenType.ELSE, TokenType.ELSEIF)) {
+      return null;
+    }
+
+    // Data/Read/Restore statements
+    if (this.match(TokenType.DATA)) {
+      return this.dataStatement();
+    }
+    if (this.match(TokenType.READ)) {
+      return this.readStatement();
+    }
+    if (this.match(TokenType.RESTORE)) {
+      return this.restoreStatement();
+    }
+
+    // Include statement (preprocessor directive)
+    if (this.match(TokenType.INCLUDE)) {
+      return this.includeStatement();
     }
 
     // Expression statement (assignment or function call)
@@ -228,6 +309,46 @@ export class Parser {
     };
   }
 
+  private dataStatement(): AST.DataStatement {
+    const values: AST.Expression[] = [];
+    // Data can be on same line or multiple lines
+    while (!this.check(TokenType.NEWLINE, TokenType.EOF) && !this.isAtEnd()) {
+      const value = this.expression();
+      if (value) values.push(value);
+      this.match(TokenType.COMMA); // optional comma
+    }
+    return { type: 'DataStatement', values };
+  }
+
+  private readStatement(): AST.ReadStatement {
+    const variables: AST.Identifier[] = [];
+    while (!this.check(TokenType.NEWLINE, TokenType.EOF) && !this.isAtEnd()) {
+      if (this.check(TokenType.IDENTIFIER)) {
+        const name = this.advance().value;
+        variables.push({ type: 'Identifier', name });
+      }
+      this.match(TokenType.COMMA);
+    }
+    return { type: 'ReadStatement', variables };
+  }
+
+  private restoreStatement(): AST.RestoreStatement {
+    // Restore takes an optional label (not implemented yet)
+    return { type: 'RestoreStatement' };
+  }
+
+  private includeStatement(): AST.IncludeStatement {
+    // Include "filename"
+    const filename = this.expression();
+    if (filename.type !== 'StringLiteral') {
+      throw new ParseError('Include requires a string literal', this.previous());
+    }
+    return {
+      type: 'IncludeStatement',
+      filename: filename.value
+    };
+  }
+
   private ifStatement(): AST.IfStatement {
     const condition = this.expression();
     this.match(TokenType.THEN); // Optional
@@ -240,7 +361,12 @@ export class Parser {
     }
 
     const elseIfBranches: Array<{ condition: AST.Expression; body: AST.Statement[] }> = [];
-    while (this.match(TokenType.ELSEIF)) {
+    while (this.match(TokenType.ELSEIF) || (this.check(TokenType.ELSE) && this.peekNext().type === TokenType.IF)) {
+      // Handle both "ElseIf" (single token) and "Else If" (two tokens)
+      if (this.previous().type !== TokenType.ELSEIF) {
+        this.advance(); // consume ELSE
+        this.advance(); // consume IF
+      }
       const elseIfCondition = this.expression();
       this.match(TokenType.THEN);
       this.consumeNewlines();
@@ -303,12 +429,19 @@ export class Parser {
     this.consumeNewlines();
 
     const body: AST.Statement[] = [];
-    while (!this.check(TokenType.WEND) && !this.isAtEnd()) {
+    while (!this.check(TokenType.WEND) && !(this.check(TokenType.END) && this.peekNext().type === TokenType.WHILE) && !this.isAtEnd()) {
       const stmt = this.statement();
       if (stmt) body.push(stmt);
     }
 
-    this.consume(TokenType.WEND, 'Expected "Wend" after while loop body');
+    // Accept either "Wend" or "End While"
+    if (this.match(TokenType.WEND)) {
+      // ok
+    } else if (this.match(TokenType.END)) {
+      this.consume(TokenType.WHILE, 'Expected "While" after "End"');
+    } else {
+      this.consume(TokenType.WEND, 'Expected "Wend" or "End While" after while loop body');
+    }
 
     return { type: 'WhileLoop', condition, body };
   }
@@ -329,7 +462,7 @@ export class Parser {
       this.consume(TokenType.FOREVER, 'Expected "Until" or "Forever" after repeat loop');
     }
 
-    return { type: 'RepeatLoop', body, condition };
+    return { type: 'RepeatStatement', body, condition };
   }
 
   private selectStatement(): AST.SelectStatement {
@@ -339,12 +472,13 @@ export class Parser {
     const cases: AST.CaseClause[] = [];
     let defaultCase: AST.Statement[] | undefined;
 
-    while (this.match(TokenType.CASE) && !this.isAtEnd()) {
-      if (this.check(TokenType.DEFAULT)) {
-        this.advance();
+    while ((this.check(TokenType.CASE) || this.check(TokenType.DEFAULT)) && !this.isAtEnd()) {
+      if (this.match(TokenType.DEFAULT) || (this.match(TokenType.CASE) && this.check(TokenType.DEFAULT))) {
+        // Handle "Default" or "Case Default"
+        if (this.check(TokenType.DEFAULT)) this.advance();
         this.consumeNewlines();
         defaultCase = [];
-        while (!this.check(TokenType.CASE, TokenType.END) && !this.isAtEnd()) {
+        while (!this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) && !this.isAtEnd()) {
           const stmt = this.statement();
           if (stmt) defaultCase.push(stmt);
         }
@@ -356,7 +490,7 @@ export class Parser {
 
         this.consumeNewlines();
         const body: AST.Statement[] = [];
-        while (!this.check(TokenType.CASE, TokenType.END) && !this.isAtEnd()) {
+        while (!this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) && !this.isAtEnd()) {
           const stmt = this.statement();
           if (stmt) body.push(stmt);
         }
@@ -379,8 +513,23 @@ export class Parser {
     return { type: 'ReturnStatement', value };
   }
 
-  private expressionStatement(): AST.ExpressionStatement {
+  private expressionStatement(): AST.Statement {
     const expr = this.expression();
+
+    // Check if this is really an assignment disguised as an equality BinaryOp
+    // e.g. arr(0) = 42 gets parsed as BinaryOp{left: FunctionCall, op: '=', right: 42}
+    // Convert to Assignment if the left side is a valid target
+    if (expr.type === 'BinaryOp' && expr.operator === '=') {
+      let target = expr.left;
+      // Convert FunctionCall(Identifier, args) to ArrayAccess
+      if (target.type === 'FunctionCall' && target.name && target.name.type === 'Identifier') {
+        target = { type: 'ArrayAccess', array: target.name, indices: target.arguments };
+      }
+      if (target.type === 'Identifier' || target.type === 'FieldAccess' || target.type === 'ArrayAccess') {
+        return { type: 'Assignment', target, value: expr.right } as AST.Assignment;
+      }
+    }
+
     return { type: 'ExpressionStatement', expression: expr };
   }
 
@@ -394,8 +543,14 @@ export class Parser {
 
     if (this.match(TokenType.EQ)) {
       const value = this.assignment();
-      if (expr.type === 'Identifier' || expr.type === 'FieldAccess' || expr.type === 'ArrayAccess') {
-        return { type: 'Assignment', target: expr, value };
+      // Convert FunctionCall with Identifier callee to ArrayAccess for assignment
+      // e.g. arr(5) = 10 is parsed as FunctionCall but should be ArrayAccess
+      let target = expr;
+      if (target.type === 'FunctionCall' && target.name && target.name.type === 'Identifier') {
+        target = { type: 'ArrayAccess', array: target.name, indices: target.arguments };
+      }
+      if (target.type === 'Identifier' || target.type === 'FieldAccess' || target.type === 'ArrayAccess') {
+        return { type: 'Assignment', target, value };
       }
       throw new ParseError('Invalid assignment target', this.previous());
     }
@@ -404,9 +559,21 @@ export class Parser {
   }
 
   private logicalOr(): AST.Expression {
-    let expr = this.logicalAnd();
+    let expr = this.logicalXor();
 
     while (this.match(TokenType.OR)) {
+      const operator = this.previous().value;
+      const right = this.logicalXor();
+      expr = { type: 'BinaryOp', left: expr, operator, right };
+    }
+
+    return expr;
+  }
+
+  private logicalXor(): AST.Expression {
+    let expr = this.logicalAnd();
+
+    while (this.match(TokenType.XOR)) {
       const operator = this.previous().value;
       const right = this.logicalAnd();
       expr = { type: 'BinaryOp', left: expr, operator, right };
@@ -430,7 +597,7 @@ export class Parser {
   private equality(): AST.Expression {
     let expr = this.comparison();
 
-    while (this.match(TokenType.NOT_EQUAL)) {
+    while (this.match(TokenType.EQ, TokenType.NE)) {
       const operator = this.previous().value;
       const right = this.comparison();
       expr = { type: 'BinaryOp', left: expr, operator, right };
@@ -440,9 +607,21 @@ export class Parser {
   }
 
   private comparison(): AST.Expression {
-    let expr = this.additive();
+    let expr = this.bitshift();
 
     while (this.match(TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE)) {
+      const operator = this.previous().value;
+      const right = this.bitshift();
+      expr = { type: 'BinaryOp', left: expr, operator, right };
+    }
+
+    return expr;
+  }
+
+  private bitshift(): AST.Expression {
+    let expr = this.additive();
+
+    while (this.match(TokenType.SHL, TokenType.SHR, TokenType.SAR)) {
       const operator = this.previous().value;
       const right = this.additive();
       expr = { type: 'BinaryOp', left: expr, operator, right };
@@ -464,9 +643,21 @@ export class Parser {
   }
 
   private multiplicative(): AST.Expression {
-    let expr = this.unary();
+    let expr = this.power();
 
     while (this.match(TokenType.MULTIPLY, TokenType.DIVIDE, TokenType.MOD)) {
+      const operator = this.previous().value;
+      const right = this.power();
+      expr = { type: 'BinaryOp', left: expr, operator, right };
+    }
+
+    return expr;
+  }
+
+  private power(): AST.Expression {
+    let expr = this.unary();
+
+    while (this.match(TokenType.POWER)) {
       const operator = this.previous().value;
       const right = this.unary();
       expr = { type: 'BinaryOp', left: expr, operator, right };
@@ -488,7 +679,11 @@ export class Parser {
   private postfix(): AST.Expression {
     let expr = this.primary();
 
-    while (true) {
+    // Safety guard: prevent infinite loops
+    let iterations = 0;
+    const MAX_POSTFIX_ITERATIONS = 1000;
+
+    while (iterations++ < MAX_POSTFIX_ITERATIONS) {
       if (this.match(TokenType.LPAREN)) {
         // Function call
         const args: AST.Expression[] = [];
@@ -500,20 +695,20 @@ export class Parser {
         this.consume(TokenType.RPAREN, 'Expected ")" after arguments');
         expr = { type: 'FunctionCall', name: expr, arguments: args };
       } else if (this.match(TokenType.DOT)) {
-        // Field access
+        // Field access (dot syntax)
         const field = this.consume(TokenType.IDENTIFIER, 'Expected field name after "."').value;
         expr = { type: 'FieldAccess', object: expr, field };
-      } else if (this.match(TokenType.LBRACKET)) {
-        // Array access
-        const indices: AST.Expression[] = [];
-        do {
-          indices.push(this.expression());
-        } while (this.match(TokenType.COMMA));
-        this.consume(TokenType.RBRACKET, 'Expected "]" after array indices');
-        expr = { type: 'ArrayAccess', array: expr, indices };
+      } else if (this.match(TokenType.BACKSLASH)) {
+        // Field access (backslash syntax, e.g. npc\Health)
+        const field = this.consume(TokenType.IDENTIFIER, 'Expected field name after "\\"').value;
+        expr = { type: 'FieldAccess', object: expr, field };
       } else {
         break;
       }
+    }
+
+    if (iterations >= MAX_POSTFIX_ITERATIONS) {
+      this.error('Parser exceeded maximum iterations in postfix expression (possible infinite loop)');
     }
 
     return expr;
@@ -597,6 +792,10 @@ export class Parser {
 
   private peek(): Token {
     return this.tokens[this.current];
+  }
+
+  private peekNext(): Token {
+    return this.tokens[this.current + 1] || this.peek();
   }
 
   private previous(): Token {

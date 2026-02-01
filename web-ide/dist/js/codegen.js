@@ -1,9 +1,12 @@
+"use strict";
 /**
  * Blitz3D Code Generator - WASM Text Format
  *
  * Generates WebAssembly Text Format (WAT) from AST
  */
-export class CodeGenerator {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CodeGenerator = void 0;
+class CodeGenerator {
     constructor() {
         this.output = [];
         this.indent = 0;
@@ -47,7 +50,7 @@ export class CodeGenerator {
         // Collect all string literals
         this.collectStringLiterals(program);
         if (this.stringLiterals.size > 0) {
-            this.emit('; String data section');
+            this.emit(';; String data section');
             let offset = 0;
             for (const [str, index] of this.stringLiterals.entries()) {
                 const escaped = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
@@ -438,8 +441,14 @@ export class CodeGenerator {
             if (funcName === 'print') {
                 if (expr.arguments.length > 0) {
                     this.generateExpression(expr.arguments[0]);
-                    // Determine type and call appropriate print function
-                    this.emit('call $print');
+                    // Check if argument is a string literal
+                    const arg = expr.arguments[0];
+                    if (arg.kind === 'StringLiteral') {
+                        this.emit('call $printString');
+                    }
+                    else {
+                        this.emit('call $print');
+                    }
                 }
                 return;
             }
@@ -543,3 +552,4 @@ export class CodeGenerator {
         this.output.push('  '.repeat(this.indent) + line);
     }
 }
+exports.CodeGenerator = CodeGenerator;

@@ -31,6 +31,9 @@
     "web:build": "cd web && deno task build",
     "web:preview": "cd web && deno task preview",
     "scpcb:compile:main": "deno run -A Tools/compile_scpcb_main.ts",
-    "deploy:staging": "deno task assets:scpcb:convert && deno task test:web:build"
+    "deploy:staging": "deno task assets:scpcb:convert && deno task test:web:build",
+    "webide:serve": "cd web-ide && deno run --allow-net --allow-read server.ts",
+    "webide:build": "DENO_NO_PACKAGE_JSON=1 deno run -A web-ide/build_bundle.js",
+    "webide:test": "deno run --allow-read web-ide/src/compiler/test.ts"
   }
 }

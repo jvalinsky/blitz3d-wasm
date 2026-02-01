@@ -156,7 +156,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
-    <script src="dist/compiler-final.js"></script>
+    <script src="dist/compiler.bundle.js?v=2"></script>
     <script>
         // Compiler classes are already available globally from the bundle
         let compiledWat = null; // Store the compiled WAT for execution
@@ -168,10 +168,10 @@
             math: `; Math Operations\nx% = 10\ny% = 5\nPrint x + y\nPrint x - y\nPrint x * y`,
             loops: `; For loop\nFor i% = 1 To 5\n    Print i\nNext`,
             functions: `; Functions\nFunction Add%(a%, b%)\n    Return a + b\nEnd Function\n\nPrint Add(5, 10)`,
-            types: `; Custom Types - Coming Soon!\n; Type and Field syntax needs enhancement\n; For now, try functions or loops`,
-            arrays: `; Arrays - Coming Soon!\n; Dim syntax needs parser enhancement\n; For now, try other examples`,
-            strings: `; String Printing\nmessage$ = "Hello World"\nPrint "Strings work!"`,
-            conditionals: `; If/Else\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf`
+            types: `; Custom Types\nType Enemy\n    Field Health%\n    Field Name$\nEnd Type\n\nPrint "Type declared!"`,
+            arrays: `; Arrays with Dim\nDim arr%(10)\narr(0) = 42\narr(1) = 99\narr(2) = arr(0) + arr(1)\nPrint arr(0)\nPrint arr(1)\nPrint arr(2)`,
+            strings: `; String Printing\nPrint "Hello World"\nPrint "Strings work!"`,
+            conditionals: `; If/ElseIf/Else + Select/Case\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf\n\nSelect x\n    Case 85\n        Print "Eighty-five!"\n    Case 90\n        Print "Ninety!"\n    Default\n        Print "Something else"\nEnd Select`
         };
         
         window.loadExample = function() {
@@ -274,38 +274,126 @@
                 let output = [];
                 
                 // Runtime imports for Blitz3D functions
+                let memory = null;
+                
+                // String helper: read null-terminated string from WASM memory
+                function readStr(ptr) {
+                    if (!memory) return '';
+                    const view = new Uint8Array(memory.buffer);
+                    let s = '';
+                    while (ptr < view.length && view[ptr] !== 0) {
+                        s += String.fromCharCode(view[ptr]);
+                        ptr++;
+                    }
+                    return s;
+                }
+
+                // String helper: allocate a string on the WASM heap
+                // Reads __heap_ptr global, writes string, bumps pointer
+                function allocStr(str, instance) {
+                    if (!memory) return 0;
+                    const heapPtrGlobal = instance.exports.__heap_ptr;
+                    let ptr = heapPtrGlobal ? heapPtrGlobal.value : 4096;
+                    const view = new Uint8Array(memory.buffer);
+                    for (let i = 0; i < str.length; i++) {
+                        view[ptr + i] = str.charCodeAt(i) & 0xFF;
+                    }
+                    view[ptr + str.length] = 0; // null terminator
+                    const result = ptr;
+                    ptr += str.length + 1;
+                    // Align to 4 bytes
+                    ptr = (ptr + 3) & ~3;
+                    if (heapPtrGlobal) heapPtrGlobal.value = ptr;
+                    return result;
+                }
+
+                let wasmInstance = null;
+
                 const imports = {
                     env: {
                         print: (value) => {
-                            output.push(`${value}`);
-                            consoleElement.textContent += `${value}\n`;
+                            consoleElement.textContent += value + '\n';
                         },
                         printFloat: (value) => {
-                            output.push(`${value}`);
-                            consoleElement.textContent += `${value}\n`;
+                            consoleElement.textContent += value + '\n';
                         },
                         printString: (ptr) => {
-                            // Read string from memory (simplified)
-                            output.push(`[String at ${ptr}]`);
-                            consoleElement.textContent += `[String at ${ptr}]\n`;
-                        }
+                            consoleElement.textContent += readStr(ptr) + '\n';
+                        },
+
+                        // String built-ins
+                        b3d_len: (ptr) => readStr(ptr).length,
+                        b3d_left: (ptr, n) => allocStr(readStr(ptr).substring(0, n), wasmInstance),
+                        b3d_right: (ptr, n) => { const s = readStr(ptr); return allocStr(s.substring(s.length - n), wasmInstance); },
+                        b3d_mid: (ptr, start, len) => allocStr(readStr(ptr).substring(start - 1, start - 1 + len), wasmInstance),
+                        b3d_instr: (ptr1, ptr2, start) => {
+                            const s = readStr(ptr1);
+                            const find = readStr(ptr2);
+                            const idx = s.indexOf(find, (start || 1) - 1);
+                            return idx === -1 ? 0 : idx + 1; // Blitz3D is 1-based
+                        },
+                        b3d_upper: (ptr) => allocStr(readStr(ptr).toUpperCase(), wasmInstance),
+                        b3d_lower: (ptr) => allocStr(readStr(ptr).toLowerCase(), wasmInstance),
+                        b3d_trim: (ptr) => allocStr(readStr(ptr).trim(), wasmInstance),
+                        b3d_chr: (code) => allocStr(String.fromCharCode(code), wasmInstance),
+                        b3d_asc: (ptr) => { const s = readStr(ptr); return s.length > 0 ? s.charCodeAt(0) : 0; },
+                        b3d_str: (val) => allocStr(String(val), wasmInstance),
+                        b3d_string: (ptr, count) => allocStr(readStr(ptr).repeat(count), wasmInstance),
+                        b3d_replace: (ptr, findPtr, replPtr) => allocStr(readStr(ptr).split(readStr(findPtr)).join(readStr(replPtr)), wasmInstance),
+
+                        // Math built-ins (Blitz3D uses degrees for trig)
+                        b3d_abs: (x) => Math.abs(x),
+                        b3d_sgn: (x) => x > 0 ? 1 : x < 0 ? -1 : 0,
+                        b3d_sin: (x) => Math.round(Math.sin(x * Math.PI / 180) * 1000) / 1000 | 0,
+                        b3d_cos: (x) => Math.round(Math.cos(x * Math.PI / 180) * 1000) / 1000 | 0,
+                        b3d_tan: (x) => Math.round(Math.tan(x * Math.PI / 180) * 1000) / 1000 | 0,
+                        b3d_asin: (x) => Math.round(Math.asin(x) * 180 / Math.PI) | 0,
+                        b3d_acos: (x) => Math.round(Math.acos(x) * 180 / Math.PI) | 0,
+                        b3d_atan: (x) => Math.round(Math.atan(x) * 180 / Math.PI) | 0,
+                        b3d_atan2: (y, x) => Math.round(Math.atan2(y, x) * 180 / Math.PI) | 0,
+                        b3d_sqr: (x) => Math.sqrt(x) | 0,
+                        b3d_floor: (x) => Math.floor(x),
+                        b3d_ceil: (x) => Math.ceil(x),
+                        b3d_log: (x) => Math.log(x) | 0,
+                        b3d_exp: (x) => Math.exp(x) | 0,
+
+                        // Conversion
+                        b3d_int: (x) => x | 0,
+                        b3d_float: (x) => x,
+
+                        // Random
+                        b3d_rand: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
+                        b3d_rnd: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
+                        b3d_seedrnd: (seed) => { /* JS Math.random can't be seeded, no-op */ },
+
+                        // System
+                        b3d_millisecs: () => Date.now() | 0,
+
+                        // Power operator helper
+                        b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
                     }
                 };
                 
-                // Strip error comments (temporary - need to fix variable lookup)
+                // Strip error comments and (start ...) directive so we can
+                // call main() manually after capturing the memory export
                 const cleanWat = compiledWat.split('\n')
                     .filter(line => !line.includes('; ERROR:'))
+                    .filter(line => !line.trim().startsWith('(start '))
                     .join('\n');
-                
+
                 // Convert WAT to WASM using wabt
                 const wabt = await WabtModule();
                 const wasmModule = wabt.parseWat('program.wat', cleanWat);
                 const { buffer } = wasmModule.toBinary({});
-                
-                // Instantiate and run
+
+                // Instantiate, capture memory, then call main
                 const module = await WebAssembly.instantiate(buffer, imports);
-                
-                // The start function runs automatically (no need to call main explicitly)
+                wasmInstance = module.instance;
+                memory = module.instance.exports.memory;
+
+                if (module.instance.exports.main) {
+                    module.instance.exports.main();
+                }
                 
                 consoleElement.textContent += '\n\u2705 Program executed successfully!';
                 statusElement.innerHTML = '<div class="success">✅ Program executed! Check Program Output tab.</div>';

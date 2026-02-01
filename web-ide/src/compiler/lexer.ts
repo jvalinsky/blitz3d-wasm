@@ -51,7 +51,12 @@ export enum TokenType {
   READ = 'READ',
   RESTORE = 'RESTORE',
   INCLUDE = 'INCLUDE',
-  
+  TRUE = 'TRUE',
+  FALSE = 'FALSE',
+  NULL = 'NULL',
+  GOTO = 'GOTO',
+  GOSUB = 'GOSUB',
+
   // Operators
   PLUS = 'PLUS',
   MINUS = 'MINUS',
@@ -148,6 +153,11 @@ const KEYWORDS: Record<string, TokenType> = {
   'read': TokenType.READ,
   'restore': TokenType.RESTORE,
   'include': TokenType.INCLUDE,
+  'true': TokenType.TRUE,
+  'false': TokenType.FALSE,
+  'null': TokenType.NULL,
+  'goto': TokenType.GOTO,
+  'gosub': TokenType.GOSUB,
   'mod': TokenType.MOD,
   'and': TokenType.AND,
   'or': TokenType.OR,

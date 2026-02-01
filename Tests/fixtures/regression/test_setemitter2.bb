@@ -13,7 +13,7 @@ End Function
 Function Main()
     Local owner% = 1
     Local fixed% = 0
-    Dim e.Template[10]
+    Dim e.Template(10)
     Local i% = 0
     
     e[i] = New Template

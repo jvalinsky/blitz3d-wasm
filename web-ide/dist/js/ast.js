@@ -1,12 +1,17 @@
+"use strict";
 /**
  * Blitz3D AST (Abstract Syntax Tree)
  *
  * Represents the parsed structure of Blitz3D programs
  */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.inferTypeFromSuffix = inferTypeFromSuffix;
+exports.isStatement = isStatement;
+exports.isExpression = isExpression;
 // ============================================================================
 // Utilities
 // ============================================================================
-export function inferTypeFromSuffix(suffix) {
+function inferTypeFromSuffix(suffix) {
     if (!suffix)
         return undefined;
     switch (suffix) {
@@ -16,7 +21,7 @@ export function inferTypeFromSuffix(suffix) {
         default: return undefined;
     }
 }
-export function isStatement(node) {
+function isStatement(node) {
     return [
         'VariableDeclaration',
         'FunctionDeclaration',
@@ -35,7 +40,7 @@ export function isStatement(node) {
         'IncludeStatement',
     ].includes(node.kind);
 }
-export function isExpression(node) {
+function isExpression(node) {
     return [
         'IntegerLiteral',
         'FloatLiteral',

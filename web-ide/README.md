@@ -106,22 +106,29 @@ Create a **zero-backend** Blitz3D IDE where users can:
 ## 🚀 Running the Demo
 
 ```bash
-# Start development server
-deno run --allow-net --allow-read server.ts
+# From project root, start development server
+deno task webide:serve
 
 # Open browser
 open http://localhost:8001/demo.html          # Static demo
-open http://localhost:8001/demo-live.html      # Live compiler (WIP)
+open http://localhost:8001/demo-live.html      # Live compiler
 ```
 
 ## 🏗️ Building
 
 ```bash
-# Bundle compiler for browser
-deno run --allow-read bundle.ts > dist/compiler.bundle.js
+# From project root, build the compiler bundle
+deno task webide:build
 
 # Test compiler from command line
-deno run --allow-read src/compiler/test.ts
+deno task webide:test
+```
+
+Or from the web-ide directory:
+```bash
+cd web-ide
+deno run --allow-net --allow-read server.ts    # Serve
+deno run --allow-read src/compiler/test.ts     # Test
 ```
 
 ## 📖 Documentation

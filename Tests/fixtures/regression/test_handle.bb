@@ -10,7 +10,7 @@ Function Handle%(obj.Template)
 End Function
 
 Function Main()
-    Dim tmp.Template[10]
+    Dim tmp.Template(10)
     Local i% = 0
     
     tmp[i] = New Template

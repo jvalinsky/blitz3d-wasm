@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && git shortlog -sn --all)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A web-ide/build_bundle.js)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno install)",
+      "Bash(git add:*)"
+    ]
+  }
+}

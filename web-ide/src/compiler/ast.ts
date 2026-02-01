@@ -32,6 +32,8 @@ export type Statement =
   | FunctionDeclaration
   | TypeDeclaration
   | DataStatement
+  | ReadStatement
+  | RestoreStatement
   | Assignment
   | IfStatement
   | ForStatement
@@ -42,6 +44,8 @@ export type Statement =
   | ExpressionStatement
   | LabelStatement
   | GotoStatement
+  | GosubStatement
+  | EndStatement
   | IncludeStatement;
 
 export interface VariableDeclaration extends Node {
@@ -82,6 +86,16 @@ export interface Field {
 export interface DataStatement extends Node {
   kind: 'DataStatement';
   values: Expression[];
+  label?: string;
+}
+
+export interface ReadStatement extends Node {
+  kind: 'ReadStatement';
+  variables: Identifier[];
+}
+
+export interface RestoreStatement extends Node {
+  kind: 'RestoreStatement';
   label?: string;
 }
 
@@ -155,6 +169,15 @@ export interface LabelStatement extends Node {
 export interface GotoStatement extends Node {
   kind: 'GotoStatement';
   label: string;
+}
+
+export interface GosubStatement extends Node {
+  kind: 'GosubStatement';
+  label: string;
+}
+
+export interface EndStatement extends Node {
+  kind: 'EndStatement';
 }
 
 export interface IncludeStatement extends Node {
@@ -310,6 +333,8 @@ export function isStatement(node: Node): node is Statement {
     'FunctionDeclaration',
     'TypeDeclaration',
     'DataStatement',
+    'ReadStatement',
+    'RestoreStatement',
     'Assignment',
     'IfStatement',
     'ForStatement',
@@ -320,6 +345,8 @@ export function isStatement(node: Node): node is Statement {
     'ExpressionStatement',
     'LabelStatement',
     'GotoStatement',
+    'GosubStatement',
+    'EndStatement',
     'IncludeStatement',
   ].includes(node.kind);
 }

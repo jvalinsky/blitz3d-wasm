@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCP: Containment Breach - Main Menu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            cursor: none;
+        }
+        
+        #menuContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+        }
+        
+        #menuBackground {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        #scp173 {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: auto;
+            height: 40%;
+            opacity: 0;
+            transition: opacity 0.1s;
+        }
+        
+        #scp173.visible {
+            opacity: 1;
+        }
+        
+        #scpLogo {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: auto;
+            height: 80px;
+        }
+        
+        .creepyText {
+            position: absolute;
+            color: #333;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .creepyText.visible {
+            opacity: 1;
+        }
+        
+        #menuButtons {
+            position: absolute;
+            left: 159px;
+            top: 286px;
+            width: 400px;
+            z-index: 10;
+        }
+        
+        .menuButton {
+            width: 100%;
+            height: 70px;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+            border: 2px solid rgba(255,255,255,0.2);
+            color: #fff;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 3px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        
+        .menuButton:hover {
+            background: linear-gradient(to right, rgba(255,255,255,0.2), rgba(255,255,255,0.3));
+            border-color: rgba(255,255,255,0.6);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        
+        .menuButton:active {
+            transform: scale(0.98);
+        }
+        
+        #customCursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: rgba(255,255,255,0.8);
+            border: 2px solid #000;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        }
+        
+        #videoOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            z-index: 1000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #videoOverlay video {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        #videoOverlay .skipButton {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 2px solid #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        
+        #videoOverlay .skipButton:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        #statusText {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0f0;
+            font-size: 14px;
+            text-align: center;
+            z-index: 20;
+            text-shadow: 0 0 10px #0f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="menuContainer">
+        <img id="menuBackground" src="./dist/assets/back.jpg" alt="Menu Background">
+        <img id="scp173" src="./dist/assets/173back.jpg" alt="SCP-173">
+        <img id="scpLogo" src="./dist/assets/scptext.jpg" alt="SCP Logo">
+        
+        <div class="creepyText" id="creepyText"></div>
+        
+        <div id="menuButtons">
+            <button class="menuButton" onclick="newGame()">NEW GAME</button>
+            <button class="menuButton" onclick="loadGame()">LOAD GAME</button>
+            <button class="menuButton" onclick="options()">OPTIONS</button>
+            <button class="menuButton" onclick="quit()">QUIT</button>
+        </div>
+        
+        <div id="statusText">Main Menu Ready</div>
+    </div>
+    
+    <div id="customCursor"></div>
+    
+    <div id="videoOverlay">
+        <video id="introVideo"></video>
+        <button class="skipButton" onclick="skipVideo()">Skip Intro</button>
+    </div>
+
+    <script>
+        // Custom cursor
+        const cursor = document.getElementById('customCursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+        
+        // SCP-173 blinking effect
+        const scp173 = document.getElementById('scp173');
+        let blinkTimer = 1;
+        let blinkDuration = 0;
+        
+        function updateBlink() {
+            if (Math.random() < 0.0033) { // ~1/300 chance each frame
+                blinkTimer = 4000 + Math.random() * 4000;
+                blinkDuration = 200 + Math.random() * 300;
+            }
+            
+            const currentTime = Date.now();
+            if ((currentTime % blinkTimer) < blinkDuration) {
+                scp173.classList.add('visible');
+            } else {
+                scp173.classList.remove('visible');
+            }
+            
+            requestAnimationFrame(updateBlink);
+        }
+        updateBlink();
+        
+        // Creepy text effect
+        const creepyTextEl = document.getElementById('creepyText');
+        const creepyMessages = [
+            "DON'T BLINK",
+            "DON'T BLINK",
+            "DON'T BLINK",
+            "Secure. Contain. Protect.",
+            "Secure. Contain. Protect.",
+            "You want happy endings? Fuck you.",
+            "You want happy endings? Fuck you.",
+            "You want happy endings? Fuck you.",
+            "Sometimes we would have had time to scream.",
+            "Sometimes we would have had time to scream.",
+            "Sometimes we would have had time to scream.",
+            "NIL",
+            "NO",
+            "black white black white black white gray",
+            "Stone does not care",
+            "9341",
+            "It controls the doors",
+            "e8m106]af173o+079m895w914",
+            "NIL",
+            "It has taken over everything",
+            "The spiral is growing",
+            '"Some kind of gestalt effect due to massive reality damage."'
+        ];
+        
+        let textTimer = 700 + Math.random() * 100;
+        let textDuration = 0;
+        
+        function updateCreepyText() {
+            textTimer--;
+            
+            if (textTimer < textDuration) {
+                creepyTextEl.classList.add('visible');
+                
+                if (textTimer < 0) {
+                    textTimer = 700 + Math.random() * 100;
+                    textDuration = 10 + Math.random() * 25;
+                    
+                    // Random position
+                    const x = 700 + Math.random() * 300;
+                    const y = 100 + Math.random() * 500;
+                    creepyTextEl.style.left = x + 'px';
+                    creepyTextEl.style.top = y + 'px';
+                    
+                    // Random message
+                    const msg = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
+                    creepyTextEl.textContent = msg;
+                }
+            } else {
+                creepyTextEl.classList.remove('visible');
+            }
+            
+            setTimeout(updateCreepyText, 16); // ~60fps
+        }
+        updateCreepyText();
+        
+        // Video playback
+        const videoOverlay = document.getElementById('videoOverlay');
+        const introVideo = document.getElementById('introVideo');
+        let currentVideoIndex = 0;
+        const introVideos = [
+            './dist/assets/startup_TSS.mp4',
+            './dist/assets/startup_Undertow.mp4'
+        ];
+        
+        function playIntroVideos() {
+            if (currentVideoIndex >= introVideos.length) {
+                // All videos played
+                videoOverlay.style.display = 'none';
+                updateStatus('Intro complete - Main menu ready');
+                return;
+            }
+            
+            const videoPath = introVideos[currentVideoIndex];
+            updateStatus(`Playing intro ${currentVideoIndex + 1}/${introVideos.length}`);
+            
+            videoOverlay.style.display = 'flex';
+            introVideo.src = videoPath;
+            introVideo.load();
+            
+            introVideo.onloadedmetadata = () => {
+                introVideo.play();
+            };
+            
+            introVideo.onended = () => {
+                currentVideoIndex++;
+                playIntroVideos();
+            };
+            
+            introVideo.onerror = () => {
+                console.error('Video failed to load:', videoPath);
+                currentVideoIndex++;
+                playIntroVideos();
+            };
+        }
+        
+        function skipVideo() {
+            introVideo.pause();
+            currentVideoIndex = introVideos.length;
+            videoOverlay.style.display = 'none';
+            updateStatus('Intro skipped');
+        }
+        
+        // Menu button functions
+        function newGame() {
+            updateStatus('Starting new game...');
+            
+            // In real implementation, this would:
+            // 1. Show difficulty selection
+            // 2. Generate random seed
+            // 3. Initialize game world
+            // 4. Load first room
+            
+            alert('NEW GAME - Would initialize game world and load starting room');
+        }
+        
+        function loadGame() {
+            updateStatus('Loading saved games...');
+            
+            // In real implementation, this would:
+            // 1. List save files from localStorage/IndexedDB
+            // 2. Show save game selection UI
+            // 3. Load selected save
+            
+            alert('LOAD GAME - Would show save file selection');
+        }
+        
+        function options() {
+            updateStatus('Opening options menu...');
+            
+            // In real implementation, this would:
+            // 1. Show options tabs (Graphics, Audio, Controls)
+            // 2. Load current settings from options.ini
+            // 3. Allow settings modification
+            
+            alert('OPTIONS - Would show graphics/audio/controls settings');
+        }
+        
+        function quit() {
+            updateStatus('Exiting...');
+            
+            if (confirm('Are you sure you want to quit?')) {
+                window.close();
+                // Fallback if window.close() doesn't work
+                document.body.innerHTML = '<h1 style="color:#fff;text-align:center;margin-top:40vh;">Thanks for playing!</h1>';
+            }
+        }
+        
+        function updateStatus(msg) {
+            document.getElementById('statusText').textContent = msg;
+            console.log('[MainMenu]', msg);
+        }
+        
+        // Auto-play intro on load (if enabled in settings)
+        window.addEventListener('load', () => {
+            const introEnabled = localStorage.getItem('introEnabled') !== 'false';
+            
+            if (introEnabled) {
+                setTimeout(() => {
+                    playIntroVideos();
+                }, 500);
+            } else {
+                updateStatus('Main menu ready (intro disabled)');
+            }
+        });
+        
+        // ESC key handling
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (videoOverlay.style.display === 'flex') {
+                    skipVideo();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

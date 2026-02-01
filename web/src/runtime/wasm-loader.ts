@@ -207,9 +207,28 @@ function createEngineImports(): Blitz3DEngineImports {
 
 /**
  * Load the Blitz3D WASM engine from a file
+ * 
+ * @param wasmPath - Path to the blitz3d-engine.wasm file
+ * @param canvas - Optional canvas element for graphics rendering
  */
-export async function loadBlitz3DEngine(wasmPath: string): Promise<LoadedEngine> {
+export async function loadBlitz3DEngine(
+    wasmPath: string,
+    canvas?: HTMLCanvasElement
+): Promise<LoadedEngine> {
     console.log(`Loading Blitz3D Engine from ${wasmPath}...`);
+    
+    // Initialize graphics API if canvas provided
+    if (canvas) {
+        console.log('Initializing graphics API...');
+        graphicsAPI = await createGraphicsAPI(canvas);
+        const caps = graphicsAPI.getCapabilities();
+        console.log(`Graphics: ${caps.apiName}, max texture: ${caps.maxTextureSize}`);
+        
+        // Expose globally for test pages
+        if (typeof window !== 'undefined') {
+            window.graphicsAPI = graphicsAPI;
+        }
+    }
     
     // Read WASM binary from filesystem
     let wasmBytes: Uint8Array;

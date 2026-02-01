@@ -1314,6 +1314,98 @@ var SimpleCamera = class {
   }
 };
 
+// src/runtime/smpk-simple.ts
+var MAGIC = [83, 77, 80, 75];
+async function loadSMPK(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load ${url}: ${response.statusText}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  for (let i = 0; i < 4; i++) {
+    if (bytes[i] !== MAGIC[i]) {
+      throw new Error("Invalid SMPK magic number");
+    }
+  }
+  const dv = new DataView(bytes.buffer);
+  const version = dv.getUint32(4, true);
+  if (version !== 1) {
+    throw new Error(`Unsupported SMPK version: ${version}`);
+  }
+  const jsonLen = dv.getUint32(8, true);
+  const binLen = dv.getUint32(12, true);
+  const jsonStart = 16;
+  const jsonEnd = jsonStart + jsonLen;
+  const binStart = jsonEnd;
+  const jsonText = new TextDecoder().decode(bytes.subarray(jsonStart, jsonEnd));
+  const json = JSON.parse(jsonText);
+  const bin = bytes.subarray(binStart);
+  if (!json.meshes || json.meshes.length === 0) {
+    throw new Error("No meshes in SMPK file");
+  }
+  const mesh = json.meshes[0];
+  const primitive = mesh.primitives[0];
+  const positionIdx = primitive.attributes.POSITION;
+  const normalIdx = primitive.attributes.NORMAL;
+  const texcoordIdx = primitive.attributes.TEXCOORD_0;
+  const indicesIdx = primitive.indices;
+  let positions;
+  let normals;
+  let uvs;
+  let indices;
+  if (positionIdx !== void 0) {
+    positions = readAccessor(bin, json.accessors[positionIdx]);
+  }
+  if (normalIdx !== void 0) {
+    normals = readAccessor(bin, json.accessors[normalIdx]);
+  }
+  if (texcoordIdx !== void 0) {
+    uvs = readAccessor(bin, json.accessors[texcoordIdx]);
+  }
+  if (indicesIdx !== void 0) {
+    indices = readAccessor(bin, json.accessors[indicesIdx]);
+  }
+  if (!positions) {
+    throw new Error("No position data in SMPK");
+  }
+  return {
+    positions,
+    normals,
+    uvs,
+    indices,
+    vertexCount: positions.length / 3,
+    indexCount: indices ? indices.length : 0
+  };
+}
+function readAccessor(bin, accessor) {
+  const { offset, count, componentType, type } = accessor;
+  let componentCount = 1;
+  if (type === "VEC2")
+    componentCount = 2;
+  else if (type === "VEC3")
+    componentCount = 3;
+  else if (type === "VEC4")
+    componentCount = 4;
+  const totalCount = count * componentCount;
+  const dv = new DataView(bin.buffer, bin.byteOffset + offset);
+  if (componentType === "f32") {
+    const result = new Float32Array(totalCount);
+    for (let i = 0; i < totalCount; i++) {
+      result[i] = dv.getFloat32(i * 4, true);
+    }
+    return result;
+  } else if (componentType === "u16") {
+    const result = new Uint16Array(totalCount);
+    for (let i = 0; i < totalCount; i++) {
+      result[i] = dv.getUint16(i * 2, true);
+    }
+    return result;
+  } else {
+    throw new Error(`Unsupported component type: ${componentType}`);
+  }
+}
+
 // src/runtime/test-entry.ts
 console.log("\u2705 Graphics test bundle loaded");
 export {
@@ -1331,6 +1423,7 @@ export {
   isWebGL2Supported,
   isWebGPUSupported,
   loadBlitz3DEngine,
+  loadSMPK,
   toArrayBuffer
 };
 //# sourceMappingURL=test-graphics-bundle.js.map

@@ -37,6 +37,9 @@ export { WasmStringHelper } from './wasm-string-helper.ts';
 export { Camera } from './camera.ts';
 export { SimpleCamera } from './camera-simple.ts';
 
+// SMPK loader
+export { loadSMPK, type SMPKMesh } from './smpk-simple.ts';
+
 // Types
 export type {
     Blitz3DEngineExports,

@@ -245,7 +245,9 @@ const main = async () => {
 
   const posAcc = push("POSITION", f32(mesh.positions), "f32", "VEC3", vCount);
   const normAcc = push("NORMAL", f32(mesh.normals ?? new Float32Array(vCount * 3)), "f32", "VEC3", vCount);
-  const uvAcc = push("TEXCOORD_0", f32(mesh.uvs0 ?? new Float32Array(vCount * 2)), "f32", "VEC2", vCount);
+  // Use uvs1 if available (second UV set), otherwise uvs0
+  const uvData = mesh.uvs1 ?? mesh.uvs0 ?? new Float32Array(vCount * 2);
+  const uvAcc = push("TEXCOORD_0", f32(uvData), "f32", "VEC2", vCount);
   const jointsAcc = push("JOINTS_0", f32(jointIndices), "u16", "VEC4", vCount);
   const weightsAcc = push("WEIGHTS_0", f32(jointWeights), "f32", "VEC4", vCount);
   const idxAcc = push("INDICES", f32(mesh.indices), "u32", "SCALAR", mesh.indices.length);

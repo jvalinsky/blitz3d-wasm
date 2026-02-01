@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCP: Containment Breach</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Menu canvas */
+        #menuCanvas {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            z-index: 100;
+        }
+        
+        /* Game canvas (Three.js) */
+        #canvas {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        /* Start screen */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        #startScreen h1 {
+            color: #fff;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #fff;
+        }
+        
+        #startScreen button {
+            padding: 20px 60px;
+            font-size: 24px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 3px solid #fff;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #startScreen button:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+        
+        #startScreen p {
+            color: #888;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        /* Loader overlay */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        
+        #loader h1 {
+            color: #0f0;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #0f0;
+            font-size: 36px;
+        }
+        
+        #loader .progress {
+            width: 500px;
+            height: 40px;
+            border: 3px solid #0f0;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,255,0,0.3);
+        }
+        
+        #loader .progress-bar {
+            height: 100%;
+            background: #0f0;
+            width: 0%;
+            transition: width 0.5s ease-out;
+            box-shadow: 0 0 20px #0f0;
+        }
+        
+        #loader .progress-text {
+            color: #0f0;
+            margin-top: 20px;
+            font-size: 18px;
+            text-shadow: 0 0 5px #0f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Start screen (autoplay policy) -->
+    <div id="startScreen">
+        <h1>SCP: Containment Breach</h1>
+        <button id="startButton">CLICK TO START</button>
+        <p>Press any key or click to begin</p>
+    </div>
+    
+    <!-- Menu canvas -->
+    <canvas id="menuCanvas"></canvas>
+    
+    <!-- Game canvas (Three.js, hidden initially) -->
+    <canvas id="canvas"></canvas>
+    
+    <!-- Loading overlay -->
+    <div id="loader">
+        <h1>INITIALIZING...</h1>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-text" id="progressText">Loading game world...</div>
+    </div>
+
+    <!-- Import the unified launcher -->
+    <script type="module" src="./src/launcher_main.ts"></script>
+</body>
+</html>

@@ -246,12 +246,15 @@ export class WebGPUGraphics implements GraphicsAPI {
     createShader(vertexCode: string, fragmentCode: string): ShaderHandle {
         const handle = this.nextHandle++;
         
+        // For WGSL, if both codes are the same, it's a combined shader
+        // Otherwise concatenate them
+        const wgslCode = vertexCode === fragmentCode 
+            ? vertexCode 
+            : `${vertexCode}\n${fragmentCode}`;
+        
         // Create shader module (WGSL code)
         const shaderModule = this.device.createShaderModule({
-            code: `
-                ${vertexCode}
-                ${fragmentCode}
-            `,
+            code: wgslCode,
         });
         
         this.shaders.set(handle, shaderModule);

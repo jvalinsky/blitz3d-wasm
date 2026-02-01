@@ -131,7 +131,8 @@
       "Bash(git push:*)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build 2>&1 | tail -20)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task serve > /tmp/deno_serve.log 2>&1 &\nsleep 2\necho \"✅ Server started on port 8000\"\necho \"🌐 Open: http://localhost:8000/web/test-graphics.html\")",
-      "Bash(curl -s http://localhost:8000/web/test-graphics.html | head -5 && echo \"✅ Server responding\")"
+      "Bash(curl -s http://localhost:8000/web/test-graphics.html | head -5 && echo \"✅ Server responding\")",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build:test)"
     ]
   }
 }

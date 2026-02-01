@@ -253,11 +253,10 @@ var WebGPUGraphics = class {
   }
   createShader(vertexCode, fragmentCode) {
     const handle = this.nextHandle++;
+    const wgslCode = vertexCode === fragmentCode ? vertexCode : `${vertexCode}
+${fragmentCode}`;
     const shaderModule = this.device.createShaderModule({
-      code: `
-                ${vertexCode}
-                ${fragmentCode}
-            `
+      code: wgslCode
     });
     this.shaders.set(handle, shaderModule);
     return handle;

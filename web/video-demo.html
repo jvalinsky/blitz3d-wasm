@@ -112,6 +112,15 @@
             <button onclick="clearLog()">Clear Log</button>
         </div>
         
+        <div class="controls" style="margin-top: 10px; border-top: 1px solid #0f0; padding-top: 15px;">
+            <button onclick="wasmPlay()">▶️ Play</button>
+            <button onclick="wasmPause()">⏸️ Pause</button>
+            <button onclick="wasmStop()">⏹️ Stop</button>
+            <button onclick="wasmSeekBack()">⏪ -5s</button>
+            <button onclick="wasmSeekForward()">⏩ +5s</button>
+            <button onclick="wasmGetInfo()">ℹ️ Get Info</button>
+        </div>
+        
         <div class="status" id="status">
             Ready - Select a video to play
         </div>
@@ -131,6 +140,7 @@
         // Movie handle tracking
         let movieHandles = new Map();
         let nextHandle = 1;
+        let currentMovieHandle = null; // Track currently loaded movie
         
         // WASM API Implementation
         const WasmVideoAPI = {
@@ -203,6 +213,52 @@
                 logAPI(`BlitzMovie_OpenDecodeToImage(${movie}, ${image})`);
                 logAPI(`  → decode mode enabled`, true);
                 return 1;
+            },
+            
+            BlitzMovie_Pause(movie) {
+                logAPI(`BlitzMovie_Pause(${movie})`);
+                const m = movieHandles.get(movie);
+                if (m) {
+                    videoPlayer.pause();
+                    m.playing = false;
+                    logAPI(`  → paused`, true);
+                    return 1;
+                }
+                logAPI(`  → failed (invalid handle)`, true);
+                return 0;
+            },
+            
+            BlitzMovie_GetCurrentTime(movie) {
+                logAPI(`BlitzMovie_GetCurrentTime(${movie})`);
+                const time = videoPlayer.currentTime;
+                logAPI(`  → ${time.toFixed(2)}s`, true);
+                return time;
+            },
+            
+            BlitzMovie_GetDuration(movie) {
+                logAPI(`BlitzMovie_GetDuration(${movie})`);
+                const duration = videoPlayer.duration || 0;
+                logAPI(`  → ${duration.toFixed(2)}s`, true);
+                return duration;
+            },
+            
+            BlitzMovie_Seek(movie, timeSeconds) {
+                logAPI(`BlitzMovie_Seek(${movie}, ${timeSeconds})`);
+                const m = movieHandles.get(movie);
+                if (m) {
+                    videoPlayer.currentTime = timeSeconds;
+                    logAPI(`  → seeked to ${timeSeconds}s`, true);
+                    return 1;
+                }
+                logAPI(`  → failed (invalid handle)`, true);
+                return 0;
+            },
+            
+            BlitzMovie_IsPlaying(movie) {
+                logAPI(`BlitzMovie_IsPlaying(${movie})`);
+                const playing = !videoPlayer.paused;
+                logAPI(`  → ${playing ? 'yes' : 'no'}`, true);
+                return playing ? 1 : 0;
             }
         };
         
@@ -247,6 +303,8 @@
                 // Simulate WASM API calls
                 logAPI(`=== Loading ${name}.mp4 ===`);
                 const handle = WasmVideoAPI.BlitzMovie_Open(path);
+                currentMovieHandle = handle; // Track for playback controls
+                
                 WasmVideoAPI.BlitzMovie_GetWidth(handle);
                 WasmVideoAPI.BlitzMovie_GetHeight(handle);
                 
@@ -297,6 +355,68 @@
         videoPlayer.onended = () => {
             status.textContent = 'Playback complete';
         };
+        
+        // Playback control functions using WASM API
+        function wasmPlay() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            WasmVideoAPI.BlitzMovie_Play(currentMovieHandle);
+        }
+        
+        function wasmPause() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            WasmVideoAPI.BlitzMovie_Pause(currentMovieHandle);
+        }
+        
+        function wasmStop() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            WasmVideoAPI.BlitzMovie_Stop(currentMovieHandle);
+        }
+        
+        function wasmSeekBack() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            const currentTime = WasmVideoAPI.BlitzMovie_GetCurrentTime(currentMovieHandle);
+            const newTime = Math.max(0, currentTime - 5);
+            WasmVideoAPI.BlitzMovie_Seek(currentMovieHandle, newTime);
+        }
+        
+        function wasmSeekForward() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            const currentTime = WasmVideoAPI.BlitzMovie_GetCurrentTime(currentMovieHandle);
+            const duration = WasmVideoAPI.BlitzMovie_GetDuration(currentMovieHandle);
+            const newTime = Math.min(duration, currentTime + 5);
+            WasmVideoAPI.BlitzMovie_Seek(currentMovieHandle, newTime);
+        }
+        
+        function wasmGetInfo() {
+            if (!currentMovieHandle) {
+                status.textContent = 'No video loaded - load a video first!';
+                return;
+            }
+            
+            logAPI('=== Movie Info Query ===');
+            const width = WasmVideoAPI.BlitzMovie_GetWidth(currentMovieHandle);
+            const height = WasmVideoAPI.BlitzMovie_GetHeight(currentMovieHandle);
+            const currentTime = WasmVideoAPI.BlitzMovie_GetCurrentTime(currentMovieHandle);
+            const duration = WasmVideoAPI.BlitzMovie_GetDuration(currentMovieHandle);
+            const playing = WasmVideoAPI.BlitzMovie_IsPlaying(currentMovieHandle);
+            
+            status.textContent = `Info: ${width}×${height}, ${currentTime.toFixed(1)}s/${duration.toFixed(1)}s, ${playing ? 'Playing' : 'Stopped'}`;
+        }
         
         // Auto-load first video on startup
         window.addEventListener('load', () => {

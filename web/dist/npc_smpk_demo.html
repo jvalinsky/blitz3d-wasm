@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Blitz3D WASM - Real NPC Model Demo (SCPCB)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #1a1a2e;
+            color: #0f0;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        #canvas {
+            border: 1px solid #333;
+            background: #000;
+        }
+
+        #log {
+            width: 800px;
+            height: 150px;
+            background: #0a0a1a;
+            border: 1px solid #333;
+            padding: 10px;
+            overflow-y: auto;
+            white-space: pre;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+
+        h1 {
+            color: #4af;
+            margin: 10px;
+            font-size: 18px;
+        }
+
+        #controls {
+            margin: 10px;
+        }
+
+        button,
+        select {
+            background: #2a4a6a;
+            color: #fff;
+            border: 1px solid #4a6a8a;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+
+        button:hover {
+            background: #3a5a7a;
+        }
+
+        button:disabled {
+            background: #333;
+            color: #666;
+        }
+
+        #stats {
+            color: #4af;
+            margin: 10px;
+            font-size: 14px;
+        }
+
+        .info {
+            color: #888;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+
+        .loading {
+            color: #fa0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Blitz3D WASM - Real SCPCB NPC Models</h1>
+    <p class="info">Loading actual SCPCB NPC models (converted to SMPK offline)</p>
+    <div id="controls">
+        <select id="modelSelect">
+            <option value="173_2.smpk">SCP-173 (The Sculpture)</option>
+            <option value="035.smpk">SCP-035 (Containment Pod)</option>
+            <option value="scp-049.smpk">SCP-049 (The Doctor)</option>
+            <option value="106_2.smpk">SCP-106 (The Old Man)</option>
+            <option value="scp-939.smpk">SCP-939 (Hounds)</option>
+            <option value="scp-966.smpk">SCP-966 (Sleep Killers)</option>
+            <option value="372.smpk">SCP-372 (Phantom)</option>
+            <option value="scp096.smpk">SCP-096 (Shy Guy)</option>
+            <option value="guard.smpk">MTF Guard</option>
+            <option value="classd.smpk">Class D Personnel</option>
+            <option value="clerk.smpk">Clerk</option>
+            <option value="naziofficer.smpk">Nazi Officer</option>
+            <option value="zombie1.smpk">Zombie</option>
+        </select>
+        <button onclick="loadNPC()" id="btnLoad">Load NPC Model</button>
+        <button onclick="resetCamera()">Reset Camera</button>
+    </div>
+
+    <div id="animControls"
+        style="display:none; background: #2a3a4a; padding: 10px; border-radius: 5px; margin-top: 5px;">
+        <div style="margin-bottom: 5px;">
+            <label>Clip:</label>
+            <select id="clipSelect">
+                <option value="0">Default</option>
+            </select>
+
+            <label>Seq:</label>
+            <select id="seqSelect">
+                <option value="-1">All Frames</option>
+            </select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <button id="btnPlay" style="min-width: 80px;">⏸ Pause</button>
+            <input type="range" id="frameSlider" min="0" max="1000" value="0" step="0.1" style="width: 300px;">
+            <span id="frameDisplay" style="font-family: monospace; min-width: 150px;">Frame: 0.0 / 0</span>
+
+            <select id="speedSelect">
+                <option value="0.25">0.25x</option>
+                <option value="0.5">0.5x</option>
+                <option value="1.0" selected>1.0x</option>
+                <option value="2.0">2.0x</option>
+            </select>
+        </div>
+    </div>
+    <div id="stats">Select a model and click "Load NPC Model"</div>
+    <canvas id="canvas" width="800" height="500"></canvas>
+    <div id="log"></div>
+
+    <script>
+        const logDiv = document.getElementById('log');
+        const statsDiv = document.getElementById('stats');
+        const origLog = console.log;
+        console.log = (...args) => {
+            origLog(...args);
+            logDiv.innerHTML += args.join(' ') + '\n';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        let renderer, scene, camera, mixer;
+        let npcEntity = null;
+        let npcAction = null;
+        let animPlaying = false;
+        let animTime = 0;
+        let animSpeed = 1.0;
+        let clock = new THREE.Clock();
+
+        function log(msg) { console.log(msg); }
+
+        // SMPK Decoder (same as web/src/runtime/smpk.ts)
+        const SMPK_MAGIC = [0x53, 0x4d, 0x50, 0x4b];
+        const decodeSmpk = (bytes) => {
+            if (bytes.byteLength < 16) throw new Error("SMPK too small");
+            for (let i = 0; i < 4; i++) if (bytes[i] !== SMPK_MAGIC[i]) throw new Error("Invalid SMPK magic");
+            const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+            const version = dv.getUint32(4, true);
+            if (version !== 1) throw new Error(`Unsupported SMPK version ${version}`);
+            const jsonLen = dv.getUint32(8, true);
+            const binLen = dv.getUint32(12, true);
+            const jsonText = new TextDecoder().decode(bytes.subarray(16, 16 + jsonLen));
+            const json = JSON.parse(jsonText);
+            const bin = bytes.subarray(16 + jsonLen, 16 + jsonLen + binLen);
+            return { json, bin };
+        };
+
+        // Read accessor data as Float32Array (handles alignment automatically)
+        const readFloat32Array = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const bytesPerComp = acc.componentType === 5123 ? 2 : 4;
+            const totalBytes = count * 3 * bytesPerComp; // VEC3
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Float32Array(count * 3);
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+
+            // Copy with potential unaligned access
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < count * 3; i++) {
+                data[i] = view.getFloat32(i * 4, true);
+            }
+            return data;
+        };
+
+        // Read accessor data as Uint16Array (indices)
+        const readUint16Array = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const totalBytes = count * 2;
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Uint16Array(count);
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < count; i++) {
+                data[i] = view.getUint16(i * 2, true);
+            }
+            return data;
+        };
+
+        // Read accessor data as Uint32Array (indices)
+        const readUint32Array = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const totalBytes = count * 4;
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Uint32Array(count);
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < count; i++) {
+                data[i] = view.getUint32(i * 4, true);
+            }
+            return data;
+        };
+
+        // Read accessor data as Float32Array for VEC2 (UVs)
+        const readFloat32ArrayVec2 = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const totalBytes = count * 2 * 4;
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Float32Array(count * 2);
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < count * 2; i++) {
+                data[i] = view.getFloat32(i * 4, true);
+            }
+            return data;
+        };
+
+        // Read animation times
+        const readFloat32ArrayAnim = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const totalBytes = count * 4;
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Float32Array(count);
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < count; i++) {
+                data[i] = view.getFloat32(i * 4, true);
+            }
+            return data;
+        };
+
+        // Read animation values (VEC3 or VEC4)
+        const readFloat32ArrayAnimValues = (bin, acc) => {
+            const base = bin.byteOffset + acc.offset;
+            const count = acc.count;
+            const isVec4 = acc.type === "VEC4";
+            const totalBytes = count * (isVec4 ? 4 : 3) * 4;
+
+            if (base + totalBytes > bin.byteOffset + bin.length) {
+                throw new Error("offset is out of bounds");
+            }
+
+            const data = new Float32Array(count * (isVec4 ? 4 : 3));
+            const src = new Uint8Array(bin.buffer, base, totalBytes);
+            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+            for (let i = 0; i < data.length; i++) {
+                data[i] = view.getFloat32(i * 4, true);
+            }
+            return data;
+        };
+
+        const loadSmpkModel = async (path) => {
+            log(`Loading SMPK: ${path}`);
+
+            const response = await fetch(path);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const bytes = new Uint8Array(await response.arrayBuffer());
+
+            const { json, bin } = decodeSmpk(bytes);
+            log(`SMPK loaded: ${json.meshes?.length || 0} meshes, ${json.nodes?.length || 0} nodes`);
+            if (json.animations) log(`Animations: ${json.animations.length}`);
+            if (json.skins) log(`Skins: ${json.skins.length}`);
+
+            const group = new THREE.Group();
+            const meshes = [];
+            const nodes = json.nodes || [];
+            const skins = json.skins || [];
+
+            // Build node hierarchy
+            const nodeObjects = [];
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                const obj = new THREE.Object3D();
+                obj.name = node.name || `node_${i}`;
+
+                if (node.translation) obj.position.fromArray(node.translation);
+                if (node.rotation) {
+                    // SMPK stores quaternions as [x, y, z, w] (glTF convention)
+                    // Three.js Quaternion.fromArray also expects [x, y, z, w]
+                    obj.quaternion.fromArray(node.rotation);
+                }
+                if (node.scale) obj.scale.fromArray(node.scale);
+
+                nodeObjects.push(obj);
+                group.add(obj);
+            }
+
+            // Helper to build clips (needed for bind pose)
+            const buildClips = () => {
+                log(`[buildClips] Starting... animations: ${json.animations?.length || 0}`);
+                if (!json.animations || json.animations.length === 0) {
+                    log('[buildClips] No animations found');
+                    return [];
+                }
+                const clips = [];
+                for (let i = 0; i < json.animations.length; i++) {
+                    const anim = json.animations[i];
+                    const tracks = [];
+                    for (let ci = 0; ci < anim.channels.length; ci++) {
+                        const channel = anim.channels[ci];
+                        const targetNode = nodeObjects[channel.targetNode];
+                        if (!targetNode) continue;
+                        const sampler = anim.samplers[channel.sampler];
+                        const inputAcc = json.accessors[sampler.input];
+                        const outputAcc = json.accessors[sampler.output];
+                        const times = readFloat32ArrayAnim(bin, inputAcc);
+                        const values = readFloat32ArrayAnimValues(bin, outputAcc);
+                        const trackName = (targetNode.name || `bone_${channel.targetNode}`) + '.' +
+                            (channel.path === "translation" ? "position" : channel.path === "rotation" ? "quaternion" : "scale");
+                        if (channel.path === "translation" && outputAcc.type === "VEC3") {
+                            tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                        } else if (channel.path === "rotation" && outputAcc.type === "VEC4") {
+                            tracks.push(new THREE.QuaternionKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                        } else if (channel.path === "scale" && outputAcc.type === "VEC3") {
+                            tracks.push(new THREE.VectorKeyframeTrack(trackName, Array.from(times), Array.from(values)));
+                        }
+                    }
+                    if (tracks.length > 0) {
+                        const clip = new THREE.AnimationClip(anim.name || `clip_${i}`, -1, tracks);
+                        clips.push(clip);
+                        log(`[buildClips] Created clip: ${clip.name}, ${tracks.length} tracks, ${clip.duration.toFixed(2)}s`);
+                    } else {
+                        log(`[buildClips] No tracks created for animation ${i}`);
+                    }
+                }
+                log(`[buildClips] Returning ${clips.length} clips`);
+                return clips;
+            };
+
+            // Build parent-child relationships
+            for (let i = 0; i < nodes.length; i++) {
+                const node = nodes[i];
+                if (node.parent !== undefined && node.parent >= 0 && node.parent < nodeObjects.length) {
+                    nodeObjects[node.parent].add(nodeObjects[i]);
+                }
+            }
+
+            // Setup skins (skeletal animation)
+            const skeletons = [];
+            for (let si = 0; si < skins.length; si++) {
+                const skin = skins[si];
+                const joints = skin.joints;
+                if (!joints || joints.length === 0) {
+                    log(`Skin ${si} has no joints, skipping`);
+                    continue;
+                }
+
+                // Create bones and build skeleton hierarchy
+                const bones = [];
+                const boneInverses = [];
+
+                // Read inverse bind matrices from file if available
+                if (skin.inverseBindMatrices !== undefined) {
+                    const ibmAcc = json.accessors[skin.inverseBindMatrices];
+                    if (ibmAcc) {
+                        const base = bin.byteOffset + ibmAcc.offset;
+                        const count = ibmAcc.count;
+                        const totalBytes = count * 16 * 4; // MAT4 = 16 floats
+                        const src = new Uint8Array(bin.buffer, base, totalBytes);
+                        const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+                        for (let mi = 0; mi < count; mi++) {
+                            const mat = new THREE.Matrix4();
+                            const els = [];
+                            for (let ei = 0; ei < 16; ei++) {
+                                els.push(view.getFloat32((mi * 16 + ei) * 4, true));
+                            }
+                            mat.fromArray(els);
+                            boneInverses.push(mat);
+                        }
+                        log(`Read ${boneInverses.length} inverse bind matrices from file`);
+                    }
+                }
+
+                for (let ji = 0; ji < joints.length; ji++) {
+                    const nodeIndex = joints[ji];
+                    const originalNode = nodeObjects[nodeIndex];
+
+                    if (originalNode instanceof THREE.Bone) {
+                        // Already promoted?
+                        bones.push(originalNode);
+                        continue;
+                    }
+
+                    const bone = new THREE.Bone();
+                    bone.name = originalNode.name;
+                    bone.position.copy(originalNode.position);
+                    bone.quaternion.copy(originalNode.quaternion);
+                    bone.scale.copy(originalNode.scale);
+                    bone.userData.originalNodeIndex = nodeIndex;
+
+                    // Reattach children
+                    // We must copy the children array because re-parenting modifies it
+                    const children = [...originalNode.children];
+                    for (const child of children) {
+                        bone.add(child);
+                    }
+
+                    // Swap in parent
+                    if (originalNode.parent) {
+                        originalNode.parent.add(bone);
+                        originalNode.parent.remove(originalNode);
+                    } else {
+                        // It was a root node
+                        // If it was added to group (in checking loop?), we might need to handle it.
+                        // But nodeObjects logic adds roots to group earlier.
+                        // So originalNode.parent should be 'group' if it's a root.
+                        // Ideally we check if it has a parent.
+                        // If parent is null, it might be waiting to be added to scene.
+                        // But in our earlier loop: group.add(obj) for all nodes!
+                        // Wait, earlier loop:
+                        // for (let i = 0; i < nodes.length; i++) { ... group.add(obj); }
+                        // Then:
+                        // for (let i = 0; i < nodes.length; i++) { ... nodeObjects[node.parent].add(nodeObjects[i]); }
+                        // So non-roots are reparented. Roots stay in 'group'.
+                        // So originalNode.parent should be valid (either group or another node).
+                        if (originalNode.parent) {
+                            originalNode.parent.add(bone);
+                            originalNode.parent.remove(originalNode);
+                        }
+                    }
+
+                    nodeObjects[nodeIndex] = bone;
+                    bones.push(bone);
+                }
+
+                // We don't need explicit hierarchy loop because we preserved structure via replacement!
+
+                // Update world matrices BEFORE creating Skeleton so calculateInverses()
+                // (called by constructor when no file IBMs) uses correct bone positions
+                group.updateMatrixWorld(true);
+
+                const skeleton = new THREE.Skeleton(bones, boneInverses.length > 0 ? boneInverses : undefined);
+                skeletons.push({ skeleton, meshIndex: -1, skin });
+            }
+
+            // ... (rest of code) ...
+
+
+            // Create meshes
+            for (let mi = 0; mi < (json.meshes?.length || 0); mi++) {
+                const meshJson = json.meshes[mi];
+                const meshGroup = new THREE.Group();
+                meshGroup.name = meshJson.name || `mesh_${mi}`;
+
+                for (let pi = 0; pi < meshJson.primitives.length; pi++) {
+                    const prim = meshJson.primitives[pi];
+                    const geometry = new THREE.BufferGeometry();
+
+                    // Position (VEC3)
+                    if (prim.attributes.POSITION !== undefined) {
+                        const acc = json.accessors[prim.attributes.POSITION];
+                        const positions = readFloat32Array(bin, acc);
+                        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    }
+
+                    // Normal (VEC3)
+                    if (prim.attributes.NORMAL !== undefined) {
+                        const acc = json.accessors[prim.attributes.NORMAL];
+                        const normals = readFloat32Array(bin, acc);
+                        geometry.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+                    }
+
+                    // UV (VEC2)
+                    if (prim.attributes.TEXCOORD_0 !== undefined) {
+                        const acc = json.accessors[prim.attributes.TEXCOORD_0];
+                        const uvs = readFloat32ArrayVec2(bin, acc);
+                        geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+                    }
+
+                    // Skinning: joints and weights
+                    if (prim.attributes.JOINTS_0 !== undefined && prim.attributes.WEIGHTS_0 !== undefined) {
+                        const jointAcc = json.accessors[prim.attributes.JOINTS_0];
+                        const weightAcc = json.accessors[prim.attributes.WEIGHTS_0];
+
+                        // Read JOINTS (skinIndex)
+                        let jointData;
+                        if (jointAcc.componentType === 5123) { // UNSIGNED_SHORT
+                            jointData = readUint16Array(bin, jointAcc);
+                        } else if (jointAcc.componentType === 5121) { // UNSIGNED_BYTE
+                            const raw = readUint8Array(bin, jointAcc); // Need to implement or do manually
+                            // Convert u8 to u16 for Three.js BufferAttribute (standardizes it)
+                            jointData = new Uint16Array(raw.length);
+                            for (let k = 0; k < raw.length; k++) jointData[k] = raw[k];
+                        } else {
+                            // Fallback or Float? Usually ints.
+                            jointData = readUint16Array(bin, jointAcc);
+                        }
+
+                        // Read WEIGHTS (skinWeight)
+                        const weightData = readFloat32Array(bin, weightAcc);
+
+                        // Ensure VEC4 structure (4 components per vertex) is respected by the helper
+                        // readFloat32Array handles VEC3, need generic read?
+                        // Actually readFloat32Array assumes VEC3 * 3. WEIGHTS are VEC4.
+                        // We need a specific reader for VEC4 or generic reader.
+
+                        // Let's implement inline reading for safety to match VEC4 requirement
+
+                        // JOINTS
+                        let finalJoints;
+                        {
+                            const count = jointAcc.count;
+                            // Checking string "u16" is CRITICAL because convert_b3d_to_smpk.ts writes string types
+                            const isU16 = jointAcc.componentType === 5123 || jointAcc.componentType === "u16";
+                            const compSize = isU16 ? 2 : 1;
+                            const totalBytes = count * 4 * compSize;
+                            const src = new Uint8Array(bin.buffer, bin.byteOffset + jointAcc.offset, totalBytes);
+                            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+                            finalJoints = new Uint16Array(count * 4);
+
+                            for (let i = 0; i < count * 4; i++) {
+                                if (compSize === 2) finalJoints[i] = view.getUint16(i * 2, true);
+                                else finalJoints[i] = view.getUint8(i);
+                            }
+                        }
+
+                        // WEIGHTS
+                        let finalWeights;
+                        {
+                            const count = weightAcc.count;
+                            const totalBytes = count * 4 * 4; // VEC4 * float32
+                            const src = new Uint8Array(bin.buffer, bin.byteOffset + weightAcc.offset, totalBytes);
+                            const view = new DataView(src.buffer, src.byteOffset, src.byteLength);
+                            finalWeights = new Float32Array(count * 4);
+
+                            for (let i = 0; i < count * 4; i++) {
+                                finalWeights[i] = view.getFloat32(i * 4, true);
+                            }
+                        }
+
+                        geometry.setAttribute('skinIndex', new THREE.BufferAttribute(finalJoints, 4));
+                        geometry.setAttribute('skinWeight', new THREE.BufferAttribute(finalWeights, 4));
+                    }
+
+                    // Indices
+                    if (prim.indices !== undefined) {
+                        const acc = json.accessors[prim.indices];
+                        let indices;
+                        if (acc.componentType === 5123) {
+                            indices = readUint16Array(bin, acc);
+                        } else {
+                            indices = readUint32Array(bin, acc);
+                        }
+                        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+                    }
+
+                    geometry.computeVertexNormals();
+
+                    // Material
+                    let material;
+                    const meshColors = [0x6a7a8a, 0x7a8a9a, 0x5a6a7a, 0x8a9aaa, 0x4a5a6a];
+                    const fallbackColor = meshColors[mi % meshColors.length];
+
+                    if (prim.material !== undefined && json.materials && json.materials[prim.material]) {
+                        const matInfo = json.materials[prim.material];
+                        material = new THREE.MeshStandardMaterial({
+                            color: 0x888888,
+                            side: THREE.DoubleSide,
+                            skinning: true
+                        });
+                        if (matInfo.baseColorTexture) {
+                            const texLoader = new THREE.TextureLoader();
+                            const dirPath = path.substring(0, path.lastIndexOf('/') + 1);
+                            const texPath = dirPath + matInfo.baseColorTexture;
+                            try {
+                                material.map = texLoader.load(texPath);
+                                material.color.setHex(0xffffff);
+                                log(`Loaded texture: ${texPath}`);
+                            } catch (e) {
+                                material.color.setHex(fallbackColor);
+                                log(`Texture load failed: ${texPath}`);
+                            }
+                        } else {
+                            material.color.setHex(fallbackColor);
+                        }
+                    } else {
+                        material = new THREE.MeshStandardMaterial({
+                            color: fallbackColor,
+                            side: THREE.DoubleSide,
+                            skinning: true
+                        });
+                    }
+
+                    // Attach meshGroup to the node that references this mesh index.
+                    // This ensures the SkinnedMesh's world matrix matches what the
+                    // converter used when computing inverse bind matrices.
+                    let meshNodeObj = group; // fallback to root
+                    for (let ni = 0; ni < nodes.length; ni++) {
+                        if (nodes[ni].mesh === mi) {
+                            meshNodeObj = nodeObjects[ni];
+                            break;
+                        }
+                    }
+                    meshNodeObj.add(meshGroup);
+                    meshes.push(meshGroup);
+
+                    // Determine if this mesh should be skinned
+                    let hasSkin = false;
+                    for (let ni = 0; ni < nodes.length; ni++) {
+                        if (nodes[ni].mesh === mi && nodes[ni].skin !== undefined) {
+                            hasSkin = true;
+                            break;
+                        }
+                    }
+
+                    const mesh = hasSkin
+                        ? new THREE.SkinnedMesh(geometry, material)
+                        : new THREE.Mesh(geometry, material);
+                    meshGroup.add(mesh);
+
+                    // Attach skeleton to skinned mesh if available
+                    let skeletonValid = false;
+                    if (hasSkin && mesh.isSkinnedMesh) {
+                        for (const sk of skeletons) {
+                            if (sk.skeleton && sk.skeleton.bones && sk.skeleton.bones.length > 0) {
+                                try {
+                                    // Do NOT reparent bones to SkinnedMesh.
+                                    // Bones must remain in the original node hierarchy so their
+                                    // world matrices include all ancestor transforms (e.g. Root1's
+                                    // 90-degree rotation and 0.709 scale for the guard model).
+                                    // Three.js only needs bones to have valid matrixWorld values.
+
+                                    // Ensure all world matrices are up-to-date
+                                    group.updateMatrixWorld(true);
+
+                                    // Bind with explicit bind matrix to preserve file IBMs
+                                    mesh.bind(sk.skeleton, mesh.matrixWorld);
+
+                                    skeletonValid = true;
+                                    log(`Bound skeleton with ${sk.skeleton.bones.length} bones`);
+                                    break;
+                                } catch (e) {
+                                    log(`Failed to bind skeleton: ${e.message}`);
+                                }
+                            }
+                        }
+                    }
+
+                    if (hasSkin && !skeletonValid) {
+                        // Convert to regular mesh if skeleton binding fails
+                        log(`No valid skeleton, using regular mesh`);
+                        const regularMesh = new THREE.Mesh(geometry, material);
+                        meshGroup.add(regularMesh);
+                        meshGroup.remove(mesh);
+                    }
+                }
+
+                // Moved attachment logic up
+            }
+
+            // Add bones to scene
+            log(`[Debug] Adding bones to scene, skeletons: ${skeletons.length}`);
+            for (const sk of skeletons) {
+                for (const bone of sk.skeleton.bones) {
+                    if (bone.parent === group || bone.parent === null) {
+                        group.add(bone);
+                    }
+                }
+            }
+
+            // Setup animation
+            log(`[Animation Setup] Checking animations... found: ${json.animations?.length || 0}`);
+            if (json.animations && json.animations.length > 0) {
+                log('[Animation Setup] Calling buildClips()');
+                const clips = buildClips();
+                log(`[Animation Setup] buildClips returned ${clips.length} clips`);
+
+                if (clips.length > 0) {
+                    try {
+                        const mixer = new THREE.AnimationMixer(group);
+                        group.userData.mixer = mixer;
+                        group.userData.animationClips = clips;
+                        group.userData.fps = json.animations[0].fps || 30;
+
+                        // Play first clip
+                        const action = mixer.clipAction(clips[0]);
+                        action.play();
+                        group.userData.action = action;
+
+                        if (json.animations[0].sequences) {
+                            group.userData.sequences = json.animations[0].sequences;
+                        }
+
+                        log(`Animation initialized: ${clips.length} clips`);
+                    } catch (e) {
+                        log(`Animation setup failed: ${e.message}`);
+                    }
+                } else {
+                    log(`No valid animation clips created`);
+                }
+            } else {
+                log(`No animations in model`);
+            }
+
+            return group;
+        };
+
+        async function loadNPC() {
+            const modelName = document.getElementById('modelSelect').value;
+            const modelPath = `GFX/npcs/${modelName}`;
+
+            document.getElementById('btnLoad').disabled = true;
+            document.getElementById('btnLoad').innerHTML = '<span class="loading">Loading...</span>';
+
+            log('=== SCPCB NPC Model Demo ===');
+            log(`Model: ${modelName}`);
+            log('');
+
+            // Setup Three.js
+            const canvas = document.getElementById('canvas');
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+            renderer.setSize(800, 500);
+            renderer.setClearColor(0x1a1a2e);
+            renderer.shadowMap.enabled = true;
+
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(60, 800 / 500, 0.1, 1000);
+            camera.position.set(0, 2, -6);
+            camera.lookAt(0, 1, 0);
+
+            // Lights
+            const ambient = new THREE.AmbientLight(0x808080, 1.2);
+            scene.add(ambient);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            dirLight.position.set(5, 10, -5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            const fillLight = new THREE.DirectionalLight(0x8080ff, 0.3);
+            fillLight.position.set(-5, 5, 5);
+            scene.add(fillLight);
+
+            // Ground
+            const groundGeom = new THREE.PlaneGeometry(30, 30);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x2a2a3a, roughness: 0.9 });
+            const ground = new THREE.Mesh(groundGeom, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Grid helper
+            const grid = new THREE.GridHelper(30, 30, 0x3a3a4a, 0x2a2a3a);
+            scene.add(grid);
+
+            // Load NPC model
+            log('');
+            log(`Loading: ${modelPath}`);
+
+            // Initialize Animation Controls
+            const animControls = document.getElementById('animControls');
+            const clipSelect = document.getElementById('clipSelect');
+            const seqSelect = document.getElementById('seqSelect');
+            const frameSlider = document.getElementById('frameSlider');
+            const frameDisplay = document.getElementById('frameDisplay');
+            const btnPlay = document.getElementById('btnPlay');
+            const speedSelect = document.getElementById('speedSelect');
+
+            // Reset controls
+            animControls.style.display = 'none';
+
+            try {
+                const npcGroup = await loadSmpkModel(modelPath);
+                npcEntity = npcGroup;
+                npcGroup.position.set(0, 0, 0);
+                scene.add(npcGroup);
+
+                // Setup Animation UI if animations exist
+                if (npcGroup.userData.mixer) {
+                    mixer = npcGroup.userData.mixer;
+                    const clips = npcGroup.userData.animationClips || [];
+                    const sequences = npcGroup.userData.sequences || [];
+                    const fps = npcGroup.userData.fps || 30;
+
+                    npcAction = npcGroup.userData.action; // Already playing from loader
+                    
+                    // Ensure the action is playing with proper settings
+                    if (npcAction && !npcAction.isRunning()) {
+                        npcAction.setLoop(THREE.LoopRepeat, Infinity);
+                        npcAction.setEffectiveTimeScale(1.0);
+                        npcAction.play();
+                    }
+                    animPlaying = true;
+                    animSpeed = 1.0;
+
+                    // Show Controls
+                    animControls.style.display = 'block';
+
+                    // Populate Clips
+                    clipSelect.innerHTML = '';
+                    if (clips.length > 0) {
+                        clips.forEach((clip, i) => {
+                            const opt = document.createElement('option');
+                            opt.value = i;
+                            opt.textContent = clip.name || `Clip ${i}`;
+                            clipSelect.appendChild(opt);
+                        });
+                    } else {
+                        clipSelect.innerHTML = '<option>No Clips</option>';
+                    }
+
+                    // Populate Sequences
+                    seqSelect.innerHTML = '<option value="-1">All Frames</option>';
+                    sequences.forEach((seq, i) => {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = `${seq.name} (${seq.firstFrame}-${seq.lastFrame})`;
+                        seqSelect.appendChild(opt);
+                    });
+
+                    // Setup Slider
+                    const duration = npcAction.getClip().duration;
+                    const maxFrame = Math.ceil(duration * fps);
+                    frameSlider.max = maxFrame;
+                    frameSlider.value = 0;
+
+                    // Event Listeners for this specific model load
+                    clipSelect.onchange = (e) => {
+                        if (!mixer) return;
+                        const idx = parseInt(e.target.value);
+                        if (clips[idx]) {
+                            const prevTime = npcAction ? npcAction.time : 0;
+                            const wasPlaying = npcAction ? npcAction.isRunning() : true;
+
+                            if (npcAction) npcAction.stop();
+                            npcAction = mixer.clipAction(clips[idx]);
+                            if (wasPlaying) npcAction.play();
+
+                            // Update slider max
+                            const newDur = npcAction.getClip().duration;
+                            frameSlider.max = Math.ceil(newDur * fps);
+                        }
+                    };
+
+                    seqSelect.onchange = (e) => {
+                        const seqIdx = parseInt(e.target.value);
+                        if (seqIdx >= 0 && sequences[seqIdx]) {
+                            // Jump to sequence start? 
+                            // Or restrict playback? For now just jump.
+                            const seq = sequences[seqIdx];
+                            if (npcAction) {
+                                npcAction.time = seq.firstFrame / fps;
+                            }
+                        }
+                    };
+
+                    btnPlay.onclick = () => {
+                        if (npcAction) {
+                            if (npcAction.isRunning() && !npcAction.paused) {
+                                // Playing -> Pause
+                                npcAction.paused = true;
+                                btnPlay.textContent = "▶ Play";
+                                animPlaying = false;
+                            } else {
+                                // Paused or Stopped -> Play
+                                if (!npcAction.isRunning()) {
+                                    npcAction.play();
+                                    // Ensure time scale is correct
+                                    npcAction.setEffectiveTimeScale(animSpeed);
+                                }
+                                npcAction.paused = false;
+                                btnPlay.textContent = "⏸ Pause";
+                                animPlaying = true;
+                            }
+                        }
+                    };
+
+                    frameSlider.oninput = (e) => {
+                        const frame = parseFloat(e.target.value);
+                        if (npcAction) {
+                            npcAction.time = frame / fps;
+                            npcAction.paused = true; // Pause when scrubbing
+                            btnPlay.textContent = "▶ Play";
+                            animPlaying = false;
+                            mixer.update(0); // Update visual
+                        }
+                        frameDisplay.textContent = `Frame: ${frame.toFixed(1)} / ${frameSlider.max}`;
+                    };
+
+                    speedSelect.onchange = (e) => {
+                        const spd = parseFloat(e.target.value);
+                        if (npcAction) npcAction.setEffectiveTimeScale(spd);
+                    };
+                }
+
+                // Auto-scale if needed
+                npcGroup.traverse((child) => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                    }
+                });
+
+                // Auto-fit camera
+                const box = new THREE.Box3().setFromObject(npcGroup);
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z);
+                if (maxDim > 4) {
+                    camera.position.z = -maxDim * 2;
+                }
+
+                log('');
+                log(`Model loaded successfully!`);
+                log(`Bounding box: ${size.x.toFixed(2)} x ${size.y.toFixed(2)} x ${size.z.toFixed(2)}`);
+
+                document.getElementById('btnLoad').disabled = false;
+                document.getElementById('btnLoad').innerHTML = 'Load NPC Model';
+            } catch (e) {
+                log(`Failed to load: ${e.message}`);
+                log('Using placeholder...');
+                createPlaceholderNPC();
+
+                document.getElementById('btnLoad').disabled = false;
+                document.getElementById('btnLoad').innerHTML = 'Load NPC Model';
+            }
+
+            // Start render loop
+            startRenderLoop();
+        }
+
+        function createPlaceholderNPC() {
+
+            const group = new THREE.Group();
+
+            const bodyGeom = new THREE.BoxGeometry(0.7, 1.2, 0.35);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3a4a5a });
+            const body = new THREE.Mesh(bodyGeom, bodyMat);
+            body.position.y = 1.1;
+            body.castShadow = true;
+            group.add(body);
+
+            const headGeom = new THREE.BoxGeometry(0.35, 0.4, 0.35);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xd4a574 });
+            const head = new THREE.Mesh(headGeom, headMat);
+            head.position.y = 1.9;
+            head.castShadow = true;
+            group.add(head);
+
+            const armGeom = new THREE.BoxGeometry(0.18, 0.8, 0.18);
+            const armMat = new THREE.MeshStandardMaterial({ color: 0x3a4a5a });
+            const leftArm = new THREE.Mesh(armGeom, armMat);
+            leftArm.position.set(-0.55, 1.1, 0);
+            group.add(leftArm);
+            const rightArm = new THREE.Mesh(armGeom, armMat);
+            rightArm.position.set(0.55, 1.1, 0);
+            group.add(rightArm);
+
+            const legGeom = new THREE.BoxGeometry(0.25, 0.8, 0.25);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x2a3a4a });
+            const leftLeg = new THREE.Mesh(legGeom, legMat);
+            leftLeg.position.set(-0.22, 0.4, 0);
+            group.add(leftLeg);
+            const rightLeg = new THREE.Mesh(legGeom, legMat);
+            rightLeg.position.set(0.22, 0.4, 0);
+            group.add(rightLeg);
+
+            npcEntity = group;
+            group.position.set(0, 0, 0);
+            scene.add(group);
+
+            // Setup simple animation
+            mixer = new THREE.AnimationMixer(group);
+            npcEntity.userData.leftArm = leftArm;
+            npcEntity.userData.rightArm = rightArm;
+            npcEntity.userData.leftLeg = leftLeg;
+            npcEntity.userData.rightLeg = rightLeg;
+            npcEntity.userData.body = body;
+
+            animPlaying = true;
+        }
+
+        function toggleAnimation() {
+            animPlaying = !animPlaying;
+            if (npcAction) {
+                if (animPlaying) npcAction.play();
+                else npcAction.stop();
+            }
+            log(`Animation: ${animPlaying ? 'ON' : 'OFF'}`);
+        }
+
+        function setAnimSpeed(speed) {
+            animSpeed = speed;
+            if (npcAction) npcAction.timeScale = speed;
+            log(`Speed: ${speed}x`);
+        }
+
+        function resetCamera() {
+            camera.position.set(0, 2, -6);
+            camera.lookAt(0, 1, 0);
+            log('Camera reset');
+        }
+
+        let lastTime = performance.now();
+        let frame = 0;
+
+        function startRenderLoop() {
+            if (!requestAnimationFrameId) {
+                animate();
+            }
+        }
+
+        let requestAnimationFrameId = null;
+
+        function animate() {
+            requestAnimationFrameId = requestAnimationFrame(animate);
+
+            const now = performance.now();
+            const dt = clock.getDelta();
+
+            // Update animation mixer if valid
+            if (mixer && npcAction) {
+                // Ensure we update even if paused (to allow scrubbing), but mainly when running
+                if (npcAction.isRunning() && !npcAction.paused) {
+                    mixer.update(dt);
+                    
+                    // Update slider to match current animation time
+                    const frameSlider = document.getElementById('frameSlider');
+                    const frameDisplay = document.getElementById('frameDisplay');
+                    if (frameSlider && !frameSlider.matches(':hover, :active')) {
+                        const fps = npcEntity?.userData?.fps || 30;
+                        const currentFrame = npcAction.time * fps;
+                        frameSlider.value = currentFrame;
+                        frameDisplay.textContent = `Frame: ${currentFrame.toFixed(1)} / ${frameSlider.max}`;
+                    }
+                }
+            }
+
+            // Simple walking animation for placeholder
+            if (animPlaying && npcEntity && npcEntity.userData && npcEntity.userData.leftArm) {
+                animTime += dt * 30 * animSpeed;
+                const t = (animTime % 30) / 30;
+                const swing = Math.sin(t * Math.PI * 2) * 0.5;
+
+                npcEntity.userData.leftArm.rotation.x = swing;
+                npcEntity.userData.rightArm.rotation.x = -swing;
+                npcEntity.userData.leftLeg.rotation.x = -swing * 0.4;
+                npcEntity.userData.rightLeg.rotation.x = swing * 0.4;
+                npcEntity.userData.body.position.y = 1.1 + Math.abs(Math.sin(t * Math.PI * 2)) * 0.05;
+            }
+
+            // Slow NPC rotation
+            if (npcEntity) {
+                // npcEntity.rotation.y += 0.002; // Disable rotation to inspect animation better
+            }
+
+            renderer.render(scene, camera);
+
+            frame++;
+            if (frame % 30 === 0) {
+                const animStatus = (npcAction && npcAction.isRunning() && !npcAction.paused) || (!npcAction && animPlaying) ? 'ON' : 'OFF';
+                statsDiv.textContent = `Model loaded | Anim: ${animStatus} | Speed: ${animSpeed}x`;
+            }
+        }
+
+
+        document.addEventListener('keydown', (e) => {
+            const speed = 0.15;
+            switch (e.key.toLowerCase()) {
+                case 'w': case 'arrowup': camera.position.z += speed; break;
+                case 's': case 'arrowdown': camera.position.z -= speed; break;
+                case 'a': case 'arrowleft': camera.position.x -= speed; break;
+                case 'd': case 'arrowright': camera.position.x += speed; break;
+                case ' ': e.preventDefault(); toggleAnimation(); break;
+            }
+        });
+
+        log('Blitz3D WASM SCPCB NPC Demo');
+        log('Select a model and click "Load NPC Model"');
+    </script>
+</body>
+
+</html>

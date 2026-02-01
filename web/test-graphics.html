@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphics Test - Blitz3D WASM</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        #info {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        #info div {
+            margin: 5px 0;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status.loading {
+            background: #ff9800;
+            color: #000;
+        }
+        
+        .status.success {
+            background: #4CAF50;
+            color: #fff;
+        }
+        
+        .status.error {
+            background: #f44336;
+            color: #fff;
+        }
+        
+        #canvas-container {
+            position: relative;
+            background: #000;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        #game-canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        
+        #controls {
+            margin-top: 20px;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        
+        #console {
+            margin-top: 20px;
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+        
+        .log-entry.info { color: #4CAF50; }
+        .log-entry.warn { color: #ff9800; }
+        .log-entry.error { color: #f44336; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>🎮 Graphics Test - Blitz3D WASM Engine</h1>
+        
+        <div id="info">
+            <div>
+                <strong>Status:</strong> 
+                <span id="status" class="status loading">Initializing...</span>
+            </div>
+            <div><strong>Graphics API:</strong> <span id="api-name">-</span></div>
+            <div><strong>Max Texture Size:</strong> <span id="max-texture">-</span></div>
+            <div><strong>Frame Time:</strong> <span id="frame-time">-</span></div>
+            <div><strong>FPS:</strong> <span id="fps">-</span></div>
+        </div>
+        
+        <div id="canvas-container">
+            <canvas id="game-canvas" width="800" height="600"></canvas>
+        </div>
+        
+        <div id="controls">
+            <button id="btn-triangle" disabled>Draw Triangle</button>
+            <button id="btn-clear" disabled>Clear Screen</button>
+            <button id="btn-reload">Reload Page</button>
+        </div>
+        
+        <div id="console">
+            <div class="log-entry info">Console output will appear here...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { loadBlitz3DEngine } from './src/runtime/wasm-loader.ts';
+        import { createStandardVertexLayout, BufferUsage, toArrayBuffer } from './src/runtime/graphics-api.ts';
+
+        // Console logging to page
+        const consoleDiv = document.getElementById('console');
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            consoleDiv.appendChild(entry);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog(...args);
+            addLog(args.join(' '), 'info');
+        };
+        
+        console.warn = (...args) => {
+            originalWarn(...args);
+            addLog(args.join(' '), 'warn');
+        };
+        
+        console.error = (...args) => {
+            originalError(...args);
+            addLog(args.join(' '), 'error');
+        };
+
+        // Global state
+        let engine = null;
+        let graphicsAPI = null;
+        let triangleVBO = null;
+        let triangleShader = null;
+        let isRendering = false;
+        
+        // Performance monitoring
+        let frameTimes = [];
+        let lastFrameTime = performance.now();
+        
+        function updatePerformanceStats() {
+            const now = performance.now();
+            const frameTime = now - lastFrameTime;
+            lastFrameTime = now;
+            
+            frameTimes.push(frameTime);
+            if (frameTimes.length > 60) {
+                const avg = frameTimes.reduce((a, b) => a + b) / 60;
+                const fps = 1000 / avg;
+                document.getElementById('frame-time').textContent = `${avg.toFixed(2)}ms`;
+                document.getElementById('fps').textContent = fps.toFixed(1);
+                frameTimes = [];
+            }
+        }
+        
+        // Initialize
+        async function init() {
+            try {
+                console.log('🔧 Starting initialization...');
+                
+                const canvas = document.getElementById('game-canvas');
+                console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
+                
+                // Load WASM engine
+                console.log('📦 Loading Blitz3D WASM engine...');
+                engine = await loadBlitz3DEngine('./blitz3d-engine.wasm', canvas);
+                console.log('✅ Engine loaded successfully');
+                
+                // Get graphics API from global (set by loader)
+                graphicsAPI = window.graphicsAPI;
+                if (!graphicsAPI) {
+                    throw new Error('Graphics API not initialized by loader');
+                }
+                
+                const caps = graphicsAPI.getCapabilities();
+                console.log(`Graphics API: ${caps.apiName}`);
+                console.log(`Max texture size: ${caps.maxTextureSize}`);
+                
+                // Update UI
+                document.getElementById('api-name').textContent = caps.apiName;
+                document.getElementById('max-texture').textContent = caps.maxTextureSize;
+                document.getElementById('status').textContent = 'Ready';
+                document.getElementById('status').className = 'status success';
+                
+                // Enable buttons
+                document.getElementById('btn-triangle').disabled = false;
+                document.getElementById('btn-clear').disabled = false;
+                
+                console.log('✅ Initialization complete!');
+                
+            } catch (error) {
+                console.error('❌ Initialization failed:', error.message);
+                document.getElementById('status').textContent = 'Error';
+                document.getElementById('status').className = 'status error';
+                throw error;
+            }
+        }
+        
+        // Draw triangle
+        async function drawTriangle() {
+            if (!graphicsAPI) {
+                console.error('Graphics API not initialized');
+                return;
+            }
+            
+            try {
+                console.log('🔺 Creating triangle...');
+                
+                // Create triangle vertices (position, normal, uv)
+                const vertices = new Float32Array([
+                    // x,    y,    z,   nx,   ny,   nz,   u,    v
+                    0.0,   0.5,  0.0,  0.0,  0.0,  1.0,  0.5,  1.0,  // top
+                   -0.5,  -0.5,  0.0,  0.0,  0.0,  1.0,  0.0,  0.0,  // bottom-left
+                    0.5,  -0.5,  0.0,  0.0,  0.0,  1.0,  1.0,  0.0,  // bottom-right
+                ]);
+                
+                console.log(`Created ${vertices.length / 8} vertices`);
+                
+                // Create buffer
+                triangleVBO = graphicsAPI.createBuffer(
+                    toArrayBuffer(vertices),
+                    BufferUsage.Vertex
+                );
+                console.log(`Vertex buffer created: handle ${triangleVBO}`);
+                
+                // Load shaders
+                const caps = graphicsAPI.getCapabilities();
+                let vertexCode, fragmentCode;
+                
+                if (caps.apiName === 'WebGPU') {
+                    console.log('Loading WGSL shaders...');
+                    const wgsl = await fetch('./src/runtime/shaders/basic.wgsl').then(r => r.text());
+                    vertexCode = wgsl;
+                    fragmentCode = wgsl;
+                } else {
+                    console.log('Loading GLSL shaders...');
+                    vertexCode = await fetch('./src/runtime/shaders/basic.vert').then(r => r.text());
+                    fragmentCode = await fetch('./src/runtime/shaders/basic.frag').then(r => r.text());
+                }
+                
+                console.log('Compiling shaders...');
+                triangleShader = graphicsAPI.createShader(vertexCode, fragmentCode);
+                console.log(`Shader created: handle ${triangleShader}`);
+                
+                // Set vertex layout
+                graphicsAPI.setVertexLayout(createStandardVertexLayout());
+                console.log('Vertex layout set');
+                
+                // Start render loop
+                if (!isRendering) {
+                    isRendering = true;
+                    console.log('🎬 Starting render loop...');
+                    renderLoop();
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to create triangle:', error.message);
+                throw error;
+            }
+        }
+        
+        // Render loop
+        function renderLoop() {
+            if (!isRendering) return;
+            
+            try {
+                graphicsAPI.beginFrame();
+                graphicsAPI.clear(0.2, 0.3, 0.4, 1.0); // Blue background
+                
+                if (triangleVBO && triangleShader) {
+                    graphicsAPI.useShader(triangleShader);
+                    graphicsAPI.drawTriangles(triangleVBO, 3);
+                }
+                
+                graphicsAPI.endFrame();
+                
+                updatePerformanceStats();
+                
+            } catch (error) {
+                console.error('Render error:', error.message);
+                isRendering = false;
+            }
+            
+            requestAnimationFrame(renderLoop);
+        }
+        
+        // Clear screen
+        function clearScreen() {
+            if (!graphicsAPI) return;
+            
+            console.log('🧹 Clearing screen...');
+            graphicsAPI.beginFrame();
+            graphicsAPI.clear(0.0, 0.0, 0.0, 1.0); // Black
+            graphicsAPI.endFrame();
+        }
+        
+        // Button handlers
+        document.getElementById('btn-triangle').addEventListener('click', drawTriangle);
+        document.getElementById('btn-clear').addEventListener('click', clearScreen);
+        document.getElementById('btn-reload').addEventListener('click', () => location.reload());
+        
+        // Global error handlers
+        window.addEventListener('error', (e) => {
+            console.error('Uncaught error:', e.message);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+        
+        // Start initialization
+        init().catch(err => {
+            console.error('Fatal error during initialization:', err);
+        });
+    </script>
+</body>
+</html>

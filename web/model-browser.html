@@ -353,6 +353,8 @@
                             pathIndex++;
                             if (pathIndex < texPaths.length) {
                                 img.src = texPaths[pathIndex];
+                            } else {
+                                console.warn('❌ Texture not found after trying all paths:', prim.texturePath);
                             }
                         };
                         

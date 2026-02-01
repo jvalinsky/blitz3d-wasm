@@ -30,7 +30,8 @@
       "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_main.wasm 2>&1 | head -100)",
       "Bash(cd /Users/jack/Software/scp_port/scpcb && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm Main.bb -o /tmp/scpcb_main.wasm 2>&1 | tail -30)",
       "Bash(mkdir -p /Users/jack/Software/scp_port/blitz3d-wasm/Sources/Blitz3DEngine/Math)",
-      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -30)"
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && swift build 2>&1 | tail -30)",
+      "Bash(cd /tmp/blitz3d-test && /Users/jack/Software/scp_port/blitz3d-wasm/.build/debug/blitz3d-wasm math_test.bb -o math_test.wasm 2>&1 | tail -20)"
     ]
   }
 }

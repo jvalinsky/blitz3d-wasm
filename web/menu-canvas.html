@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SCP: Containment Breach - Main Menu (Authentic)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #gameCanvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+        
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        
+        #startScreen h1 {
+            color: #fff;
+            font-size: 48px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #fff;
+        }
+        
+        #startScreen button {
+            padding: 20px 60px;
+            font-size: 24px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 3px solid #fff;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #startScreen button:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+        
+        #startScreen p {
+            color: #888;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        #videoOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 900;
+        }
+        
+        #videoOverlay video {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        #videoOverlay button {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+            border: 2px solid #fff;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="startScreen">
+        <h1>SCP: Containment Breach</h1>
+        <button id="startButton">CLICK TO START</button>
+        <p>Press any key or click to begin</p>
+    </div>
+    
+    <div id="videoOverlay">
+        <video id="introVideo"></video>
+        <button onclick="skipVideo()">Skip Intro</button>
+    </div>
+
+    <script>
+        // Canvas setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Scale for high-DPI displays
+        const dpr = window.devicePixelRatio || 1;
+        const menuScale = 1.0;
+        
+        // Set canvas size (original game is 1024x768 base)
+        const baseWidth = 1024;
+        const baseHeight = 768;
+        canvas.width = baseWidth * menuScale;
+        canvas.height = baseHeight * menuScale;
+        canvas.style.width = baseWidth + 'px';
+        canvas.style.height = baseHeight + 'px';
+        
+        // Mouse state (matches Blitz3D globals)
+        let mouseX = 0;
+        let mouseY = 0;
+        let mouseHit1 = false;
+        let mouseDown1 = false;
+        let mouseUp1 = false;
+        
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * menuScale;
+            mouseY = (e.clientY - rect.top) * menuScale;
+        });
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) {
+                mouseDown1 = true;
+                mouseHit1 = true;
+            }
+        });
+        
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 0) {
+                mouseDown1 = false;
+                mouseUp1 = true;
+            }
+        });
+        
+        // Assets (loaded images)
+        const assets = {
+            menuBack: null,
+            menu173: null,
+            menuText: null,
+            menuWhite: null,
+            menuBlack: null
+        };
+        
+        let assetsLoaded = 0;
+        const totalAssets = 5;
+        
+        function loadAsset(name, path) {
+            const img = new Image();
+            img.onload = () => {
+                assets[name] = img;
+                assetsLoaded++;
+                if (assetsLoaded === totalAssets) {
+                    console.log('[Menu] All assets loaded');
+                }
+            };
+            img.onerror = () => {
+                console.error('[Menu] Failed to load:', path);
+                assetsLoaded++;
+            };
+            img.src = path;
+        }
+        
+        // Load assets
+        loadAsset('menuBack', './dist/assets/back.jpg');
+        loadAsset('menu173', './dist/assets/173back.jpg');
+        loadAsset('menuText', './dist/assets/scptext.jpg');
+        loadAsset('menuWhite', './dist/assets/menuwhite.jpg');
+        loadAsset('menuBlack', './dist/assets/menublack.jpg');
+        
+        // Menu state
+        let mainMenuTab = 0;  // 0 = main, 1 = new game, 2 = load, 3 = options
+        
+        // SCP-173 blink effect (matches original timing)
+        let menuBlinkTimer = [1, 700 + Math.random() * 100];
+        let menuBlinkDuration = [0, 0];
+        
+        // Creepy text effect
+        let menuStr = "";
+        let menuStrX = 700 * menuScale;
+        let menuStrY = 100 * menuScale;
+        const creepyMessages = [
+            "DON'T BLINK", "DON'T BLINK", "DON'T BLINK",
+            "Secure. Contain. Protect.", "Secure. Contain. Protect.",
+            "You want happy endings? Fuck you.",
+            "You want happy endings? Fuck you.",
+            "You want happy endings? Fuck you.",
+            "Sometimes we would have had time to scream.",
+            "Sometimes we would have had time to scream.",
+            "Sometimes we would have had time to scream.",
+            "NIL", "NO", "black white black white black white gray",
+            "Stone does not care", "9341", "It controls the doors",
+            "e8m106]af173o+079m895w914", "NIL",
+            "It has taken over everything", "The spiral is growing",
+            '"Some kind of gestalt effect due to massive reality damage."'
+        ];
+        
+        // Blitz3D-style helper functions
+        function MouseOn(x, y, width, height) {
+            return mouseX >= x && mouseX <= x + width &&
+                   mouseY >= y && mouseY <= y + height;
+        }
+        
+        function DrawFrame(x, y, width, height) {
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, width, height);
+            
+            ctx.strokeStyle = 'rgb(90,90,90)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
+        }
+        
+        function DrawButton(x, y, width, height, txt, bigfont = true) {
+            DrawFrame(x, y, width, height);
+            
+            let clicked = false;
+            if (MouseOn(x, y, width, height)) {
+                ctx.fillStyle = 'rgb(30,30,30)';
+                if (mouseHit1) {
+                    clicked = true;
+                    // Play button sound (TODO: add audio)
+                }
+                ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
+            } else {
+                ctx.fillStyle = 'rgb(0,0,0)';
+                ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
+            }
+            
+            // Draw text
+            ctx.fillStyle = 'white';
+            ctx.font = bigfont ? '28px Courier New' : '18px Courier New';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(txt, x + width / 2, y + height / 2);
+            
+            return clicked;
+        }
+        
+        // Main menu rendering
+        function UpdateMainMenu() {
+            // Clear screen
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            if (assets.menuBack) {
+                ctx.drawImage(assets.menuBack, 0, 0, canvas.width, canvas.height);
+            }
+            
+            // SCP-173 blink effect (matches original)
+            const currentTime = Date.now();
+            if ((currentTime % menuBlinkTimer[0]) >= (menuBlinkTimer[0] - menuBlinkDuration[0])) {
+                if (assets.menu173) {
+                    const img = assets.menu173;
+                    const scale = canvas.height * 0.4 / img.height;
+                    const w = img.width * scale;
+                    const h = img.height * scale;
+                    ctx.drawImage(img, canvas.width - w, canvas.height - h, w, h);
+                }
+            }
+            
+            if (Math.random() < 0.0033) {
+                menuBlinkTimer[0] = 4000 + Math.random() * 4000;
+                menuBlinkDuration[0] = 200 + Math.random() * 300;
+            }
+            
+            // Creepy text effect
+            menuBlinkTimer[1]--;
+            if (menuBlinkTimer[1] < menuBlinkDuration[1]) {
+                ctx.fillStyle = 'rgb(50,50,50)';
+                ctx.font = '24px Courier New';
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'top';
+                
+                // Slight random offset (like original)
+                const offsetX = (Math.random() - 0.5) * 10;
+                const offsetY = (Math.random() - 0.5) * 10;
+                ctx.fillText(menuStr, menuStrX + offsetX, menuStrY + offsetY);
+                
+                if (menuBlinkTimer[1] < 0) {
+                    menuBlinkTimer[1] = 700 + Math.random() * 100;
+                    menuBlinkDuration[1] = 10 + Math.random() * 25;
+                    menuStrX = (700 + Math.random() * 300) * menuScale;
+                    menuStrY = (100 + Math.random() * 500) * menuScale;
+                    menuStr = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
+                }
+            }
+            
+            // Draw SCP logo
+            if (assets.menuText) {
+                const img = assets.menuText;
+                const x = canvas.width / 2 - img.width / 2;
+                const y = canvas.height - 20 * menuScale - img.height;
+                ctx.drawImage(img, x, y);
+            }
+            
+            // Main menu buttons (matches original positions)
+            if (mainMenuTab === 0) {
+                for (let i = 0; i < 4; i++) {
+                    const x = 159 * menuScale;
+                    const y = (286 + 100 * i) * menuScale;
+                    const width = 400 * menuScale;
+                    const height = 70 * menuScale;
+                    
+                    let txt = "";
+                    switch (i) {
+                        case 0: txt = "NEW GAME"; break;
+                        case 1: txt = "LOAD GAME"; break;
+                        case 2: txt = "OPTIONS"; break;
+                        case 3: txt = "QUIT"; break;
+                    }
+                    
+                    if (DrawButton(x, y, width, height, txt)) {
+                        handleMenuClick(i);
+                    }
+                }
+            }
+            
+            // Reset mouse hit state
+            mouseHit1 = false;
+            mouseUp1 = false;
+            
+            requestAnimationFrame(UpdateMainMenu);
+        }
+        
+        function handleMenuClick(index) {
+            console.log('[Menu] Button clicked:', index);
+            switch (index) {
+                case 0: // NEW GAME
+                    alert('NEW GAME - Would show difficulty selection');
+                    break;
+                case 1: // LOAD GAME
+                    alert('LOAD GAME - Would show save files');
+                    break;
+                case 2: // OPTIONS
+                    alert('OPTIONS - Would show settings');
+                    break;
+                case 3: // QUIT
+                    if (confirm('Are you sure you want to quit?')) {
+                        window.close();
+                    }
+                    break;
+            }
+        }
+        
+        // Video playback
+        const videoOverlay = document.getElementById('videoOverlay');
+        const introVideo = document.getElementById('introVideo');
+        let currentVideoIndex = 0;
+        const introVideos = [
+            './dist/assets/startup_TSS.mp4',
+            './dist/assets/startup_Undertow.mp4'
+        ];
+        
+        function playIntroVideos() {
+            if (currentVideoIndex >= introVideos.length) {
+                videoOverlay.style.display = 'none';
+                UpdateMainMenu();
+                return;
+            }
+            
+            videoOverlay.style.display = 'flex';
+            introVideo.src = introVideos[currentVideoIndex];
+            introVideo.load();
+            
+            introVideo.onloadedmetadata = () => {
+                introVideo.play();
+            };
+            
+            introVideo.onended = () => {
+                currentVideoIndex++;
+                playIntroVideos();
+            };
+        }
+        
+        function skipVideo() {
+            introVideo.pause();
+            currentVideoIndex = introVideos.length;
+            videoOverlay.style.display = 'none';
+            UpdateMainMenu();
+        }
+        
+        // Start screen
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        
+        function startGame() {
+            startScreen.style.display = 'none';
+            
+            const introEnabled = localStorage.getItem('introEnabled') !== 'false';
+            if (introEnabled) {
+                playIntroVideos();
+            } else {
+                UpdateMainMenu();
+            }
+        }
+        
+        startButton.addEventListener('click', startGame);
+        document.addEventListener('keydown', (e) => {
+            if (startScreen.style.display !== 'none') {
+                startGame();
+            } else if (e.key === 'Escape' && videoOverlay.style.display === 'flex') {
+                skipVideo();
+            }
+        });
+    </script>
+</body>
+</html>

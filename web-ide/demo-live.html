@@ -178,19 +178,7 @@
         </div>
     </div>
     
-    <!-- Load Monaco first (uses AMD loader) -->
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
-    
-    <!-- Then load other dependencies after Monaco's loader is set up -->
-    <script>
-        // Prevent AMD conflicts by using noConflict mode
-        if (typeof define === 'function' && define.amd) {
-            window.oldDefine = define;
-            window.define = undefined;
-        }
-    </script>
-    
-    <!-- These don't use AMD -->
+    <!-- Load dependencies in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     
@@ -203,8 +191,13 @@
     }
     </script>
     
+    <!-- Load compiler bundle -->
     <script src="dist/compiler.bundle.js?v=2"></script>
     
+    <!-- Load Monaco last (it uses AMD loader which can conflict) -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
+    
+    <!-- Load our modules -->
     <script type="module">
         import * as THREE from 'three';
         import { registerBlitz3DLanguage } from './blitz3d-language.js';
@@ -217,11 +210,6 @@
         window.registerBlitz3DLanguage = registerBlitz3DLanguage;
         window.graphicsExamples = graphicsExamples;
         window.Blitz3DGraphicsRuntime = Blitz3DGraphicsRuntime;
-        
-        // Restore AMD define if needed
-        if (window.oldDefine) {
-            window.define = window.oldDefine;
-        }
         
         // Signal that modules are loaded
         window.modulesLoaded = true;

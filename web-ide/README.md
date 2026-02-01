@@ -37,7 +37,9 @@ A **fully client-side** Blitz3D development environment that runs entirely in th
   - Survives browser restarts!
 
 ### 📚 Example Library
-**8 Built-in Examples** covering all major features:
+**17 Built-in Examples** covering all major features:
+
+**🎓 Basics (8 examples):**
 1. **Hello World** - Your first program
 2. **Math** - Arithmetic operations
 3. **Loops** - For/Next iteration
@@ -46,6 +48,19 @@ A **fully client-side** Blitz3D development environment that runs entirely in th
 6. **Arrays** - Dim arrays with subscripts
 7. **Strings** - String literals and Print
 8. **Conditionals** - If/ElseIf/Else and Select/Case
+
+**🎮 3D Graphics (7 examples):**
+1. **Rotating Cube** - Simple 3D cube with rotation
+2. **Colorful Cube** - Custom mesh with vertices/triangles
+3. **Particle System** - 100 particles with physics simulation
+4. **Texture Loading** - Loading and applying textures
+5. **3D Model Loading** - Loading .b3d models with animation
+6. **Lighting Effects** - Multiple colored lights
+7. **Skybox Scene** - Full skybox with ground plane
+
+**🎨 2D Graphics (2 examples):**
+1. **Sprite Movement** - 2D sprite with keyboard input
+2. **Collision Detection** - 3D collision between objects
 
 ### 🔧 Developer-Friendly Tools
 - **Three-Tab Output**: WASM / AST / Console
@@ -57,6 +72,11 @@ A **fully client-side** Blitz3D development environment that runs entirely in th
   - 40+ built-in functions (string, math, etc.)
   - Memory management
   - Print to console
+- **Graphics API** (via Three.js)
+  - 3D meshes, cameras, lights
+  - Texture and model loading
+  - Particle systems
+  - Collision detection
 - **Isolated Test Pages** for debugging
   - `test-lexer-only.html` - Test tokenization
   - `test-parser-only.html` - Test AST generation  
@@ -217,14 +237,20 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
 ## 📚 Language Support
 
 ### ✅ Implemented
-- Variables: `Local`, `Global`, `Const`, `Dim`
-- Types: Integer (`%`), Float (`#`), String (`$`)
-- Control Flow: `If`/`Then`/`Else`, `For`/`Next`, `While`/`Wend`, `Repeat`/`Until`
-- Functions: With parameters, return types, defaults
-- Operators: Arithmetic, comparison, logical
-- Arrays: `Dim arr%(10)`
-- Select/Case statements
-- Comments (`;`)
+- **Variables**: `Local`, `Global`, `Const`, `Dim`
+- **Types**: Integer (`%`), Float (`#`), String (`$`)
+- **Control Flow**: `If`/`Then`/`Else`, `For`/`Next`, `While`/`Wend`, `Repeat`/`Until`
+- **Functions**: With parameters, return types, defaults
+- **Operators**: Arithmetic, comparison, logical
+- **Arrays**: `Dim arr%(10)`
+- **Select/Case** statements
+- **Comments** (`;`)
+- **Graphics API** (examples provided):
+  - `Graphics3D`, `CreateMesh`, `CreateCamera`
+  - `CreateSphere`, `CreateCube`, `LoadMesh`
+  - `LoadTexture`, `LoadImage`, `CreateLight`
+  - `RenderWorld`, `Flip`, `TurnEntity`
+  - `PositionEntity`, `RotateEntity`, `ScaleEntity`
 
 ### 🚧 Partially Implemented
 - Custom Types (`Type`...`End Type`) - parsed, not codegen

@@ -23,7 +23,10 @@ public final class DataGeneration {
     private var context: ModuleContext
     private var dataStatements: [DataBlock] = []
     private var dataOffsetMap: [String: Int] = [:]
-    private var currentDataOffset: Int = 0
+    // DATA is laid out in linear memory starting at a fixed base.
+    // We keep offsets absolute (memory addresses) to simplify RESTORE label handling.
+    private let dataBaseAddress: Int = 256
+    private var currentDataOffset: Int = 256
     public private(set) var dataPtrIndex: Int = -1
     
     public init(context: ModuleContext) {
@@ -31,7 +34,7 @@ public final class DataGeneration {
     }
     
     public func setup() {
-        let dataPtrGlobal = WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(256))
+        let dataPtrGlobal = WASMGlobal(type: .i32, mutability: true, initExpr: .i32Const(Int32(truncatingIfNeeded: dataBaseAddress)))
         dataPtrIndex = context.module.globals.count
         context.module.globals.append(dataPtrGlobal)
     }
@@ -50,9 +53,18 @@ public final class DataGeneration {
                 }
                 for value in values {
                     switch value {
-                    case .integer: currentDataOffset += 4
-                    case .float: currentDataOffset += 4
-                    case .string(let str): currentDataOffset += str.utf8.count + 1
+                    case .integer:
+                        currentDataOffset += 4
+                    case .float:
+                        currentDataOffset += 4
+                    case .string(let str):
+                        // Store DATA strings using the Blitz3D string layout:
+                        // [refCount:i32][len:i32][utf8 bytes...][0]
+                        // Then pad to 4 bytes so subsequent numeric loads remain aligned.
+                        let byteLen = str.utf8.count
+                        let size = 8 + byteLen + 1
+                        let padded = (size + 3) & ~3
+                        currentDataOffset += padded
                     }
                 }
             case .function(let funcNode, _):
@@ -85,7 +97,7 @@ public final class DataGeneration {
     }
     
     public func serializeDataSection() {
-        var dataOffset = 256
+        var dataOffset = dataBaseAddress
         for block in dataStatements {
             for value in block.values {
                 switch value {
@@ -100,11 +112,21 @@ public final class DataGeneration {
                     context.module.data.append(data)
                     dataOffset += 4
                 case .string(let str):
+                    // Encode as a Blitz3D string object with a static refcount of 1.
+                    let utf8Bytes = Array(str.utf8)
+                    let len = utf8Bytes.count
+
                     var bytes: [UInt8] = []
-                    for char in str.utf8 {
-                        bytes.append(char)
+                    bytes.append(contentsOf: Int(1).toBytes())     // refCount
+                    bytes.append(contentsOf: Int(len).toBytes())   // length
+                    bytes.append(contentsOf: utf8Bytes)
+                    bytes.append(0) // null terminator
+
+                    // Pad to 4 bytes for consistent pointer math.
+                    while (bytes.count & 3) != 0 {
+                        bytes.append(0)
                     }
-                    bytes.append(0)
+
                     let data = WASMData(memoryIndex: 0, offset: .i32Const(Int32(truncatingIfNeeded: dataOffset)), bytes: bytes)
                     context.module.data.append(data)
                     dataOffset += bytes.count

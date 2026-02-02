@@ -3,6 +3,9 @@
 **Current Status**: 72% pass rate (26/36 files) - VERIFIED ACCURATE  
 **Remaining Work**: 10 files with 394 real WASM validation errors
 
+> Note (2026-02-02): this document is a historical triage snapshot.
+> Prefer `plan/README.md` and `plan/scpcb-web-track-b/README.md` for current status.
+
 ---
 
 ## What I Verified Today
@@ -218,6 +221,11 @@ The STACK errors (124 total) are hard to fix without function signatures because
 
 - [x] Researched stack balancing algorithms
 - [x] Implemented StackValidator infrastructure
+
+## 2026-02-02 updates (reliability + regression prevention)
+
+- Added BB→WASM end-to-end smoke tests (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to catch control-flow/type/ABI regressions quickly.
+- Added web-side “safe runner” execution (Worker + watchdog timeout + Stop control) so infinite loops never freeze the tab (`web/interpreter.html`, `web/interpreter.js`, `web/public/bb_wasm_runner_demo.html`).
 - [x] Verified test accuracy
 - [x] Documented heuristics
 - [ ] Fix Update.bb (4 errors) ← START HERE

@@ -21,6 +21,9 @@ public final class StatementGeneration: ValidatorTypeContext {
     // GOTO/Label support
     private var labelStateMap: [String: Int] = [:]
     private var gotoStateLocalIdx: Int = -1
+    // In the GOTO/GOSUB state-machine lowering, each chunk is nested under `stateIdx` blocks.
+    // Branching to the dispatcher loop requires exiting those blocks plus any local nesting.
+    private var gotoChunkBaseDepth: Int = 0
     
     // Control flow depth tracking
     private var currentDepth: Int = 0
@@ -30,6 +33,7 @@ public final class StatementGeneration: ValidatorTypeContext {
     // GOSUB support
     private var gosubReturnCounter: Int = 0
     private var gosubReturnMap: [Int: [WASMInstruction]] = [:]
+    private var internalTempCounter: Int = 0
     
     // Stack validation
     private var stackValidator: StackValidator?
@@ -74,6 +78,11 @@ public final class StatementGeneration: ValidatorTypeContext {
         self.labelStateMap = labelStateMap
         self.gotoStateLocalIdx = gotoStateLocalIdx
         self.gosubReturnCounter = 0
+        self.gotoChunkBaseDepth = 0
+    }
+
+    public func configureGotoChunkBaseDepth(_ depth: Int) {
+        self.gotoChunkBaseDepth = max(0, depth)
     }
 
     public func setCurrentReturnType(_ type: WASMType) {
@@ -206,6 +215,45 @@ public final class StatementGeneration: ValidatorTypeContext {
             }
             
             switch assign.target {
+            case .functionCall(let call, _):
+                // Blitz3D uses `arr(i)` syntax for array access, which parses as a FunctionCallNode.
+                // Treat assignment to a known Dim'd array as a store.
+                let internalName = stripSuffix(call.name).lowercased()
+                if let array = context.variableManagement.arrayInfo(for: internalName) {
+                    // Start with base address
+                    function.body.append(.i32Const(Int32(truncatingIfNeeded: array.baseAddress)))
+
+                    let strides = array.strides
+                    for (index, indexExpr) in call.arguments.enumerated() {
+                        let indexResult = expressionGenerator.generateWithInfo(indexExpr)
+                        function.body.append(contentsOf: indexResult.instrs)
+                        function.body.append(contentsOf: convert(from: indexResult.type, to: .i32))
+
+                        let stride = index < strides.count ? strides[index] : array.elementSize
+                        function.body.append(.i32Const(Int32(truncatingIfNeeded: stride)))
+                        function.body.append(.i32Mul)
+                        if index > 0 {
+                            function.body.append(.i32Add)
+                        }
+                    }
+
+                    function.body.append(.i32Add)
+                    function.body.append(contentsOf: finalInstrs)
+
+                    if targetType != array.elementType {
+                        function.body.append(contentsOf: convert(from: targetType, to: array.elementType))
+                    }
+
+                    switch array.elementType {
+                    case .i32: function.body.append(.i32Store(2, 0))
+                    case .f32: function.body.append(.f32Store(2, 0))
+                    case .i64: function.body.append(.i64Store(2, 0))
+                    case .f64: function.body.append(.f64Store(2, 0))
+                    default: function.body.append(.i32Store(2, 0))
+                    }
+                } else {
+                    function.body.append(.nop)
+                }
             case .identifier(let id, _):
                 CompilerLogger.debug("DEBUG_ASSIGN: Assigning to '\(id.name)' suffix=\(id.typeSuffix?.rawValue ?? "none") targetType=\(targetType) valueType=\(valueResult.type)")
                 
@@ -632,6 +680,39 @@ public final class StatementGeneration: ValidatorTypeContext {
             
             guard let local = loopLocal else { break }
             registerLocalType(local.index, type: loopType)
+
+            // Store end/step into dedicated locals so loop bodies can freely use scratch globals.
+            // Loop bodies frequently use scratch globals during expression lowering (strings, arrays, etc),
+            // which can otherwise corrupt the loop step/end and cause non-terminating loops.
+            internalTempCounter += 1
+            let endTempName = "__bb_for_end_\(internalTempCounter)"
+            let stepTempName = "__bb_for_step_\(internalTempCounter)"
+
+            let endLocal = context.variableManagement.registerLocal(endTempName, type: loopType)
+            function.locals.append(loopType)
+            registerLocalType(endLocal.index, type: loopType)
+
+            let stepLocal = context.variableManagement.registerLocal(stepTempName, type: loopType)
+            function.locals.append(loopType)
+            registerLocalType(stepLocal.index, type: loopType)
+
+            var endInstrs = endInfo.instrs
+            endInstrs.append(contentsOf: convert(from: endInfo.type, to: loopType))
+            function.body.append(contentsOf: endInstrs)
+            function.body.append(.localSet(endLocal.index))
+
+            if let step = stepInfo {
+                var stepInstrs = step.instrs
+                stepInstrs.append(contentsOf: convert(from: step.type, to: loopType))
+                function.body.append(contentsOf: stepInstrs)
+            } else {
+                if loopType == .f32 {
+                    function.body.append(.f32Const(1.0))
+                } else {
+                    function.body.append(.i32Const(1))
+                }
+            }
+            function.body.append(.localSet(stepLocal.index))
             
             // Initialize loop variable
             var startInstrs = startInfo.instrs
@@ -645,56 +726,38 @@ public final class StatementGeneration: ValidatorTypeContext {
 
             var loopInstrs: [WASMInstruction] = []
 
-            // Precompute end/step and store into scratch globals for reuse
-            let endScratch = (loopType == .f32) ? context.scratchGlobalFloatIdx : context.scratchGlobal2Idx
-            let stepScratch = (loopType == .f32) ? context.scratchGlobalFloat2Idx : context.scratchGlobalIdx
-
-            loopInstrs.append(contentsOf: endInfo.instrs)
-            loopInstrs.append(contentsOf: convert(from: endInfo.type, to: loopType))
-            loopInstrs.append(.globalSet(endScratch))
-
-            if let step = stepInfo {
-                loopInstrs.append(contentsOf: step.instrs)
-                loopInstrs.append(contentsOf: convert(from: step.type, to: loopType))
-            } else {
-                if loopType == .f32 {
-                    loopInstrs.append(.f32Const(1.0))
-                } else {
-                    loopInstrs.append(.i32Const(1))
-                }
-            }
-            loopInstrs.append(.globalSet(stepScratch))
-
             // Loop condition: exit when (step < 0 ? i < end : i > end)
             if loopType == .f32 {
-                loopInstrs.append(.globalGet(stepScratch))
+                loopInstrs.append(.localGet(stepLocal.index))
                 loopInstrs.append(.f32Const(0))
                 loopInstrs.append(.f32Lt)
                 loopInstrs.append(.if(.void, [
                     .localGet(local.index),
-                    .globalGet(endScratch),
+                    .localGet(endLocal.index),
                     .f32Lt,
-                    .brIf(1)
+                    // We are nested in: block -> loop -> if, so exiting the loop requires depth 2.
+                    .brIf(2)
                 ], [
                     .localGet(local.index),
-                    .globalGet(endScratch),
+                    .localGet(endLocal.index),
                     .f32Gt,
-                    .brIf(1)
+                    .brIf(2)
                 ]))
             } else {
-                loopInstrs.append(.globalGet(stepScratch))
+                loopInstrs.append(.localGet(stepLocal.index))
                 loopInstrs.append(.i32Const(0))
                 loopInstrs.append(.i32LtS)
                 loopInstrs.append(.if(.void, [
                     .localGet(local.index),
-                    .globalGet(endScratch),
+                    .localGet(endLocal.index),
                     .i32LtS,
-                    .brIf(1)
+                    // We are nested in: block -> loop -> if, so exiting the loop requires depth 2.
+                    .brIf(2)
                 ], [
                     .localGet(local.index),
-                    .globalGet(endScratch),
+                    .localGet(endLocal.index),
                     .i32GtS,
-                    .brIf(1)
+                    .brIf(2)
                 ]))
             }
 
@@ -703,7 +766,7 @@ public final class StatementGeneration: ValidatorTypeContext {
 
             // Increment: i = i + step
             loopInstrs.append(.localGet(local.index))
-            loopInstrs.append(.globalGet(stepScratch))
+            loopInstrs.append(.localGet(stepLocal.index))
             if loopType == .f32 {
                 loopInstrs.append(.f32Add)
             } else {
@@ -899,7 +962,9 @@ public final class StatementGeneration: ValidatorTypeContext {
                     .globalGet(context.gosubStackPtrIdx),
                     .i32Load(2, 0),
                     .localSet(gotoStateLocalIdx),
-                    .br(currentDepth + 2) // Back to state machine loop (beyond return if AND chunk if)
+                    // Back to dispatcher loop: we're inside the gosub-return `if` body,
+                    // so add 1 to account for the `if` label itself.
+                    .br(gotoChunkBaseDepth + currentDepth + 1)
                 ], nil))
             }
             
@@ -934,7 +999,10 @@ public final class StatementGeneration: ValidatorTypeContext {
             if gotoStateLocalIdx >= 0, let stateNum = labelStateMap[labelName] {
                 function.body.append(.i32Const(Int32(truncatingIfNeeded: stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(0)) // Branch to loop start to re-evaluate state
+                // In the GOTO state-machine lowering, jump out to the dispatcher loop.
+                // `currentDepth` tracks the number of enclosing WASM labels between here and
+                // the dispatcher (including `if` bodies and loop/block pairs).
+                function.body.append(.br(gotoChunkBaseDepth + currentDepth))
             } else {
                 function.body.append(.nop)
             }
@@ -958,7 +1026,7 @@ public final class StatementGeneration: ValidatorTypeContext {
                 // 3. Set target state and jump
                 function.body.append(.i32Const(Int32(truncatingIfNeeded: stateNum)))
                 function.body.append(.localSet(gotoStateLocalIdx))
-                function.body.append(.br(0)) // Branch to loop start
+                function.body.append(.br(gotoChunkBaseDepth + currentDepth)) // Jump to dispatcher loop
                 
                 // 4. Mark return point (placeholder)
                 function.body.append(.nop)
@@ -1003,14 +1071,33 @@ public final class StatementGeneration: ValidatorTypeContext {
         case .read(let identifiers, _):
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             for id in identifiers {
-                function.body.append(.globalGet(dataPtrIdx))
-
                 // Read DATA as the destination variable's WASM type.
                 // (Blitz READ is type-directed; keeping the stack types consistent is required for wasm-validate.)
+                // Note: READ identifiers may omit the explicit suffix; try resolving against declared locals/globals.
+                // For example: `Local s$ : Read s` should still resolve to `s$` if present.
+                let candidateNames = [id.name, id.name + "$", id.name + "#", id.name + "%"]
+                var resolvedName = id.name
+                var destLocal = context.variableManagement.localInfo(for: id.name)
+                var destGlobal = context.variableManagement.globalInfo(for: id.name)
+                if destLocal == nil && destGlobal == nil {
+                    for cand in candidateNames.dropFirst() {
+                        if let local = context.variableManagement.localInfo(for: cand) {
+                            resolvedName = cand
+                            destLocal = local
+                            break
+                        }
+                        if let global = context.variableManagement.globalInfo(for: cand) {
+                            resolvedName = cand
+                            destGlobal = global
+                            break
+                        }
+                    }
+                }
+
                 let destType: WASMType
-                if let local = context.variableManagement.localInfo(for: id.name) {
+                if let local = destLocal {
                     destType = local.type
-                } else if let global = context.variableManagement.globalInfo(for: id.name) {
+                } else if let global = destGlobal {
                     destType = global.type
                 } else if let suffix = id.typeSuffix {
                     destType = typeHandling.wasmType(from: suffix)
@@ -1018,28 +1105,64 @@ public final class StatementGeneration: ValidatorTypeContext {
                     destType = .i32
                 }
 
-                switch destType {
-                case .f32:
-                    function.body.append(.f32Load(2, 0))
-                default:
-                    function.body.append(.i32Load(2, 0))
-                }
+                let isStringDest = (resolvedName.hasSuffix("$") || id.typeSuffix == .string)
+                if destType == .i32, isStringDest {
+                    // DATA strings are stored as Blitz3D string objects at the current data pointer.
+                    // Assign the pointer directly and advance by the padded object size:
+                    // size = align4(8 + len + 1) = (len + 12) & -4
 
-                if let local = context.variableManagement.localInfo(for: id.name) {
-                    function.body.append(.localSet(local.index))
-                } else if let global = context.variableManagement.globalInfo(for: id.name) {
-                    function.body.append(.globalSet(global.index))
+                    // scratch = dataPtr
+                    function.body.append(.globalGet(dataPtrIdx))
+                    function.body.append(.globalSet(context.scratchGlobalIdx))
+
+                    // dest = scratch (string pointer)
+                    function.body.append(.globalGet(context.scratchGlobalIdx))
+                    if let local = destLocal {
+                        function.body.append(.localSet(local.index))
+                    } else if let global = destGlobal {
+                        function.body.append(.globalSet(global.index))
+                    } else {
+                        function.body.append(.drop)
+                    }
+
+                    // dataPtr += (len + 12) & -4
+                    function.body.append(.globalGet(context.scratchGlobalIdx))
+                    function.body.append(.i32Load(2, 4)) // len at offset 4
+                    function.body.append(.i32Const(12))
+                    function.body.append(.i32Add)
+                    function.body.append(.i32Const(-4))
+                    function.body.append(.i32And)
+                    function.body.append(.globalGet(context.scratchGlobalIdx))
+                    function.body.append(.i32Add)
+                    function.body.append(.globalSet(dataPtrIdx))
+                } else {
+                    function.body.append(.globalGet(dataPtrIdx))
+                    switch destType {
+                    case .f32:
+                        function.body.append(.f32Load(2, 0))
+                    default:
+                        function.body.append(.i32Load(2, 0))
+                    }
+
+                    if let local = destLocal {
+                        function.body.append(.localSet(local.index))
+                    } else if let global = destGlobal {
+                        function.body.append(.globalSet(global.index))
+                    } else {
+                        function.body.append(.drop)
+                    }
+
+                    function.body.append(.globalGet(dataPtrIdx))
+                    function.body.append(.i32Const(4))
+                    function.body.append(.i32Add)
+                    function.body.append(.globalSet(dataPtrIdx))
                 }
-                
-                function.body.append(.globalGet(dataPtrIdx))
-                function.body.append(.i32Const(4))
-                function.body.append(.i32Add)
-                function.body.append(.globalSet(dataPtrIdx))
             }
             
         case .restore(let label, _):
             guard let dataPtrIdx = dataGenerator?.dataPtrIndex else { break }
             if let labelName = label, let offset = dataGenerator?.getDataOffset(for: labelName) {
+                // Offsets are absolute memory addresses.
                 function.body.append(.i32Const(Int32(truncatingIfNeeded: offset)))
                 function.body.append(.globalSet(dataPtrIdx))
             } else {
@@ -1120,7 +1243,7 @@ public final class StatementGeneration: ValidatorTypeContext {
             // Insert a Before b  OR  Insert a After b
             // Moves 'a' in the linked list to be before/after 'b'
             guard let typeName = getTypeName(from: objExpr),
-                  let typeInfo = context.userTypes[typeName],
+                  let typeInfo = context.userTypes[typeName.lowercased()],
                   let expressionGenerator = expressionGenerator else { break }
 
             // Generate 'a' (the object to move)

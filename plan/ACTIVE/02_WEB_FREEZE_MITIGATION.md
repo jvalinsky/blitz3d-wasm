@@ -4,7 +4,7 @@
 **Type**: Critical Fix
 **Priority**: Critical
 **Timeline**: 1 week
-**Progress**: 0% (plan created, implementation pending)
+**Progress**: Partial (core “kill switch” implemented for interpreter demos)
 
 ## Problem Description
 
@@ -24,11 +24,21 @@ Browser tabs freeze immediately when loading complex SCPCB WASM modules, prevent
 - **Development**: Cannot debug or test in browser environment
 
 ## Success Criteria
-- [ ] Browser tab remains responsive during WASM initialization
+- [x] Browser tab remains responsive during user-code WASM execution (Worker + watchdog for interpreter demos)
 - [ ] Users can access debug overlay and controls
 - [ ] Progressive loading shows progress to user
-- [ ] Main() execution can be paused/resumed/controlled
+- [x] Main() execution can be stopped/controlled (Stop button + timeout termination in interpreter demos)
 - [ ] Recovery from initialization errors without page reload
+
+## 2026-02-02 implementation notes
+
+We implemented the minimal freeze-prevention foundation for the “web interpreter” style demos:
+
+- `web/interpreter.html` now has a **Stop** button and a **timeout** input.
+- `web/interpreter.js` runs compiled BB→WASM inside a **Worker** and can terminate it on timeout.
+- A standalone upload+run demo exists at `web/public/bb_wasm_runner_demo.html`.
+
+This does not fully solve SCPCB’s “init/Main() + asset preload” freeze risks yet, but it establishes the baseline pattern: **never run untrusted/unknown WASM entrypoints on the UI thread**.
 
 ## Solution Architecture
 

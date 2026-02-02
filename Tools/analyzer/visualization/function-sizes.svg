@@ -3,29 +3,104 @@
       .axis { font-size: 9px; }
     </style><rect class="bar" x="50" y="40" width="25" height="300"/><text class="axis" x="62.5" y="355" 
         text-anchor="end" transform="rotate(-45, 62.5, 355)">
-        Func 2
+        Func 303
       </text><text class="axis" x="62.5" y="37" text-anchor="middle" font-size="8">
-        41
-      </text><rect class="bar" x="77" y="259.5121951219512" width="25" height="80.48780487804879"/><text class="axis" x="89.5" y="355" 
+        3168
+      </text><rect class="bar" x="77" y="58.371212121212125" width="25" height="281.6287878787879"/><text class="axis" x="89.5" y="355" 
         text-anchor="end" transform="rotate(-45, 89.5, 355)">
-        Func 1
-      </text><text class="axis" x="89.5" y="256.5121951219512" text-anchor="middle" font-size="8">
-        11
-      </text><rect class="bar" x="104" y="274.1463414634146" width="25" height="65.85365853658537"/><text class="axis" x="116.5" y="355" 
-        text-anchor="end" transform="rotate(-45, 116.5, 355)">
-        Func 0
-      </text><text class="axis" x="116.5" y="271.1463414634146" text-anchor="middle" font-size="8">
-        9
-      </text><rect class="bar" x="131" y="296.0975609756098" width="25" height="43.90243902439024"/><text class="axis" x="143.5" y="355" 
-        text-anchor="end" transform="rotate(-45, 143.5, 355)">
-        Func 4
-      </text><text class="axis" x="143.5" y="293.0975609756098" text-anchor="middle" font-size="8">
-        6
-      </text><rect class="bar" x="158" y="318.0487804878049" width="25" height="21.95121951219512"/><text class="axis" x="170.5" y="355" 
-        text-anchor="end" transform="rotate(-45, 170.5, 355)">
         Func 3
-      </text><text class="axis" x="170.5" y="315.0487804878049" text-anchor="middle" font-size="8">
-        3
+      </text><text class="axis" x="89.5" y="55.371212121212125" text-anchor="middle" font-size="8">
+        2974
+      </text><rect class="bar" x="104" y="70.96590909090912" width="25" height="269.0340909090909"/><text class="axis" x="116.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 116.5, 355)">
+        Func 135
+      </text><text class="axis" x="116.5" y="67.96590909090912" text-anchor="middle" font-size="8">
+        2841
+      </text><rect class="bar" x="131" y="207.61363636363637" width="25" height="132.38636363636363"/><text class="axis" x="143.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 143.5, 355)">
+        Func 205
+      </text><text class="axis" x="143.5" y="204.61363636363637" text-anchor="middle" font-size="8">
+        1398
+      </text><rect class="bar" x="158" y="232.2348484848485" width="25" height="107.76515151515152"/><text class="axis" x="170.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 170.5, 355)">
+        Func 309
+      </text><text class="axis" x="170.5" y="229.2348484848485" text-anchor="middle" font-size="8">
+        1138
+      </text><rect class="bar" x="185" y="248.14393939393938" width="25" height="91.85606060606061"/><text class="axis" x="197.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 197.5, 355)">
+        Func 258
+      </text><text class="axis" x="197.5" y="245.14393939393938" text-anchor="middle" font-size="8">
+        970
+      </text><rect class="bar" x="212" y="250.70075757575756" width="25" height="89.29924242424244"/><text class="axis" x="224.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 224.5, 355)">
+        Func 308
+      </text><text class="axis" x="224.5" y="247.70075757575756" text-anchor="middle" font-size="8">
+        943
+      </text><rect class="bar" x="239" y="263.95833333333337" width="25" height="76.04166666666666"/><text class="axis" x="251.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 251.5, 355)">
+        Func 307
+      </text><text class="axis" x="251.5" y="260.95833333333337" text-anchor="middle" font-size="8">
+        803
+      </text><rect class="bar" x="266" y="266.04166666666663" width="25" height="73.95833333333334"/><text class="axis" x="278.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 278.5, 355)">
+        Func 306
+      </text><text class="axis" x="278.5" y="263.04166666666663" text-anchor="middle" font-size="8">
+        781
+      </text><rect class="bar" x="293" y="285.2651515151515" width="25" height="54.734848484848484"/><text class="axis" x="305.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 305.5, 355)">
+        Func 302
+      </text><text class="axis" x="305.5" y="282.2651515151515" text-anchor="middle" font-size="8">
+        578
+      </text><rect class="bar" x="320" y="289.4318181818182" width="25" height="50.56818181818181"/><text class="axis" x="332.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 332.5, 355)">
+        Func 150
+      </text><text class="axis" x="332.5" y="286.4318181818182" text-anchor="middle" font-size="8">
+        534
+      </text><rect class="bar" x="347" y="296.6287878787879" width="25" height="43.371212121212125"/><text class="axis" x="359.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 359.5, 355)">
+        Func 164
+      </text><text class="axis" x="359.5" y="293.6287878787879" text-anchor="middle" font-size="8">
+        458
+      </text><rect class="bar" x="374" y="301.07954545454544" width="25" height="38.92045454545455"/><text class="axis" x="386.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 386.5, 355)">
+        Func 168
+      </text><text class="axis" x="386.5" y="298.07954545454544" text-anchor="middle" font-size="8">
+        411
+      </text><rect class="bar" x="401" y="304.29924242424244" width="25" height="35.70075757575758"/><text class="axis" x="413.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 413.5, 355)">
+        Func 385
+      </text><text class="axis" x="413.5" y="301.29924242424244" text-anchor="middle" font-size="8">
+        377
+      </text><rect class="bar" x="428" y="305.625" width="25" height="34.375"/><text class="axis" x="440.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 440.5, 355)">
+        Func 371
+      </text><text class="axis" x="440.5" y="302.625" text-anchor="middle" font-size="8">
+        363
+      </text><rect class="bar" x="455" y="310.45454545454544" width="25" height="29.545454545454543"/><text class="axis" x="467.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 467.5, 355)">
+        Func 132
+      </text><text class="axis" x="467.5" y="307.45454545454544" text-anchor="middle" font-size="8">
+        312
+      </text><rect class="bar" x="482" y="310.7386363636364" width="25" height="29.261363636363637"/><text class="axis" x="494.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 494.5, 355)">
+        Func 361
+      </text><text class="axis" x="494.5" y="307.7386363636364" text-anchor="middle" font-size="8">
+        309
+      </text><rect class="bar" x="509" y="311.969696969697" width="25" height="28.03030303030303"/><text class="axis" x="521.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 521.5, 355)">
+        Func 194
+      </text><text class="axis" x="521.5" y="308.969696969697" text-anchor="middle" font-size="8">
+        296
+      </text><rect class="bar" x="536" y="313.29545454545456" width="25" height="26.704545454545457"/><text class="axis" x="548.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 548.5, 355)">
+        Func 284
+      </text><text class="axis" x="548.5" y="310.29545454545456" text-anchor="middle" font-size="8">
+        282
+      </text><rect class="bar" x="563" y="313.3901515151515" width="25" height="26.609848484848484"/><text class="axis" x="575.5" y="355" 
+        text-anchor="end" transform="rotate(-45, 575.5, 355)">
+        Func 304
+      </text><text class="axis" x="575.5" y="310.3901515151515" text-anchor="middle" font-size="8">
+        281
       </text><text x="415" y="20" text-anchor="middle" font-weight="bold">
       Function Size Distribution (Top 20)
     </text></svg>

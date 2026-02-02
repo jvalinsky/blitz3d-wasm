@@ -13,6 +13,7 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 - **Plan index**: `plan/README.md`
 - **SCPCB Web Port (Track B execution checklists)**: `plan/scpcb-web-track-b/README.md`
 - **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
+- **Docs catalog**: `docs/DOCS_CATALOG.md`
 
 ### ✅ Working Demos
 
@@ -27,6 +28,10 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 - Full material/texture support (baseColor, normal, specular)
 - SCPCB-style lighting (brightness 140/255, warm flashlight)
 - Camera controls: orbit, free, flashlight modes with view presets
+
+**Safe WASM Runner (no-freeze)**:
+- `web/public/bb_wasm_runner_demo.html` (upload a compiled `.wasm`, run in Worker with watchdog timeout)
+- `web/interpreter.html` (in-browser editor; compiled modules execute in Worker with Stop + timeout)
 
 ## 🏗️ Building
 
@@ -47,7 +52,7 @@ cd blitz3d-wasm
 swift build -c release
 
 # Setup web development
-deno task web:setup
+deno task web:setup   # Prefetch deps + set up web/public manifest (best-effort)
 deno task web:dev    # Development server
 deno task web:build   # Production build
 ```
@@ -68,7 +73,7 @@ The `web/` directory contains the modern TypeScript runtime and development tool
 
 ```bash
 # From project root
-deno task web:setup    # Install dependencies
+deno task web:setup    # Prefetch deps + set up web/public assets/manifest
 deno task web:dev      # Start development server
 deno task web:build    # Build for production
 ```
@@ -110,6 +115,14 @@ deno task memleak:run -- --cycles 5 --wasm test.wasm --verbose
 
 # SCPCB-specific testing
 deno task memleak:scpcb:churn -- --steps 2000 --export "__LeakTestStep%"
+```
+
+### BB→WASM smoke suite (runner correctness)
+
+Fast end-to-end coverage for language/codegen/runtime ABI (includes an infinite-loop timeout test):
+
+```bash
+deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests/bb_deno_compile_and_run_smoke.test.ts
 ```
 
 ## 📁 Project Structure

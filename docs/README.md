@@ -13,6 +13,7 @@
 - **Compiler status + metrics**: `COMPILER_STATUS_ANALYSIS.md`
 - **Project plan index**: `../plan/README.md`
 - **SCPCB web port execution (Track B)**: `../plan/scpcb-web-track-b/README.md`
+ - **Docs catalog (what to read next)**: `DOCS_CATALOG.md`
 
 The compiler successfully translates Blitz3D BASIC to WebAssembly. Recent achievements include:
 - Advanced typed IR pipeline with proper control flow
@@ -62,6 +63,7 @@ These documents analyze the target game for porting:
 ## Recent Achievements
 
 - **✅ Working Demos**: Particle physics at https://blitz3d.exe.xyz:8000/test.html and NPC model viewer at https://blitz3d.exe.xyz:8000/npc_smpk_demo.html
+- **✅ Safe WASM Runner (no-freeze)**: `web/public/bb_wasm_runner_demo.html` and `web/interpreter.html` now run compiled BB→WASM inside a Worker with a watchdog timeout (prevents infinite-loop tab freezes).
 - **✅ SCPCB Compilation**: 94.7% pass rate (54/57 files) with advanced type system
 - **✅ WASM Validation**: 100% compliance with WebAssembly specification using custom 3-stack validator
 - **✅ Memory Management**: Zero memory leaks in runtime testing
@@ -102,3 +104,10 @@ These documents analyze the target game for porting:
 ## Archived
 
 Older session notes and dated analysis in [archive/](archive/).
+
+## 2026-02-02 notes (recent learnings)
+
+- **Watchdogs matter**: Any “run forever” mode needs a kill switch. We now enforce this in both the Deno runner and the web interpreter runner (Worker + timeout).
+- **String layout matters**: The compiler prints strings via a Blitz string object layout (`[refcount][len][utf8...]`), not `(ptr,len)` — runners must decode that correctly.
+- **Arrays + parens**: `arr(i)` syntax is parsed as a call; codegen must treat it as array access (load/store) for correctness.
+- **Const propagation**: `Const` is compile-time; codegen needs constant folding/lookup for `Select/Case` to behave correctly.

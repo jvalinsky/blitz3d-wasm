@@ -120,27 +120,17 @@ blitz3d-wasm/
 
 ### Development Workflow for Demos
 
-**IMPORTANT**: When editing demo HTML files (e.g., `web/public/npc_smpk_demo.html`), always run the deployment script after making changes:
+`deploy.sh` is archived (see `docs/archive/dated/2026-02-02_deploy.md:1`).
+
+Preferred workflow:
 
 ```bash
-cd /home/exedev/Software/blitz3d-wasm
-./deploy.sh
+# Build (writes repo-root dist/)
+deno task web:build
+
+# Serve dist/ locally
+deno run -A web/serve_dist.ts
 ```
-
-This script:
-1. Builds TypeScript sources (if needed)
-2. Creates/updates web root at `/var/www/html` (nginx web root)
-3. Copies HTML and static assets
-4. Copies built JavaScript/TypeScript dist
-5. Converts and copies NPC models (if source B3D files exist)
-
-**Do NOT manually copy files to `/var/www/html`** - use the deploy script to ensure all changes are properly deployed.
-
-**Note**: The deployment uses nginx which is already running on port 8000. After deployment, the demo is immediately available at:
-- Local: `http://localhost:8000/npc_smpk_demo.html`
-- Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
-
-No need to start a separate web server - nginx is already configured to serve from `/var/www/html` on port 8000.
 
 ### Linux Note
 
@@ -175,15 +165,13 @@ python3 -m http.server 8000
 
 The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models with skeletal animation:
 
-1. Deploy to web root:
+1. Build to `dist/`:
    ```bash
-   cd /home/exedev/Software/blitz3d-wasm
-   ./deploy.sh
+   deno task web:build
    ```
 
-2. Open in browser (nginx is already running):
+2. Serve `dist/` and open:
    - Local: `http://localhost:8000/npc_smpk_demo.html`
-   - Public: `https://blitz3d.exe.xyz:8000/npc_smpk_demo.html`
 
 Features:
 - Load SCPCB NPC models (SCP-173, SCP-049, Guard, Class-D, etc.)

@@ -47,6 +47,9 @@ public final class ExpressionGeneration {
             return ([.i32Const(Int32(truncatingIfNeeded: offset))], .i32)
             
         case .identifier(let id, _):
+            if let constVal = context.constantValue(id.name) {
+                return ([.i32Const(Int32(truncatingIfNeeded: constVal))], .i32)
+            }
             if let local = context.variableManagement.localInfo(for: id.name) {
                 return ([.localGet(local.index)], local.type)
             }
@@ -586,6 +589,57 @@ public final class ExpressionGeneration {
             internalName = String(internalName.dropLast())
         } else if internalName.hasSuffix("%") {
             internalName = String(internalName.dropLast())
+        }
+
+        // Special-case Print overloading (Blitz3D behavior).
+        // The core imports include PrintInt/PrintFloat/PrintString, but the generic resolver maps `Print`
+        // to the string-print import; without this, `Print 123` ends up treating 123 as a string pointer.
+        if internalName == "print" {
+            // Resolve import indices (fall back to current behavior if not present)
+            let printStringIdx = context.functionIndexMap["print"] ?? context.functionIndexMap["printstring"]
+            let printIntIdx = context.functionIndexMap["printint"]
+            let printFloatIdx = context.functionIndexMap["printfloat"]
+
+            if call.arguments.isEmpty {
+                if let printStringIdx {
+                    let emptyPtr = addStringData("")
+                    return ([.i32Const(Int32(truncatingIfNeeded: emptyPtr)), .call(Int(printStringIdx))], .void)
+                }
+                // If we can't resolve, treat as no-op.
+                return ([], .void)
+            }
+
+            if call.arguments.count == 1 {
+                let arg = call.arguments[0]
+                let argInfo = generateWithInfo(arg)
+
+                // If it's a string-typed expression, print as string.
+                if typeHandling.isString(from: arg), let printStringIdx {
+                    instrs.append(contentsOf: argInfo.instrs)
+                    if argInfo.type != .i32 && argInfo.type != .void {
+                        instrs.append(contentsOf: convert(from: argInfo.type, to: .i32))
+                    }
+                    instrs.append(.call(Int(printStringIdx)))
+                    return (instrs, .void)
+                }
+
+                // Float prints.
+                if argInfo.type == .f32, let printFloatIdx {
+                    instrs.append(contentsOf: argInfo.instrs)
+                    instrs.append(.call(Int(printFloatIdx)))
+                    return (instrs, .void)
+                }
+
+                // Int prints (default).
+                if let printIntIdx {
+                    instrs.append(contentsOf: argInfo.instrs)
+                    if argInfo.type != .i32 && argInfo.type != .void {
+                        instrs.append(contentsOf: convert(from: argInfo.type, to: .i32))
+                    }
+                    instrs.append(.call(Int(printIntIdx)))
+                    return (instrs, .void)
+                }
+            }
         }
         
         // Check if this is actually an array access (Blitz3D uses parentheses for both)
@@ -2582,7 +2636,8 @@ extension ArrayInfo {
         for i in 0..<dimensions.count {
             strides.append(currentStride)
             if i < dimensions.count - 1 {
-                currentStride *= dimensions[i]
+                // `dimensions[i]` is the max index (0..N), so multiply by the extent (N + 1).
+                currentStride *= (dimensions[i] + 1)
             }
         }
         

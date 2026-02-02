@@ -1,6 +1,36 @@
 import { normalizePath, openFileCandidates } from "../shared/path_alias.ts";
 import { VideoRuntime } from "../runtime/video.ts";
 
+type BbdbgFileInfo = { id: number; path: string };
+type BbdbgFunctionInfo = {
+  id: number;
+  name: string;
+  signature: string;
+  fileId: number;
+  startLine: number;
+  endLine: number;
+};
+type BbdbgFieldInfo = {
+  name: string;
+  offsetBytes: number;
+  wasmType: string;
+  declaredType: string;
+  customTypeName?: string | null;
+  dimensions?: number[] | null;
+};
+type BbdbgTypeInfo = {
+  id: number;
+  name: string;
+  instanceSizeBytes: number;
+  fields: BbdbgFieldInfo[];
+};
+type BbdbgMetadata = {
+  files?: BbdbgFileInfo[];
+  functions?: BbdbgFunctionInfo[];
+  types?: BbdbgTypeInfo[];
+  versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
+};
+
 type WorkerInitMessage = {
   cmd: "init";
   wasmUrl: string;
@@ -29,12 +59,40 @@ type WorkerTerminateMessage = {
   cmd: "dispose";
 };
 
+type WorkerDbgConfigMessage = {
+  cmd: "dbgConfig";
+  enabled?: boolean;
+  traceMax?: number;
+};
+
+type WorkerDbgSetBreakpointsMessage = {
+  cmd: "dbgSetBreakpoints";
+  breakpointsByFileId: Record<string, number[]>;
+};
+
+type WorkerDbgReadMemoryMessage = {
+  cmd: "dbgReadMemory";
+  reqId: number;
+  addr: number;
+  len: number;
+};
+
+type WorkerDbgReadGlobalMessage = {
+  cmd: "dbgReadGlobal";
+  reqId: number;
+  name: string;
+};
+
 type WorkerMessage =
   | WorkerInitMessage
   | WorkerCallMessage
   | WorkerSetGlobalMessage
   | WorkerPrimeInputMessage
-  | WorkerTerminateMessage;
+  | WorkerTerminateMessage
+  | WorkerDbgConfigMessage
+  | WorkerDbgSetBreakpointsMessage
+  | WorkerDbgReadMemoryMessage
+  | WorkerDbgReadGlobalMessage;
 
 type AssetManifestEntry = {
   path: string;
@@ -218,6 +276,166 @@ let module: WebAssembly.Module | null = null;
 let memory: WebAssembly.Memory | null = null;
 let stringAlloc: ((len: number) => number) | null = null;
 
+type BbdbgSnapshot = {
+  enabled: boolean;
+  hasMetadata: boolean;
+  exportName: string;
+  location: { fileId: number; file: string; line: number } | null;
+  stack: string[];
+  trace: Array<{ fileId: number; file: string; line: number; depth: number }>;
+  breakpointHits: Array<{ fileId: number; file: string; line: number }>;
+};
+
+let bbdbgEnabled = true;
+let bbdbgTraceMax = 300;
+let bbdbgHasMetadata = false;
+let bbdbgFileMap = new Map<number, string>();
+let bbdbgFuncMap = new Map<number, BbdbgFunctionInfo>();
+let bbdbgTypes: BbdbgTypeInfo[] = [];
+let bbdbgStack: Array<{ funcId: number; name: string }> = [];
+let bbdbgCurrentFileId = 0;
+let bbdbgCurrentLine = 0;
+let bbdbgTrace: Array<{ fileId: number; line: number; depth: number }> = [];
+let bbdbgBreakpointsByFileId = new Map<number, Set<number>>();
+let bbdbgBreakpointHits: Array<{ fileId: number; line: number }> = [];
+let bbdbgCollecting = false;
+
+const bbdbgFilePath = (fileId: number) => bbdbgFileMap.get(fileId) ?? `file_${fileId}`;
+
+const bbdbgResetForCall = () => {
+  bbdbgCollecting = true;
+  bbdbgTrace.length = 0;
+  bbdbgBreakpointHits.length = 0;
+  bbdbgStack.length = 0;
+  bbdbgCurrentFileId = 0;
+  bbdbgCurrentLine = 0;
+};
+
+const bbdbgFinishCall = (exportName: string): BbdbgSnapshot | null => {
+  bbdbgCollecting = false;
+  if (!bbdbgEnabled) return null;
+  const loc = bbdbgCurrentFileId
+    ? {
+      fileId: bbdbgCurrentFileId,
+      file: bbdbgFilePath(bbdbgCurrentFileId),
+      line: bbdbgCurrentLine | 0,
+    }
+    : null;
+  const snapshot: BbdbgSnapshot = {
+    enabled: bbdbgEnabled,
+    hasMetadata: bbdbgHasMetadata,
+    exportName,
+    location: loc,
+    stack: bbdbgStack.map((f) => f.name).reverse(),
+    trace: bbdbgTrace.map((t) => ({
+      fileId: t.fileId,
+      file: bbdbgFilePath(t.fileId),
+      line: t.line | 0,
+      depth: t.depth | 0,
+    })),
+    breakpointHits: bbdbgBreakpointHits.map((h) => ({
+      fileId: h.fileId,
+      file: bbdbgFilePath(h.fileId),
+      line: h.line | 0,
+    })),
+  };
+  return snapshot;
+};
+
+const bbdbgRecordStmt = (fileId: number, line: number) => {
+  bbdbgCurrentFileId = fileId | 0;
+  bbdbgCurrentLine = line | 0;
+  if (!bbdbgCollecting) return;
+  const depth = bbdbgStack.length | 0;
+  // Deduplicate exact repeats to keep traces readable in tight loops.
+  const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
+  if (last && last.fileId === fileId && last.line === line && last.depth === depth) return;
+  bbdbgTrace.push({ fileId: fileId | 0, line: line | 0, depth });
+  if (bbdbgTrace.length > bbdbgTraceMax) {
+    bbdbgTrace.splice(0, bbdbgTrace.length - bbdbgTraceMax);
+  }
+  const bp = bbdbgBreakpointsByFileId.get(fileId | 0);
+  if (bp && bp.has(line | 0)) {
+    bbdbgBreakpointHits.push({ fileId: fileId | 0, line: line | 0 });
+    if (bbdbgBreakpointHits.length > 50) {
+      bbdbgBreakpointHits.splice(0, bbdbgBreakpointHits.length - 50);
+    }
+  }
+};
+
+const loadBbdbgMetadata = async (wasmUrl: string) => {
+  bbdbgHasMetadata = false;
+  bbdbgFileMap.clear();
+  bbdbgFuncMap.clear();
+  bbdbgTypes = [];
+  const jsonUrl = wasmUrl.endsWith(".wasm")
+    ? wasmUrl.replace(/\.wasm$/i, ".bbdbg.json")
+    : `${wasmUrl}.bbdbg.json`;
+  try {
+    const res = await fetch(jsonUrl, { cache: "no-store" });
+    if (!res.ok) return;
+    const meta = (await res.json()) as BbdbgMetadata;
+    const files = Array.isArray(meta?.files) ? meta.files : [];
+    const funcs = Array.isArray(meta?.functions) ? meta.functions : [];
+    const types = Array.isArray(meta?.types) ? meta.types : [];
+    const versions = meta?.versions && typeof meta.versions === "object" ? meta.versions : undefined;
+    for (const f of files) {
+      if (!f || typeof f.id !== "number" || typeof f.path !== "string") continue;
+      bbdbgFileMap.set(f.id | 0, f.path);
+    }
+    for (const fn of funcs) {
+      if (!fn || typeof fn.id !== "number" || typeof fn.name !== "string") continue;
+      bbdbgFuncMap.set(fn.id | 0, fn);
+    }
+    bbdbgTypes = types.filter((t) =>
+      t && typeof t.id === "number" && typeof t.name === "string" && typeof t.instanceSizeBytes === "number" &&
+      Array.isArray(t.fields)
+    );
+    bbdbgHasMetadata = true;
+    (self as any).postMessage({
+      type: "bbdbgMeta",
+      ok: true,
+      url: jsonUrl,
+      fileCount: bbdbgFileMap.size,
+      functionCount: bbdbgFuncMap.size,
+      typeCount: bbdbgTypes.length,
+      versions,
+      files: files.slice(0, 500).map((f) => ({ id: f.id | 0, path: String(f.path ?? "") })),
+      functions: funcs.slice(0, 2000).map((fn) => ({
+        id: fn.id | 0,
+        name: String(fn.name ?? ""),
+        signature: String(fn.signature ?? ""),
+        fileId: fn.fileId | 0,
+        startLine: fn.startLine | 0,
+        endLine: fn.endLine | 0,
+      })),
+      types: bbdbgTypes.slice(0, 500).map((t) => ({
+        id: t.id | 0,
+        name: String(t.name ?? ""),
+        instanceSizeBytes: t.instanceSizeBytes | 0,
+        fields: (Array.isArray(t.fields) ? t.fields : []).slice(0, 2000).map((f) => ({
+          name: String((f as any)?.name ?? ""),
+          offsetBytes: Number((f as any)?.offsetBytes ?? 0) | 0,
+          wasmType: String((f as any)?.wasmType ?? ""),
+          declaredType: String((f as any)?.declaredType ?? ""),
+          customTypeName: (f as any)?.customTypeName == null ? null : String((f as any)?.customTypeName ?? ""),
+          dimensions: Array.isArray((f as any)?.dimensions)
+            ? (f as any).dimensions.map((n: any) => Number(n) | 0).filter((n: number) => n > 0)
+            : null,
+        })).filter((f) => !!f.name && (f.offsetBytes | 0) >= 0),
+      })).filter((t) => (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0),
+    });
+  } catch (e: any) {
+    // Best-effort: don't fail init if metadata is missing/bad.
+    (self as any).postMessage({
+      type: "bbdbgMeta",
+      ok: false,
+      url: jsonUrl,
+      error: String(e?.message ?? e),
+    });
+  }
+};
+
 const openFile = (path: string) => {
   const candidates = openFileCandidates(path);
   for (const rp of candidates) {
@@ -320,6 +538,22 @@ const buildImports = () => {
     },
     blitz3d: {},
     al: {},
+    bbdbg: {},
+  };
+
+  imports.bbdbg.__bbdbg_enter = (funcId: number) => {
+    if (!bbdbgEnabled) return;
+    const fn = bbdbgFuncMap.get(funcId | 0);
+    const name = fn?.name ?? `func_${funcId | 0}`;
+    bbdbgStack.push({ funcId: funcId | 0, name });
+  };
+  imports.bbdbg.__bbdbg_leave = (_funcId: number) => {
+    if (!bbdbgEnabled) return;
+    bbdbgStack.pop();
+  };
+  imports.bbdbg.__bbdbg_stmt = (fileId: number, line: number) => {
+    if (!bbdbgEnabled) return;
+    bbdbgRecordStmt(fileId | 0, line | 0);
   };
 
   // File I/O
@@ -840,6 +1074,11 @@ const instantiate = async (wasmUrl: string) => {
   status.stage = "compile:wasm";
   postStatus();
   module = await WebAssembly.compile(buffer);
+  try {
+    const imps = WebAssembly.Module.imports(module);
+    const needs = imps.some((i) => i.module === "bbdbg");
+    (self as any).postMessage({ type: "bbdbgRequired", required: needs });
+  } catch {}
   const imports = buildImports();
   stubMissingImports(imports, module);
   status.stage = "instantiate:wasm";
@@ -849,6 +1088,8 @@ const instantiate = async (wasmUrl: string) => {
   stringAlloc = (instance.exports as any).__StringAlloc
     ? ((instance.exports as any).__StringAlloc as any)
     : null;
+  // Best-effort: load bbdbg metadata after instantiate (does not affect instantiation).
+  await loadBbdbgMetadata(wasmUrl);
   try {
     const exports = Object.keys(instance.exports ?? {}).sort();
     (self as any).postMessage({
@@ -869,6 +1110,7 @@ const callExport = (name: string, args: Array<number | string> = []) => {
   status.stage = `call:${name}`;
   postStatus();
   try {
+    bbdbgResetForCall();
     const argv: number[] = [];
     for (const a of args) {
       if (typeof a === "string") {
@@ -878,7 +1120,10 @@ const callExport = (name: string, args: Array<number | string> = []) => {
         argv.push((a as number) | 0);
       }
     }
-    return fn(...argv);
+    const result = fn(...argv);
+    const snap = bbdbgFinishCall(name);
+    if (snap) (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+    return result;
   } catch (e: any) {
     if (e?.__blitz3dEnd || e?.message === "__BLITZ3D_END__") {
       status.stage = "done:End";
@@ -887,6 +1132,10 @@ const callExport = (name: string, args: Array<number | string> = []) => {
     }
     status.stage = `error:${name}`;
     postStatus();
+    try {
+      const snap = bbdbgFinishCall(name);
+      if (snap) (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+    } catch {}
     throw e;
   }
 };
@@ -966,6 +1215,87 @@ self.onmessage = async (ev: MessageEvent<WorkerMessage>) => {
       setExportedGlobal("LauncherEnabled", 0);
       (self as any).postMessage({ type: "ready" });
       postStatus();
+      return;
+    }
+
+    if (msg.cmd === "dbgConfig") {
+      if (typeof msg.enabled === "boolean") bbdbgEnabled = msg.enabled;
+      if (typeof msg.traceMax === "number" && Number.isFinite(msg.traceMax)) {
+        bbdbgTraceMax = Math.max(10, Math.min(5000, msg.traceMax | 0));
+      }
+      (self as any).postMessage({
+        type: "bbdbgConfig",
+        enabled: bbdbgEnabled,
+        traceMax: bbdbgTraceMax,
+      });
+      return;
+    }
+
+    if (msg.cmd === "dbgSetBreakpoints") {
+      bbdbgBreakpointsByFileId.clear();
+      for (const [k, lines] of Object.entries(msg.breakpointsByFileId ?? {})) {
+        const fileId = Number(k) | 0;
+        if (!Number.isFinite(fileId) || fileId <= 0) continue;
+        const set = new Set<number>();
+        if (Array.isArray(lines)) for (const ln of lines) set.add(Number(ln) | 0);
+        if (set.size > 0) bbdbgBreakpointsByFileId.set(fileId, set);
+      }
+      (self as any).postMessage({
+        type: "bbdbgBreakpoints",
+        files: [...bbdbgBreakpointsByFileId.keys()].length,
+      });
+      return;
+    }
+
+    if (msg.cmd === "dbgReadMemory") {
+      const reqId = Number(msg.reqId ?? 0) | 0;
+      if (!memory) {
+        (self as any).postMessage({ type: "dbgMemoryError", reqId, error: "no memory" });
+        return;
+      }
+      const addr = Number(msg.addr ?? 0) >>> 0;
+      const wantLen = Number(msg.len ?? 0) | 0;
+      const maxLen = 64 * 1024;
+      const len = Math.max(0, Math.min(maxLen, wantLen | 0));
+      try {
+        const buf = memory.buffer;
+        const max = buf.byteLength >>> 0;
+        const start = Math.min(addr, max);
+        const end = Math.min(max, (start + len) >>> 0);
+        const out = new Uint8Array(buf.slice(start, end));
+        (self as any).postMessage(
+          { type: "dbgMemory", reqId, addr: start, bytes: out },
+          [out.buffer],
+        );
+      } catch (e: any) {
+        (self as any).postMessage({
+          type: "dbgMemoryError",
+          reqId,
+          error: String(e?.message ?? e),
+        });
+      }
+      return;
+    }
+
+    if (msg.cmd === "dbgReadGlobal") {
+      const reqId = Number(msg.reqId ?? 0) | 0;
+      const name = String(msg.name ?? "");
+      if (!instance) {
+        (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: "not initialized" });
+        return;
+      }
+      try {
+        const exp = (instance.exports as any)[name];
+        const value =
+          exp && typeof exp === "object" && "value" in exp ? Number((exp as any).value) : NaN;
+        if (!Number.isFinite(value)) {
+          (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: "missing/invalid export" });
+          return;
+        }
+        (self as any).postMessage({ type: "dbgGlobal", reqId, name, value: (value | 0) >>> 0 });
+      } catch (e: any) {
+        (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: String(e?.message ?? e) });
+      }
       return;
     }
 

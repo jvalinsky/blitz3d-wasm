@@ -145,7 +145,16 @@
                 <div id="editor" style="height: 400px; border: 2px solid #e0e0e0; border-radius: 5px;"></div>
                 <div style="display: flex; gap: 10px;">
                     <button onclick="compile()" style="flex: 1">▶️ Compile to WASM</button>
-                    <button onclick="runWasm()" style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);">▶️ Run Program</button>
+                    <button onclick="runWasm()" style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);">▶️ Run (Safe)</button>
+                    <button onclick="stopRun()" style="flex: 0.7; background: linear-gradient(135deg, #b71c1c 0%, #ef5350 100%);">⏹ Stop</button>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                    <label style="font-size: 0.9rem; color: #555; flex: 1;">
+                        Timeout (ms):
+                        <input id="run-timeout-ms" type="number" min="50" step="50" value="2000"
+                            style="width: 120px; margin-left: 8px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </label>
+                    <button onclick="runWasmUnsafe()" style="flex: 1; background: linear-gradient(135deg, #455a64 0%, #90a4ae 100%);" title="Runs on the main thread; may freeze if the program has a tight loop that never calls runtime imports.">⚠️ Run (Unsafe)</button>
                 </div>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button onclick="shareURL()" style="flex: 1; background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);">🔗 Share URL</button>
@@ -221,7 +230,10 @@
         let editor = null; // Monaco editor instance
         let graphicsRuntime = null; // Three.js runtime
         let animationLoopId = null; // For canceling animation
-        
+        let activeRunWorker = null; // Safe runner worker (killable)
+        let activeRunTimeoutId = null; // Safe runner watchdog
+        let unsafeStopRequested = false; // Best-effort stop flag for unsafe runs
+
         // Example programs - will merge with graphics examples
         let examples = {
             hello: `; Hello World\nPrint "Hello from Blitz3D!"`,
@@ -276,9 +288,43 @@
             } else if (tab === 'console') {
                 document.querySelectorAll('.tab')[2].classList.add('active');
                 document.getElementById('console-output').classList.add('active');
+            } else if (tab === 'canvas') {
+                document.querySelectorAll('.tab')[3].classList.add('active');
+                document.getElementById('canvas-output').classList.add('active');
             }
         };
-        
+
+        function getRunTimeoutMs() {
+            const el = document.getElementById('run-timeout-ms');
+            const parsed = el ? Number(el.value) : 2000;
+            if (!Number.isFinite(parsed) || parsed <= 0) return 2000;
+            return Math.max(50, Math.floor(parsed));
+        }
+
+        window.stopRun = function(reason = "Stopped") {
+            unsafeStopRequested = true;
+
+            if (animationLoopId) {
+                cancelAnimationFrame(animationLoopId);
+                animationLoopId = null;
+            }
+
+            if (activeRunTimeoutId) {
+                clearTimeout(activeRunTimeoutId);
+                activeRunTimeoutId = null;
+            }
+
+            if (activeRunWorker) {
+                activeRunWorker.terminate();
+                activeRunWorker = null;
+            }
+
+            const statusElement = document.getElementById('output-status');
+            if (statusElement) {
+                statusElement.innerHTML = `<div class="info">⏹ ${reason}</div>`;
+            }
+        };
+
         window.compile = function() {
             const outputElement = document.getElementById('output');
             const astElement = document.getElementById('ast');
@@ -376,7 +422,7 @@
             }
         };
         
-        // Run compiled WASM
+        // Run compiled WASM (safe runner: Worker + watchdog + Stop)
         window.runWasm = async function() {
             const consoleElement = document.getElementById('console');
             const statusElement = document.getElementById('output-status');
@@ -387,17 +433,108 @@
             }
             
             try {
+                window.stopRun("Restarting");
+                unsafeStopRequested = false;
+
                 // Switch to console tab
                 switchTab('console');
-                consoleElement.textContent = 'Executing WASM...\n\n';
+                consoleElement.textContent = 'Executing WASM in safe runner (Worker)...\n\n';
+
+                // Strip error comments and (start ...) directive so we can
+                // call main() manually after capturing the memory export
+                const cleanWat = compiledWat.split('\n')
+                    .filter(line => !line.includes('; ERROR:'))
+                    .filter(line => !line.trim().startsWith('(start '))
+                    .join('\n');
+
+                // Convert WAT to WASM using wabt
+                const wabt = await WabtModule();
+                const wasmModule = wabt.parseWat('program.wat', cleanWat);
+                const { buffer: wasmBinary } = wasmModule.toBinary({});
+                const wasmBytes = wasmBinary.buffer.slice(
+                    wasmBinary.byteOffset,
+                    wasmBinary.byteOffset + wasmBinary.byteLength,
+                );
+
+                // Start worker per-run so a stuck program can't poison future runs
+                activeRunWorker = new Worker('wasm_runner_worker.js');
+                const timeoutMs = getRunTimeoutMs();
+                const hasGraphics = compiledWat.includes('b3d_graphics3d') || compiledWat.includes('b3d_renderworld');
+
+                activeRunWorker.onmessage = (ev) => {
+                    const msg = ev.data || {};
+                    if (msg.kind === 'stdout') {
+                        consoleElement.textContent += msg.text;
+                        return;
+                    }
+                    if (msg.kind === 'error') {
+                        consoleElement.textContent += `\n\n❌ Runtime Error:\n${msg.message}\n\n${msg.stack || ''}`;
+                        statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${msg.message}</div>`;
+                        window.stopRun("Error");
+                        return;
+                    }
+                    if (msg.kind === 'done') {
+                        consoleElement.textContent += '\n✅ Program finished.';
+                        statusElement.innerHTML = hasGraphics
+                            ? '<div class="success">✅ Program finished (graphics calls were stubbed in safe mode).</div>'
+                            : '<div class="success">✅ Program executed! Check Console tab.</div>';
+                        window.stopRun("Done");
+                        return;
+                    }
+                };
+
+                activeRunWorker.onerror = (e) => {
+                    consoleElement.textContent += `\n\n❌ Worker Error:\n${e.message || String(e)}`;
+                    statusElement.innerHTML = `<div class="error">❌ Worker Error:\n\n${e.message || String(e)}</div>`;
+                    window.stopRun("Worker error");
+                };
+
+                statusElement.innerHTML = hasGraphics
+                    ? '<div class="info">ℹ️ Safe mode: graphics calls are stubbed (no rendering). Use “Run (Unsafe)” for Three.js rendering.</div>'
+                    : '<div class="info">ℹ️ Safe mode: running in a killable Worker with a watchdog timeout.</div>';
+
+                activeRunTimeoutId = setTimeout(() => {
+                    consoleElement.textContent += `\n\n⏱ Timed out after ${timeoutMs}ms.`;
+                    window.stopRun(`Timed out after ${timeoutMs}ms`);
+                }, timeoutMs);
+
+                activeRunWorker.postMessage({ kind: 'run', wasmBytes }, [wasmBytes]);
                 
-                // Program output buffer
-                let output = [];
-                
-                // Runtime imports for Blitz3D functions
+            } catch (e) {
+                consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;
+                statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
+                console.error('WASM execution error:', e);
+            }
+        };
+
+        // Unsafe runner: runs on main thread. Best-effort stop via throwing from Flip/RenderWorld.
+        window.runWasmUnsafe = async function() {
+            const consoleElement = document.getElementById('console');
+            const statusElement = document.getElementById('output-status');
+
+            if (!compiledWat) {
+                statusElement.innerHTML = '<div class="error">❌ Please compile the code first!</div>';
+                return;
+            }
+
+            window.stopRun("Restarting (unsafe)");
+            unsafeStopRequested = false;
+
+            try {
+                switchTab('console');
+                consoleElement.textContent = 'Executing WASM on main thread (unsafe)...\n\n';
+
                 let memory = null;
-                
-                // String helper: read null-terminated string from WASM memory
+                let wasmInstance = null;
+                const timeoutMs = getRunTimeoutMs();
+                const startTime = Date.now();
+
+                function shouldAbortUnsafe() {
+                    if (unsafeStopRequested) return "Stopped";
+                    if (Date.now() - startTime > timeoutMs) return `Timed out after ${timeoutMs}ms`;
+                    return null;
+                }
+
                 function readStr(ptr) {
                     if (!memory) return '';
                     const view = new Uint8Array(memory.buffer);
@@ -409,8 +546,6 @@
                     return s;
                 }
 
-                // String helper: allocate a string on the WASM heap
-                // Reads __heap_ptr global, writes string, bumps pointer
                 function allocStr(str, instance) {
                     if (!memory) return 0;
                     const heapPtrGlobal = instance.exports.__heap_ptr;
@@ -419,30 +554,20 @@
                     for (let i = 0; i < str.length; i++) {
                         view[ptr + i] = str.charCodeAt(i) & 0xFF;
                     }
-                    view[ptr + str.length] = 0; // null terminator
+                    view[ptr + str.length] = 0;
                     const result = ptr;
                     ptr += str.length + 1;
-                    // Align to 4 bytes
                     ptr = (ptr + 3) & ~3;
                     if (heapPtrGlobal) heapPtrGlobal.value = ptr;
                     return result;
                 }
 
-                let wasmInstance = null;
-
                 const imports = {
                     env: {
-                        print: (value) => {
-                            consoleElement.textContent += value + '\n';
-                        },
-                        printFloat: (value) => {
-                            consoleElement.textContent += value + '\n';
-                        },
-                        printString: (ptr) => {
-                            consoleElement.textContent += readStr(ptr) + '\n';
-                        },
+                        print: (value) => { consoleElement.textContent += value + '\n'; },
+                        printFloat: (value) => { consoleElement.textContent += value + '\n'; },
+                        printString: (ptr) => { consoleElement.textContent += readStr(ptr) + '\n'; },
 
-                        // String built-ins
                         b3d_len: (ptr) => readStr(ptr).length,
                         b3d_left: (ptr, n) => allocStr(readStr(ptr).substring(0, n), wasmInstance),
                         b3d_right: (ptr, n) => { const s = readStr(ptr); return allocStr(s.substring(s.length - n), wasmInstance); },
@@ -451,7 +576,7 @@
                             const s = readStr(ptr1);
                             const find = readStr(ptr2);
                             const idx = s.indexOf(find, (start || 1) - 1);
-                            return idx === -1 ? 0 : idx + 1; // Blitz3D is 1-based
+                            return idx === -1 ? 0 : idx + 1;
                         },
                         b3d_upper: (ptr) => allocStr(readStr(ptr).toUpperCase(), wasmInstance),
                         b3d_lower: (ptr) => allocStr(readStr(ptr).toLowerCase(), wasmInstance),
@@ -462,7 +587,6 @@
                         b3d_string: (ptr, count) => allocStr(readStr(ptr).repeat(count), wasmInstance),
                         b3d_replace: (ptr, findPtr, replPtr) => allocStr(readStr(ptr).split(readStr(findPtr)).join(readStr(replPtr)), wasmInstance),
 
-                        // Math built-ins (Blitz3D uses degrees for trig)
                         b3d_abs: (x) => Math.abs(x),
                         b3d_sgn: (x) => x > 0 ? 1 : x < 0 ? -1 : 0,
                         b3d_sin: (x) => Math.round(Math.sin(x * Math.PI / 180) * 1000) / 1000 | 0,
@@ -478,22 +602,16 @@
                         b3d_log: (x) => Math.log(x) | 0,
                         b3d_exp: (x) => Math.exp(x) | 0,
 
-                        // Conversion
                         b3d_int: (x) => x | 0,
                         b3d_float: (x) => x,
 
-                        // Random
                         b3d_rand: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
                         b3d_rnd: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
-                        b3d_seedrnd: (seed) => { /* JS Math.random can't be seeded, no-op */ },
+                        b3d_seedrnd: (_seed) => {},
 
-                        // System
                         b3d_millisecs: () => Date.now() | 0,
-
-                        // Power operator helper
                         b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
-                        
-                        // Graphics API - wired to Three.js runtime!
+
                         b3d_graphics3d: (w, h) => {
                             if (!graphicsRuntime) {
                                 const canvas = document.getElementById('renderCanvas');
@@ -519,112 +637,52 @@
                         b3d_pointentity: (h, t) => graphicsRuntime?.pointentity(h, t),
                         b3d_lightcolor: (h, r, g, b) => graphicsRuntime?.lightcolor(h, r, g, b),
                         b3d_entitycolor: (h, r, g, b) => graphicsRuntime?.entitycolor(h, r, g, b),
-                        b3d_entitytexture: (h, t) => {},
-                        b3d_renderworld: () => graphicsRuntime?.renderworld(),
-                        b3d_flip: () => graphicsRuntime?.flip(),
+                        b3d_entitytexture: (_h, _t) => {},
+                        b3d_renderworld: () => {
+                            const abortReason = shouldAbortUnsafe();
+                            if (abortReason) throw new Error(abortReason);
+                            return graphicsRuntime?.renderworld();
+                        },
+                        b3d_flip: () => {
+                            const abortReason = shouldAbortUnsafe();
+                            if (abortReason) throw new Error(abortReason);
+                            return graphicsRuntime?.flip();
+                        },
                         b3d_cls: () => graphicsRuntime?.cls(),
-                        b3d_loadtexture: (p) => 10,
-                        b3d_loadimage: (p) => 11,
-                        b3d_loadmesh: (p) => 12,
-                        b3d_drawimage: (i, x, y) => {},
-                        b3d_addvertex: (s, x, y, z) => { console.log(`AddVertex ${s}`); return 0; },
-                        b3d_addtriangle: (s, v0, v1, v2) => { console.log(`AddTriangle ${s}`); },
-                        b3d_animate: (e, m, s, f) => {},
+                        b3d_loadtexture: (_p) => 10,
+                        b3d_loadimage: (_p) => 11,
+                        b3d_loadmesh: (_p) => 12,
+                        b3d_drawimage: (_i, _x, _y) => {},
+                        b3d_addvertex: (s, _x, _y, _z) => { console.log(`AddVertex ${s}`); return 0; },
+                        b3d_addtriangle: (s, _v0, _v1, _v2) => { console.log(`AddTriangle ${s}`); },
+                        b3d_animate: (_e, _m, _s, _f) => {},
                         b3d_createplane: () => 20,
-                        b3d_createskybox: (t) => 21,
-                        b3d_keydown: (k) => 0,
+                        b3d_createskybox: (_t) => 21,
+                        b3d_keydown: (_k) => 0,
                     }
                 };
-                
-                // Strip error comments and (start ...) directive so we can
-                // call main() manually after capturing the memory export
+
                 const cleanWat = compiledWat.split('\n')
                     .filter(line => !line.includes('; ERROR:'))
                     .filter(line => !line.trim().startsWith('(start '))
                     .join('\n');
 
-                // Convert WAT to WASM using wabt
                 const wabt = await WabtModule();
                 const wasmModule = wabt.parseWat('program.wat', cleanWat);
                 const { buffer } = wasmModule.toBinary({});
-
-                // Instantiate, capture memory, then call main
                 const module = await WebAssembly.instantiate(buffer, imports);
                 wasmInstance = module.instance;
                 memory = module.instance.exports.memory;
 
-                // Check if this is a graphics program (has While True loop)
                 const hasGraphics = compiledWat.includes('b3d_graphics3d') || compiledWat.includes('b3d_renderworld');
-                const hasWhileTrue = compiledWat.includes('(block $break') && compiledWat.includes('(loop $continue');
-                
-                if (hasGraphics && hasWhileTrue) {
-                    // Switch to canvas tab
-                    switchTab('canvas');
-                    
-                    // Run animation loop
-                    let frameCount = 0;
-                    const maxFrames = 10000; // Safety limit
-                    
-                    const animate = () => {
-                        if (frameCount++ > maxFrames) {
-                            console.log('Animation stopped (frame limit reached)');
-                            return;
-                        }
-                        
-                        try {
-                            // Call main once per frame
-                            if (module.instance.exports.main) {
-                                // Don't call main in a loop! It has its own While True
-                                // Instead we need to restructure... for now just call once
-                            }
-                        } catch (e) {
-                            console.error('Animation error:', e);
-                            return;
-                        }
-                        
-                        animationLoopId = requestAnimationFrame(animate);
-                    };
-                    
-                    // Cancel previous animation
-                    if (animationLoopId) {
-                        cancelAnimationFrame(animationLoopId);
-                    }
-                    
-                    // Set up scene and render once
-                    consoleElement.textContent += '\n📐 Setting up 3D scene...\n';
-                    
-                    if (module.instance.exports.main) {
-                        setTimeout(() => {
-                            try {
-                                // Call main - it will set up scene then hit While True and block
-                                module.instance.exports.main();
-                            } catch (e) {
-                                if (e.message && e.message.includes('unreachable')) {
-                                    consoleElement.textContent += '✅ Scene setup complete!\n';
-                                } else {
-                                    consoleElement.textContent += `\n⚠️ ${e.message}\n`;
-                                }
-                            }
-                            
-                            // Manually render the scene after setup
-                            if (graphicsRuntime && graphicsRuntime.scene && graphicsRuntime.camera) {
-                                graphicsRuntime.renderworld();
-                                consoleElement.textContent += '🎨 Scene rendered! Check 3D View tab.\n';
-                            }
-                        }, 200);
-                    }
-                    
-                    statusElement.innerHTML = '<div class="success">✅ Graphics program running! Check 3D View tab.</div>';
-                } else {
-                    // Regular program
-                    if (module.instance.exports.main) {
-                        module.instance.exports.main();
-                    }
-                    
-                    consoleElement.textContent += '\n\u2705 Program executed successfully!';
-                    statusElement.innerHTML = '<div class="success">✅ Program executed! Check Console tab.</div>';
+                if (hasGraphics) switchTab('canvas');
+
+                if (module.instance.exports.main) {
+                    module.instance.exports.main();
                 }
-                
+
+                consoleElement.textContent += '\n✅ Program executed successfully!';
+                statusElement.innerHTML = '<div class="success">✅ Program executed! (unsafe)</div>';
             } catch (e) {
                 consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;
                 statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;

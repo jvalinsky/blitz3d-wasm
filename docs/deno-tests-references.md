@@ -1,5 +1,16 @@
 # References and Citations for Deno Test Suite
 
+## Repository references (source of truth)
+
+For how the repo’s Deno tests actually work today, prefer these in-repo references over external links:
+
+- Overview + commands: `docs/deno-tests-documentation.md`
+- Technical details: `docs/deno-tests-technical.md`
+- End-to-end BB→WASM smoke suite: `Tests/deno_smoke/` and `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`
+- Deno runner used by the smoke suite: `Tools/bb_deno_compile_and_run.ts`
+
+External URLs below are useful background reading, but they may drift/rot over time.
+
 ## Academic and Industry Standards
 
 ### Memory Leak Detection Research

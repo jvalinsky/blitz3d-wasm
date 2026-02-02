@@ -640,23 +640,22 @@ class BuildComparator {
 ### CLI Usage
 
 ```bash
-# Basic analysis
-deno run -A Tools/analyzer/analyze.ts input.wasm
+# From repo root:
+cd Tools/analyzer
 
-# Generate dashboard
-deno run -A Tools/analyzer/analyze.ts input.wasm --dashboard --output report.html
+# (Optional) Install/update analyzer deps
+deno task setup
 
-# Compare with baseline
-deno run -A Tools/analyzer/analyze.ts current.wasm --compare baseline.wasm --output comparison.html
+# Analyze a single WASM file
+deno task analyze -- /path/to/output.wasm
 
-# Validate only
-deno run -A Tools/analyzer/analyze.ts input.wasm --validate-only
+# Compare two WASM files
+deno task analyze -- -c /path/to/before.wasm /path/to/after.wasm
 
-# Performance profile
-deno run -A Tools/analyzer/analyze.ts input.wasm --profile --output profile.json
+# LLM-friendly summary
+deno task llm-compact -- /path/to/output.wasm
 
-# Export data for LLM
-deno run -A Tools/analyzer/analyze.ts input.wasm --export-llm --output llm-data.json
+# Outputs are written to Tools/analyzer/visualization/ (e.g. dashboard.html)
 ```
 
 ### Configuration
@@ -703,14 +702,20 @@ interface AnalyzerConfig {
 # Pre-commit hook (scripts/pre-commit.sh)
 #!/bin/bash
 echo "Running WASM analysis..."
-deno run -A Tools/analyzer/analyze.ts $1 --validate-only
+(
+  cd Tools/analyzer
+  deno task analyze -- "$1"
+)
 if [ $? -ne 0 ]; then
     echo "WASM validation failed - commit blocked"
     exit 1
 fi
 
 echo "Comparing with main branch..."
-deno run -A Tools/analyzer/analyze.ts $1 --compare main.wasm --output comparison.html
+(
+  cd Tools/analyzer
+  deno task analyze -- -c "$1" main.wasm
+)
 ```
 
 ### Continuous Monitoring

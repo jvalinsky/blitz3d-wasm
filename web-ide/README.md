@@ -4,15 +4,25 @@ A **fully client-side** Blitz3D development environment that runs entirely in th
 
 **🎮 [Try it now →](demo-live.html)** Just open in any modern browser!
 
+## Scope (important)
+
+This `web-ide/` directory contains a **TypeScript** Blitz3D-to-WASM compiler intended for small, interactive browser demos.
+
+It is **not** the same compiler as the main project’s **Swift** compiler (`.build/debug/blitz3d-wasm`), and it should not be treated as the source-of-truth for full language compatibility (e.g. SCPCB).
+
+If you are validating “real” compiler/runtime behavior, prefer:
+- `Tools/bb_deno_compile_and_run.ts` + `Tests/deno_smoke/` (BB→WASM end-to-end smoke scripts)
+- `web/interpreter.html` and `web/public/bb_wasm_runner_demo.html` for **safe execution** (Worker + Stop + watchdog timeout)
+
 ## 🚀 Features
 
-### ✅ Production-Ready Compiler
-- **100% Browser-Based TypeScript Compiler** (~3000 lines)
+### ✅ Browser-Based TypeScript Compiler (demo-focused)
+- **Client-side TypeScript compiler** (~3000 lines)
 - Compiles Blitz3D → WebAssembly in milliseconds
-- **100% test pass rate** on all example programs
 - Complete pipeline: Lexer → Parser → CodeGen
-- Safety guards prevent infinite loops/crashes
-- Comprehensive error handling with auto-recovery
+- Demo-oriented safety guards (see note below)
+
+**Execution safety note:** any user-editable language with `While/For` can hang if run on the UI thread. For the main web interpreter demos, compiled WASM executes in a **Worker** with a **watchdog timeout** and a **Stop** button. If you extend `web-ide/` execution, follow the same pattern.
 
 ### 🎨 Beautiful Code Editor  
 - **Monaco Editor** (same engine as VS Code!)
@@ -111,7 +121,8 @@ deno task webide:serve
    - Watch the magic happen in <1ms!
    
 3. **Run**
-   - Click "▶️ Run Program" to execute
+   - Click "▶️ Run (Safe)" to execute in a killable Worker (recommended)
+   - Use "⏹ Stop" or the timeout to avoid infinite-loop tab freezes
    - See output in the Console tab
    
 4. **Share**
@@ -175,7 +186,7 @@ deno run --allow-read web-ide/test_examples.ts
 # ✅ hello (1.13ms) - 2957 bytes WAT
 # ✅ math (0.49ms) - 3143 bytes WAT
 # ✅ loops (0.26ms) - 3256 bytes WAT
-# ... 100% pass rate!
+# ... example-suite pass rate (demo coverage)
 ```
 
 ### Manual Testing

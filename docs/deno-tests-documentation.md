@@ -133,6 +133,28 @@ deno run -A --sloppy-imports --node-modules-dir Tools/memleak/scpcb_churn.ts [op
 deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests
 ```
 
+### 5. BB compile-and-run smoke suite (runner correctness)
+
+**Purpose**: Validate BB language/codegen behavior end-to-end by compiling and executing small `.bb` programs through the Deno runner (`Tools/bb_deno_compile_and_run.ts`).
+
+**Why this exists**:
+- The fastest feedback loop for “does this language feature actually run”.
+- Catches “web demo would freeze” failure modes early (infinite loops → watchdog timeout).
+- Ensures the runner matches the compiler’s ABI expectations (notably Blitz string objects).
+
+**Key files**:
+- `Tools/bb_deno_compile_and_run.ts` — Compiles via native compiler binary and runs the output WASM in a Worker with a timeout.
+- `Tests/deno_smoke/` — The BB programs (coverage checklist in `Tests/deno_smoke/COVERAGE.md`).
+- `Tools/tests/bb_deno_compile_and_run_smoke.test.ts` — Deno tests that execute the programs and assert stdout.
+
+**Usage**:
+```bash
+deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests/bb_deno_compile_and_run_smoke.test.ts
+```
+
+**Important implementation detail**:
+- `Print`/`PrintString` take a **pointer to a Blitz string object**, not `(ptr,len)`. The runner must decode `[refcount][len][utf8 bytes...]`.
+
 ## Technical Architecture
 
 ### Memory Management Strategy

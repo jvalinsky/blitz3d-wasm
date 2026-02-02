@@ -180,7 +180,9 @@ public struct VariableManagement {
     /// Register an array variable
     public mutating func registerArray(_ name: String, elementType: WASMType, dimensions: [Int]) -> ArrayInfo {
         let elementSize = typeSize(for: elementType)
-        let totalSize = dimensions.reduce(elementSize) { $0 * $1 }
+        // `dimensions` are stored as Blitz3D max indices (0..N), so the extent is (N + 1).
+        let totalElements = dimensions.reduce(1) { acc, dim in acc * (dim + 1) }
+        let totalSize = totalElements * elementSize
         
         let info = ArrayInfo(
             baseAddress: nextArrayAddress,
@@ -283,6 +285,8 @@ public struct FunctionDefinition {
 public final class ModuleContext {
     public var module: WASMModule
     public var variableManagement: VariableManagement
+    /// Compile-time constants (case-insensitive). Currently only integer consts are used by codegen.
+    public var constants: [String: Int] = [:]
     public var typeIndexMap: [String: Int]
     public var functionIndexMap: [String: Int]
     public var functionDefinitions: [String: FunctionDefinition]
@@ -364,6 +368,14 @@ public final class ModuleContext {
         
         // Initialize type inference with TypeHandling
         self.typeInference = TypeInference(typeHandling: TypeHandling())
+    }
+
+    public func setConstant(_ name: String, value: Int) {
+        constants[name.lowercased()] = value
+    }
+
+    public func constantValue(_ name: String) -> Int? {
+        constants[name.lowercased()]
     }
 
     public func reportDiagnostic(_ message: String, span: SourceSpan, severity: CompilerDiagnostic.Severity = .error) {

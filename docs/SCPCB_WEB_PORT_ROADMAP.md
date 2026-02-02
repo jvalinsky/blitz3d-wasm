@@ -5,6 +5,11 @@
 **Status**: Phase 3 Complete (Browser Integration) - 93% Complete  
 **Last Updated**: February 1, 2026
 
+## 2026-02-02 reliability update
+
+- Added an end-to-end BB→WASM smoke suite (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate language features by actually running the resulting WASM.
+- Added a “safe runner” pattern for web interpreter demos: compiled WASM executes in a Worker with a watchdog timeout and Stop control (`web/interpreter.html`, `web/public/bb_wasm_runner_demo.html`).
+
 ---
 
 ## Project Architecture

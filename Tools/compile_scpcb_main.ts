@@ -9,6 +9,8 @@ type Options = {
   outRuntimeWasm: string;
   outWebPublicWasm: string | null;
   buildCompiler: boolean;
+  debug: boolean;
+  sourceMap: boolean;
   quiet: boolean;
 };
 
@@ -28,9 +30,13 @@ const parseArgs = (args: string[]): Options => {
   const opts: Options = {
     scpcbRoot: new URL("../../scpcb/", import.meta.url).pathname,
     entryBb: "Main.bb",
-    outRuntimeWasm: new URL("../Sources/Runtime/scpcb.wasm", import.meta.url).pathname,
-    outWebPublicWasm: new URL("../web/public/scpcb.wasm", import.meta.url).pathname,
+    outRuntimeWasm:
+      new URL("../Sources/Runtime/scpcb.wasm", import.meta.url).pathname,
+    outWebPublicWasm:
+      new URL("../web/public/scpcb.wasm", import.meta.url).pathname,
     buildCompiler: true,
+    debug: false,
+    sourceMap: false,
     quiet: true,
   };
 
@@ -38,10 +44,14 @@ const parseArgs = (args: string[]): Options => {
     const a = args[i];
     if (a === "--scpcb-root") opts.scpcbRoot = args[++i] ?? opts.scpcbRoot;
     else if (a === "--entry") opts.entryBb = args[++i] ?? opts.entryBb;
-    else if (a === "--out-runtime") opts.outRuntimeWasm = args[++i] ?? opts.outRuntimeWasm;
-    else if (a === "--out-web-public") opts.outWebPublicWasm = args[++i] ?? opts.outWebPublicWasm;
-    else if (a === "--no-web-public") opts.outWebPublicWasm = null;
+    else if (a === "--out-runtime") {
+      opts.outRuntimeWasm = args[++i] ?? opts.outRuntimeWasm;
+    } else if (a === "--out-web-public") {
+      opts.outWebPublicWasm = args[++i] ?? opts.outWebPublicWasm;
+    } else if (a === "--no-web-public") opts.outWebPublicWasm = null;
     else if (a === "--no-build") opts.buildCompiler = false;
+    else if (a === "--debug" || a === "-d") opts.debug = true;
+    else if (a === "--source-map" || a === "-g") opts.sourceMap = true;
     else if (a === "--verbose") opts.quiet = false;
     else if (a === "--help" || a === "-h") {
       console.log(
@@ -58,6 +68,8 @@ const parseArgs = (args: string[]): Options => {
           "  --out-web-public <path>   also write to web/public/scpcb.wasm",
           "  --no-web-public           do not write web/public/scpcb.wasm",
           "  --no-build                skip swift build step",
+          "  -d, --debug               emit bbdbg hooks + scpcb.bbdbg.json (enables inspector helpers)",
+          "  -g, --source-map          emit scpcb.wasm.map (useful for wasm-validate digests)",
           "  --verbose                 show compiler output (no --quiet/-q)",
         ].join("\n"),
       );
@@ -119,7 +131,13 @@ const run = async (cmd: string[], cwd: string | undefined, label: string) => {
     }, 5000) as unknown as number;
   }
 
-  const p = new Deno.Command(cmd[0]!, { args: cmd.slice(1), cwd, env, stdout: "inherit", stderr: "inherit" }).spawn();
+  const p = new Deno.Command(cmd[0]!, {
+    args: cmd.slice(1),
+    cwd,
+    env,
+    stdout: "inherit",
+    stderr: "inherit",
+  }).spawn();
   const { code } = await p.status;
 
   if (timer !== null) clearInterval(timer);
@@ -164,7 +182,14 @@ const runCompilerWithProgress = async (
   })();
 
   const t0 = Date.now();
-  const phaseOrder = ["include-scan", "preprocess", "parse", "codegen", "encode", "write"] as const;
+  const phaseOrder = [
+    "include-scan",
+    "preprocess",
+    "parse",
+    "codegen",
+    "encode",
+    "write",
+  ] as const;
   const phaseIndex = new Map<string, number>(phaseOrder.map((p, i) => [p, i]));
   const completed = new Set<string>();
   let activePhase: string | null = null;
@@ -176,18 +201,23 @@ const runCompilerWithProgress = async (
     if (!isTTY) return;
     const totalPhases = phaseOrder.length;
     const doneCount = completed.size;
-    const idx = activePhase ? (phaseIndex.get(activePhase) ?? doneCount) : doneCount;
+    const idx = activePhase
+      ? (phaseIndex.get(activePhase) ?? doneCount)
+      : doneCount;
     const within = activePhase ? activeFraction : 0;
     const overall = clamp01((idx + within) / totalPhases);
     const s = Math.floor((Date.now() - t0) / 1000);
-    const phaseLabel = activePhase ?? (doneCount >= totalPhases ? "done" : "idle");
+    const phaseLabel = activePhase ??
+      (doneCount >= totalPhases ? "done" : "idle");
     const pct = String(Math.round(overall * 100)).padStart(3, " ");
     const bar = fmtBar(overall, 18);
     const left = `${phaseLabel.padEnd(12, " ")} ${bar} ${pct}%`;
     const detail = `${activeMsg}${activeFile ? ` (${activeFile})` : ""}`.trim();
     const msg = `${left}  ${detail}  ${s}s`;
     try {
-      Deno.stderr.writeSync(enc.encode(`\r${msg.slice(0, 180).padEnd(180, " ")}`));
+      Deno.stderr.writeSync(
+        enc.encode(`\r${msg.slice(0, 180).padEnd(180, " ")}`),
+      );
     } catch {}
   };
 
@@ -214,8 +244,8 @@ const runCompilerWithProgress = async (
   // (e.g. preprocess/codegen can be long and only bracketed by start/end events.)
   const aliveTimer = isTTY
     ? (setInterval(() => {
-        render();
-      }, 200) as unknown as number)
+      render();
+    }, 200) as unknown as number)
     : null;
 
   const pump = async (
@@ -240,7 +270,7 @@ const runCompilerWithProgress = async (
   };
 
   const handleProgressLine = (line: string) => {
-    if (!line.startsWith("{") || !line.includes("\"b3d-progress\"")) {
+    if (!line.startsWith("{") || !line.includes('"b3d-progress"')) {
       if (!opts.quiet && line.trim()) console.error(line);
       return;
     }
@@ -261,10 +291,14 @@ const runCompilerWithProgress = async (
     } else if (ev.kind === "progress") {
       activePhase = ev.phase ?? activePhase;
       activeMsg = ev.message ? String(ev.message) : activeMsg;
-      activeFile = ev.file ? String(ev.file).split("/").pop() ?? "" : activeFile;
+      activeFile = ev.file
+        ? String(ev.file).split("/").pop() ?? ""
+        : activeFile;
       const cur = typeof ev.current === "number" ? ev.current : null;
       const tot = typeof ev.total === "number" ? ev.total : null;
-      if (cur !== null && tot !== null && tot > 0) activeFraction = clamp01(cur / tot);
+      if (cur !== null && tot !== null && tot > 0) {
+        activeFraction = clamp01(cur / tot);
+      }
     } else if (ev.kind === "end") {
       completed.add(ev.phase);
       activePhase = null;
@@ -293,25 +327,33 @@ const runCompilerWithProgress = async (
   if (aliveTimer !== null) clearInterval(aliveTimer);
   render();
   finishLine(status.success);
-  if (!status.success) throw new Error(`command failed (${status.code}): ${cmd.join(" ")}`);
+  if (!status.success) {
+    throw new Error(`command failed (${status.code}): ${cmd.join(" ")}`);
+  }
 };
 
 const main = async () => {
   const opts = parseArgs(Deno.args);
   const repoRoot = new URL("../", import.meta.url).pathname;
-  const compilerBin = new URL("../.build/debug/blitz3d-wasm", import.meta.url).pathname;
+  const compilerBin =
+    new URL("../.build/debug/blitz3d-wasm", import.meta.url).pathname;
 
   const scpcbRoot = opts.scpcbRoot.replace(/\/+$/g, "");
   const entryBb = join(scpcbRoot, opts.entryBb);
   try {
     await Deno.stat(entryBb);
   } catch {
-    throw new Error(`Entry BB not found at ${entryBb} (set --scpcb-root/--entry)`);
+    throw new Error(
+      `Entry BB not found at ${entryBb} (set --scpcb-root/--entry)`,
+    );
   }
 
   // If the user compiles something other than Main.bb, default output to /tmp and
   // avoid overwriting Sources/Runtime/scpcb.wasm unless they explicitly asked for it.
-  if (opts.entryBb.toLowerCase() != "main.bb" && Deno.args.every((a) => a !== "--out-runtime")) {
+  if (
+    opts.entryBb.toLowerCase() != "main.bb" &&
+    Deno.args.every((a) => a !== "--out-runtime")
+  ) {
     const base = opts.entryBb.replace(/.*[\\/]/g, "").replace(/\\.[^.]+$/g, "");
     opts.outRuntimeWasm = `/tmp/${base}_cmdbuf.wasm`;
     opts.outWebPublicWasm = null;
@@ -336,6 +378,8 @@ const main = async () => {
       "--progress",
       "ndjson",
     ];
+    if (opts.debug) cmd.push("--debug");
+    if (opts.sourceMap) cmd.push("--source-map");
     if (opts.quiet) cmd.push("--quiet");
     await runCompilerWithProgress(cmd, repoRoot, { quiet: opts.quiet });
   }
@@ -343,14 +387,48 @@ const main = async () => {
   // Validate module parses and has required CMDB exports.
   const bytes = await Deno.readFile(opts.outRuntimeWasm);
   const r = checkCmdbufExports(bytes);
-  if (r.missing.length) throw new Error(`compiled wasm missing CMDB exports: ${r.missing.join(", ")}`);
+  if (r.missing.length) {
+    throw new Error(
+      `compiled wasm missing CMDB exports: ${r.missing.join(", ")}`,
+    );
+  }
 
   if (opts.outWebPublicWasm) {
     await Deno.copyFile(opts.outRuntimeWasm, opts.outWebPublicWasm);
+    if (opts.debug) {
+      const srcBbdbg = opts.outRuntimeWasm.replace(/\.wasm$/i, ".bbdbg.json");
+      const dstBbdbg = opts.outWebPublicWasm.replace(/\.wasm$/i, ".bbdbg.json");
+      try {
+        await Deno.copyFile(srcBbdbg, dstBbdbg);
+      } catch {
+        // Best-effort: debug build should emit this, but don't fail the compile tool if it doesn't exist.
+      }
+    }
+    if (opts.sourceMap) {
+      const srcMap = `${opts.outRuntimeWasm}.map`;
+      const dstMap = `${opts.outWebPublicWasm}.map`;
+      try {
+        await Deno.copyFile(srcMap, dstMap);
+      } catch {
+        // Best-effort: source maps are optional.
+      }
+    }
   }
 
   console.log(`[scpcb] wrote ${opts.outRuntimeWasm}`);
-  if (opts.outWebPublicWasm) console.log(`[scpcb] wrote ${opts.outWebPublicWasm}`);
+  if (opts.outWebPublicWasm) {
+    console.log(`[scpcb] wrote ${opts.outWebPublicWasm}`);
+  }
+  if (opts.outWebPublicWasm && opts.debug) {
+    console.log(
+      `[scpcb] wrote ${
+        opts.outWebPublicWasm.replace(/\\.wasm$/i, ".bbdbg.json")
+      }`,
+    );
+  }
+  if (opts.outWebPublicWasm && opts.sourceMap) {
+    console.log(`[scpcb] wrote ${opts.outWebPublicWasm}.map`);
+  }
 };
 
 if (import.meta.main) {

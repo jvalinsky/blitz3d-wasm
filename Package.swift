@@ -1,10 +1,14 @@
 // swift-tools-version:6.0
-// WASM-only Package.swift - ONLY the engine, no compiler
 import PackageDescription
 
 let package = Package(
-    name: "Blitz3DEngine",
+    name: "Blitz3DCompiler",
     products: [
+        // Native compiler executable
+        .executable(
+            name: "blitz3d-wasm",
+            targets: ["blitz3d-wasm"]
+        ),
         // WASM executable that exports engine functions
         .executable(
             name: "blitz3d-engine",
@@ -17,6 +21,24 @@ let package = Package(
         .package(url: "https://github.com/swiftwasm/JavaScriptKit.git", exact: "0.19.2")
     ],
     targets: [
+        // Native compiler executable
+        .executableTarget(
+            name: "blitz3d-wasm",
+            dependencies: ["Blitz3DCompiler"],
+            path: "Tools/wasm-cli",
+            exclude: ["AGENTs.md"]
+        ),
+        // Compiler library
+        .target(
+            name: "Blitz3DCompiler",
+            path: "Sources/Compiler",
+            exclude: [
+                "AGENTs.md",
+                "REFACTORING_PLAN.md",
+                "PLACEHOLDER.md"
+            ]
+        ),
+        // WASM engine executable
         .executableTarget(
             name: "Blitz3DEngineWASM",
             dependencies: [

@@ -2,6 +2,9 @@
 
 **Goal**: Compile all SCPCB files to WASM and run the game in a browser with full functionality.
 
+> Note (2026-02-02): this document is a historical “snapshot plan” and parts of it may be outdated.
+> Prefer `plan/README.md` and `plan/scpcb-web-track-b/README.md` for current execution status.
+
 **Current State**: 
 - [DONE] 100% compilation rate (36/36 files compile without crashes)
 - [TODO] ~450 WASM validation errors across 7 files
@@ -12,6 +15,11 @@
 ---
 
 ## Phase 1: Fix Critical Compiler Bugs (BLOCKING)
+
+## 2026-02-02 progress (what changed since this doc)
+
+- Added BB→WASM end-to-end smoke tests (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate language features quickly by running WASM.
+- Implemented “safe runner” execution for interpreter demos (Worker + watchdog timeout + Stop control) to prevent browser freezes from infinite loops.
 
 ### 1.1 Parser Bug: Missing Functions/Globals (HIGH PRIORITY)  4-6 hours
 

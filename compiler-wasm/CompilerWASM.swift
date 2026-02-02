@@ -27,6 +27,12 @@ struct CompilerWASM {
             }
             
             var codeGen = CodeGenerator()
+            if !options.autoImports.isEmpty {
+                codeGen.enableAutoImports(Set(options.autoImports.map { $0.lowercased() }))
+            }
+            if options.commandBuffer {
+                codeGen.enableCommandBuffer()
+            }
             let wasmModule = codeGen.generateFromIR(program)
             
             if codeGen.hasDiagnostics {
@@ -88,22 +94,59 @@ struct CompilerOptions {
     )
     
     static func from(json: String) -> CompilerOptions {
-        // Simple JSON parsing (in real implementation, use proper JSON parser)
+        // Options are passed as a JSON-ish object from JS. We intentionally use
+        // a very lightweight parser here (instead of Foundation JSON parsing)
+        // because this runs inside WASI and should avoid heavy Foundation
+        // internals.
         var options = CompilerOptions.default
-        
-        if json.contains("\"optimize\":false") {
-            options.optimize = false
+
+        if json.contains("\"optimize\":false") { options.optimize = false }
+        if json.contains("\"debugInfo\":true") { options.debugInfo = true }
+        if json.contains("\"sourceMap\":true") { options.sourceMap = true }
+        if json.contains("\"commandBuffer\":true") { options.commandBuffer = true }
+
+        // Parse: "autoImports": ["A","B",...]
+        if let keyRange = json.range(of: "\"autoImports\"") {
+            let tail = json[keyRange.upperBound...]
+            if let openBracket = tail.firstIndex(of: "[") {
+                var i = tail.index(after: openBracket)
+                var inString = false
+                var escape = false
+                var current = ""
+                var values: [String] = []
+
+                while i < tail.endIndex {
+                    let ch = tail[i]
+                    if inString {
+                        if escape {
+                            current.append(ch)
+                            escape = false
+                        } else if ch == "\\" {
+                            escape = true
+                        } else if ch == "\"" {
+                            inString = false
+                            values.append(current)
+                            current = ""
+                        } else {
+                            current.append(ch)
+                        }
+                    } else {
+                        if ch == "\"" {
+                            inString = true
+                            current = ""
+                        } else if ch == "]" {
+                            break
+                        }
+                    }
+                    i = tail.index(after: i)
+                }
+
+                if !values.isEmpty {
+                    options.autoImports = values
+                }
+            }
         }
-        if json.contains("\"debugInfo\":true") {
-            options.debugInfo = true
-        }
-        if json.contains("\"sourceMap\":true") {
-            options.sourceMap = true
-        }
-        if json.contains("\"commandBuffer\":true") {
-            options.commandBuffer = true
-        }
-        
+
         return options
     }
 }

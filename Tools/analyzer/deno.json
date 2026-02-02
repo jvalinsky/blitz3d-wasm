@@ -1,12 +1,12 @@
 {
   "tasks": {
     "setup": "deno run -A --node-modules-dir npm:npm@latest install",
-    "analyze": "deno run -A --node-modules-dir node cli.js",
-    "visualize": "deno run -A --node-modules-dir node visualize.js",
-    "report": "deno run -A --node-modules-dir node report.js",
-    "test": "deno run -A --node-modules-dir node test.js",
-    "scoreboard": "deno run -A --node-modules-dir node scoreboard.js",
-    "imports-scan": "deno run -A --node-modules-dir node imports-scan.js",
-    "llm-compact": "deno run -A --node-modules-dir node llm-compact.js"
+    "analyze": "node cli.js",
+    "visualize": "node visualize.js",
+    "report": "node report.js",
+    "test": "node test.js",
+    "scoreboard": "node scoreboard.js",
+    "imports-scan": "node imports-scan.js",
+    "llm-compact": "node llm-compact.js"
   }
 }

@@ -213,6 +213,7 @@ public final class FunctionGeneration {
                 // Generate this chunk's body
                 var chunkBody: [WASMInstruction] = []
                 var tempFunc = WASMFunction(typeIndex: function.typeIndex, locals: function.locals)
+                statementGenerator?.configureGotoChunkBaseDepth(stateIdx)
                 for stmt in statements {
                     statementGenerator?.generateStatement(stmt, function: &tempFunc)
                 }

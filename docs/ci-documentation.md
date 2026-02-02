@@ -48,6 +48,8 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Run build validation tests (`deno task test:web:build`)
   - Upload build artifacts for later use
 
+**Note (2026-02-02):** `web/deno.json` now pins Vite and ensures `three` is prefetched via `deno task web:setup`. If you still hit a “cannot resolve `three`” error, rerun `deno task web:setup` (or wipe `web/node_modules/` and rerun). Offline/restricted environments can still serve `web/public/*.html` demos without the Vite pipeline. See `docs/GETTING_STARTED.md`.
+
 #### 4. Browser WASM Tests (`browser-tests`)
 - **Purpose:** Test WASM compilation and browser execution
 - **Steps:**

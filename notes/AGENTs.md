@@ -19,3 +19,9 @@ Analysis notes for SCP: Containment Breach, the target game for this compiler.
 ## Archived
 
 Older debugging and analysis notes in `archive/`.
+
+## 2026-02-02 note (reliability)
+
+When assessing “can this run in the browser”, assume infinite loops exist in legacy BB code and require:
+- Worker isolation + watchdog timeouts for executing WASM entrypoints
+- End-to-end smoke tests that run real WASM outputs (see `Tests/deno_smoke/`)

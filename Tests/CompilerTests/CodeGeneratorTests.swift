@@ -272,6 +272,56 @@ final class CodeGeneratorTests: XCTestCase {
         // Should compile successfully
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
+
+    func testDataStringsUseBlitzStringLayoutAndReadAssignsPointer() throws {
+        let source = """
+        Function Main()
+            Local s$
+            Data "hello"
+            Restore
+            Read s$
+        End Function
+        """
+
+        var parser = Parser(source: source)
+        let program = parser.parse()
+
+        var codeGen = CodeGenerator()
+        let module = codeGen.generate(from: program)
+
+        // DATA strings should be serialized as Blitz3D string objects: [refCount][len][bytes][0][pad]
+        let helloData = module.data.first { data in
+            guard data.bytes.count >= 14 else { return false } // 8 header + 5 + 1
+            // "hello" starts at byte offset 8
+            let payload = Array(data.bytes[8..<13])
+            return payload == Array("hello".utf8)
+        }
+        XCTAssertNotNil(helloData, "DATA string \"hello\" should be present in the data section as a Blitz3D string object")
+
+        if let helloData {
+            let refCount = Int32(bitPattern: UInt32(helloData.bytes[0]) |
+                                 (UInt32(helloData.bytes[1]) << 8) |
+                                 (UInt32(helloData.bytes[2]) << 16) |
+                                 (UInt32(helloData.bytes[3]) << 24))
+            let len = Int32(bitPattern: UInt32(helloData.bytes[4]) |
+                            (UInt32(helloData.bytes[5]) << 8) |
+                            (UInt32(helloData.bytes[6]) << 16) |
+                            (UInt32(helloData.bytes[7]) << 24))
+            XCTAssertEqual(refCount, 1, "DATA string refCount should be 1")
+            XCTAssertEqual(len, 5, "DATA string length should match UTF-8 byte count")
+            XCTAssertEqual(helloData.bytes[13], 0, "DATA string should be null-terminated")
+        }
+
+        // READ into a string variable should assign the pointer directly (no i32.load from DATA bytes)
+        guard let mainIdx = module.functionNames.firstIndex(of: "Main") else {
+            XCTFail("Expected a Main function in generated module")
+            return
+        }
+
+        let mainFunc = module.code[mainIdx]
+        XCTAssertFalse(mainFunc.body.contains(.i32Load(2, 0)), "READ s$ should not i32.load the string payload as an i32")
+        XCTAssertTrue(mainFunc.body.contains(.i32Load(2, 4)), "READ s$ should load the string length (offset 4) to advance the DATA pointer")
+    }
     
     func testGenerateRestoreStatement() throws {
         let source = """

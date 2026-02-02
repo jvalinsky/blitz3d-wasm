@@ -2,7 +2,10 @@
 
 ## Overview
 
-This guide helps you get started with Blitz3D-WASM, from setting up the development environment to running your first compiled game in the browser. Blitz3D-WASM is a production-ready compiler that successfully runs complex games like SCP: Containment Breach.
+This guide helps you get started with Blitz3D-WASM, from setting up the
+development environment to running your first compiled game in the browser.
+Blitz3D-WASM is a production-ready compiler that successfully runs complex games
+like SCP: Containment Breach.
 
 ## Quick Start
 
@@ -26,18 +29,28 @@ This guide helps you get started with Blitz3D-WASM, from setting up the developm
    swift build -c release
    ```
 
-3. **Setup Web Development**
+3. **(Optional) Run the BB→WASM smoke suite**
+
+   This is the fastest way to verify “core language + runner” behavior
+   end-to-end.
+
+   ```bash
+   deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests/bb_deno_compile_and_run_smoke.test.ts
+   ```
+
+   If a test hangs, it should be killed by the watchdog timeout (by design).
+
+4. **Setup Web Development**
    ```bash
    deno task web:setup
    ```
 
-4. **Run Development Server**
+5. **Run Development Server**
    ```bash
    deno task web:dev
    ```
 
-5. **Open Browser**
-   Navigate to `http://localhost:8000`
+6. **Open Browser** Navigate to `http://localhost:8000`
 
 You should see the Blitz3D-WASM interface with debugging tools ready.
 
@@ -141,8 +154,44 @@ Next
    wasm-validate particles.wasm
    ```
 
-3. **Run in Browser**
-   Copy `particles.wasm` to the web directory and open `http://localhost:8000/test.html?file=particles.wasm`
+3. **Run in Browser** Copy `particles.wasm` to the web directory and open
+   `http://localhost:8000/test.html?file=particles.wasm`
+
+## Safe runner demos (2026-02-02)
+
+Two “no-freeze” runner entry points exist:
+
+- `web/public/bb_wasm_runner_demo.html`
+  - Upload a compiled `.wasm` and run it in a Worker with a watchdog timeout.
+- `web/interpreter.html`
+  - The in-browser editor/compile UI, now executing compiled modules in a Worker
+    with a Stop button + timeout.
+  - When using the Vite dev server / build pipeline, `interpreter.html` is a
+    first-class entrypoint (no CDN globals; uses bundled npm deps like `three`).
+
+**Why**: BB programs can contain infinite loops; in the browser this must never
+lock the UI thread.
+
+## Notes on `deno task web:build`
+
+`deno task web:build` uses Vite to build the `web/` frontend.
+
+If you see a Vite/Rollup error about failing to resolve `three`, run:
+
+```bash
+deno task web:setup
+```
+
+`web:setup` now prefetches the required npm deps (including `three`) and also
+runs the SCPCB public/ manifest setup (`web/setup.ts`).
+
+If you cannot fetch npm deps (offline / restricted network), you can still serve
+the static `web/public/*.html` demos without running the Vite pipeline.
+
+The production build is multi-page and should emit at least:
+
+- `dist/index.html`
+- `dist/interpreter.html`
 
 ## Development Workflow
 
@@ -176,7 +225,7 @@ Create `project.json`:
   "entry": "src/main.bb",
   "sources": [
     "src/main.bb",
-    "src/player.bb", 
+    "src/player.bb",
     "src/enemies.bb",
     "src/utils.bb"
   ],
@@ -301,15 +350,14 @@ deno task memleak:webgpu --iterations 50 --verbose
 // Test loading in browser console
 async function testWasm() {
   try {
-    const result = await Blitz3D.load('game.wasm');
-    console.log('WASM loaded successfully:', result);
-    
+    const result = await Blitz3D.load("game.wasm");
+    console.log("WASM loaded successfully:", result);
+
     // Test function calls
     const entity = Blitz3D.createCube();
-    console.log('Created entity:', entity);
-    
+    console.log("Created entity:", entity);
   } catch (error) {
-    console.error('WASM failed to load:', error);
+    console.error("WASM failed to load:", error);
   }
 }
 
@@ -355,12 +403,12 @@ Check browser console for detailed error messages:
 
 ```javascript
 // Enable WASM logging
-Blitz3D.setLogLevel('debug');
+Blitz3D.setLogLevel("debug");
 
 // Monitor memory usage
 setInterval(() => {
   const memory = Blitz3D.getMemoryUsage();
-  console.log('WASM Memory:', memory);
+  console.log("WASM Memory:", memory);
 }, 5000);
 ```
 
@@ -369,6 +417,7 @@ setInterval(() => {
 ### Setup Problems
 
 **"Swift not found"**:
+
 ```bash
 # macOS: Install Xcode Command Line Tools
 xcode-select --install
@@ -381,6 +430,7 @@ sudo apt-get install swift swift-clang
 ```
 
 **"wasm-validate not found"**:
+
 ```bash
 # macOS
 brew install wabt
@@ -394,11 +444,13 @@ sudo apt-get install wabt
 ### Compilation Issues
 
 **"Undefined function" errors**:
+
 - Check function names match runtime imports
 - Verify `Include` files are found
 - Use `--verbose` flag for detailed error messages
 
 **"Type mismatch" errors**:
+
 - Ensure parameter types match function signatures
 - Check for proper type conversions
 - Use `DebugLog` to trace variable values
@@ -406,11 +458,13 @@ sudo apt-get install wabt
 ### Runtime Issues
 
 **"WASM failed to load"**:
+
 - Validate WASM file: `wasm-validate game.wasm`
 - Check browser console for specific error
 - Verify runtime.js is loaded correctly
 
 **"No entities visible"**:
+
 - Check camera positioning
 - Verify entity creation succeeded
 - Ensure lighting is configured
@@ -419,12 +473,14 @@ sudo apt-get install wabt
 ### Performance Issues
 
 **Low frame rate**:
+
 - Reduce particle count
 - Optimize entity updates
 - Check for memory leaks
 - Profile with debug overlay
 
 **High memory usage**:
+
 - Run memory leak detection
 - Check for undisposed resources
 - Optimize asset loading
@@ -436,7 +492,8 @@ sudo apt-get install wabt
 
 1. **Documentation**: Read the full API documentation in `docs/API.md`
 2. **Examples**: Study examples in the `Examples/` directory
-3. **Compiler Internals**: Understand the compilation process in `docs/compiler/`
+3. **Compiler Internals**: Understand the compilation process in
+   `docs/compiler/`
 4. **Runtime Architecture**: Learn about the command buffer system
 
 ### Community
@@ -456,4 +513,7 @@ Once comfortable with basics, explore:
 
 ---
 
-Welcome to Blitz3D-WASM development! You now have everything needed to create and deploy browser-based 3D games using the Blitz3D language. Start with simple projects, experiment with the examples, and gradually build up to more complex applications.
+Welcome to Blitz3D-WASM development! You now have everything needed to create
+and deploy browser-based 3D games using the Blitz3D language. Start with simple
+projects, experiment with the examples, and gradually build up to more complex
+applications.

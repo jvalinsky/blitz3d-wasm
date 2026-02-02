@@ -1122,9 +1122,14 @@ public struct Parser {
                 if expect(.identifier) {
                     let typeName = currentToken.text
                     advance()
-                    // Delete Each is handled as delete with First of type
                     let span = endSpan(from: start)
-                    return .delete(.first(typeName, span), span)
+                    // Expand to:
+                    //   While First TypeName
+                    //       Delete First TypeName
+                    //   Wend
+                    let firstExpr: ExpressionNode = .first(typeName, span)
+                    let whileNode = WhileNode(condition: firstExpr, body: [.delete(firstExpr, span)], span: span)
+                    return .whileLoop(whileNode, span)
                 }
             }
             let expr = parseExpression()
@@ -1534,11 +1539,12 @@ public struct Parser {
         }
 
         if expect(.keywordForever) {
-            // Infinite loop - use True as condition
+            // Infinite loop - codegen is "do { body } until condition",
+            // so condition must always be false to loop forever.
             _ = consume(.keywordForever)
             return .repeatLoop(
                 RepeatNode(
-                    body: body, condition: .integerLiteral(1, .unknown), span: endSpan(from: start)),
+                    body: body, condition: .integerLiteral(0, .unknown), span: endSpan(from: start)),
                 endSpan(from: start))
         }
 
@@ -1799,15 +1805,19 @@ public struct Parser {
                 }
 
                 CompilerLogger.debug("DEBUG_PARSER: Produced functionCall for '\(id.name)'")
+                // Preserve explicit suffix for calls like `Trim$ s$` so codegen can treat
+                // the call result as string in expressions like `"x=" + Trim$(s$)`.
+                let suffix = (id.typeSuffix == .object) ? "" : (id.typeSuffix?.rawValue ?? "")
                 return .functionCall(
-                    FunctionCallNode(name: id.name, arguments: args, span: endSpan(from: start)),
+                    FunctionCallNode(name: id.name + suffix, arguments: args, span: endSpan(from: start)),
                     endSpan(from: start))
             }
 
             // Also allow no-argument calls as standalone statements:
             // `Cls`, `RenderWorld`, etc.
+            let suffix = (id.typeSuffix == .object) ? "" : (id.typeSuffix?.rawValue ?? "")
             return .functionCall(
-                FunctionCallNode(name: id.name, arguments: [], span: endSpan(from: start)),
+                FunctionCallNode(name: id.name + suffix, arguments: [], span: endSpan(from: start)),
                 endSpan(from: start))
         }
 
@@ -2009,7 +2019,8 @@ public struct Parser {
                 // Get function name from identifier
                 if case .identifier(let id, _) = expr {
                     let span = endSpan(from: startLoc)
-                    let node = FunctionCallNode(name: id.name, arguments: args, span: span)
+                    let suffix = (id.typeSuffix == .object) ? "" : (id.typeSuffix?.rawValue ?? "")
+                    let node = FunctionCallNode(name: id.name + suffix, arguments: args, span: span)
                     expr = .functionCall(node, span)
                 }
                 continue

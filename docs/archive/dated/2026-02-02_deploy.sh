@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Blitz3D WASM Deployment Script
-# Compiles TypeScript, copies assets, and deploys to nginx web root
+# Blitz3D WASM Deployment Script (ARCHIVED)
+#
+# Archived on 2026-02-02: this script relied on sudo + mutable /var/www/html and
+# ad-hoc npm/npx usage. Prefer `deno task web:build` and serve `dist/` instead.
+#
+# Kept here for reference only.
 
 set -e  # Exit on error
 
@@ -108,7 +112,9 @@ echo "=== Deployment Complete ==="
 echo ""
 echo "Web root: $WEB_ROOT"
 echo "NPC Demo: https://blitz3d.exe.xyz:8000/npc_smpk_demo.html"
+echo "BB WASM Runner Demo: https://blitz3d.exe.xyz:8000/bb_wasm_runner_demo.html"
 echo ""
 echo "To start nginx server:"
 echo "  cd $WEB_ROOT && busybox httpd -f -p 8000 -h ."
 echo ""
+

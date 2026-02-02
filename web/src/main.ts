@@ -35,6 +35,7 @@ let currentWorker: Worker | null = null;
 let currentWorkerWatchdog: number | null = null; // legacy (kept for compatibility); per-call timeouts are preferred.
 let currentWorkerReady = false;
 let currentWorkerUiRefresh: (() => void) | null = null;
+let currentWorkerBbdbgUiRefresh: (() => void) | null = null;
 let currentWorkerCallId = 1;
 const currentWorkerPending = new Map<
   number,
@@ -45,6 +46,78 @@ const currentWorkerPending = new Map<
     timeoutId: number;
   }
 >();
+
+let currentWorkerMemReqId = 1;
+const currentWorkerMemPending = new Map<
+  number,
+  {
+    resolve: (v: { addr: number; bytes: Uint8Array }) => void;
+    reject: (e: unknown) => void;
+    timeoutId: number;
+  }
+>();
+
+let currentWorkerGlobalReqId = 1;
+const currentWorkerGlobalPending = new Map<
+  number,
+  {
+    resolve: (v: { name: string; value: number }) => void;
+    reject: (e: unknown) => void;
+    timeoutId: number;
+  }
+>();
+
+let currentWorkerUpdateLoopCancel: (() => void) | null = null;
+let currentWorkerUpdateLoopPausedReason: string | null = null;
+
+type WorkerBbdbgSnapshot = {
+  enabled: boolean;
+  hasMetadata: boolean;
+  exportName: string;
+  location: { fileId: number; file: string; line: number } | null;
+  stack: string[];
+  trace: Array<{ fileId: number; file: string; line: number; depth: number }>;
+  breakpointHits: Array<{ fileId: number; file: string; line: number }>;
+};
+
+type WorkerBbdbgState = {
+  required: boolean;
+  meta:
+    | null
+    | {
+      ok: boolean;
+      url: string;
+      fileCount?: number;
+      functionCount?: number;
+      typeCount?: number;
+      versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
+      error?: string;
+      files?: Array<{ id: number; path: string }>;
+      functions?: Array<{
+        id: number;
+        name: string;
+        signature: string;
+        fileId: number;
+        startLine: number;
+        endLine: number;
+      }>;
+      types?: Array<{
+        id: number;
+        name: string;
+        instanceSizeBytes: number;
+        fields: Array<{
+          name: string;
+          offsetBytes: number;
+          wasmType: string;
+          declaredType: string;
+          customTypeName?: string | null;
+          dimensions?: number[] | null;
+        }>;
+      }>;
+    };
+  config: { enabled: boolean; traceMax: number } | null;
+  lastSnapshot: WorkerBbdbgSnapshot | null;
+};
 
 const getUrlFlags = () => {
   const params = new URLSearchParams(globalThis.location?.search ?? "");
@@ -73,6 +146,13 @@ const getUrlFlags = () => {
 };
 
 const terminateWorker = () => {
+  if (currentWorkerUpdateLoopCancel) {
+    try {
+      currentWorkerUpdateLoopCancel();
+    } catch { }
+    currentWorkerUpdateLoopCancel = null;
+  }
+  currentWorkerUpdateLoopPausedReason = "terminated";
   if (currentWorkerWatchdog != null) {
     try {
       clearTimeout(currentWorkerWatchdog);
@@ -98,8 +178,18 @@ const terminateWorker = () => {
     } catch { }
   }
   currentWorkerPending.clear();
+  for (const [_id, p] of currentWorkerMemPending) {
+    try {
+      clearTimeout(p.timeoutId);
+      p.reject(new Error("worker terminated"));
+    } catch { }
+  }
+  currentWorkerMemPending.clear();
   try {
     currentWorkerUiRefresh?.();
+  } catch { }
+  try {
+    currentWorkerBbdbgUiRefresh?.();
   } catch { }
 };
 
@@ -1506,6 +1596,8 @@ async function init() {
         requiresWorkerReady?: boolean;
         requiresWorkerIdle?: boolean;
       }> = [];
+      let workerRunUpdateBtn: HTMLButtonElement | null = null;
+      let workerStopUpdateBtn: HTMLButtonElement | null = null;
 
       const setButtonEnabled = (btn: HTMLButtonElement, enabled: boolean) => {
         btn.disabled = !enabled;
@@ -1520,6 +1612,14 @@ async function init() {
           const okReady = !b.requiresWorkerReady || ready;
           const okIdle = !b.requiresWorkerIdle || !busy;
           setButtonEnabled(b.btn, okReady && okIdle);
+        }
+        if (workerRunUpdateBtn) {
+          const enabled = ready && !busy && !currentWorkerUpdateLoopCancel;
+          setButtonEnabled(workerRunUpdateBtn, enabled);
+        }
+        if (workerStopUpdateBtn) {
+          const enabled = ready && !!currentWorkerUpdateLoopCancel;
+          setButtonEnabled(workerStopUpdateBtn, enabled);
         }
       };
       currentWorkerUiRefresh = refreshWorkerButtons;
@@ -1544,6 +1644,12 @@ async function init() {
         currentWorkerReady = false;
         (window as any).__WORKER_STATUS = { stage: "starting" };
         (window as any).__WORKER_EXPORTS = [];
+        (window as any).__WORKER_BBDBG = {
+          required: false,
+          meta: null,
+          config: null,
+          lastSnapshot: null,
+        } satisfies WorkerBbdbgState;
         w.onmessage = (ev: MessageEvent<any>) => {
           const m = ev.data;
           if (m?.type === "status") {
@@ -1556,10 +1662,152 @@ async function init() {
               const n = (window as any).__WORKER_EXPORTS.length;
               console.log(`[worker] exports: ${n}`);
             } catch { }
+          } else if (m?.type === "bbdbgRequired") {
+            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            st.required = !!m.required;
+            (window as any).__WORKER_BBDBG = st;
+            try {
+              currentWorkerBbdbgUiRefresh?.();
+            } catch { }
+          } else if (m?.type === "bbdbgMeta") {
+            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            const files = Array.isArray(m.files)
+              ? (m.files as Array<any>).map((f) => ({
+                id: Number(f?.id ?? 0) | 0,
+                path: String(f?.path ?? ""),
+              })).filter((f) => f.id > 0 && !!f.path)
+              : undefined;
+            const functions = Array.isArray(m.functions)
+              ? (m.functions as Array<any>).map((fn) => ({
+                id: Number(fn?.id ?? 0) | 0,
+                name: String(fn?.name ?? ""),
+                signature: String(fn?.signature ?? ""),
+                fileId: Number(fn?.fileId ?? 0) | 0,
+                startLine: Number(fn?.startLine ?? 0) | 0,
+                endLine: Number(fn?.endLine ?? 0) | 0,
+              })).filter((fn) => fn.id >= 0 && !!fn.name)
+              : undefined;
+            const types = Array.isArray(m.types)
+              ? (m.types as Array<any>).map((t) => ({
+                id: Number(t?.id ?? 0) | 0,
+                name: String(t?.name ?? ""),
+                instanceSizeBytes: Number(t?.instanceSizeBytes ?? 0) | 0,
+                fields: Array.isArray(t?.fields)
+                  ? (t.fields as Array<any>).map((f) => ({
+                    name: String(f?.name ?? ""),
+                    offsetBytes: Number(f?.offsetBytes ?? 0) | 0,
+                    wasmType: String(f?.wasmType ?? ""),
+                    declaredType: String(f?.declaredType ?? ""),
+                    customTypeName: f?.customTypeName == null ? null : String(f?.customTypeName ?? ""),
+                    dimensions: Array.isArray(f?.dimensions)
+                      ? (f.dimensions as Array<any>).map((n) => Number(n) | 0).filter((n) => n > 0)
+                      : null,
+                  })).filter((f) => !!f.name && (f.offsetBytes | 0) >= 0)
+                  : [],
+              })).filter((t) => (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0)
+              : undefined;
+            const versions = m.versions && typeof m.versions === "object"
+              ? {
+                bbdbgSchemaVersion: Number(m.versions?.bbdbgSchemaVersion ?? 0) | 0,
+                runtimeLayoutVersion: Number(m.versions?.runtimeLayoutVersion ?? 0) | 0,
+              }
+              : undefined;
+            st.meta = {
+              ok: !!m.ok,
+              url: String(m.url ?? ""),
+              fileCount: Number(m.fileCount ?? 0),
+              functionCount: Number(m.functionCount ?? 0),
+              typeCount: Number(m.typeCount ?? 0),
+              versions,
+              error: m.error ? String(m.error) : undefined,
+              files,
+              functions,
+              types,
+            };
+            (window as any).__WORKER_BBDBG = st;
+            try {
+              currentWorkerBbdbgUiRefresh?.();
+            } catch { }
+          } else if (m?.type === "bbdbgConfig") {
+            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            st.config = {
+              enabled: !!m.enabled,
+              traceMax: Number(m.traceMax ?? 0) | 0,
+            };
+            (window as any).__WORKER_BBDBG = st;
+            try {
+              currentWorkerBbdbgUiRefresh?.();
+            } catch { }
+          } else if (m?.type === "bbdbgSnapshot") {
+            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            st.lastSnapshot = (m.snapshot ?? null) as WorkerBbdbgSnapshot | null;
+            (window as any).__WORKER_BBDBG = st;
+            try {
+              const hits = st.lastSnapshot?.breakpointHits?.length ?? 0;
+              if (hits > 0 && currentWorkerUpdateLoopCancel) {
+                stopWorkerUpdateLoop(`breakpoint hit (${hits})`);
+              }
+            } catch { }
+            try {
+              currentWorkerBbdbgUiRefresh?.();
+            } catch { }
+          } else if (m?.type === "dbgMemory") {
+            const id = Number(m.reqId ?? 0) | 0;
+            const pending = currentWorkerMemPending.get(id);
+            if (pending) {
+              currentWorkerMemPending.delete(id);
+              try {
+                clearTimeout(pending.timeoutId);
+                const addr = Number(m.addr ?? 0) >>> 0;
+                const bytes = m.bytes instanceof Uint8Array ? m.bytes : new Uint8Array(m.bytes ?? []);
+                pending.resolve({ addr, bytes });
+              } catch (e) {
+                pending.reject(e);
+              }
+            }
+          } else if (m?.type === "dbgMemoryError") {
+            const id = Number(m.reqId ?? 0) | 0;
+            const pending = currentWorkerMemPending.get(id);
+            if (pending) {
+              currentWorkerMemPending.delete(id);
+              try {
+                clearTimeout(pending.timeoutId);
+                pending.reject(new Error(String(m.error ?? "dbgMemoryError")));
+              } catch { }
+            }
+          } else if (m?.type === "dbgGlobal") {
+            const id = Number(m.reqId ?? 0) | 0;
+            const pending = currentWorkerGlobalPending.get(id);
+            if (pending) {
+              currentWorkerGlobalPending.delete(id);
+              try {
+                clearTimeout(pending.timeoutId);
+                pending.resolve({
+                  name: String(m.name ?? ""),
+                  value: Number(m.value ?? 0) >>> 0,
+                });
+              } catch (e) {
+                pending.reject(e);
+              }
+            }
+          } else if (m?.type === "dbgGlobalError") {
+            const id = Number(m.reqId ?? 0) | 0;
+            const pending = currentWorkerGlobalPending.get(id);
+            if (pending) {
+              currentWorkerGlobalPending.delete(id);
+              try {
+                clearTimeout(pending.timeoutId);
+                pending.reject(new Error(String(m.error ?? "dbgGlobalError")));
+              } catch { }
+            }
           } else if (m?.type === "ready") {
             console.log("[worker] ready");
             currentWorkerReady = true;
             refreshWorkerButtons();
+            try {
+              // Query bbdbg config immediately (best-effort; no-op if worker doesn't support it).
+              w.postMessage({ cmd: "dbgConfig" });
+            } catch { }
             if (workerAutoProbePending) {
               workerAutoProbePending = false;
               // Defer so the UI updates before starting probe calls.
@@ -1699,6 +1947,62 @@ async function init() {
         return p;
       };
 
+      const stopWorkerUpdateLoop = (reason?: string) => {
+        if (currentWorkerUpdateLoopCancel) {
+          try {
+            currentWorkerUpdateLoopCancel();
+          } catch { }
+          currentWorkerUpdateLoopCancel = null;
+        }
+        currentWorkerUpdateLoopPausedReason = reason ? String(reason) : null;
+        try {
+          currentWorkerBbdbgUiRefresh?.();
+        } catch { }
+        try {
+          refreshWorkerButtons();
+        } catch { }
+      };
+
+      const startWorkerUpdateLoop = () => {
+        if (!currentWorker || !currentWorkerReady) return;
+        if (currentWorkerUpdateLoopCancel) return;
+        let running = true;
+        currentWorkerUpdateLoopPausedReason = null;
+
+        const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+        const loop = async () => {
+          while (running) {
+            if (!currentWorker || !currentWorkerReady) {
+              stopWorkerUpdateLoop("worker not ready");
+              return;
+            }
+            // Ensure strict single in-flight call semantics.
+            if (currentWorkerPending.size > 0) {
+              await delay(10);
+              continue;
+            }
+            try {
+              await workerCall("UpdateGame", 500);
+            } catch (e: any) {
+              stopWorkerUpdateLoop(`UpdateGame failed: ${String(e?.message ?? e)}`);
+              return;
+            }
+            // Yield to keep UI responsive.
+            await delay(0);
+          }
+        };
+        void loop();
+        currentWorkerUpdateLoopCancel = () => {
+          running = false;
+        };
+        try {
+          currentWorkerBbdbgUiRefresh?.();
+        } catch { }
+        try {
+          refreshWorkerButtons();
+        } catch { }
+      };
+
       const workerCallUI = (
         exportName: string,
         timeoutMs: number,
@@ -1807,6 +2111,902 @@ async function init() {
           },
           {},
         );
+        if (hasUpdateGame) {
+          workerRunUpdateBtn = addButton(bar, "Run UpdateGame", () => {
+            startWorkerUpdateLoop();
+          }) as HTMLButtonElement;
+          workerStopUpdateBtn = addButton(bar, "Stop UpdateGame", () => {
+            stopWorkerUpdateLoop("stopped");
+          }) as HTMLButtonElement;
+          // Managed by refreshWorkerButtons() special-casing above.
+          refreshWorkerButtons();
+        }
+
+        // BBDBG panel (best-effort). Requires a debug build compiled with `-d/--debug` so
+        // the WASM imports `bbdbg.__bbdbg_*` and a sibling `.bbdbg.json` exists.
+        const dbgWrap = document.createElement("details");
+        dbgWrap.open = false;
+        dbgWrap.style.marginTop = "8px";
+        dbgWrap.style.padding = "6px";
+        dbgWrap.style.border = "1px solid rgba(255,255,255,0.12)";
+        dbgWrap.style.borderRadius = "6px";
+        const dbgSum = document.createElement("summary");
+        dbgSum.textContent = "Worker BBDBG (source trace)";
+        dbgSum.style.cursor = "pointer";
+        dbgWrap.appendChild(dbgSum);
+        const dbgBar = document.createElement("div");
+        dbgBar.style.display = "flex";
+        dbgBar.style.gap = "6px";
+        dbgBar.style.flexWrap = "wrap";
+        dbgBar.style.margin = "6px 0";
+        dbgWrap.appendChild(dbgBar);
+        const bbdbgSources = new Map<string, string>();
+        const dbgFileInput = document.createElement("input");
+        dbgFileInput.type = "file";
+        dbgFileInput.multiple = true;
+        dbgFileInput.accept = ".bb,.b3d,.txt";
+        dbgFileInput.style.display = "none";
+        dbgFileInput.addEventListener("change", async () => {
+          const files = Array.from(dbgFileInput.files ?? []);
+          for (const f of files) {
+            try {
+              const text = await f.text();
+              bbdbgSources.set(f.name, text);
+            } catch { }
+          }
+          try {
+            refreshBbdbgPanel();
+          } catch { }
+          // Allow re-selecting the same file(s).
+          try {
+            dbgFileInput.value = "";
+          } catch { }
+        });
+        dbgWrap.appendChild(dbgFileInput);
+
+        // Breakpoints (worker-side currently treats them as "hits during the last call";
+        // we don't attempt to pause inside a WASM call).
+        const bbdbgBreakpointsByFileId = new Map<number, Set<number>>();
+        const bpFileSelect = document.createElement("select");
+        bpFileSelect.style.maxWidth = "260px";
+        bpFileSelect.style.fontSize = "12px";
+        bpFileSelect.title = "Breakpoint file (from .bbdbg.json metadata)";
+        const bpLineInput = document.createElement("input");
+        bpLineInput.type = "number";
+        bpLineInput.min = "1";
+        bpLineInput.step = "1";
+        bpLineInput.placeholder = "line";
+        bpLineInput.style.width = "90px";
+        bpLineInput.style.fontSize = "12px";
+        bpLineInput.title = "Breakpoint line number";
+        dbgBar.appendChild(bpFileSelect);
+        dbgBar.appendChild(bpLineInput);
+
+        // Metadata browser (files + functions) from `.bbdbg.json`.
+        const metaWrap = document.createElement("details");
+        metaWrap.open = false;
+        metaWrap.style.marginTop = "8px";
+        const metaSum = document.createElement("summary");
+        metaSum.textContent = "BBDBG metadata (files/functions)";
+        metaSum.style.cursor = "pointer";
+        metaWrap.appendChild(metaSum);
+        const metaBar = document.createElement("div");
+        metaBar.style.display = "flex";
+        metaBar.style.gap = "6px";
+        metaBar.style.flexWrap = "wrap";
+        metaBar.style.margin = "6px 0";
+        metaWrap.appendChild(metaBar);
+        const metaSearch = document.createElement("input");
+        metaSearch.type = "text";
+        metaSearch.placeholder = "filter (file or function name)";
+        metaSearch.style.width = "260px";
+        metaSearch.style.fontSize = "12px";
+        const metaLimit = document.createElement("select");
+        metaLimit.style.fontSize = "12px";
+        for (const n of [50, 200, 800]) {
+          const opt = document.createElement("option");
+          opt.value = String(n);
+          opt.textContent = `limit=${n}`;
+          metaLimit.appendChild(opt);
+        }
+        metaBar.appendChild(metaSearch);
+        metaBar.appendChild(metaLimit);
+        const metaFiles = document.createElement("pre");
+        metaFiles.style.margin = "0";
+        metaFiles.style.maxHeight = "160px";
+        metaFiles.style.overflow = "auto";
+        metaFiles.style.whiteSpace = "pre";
+        metaFiles.style.fontSize = "12px";
+        metaFiles.style.borderTop = "1px solid rgba(255,255,255,0.08)";
+        metaFiles.style.paddingTop = "6px";
+        metaWrap.appendChild(metaFiles);
+        const metaFuncs = document.createElement("div");
+        metaFuncs.style.marginTop = "6px";
+        metaFuncs.style.maxHeight = "260px";
+        metaFuncs.style.overflow = "auto";
+        metaFuncs.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+        metaFuncs.style.fontSize = "12px";
+        metaFuncs.style.borderTop = "1px solid rgba(255,255,255,0.08)";
+        metaFuncs.style.paddingTop = "6px";
+        metaWrap.appendChild(metaFuncs);
+        dbgWrap.appendChild(metaWrap);
+
+        const dbgPre = document.createElement("pre");
+        dbgPre.style.margin = "0";
+        dbgPre.style.maxHeight = "280px";
+        dbgPre.style.overflow = "auto";
+        dbgPre.style.whiteSpace = "pre";
+        dbgPre.style.fontSize = "12px";
+        dbgWrap.appendChild(dbgPre);
+
+        // Memory inspector (worker mode only): reads slices of linear memory via worker RPC.
+        const memWrap = document.createElement("details");
+        memWrap.open = false;
+        memWrap.style.marginTop = "8px";
+        const memSum = document.createElement("summary");
+        memSum.textContent = "Memory inspector (read-only)";
+        memSum.style.cursor = "pointer";
+        memWrap.appendChild(memSum);
+        const memBar = document.createElement("div");
+        memBar.style.display = "flex";
+        memBar.style.gap = "6px";
+        memBar.style.flexWrap = "wrap";
+        memBar.style.margin = "6px 0";
+        memWrap.appendChild(memBar);
+        const memAddrInput = document.createElement("input");
+        memAddrInput.type = "text";
+        memAddrInput.placeholder = "addr (e.g. 0x1000)";
+        memAddrInput.style.width = "160px";
+        memAddrInput.style.fontSize = "12px";
+        const memLenInput = document.createElement("input");
+        memLenInput.type = "number";
+        memLenInput.min = "1";
+        memLenInput.step = "1";
+        memLenInput.value = "256";
+        memLenInput.style.width = "90px";
+        memLenInput.style.fontSize = "12px";
+        const memTypeSelect = document.createElement("select");
+        memTypeSelect.style.fontSize = "12px";
+        for (const v of ["hex", "i32", "u32", "f32", "b3dstr"]) {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          memTypeSelect.appendChild(opt);
+        }
+        memBar.appendChild(memAddrInput);
+        memBar.appendChild(memLenInput);
+        memBar.appendChild(memTypeSelect);
+        const memPre = document.createElement("pre");
+        memPre.style.margin = "0";
+        memPre.style.maxHeight = "280px";
+        memPre.style.overflow = "auto";
+        memPre.style.whiteSpace = "pre";
+        memPre.style.fontSize = "12px";
+        memWrap.appendChild(memPre);
+
+        const watchBar = document.createElement("div");
+        watchBar.style.display = "flex";
+        watchBar.style.gap = "6px";
+        watchBar.style.flexWrap = "wrap";
+        watchBar.style.margin = "6px 0";
+        const watchLabelInput = document.createElement("input");
+        watchLabelInput.type = "text";
+        watchLabelInput.placeholder = "watch label";
+        watchLabelInput.style.width = "140px";
+        watchLabelInput.style.fontSize = "12px";
+        const watchTypeSelect = document.createElement("select");
+        watchTypeSelect.style.fontSize = "12px";
+        for (const v of ["i32", "u32", "f32", "b3dstr"]) {
+          const opt = document.createElement("option");
+          opt.value = v;
+          opt.textContent = v;
+          watchTypeSelect.appendChild(opt);
+        }
+        watchBar.appendChild(watchLabelInput);
+        watchBar.appendChild(watchTypeSelect);
+        memWrap.appendChild(watchBar);
+        const watchPre = document.createElement("pre");
+        watchPre.style.margin = "0";
+        watchPre.style.maxHeight = "220px";
+        watchPre.style.overflow = "auto";
+        watchPre.style.whiteSpace = "pre";
+        watchPre.style.fontSize = "12px";
+        memWrap.appendChild(watchPre);
+
+        const typeDecodeBar = document.createElement("div");
+        typeDecodeBar.style.display = "flex";
+        typeDecodeBar.style.gap = "6px";
+        typeDecodeBar.style.flexWrap = "wrap";
+        typeDecodeBar.style.margin = "8px 0 6px 0";
+        const typePtrInput = document.createElement("input");
+        typePtrInput.type = "text";
+        typePtrInput.placeholder = "type ptr (hex like 0x1234)";
+        typePtrInput.style.width = "220px";
+        typePtrInput.style.fontSize = "12px";
+        const typeSelect = document.createElement("select");
+        typeSelect.style.maxWidth = "260px";
+        typeSelect.style.fontSize = "12px";
+        typeSelect.title = "Decode as Blitz Type (from .bbdbg.json)";
+        typeDecodeBar.appendChild(typePtrInput);
+        typeDecodeBar.appendChild(typeSelect);
+        memWrap.appendChild(typeDecodeBar);
+        const typePre = document.createElement("pre");
+        typePre.style.margin = "0";
+        typePre.style.maxHeight = "260px";
+        typePre.style.overflow = "auto";
+        typePre.style.whiteSpace = "pre";
+        typePre.style.fontSize = "12px";
+        memWrap.appendChild(typePre);
+        dbgWrap.appendChild(memWrap);
+        loader.overlay.appendChild(dbgWrap);
+
+        const basename = (p: string) => {
+          const s = String(p ?? "");
+          const i = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"));
+          return i >= 0 ? s.slice(i + 1) : s;
+        };
+
+        const refreshMetaViz = () => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const files = st?.meta?.files ?? [];
+          const funcs = st?.meta?.functions ?? [];
+          const q = String(metaSearch.value ?? "").trim().toLowerCase();
+          const lim = Math.max(10, Math.min(5000, Number(metaLimit.value ?? "200") | 0));
+
+          const fileLines: string[] = [];
+          fileLines.push(`files (${files.length}${files.length > 500 ? "+ (truncated in worker)" : ""})`);
+          const fileRows = q
+            ? files.filter((f) => String(f.path ?? "").toLowerCase().includes(q))
+            : files;
+          for (const f of fileRows.slice(0, 30)) {
+            fileLines.push(`  ${String(f.id).padStart(4, " ")}  ${f.path}`);
+          }
+          if (fileRows.length > 30) fileLines.push(`  ... (${fileRows.length - 30} more)`);
+          metaFiles.textContent = fileLines.join("\n");
+
+          metaFuncs.textContent = "";
+          const title = document.createElement("div");
+          title.textContent = `functions (${funcs.length}${funcs.length > 2000 ? "+ (truncated in worker)" : ""})`;
+          title.style.marginBottom = "6px";
+          metaFuncs.appendChild(title);
+
+          const fnRows = q
+            ? funcs.filter((fn) => {
+              const name = String(fn.name ?? "").toLowerCase();
+              const sig = String(fn.signature ?? "").toLowerCase();
+              const file = files.find((f) => (f.id | 0) === (fn.fileId | 0))?.path ?? "";
+              return name.includes(q) || sig.includes(q) || String(file).toLowerCase().includes(q);
+            })
+            : funcs;
+          const list = fnRows.slice(0, lim);
+          for (const fn of list) {
+            const row = document.createElement("div");
+            row.style.display = "flex";
+            row.style.gap = "8px";
+            row.style.alignItems = "baseline";
+            row.style.padding = "2px 0";
+
+            const btn = document.createElement("button");
+            btn.textContent = "BP";
+            btn.style.fontSize = "11px";
+            btn.style.padding = "1px 6px";
+            btn.dataset.fileId = String(fn.fileId | 0);
+            btn.dataset.line = String(fn.startLine | 0);
+            btn.title = "Set breakpoint at function startLine";
+
+            const filePath = files.find((f) => (f.id | 0) === (fn.fileId | 0))?.path ?? `file_${fn.fileId | 0}`;
+            const label = document.createElement("div");
+            label.style.flex = "1";
+            label.textContent =
+              `${String(fn.id).padStart(4, " ")}  ${fn.name}  ` +
+              `[${basename(filePath)}:${fn.startLine}..${fn.endLine}]  ` +
+              `${fn.signature}`;
+            row.appendChild(btn);
+            row.appendChild(label);
+            metaFuncs.appendChild(row);
+          }
+          if (fnRows.length > lim) {
+            const more = document.createElement("div");
+            more.textContent = `... (${fnRows.length - lim} more; refine filter)`;
+            more.style.marginTop = "6px";
+            metaFuncs.appendChild(more);
+          }
+        };
+
+        const refreshTypeDecodeSelect = () => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const types = st?.meta?.types ?? [];
+          const cur = String(typeSelect.value ?? "");
+          typeSelect.textContent = "";
+          const opt0 = document.createElement("option");
+          opt0.value = "";
+          opt0.textContent = types.length ? "(choose type)" : "(no bbdbg types)";
+          typeSelect.appendChild(opt0);
+
+          const rank = (name: string) => {
+            const n = name.toLowerCase();
+            if (n === "npcs") return 0;
+            if (n === "items") return 1;
+            if (n.includes("npc")) return 2;
+            if (n.includes("item")) return 3;
+            return 10;
+          };
+          const sorted = [...types].sort((a, b) => {
+            const ra = rank(a.name);
+            const rb = rank(b.name);
+            if (ra !== rb) return ra - rb;
+            return a.name.localeCompare(b.name);
+          });
+          for (const t of sorted) {
+            const opt = document.createElement("option");
+            opt.value = String(t.id | 0);
+            opt.textContent = `${t.name} (id=${t.id | 0}, ${t.instanceSizeBytes | 0} bytes)`;
+            typeSelect.appendChild(opt);
+          }
+          if (cur) typeSelect.value = cur;
+        };
+
+        const getSelectedType = () => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const types = st?.meta?.types ?? [];
+          const id = Number(typeSelect.value ?? "0") | 0;
+          if (id <= 0) return null;
+          return types.find((t) => (t.id | 0) === id) ?? null;
+        };
+
+        const selectTypeByName = (name: string) => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const types = st?.meta?.types ?? [];
+          const want = name.toLowerCase();
+          const hit = types.find((t) => String(t.name ?? "").toLowerCase() === want);
+          if (!hit) return false;
+          typeSelect.value = String(hit.id | 0);
+          return true;
+        };
+
+        const parseU32 = (s: string): number | null => {
+          const t = String(s ?? "").trim();
+          if (!t) return null;
+          const n = t.startsWith("0x") || t.startsWith("0X")
+            ? Number.parseInt(t.slice(2), 16)
+            : Number.parseInt(t, 10);
+          if (!Number.isFinite(n)) return null;
+          return (n >>> 0) as number;
+        };
+
+        const latin1 = new TextDecoder("latin1");
+
+        const readWorkerMemory = (addr: number, len: number) => {
+          if (!currentWorker || !currentWorkerReady) {
+            return Promise.reject(new Error("worker not ready"));
+          }
+          const reqId = (currentWorkerMemReqId++ | 0) >>> 0;
+          return new Promise<{ addr: number; bytes: Uint8Array }>((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              currentWorkerMemPending.delete(reqId);
+              reject(new Error("dbgReadMemory timeout"));
+            }, 1500) as any as number;
+            currentWorkerMemPending.set(reqId, { resolve, reject, timeoutId });
+            currentWorker!.postMessage({ cmd: "dbgReadMemory", reqId, addr, len });
+          });
+        };
+
+        const readWorkerGlobal = (name: string) => {
+          if (!currentWorker || !currentWorkerReady) {
+            return Promise.reject(new Error("worker not ready"));
+          }
+          const reqId = (currentWorkerGlobalReqId++ | 0) >>> 0;
+          return new Promise<{ name: string; value: number }>((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              currentWorkerGlobalPending.delete(reqId);
+              reject(new Error("dbgReadGlobal timeout"));
+            }, 1500) as any as number;
+            currentWorkerGlobalPending.set(reqId, { resolve, reject, timeoutId });
+            currentWorker!.postMessage({ cmd: "dbgReadGlobal", reqId, name });
+          });
+        };
+
+        const readU32le = async (addr: number) => {
+          const { bytes } = await readWorkerMemory(addr, 4);
+          if (bytes.byteLength < 4) throw new Error("short read");
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, true) >>> 0;
+        };
+
+        const readI32le = async (addr: number) => {
+          const { bytes } = await readWorkerMemory(addr, 4);
+          if (bytes.byteLength < 4) throw new Error("short read");
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getInt32(0, true) | 0;
+        };
+
+        const readF32le = async (addr: number) => {
+          const { bytes } = await readWorkerMemory(addr, 4);
+          if (bytes.byteLength < 4) throw new Error("short read");
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getFloat32(0, true);
+        };
+
+        const readB3DString = async (ptr: number) => {
+          const maxStringLen = 1024 * 1024;
+          const head = await readWorkerMemory(ptr >>> 0, 8);
+          const hb = head.bytes;
+          if (hb.byteLength < 8) return `<invalid_str_ptr:0x${(ptr >>> 0).toString(16)}>`;
+          const hv = new DataView(hb.buffer, hb.byteOffset, hb.byteLength);
+          const len = hv.getInt32(4, true) | 0;
+          if (len < 0 || len > maxStringLen) {
+            return `<invalid_str_len:0x${(ptr >>> 0).toString(16)}:${len}>`;
+          }
+          const body = await readWorkerMemory(((ptr + 8) >>> 0), len);
+          const b = body.bytes;
+          const text = latin1.decode(b.subarray(0, Math.min(b.length, len)));
+          return b.length < len ? `${text}<...truncated ${len - b.length}>` : text;
+        };
+
+        const typeSizeBytes = (wasmType: string) => {
+          const t = wasmType.toLowerCase();
+          if (t === "i64" || t === "f64") return 8;
+          return 4;
+        };
+
+        const readScalarFrom = (dv: DataView, wasmType: string, off: number) => {
+          const t = wasmType.toLowerCase();
+          try {
+            if (t === "f32") return String(dv.getFloat32(off, true));
+            if (t === "f64") return String(dv.getFloat64(off, true));
+            if (t === "i64") return String(dv.getBigInt64(off, true));
+            if (t === "u64") return String(dv.getBigUint64(off, true));
+          } catch {
+            // Fall through to i32 below.
+          }
+          return String(dv.getInt32(off, true));
+        };
+
+        const fmtHex32 = (v: number) => `0x${(v >>> 0).toString(16).padStart(8, "0")}`;
+
+        const decodeTypeInstance = async (
+          ptr: number,
+          typeInfo: NonNullable<ReturnType<typeof getSelectedType>>,
+        ) => {
+          const size = Math.max(0, Math.min(16 * 1024, typeInfo.instanceSizeBytes | 0));
+          if (size <= 0) throw new Error("invalid instance size");
+          const { bytes } = await readWorkerMemory(ptr >>> 0, size);
+          const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          const lines: string[] = [];
+          lines.push(
+            `Type ${typeInfo.name} (id=${typeInfo.id | 0}) @ ${fmtHex32(ptr >>> 0)} size=${size} bytes`,
+          );
+          lines.push("");
+
+          let decodedStrings = 0;
+          const maxStringDecodes = 8;
+
+          for (const f of typeInfo.fields ?? []) {
+            const off = f.offsetBytes | 0;
+            if (off < 0 || off >= dv.byteLength) continue;
+            const dims = Array.isArray(f.dimensions) ? f.dimensions : null;
+            const elemSize = typeSizeBytes(String(f.wasmType ?? "i32"));
+            const isString = String(f.declaredType ?? "").toLowerCase() === "string";
+            const isPtr = isString || !!f.customTypeName;
+
+            const label =
+              `${String(f.name ?? "").padEnd(18, " ")} +${String(off).padStart(5, " ")}  ` +
+              `${String(f.wasmType ?? "").padEnd(4, " ")}`;
+            if (dims && dims.length) {
+              const count = dims.reduce((a, b) => a * Math.max(1, b | 0), 1) | 0;
+              const maxElems = Math.max(1, Math.min(8, count));
+              const vals: string[] = [];
+              for (let i = 0; i < maxElems; i++) {
+                const at = off + i * elemSize;
+                if (at + elemSize > dv.byteLength) break;
+                const v = readScalarFrom(dv, String(f.wasmType ?? "i32"), at);
+                vals.push(v);
+              }
+              const tail = count > maxElems ? `, ... (${count} total)` : "";
+              lines.push(`${label}  [${dims.join(",")}] = [${vals.join(", ")}${tail}]`);
+              continue;
+            }
+
+            if (off + elemSize > dv.byteLength) continue;
+            if (!isPtr) {
+              const raw = readScalarFrom(dv, String(f.wasmType ?? "i32"), off);
+              lines.push(`${label}  = ${raw}`);
+              continue;
+            }
+
+            const p = dv.getUint32(off, true) >>> 0;
+            const hint = isString ? "String" : (f.customTypeName ? `.${String(f.customTypeName)}` : "ptr");
+            let extra = "";
+            if (isString && p !== 0 && decodedStrings < maxStringDecodes) {
+              decodedStrings++;
+              try {
+                const s = await readB3DString(p);
+                extra = `  "${String(s).slice(0, 120)}${String(s).length > 120 ? "…" : ""}"`;
+              } catch { }
+            }
+            lines.push(`${label}  = ${fmtHex32(p)} (${hint})${extra}`);
+          }
+
+          return lines.join("\n");
+        };
+
+        const hexDump = (addr: number, bytes: Uint8Array) => {
+          const lines: string[] = [];
+          const row = 16;
+          const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          // Typed preview at start.
+          if (bytes.byteLength >= 4) {
+            const i32 = view.getInt32(0, true);
+            const u32 = view.getUint32(0, true);
+            const f32 = view.getFloat32(0, true);
+            lines.push(`@0x${addr.toString(16)} i32=${i32} u32=${u32} f32=${Number.isFinite(f32) ? f32.toFixed(6) : String(f32)}`);
+          } else {
+            lines.push(`@0x${addr.toString(16)} len=${bytes.byteLength}`);
+          }
+          lines.push("");
+          for (let off = 0; off < bytes.length; off += row) {
+            const chunk = bytes.subarray(off, Math.min(bytes.length, off + row));
+            const hex = Array.from(chunk).map((b) => b.toString(16).padStart(2, "0")).join(" ");
+            const ascii = Array.from(chunk).map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("");
+            lines.push(`0x${(addr + off).toString(16).padStart(8, "0")}  ${hex.padEnd(row * 3 - 1, " ")}  |${ascii}|`);
+          }
+          return lines.join("\n");
+        };
+
+        const memWatches: Array<{ addr: number; kind: string; label: string }> = [];
+        const refreshWatches = async () => {
+          if (!memWatches.length) {
+            watchPre.textContent = "(no watches)";
+            return;
+          }
+          const lines: string[] = [];
+          for (const w of memWatches) {
+            try {
+              let v = "";
+              if (w.kind === "i32") v = String(await readI32le(w.addr));
+              else if (w.kind === "u32") v = `0x${(await readU32le(w.addr)).toString(16)}`;
+              else if (w.kind === "f32") {
+                const f = await readF32le(w.addr);
+                v = Number.isFinite(f) ? f.toFixed(6) : String(f);
+              } else if (w.kind === "b3dstr") {
+                v = JSON.stringify(await readB3DString(w.addr));
+              } else v = "(unknown)";
+              lines.push(`${w.label || w.kind}@0x${w.addr.toString(16)} = ${v}`);
+            } catch (e: any) {
+              lines.push(`${w.label || w.kind}@0x${w.addr.toString(16)} = <error: ${String(e?.message ?? e)}>`);
+            }
+          }
+          watchPre.textContent = lines.join("\n");
+        };
+
+        const syncBreakpoints = () => {
+          if (!currentWorker || !currentWorkerReady) return;
+          const out: Record<string, number[]> = {};
+          for (const [fileId, set] of bbdbgBreakpointsByFileId) {
+            const list = [...set].filter((n) => Number.isFinite(n) && (n | 0) > 0).sort((a, b) => a - b);
+            if (list.length) out[String(fileId | 0)] = list.map((n) => n | 0);
+          }
+          currentWorker.postMessage({ cmd: "dbgSetBreakpoints", breakpointsByFileId: out });
+        };
+
+        const refreshBreakpointFiles = () => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const files = st?.meta?.files ?? [];
+          const cur = Number(bpFileSelect.value ?? "0") | 0;
+          bpFileSelect.textContent = "";
+          const opt0 = document.createElement("option");
+          opt0.value = "0";
+          opt0.textContent = files.length ? "(choose file)" : "(no bbdbg files)";
+          bpFileSelect.appendChild(opt0);
+          for (const f of files.slice(0, 200)) {
+            const opt = document.createElement("option");
+            opt.value = String(f.id | 0);
+            opt.textContent = `${f.id | 0}: ${basename(f.path)}`;
+            opt.title = f.path;
+            bpFileSelect.appendChild(opt);
+          }
+          if (cur > 0) bpFileSelect.value = String(cur);
+        };
+
+        const refreshBbdbgPanel = () => {
+          try {
+            refreshBreakpointFiles();
+            refreshMetaViz();
+            refreshTypeDecodeSelect();
+          } catch { }
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const snap = st?.lastSnapshot ?? null;
+          const lines: string[] = [];
+          lines.push(`required=${st?.required ? "1" : "0"}`);
+          if (st?.meta) {
+            lines.push(
+              st.meta.ok
+                ? `meta=ok files=${st.meta.fileCount ?? 0} funcs=${st.meta.functionCount ?? 0}`
+                : `meta=error ${st.meta.error ?? "unknown"}`,
+            );
+          } else {
+            lines.push("meta=(none yet)");
+          }
+          if (st?.config) {
+            lines.push(
+              `config enabled=${st.config.enabled ? "1" : "0"} traceMax=${st.config.traceMax | 0}`,
+            );
+          } else {
+            lines.push("config=(unknown; click Toggle once to query)");
+          }
+          if (bbdbgBreakpointsByFileId.size > 0) {
+            const parts: string[] = [];
+            const fileName = (id: number) =>
+              st?.meta?.files?.find((f) => (f.id | 0) === (id | 0))?.path ?? `file_${id | 0}`;
+            for (const [fileId, set] of bbdbgBreakpointsByFileId) {
+              const list = [...set].sort((a, b) => a - b);
+              parts.push(`${basename(fileName(fileId))}:${list.join(",")}`);
+            }
+            lines.push(`breakpoints set: ${parts.join(" | ")}`);
+          } else {
+            lines.push("breakpoints set: (none)");
+          }
+          if (currentWorkerUpdateLoopCancel) {
+            lines.push("UpdateGame loop: running");
+          } else if (currentWorkerUpdateLoopPausedReason) {
+            lines.push(`UpdateGame loop: paused (${currentWorkerUpdateLoopPausedReason})`);
+          } else {
+            lines.push("UpdateGame loop: stopped");
+          }
+          if (!snap) {
+            lines.push("last=(none yet) — call an export like UpdateGame");
+            dbgPre.textContent = lines.join("\n");
+            return;
+          }
+          lines.push(`last export=${snap.exportName}`);
+          if (snap.location) {
+            lines.push(`at ${snap.location.file}:${snap.location.line} (fileId=${snap.location.fileId})`);
+          } else {
+            lines.push("at (unknown)");
+          }
+          if (snap.stack?.length) lines.push(`stack: ${snap.stack.join(" -> ")}`);
+          if (snap.breakpointHits?.length) {
+            lines.push(
+              `breakpoints hit: ${snap.breakpointHits.map((h) => `${h.file}:${h.line}`).join(", ")}`,
+            );
+          }
+          if (snap.trace?.length) {
+            lines.push("");
+            lines.push("trace (most recent):");
+            for (const t of snap.trace.slice(-80)) {
+              const pad = "  ".repeat(Math.min(8, t.depth | 0));
+              lines.push(`${pad}${t.file}:${t.line}`);
+            }
+          }
+
+          // Best-effort source preview: user can drag in / select .bb files locally.
+          if (snap.location?.file && snap.location.line > 0) {
+            const want = String(snap.location.file);
+            const src = bbdbgSources.get(want) ?? bbdbgSources.get(basename(want)) ?? null;
+            if (src) {
+              const all = src.split(/\r?\n/);
+              const cur = snap.location.line | 0;
+              const start = Math.max(1, cur - 5);
+              const end = Math.min(all.length, cur + 5);
+              const width = String(end).length;
+              lines.push("");
+              lines.push(`source: ${basename(want)} (loaded locally)`);
+              for (let ln = start; ln <= end; ln++) {
+                const mark = ln === cur ? ">" : " ";
+                const num = String(ln).padStart(width, " ");
+                lines.push(`${mark} ${num} | ${all[ln - 1] ?? ""}`);
+              }
+            } else {
+              lines.push("");
+              lines.push(`source: not loaded for ${basename(want)} (use "Load sources…")`);
+            }
+          }
+          dbgPre.textContent = lines.join("\n");
+        };
+        currentWorkerBbdbgUiRefresh = refreshBbdbgPanel;
+        refreshBreakpointFiles();
+        refreshMetaViz();
+        refreshTypeDecodeSelect();
+        refreshBbdbgPanel();
+
+        const postDbgConfig = (patch: { enabled?: boolean; traceMax?: number }) => {
+          if (!currentWorker || !currentWorkerReady) return;
+          currentWorker.postMessage({ cmd: "dbgConfig", ...patch });
+        };
+
+        const btnToggle = addButton(dbgBar, "Toggle", () => {
+          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const cur = st?.config?.enabled ?? true;
+          postDbgConfig({ enabled: !cur });
+        }) as HTMLButtonElement;
+        const btnLoadSources = addButton(dbgBar, "Load sources…", () => {
+          try {
+            dbgFileInput.click();
+          } catch { }
+        }) as HTMLButtonElement;
+        const btnMemRead = addButton(memBar, "Read", () => {
+          const addr = parseU32(memAddrInput.value);
+          const len = Number(memLenInput.value ?? "256") | 0;
+          if (addr == null || len <= 0) {
+            memPre.textContent = "invalid addr/len";
+            return;
+          }
+          memPre.textContent = "reading...";
+          const mode = String(memTypeSelect.value ?? "hex");
+          if (mode === "i32") {
+            void readI32le(addr).then((v) => {
+              memPre.textContent = `i32@0x${addr.toString(16)} = ${v}`;
+            }).catch((e) => {
+              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            });
+          } else if (mode === "u32") {
+            void readU32le(addr).then((v) => {
+              memPre.textContent = `u32@0x${addr.toString(16)} = 0x${v.toString(16)}`;
+            }).catch((e) => {
+              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            });
+          } else if (mode === "f32") {
+            void readF32le(addr).then((v) => {
+              memPre.textContent = `f32@0x${addr.toString(16)} = ${Number.isFinite(v) ? v.toFixed(6) : String(v)}`;
+            }).catch((e) => {
+              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            });
+          } else if (mode === "b3dstr") {
+            void readB3DString(addr).then((s) => {
+              memPre.textContent = `b3dstr@0x${addr.toString(16)} = ${s}`;
+            }).catch((e) => {
+              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            });
+          } else {
+            void readWorkerMemory(addr, len).then(({ addr: a, bytes }) => {
+              memPre.textContent = hexDump(a, bytes);
+            }).catch((e) => {
+              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            });
+          }
+        }) as HTMLButtonElement;
+        const btnWatchAdd = addButton(watchBar, "Add watch", () => {
+          const addr = parseU32(memAddrInput.value);
+          if (addr == null) return;
+          const kind = String(watchTypeSelect.value ?? "i32");
+          const label = String(watchLabelInput.value ?? "");
+          memWatches.push({ addr, kind, label });
+          void refreshWatches();
+        }) as HTMLButtonElement;
+        const btnWatchRefresh = addButton(watchBar, "Refresh", () => {
+          void refreshWatches();
+        }) as HTMLButtonElement;
+        const btnWatchClear = addButton(watchBar, "Clear", () => {
+          memWatches.length = 0;
+          void refreshWatches();
+        }) as HTMLButtonElement;
+        const btnTypeNPCs = addButton(typeDecodeBar, "NPCs", () => {
+          refreshTypeDecodeSelect();
+          selectTypeByName("NPCs");
+        }) as HTMLButtonElement;
+        const btnTypeItems = addButton(typeDecodeBar, "Items", () => {
+          refreshTypeDecodeSelect();
+          selectTypeByName("Items");
+        }) as HTMLButtonElement;
+        const btnTypeUseFirst = addButton(typeDecodeBar, "Use First", () => {
+          const t = getSelectedType();
+          if (!t) {
+            typePre.textContent = "choose a type first";
+            return;
+          }
+          const exportName = `__bbdbg_first_${String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")}`;
+          typePre.textContent = `reading ${exportName}...`;
+          void readWorkerGlobal(exportName).then(({ value }) => {
+            const hex = `0x${(value >>> 0).toString(16)}`;
+            typePtrInput.value = hex;
+            memAddrInput.value = hex;
+            typePre.textContent = `${exportName} = ${hex}`;
+          }).catch((e) => {
+            typePre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+          });
+        }) as HTMLButtonElement;
+        const btnTypeUseLast = addButton(typeDecodeBar, "Use Last", () => {
+          const t = getSelectedType();
+          if (!t) {
+            typePre.textContent = "choose a type first";
+            return;
+          }
+          const exportName = `__bbdbg_last_${String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")}`;
+          typePre.textContent = `reading ${exportName}...`;
+          void readWorkerGlobal(exportName).then(({ value }) => {
+            const hex = `0x${(value >>> 0).toString(16)}`;
+            typePtrInput.value = hex;
+            memAddrInput.value = hex;
+            typePre.textContent = `${exportName} = ${hex}`;
+          }).catch((e) => {
+            typePre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+          });
+        }) as HTMLButtonElement;
+        const btnTypeDecode = addButton(typeDecodeBar, "Decode Type", () => {
+          const addr =
+            parseU32(typePtrInput.value) ??
+            parseU32(memAddrInput.value);
+          const t = getSelectedType();
+          if (addr == null || !t) {
+            typePre.textContent = "need ptr + type (debug build must provide .bbdbg.json)";
+            return;
+          }
+          typePre.textContent = "decoding...";
+          void decodeTypeInstance(addr, t).then((s) => {
+            typePre.textContent = s;
+          }).catch((e) => {
+            typePre.textContent = `decode failed: ${String((e as any)?.message ?? e)}`;
+          });
+        }) as HTMLButtonElement;
+        const btnAddBp = addButton(dbgBar, "Add BP", () => {
+          const fileId = Number(bpFileSelect.value ?? "0") | 0;
+          const line = Number(bpLineInput.value ?? "0") | 0;
+          if (fileId <= 0 || line <= 0) return;
+          const set = bbdbgBreakpointsByFileId.get(fileId) ?? new Set<number>();
+          set.add(line);
+          bbdbgBreakpointsByFileId.set(fileId, set);
+          syncBreakpoints();
+          try {
+            refreshBbdbgPanel();
+          } catch { }
+        }) as HTMLButtonElement;
+        const btnClearBp = addButton(dbgBar, "Clear BPs", () => {
+          bbdbgBreakpointsByFileId.clear();
+          syncBreakpoints();
+          try {
+            refreshBbdbgPanel();
+          } catch { }
+        }) as HTMLButtonElement;
+        const btnTrace300 = addButton(
+          dbgBar,
+          "traceMax=300",
+          () => postDbgConfig({ traceMax: 300 }),
+        ) as HTMLButtonElement;
+        const btnTrace1000 = addButton(
+          dbgBar,
+          "traceMax=1000",
+          () => postDbgConfig({ traceMax: 1000 }),
+        ) as HTMLButtonElement;
+        guardedButtons.push({ btn: btnToggle, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnLoadSources });
+        guardedButtons.push({ btn: btnMemRead, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnWatchAdd, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnWatchRefresh, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnWatchClear, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTypeNPCs, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTypeItems, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTypeUseFirst, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTypeUseLast, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTypeDecode, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnAddBp, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnClearBp, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTrace300, requiresWorkerReady: true });
+        guardedButtons.push({ btn: btnTrace1000, requiresWorkerReady: true });
+
+        metaSearch.addEventListener("input", () => {
+          try {
+            refreshMetaViz();
+          } catch { }
+        });
+        metaLimit.addEventListener("change", () => {
+          try {
+            refreshMetaViz();
+          } catch { }
+        });
+        metaFuncs.addEventListener("click", (ev) => {
+          const t = ev.target as any;
+          const btn = t && typeof t === "object" && "dataset" in t ? t as HTMLButtonElement : null;
+          const fileId = btn?.dataset?.fileId ? Number(btn.dataset.fileId) | 0 : 0;
+          const line = btn?.dataset?.line ? Number(btn.dataset.line) | 0 : 0;
+          if (fileId <= 0 || line <= 0) return;
+          bpFileSelect.value = String(fileId);
+          bpLineInput.value = String(line);
+          try {
+            // Keep focus on the breakpoint controls for quick repeated additions.
+            bpLineInput.focus();
+            bpLineInput.select?.();
+          } catch { }
+          try {
+            refreshBbdbgPanel();
+          } catch { }
+        });
       }
 
       if (hasUpdateGame) {

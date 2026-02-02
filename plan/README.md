@@ -66,3 +66,8 @@ Each plan follows this template:
 ---
 
 *Last updated: February 1, 2026*
+
+## 2026-02-02 update (reliability)
+
+- Added BB→WASM smoke tests (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate core language behavior end-to-end.
+- Hardened the “web interpreter” run path to avoid UI freezes by executing compiled WASM in a killable Worker with a watchdog timeout (`web/interpreter.html`, `web/interpreter.js`).

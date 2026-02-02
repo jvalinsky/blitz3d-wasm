@@ -55,3 +55,9 @@ docs/
 - **Plan index**: `plan/README.md`
 - **SCPCB web port**: `plan/scpcb-web-track-b/README.md`
 - **Compiler status**: `docs/COMPILER_STATUS_ANALYSIS.md`
+
+## 2026-02-02 addendum (runner + tests)
+
+- Added an end-to-end BB→WASM smoke suite (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate language/runtime behavior quickly.
+- Updated the web interpreter execution path to avoid UI-thread freezes by running compiled WASM in a Worker with a watchdog timeout and a Stop button (`web/interpreter.html`, `web/interpreter.js`).
+- Archived the old `deploy.sh` workflow (see `docs/archive/dated/2026-02-02_deploy.md`) and updated repo guidance to stop recommending it.

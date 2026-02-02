@@ -1,13 +1,15 @@
-#!/usr/bin/env -S deno run --allow-read --allow-net
+#!/usr/bin/env node
 
-import { dirname, fromFileUrl, join, existsSync } from "jsr:@std/path";
-import { globSync } from "jsr:@std/glob";
+import { existsSync, watch } from "node:fs";
+import { stat } from "node:fs/promises";
+import { globSync } from "glob";
 import { WASMAnalyzer } from "./core.js";
 import { visualizeAnalysis } from "./visualize.js";
 
 class AnalyzerCLI {
   constructor() {
-    this.args = Deno.args;
+    this.args = process.argv.slice(2);
+    if (this.args[0] === "--") this.args.shift(); // common when invoked via `deno task ... -- <args>`
     this.options = {
       watch: false,
       compare: false,
@@ -47,7 +49,7 @@ class AnalyzerCLI {
         case "--help":
         case "-h":
           this.printHelp();
-          Deno.exit(0);
+          process.exit(0);
         default:
           this.options.target = arg;
       }
@@ -59,21 +61,21 @@ class AnalyzerCLI {
 WASM Analyzer for Blitz3D Compiler
 
 Usage:
-  deno run -A cli.js <file>              Analyze a single WASM file
-  deno run -A cli.js <dir>               Analyze all WASM files in directory
-  deno run -A cli.js -w <file>           Watch file and re-analyze on changes
-  deno run -A cli.js -c <a> <b>          Compare two WASM files
-  deno run -A cli.js -b <pattern>        Batch analyze files matching pattern
-  deno run -A cli.js -o <dir>            Set output directory (default: ./analysis-output)
-  deno run -A cli.js -v                  Verbose output
-  deno run -A cli.js -h                  Show this help
+  node cli.js <file>                     Analyze a single WASM file
+  node cli.js <dir>                      Analyze all WASM files in directory
+  node cli.js -w <file>                  Watch file and re-analyze on changes
+  node cli.js -c <a> <b>                 Compare two WASM files
+  node cli.js -b <pattern>               Batch analyze files matching pattern
+  node cli.js -o <dir>                   Set output directory (default: ./analysis-output)
+  node cli.js -v                         Verbose output
+  node cli.js -h                         Show this help
 
 Examples:
-  deno run -A cli.js output.wasm
-  deno run -A cli.js ./compiled/
-  deno run -A cli.js -w Main.wasm
-  deno run -A cli.js -c before.wasm after.wasm
-  deno run -A cli.js -b "*.wasm"
+  node cli.js output.wasm
+  node cli.js ./compiled/
+  node cli.js -w Main.wasm
+  node cli.js -c before.wasm after.wasm
+  node cli.js -b "*.wasm"
 
 Output:
   - dashboard.html    Interactive summary dashboard
@@ -91,7 +93,7 @@ Output:
     if (!this.options.target) {
       console.error("Error: No target file or directory specified");
       this.printHelp();
-      Deno.exit(1);
+      process.exit(1);
     }
 
     if (this.options.compare) {
@@ -106,16 +108,16 @@ Output:
     ) {
       await this.analyzeSingle(this.options.target);
     } else if (existsSync(this.options.target)) {
-      const info = await Deno.stat(this.options.target);
+      const info = await stat(this.options.target);
       if (info.isDirectory) {
         await this.analyzeDirectory(this.options.target);
       } else {
         console.error(`Error: Target not found: ${this.options.target}`);
-        Deno.exit(1);
+        process.exit(1);
       }
     } else {
       console.error(`Error: Target not found: ${this.options.target}`);
-      Deno.exit(1);
+      process.exit(1);
     }
   }
 
@@ -138,7 +140,7 @@ Output:
 
       if (!report.summary.stackValid || !report.summary.typeValid) {
         console.log("\n❌ Issues found - see dashboard.html for details");
-        Deno.exit(1);
+        process.exit(1);
       }
 
       return report;
@@ -205,7 +207,7 @@ Output:
   watchAnalyze() {
     if (!existsSync(this.options.target)) {
       console.error(`File not found: ${this.options.target}`);
-      Deno.exit(1);
+      process.exit(1);
     }
 
     console.log(`\nWatching ${this.options.target} for changes...`);
@@ -230,12 +232,9 @@ Output:
 
     runAnalysis();
 
-    const watcher = Deno.watchFs(this.options.target);
-    for await (const event of watcher) {
-      if (event.kind === "modify") {
-        runAnalysis();
-      }
-    }
+    watch(this.options.target, { persistent: true }, (eventType) => {
+      if (eventType === "change") runAnalysis();
+    });
   }
 
   printSummary(report) {

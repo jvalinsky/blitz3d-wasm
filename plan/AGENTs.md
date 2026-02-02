@@ -21,3 +21,8 @@ Implementation roadmaps and phase plans.
 ## Archived
 
 Old dated plans in `archive/`.
+
+## 2026-02-02 note
+
+- BB→WASM smoke tests live at `Tests/deno_smoke/` and are executed by `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`.
+- Web “safe runner” execution (Worker + watchdog timeout) is now the default for interpreter-style demos.

@@ -24,6 +24,18 @@ A fully client-side Blitz3D development environment that runs entirely in the br
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Non-negotiable reliability requirement (2026-02-02)
+
+Any “web interpreter / IDE” must treat user/game WASM as potentially untrusted:
+
+- Always execute compiled WASM in a **Web Worker** (never the UI thread).
+- Provide a **Stop/Reset** control.
+- Enforce a **watchdog timeout** (infinite loops must not freeze the tab).
+
+Reference implementations in this repo:
+- `web/interpreter.html` + `web/interpreter.js` (Stop + timeout; execution in Worker)
+- `web/public/bb_wasm_runner_demo.html` (upload a `.wasm`, run with Worker + watchdog)
+
 ## Components
 
 ### 1. Compiler as WASM

@@ -113,7 +113,12 @@ public struct CodeGenerator {
         
         processTypeDeclarations(program.types)
         setupUserTypeGlobals(program.types)
+        processConstantDeclarations(program.statements, functions: program.functions)
         processGlobalDeclarations(program.statements)
+
+        // String/heap allocators are used by expression generation (e.g. string concatenation),
+        // so they must be registered before we emit any function bodies.
+        addAllocFunction()
         
         let topLevelStatements = extractTopLevelStatements(program.statements)
 
@@ -135,9 +140,10 @@ public struct CodeGenerator {
         }
         generateMainFunction(topLevelStatements)
         
-        addAllocFunction()
-        
-        context.functionIndexMap.forEach { lowerName, idx in
+        // Export only user-defined functions.
+        // Do NOT export imports: export names must be unique across kinds, and SCPCB frequently uses
+        // global variable names that collide with built-in runtime imports (e.g. `ParticlePiv`).
+        context.userFunctionIndices.sorted(by: { $0.key < $1.key }).forEach { lowerName, idx in
             var exportName = context.functionOriginalNames[lowerName] ?? lowerName
             
             // Reconstruct function name with type suffix if it was explicit in source
@@ -159,9 +165,7 @@ public struct CodeGenerator {
             
             // Filter out internal functions only (_main is internal entry point alias, __alloc/__stringalloc/__stringconcat are internal allocators)
             if lowerName != "_main" && lowerName != "__alloc" && lowerName != "__stringalloc" && lowerName != "__stringconcat" {
-                // Use user-defined function index if available (overrides imports)
-                let exportIdx = context.userFunctionIndices[lowerName] ?? idx
-                context.module.exports.append(WASMExport(name: exportName, kind: .function, index: exportIdx))
+                context.module.exports.append(WASMExport(name: exportName, kind: .function, index: idx))
             }
         }
         
@@ -1098,6 +1102,10 @@ public struct CodeGenerator {
         context.fieldDimensions = [:]
         
         for (index, typeNode) in types.enumerated() {
+            let sanitizedTypeName = typeNode.name.map { ch -> Character in
+                if ch.isLetter || ch.isNumber || ch == "_" { return ch }
+                return "_"
+            }
             var offset = 12 // Header: prev(4), next(4), typeID(4)
             var typeFieldOffsets: [String: Int] = [:]
             var typeFieldTypes: [String: String] = [:]
@@ -1109,10 +1117,43 @@ public struct CodeGenerator {
             context.fieldOffsets[typeNode.name.lowercased()] = [:]
             context.fieldDimensions[typeNode.name.lowercased()] = [:]
             
+            var debugFields: [DebugFieldInfo] = []
+            debugFields.append(
+                DebugFieldInfo(
+                    name: "__prev",
+                    offsetBytes: 0,
+                    wasmType: "i32",
+                    declaredType: "Int",
+                    customTypeName: nil,
+                    dimensions: nil
+                )
+            )
+            debugFields.append(
+                DebugFieldInfo(
+                    name: "__next",
+                    offsetBytes: 4,
+                    wasmType: "i32",
+                    declaredType: "Int",
+                    customTypeName: nil,
+                    dimensions: nil
+                )
+            )
+            debugFields.append(
+                DebugFieldInfo(
+                    name: "__typeID",
+                    offsetBytes: 8,
+                    wasmType: "i32",
+                    declaredType: "Int",
+                    customTypeName: nil,
+                    dimensions: nil
+                )
+            )
+            
             let typeHandling = TypeHandling()
             for field in typeNode.fields {
                 let fieldWasmType = typeHandling.typeInfo(from: field.type?.rawValue ?? "Int").wasmType
                 let fieldSize = context.typeSize(for: fieldWasmType)
+                let wasmTypeStr = fieldWasmType.rawValue
                 
                 // Calculate array size from dimensions
                 var arraySize = 1
@@ -1133,6 +1174,17 @@ public struct CodeGenerator {
                 typeFieldOffsets[field.name.lowercased()] = offset
                 CompilerLogger.debug("DEBUG_FIELD: Type=\(typeNode.name) Field=\(field.name) Offset=\(offset)")
                 typeFieldTypes[field.name.lowercased()] = field.type?.rawValue ?? "Int"
+                
+                debugFields.append(
+                    DebugFieldInfo(
+                        name: field.name,
+                        offsetBytes: offset,
+                        wasmType: wasmTypeStr,
+                        declaredType: field.type?.rawValue ?? "Int",
+                        customTypeName: field.typeName,
+                        dimensions: dimensions.isEmpty ? nil : dimensions
+                    )
+                )
                 
                 // Store dimensions if field is an array
                 if !dimensions.isEmpty {
@@ -1158,10 +1210,46 @@ public struct CodeGenerator {
                 instanceSize: offset
             )
             
+            if let gen = context.debugGenerator {
+                gen.registerType(
+                    DebugTypeInfo(
+                        id: index + 1,
+                        name: typeNode.name,
+                        instanceSizeBytes: offset,
+                        fields: debugFields
+                    )
+                )
+            }
+            
             // Register globals for this type's management
             info.firstGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
             info.lastGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
             info.freeHeadGlobalIdx = context.registerGlobal(type: .i32, mutability: true, initExpr: .i32Const(0))
+
+            // Debug helpers: expose list heads so the web inspector can find live instances without guessing.
+            if context.debugGenerator != nil {
+                context.module.exports.append(
+                    WASMExport(
+                        name: "__bbdbg_first_\(sanitizedTypeName)",
+                        kind: .global,
+                        index: info.firstGlobalIdx
+                    )
+                )
+                context.module.exports.append(
+                    WASMExport(
+                        name: "__bbdbg_last_\(sanitizedTypeName)",
+                        kind: .global,
+                        index: info.lastGlobalIdx
+                    )
+                )
+                context.module.exports.append(
+                    WASMExport(
+                        name: "__bbdbg_freeHead_\(sanitizedTypeName)",
+                        kind: .global,
+                        index: info.freeHeadGlobalIdx
+                    )
+                )
+            }
             
             context.userTypes[typeNode.name.lowercased()] = info
         }
@@ -1300,6 +1388,67 @@ public struct CodeGenerator {
             }
         }
         CompilerLogger.debug("DEBUG_GLOBAL_PROC: Finished processing. Found \(globalCount) Global statements")
+    }
+
+    private mutating func processConstantDeclarations(_ statements: [StatementNode], functions: [FunctionNode]) {
+        // Constants are compile-time only in this pipeline; we record them in `context.constants`
+        // so expression/codegen can treat them as literals (and Select/Case can work).
+        for statement in statements {
+            collectConstants(in: statement)
+        }
+        for fn in functions {
+            for statement in fn.body {
+                collectConstants(in: statement)
+            }
+        }
+    }
+
+    private mutating func collectConstants(in statement: StatementNode) {
+        switch statement {
+        case .constant(let decl, _):
+            if let val = evaluateConstInt(decl.value) {
+                context.setConstant(decl.name, value: val)
+            }
+        case .constants(let decls, _):
+            for decl in decls {
+                if let val = evaluateConstInt(decl.value) {
+                    context.setConstant(decl.name, value: val)
+                }
+            }
+        case .include(_, let inner, _):
+            for stmt in inner {
+                collectConstants(in: stmt)
+            }
+        default:
+            break
+        }
+    }
+
+    private func evaluateConstInt(_ expr: ExpressionNode) -> Int? {
+        switch expr {
+        case .integerLiteral(let v, _):
+            return v
+        case .identifier(let id, _):
+            return context.constantValue(id.name)
+        case .unary(let u, _):
+            guard u.op == "-" else { return nil }
+            guard let inner = evaluateConstInt(u.expression) else { return nil }
+            return -inner
+        case .binary(let b, _):
+            guard let l = evaluateConstInt(b.left), let r = evaluateConstInt(b.right) else { return nil }
+            switch b.op.lowercased() {
+            case "+": return l + r
+            case "-": return l - r
+            case "*": return l * r
+            case "/":
+                guard r != 0 else { return nil }
+                return l / r
+            default:
+                return nil
+            }
+        default:
+            return nil
+        }
     }
     
     private func extractTopLevelStatements(_ statements: [StatementNode]) -> [StatementNode] {

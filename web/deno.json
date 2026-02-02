@@ -1,10 +1,11 @@
 {
   "tasks": {
-    "dev": "deno run -A --node-modules-dir npm:vite",
-    "build": "deno run -A --node-modules-dir npm:vite build",
-    "preview": "deno run -A --node-modules-dir npm:vite preview",
+    "setup": "deno eval --node-modules-dir \"import 'npm:vite@7.3.1'; import 'npm:three@0.182.0'; import 'npm:jszip@3.10.1';\"",
+    "dev": "deno task setup && deno run -A --node-modules-dir npm:vite@7.3.1",
+    "build": "deno task setup && deno run -A --node-modules-dir build.ts",
+    "preview": "deno task setup && deno run -A --node-modules-dir npm:vite@7.3.1 preview",
     "check": "deno check src/main.ts",
-    "setup": "deno install"
+    "setup:assets": "deno run -A setup.ts"
   },
   "compilerOptions": {
     "lib": [
@@ -15,5 +16,5 @@
     ],
     "strict": true
   },
-  "nodeModulesDir": true
+  "nodeModulesDir": "auto"
 }

@@ -4,6 +4,21 @@
 
 The Deno test suite follows a layered testing architecture designed specifically for WebAssembly memory management and browser runtime simulation.
 
+## BB compile-and-run smoke suite (2026-02-02)
+
+In addition to unit-style runtime tests, the repo includes an end-to-end smoke suite that exercises the **full** pipeline:
+
+1) Compile a `.bb` script using the Swift compiler (`.build/debug/blitz3d-wasm`)  
+2) Execute the resulting `.wasm` under Deno with the JS runtime glue
+
+Key pieces:
+- Runner: `Tools/bb_deno_compile_and_run.ts`
+- Smoke scripts: `Tests/deno_smoke/*.bb`
+- Coverage notes + gaps: `Tests/deno_smoke/COVERAGE.md`
+- Deno test wrapper: `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`
+
+This smoke suite is the fastest way to validate changes to the Swift compiler, runtime imports, and the Deno runner together. It is also the reference behavior for the “safe web interpreter” demos (run compiled WASM in a killable Worker with a watchdog timeout to avoid UI-thread freezes).
+
 ## Core Testing Framework
 
 ### Assertion Framework (`Tools/tests/assert.ts`)
@@ -80,7 +95,7 @@ Based on industry best practices for WebAssembly memory management, the test sui
 
 The test suite uses configurable thresholds rather than absolute memory requirements, following the principle that:
 
-> "Memory leak detection should focus on growth patterns rather than absolute values, as different environments have different memory baselines." - Chrome DevTools Team
+Memory leak detection should focus on **growth patterns** rather than absolute values, because different environments have different baselines.
 
 ## WebAssembly-Specific Testing
 

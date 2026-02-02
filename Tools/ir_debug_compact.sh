@@ -52,7 +52,19 @@ python3 "$ROOT/Tools/wasm_error_digest.py" "$OUTPUT" \
   --map "${OUTPUT}.map" \
   --bbdbg "${OUTPUT%.wasm}.bbdbg.json"
 
-if command -v node >/dev/null 2>&1; then
-  echo ""
-  echo "NOTE: Tools/analyzer is Node.js-based; skipping (Deno-only workflow)."
+echo ""
+echo "wasm analyzer (best-effort):"
+if command -v deno >/dev/null 2>&1; then
+  if [[ -d "$ROOT/Tools/analyzer/node_modules" ]]; then
+    (
+      cd "$ROOT/Tools/analyzer"
+      deno task -q analyze -- "$OUTPUT"
+    ) || echo "NOTE: Tools/analyzer failed (continuing)."
+    echo "dashboard: $ROOT/Tools/analyzer/visualization/dashboard.html"
+  else
+    echo "NOTE: Tools/analyzer deps not installed (missing Tools/analyzer/node_modules)."
+    echo "      Run: (cd Tools/analyzer && deno task setup)"
+  fi
+else
+  echo "NOTE: deno not found; skipping Tools/analyzer."
 fi

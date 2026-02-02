@@ -789,4 +789,521 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             parent.add(entity);
         }
     };
+
+    // ================================================================
+    // Phase 8: RenderWorld
+    // ================================================================
+
+    imports.env.RenderWorld = (tween: number) => {
+        if (graphics.nativeManager) {
+            graphics.nativeManager.render(graphics.inputManager);
+            return;
+        }
+        if (graphics.wasmManager) {
+            graphics.wasmManager.render(graphics.inputManager);
+            return;
+        }
+        if (graphics.renderer && graphics.scene && graphics.camera) {
+            graphics.renderer.clear();
+            graphics.renderer.render(graphics.scene, graphics.camera);
+        }
+    };
+
+    // ================================================================
+    // Phase 1: Entity Appearance Functions
+    // ================================================================
+
+    imports.env.EntityColor = (ent: number, r: number, g: number, b: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) {
+            entity.traverse((child: THREE.Object3D) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    graphics.ensureUniqueMaterial(child);
+                    const mat = (child as THREE.Mesh).material as any;
+                    if (Array.isArray(mat)) return;
+                    if (mat.color) mat.color.setRGB(r / 255, g / 255, b / 255);
+                    mat.needsUpdate = true;
+                }
+            });
+        }
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineEntityColor(eid, r, g, b));
+    };
+
+    imports.env.EntityAlpha = (ent: number, alpha: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) {
+            entity.traverse((child: THREE.Object3D) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    graphics.ensureUniqueMaterial(child);
+                    const mat = (child as THREE.Mesh).material as any;
+                    if (Array.isArray(mat)) return;
+                    mat.opacity = alpha;
+                    mat.transparent = alpha < 1;
+                    mat.needsUpdate = true;
+                }
+            });
+        }
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineEntityAlpha(eid, alpha));
+    };
+
+    imports.env.EntityFX = (ent: number, fx: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) {
+            entity.userData.fx = fx;
+            entity.traverse((child: THREE.Object3D) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    graphics.ensureUniqueMaterial(child);
+                    const mat = (child as THREE.Mesh).material as any;
+                    if (Array.isArray(mat)) return;
+                    // Bit 1: fullbright (no lighting)
+                    if (fx & 1) {
+                        if (mat.type !== "MeshBasicMaterial") {
+                            const basic = new THREE.MeshBasicMaterial();
+                            if (mat.color) basic.color.copy(mat.color);
+                            if (mat.map) basic.map = mat.map;
+                            basic.transparent = mat.transparent;
+                            basic.opacity = mat.opacity;
+                            basic.side = mat.side;
+                            (child as THREE.Mesh).material = basic;
+                        }
+                    }
+                    // Bit 2: vertex colors
+                    if (fx & 2) {
+                        mat.vertexColors = true;
+                        mat.needsUpdate = true;
+                    }
+                    // Bit 4: flat shading
+                    if (fx & 4) {
+                        mat.flatShading = true;
+                        mat.needsUpdate = true;
+                    }
+                    // Bit 8: disable fog
+                    if (fx & 8) {
+                        mat.fog = false;
+                    }
+                    // Bit 16: disable backface culling
+                    if (fx & 16) {
+                        mat.side = THREE.DoubleSide;
+                        mat.needsUpdate = true;
+                    }
+                }
+            });
+        }
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineEntityFX(eid, fx));
+    };
+
+    imports.env.EntityBlend = (ent: number, blend: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) {
+            entity.userData.blend = blend;
+            entity.traverse((child: THREE.Object3D) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    graphics.ensureUniqueMaterial(child);
+                    const mat = (child as THREE.Mesh).material as any;
+                    if (Array.isArray(mat)) return;
+                    switch (blend) {
+                        case 1: // Alpha
+                            mat.transparent = true;
+                            mat.blending = THREE.NormalBlending;
+                            break;
+                        case 2: // Multiply
+                            mat.transparent = true;
+                            mat.blending = THREE.MultiplyBlending;
+                            break;
+                        case 3: // Additive
+                            mat.transparent = true;
+                            mat.blending = THREE.AdditiveBlending;
+                            mat.depthWrite = false;
+                            break;
+                    }
+                    mat.needsUpdate = true;
+                }
+            });
+        }
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineEntityBlend(eid, blend));
+    };
+
+    imports.env.EntityShininess = (ent: number, s: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) {
+            entity.traverse((child: THREE.Object3D) => {
+                if ((child as THREE.Mesh).isMesh) {
+                    graphics.ensureUniqueMaterial(child);
+                    const mat = (child as THREE.Mesh).material as any;
+                    if (Array.isArray(mat)) return;
+                    if (mat.shininess !== undefined) mat.shininess = s * 128;
+                    if (mat.roughness !== undefined) mat.roughness = 1.0 - s;
+                    mat.needsUpdate = true;
+                }
+            });
+        }
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineEntityShininess(eid, s));
+    };
+
+    imports.env.HideEntity = (ent: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) entity.visible = false;
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineHideEntity(eid));
+    };
+
+    imports.env.ShowEntity = (ent: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) entity.visible = true;
+        graphics.engineCall(ent, (eid) => graphics._engine!.EngineShowEntity(eid));
+    };
+
+    imports.env.EntityParent = (ent: number, parent: number, global: number) => {
+        const entity = graphics.entities[ent];
+        if (!entity) return;
+
+        if (global) {
+            entity.updateWorldMatrix(true, false);
+        }
+
+        const worldPos = global ? new THREE.Vector3() : null;
+        const worldQuat = global ? new THREE.Quaternion() : null;
+        const worldScale = global ? new THREE.Vector3() : null;
+        if (global) {
+            entity.getWorldPosition(worldPos!);
+            entity.getWorldQuaternion(worldQuat!);
+            entity.getWorldScale(worldScale!);
+        }
+
+        if (entity.parent) entity.parent.remove(entity);
+
+        if (parent && graphics.entities[parent]) {
+            graphics.entities[parent].add(entity);
+        } else if (graphics.scene) {
+            graphics.scene.add(entity);
+        }
+
+        if (global && worldPos && worldQuat && worldScale) {
+            // Convert world transform to new parent's local space
+            const newParent = entity.parent;
+            if (newParent) {
+                newParent.updateWorldMatrix(true, false);
+                const parentInverse = new THREE.Matrix4().copy(newParent.matrixWorld).invert();
+                const worldMatrix = new THREE.Matrix4().compose(worldPos, worldQuat, worldScale);
+                worldMatrix.premultiply(parentInverse);
+                worldMatrix.decompose(entity.position, entity.quaternion, entity.scale);
+            }
+        }
+
+        graphics.engineCall(ent, (eid) => {
+            const parentEid = parent ? (graphics._engineIds.get(parent) ?? 0) : 0;
+            graphics._engine!.EngineSetParent(eid, parentEid);
+        });
+    };
+
+    imports.env.CopyEntity = (ent: number, parent: number) => {
+        const entity = graphics.entities[ent];
+        if (!entity) return 0;
+
+        const clone = entity.clone(true);
+        const id = graphics.nextEntityId++;
+        graphics.entities[id] = clone;
+
+        if (parent && graphics.entities[parent]) {
+            graphics.entities[parent].add(clone);
+        } else if (graphics.scene) {
+            graphics.scene.add(clone);
+        }
+
+        return id;
+    };
+
+    imports.env.EntityVisible = (ent: number, cam: number) => {
+        const entity = graphics.entities[ent];
+        return entity && entity.visible ? 1 : 0;
+    };
+
+    // ================================================================
+    // Phase 2: Camera Functions
+    // ================================================================
+
+    // Module-level storage for projected coordinates
+    let _projectedX = 0;
+    let _projectedY = 0;
+    let _projectedZ = 0;
+
+    imports.env.CameraClsColor = (cam: number, r: number, g: number, b: number) => {
+        const camera = graphics.entities[cam];
+        if (camera) camera.userData.clsColor = { r: r / 255, g: g / 255, b: b / 255 };
+        if (graphics.renderer) {
+            graphics.renderer.setClearColor(new THREE.Color(r / 255, g / 255, b / 255), 1);
+        }
+    };
+
+    imports.env.CameraFogMode = (cam: number, mode: number) => {
+        if (!graphics.scene) return;
+        if (mode === 0) {
+            graphics.scene.fog = null;
+        } else if (mode === 1) {
+            // Linear fog
+            if (!graphics.scene.fog || !(graphics.scene.fog as THREE.Fog).near) {
+                graphics.scene.fog = new THREE.Fog(0x000000, 1, 1000);
+            }
+        } else if (mode === 2) {
+            // Exponential fog
+            graphics.scene.fog = new THREE.FogExp2(0x000000, 0.01);
+        }
+        graphics.engineCall(cam, () => {
+            if (graphics._engine!.EngineFogMode) graphics._engine!.EngineFogMode(mode);
+        });
+    };
+
+    imports.env.CameraFogRange = (cam: number, near: number, far: number) => {
+        if (graphics.scene?.fog && (graphics.scene.fog as THREE.Fog).near !== undefined) {
+            (graphics.scene.fog as THREE.Fog).near = near;
+            (graphics.scene.fog as THREE.Fog).far = far;
+        }
+        if (graphics._engine?.EngineFogRange) graphics._engine.EngineFogRange(near, far);
+    };
+
+    imports.env.CameraFogColor = (cam: number, r: number, g: number, b: number) => {
+        if (graphics.scene?.fog) {
+            graphics.scene.fog.color.setRGB(r / 255, g / 255, b / 255);
+        }
+        if (graphics._engine?.EngineFogColor) graphics._engine.EngineFogColor(r, g, b);
+    };
+
+    imports.env.CameraZoom = (cam: number, zoom: number) => {
+        const camera = graphics.entities[cam];
+        if (camera && (camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+            const pc = camera as THREE.PerspectiveCamera;
+            pc.fov = 2 * Math.atan(1 / zoom) * (180 / Math.PI);
+            pc.updateProjectionMatrix();
+        }
+    };
+
+    imports.env.CameraRange = (cam: number, near: number, far: number) => {
+        const camera = graphics.entities[cam];
+        if (camera && (camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+            const pc = camera as THREE.PerspectiveCamera;
+            pc.near = near;
+            pc.far = far;
+            pc.updateProjectionMatrix();
+        }
+        graphics.engineCall(cam, (eid) => graphics._engine!.EngineCameraRange(eid, near, far));
+    };
+
+    imports.env.CameraViewport = (cam: number, x: number, y: number, w: number, h: number) => {
+        const camera = graphics.entities[cam];
+        if (camera) camera.userData.viewport = { x, y, w, h };
+        if (graphics.renderer) {
+            graphics.renderer.setViewport(x, y, w, h);
+            graphics.renderer.setScissor(x, y, w, h);
+            graphics.renderer.setScissorTest(true);
+        }
+        if (camera && (camera as THREE.PerspectiveCamera).isPerspectiveCamera) {
+            const pc = camera as THREE.PerspectiveCamera;
+            pc.aspect = w / h;
+            pc.updateProjectionMatrix();
+        }
+    };
+
+    imports.env.CameraProject = (cam: number, x: number, y: number, z: number) => {
+        const camera = graphics.entities[cam];
+        if (!camera || !(camera as THREE.PerspectiveCamera).isPerspectiveCamera) return;
+        const pc = camera as THREE.PerspectiveCamera;
+        const vec = new THREE.Vector3(x, y, -z); // Blitz3D to Three.js Z
+        vec.project(pc);
+        const cw = graphics.core.canvas?.width || 800;
+        const ch = graphics.core.canvas?.height || 600;
+        _projectedX = (vec.x * 0.5 + 0.5) * cw;
+        _projectedY = (1 - (vec.y * 0.5 + 0.5)) * ch;
+        _projectedZ = vec.z;
+    };
+
+    imports.env.ProjectedX = () => _projectedX;
+    imports.env.ProjectedY = () => _projectedY;
+    imports.env.ProjectedZ = () => _projectedZ;
+
+    // ================================================================
+    // Phase 3: Light Functions
+    // ================================================================
+
+    imports.env.LightColor = (lightId: number, r: number, g: number, b: number) => {
+        const light = graphics.entities[lightId];
+        if (light && (light as THREE.Light).isLight) {
+            (light as THREE.Light).color.setRGB(r / 255, g / 255, b / 255);
+        }
+        graphics.engineCall(lightId, (eid) => graphics._engine!.EngineLightColor(eid, r, g, b));
+    };
+
+    imports.env.LightRange = (lightId: number, range: number) => {
+        const light = graphics.entities[lightId];
+        if (light) {
+            if ((light as THREE.PointLight).isPointLight) {
+                (light as THREE.PointLight).distance = range;
+                (light as THREE.PointLight).decay = 2;
+            } else if ((light as THREE.SpotLight).isSpotLight) {
+                (light as THREE.SpotLight).distance = range;
+                (light as THREE.SpotLight).decay = 2;
+            }
+        }
+        graphics.engineCall(lightId, (eid) => graphics._engine!.EngineLightRange(eid, range));
+    };
+
+    imports.env.LightConeAngles = (lightId: number, inner: number, outer: number) => {
+        const light = graphics.entities[lightId];
+        if (light && (light as THREE.SpotLight).isSpotLight) {
+            const spot = light as THREE.SpotLight;
+            spot.angle = outer * Math.PI / 180;
+            spot.penumbra = outer > 0 ? 1 - (inner / outer) : 0;
+        }
+        graphics.engineCall(lightId, (eid) => {
+            if (graphics._engine!.EngineSetLightCones) graphics._engine!.EngineSetLightCones(eid, inner, outer);
+        });
+    };
+
+    imports.env.AmbientLight = (r: number, g: number, b: number) => {
+        if (graphics.scene) {
+            // Find or create ambient light
+            let ambient = graphics.scene.children.find((c: any) => c.isAmbientLight) as THREE.AmbientLight | undefined;
+            if (!ambient) {
+                ambient = new THREE.AmbientLight(0xffffff);
+                graphics.scene.add(ambient);
+            }
+            ambient.color.setRGB(r / 255, g / 255, b / 255);
+        }
+        if (graphics._engine?.EngineAmbientLight) graphics._engine.EngineAmbientLight(r, g, b);
+    };
+
+    // ================================================================
+    // Phase 5: Animation Wiring
+    // ================================================================
+
+    imports.env.Animate = (ent: number, mode: number, speed: number, seq: number, trans: number) => {
+        if (graphics.animationSystem) {
+            graphics.animationSystem.animate(ent, mode, speed, seq, trans);
+        }
+    };
+
+    imports.env.AnimTime = (ent: number) => {
+        if (graphics.animationSystem) {
+            return graphics.animationSystem.getAnimTime(ent);
+        }
+        return 0.0;
+    };
+
+    imports.env.AnimLength = (ent: number) => {
+        if (graphics.animationSystem) {
+            return graphics.animationSystem.getAnimLength(ent);
+        }
+        return 0.0;
+    };
+
+    imports.env.SetAnimTime = (ent: number, time: number, seq: number) => {
+        if (graphics.animationSystem) {
+            graphics.animationSystem.setAnimTime(ent, time, seq);
+        }
+    };
+
+    imports.env.Animating = (ent: number) => {
+        const entity = graphics.entities[ent];
+        if (entity && entity.userData.mixer && entity.userData.action) {
+            return entity.userData.action.isRunning() ? 1 : 0;
+        }
+        return 0;
+    };
+
+    imports.env.ExtractAnimSeq = (ent: number, start: number, end: number, seq: number) => {
+        const entity = graphics.entities[ent];
+        if (!entity || !entity.userData.action) return 0;
+
+        const clip = entity.userData.action.getClip();
+        if (!clip) return 0;
+
+        const fps = entity.userData.fps || 30;
+        if (!entity.userData.sequences) entity.userData.sequences = [];
+
+        const seqId = entity.userData.sequences.length + 1;
+        entity.userData.sequences.push({
+            firstFrame: start,
+            lastFrame: end,
+            name: `seq_${seqId}`,
+        });
+
+        return seqId;
+    };
+
+    imports.env.LoadAnimMesh = (pathPtr: number, parent: number) => {
+        const rawPath = graphics.core.readString(pathPtr);
+        const path = rawPath.replace(/\.(b3d|x|rmesh)$/i, ".smpk");
+        console.log(`LoadAnimMesh: ${rawPath} -> ${path}`);
+
+        const placeholderId = imports.env.CreateMesh(parent);
+        const ent = graphics.entities[placeholderId];
+        if (ent) ent.name = rawPath;
+
+        graphics.animationSystem.loadAnimMesh(path, parent || 0, placeholderId).then(() => {
+            console.log(`[AnimMesh] Loaded ${path}`);
+        }).catch((err: any) => console.error(`[AnimMesh] ${path}:`, err));
+
+        return placeholderId;
+    };
+
+    imports.env.LoadAnimMesh_Strict = (pathPtr: number, parent: number) => {
+        return imports.env.LoadAnimMesh(pathPtr, parent);
+    };
+
+    // ================================================================
+    // Phase 9 (partial): Entity query / misc functions in 3d.ts
+    // ================================================================
+
+    imports.env.EntityInView = (ent: number, cam: number) => {
+        const entity = graphics.entities[ent];
+        const camera = graphics.entities[cam] || graphics.camera;
+        if (!entity || !camera) return 0;
+
+        const frustum = new THREE.Frustum();
+        const projScreenMatrix = new THREE.Matrix4();
+        projScreenMatrix.multiplyMatrices(
+            (camera as THREE.PerspectiveCamera).projectionMatrix,
+            (camera as THREE.PerspectiveCamera).matrixWorldInverse,
+        );
+        frustum.setFromProjectionMatrix(projScreenMatrix);
+
+        const pos = new THREE.Vector3();
+        entity.getWorldPosition(pos);
+        return frustum.containsPoint(pos) ? 1 : 0;
+    };
+
+    imports.env.SpriteViewMode = (spriteId: number, mode: number) => {
+        const sprite = graphics.entities[spriteId];
+        if (sprite) {
+            sprite.userData.viewMode = mode;
+            // Three.js Sprite is always billboard by default (mode 1 free, 2 fixed upright)
+        }
+    };
+
+    imports.env.EntityClass = (ent: number) => {
+        const entity = graphics.entities[ent];
+        if (!entity || !graphics.core.allocString) return 0;
+        let cls = "Pivot";
+        if ((entity as THREE.PerspectiveCamera).isPerspectiveCamera) cls = "Camera";
+        else if ((entity as THREE.Mesh).isMesh) cls = "Mesh";
+        else if ((entity as THREE.Light).isLight) cls = "Light";
+        else if ((entity as THREE.Sprite).isSprite) cls = "Sprite";
+        return graphics.core.allocString(cls);
+    };
+
+    imports.env.PointEntity = (ent: number, target: number, roll: number) => {
+        const entity = graphics.entities[ent];
+        const targetEntity = graphics.entities[target];
+        if (entity && targetEntity) {
+            const targetPos = new THREE.Vector3();
+            targetEntity.getWorldPosition(targetPos);
+            entity.lookAt(targetPos);
+        }
+    };
+
+    imports.env.EntityPickMode = (ent: number, mode: number, obscure: number) => {
+        const entity = graphics.entities[ent];
+        if (entity) entity.userData.pickMode = mode;
+        graphics.engineCall(ent, (eid) => {
+            if (graphics._engine!.EngineEntityPickMode) graphics._engine!.EngineEntityPickMode(eid, mode);
+        });
+    };
 }

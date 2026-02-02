@@ -8,6 +8,7 @@
     "engine:build": "swift build --product blitz3d-engine --swift-sdk swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1 --triple wasm32-unknown-wasip1 -Xlinker --export-all -Xlinker --no-entry -Xswiftc -enable-experimental-feature -Xswiftc Extern -c release && cp .build/wasm32-unknown-wasip1/release/blitz3d-engine.wasm dist/engine.wasm",
     "serve": "deno run -A Tools/serve_dir.ts --root . --port 8000",
     "assets:scpcb:convert": "deno run -A Tools/assets_scpcb_convert.ts",
+    "assets:textures:ktx2": "deno run -A Tools/texture_convert.ts",
     "test:deno": "deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests",
     "test:web:unit": "deno test --allow-read web/src/runtime/runtime.test.ts",
     "test:web:build": "cd web && deno task build && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno run -A Tools/validate_smpk_material_textures.ts dist && deno task dist:report",

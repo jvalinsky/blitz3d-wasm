@@ -21,6 +21,7 @@ public enum GLCmdOpcode: UInt32 {
     case uploadIB = 0x13
     case setViewport = 0x14
     case setUniformMat3 = 0x15
+    case setUniformMat4Array = 0x16
 }
 
 /// WebGL constant values (subset used by the command buffer).
@@ -277,6 +278,17 @@ public class GLCommandBuffer {
         writeU32(bufferId)
         writeU32(dataPtr)
         writeU32(size)
+        commandCount += 1
+    }
+
+    public func setUniformMat4Array(_ loc: UInt32, _ matrices: UnsafePointer<Float>, _ count: Int32) {
+        writeU32(GLCmdOpcode.setUniformMat4Array.rawValue)
+        writeU32(loc)
+        writeI32(count)
+        // Write count * 16 floats
+        for i in 0..<(Int(count) * 16) {
+            writeF32(matrices[i])
+        }
         commandCount += 1
     }
 }

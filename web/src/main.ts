@@ -5,6 +5,8 @@ import { initCmdBuf } from "./shared/command_buffer.ts";
 import { assertCmdBufAbi } from "./shared/cmdbuf_abi.ts";
 import { EntityTableView } from "./shared/entity_table.ts";
 import { BootStateMachine } from "./shared/boot_state_machine.ts";
+import { GLCommandExecutor } from "./runtime/gl_command_executor.ts";
+import { ShaderLibrary } from "./runtime/shaders.ts";
 
 type LoaderElements = {
   overlay: HTMLElement;
@@ -924,10 +926,12 @@ const attachRuntime = (
 const startGameLoop = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
   let rafHandle = 0;
   let lastTime = performance.now();
+  let frameCount = 0;
   const updateGame = (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) as Function | undefined;
 
   const loop = (time: number) => {
     rafHandle = requestAnimationFrame(loop);
+    frameCount++;
 
     const dt = (time - lastTime) / 1000;
     lastTime = time;
@@ -938,12 +942,24 @@ const startGameLoop = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
         updateGame(dt);
       }
 
-      // 2. Synchronize State (CMDB -> Three.js)
+      // 2. WASM-First Rendering: Execute GL Command Buffer
+      if (core.glexecutor && core.memory && instance.exports.EngineRenderFrame) {
+        const cmdSize = (instance.exports.EngineRenderFrame as Function)(dt * 1000);
+        if (cmdSize > 0) {
+          const cmdPtr = (instance.exports.EngineGetCmdBufferPtr as Function)();
+          core.glexecutor.execute(cmdPtr, cmdSize, core.memory);
+          (instance.exports.EngineEndFrame as Function)();
+          const debug = (globalThis as any).__BLITZ3D_DEBUG === true;
+          if (debug && frameCount % 60 === 0) {
+            console.log(`[WASM-First] Frame ${frameCount}: Executed ${cmdSize} bytes of GL commands`);
+          }
+        }
+      }
+
+      // 3. Legacy Three.js rendering (if available)
       if (core.graphics && typeof (core.graphics as any).drainCommandBuffer === 'function') {
         (core.graphics as any).drainCommandBuffer();
       }
-
-      // 3. Render Visuals (JS)
       if (core.graphics && typeof (core.graphics as any).render === 'function') {
         (core.graphics as any).render(time);
       }
@@ -1101,9 +1117,9 @@ const runInitIfPresent = async (
     let lastLog = 0;
     await fileIO.preloadAssetGroup(group, {
       concurrency: 4,
-      onProgress: (loaded: number, total: number, file: string) => {
+      onProgress: (loaded: number, total: number | null, file?: string) => {
         const now = performance.now();
-        if (now - last < 50 && loaded !== total) return;
+        if (now - last < 50 && loaded !== (total ?? loaded)) return;
         last = now;
         if (loader && total) {
           updateLoader(loader, {
@@ -1373,9 +1389,9 @@ async function init() {
           let lastUpdate = 0;
           bootPreload = fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
             concurrency: 4,
-            onProgress: (loaded: number, total: number, file: string) => {
+            onProgress: (loaded: number, total: number | null, file?: string) => {
               const now = performance.now();
-              if (now - lastUpdate > 32 || loaded === total) {
+              if (now - lastUpdate > 32 || loaded === (total ?? loaded)) {
                 const ratio = total ? loaded / total : 0;
                 diagnosticsState.Assets = `${loaded}/${total ?? "?"}`;
                 diagnosticsState.Downloads = Math.max(
@@ -2012,12 +2028,12 @@ async function init() {
 
       fileIO.preloadAssetGroup("facility_assets", {
         concurrency: 2, // Reduced concurrency
-        onProgress: (loaded: number, total: number, file: string) => {
+        onProgress: (loaded: number, total: number | null, file?: string) => {
           loadedAssets = loaded;
           const now = performance.now();
 
           // Throttle UI updates to 10fps (100ms)
-          if (now - lastUpdate > 100 || loaded === total) {
+          if (now - lastUpdate > 100 || loaded === (total ?? loaded)) {
             diagnosticsState.Assets = `${loadedAssets}/${totalAssets}`;
             diagnosticsState.Downloads = Math.max(
               diagnosticsState.Downloads as number,

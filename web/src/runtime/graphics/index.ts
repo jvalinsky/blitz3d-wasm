@@ -153,7 +153,7 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         imports.env.DrainCommandBuffer = () => this.drainCommandBuffer();
     }
 
-    init3D() {
+    async init3D() {
         console.log("init3D called");
 
         // Assert core is available
@@ -285,6 +285,29 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
                     console.log("WebGL context verified");
                     console.log("WebGL Renderer: " + gl.getParameter(gl.RENDERER));
                     console.log("WebGL Version: " + gl.getParameter(gl.VERSION));
+
+                    if (this.core) {
+                        this.core.gl = gl as WebGL2RenderingContext;
+
+                        if (this.core.memory) {
+                            const { GLCommandExecutor } = await import("../gl_command_executor.ts");
+                            const executor = new GLCommandExecutor(gl);
+                            this.core.glexecutor = executor;
+                            console.log("GLCommandExecutor initialized for WASM-first rendering");
+
+                            const { ShaderLibrary } = await import("../shaders.ts");
+                            const shaders = new ShaderLibrary(gl, executor);
+                            this.core.shaders = shaders;
+                            console.log("ShaderLibrary initialized");
+
+                            const { NativeWebGLRenderer } = await import("../native_renderer.ts");
+                            const native = new NativeWebGLRenderer(this.core.canvas, gl, executor);
+                            native.initialize();
+                            native.compileShaders();
+                            this.core.nativeRenderer = native;
+                            console.log("NativeWebGLRenderer initialized");
+                        }
+                    }
                 } else {
                     console.warn("Could not verify WebGL context");
                 }

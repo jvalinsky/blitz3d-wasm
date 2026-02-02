@@ -3,17 +3,21 @@
  * Essential functionality and initialization
  */
 import JSZip from "jszip";
-import { EntityTableView } from "../shared/entity_table";
+import { EntityTableView } from "../shared/entity_table.ts";
 
 export class Blitz3DCore {
   [key: string]: any;
   allocString: ((str: string) => number) | null;
   textCanvas: HTMLCanvasElement | null;
+  env: Record<string, unknown> = {};
 
   constructor() {
     this.memory = null;
     this.canvas = null;
     this.gl = null;
+    this.glexecutor = null;
+    this.shaders = null;
+    this.nativeRenderer = null;
     this.textCanvas = null;
     this.ctx2d = null;
     this.instance = null;
@@ -22,6 +26,7 @@ export class Blitz3DCore {
     this.dataPointer = 256;
     this.allocString = null;
     this.entityTable = null;
+    this.env = {};
 
     // Seeded random number generator (LCG)
     this.randomSeed = 0;

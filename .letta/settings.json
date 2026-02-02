@@ -179,7 +179,11 @@
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && git checkout main)",
       "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno task web:build 2>&1 | head -20)",
       "Bash(sleep 5 && curl -s http://localhost:5173/ | head -20)",
-      "Bash(curl -s http://localhost:5173/launcher.html 2>&1 | head -30)"
+      "Bash(curl -s http://localhost:5173/launcher.html 2>&1 | head -30)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run -A Tools/bundle_graphics_test.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm/web && deno run -A build-test.ts)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && node -e \"\nconst fs = require('fs');\nconst guard = JSON.parse(fs.readFileSync('web/assets/npcs/guard.smpk/guard.json'));\nconsole.log('Guard skeleton:');\nguard.skeleton.bones.forEach((bone, i) => {\n  console.log(\\`Bone \\${i}: parent=\\${bone.parent}, name=\\${bone.name || 'unnamed'}\\`);\n});\n\" | head -40)",
+      "Bash(cd /Users/jack/Software/scp_port/blitz3d-wasm && deno run --allow-read Tools/debug_b3d_hierarchy.ts ../scpcb/GFX/npcs/scp-939.b3d 2>&1 | head -80)"
     ]
   }
 }

@@ -245,7 +245,24 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     };
 
     imports.env.MaskImage = (imgId: number, r: number, g: number, b: number) => {
-        // Color masking - complex, stub for now
+        const img = graphics.images[imgId];
+        if (!img || img.type !== "image") return;
+
+        const ctx = getBufferContext(imgId);
+        if (!ctx) return;
+
+        const w = img.width || 1;
+        const h = img.height || 1;
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            if (data[i] === r && data[i + 1] === g && data[i + 2] === b) {
+                data[i + 3] = 0; // Make matching pixels transparent
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
     };
 
     imports.env.FreeImage = (imgId: number) => {
@@ -403,4 +420,109 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
             ctx.putImageData(imageData, 0, 0);
         }
     };
+
+    // ================================================================
+    // Phase 9: Texture property functions
+    // ================================================================
+
+    imports.env.TextureBlend = (texId: number, blend: number) => {
+        const tex = graphics.textures[texId];
+        if (tex) tex.blend = blend;
+    };
+
+    imports.env.TextureCoords = (texId: number, coords: number) => {
+        const tex = graphics.textures[texId];
+        if (tex) tex.coords = coords;
+    };
+
+    imports.env.TextureName = (texId: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.texture?.name && graphics.core.allocString) {
+            return graphics.core.allocString(tex.texture.name);
+        }
+        return 0;
+    };
+
+    imports.env.TextureWidth = (texId: number) => {
+        const tex = graphics.textures[texId];
+        return tex ? (tex.width || 0) : 0;
+    };
+
+    imports.env.TextureHeight = (texId: number) => {
+        const tex = graphics.textures[texId];
+        return tex ? (tex.height || 0) : 0;
+    };
+
+    imports.env.CopyImage = (imgId: number) => {
+        const src = graphics.images[imgId];
+        if (!src || src.type !== "image") return 0;
+
+        const id = graphics.nextImageId++;
+        const canvas = document.createElement("canvas");
+        canvas.width = src.width || 1;
+        canvas.height = src.height || 1;
+        const ctx = canvas.getContext("2d");
+        if (ctx && src.element && src.loaded) {
+            ctx.drawImage(src.element, 0, 0);
+        }
+
+        graphics.images[id] = {
+            type: "image",
+            element: canvas as any,
+            width: canvas.width,
+            height: canvas.height,
+            loaded: true,
+            handleX: src.handleX,
+            handleY: src.handleY,
+            scaleX: src.scaleX,
+            scaleY: src.scaleY,
+            rotation: src.rotation,
+            flags: src.flags,
+            loading: Promise.resolve(),
+        };
+        (graphics.images[id] as any).canvas = canvas;
+        (graphics.images[id] as any).canvasCtx = ctx;
+        return id;
+    };
+
+    imports.env.LoadTexture = imports.env.LoadTexture || ((pathPtr: number, flags: number) => {
+        const path = graphics.core.readString(pathPtr);
+        const tex = new THREE.TextureLoader().load(path);
+        tex.name = path;
+        const id = graphics.nextTextureId++;
+        graphics.textures[id] = {
+            type: "texture",
+            texture: tex,
+            width: 0,
+            height: 0,
+            flags: flags,
+        };
+        tex.image && tex.image.addEventListener?.("load", () => {
+            graphics.textures[id].width = tex.image.width;
+            graphics.textures[id].height = tex.image.height;
+        });
+        return id;
+    });
+
+    imports.env.LoadTexture_Strict = imports.env.LoadTexture_Strict || imports.env.LoadTexture;
+
+    imports.env.FreeTexture = imports.env.FreeTexture || ((texId: number) => {
+        const tex = graphics.textures[texId];
+        if (tex) {
+            if (tex.texture?.dispose) tex.texture.dispose();
+            delete graphics.textures[texId];
+        }
+    });
+
+    imports.env.CopyRect = imports.env.CopyRect || ((
+        srcX: number, srcY: number, width: number, height: number,
+        destX: number, destY: number, srcBuffer: number, destBuffer: number,
+    ) => {
+        const srcCtx = getBufferContext(srcBuffer);
+        const destCtx = getBufferContext(destBuffer);
+        if (srcCtx && destCtx) {
+            const data = srcCtx.getImageData(srcX, srcY, width, height);
+            destCtx.putImageData(data, destX, destY);
+        }
+    });
 }

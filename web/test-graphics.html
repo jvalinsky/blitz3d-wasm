@@ -1,378 +1,775 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graphics Test - Blitz3D WASM</title>
+    <title>SCP-173 - WebGL2 (SMPK)</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-        }
-        
-        #container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        h1 {
-            color: #4CAF50;
-            margin-bottom: 10px;
-        }
-        
-        #info {
-            background: #2a2a2a;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid #4CAF50;
-        }
-        
-        #info div {
-            margin: 5px 0;
-        }
-        
-        .status {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .status.loading {
-            background: #ff9800;
-            color: #000;
-        }
-        
-        .status.success {
-            background: #4CAF50;
-            color: #fff;
-        }
-        
-        .status.error {
-            background: #f44336;
-            color: #fff;
-        }
-        
-        #canvas-container {
-            position: relative;
-            background: #000;
-            border: 2px solid #4CAF50;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        #game-canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-        }
-        
-        #controls {
-            margin-top: 20px;
-            background: #2a2a2a;
-            padding: 15px;
-            border-radius: 8px;
-        }
-        
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-        }
-        
-        button:hover {
-            background: #45a049;
-        }
-        
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
-        
-        #console {
-            margin-top: 20px;
-            background: #000;
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 12px;
-        }
-        
-        .log-entry {
-            margin: 2px 0;
-            padding: 2px 0;
-        }
-        
-        .log-entry.info { color: #4CAF50; }
-        .log-entry.warn { color: #ff9800; }
-        .log-entry.error { color: #f44336; }
+        body { margin: 0; padding: 20px; background: #0a0a0a; color: #e0e0e0; font-family: sans-serif; }
+        h1 { color: #d4af37; margin-bottom: 10px; }
+        canvas { display: block; background: #000; border-radius: 8px; margin-bottom: 15px; }
+        #controls { background: #1a1a1a; padding: 15px; border-radius: 8px; font-family: monospace; max-width: 400px; }
+        .row { display: flex; align-items: center; margin: 8px 0; }
+        .label { color: #888; width: 100px; }
+        input[type="range"] { flex: 1; margin: 0 10px; }
+        .val { color: #4CAF50; width: 50px; text-align: right; }
+        button { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px; }
+        button:hover { background: #3a3a3a; }
+        button.active { background: #4CAF50; color: #000; }
+        .section { border-top: 1px solid #333; padding-top: 10px; margin-top: 10px; }
+        .section-title { color: #d4af37; font-weight: bold; margin-bottom: 10px; }
+        .info-row { display: flex; margin: 4px 0; }
     </style>
 </head>
 <body>
-    <div id="container">
-        <h1>🎮 Graphics Test - Blitz3D WASM Engine</h1>
-        
-        <div id="info">
-            <div>
-                <strong>Status:</strong> 
-                <span id="status" class="status loading">Initializing...</span>
+    <h1>SCP-173 (The Sculpture)</h1>
+    <canvas id="c" width="900" height="650"></canvas>
+    <div id="controls">
+        <div class="section">
+            <div class="section-title">Camera</div>
+            <div class="row">
+                <span class="label">Zoom</span>
+                <input type="range" id="zoom" min="1" max="200" step="1" value="15">
+                <span class="val" id="zoomVal">15</span>
             </div>
-            <div><strong>Graphics API:</strong> <span id="api-name">-</span></div>
-            <div><strong>Max Texture Size:</strong> <span id="max-texture">-</span></div>
-            <div><strong>Frame Time:</strong> <span id="frame-time">-</span></div>
-            <div><strong>FPS:</strong> <span id="fps">-</span></div>
+            <div class="row">
+                <span class="label">Pan X</span>
+                <input type="range" id="panX" min="-100" max="100" step="1" value="0">
+                <span class="val" id="panXVal">0</span>
+            </div>
+            <div class="row">
+                <span class="label">Pan Y</span>
+                <input type="range" id="panY" min="-100" max="100" step="1" value="0">
+                <span class="val" id="panYVal">0</span>
+            </div>
         </div>
-        
-        <div id="canvas-container">
-            <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div class="section">
+            <div class="section-title">Model</div>
+            <div class="row">
+                <span class="label">NPC</span>
+                <select id="npcSelect" style="flex:1;background:#2a2a2a;color:#e0e0e0;border:1px solid #444;padding:6px;border-radius:4px;">
+                    <option value="173_2">SCP-173 (The Sculpture)</option>
+                    <option value="035">SCP-035 (Mask)</option>
+                    <option value="035tentacle">SCP-035 Tentacle</option>
+                    <option value="106_2">SCP-106 (The Old Man)</option>
+                    <option value="1499-1">SCP-1499</option>
+                    <option value="205_demon1">SCP-205 Demon 1</option>
+                    <option value="205_demon2">SCP-205 Demon 2</option>
+                    <option value="205_demon3">SCP-205 Demon 3</option>
+                    <option value="205_woman">SCP-205 Woman</option>
+                    <option value="372">SCP-372</option>
+                    <option value="682arm">SCP-682 Arm</option>
+                    <option value="bll">Black Lodge Light</option>
+                    <option value="classd">Class-D Personnel</option>
+                    <option value="clerk">Clerk</option>
+                    <option value="duck_low_res">Duck</option>
+                    <option value="forestmonster">Forest Monster</option>
+                    <option value="guard">MTF Guard</option>
+                    <option value="MTF2">MTF Soldier</option>
+                    <option value="naziofficer">Nazi Officer</option>
+                    <option value="s2">S-2 Naval Officer</option>
+                    <option value="scp-049">SCP-049</option>
+                    <option value="scp-066">SCP-066</option>
+                    <option value="scp-096">SCP-096</option>
+                    <option value="scp-939">SCP-939</option>
+                    <option value="scp-966">SCP-966</option>
+                    <option value="scp-1048">SCP-1048</option>
+                    <option value="scp-1048a">SCP-1048-A</option>
+                    <option value="scp-1048pp">SCP-1048-PP</option>
+                    <option value="zombie1">Zombie 1</option>
+                    <option value="zombiesurgeon">Zombie Surgeon</option>
+                </select>
+            </div>
+            <div class="row">
+                <span class="label">Rotation Y</span>
+                <input type="range" id="rotY" min="0" max="6.28" step="0.01" value="0">
+                <span class="val" id="rotYVal">0.00</span>
+            </div>
+            <div class="row">
+                <button id="autoRot" class="active">Auto Rotate</button>
+                <button id="resetCam">Reset</button>
+            </div>
         </div>
-        
-        <div id="controls">
-            <button id="btn-triangle" disabled>Draw Triangle</button>
-            <button id="btn-clear" disabled>Clear Screen</button>
-            <button id="btn-reload">Reload Page</button>
+        <div class="section">
+            <div class="section-title">Light Position</div>
+            <div class="row">
+                <span class="label">Light X</span>
+                <input type="range" id="lightX" min="-10" max="10" step="0.5" value="2">
+                <span class="val" id="lightXVal">2.0</span>
+            </div>
+            <div class="row">
+                <span class="label">Light Y</span>
+                <input type="range" id="lightY" min="-10" max="10" step="0.5" value="3">
+                <span class="val" id="lightYVal">3.0</span>
+            </div>
+            <div class="row">
+                <span class="label">Light Z</span>
+                <input type="range" id="lightZ" min="-10" max="10" step="0.5" value="2">
+                <span class="val" id="lightZVal">2.0</span>
+            </div>
         </div>
-        
-        <div id="console">
-            <div class="log-entry info">Console output will appear here...</div>
+        <div class="section">
+            <div class="section-title">Shading</div>
+            <div class="row">
+                <span class="label">Shader</span>
+                <select id="shaderMode">
+                    <option value="0">Blinn-Phong</option>
+                    <option value="1">PBR-like</option>
+                    <option value="2">Flat</option>
+                    <option value="3">Normals</option>
+                    <option value="4">Wireframe</option>
+                </select>
+            </div>
+            <div class="row">
+                <span class="label">Maps</span>
+                <button id="btnDiffuse" class="active">Diffuse</button>
+                <button id="btnNormal">Normal</button>
+                <button id="btnSpecular">Specular</button>
+            </div>
+            <div class="row">
+                <span class="label">Exposure</span>
+                <input type="range" id="exposure" min="0.1" max="5" step="0.1" value="1">
+                <span class="val" id="exposureVal">1.0</span>
+            </div>
+            <div class="row">
+                <span class="label">Gamma</span>
+                <input type="range" id="gamma" min="0.5" max="3" step="0.1" value="2.2">
+                <span class="val" id="gammaVal">2.2</span>
+            </div>
+        </div>
+        <div class="section">
+            <div class="section-title">Fog</div>
+            <div class="row">
+                <span class="label">Fog</span>
+                <button id="btnFog" class="active">Enable</button>
+            </div>
+            <div class="row">
+                <span class="label">Near</span>
+                <input type="range" id="fogNear" min="0" max="50" step="1" value="15">
+                <span class="val" id="fogNearVal">15</span>
+            </div>
+            <div class="row">
+                <span class="label">Far</span>
+                <input type="range" id="fogFar" min="5" max="100" step="1" value="50">
+                <span class="val" id="fogFarVal">50</span>
+            </div>
+        </div>
+        <div class="section">
+            <div class="info-row"><span class="label">Format</span><span class="value" style="color:#4CAF50">SMPK</span></div>
+            <div class="info-row"><span class="label">Vertices</span><span class="value" style="color:#4CAF50" id="v">Loading...</span></div>
+            <div class="info-row"><span class="label">Triangles</span><span class="value" style="color:#4CAF50" id="t">-</span></div>
+            <div class="info-row"><span class="label">Status</span><span class="value" style="color:#4CAF50" id="s">Loading...</span></div>
         </div>
     </div>
 
-    <script type="module">
-        // Use our custom test bundle (all runtime functions exported)
-        import { 
-            loadBlitz3DEngine,
-            createStandardVertexLayout,
-            BufferUsage,
-            toArrayBuffer
-        } from './dist/test-graphics-bundle.js';
+    <script>
+    const c = document.getElementById('c');
+    const gl = c.getContext('webgl2');
+    if (!gl) throw new Error('No WebGL2');
 
-        // Console logging to page
-        const consoleDiv = document.getElementById('console');
-        const originalLog = console.log;
-        const originalWarn = console.warn;
-        const originalError = console.error;
-        
-        function addLog(message, type = 'info') {
-            const entry = document.createElement('div');
-            entry.className = `log-entry ${type}`;
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            consoleDiv.appendChild(entry);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        }
-        
-        console.log = (...args) => {
-            originalLog(...args);
-            addLog(args.join(' '), 'info');
-        };
-        
-        console.warn = (...args) => {
-            originalWarn(...args);
-            addLog(args.join(' '), 'warn');
-        };
-        
-        console.error = (...args) => {
-            originalError(...args);
-            addLog(args.join(' '), 'error');
-        };
+    const vs = `#version 300 es
+        layout(location=0) in vec3 pos;
+        layout(location=1) in vec3 norm;
+        layout(location=2) in vec2 uv;
+        uniform mat4 uM, uV, uP;
+        uniform vec3 uCam;
+        out vec3 vNorm, vWorld, vUV;
+        out mat3 vTBN;
+        out float vFogDist;
+        void main() {
+            vec4 w = uM * vec4(pos, 1.0);
+            vWorld = w.xyz;
+            vNorm = normalize(mat3(uM) * norm);
+            vUV = vec3(uv, 0.0);
+            vec3 T = normalize(vec3(uM * vec4(1,0,0,0)));
+            vec3 B = cross(vNorm, T);
+            vTBN = mat3(T, B, vNorm);
+            vec4 p = uP * uV * w;
+            vFogDist = length(uCam - vWorld);
+            gl_Position = p;
+        }`;
 
-        // Global state
-        let engine = null;
-        let graphicsAPI = null;
-        let triangleVBO = null;
-        let triangleShader = null;
-        let isRendering = false;
-        
-        // Performance monitoring
-        let frameTimes = [];
-        let lastFrameTime = performance.now();
-        
-        function updatePerformanceStats() {
-            const now = performance.now();
-            const frameTime = now - lastFrameTime;
-            lastFrameTime = now;
+    const fsBlinn = `#version 300 es
+        precision highp float;
+        in vec3 vNorm, vWorld, vUV;
+        in mat3 vTBN;
+        in float vFogDist;
+        uniform vec3 uLight, uCam;
+        uniform sampler2D uTexDiff, uTexNorm, uTexSpec;
+        uniform int uUseNorm, uUseSpec;
+        uniform int uUseFog;
+        uniform vec3 uFogColor;
+        uniform float uFogNear, uFogFar;
+        uniform float uExposure, uGamma;
+        out vec4 color;
+        void main() {
+            vec3 n = vNorm;
+            if (uUseNorm == 1) {
+                vec3 nm = texture(uTexNorm, vUV.xy).rgb * 2.0 - 1.0;
+                n = normalize(vTBN * nm);
+            }
+            vec3 l = normalize(uLight - vWorld);
+            vec3 v = normalize(uCam - vWorld);
+            vec3 h = normalize(l + v);
+            vec3 base = texture(uTexDiff, vUV.xy).rgb;
+            float spec = 1.0;
+            if (uUseSpec == 1) spec = texture(uTexSpec, vUV.xy).r;
+            float diff = max(dot(n, l), 0.0);
+            float specB = pow(max(dot(n, h), 0.0), 32.0) * spec;
+            vec3 rgb = base * (0.15 + diff * 0.8) + vec3(1.0) * specB * 0.5;
+            rgb = rgb * uExposure;
+            rgb = pow(rgb, vec3(1.0 / uGamma));
             
-            frameTimes.push(frameTime);
-            if (frameTimes.length > 60) {
-                const avg = frameTimes.reduce((a, b) => a + b) / 60;
-                const fps = 1000 / avg;
-                document.getElementById('frame-time').textContent = `${avg.toFixed(2)}ms`;
-                document.getElementById('fps').textContent = fps.toFixed(1);
-                frameTimes = [];
+            if (uUseFog == 1) {
+                float fog = clamp((vFogDist - uFogNear) / (uFogFar - uFogNear), 0.0, 1.0);
+                rgb = mix(rgb, uFogColor, fog);
             }
-        }
-        
-        // Initialize
-        async function init() {
-            try {
-                console.log('🔧 Starting initialization...');
-                
-                const canvas = document.getElementById('game-canvas');
-                console.log(`Canvas size: ${canvas.width}x${canvas.height}`);
-                
-                // Load WASM engine
-                console.log('📦 Loading Blitz3D WASM engine...');
-                engine = await loadBlitz3DEngine('./blitz3d-engine.wasm', canvas);
-                console.log('✅ Engine loaded successfully');
-                
-                // Get graphics API from global (set by loader)
-                graphicsAPI = window.graphicsAPI;
-                if (!graphicsAPI) {
-                    throw new Error('Graphics API not initialized by loader');
-                }
-                
-                const caps = graphicsAPI.getCapabilities();
-                console.log(`Graphics API: ${caps.apiName}`);
-                console.log(`Max texture size: ${caps.maxTextureSize}`);
-                
-                // Update UI
-                document.getElementById('api-name').textContent = caps.apiName;
-                document.getElementById('max-texture').textContent = caps.maxTextureSize;
-                document.getElementById('status').textContent = 'Ready';
-                document.getElementById('status').className = 'status success';
-                
-                // Enable buttons
-                document.getElementById('btn-triangle').disabled = false;
-                document.getElementById('btn-clear').disabled = false;
-                
-                console.log('✅ Initialization complete!');
-                
-            } catch (error) {
-                console.error('❌ Initialization failed:', error.message);
-                document.getElementById('status').textContent = 'Error';
-                document.getElementById('status').className = 'status error';
-                throw error;
+            color = vec4(rgb, 1.0);
+        }`;
+
+    const fsPBR = `#version 300 es
+        precision highp float;
+        in vec3 vNorm, vWorld, vUV;
+        in mat3 vTBN;
+        in float vFogDist;
+        uniform vec3 uLight, uCam;
+        uniform sampler2D uTexDiff, uTexNorm, uTexSpec;
+        uniform int uUseNorm, uUseSpec;
+        uniform int uUseFog;
+        uniform vec3 uFogColor;
+        uniform float uFogNear, uFogFar;
+        uniform float uExposure, uGamma;
+        out vec4 color;
+        void main() {
+            vec3 n = vNorm;
+            if (uUseNorm == 1) {
+                vec3 nm = texture(uTexNorm, vUV.xy).rgb * 2.0 - 1.0;
+                n = normalize(vTBN * nm);
             }
-        }
-        
-        // Draw triangle
-        async function drawTriangle() {
-            if (!graphicsAPI) {
-                console.error('Graphics API not initialized');
-                return;
-            }
+            vec3 l = normalize(uLight - vWorld);
+            vec3 v = normalize(uCam - vWorld);
+            vec3 h = normalize(l + v);
+            vec3 albedo = texture(uTexDiff, vUV.xy).rgb;
+            float specStrength = 0.3;
+            if (uUseSpec == 1) specStrength = texture(uTexSpec, vUV.xy).r * 0.4;
             
-            try {
-                console.log('🔺 Creating triangle...');
-                
-                // Create triangle vertices (position, normal, uv)
-                const vertices = new Float32Array([
-                    // x,    y,    z,   nx,   ny,   nz,   u,    v
-                    0.0,   0.5,  0.0,  0.0,  0.0,  1.0,  0.5,  1.0,  // top
-                   -0.5,  -0.5,  0.0,  0.0,  0.0,  1.0,  0.0,  0.0,  // bottom-left
-                    0.5,  -0.5,  0.0,  0.0,  0.0,  1.0,  1.0,  0.0,  // bottom-right
-                ]);
-                
-                console.log(`Created ${vertices.length / 8} vertices`);
-                
-                // Create buffer
-                triangleVBO = graphicsAPI.createBuffer(
-                    toArrayBuffer(vertices),
-                    BufferUsage.Vertex
-                );
-                console.log(`Vertex buffer created: handle ${triangleVBO}`);
-                
-                // Load shaders
-                const caps = graphicsAPI.getCapabilities();
-                let vertexCode, fragmentCode;
-                
-                if (caps.apiName === 'WebGPU') {
-                    console.log('Loading WGSL shaders...');
-                    const wgsl = await fetch('./src/runtime/shaders/basic.wgsl').then(r => r.text());
-                    vertexCode = wgsl;
-                    fragmentCode = wgsl;
+            float NdotL = max(dot(n, l), 0.0);
+            float NdotH = max(dot(n, h), 0.0);
+            float NdotV = max(dot(n, v), 0.0);
+            
+            float spec = pow(NdotH, 32.0) * specStrength;
+            vec3 fresnel = pow(1.0 - NdotV, 5.0) * specStrength;
+            
+            vec3 diffuse = albedo * NdotL * 0.7;
+            vec3 specular = vec3(1.0) * spec + albedo * fresnel * 0.2;
+            vec3 ambient = albedo * 0.15;
+            
+            vec3 rgb = ambient + diffuse + specular;
+            rgb = rgb * uExposure;
+            rgb = rgb / (rgb + vec3(1.0));
+            rgb = pow(rgb, vec3(1.0 / uGamma));
+            
+            if (uUseFog == 1) {
+                float fog = clamp((vFogDist - uFogNear) / (uFogFar - uFogNear), 0.0, 1.0);
+                rgb = mix(rgb, uFogColor, fog);
+            }
+            color = vec4(rgb, 1.0);
+        }`;
+
+    const fsFlat = `#version 300 es
+        precision highp float;
+        in vec3 vNorm, vWorld, vUV;
+        in float vFogDist;
+        uniform sampler2D uTexDiff;
+        uniform int uUseFog;
+        uniform vec3 uFogColor;
+        uniform float uFogNear, uFogFar;
+        uniform float uExposure, uGamma;
+        out vec4 color;
+        void main() {
+            vec3 n = normalize(vNorm);
+            vec3 l = normalize(vec3(0.5, 1.0, 0.5));
+            float diff = max(dot(n, l), 0.0) * 0.5 + 0.5;
+            vec3 rgb = texture(uTexDiff, vUV.xy).rgb * diff;
+            rgb = rgb * uExposure;
+            rgb = pow(rgb, vec3(1.0 / uGamma));
+            
+            if (uUseFog == 1) {
+                float fog = clamp((vFogDist - uFogNear) / (uFogFar - uFogNear), 0.0, 1.0);
+                rgb = mix(rgb, uFogColor, fog);
+            }
+            color = vec4(rgb, 1.0);
+        }`;
+
+    const fsNormals = `#version 300 es
+        precision highp float;
+        in vec3 vNorm;
+        in float vFogDist;
+        uniform int uUseFog;
+        uniform vec3 uFogColor;
+        uniform float uFogNear, uFogFar;
+        out vec4 color;
+        void main() { 
+            vec3 rgb = normalize(vNorm) * 0.5 + 0.5;
+            if (uUseFog == 1) {
+                float fog = clamp((vFogDist - uFogNear) / (uFogFar - uFogNear), 0.0, 1.0);
+                rgb = mix(rgb, uFogColor, fog);
+            }
+            color = vec4(rgb, 1.0); 
+        }`;
+
+    const fsWire = `#version 300 es
+        precision highp float;
+        in vec3 vWorld;
+        in float vFogDist;
+        uniform int uUseFog;
+        uniform vec3 uFogColor;
+        uniform float uFogNear, uFogFar;
+        out vec4 color;
+        void main() { 
+            vec3 rgb = vec3(0.0, 1.0, 0.0);
+            if (uUseFog == 1) {
+                float fog = clamp((vFogDist - uFogNear) / (uFogFar - uFogNear), 0.0, 1.0);
+                rgb = mix(rgb, uFogColor, fog);
+            }
+            color = vec4(rgb, 0.5); 
+        }`;
+
+    function createProg(vsSrc, fsSrc) {
+        const v = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(v, vsSrc);
+        gl.compileShader(v);
+        if (!gl.getShaderParameter(v, gl.COMPILE_STATUS)) console.error('VS:', gl.getShaderInfoLog(v));
+        const f = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(f, fsSrc);
+        gl.compileShader(f);
+        if (!gl.getShaderParameter(f, gl.COMPILE_STATUS)) console.error('FS:', gl.getShaderInfoLog(f));
+        const p = gl.createProgram();
+        gl.attachShader(p, v);
+        gl.attachShader(p, f);
+        gl.linkProgram(p);
+        return p;
+    }
+
+    const progs = {
+        0: createProg(vs, fsBlinn),
+        1: createProg(vs, fsPBR),
+        2: createProg(vs, fsFlat),
+        3: createProg(vs, fsNormals),
+        4: createProg(vs, fsWire)
+    };
+
+    let curProg = 0;
+    let useDiffuse = true, useNormal = false, useSpecular = false;
+
+    const uLocs = {};
+    Object.keys(progs).forEach(k => {
+        const p = progs[k];
+        uLocs[k] = {
+            uM: gl.getUniformLocation(p, 'uM'), uV: gl.getUniformLocation(p, 'uV'), uP: gl.getUniformLocation(p, 'uP'),
+            uLight: gl.getUniformLocation(p, 'uLight'), uCam: gl.getUniformLocation(p, 'uCam'),
+            uTexDiff: gl.getUniformLocation(p, 'uTexDiff'), uTexNorm: gl.getUniformLocation(p, 'uTexNorm'),
+            uTexSpec: gl.getUniformLocation(p, 'uTexSpec'), uUseNorm: gl.getUniformLocation(p, 'uUseNorm'),
+            uUseSpec: gl.getUniformLocation(p, 'uUseSpec'),
+            uUseFog: gl.getUniformLocation(p, 'uUseFog'),
+            uFogColor: gl.getUniformLocation(p, 'uFogColor'),
+            uFogNear: gl.getUniformLocation(p, 'uFogNear'),
+            uFogFar: gl.getUniformLocation(p, 'uFogFar'),
+            uExposure: gl.getUniformLocation(p, 'uExposure'),
+            uGamma: gl.getUniformLocation(p, 'uGamma')
+        };
+    });
+
+    async function loadTex(url) {
+        const img = new Image();
+        img.src = url;
+        await new Promise(r => img.onload = r);
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        return t;
+    }
+
+    function mat4Pers(f, a, n, fz) {
+        const fv = 1 / Math.tan(f / 2);
+        return new Float32Array([fv/a,0,0,0, 0,fv,0,0, 0,0,(fz+n)/(n-fz),-1, 0,0,(2*fz*n)/(n-fz),0]);
+    }
+    function mat4Look(e, c, u) {
+        const z = norm([e[0]-c[0], e[1]-c[1], e[2]-c[2]]);
+        const x = norm(cross(u, z));
+        return new Float32Array([x[0],cross(z,x)[0],z[0],0, x[1],cross(z,x)[1],z[1],0, x[2],cross(z,x)[2],z[2],0, -dot(x,e),-dot(cross(z,x),e),-dot(z,e),1]);
+    }
+    function mat4Id() { return new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]); }
+    function mat4RotY(m, a) {
+        const c = Math.cos(a), s = Math.sin(a), r = new Float32Array(m);
+        r[0]=m[0]*c+m[8]*s; r[2]=m[2]*c-m[10]*s;
+        r[8]=m[0]*-s+m[8]*c; r[10]=m[2]*s+m[10]*c;
+        return r;
+    }
+    function mat4Trans(m, x, y, z) {
+        const r = new Float32Array(m);
+        r[12] += x; r[13] += y; r[14] += z;
+        return r;
+    }
+    function norm(v) { const l = Math.hypot(...v); return [v[0]/l, v[1]/l, v[2]/l]; }
+    function cross(a,b) { return [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]]; }
+    function dot(a,b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
+
+    function createVAO(mesh) {
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        const vb = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vb);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vs), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        const nb = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, nb);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.ns), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+        const ub = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, ub);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.us), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(2);
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+        const ib = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(mesh.is), gl.STATIC_DRAW);
+        gl.bindVertexArray(null);
+        return { vao, count: mesh.is.length };
+    }
+
+    const npcTextures = {
+        '173_2': { diff: '173texture.jpg', norm: '173_Norm.jpg', spec: '173_Spec.jpg' },
+        '035': { diff: '035.jpg', norm: null, spec: null },
+        '035tentacle': { diff: 'tentacle.jpg', norm: null, spec: null },
+        '106_2': { diff: '106_diffuse.jpg', norm: '106_normals.png', spec: null },
+        '1499-1': { diff: '1499_King.jpg', norm: '1499_normal.jpg', spec: null },
+        '205_demon1': { diff: null, norm: null, spec: null },
+        '205_demon2': { diff: null, norm: null, spec: null },
+        '205_demon3': { diff: null, norm: null, spec: null },
+        '205_woman': { diff: null, norm: null, spec: null },
+        '372': { diff: 'pj.jpg', norm: null, spec: null },
+        '682arm': { diff: '682arm.jpg', norm: null, spec: null },
+        'bll': { diff: 'bll.jpg', norm: null, spec: null },
+        'classd': { diff: 'classd1.jpg', norm: 'bodybump.jpg', spec: null },
+        'clerk': { diff: 'clerk_d1.jpg', norm: null, spec: null },
+        'duck_low_res': { diff: 'duck1.png', norm: null, spec: null },
+        'forestmonster': { diff: '860_diffuse.jpg', norm: null, spec: null },
+        'guard': { diff: 'guard_diffuse.jpg', norm: null, spec: null },
+        'MTF2': { diff: 'MTF_newdiffuse02.jpg', norm: 'mtf_newnormal01.png', spec: null },
+        'naziofficer': { diff: 'naziofficer.jpg', norm: null, spec: null },
+        's2': { diff: 'scientist.jpg', norm: null, spec: null },
+        'scp-049': { diff: 'scp-049_mask_diffuse5.jpg', norm: null, spec: null },
+        'scp-066': { diff: 'scp-066_diffuse01.jpg', norm: null, spec: null },
+        'scp-096': { diff: 'SCP096.jpg', norm: null, spec: null },
+        'scp-939': { diff: 'scp-939_licker_diffusetest01.jpg', norm: null, spec: null },
+        'scp-966': { diff: '966_diffusetest_1024_01.jpg', norm: null, spec: null },
+        'scp-1048': { diff: '1048_diffusetest01.png', norm: null, spec: null },
+        'scp-1048a': { diff: 'scp_1048a_512_diffusetest01.png', norm: null, spec: null },
+        'scp-1048pp': { diff: 'scp-1048_penandpaper_diffuse01.png', norm: null, spec: null },
+        'zombie1': { diff: 'zombie.jpg', norm: null, spec: null },
+        'zombiesurgeon': { diff: 'surgeonzombie.jpg', norm: null, spec: null }
+    };
+
+    let currentNPC = '173_2';
+
+    async function loadNPC(id) {
+        currentNPC = id;
+        document.getElementById('npcSelect').value = id;
+        
+        const mesh = await loadSMPK('./dist/GFX/npcs/' + id + '.smpk');
+        document.getElementById('v').textContent = mesh.vs.length / 3;
+        document.getElementById('t').textContent = mesh.is.length / 3;
+        meshVAO = createVAO(mesh);
+        
+        const texs = npcTextures[id];
+        texDiff = texs.diff ? await loadTex('./dist/GFX/npcs/' + texs.diff) : texDiff;
+        texNorm = texs.norm ? await loadTex('./dist/GFX/npcs/' + texs.norm) : texNorm;
+        texSpec = texs.spec ? await loadTex('./dist/GFX/npcs/' + texs.spec) : texSpec;
+        
+        document.getElementById('s').textContent = 'Loaded: ' + id;
+    }
+
+    async function loadSMPK(url) {
+        const r = await fetch(url);
+        const buf = await r.arrayBuffer();
+        const data = new Uint8Array(buf);
+        const dv = new DataView(data.buffer, data.byteOffset, data.byteLength);
+
+        // Verify SMPK magic
+        const magic = String.fromCharCode(dv.getUint8(0), dv.getUint8(1), dv.getUint8(2), dv.getUint8(3));
+        if (magic !== 'SMPK') throw new Error('Not SMPK: ' + magic);
+
+        const version = dv.getUint32(4, true);
+        if (version !== 1) throw new Error('Unsupported SMPK version: ' + version);
+
+        const jsonLen = dv.getUint32(8, true);
+        const binLen = dv.getUint32(12, true);
+        const headerLen = 16;
+        const jsonStart = headerLen;
+        const jsonEnd = jsonStart + jsonLen;
+        const binStart = jsonEnd;
+
+        console.log('SMPK: jsonLen=' + jsonLen + ', binLen=' + binLen);
+
+        // Parse JSON header
+        const jsonBytes = data.subarray(jsonStart, jsonEnd);
+        const jsonText = new TextDecoder().decode(jsonBytes);
+        const meta = JSON.parse(jsonText);
+        console.log('SMPK meta:', JSON.stringify(meta, null, 2).slice(0, 500));
+
+        // Extract binary data - copy to clean buffer to avoid offset issues
+        const bin = data.subarray(binStart, binStart + binLen);
+        const binClean = new Uint8Array(binLen);
+        binClean.set(bin);
+        const binDV = new DataView(binClean.buffer, 0, binLen);
+
+        // Find POSITION, NORMAL, TEXCOORD_0, and INDICES accessors
+        let posAcc, norAcc, uvAcc, idxAcc;
+        for (const acc of meta.accessors) {
+            if (acc.name === 'POSITION') posAcc = acc;
+            else if (acc.name === 'NORMAL') norAcc = acc;
+            else if (acc.name === 'TEXCOORD_0') uvAcc = acc;
+            else if (acc.type === 'SCALAR' && !idxAcc) idxAcc = acc; // First scalar is likely indices
+        }
+
+        if (!posAcc) throw new Error('No POSITION accessor found');
+        if (!norAcc) console.warn('No NORMAL accessor found');
+        if (!uvAcc) console.warn('No TEXCOORD_0 accessor found');
+
+        // Extract vertex data
+        const getAccessorData = (acc) => {
+            const count = acc.count;
+            const ct = acc.componentType;
+            const comps = acc.type === 'VEC3' ? 3 : acc.type === 'VEC2' ? 2 : acc.type === 'VEC4' ? 4 : 1;
+            const n = count * comps;
+            const base = acc.offset;
+
+            if (ct === 'f32') {
+                if (acc.offset % 4 === 0) {
+                    return new Float32Array(binClean.buffer, base, n);
                 } else {
-                    console.log('Loading GLSL shaders...');
-                    vertexCode = await fetch('./src/runtime/shaders/basic.vert').then(r => r.text());
-                    fragmentCode = await fetch('./src/runtime/shaders/basic.frag').then(r => r.text());
+                    const byteSize = n * 4;
+                    const bytes = new Uint8Array(binClean.buffer, base, byteSize);
+                    const aligned = new Float32Array(n);
+                    const view = new Uint8Array(aligned.buffer);
+                    view.set(bytes);
+                    return aligned;
                 }
-                
-                console.log('Compiling shaders...');
-                triangleShader = graphicsAPI.createShader(vertexCode, fragmentCode);
-                console.log(`Shader created: handle ${triangleShader}`);
-                
-                // Set vertex layout
-                graphicsAPI.setVertexLayout(createStandardVertexLayout());
-                console.log('Vertex layout set');
-                
-                // Start render loop
-                if (!isRendering) {
-                    isRendering = true;
-                    console.log('🎬 Starting render loop...');
-                    renderLoop();
-                }
-                
-            } catch (error) {
-                console.error('❌ Failed to create triangle:', error.message);
-                throw error;
+            }
+            if (ct === 'u16') return new Uint16Array(binClean.buffer, base, n);
+            if (ct === 'u32') return new Uint32Array(binClean.buffer, base, n);
+            throw new Error('Unknown component type: ' + ct);
+        };
+
+        const vs = posAcc ? Array.from(getAccessorData(posAcc)) : [];
+        const ns = norAcc ? Array.from(getAccessorData(norAcc)) : vs.map((_, i) => i % 3 === 1 ? 1 : 0);
+        const us = uvAcc ? Array.from(getAccessorData(uvAcc)) : [];
+
+        // Extract indices if available
+        let is = [];
+        if (idxAcc) {
+            const idxData = getAccessorData(idxAcc);
+            // Check if indices point to the vertex count
+            const maxIdx = Math.max(...idxData);
+            if (maxIdx < posAcc.count) {
+                is = Array.from(idxData);
+            } else {
+                console.warn('Indices seem invalid, generating grid');
+            }
+        } else if (vs.length > 0) {
+            // Generate indices for triangle strip or fallback
+            console.warn('No indices found, model may be non-indexed or have embedded data');
+        }
+
+        console.log('Vertices:', posAcc?.count, 'Normals:', norAcc?.count, 'UVs:', uvAcc?.count, 'Indices:', is.length);
+
+        // If no indices, assume non-indexed rendering (vertices are triangle soup)
+        if (is.length === 0 && vs.length > 0) {
+            // Check if vertices count is divisible by 3 for triangles
+            if (vs.length % 9 === 0) {
+                for (let i = 0; i < vs.length / 3; i++) is.push(i);
+                console.log('Using non-indexed rendering with', vs.length / 3, 'triangles');
             }
         }
-        
-        // Render loop
-        function renderLoop() {
-            if (!isRendering) return;
-            
-            try {
-                graphicsAPI.beginFrame();
-                graphicsAPI.clear(0.2, 0.3, 0.4, 1.0); // Blue background
-                
-                if (triangleVBO && triangleShader) {
-                    graphicsAPI.useShader(triangleShader);
-                    graphicsAPI.drawTriangles(triangleVBO, 3);
-                }
-                
-                graphicsAPI.endFrame();
-                
-                updatePerformanceStats();
-                
-            } catch (error) {
-                console.error('Render error:', error.message);
-                isRendering = false;
+
+        return { vs, us, ns, is };
+    }
+
+    let meshVAO, texDiff, texNorm, texSpec;
+    let autoRot = true;
+    let rotY = 0;
+
+    const state = {
+        zoom: 15,
+        panX: 0,
+        panY: 0,
+        rotY: 0,
+        lightX: 2,
+        lightY: 3,
+        lightZ: 2
+    };
+
+    const binds = {
+        zoom: (v) => { state.zoom = parseFloat(v); document.getElementById('zoomVal').textContent = v; },
+        panX: (v) => { state.panX = parseFloat(v); document.getElementById('panXVal').textContent = v; },
+        panY: (v) => { state.panY = parseFloat(v); document.getElementById('panYVal').textContent = v; },
+        rotY: (v) => { state.rotY = parseFloat(v); document.getElementById('rotYVal').textContent = v; },
+        lightX: (v) => { state.lightX = parseFloat(v); document.getElementById('lightXVal').textContent = v; },
+        lightY: (v) => { state.lightY = parseFloat(v); document.getElementById('lightYVal').textContent = v; },
+        lightZ: (v) => { state.lightZ = parseFloat(v); document.getElementById('lightZVal').textContent = v; }
+    };
+
+    Object.keys(binds).forEach(id => {
+        document.getElementById(id).addEventListener('input', e => binds[id](e.target.value));
+    });
+
+    document.getElementById('autoRot').addEventListener('click', function() {
+        autoRot = !autoRot;
+        this.classList.toggle('active', autoRot);
+    });
+
+    document.getElementById('resetCam').addEventListener('click', function() {
+        state.zoom = 15; state.panX = 0; state.panY = 0; state.rotY = 0;
+        state.lightX = 2; state.lightY = 3; state.lightZ = 2;
+        document.getElementById('zoom').value = 15; document.getElementById('zoomVal').textContent = '15';
+        document.getElementById('panX').value = 0; document.getElementById('panXVal').textContent = '0';
+        document.getElementById('panY').value = 0; document.getElementById('panYVal').textContent = '0';
+        document.getElementById('rotY').value = 0; document.getElementById('rotYVal').textContent = '0.00';
+        document.getElementById('lightX').value = 2; document.getElementById('lightXVal').textContent = '2.0';
+        document.getElementById('lightY').value = 3; document.getElementById('lightYVal').textContent = '3.0';
+        document.getElementById('lightZ').value = 2; document.getElementById('lightZVal').textContent = '2.0';
+    });
+
+    document.getElementById('shaderMode').addEventListener('change', e => curProg = parseInt(e.target.value));
+    
+    const toggleMap = (btn, varName) => {
+        window[varName] = !window[varName];
+        btn.classList.toggle('active', window[varName]);
+    };
+    
+    document.getElementById('btnDiffuse').addEventListener('click', function() { 
+        useDiffuse = !useDiffuse;
+        this.classList.toggle('active', useDiffuse);
+    });
+    document.getElementById('btnNormal').addEventListener('click', function() { 
+        useNormal = !useNormal;
+        this.classList.toggle('active', useNormal);
+    });
+    document.getElementById('btnSpecular').addEventListener('click', function() { 
+        useSpecular = !useSpecular;
+        this.classList.toggle('active', useSpecular);
+    });
+
+    const tonemapBinds = {
+        exposure: (v) => { document.getElementById('exposureVal').textContent = v; },
+        gamma: (v) => { document.getElementById('gammaVal').textContent = v; }
+    };
+    Object.keys(tonemapBinds).forEach(id => {
+        document.getElementById(id).addEventListener('input', e => tonemapBinds[id](e.target.value));
+    });
+
+    let useFog = true;
+    document.getElementById('btnFog').addEventListener('click', function() {
+        useFog = !useFog;
+        this.classList.toggle('active', useFog);
+    });
+
+    const fogBinds = {
+        fogNear: (v) => { document.getElementById('fogNearVal').textContent = v; },
+        fogFar: (v) => { document.getElementById('fogFarVal').textContent = v; }
+    };
+    Object.keys(fogBinds).forEach(id => {
+        document.getElementById(id).addEventListener('input', e => fogBinds[id](e.target.value));
+    });
+
+    document.getElementById('npcSelect').addEventListener('change', e => loadNPC(e.target.value).catch(e => console.error(e)));
+
+    (async () => {
+        try {
+            await loadNPC('173_2').catch(e => { console.warn('173_2 failed, trying 035'); return loadNPC('035'); });
+        } catch (e) {
+            console.error(e);
+            document.getElementById('s').textContent = 'Error: ' + e.message;
+        }
+
+        const P = mat4Pers(Math.PI/4, 900/650, 0.1, 100);
+
+        function render() {
+            if (autoRot) {
+                rotY += 0.005;
+            } else {
+                rotY = parseFloat(document.getElementById('rotY').value);
             }
             
-            requestAnimationFrame(renderLoop);
-        }
-        
-        // Clear screen
-        function clearScreen() {
-            if (!graphicsAPI) return;
+            const displayRot = rotY % 6.28;
+            document.getElementById('rotY').value = displayRot;
+            document.getElementById('rotYVal').textContent = displayRot.toFixed(2);
             
-            console.log('🧹 Clearing screen...');
-            graphicsAPI.beginFrame();
-            graphicsAPI.clear(0.0, 0.0, 0.0, 1.0); // Black
-            graphicsAPI.endFrame();
+            const cam = [state.panX, state.panY, state.zoom];
+            const V = mat4Look(cam, [state.panX, state.panY, 0], [0,1,0]);
+            const light = [state.lightX, state.lightY, state.lightZ];
+
+            gl.viewport(0, 0, 900, 650);
+            gl.clearColor(0.08, 0.08, 0.1, 1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+            
+            if (curProg === 4) {
+                gl.enable(gl.POLYGON_OFFSET_FILL);
+                gl.polygonOffset(-1, -1);
+            }
+            
+            if (meshVAO) {
+                gl.useProgram(progs[curProg]);
+                let M = mat4Id();
+                M = mat4Trans(M, 0, -0.3, 0);
+                M = mat4RotY(M, rotY);
+                const L = uLocs[curProg];
+                gl.uniformMatrix4fv(L.uM, false, M);
+                gl.uniformMatrix4fv(L.uV, false, V);
+                gl.uniformMatrix4fv(L.uP, false, P);
+                gl.uniform3fv(L.uLight, light);
+                gl.uniform3fv(L.uCam, cam);
+                
+                gl.activeTexture(gl.TEXTURE0);
+                gl.bindTexture(gl.TEXTURE_2D, texDiff);
+                gl.uniform1i(L.uTexDiff, 0);
+                
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, texNorm);
+                gl.uniform1i(L.uTexNorm, 1);
+                
+                gl.activeTexture(gl.TEXTURE2);
+                gl.bindTexture(gl.TEXTURE_2D, texSpec);
+                gl.uniform1i(L.uTexSpec, 2);
+                
+                gl.uniform1i(L.uUseNorm, useNormal ? 1 : 0);
+                gl.uniform1i(L.uUseSpec, useSpecular ? 1 : 0);
+                
+                gl.uniform1i(L.uUseFog, useFog ? 1 : 0);
+                gl.uniform3fv(L.uFogColor, [0.08, 0.08, 0.1]);
+                gl.uniform1f(L.uFogNear, parseFloat(document.getElementById('fogNear').value));
+                gl.uniform1f(L.uFogFar, parseFloat(document.getElementById('fogFar').value));
+                
+                gl.uniform1f(L.uExposure, parseFloat(document.getElementById('exposure').value));
+                gl.uniform1f(L.uGamma, parseFloat(document.getElementById('gamma').value));
+                
+                gl.bindVertexArray(meshVAO.vao);
+                gl.drawElements(gl.TRIANGLES, meshVAO.count, gl.UNSIGNED_SHORT, 0);
+                
+                if (curProg === 4) {
+                    gl.disable(gl.POLYGON_OFFSET_FILL);
+                }
+            }
+            requestAnimationFrame(render);
         }
-        
-        // Button handlers
-        document.getElementById('btn-triangle').addEventListener('click', drawTriangle);
-        document.getElementById('btn-clear').addEventListener('click', clearScreen);
-        document.getElementById('btn-reload').addEventListener('click', () => location.reload());
-        
-        // Global error handlers
-        window.addEventListener('error', (e) => {
-            console.error('Uncaught error:', e.message);
-        });
-        
-        window.addEventListener('unhandledrejection', (e) => {
-            console.error('Unhandled promise rejection:', e.reason);
-        });
-        
-        // Start initialization
-        init().catch(err => {
-            console.error('Fatal error during initialization:', err);
-        });
+        render();
+    })();
+
+    window.toggleRot = () => { autoRot = !autoRot; };
     </script>
 </body>
 </html>

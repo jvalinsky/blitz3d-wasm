@@ -11,3 +11,16 @@
 /web/node_modules/
 /web/deno.lock
 /dist/
+/web/dist/
+
+# Node modules (never commit)
+node_modules/
+
+# Debug/diagnostic sidecars (generated)
+Sources/Runtime/*.bbdbg.json
+Sources/Runtime/*.wasm.map
+web/public/*.bbdbg.json
+web/public/*.wasm.map
+
+# Tool caches (generated)
+Tools/analyzer/node_modules/.deno/

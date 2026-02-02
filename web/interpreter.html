@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blitz3D WASM Interpreter</title>
     <link rel="stylesheet" href="interpreter.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r170/three.min.js"></script>
     <script>
         // Immediate test to verify JS is working
         console.log('Inline script executing');
@@ -20,7 +19,7 @@
             }
         });
     </script>
-    <script type="module" src="interpreter.js?v=Math.random()"></script>
+    <script type="module" src="interpreter.js"></script>
     <script>
         // Global error handler to catch WASM loading errors
         window.addEventListener('error', (e) => {
@@ -61,13 +60,45 @@
                     <select id="example-select">
                         <option value="">-- Examples --</option>
                         <option value="hello">Hello World</option>
+                        <option value="languageBasics">Language Basics</option>
+                        <option value="arrays">Arrays</option>
+                        <option value="customTypes">Custom Types + For Each</option>
+                        <option value="dataReadRestore">Data/Read/Restore</option>
+                        <option value="stringsMath">Strings + Math</option>
                         <option value="graphics">Graphics Demo</option>
+                        <option value="rotatingCube">Rotating Cube Demo</option>
+                        <option value="rotatingCubeColor">Rotating Cube + Color Cycle</option>
+                        <option value="hud2D">2D HUD Demo</option>
+                        <option value="inputHud">Input HUD Demo</option>
+                        <option value="image2D">2D Image Demo</option>
+                        <option value="textureCube">Textured Cube Demo</option>
+                        <option value="vfsFileIO">VFS File I/O Demo</option>
+                        <option value="fogCube">Fog Demo</option>
+                        <option value="proceduralMesh">Procedural Mesh Demo</option>
                     </select>
+                    <input id="timeout-ms" type="number" min="0" step="50" value="2000"
+                        title="Watchdog timeout (ms). 0 disables." style="width: 120px;" />
                     <button class="btn btn-secondary" onclick="clearOutput()">Clear</button>
+                    <button class="btn btn-secondary" id="stop-btn" onclick="stopRun()" disabled>Stop</button>
                     <button class="btn btn-primary" id="run-btn">Run</button>
                 </div>
             </div>
             <textarea id="editor" placeholder="' Type your Blitz3D BASIC code here..."></textarea>
+            <div class="vfs-panel">
+                <div class="vfs-header">
+                    <span class="panel-title">Virtual Filesystem</span>
+                    <div class="vfs-actions">
+                        <input id="vfs-prefix" class="vfs-prefix" type="text" value="assets/"
+                            title="Upload prefix (e.g. assets/)" />
+                        <input id="vfs-upload" type="file" multiple />
+                        <button class="btn btn-secondary" id="vfs-clear-btn" title="Clear VFS">Clear</button>
+                    </div>
+                </div>
+                <div class="vfs-hint">
+                    Selecting files uploads them immediately. Refer to them by path (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code>LoadTexture</code>.
+                </div>
+                <div id="vfs-list" class="vfs-list"></div>
+            </div>
         </div>
         
         <div class="output-panel">
@@ -85,6 +116,7 @@
             <div id="canvas-tab" class="tab-content">
                 <div id="canvas-container">
                     <canvas id="game-canvas"></canvas>
+                    <canvas id="hud-canvas"></canvas>
                 </div>
             </div>
         </div>

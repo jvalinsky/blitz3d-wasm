@@ -363,7 +363,7 @@
             saveSettings({ ...settings, lastAction: 'new_game', timestamp: Date.now() });
             
             // Navigate to game
-            window.location.href = './game.html';
+            window.location.href = './game/scpcb_game.html';
         }
         
         function loadGame() {
@@ -393,7 +393,7 @@
                 const slotNum = parseInt(slot);
                 if (slotNum >= 1 && slotNum <= 10) {
                     saveSettings({ ...settings, lastAction: 'load_game', loadSlot: slotNum });
-                    window.location.href = './game.html?load=' + slotNum;
+                    window.location.href = './game/scpcb_game.html?load=' + slotNum;
                 }
             }
         }

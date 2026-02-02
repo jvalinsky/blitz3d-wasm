@@ -650,13 +650,13 @@
                 
                 console.log('[NewGame] Starting game with seed:', randomSeed, 'difficulty:', difficulties[selectedDifficulty].name);
                 
-                // Check if we're in the integrated game.html (has window.startNewGame)
+                // Check if we're in the integrated game page (has window.startNewGame)
                 if (typeof window.startNewGame === 'function') {
                     // Integrated mode - start game initialization
                     window.startNewGame(randomSeed, selectedDifficulty);
                 } else {
                     // Standalone menu - show alert
-                    alert(`Starting new game!\nSeed: ${randomSeed}\nDifficulty: ${difficulties[selectedDifficulty].name}\n\n(Load game.html for full integration)`);
+                    alert(`Starting new game!\nSeed: ${randomSeed}\nDifficulty: ${difficulties[selectedDifficulty].name}\n\n(Load game/scpcb_game.html for full integration)`);
                 }
             }
         }

@@ -557,19 +557,37 @@ End Function`,
   vfsFileIO: `; VFS File I/O Demo (read lines)
 ;
 ; Upload a text file to VFS as: assets/demo.txt
-; Then run this script to read it back.
-Local f = ReadFile("assets/demo.txt")
-If f = 0 Then
-  Print "ReadFile failed. Upload assets/demo.txt in the VFS panel first."
-  End
-EndIf
+; Then run this script to read it back, 1 line per frame (no blocking loops).
+Global f
+Global done%
+Global started%
 
-While Eof(f) = 0
+Print "Upload assets/demo.txt in the VFS panel first."
+Print "Reading one line per frame..."
+
+Function __Step%()
+  If done <> 0 Then Return
+
+  If started = 0 Then
+    f = ReadFile("assets/demo.txt")
+    If f = 0 Then
+      Print "ReadFile failed (returned 0). Check the VFS list for assets/demo.txt."
+      done = 1
+      Return
+    EndIf
+    started = 1
+    Return
+  EndIf
+
+  If Eof(f) <> 0 Then
+    CloseFile f
+    Print "Done."
+    done = 1
+    Return
+  EndIf
+
   Print ReadLine(f)
-Wend
-
-CloseFile f
-Print "Done."`,
+End Function`,
 
   fogCube: `; Fog Demo (stepped, no loops)
 Global cube
@@ -1536,6 +1554,11 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
         step();
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+          printOutput("Program ended.", "success");
+          stopExecution();
+          return;
+        }
         printOutput(`Execution error: ${msg}`, "error");
         stopExecution();
         return;
@@ -1565,6 +1588,11 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
       entry();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
+      if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+        printOutput("Program ended.", "success");
+        stopExecution();
+        return { startedStepping: false };
+      }
       printOutput(`Execution error: ${msg}`, "error");
       stopExecution();
       return { startedStepping: false };

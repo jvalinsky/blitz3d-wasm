@@ -1,4 +1,5 @@
 import { normalizePath, openFileCandidates } from "../shared/path_alias.ts";
+import { VideoRuntime } from "../runtime/video.ts";
 
 type WorkerInitMessage = {
   cmd: "init";
@@ -167,6 +168,9 @@ let nextHandle = 1;
 // Headless image/texture tracking (to satisfy init code that expects non-zero handles and sizes).
 let imageSizes = new Map<number, { w: number; h: number }>();
 
+// Video runtime for movie playback
+let videoRuntime: VideoRuntime | null = null;
+
 // Input shims (enough to satisfy SCPCB's early "press any key" logic).
 const keysHit = new Map<number, number>();
 const keysDown = new Map<number, boolean>();
@@ -302,6 +306,11 @@ const stubMissingImports = (imports: any, m: WebAssembly.Module) => {
 };
 
 const buildImports = () => {
+  // Initialize video runtime if needed
+  if (!videoRuntime) {
+    videoRuntime = new VideoRuntime();
+  }
+  
   const imports: any = {
     env: {
       __indirect_function_table: new WebAssembly.Table({
@@ -711,9 +720,59 @@ const buildImports = () => {
   imports.env.StopChannel = noop;
   imports.env.ChannelVolume = noop;
   imports.env.ChannelPan = noop;
-  imports.env.ChannelPaused = noop;
+  imports.env.ChannelPaused = zero;
   imports.env.PauseChannel = noop;
   imports.env.ResumeChannel = noop;
+
+  // Video/Movie functions (BlitzMovie_*)
+  imports.env.BlitzMovie_Open = (pathPtr: number): number => {
+    if (!memory || !videoRuntime) return 0;
+    const path = readString(memory, pathPtr);
+    // Convert .avi to .mp4 if needed
+    const mp4Path = path.replace(/\.avi$/i, '.mp4');
+    return videoRuntime.openMovie(mp4Path);
+  };
+  imports.env.BlitzMovie_Close = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.closeMovie(handle) ? 1 : 0;
+  };
+  imports.env.BlitzMovie_Play = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    videoRuntime.play(handle);
+    return 1;
+  };
+  imports.env.BlitzMovie_Stop = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.stop(handle) ? 1 : 0;
+  };
+  imports.env.BlitzMovie_Pause = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.pause(handle) ? 1 : 0;
+  };
+  imports.env.BlitzMovie_GetWidth = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.getWidth(handle);
+  };
+  imports.env.BlitzMovie_GetHeight = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.getHeight(handle);
+  };
+  imports.env.BlitzMovie_GetCurrentTime = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.getCurrentTime(handle);
+  };
+  imports.env.BlitzMovie_GetDuration = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.getDuration(handle);
+  };
+  imports.env.BlitzMovie_Seek = (handle: number, time: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.seek(handle, time) ? 1 : 0;
+  };
+  imports.env.BlitzMovie_IsPlaying = (handle: number): number => {
+    if (!videoRuntime) return 0;
+    return videoRuntime.isPlaying(handle) ? 1 : 0;
+  };
 
   // Some SCPCB-specific stubs
   imports.env.UpdateSoundOrigin = noop;
@@ -861,6 +920,11 @@ const dispose = () => {
   try {
     imageSizes.clear();
   } catch {}
+  // Cleanup video runtime
+  if (videoRuntime) {
+    videoRuntime.cleanup();
+    videoRuntime = null;
+  }
   for (const k of Object.keys(counters)) delete counters[k];
   status.counters = {};
   status.stage = "disposed";

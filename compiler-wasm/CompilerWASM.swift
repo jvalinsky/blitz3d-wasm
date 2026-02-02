@@ -9,50 +9,45 @@
 import Foundation
 import Blitz3DCompiler
 
+struct CompilerError: Error, CustomStringConvertible {
+    let message: String
+    var description: String { message }
+}
+
 /// WASM-compatible compiler interface
-/// Designed to be called from JavaScript via WASI
 struct CompilerWASM {
     
-    /// Compile Blitz3D source code to WebAssembly
-    /// Returns: WASM binary data or error message
-    static func compile(source: String, options: CompilerOptions = .default) -> Result<Data, String> {
+    static func compile(source: String, options: CompilerOptions = .default) -> Result<Data, CompilerError> {
         do {
-            // Parse the source code
-            let parser = Parser()
-            let program = try parser.parse(source: source)
+            var parser = Parser(source: source, sourceFile: "stdin")
+            let program = parser.parse()
             
-            // Generate WebAssembly
-            var codeGen = CodeGenerator()
-            
-            // Apply optimizations if enabled
-            if options.optimize {
-                // Constant folding, strength reduction, etc.
+            if parser.hasErrors {
+                return .failure(CompilerError(message: parser.errors.map { $0.description }.joined(separator: "\n")))
             }
             
-            let wasmModule = try codeGen.generateFromIR(program)
+            var codeGen = CodeGenerator()
+            let wasmModule = codeGen.generateFromIR(program)
             
-            // Encode to binary format
-            let encoder = WASMBinaryEncoder()
-            let wasmBinary = try encoder.encode(wasmModule)
+            if codeGen.hasDiagnostics {
+                return .failure(CompilerError(message: codeGen.diagnostics.map { $0.description }.joined(separator: "\n")))
+            }
             
-            return .success(wasmBinary)
-        } catch let error as CompilerError {
-            return .failure(error.description)
+            var encoder = WASMBinaryEncoder()
+            let wasmBinary = encoder.encode(wasmModule)
+            
+            return .success(Data(wasmBinary))
         } catch {
-            return .failure("Compilation failed: \(error)")
+            return .failure(CompilerError(message: "Compilation failed: \(error)"))
         }
     }
     
-    /// Compile and return JSON result for JavaScript interop
     static func compileToJSON(source: String, optionsJSON: String = "{}") -> String {
-        // Parse options from JSON
         let options = CompilerOptions.from(json: optionsJSON)
-        
         let result = compile(source: source, options: options)
         
         switch result {
         case .success(let wasmData):
-            // Encode WASM binary as base64 for JSON transport
             let base64 = wasmData.base64EncodedString()
             return """
             {
@@ -61,14 +56,11 @@ struct CompilerWASM {
                 "size": \(wasmData.count)
             }
             """
-            
         case .failure(let error):
-            // Escape error message for JSON
-            let escapedError = error
+            let escapedError = error.description
                 .replacingOccurrences(of: "\\", with: "\\\\")
                 .replacingOccurrences(of: "\"", with: "\\\"")
                 .replacingOccurrences(of: "\n", with: "\\n")
-            
             return """
             {
                 "success": false,

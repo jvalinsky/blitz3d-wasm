@@ -39,4 +39,35 @@ public class AudioManager {
     public func channelPan(_ channel: Int32, pan: Float) {
         js_ChannelPan(channel, pan)
     }
+    
+    public func pauseChannel(_ channel: Int32) {
+        js_PauseChannel(channel)
+    }
+    
+    public func resumeChannel(_ channel: Int32) {
+        js_ResumeChannel(channel)
+    }
+    
+    public func emitSound(_ sound: Int32, entityId: Int32) -> Int32 {
+        // Play sound with 3D positioning
+        return js_EmitSound(sound, entityId)
+    }
+    
+    public func setChannelPosition(_ channel: Int32, x: Float, y: Float, z: Float) {
+        js_ChannelPosition(channel, x, y, z)
+    }
+    
+    public func playMusic(_ path: String) -> Int32 {
+        return path.withCString { ptr in
+            return js_PlayMusic(Int32(Int(bitPattern: ptr)))
+        }
+    }
+    
+    public func stopMusic() {
+        js_StopMusic()
+    }
+    
+    public func setMusicVolume(_ volume: Float) {
+        js_MusicVolume(volume)
+    }
 }

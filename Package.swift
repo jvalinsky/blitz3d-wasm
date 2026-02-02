@@ -54,5 +54,10 @@ let package = Package(
                 .enableExperimentalFeature("Extern")
             ]
         ),
+        .testTarget(
+            name: "Blitz3DEngineTests",
+            dependencies: ["Blitz3DEngine"],
+            path: "Tests/Blitz3DEngineTests"
+        ),
     ]
 )

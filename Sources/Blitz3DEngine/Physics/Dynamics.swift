@@ -30,6 +30,13 @@ public class DynamicsWorld {
         collisionPairs.append(
             CollisionPair(srcType: srcType, destType: destType, method: method, response: response))
     }
+    
+    /// Clear all collision pairs and history.
+    public func clearCollisions() {
+        collisionPairs.removeAll()
+        collisionHistory.removeAll()
+        collisionEntities.removeAll()
+    }
 
     public func registerEntity(_ entity: Entity) {
         collisionEntities.insert(entity.id)

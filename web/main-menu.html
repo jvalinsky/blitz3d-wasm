@@ -289,8 +289,8 @@
         const introVideo = document.getElementById('introVideo');
         let currentVideoIndex = 0;
         const introVideos = [
-            './dist/assets/startup_TSS.mp4',
-            './dist/assets/startup_Undertow.mp4'
+            './assets/videos/startup_TSS.mp4',
+            './assets/videos/startup_Undertow.mp4'
         ];
         
         function playIntroVideos() {
@@ -331,39 +331,82 @@
             updateStatus('Intro skipped');
         }
         
+        // Settings persistence
+        const SETTINGS_KEY = 'scpcb_settings';
+        
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem(SETTINGS_KEY);
+                return saved ? JSON.parse(saved) : {};
+            } catch {
+                return {};
+            }
+        }
+        
+        function saveSettings(settings) {
+            try {
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            } catch (e) {
+                console.error('Failed to save settings:', e);
+            }
+        }
+        
+        // Load saved settings
+        const settings = loadSettings();
+        console.log('Loaded settings:', settings);
+        
         // Menu button functions
         function newGame() {
             updateStatus('Starting new game...');
             
-            // In real implementation, this would:
-            // 1. Show difficulty selection
-            // 2. Generate random seed
-            // 3. Initialize game world
-            // 4. Load first room
+            // Save that we're starting a game
+            saveSettings({ ...settings, lastAction: 'new_game', timestamp: Date.now() });
             
-            alert('NEW GAME - Would initialize game world and load starting room');
+            // Navigate to game
+            window.location.href = './game.html';
         }
         
         function loadGame() {
             updateStatus('Loading saved games...');
             
-            // In real implementation, this would:
-            // 1. List save files from localStorage/IndexedDB
-            // 2. Show save game selection UI
-            // 3. Load selected save
+            // Check for saved games in localStorage
+            const saves = [];
+            for (let i = 1; i <= 10; i++) {
+                const save = localStorage.getItem(`scpcb_save_${i}`);
+                if (save) {
+                    try {
+                        const data = JSON.parse(save);
+                        saves.push({ slot: i, ...data });
+                    } catch {}
+                }
+            }
             
-            alert('LOAD GAME - Would show save file selection');
+            if (saves.length === 0) {
+                alert('No saved games found');
+                return;
+            }
+            
+            // Show save selection
+            const saveList = saves.map(s => `Slot ${s.slot}: ${s.date || 'Unknown date'}`).join('\n');
+            const slot = prompt(`Select save slot:\n${saveList}\n\nEnter slot number (1-10):`);
+            if (slot) {
+                const slotNum = parseInt(slot);
+                if (slotNum >= 1 && slotNum <= 10) {
+                    saveSettings({ ...settings, lastAction: 'load_game', loadSlot: slotNum });
+                    window.location.href = './game.html?load=' + slotNum;
+                }
+            }
         }
         
         function options() {
             updateStatus('Opening options menu...');
             
-            // In real implementation, this would:
-            // 1. Show options tabs (Graphics, Audio, Controls)
-            // 2. Load current settings from options.ini
-            // 3. Allow settings modification
+            // Simple options dialog
+            const introEnabled = localStorage.getItem('introEnabled') !== 'false';
+            const skipIntro = confirm(`Current settings:\n\nPlay intro videos: ${introEnabled ? 'YES' : 'NO'}\n\nClick OK to ${introEnabled ? 'DISABLE' : 'ENABLE'} intro videos`);
             
-            alert('OPTIONS - Would show graphics/audio/controls settings');
+            localStorage.setItem('introEnabled', skipIntro === introEnabled ? introEnabled : !introEnabled);
+            updateStatus(`Intro videos ${skipIntro === introEnabled ? 'enabled' : 'disabled'}`);
         }
         
         function quit() {

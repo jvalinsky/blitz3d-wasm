@@ -5,6 +5,10 @@
       "scpcb.wasm",
       "options.ini"
     ],
+    "videos": [
+      "assets/videos/startup_TSS.mp4",
+      "assets/videos/startup_Undertow.mp4"
+    ],
     "init": [
       "Data/1499chunks.ini",
       "Data/rooms.ini",

@@ -14,6 +14,13 @@ public func EngineCollisions(srcType: Int32, destType: Int32, method: Int32, res
         srcType: srcType, destType: destType, method: method, response: response)
 }
 
+/// Clear all collision pairs and history.
+@_cdecl("ClearCollisions")
+@MainActor
+public func ClearCollisions() {
+    DynamicsWorld.shared.clearCollisions()
+}
+
 @_cdecl("EngineUpdateWorld")
 @MainActor
 public func EngineUpdateWorld(step: Float) {

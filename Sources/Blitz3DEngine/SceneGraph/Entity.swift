@@ -48,6 +48,9 @@ public class Entity: Equatable {
     }
     public let id: Int32
     public let type: EntityType
+    
+    // Entity name for searching
+    public var name: String = ""
 
     // Parent-child
     public weak var parent: Entity?

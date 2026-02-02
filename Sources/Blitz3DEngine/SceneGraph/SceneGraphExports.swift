@@ -18,8 +18,36 @@ public func EngineFreeEntity(id: Int32) {
 
 @_cdecl("EngineSetParent")
 @MainActor
-public func EngineSetParent(id: Int32, parent: Int32) {
-    SceneGraph.shared.setParent(id, parentId: parent)
+public func EngineSetParent(id: Int32, parent: Int32, global: Int32) {
+    SceneGraph.shared.setParent(id, parentId: parent, global: global != 0)
+}
+
+@_cdecl("EngineCountChildren")
+@MainActor
+public func EngineCountChildren(id: Int32) -> Int32 {
+    return SceneGraph.shared.countChildren(id)
+}
+
+@_cdecl("EngineGetChild")
+@MainActor
+public func EngineGetChild(id: Int32, index: Int32) -> Int32 {
+    return SceneGraph.shared.getChild(id, index: index)
+}
+
+@_cdecl("EngineFindChild")
+@MainActor
+public func EngineFindChild(id: Int32, namePtr: UnsafePointer<CChar>?) -> Int32 {
+    guard let ptr = namePtr else { return 0 }
+    let name = String(cString: ptr)
+    return SceneGraph.shared.findChild(id, name: name)
+}
+
+@_cdecl("EngineSetEntityName")
+@MainActor
+public func EngineSetEntityName(id: Int32, namePtr: UnsafePointer<CChar>?) {
+    guard let ptr = namePtr else { return }
+    let name = String(cString: ptr)
+    SceneGraph.shared.setEntityName(id, name: name)
 }
 
 // MARK: Transform setters

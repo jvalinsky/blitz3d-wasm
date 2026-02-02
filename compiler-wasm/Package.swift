@@ -4,8 +4,7 @@ import PackageDescription
 let package = Package(
     name: "Blitz3DCompilerWASM",
     platforms: [
-        .macOS(.v13),
-        .custom("wasi", versionString: "0.1")
+        .macOS(.v13)
     ],
     products: [
         .executable(
@@ -18,14 +17,18 @@ let package = Package(
             name: "CompilerWASM",
             dependencies: ["Blitz3DCompiler"],
             path: ".",
-            exclude: ["Package.swift"],
+            exclude: ["Package.swift", ".build", "Sources/"],
             swiftSettings: [
-                .enableExperimentalFeature("Embedded")
+                .enableExperimentalFeature("Extern")
+            ],
+            linkerSettings: [
+                .unsafeFlags(["-Xlinker", "--export=malloc", "-Xlinker", "--export=free", "-Xlinker", "--export=compile_blitz3d"])
             ]
         ),
         .target(
             name: "Blitz3DCompiler",
-            path: "../Sources/Compiler"
+            path: "Sources/Compiler",
+            exclude: ["AGENTs.md", "REFACTORING_PLAN.md", "PLACEHOLDER.md"]
         )
     ]
 )

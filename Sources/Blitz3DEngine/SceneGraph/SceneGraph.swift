@@ -122,13 +122,68 @@ public class SceneGraph {
         entity.markDirty()
     }
 
-    public func setParent(_ id: Int32, parentId: Int32) {
+    public func setParent(_ id: Int32, parentId: Int32, global: Bool = true) {
         guard let entity = entities[id] else { return }
+        
+        // Store world position if maintaining global position
+        let worldPos = entity.worldPosition
+        
         if parentId == 0 {
+            if global {
+                // Maintain world position when reparenting to root
+                entity.localPosition = worldPos
+            }
             root.addChild(entity)
         } else if let newParent = entities[parentId] {
+            if global {
+                // Convert world position to local space of new parent
+                newParent.updateWorldMatrix()
+                let parentWorld = newParent.worldMatrix
+                // Extract parent world position from matrix
+                let parentWorldPos = Vec3(
+                    x: parentWorld[column: 3, row: 0],
+                    y: parentWorld[column: 3, row: 1],
+                    z: parentWorld[column: 3, row: 2]
+                )
+                // Simple local position calculation (ignoring parent rotation for now)
+                entity.localPosition = worldPos - parentWorldPos
+            }
             newParent.addChild(entity)
         }
+    }
+    
+    public func countChildren(_ id: Int32) -> Int32 {
+        guard let entity = entities[id] else { return 0 }
+        return Int32(entity.children.count)
+    }
+    
+    public func getChild(_ id: Int32, index: Int32) -> Int32 {
+        guard let entity = entities[id] else { return 0 }
+        let idx = Int(index)
+        guard idx >= 0 && idx < entity.children.count else { return 0 }
+        return entity.children[idx].id
+    }
+    
+    public func findChild(_ id: Int32, name: String) -> Int32 {
+        guard let entity = entities[id] else { return 0 }
+        return findChildRecursive(entity, name: name)?.id ?? 0
+    }
+    
+    private func findChildRecursive(_ entity: Entity, name: String) -> Entity? {
+        for child in entity.children {
+            if child.name == name {
+                return child
+            }
+            if let found = findChildRecursive(child, name: name) {
+                return found
+            }
+        }
+        return nil
+    }
+    
+    public func setEntityName(_ id: Int32, name: String) {
+        guard let entity = entities[id] else { return }
+        entity.name = name
     }
 
     // MARK: - Queries

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blitz3D WASM Interpreter</title>
+    <link rel="stylesheet" href="interpreter.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r170/three.min.js"></script>
+    <script>
+        // Immediate test to verify JS is working
+        console.log('Inline script executing');
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('DOMContentLoaded fired');
+            const output = document.getElementById('output');
+            if (output) {
+                const testDiv = document.createElement('div');
+                testDiv.className = 'output-line success';
+                testDiv.textContent = 'JavaScript is working!';
+                output.appendChild(testDiv);
+            }
+        });
+    </script>
+    <script type="module" src="interpreter.js?v=Math.random()"></script>
+    <script>
+        // Global error handler to catch WASM loading errors
+        window.addEventListener('error', (e) => {
+            console.error('Global error:', e);
+            const output = document.getElementById('output');
+            if (output) {
+                const line = document.createElement('div');
+                line.className = 'output-line error';
+                line.textContent = 'Error: ' + e.message;
+                output.appendChild(line);
+            }
+        });
+        
+        // Unhandled promise rejection handler
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled rejection:', e);
+            const output = document.getElementById('output');
+            if (output) {
+                const line = document.createElement('div');
+                line.className = 'output-line error';
+                line.textContent = 'Promise rejection: ' + e.reason;
+                output.appendChild(line);
+            }
+        });
+    </script>
+</head>
+<body>
+    <header>
+        <h1>Blitz3D WASM Interpreter</h1>
+        <p>Write Blitz3D BASIC code and run it in your browser</p>
+    </header>
+    
+    <div class="main-container">
+        <div class="editor-panel">
+            <div class="panel-header">
+                <span class="panel-title">Source Code</span>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="example-select">
+                        <option value="">-- Examples --</option>
+                        <option value="hello">Hello World</option>
+                        <option value="graphics">Graphics Demo</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="clearOutput()">Clear</button>
+                    <button class="btn btn-primary" id="run-btn">Run</button>
+                </div>
+            </div>
+            <textarea id="editor" placeholder="' Type your Blitz3D BASIC code here..."></textarea>
+        </div>
+        
+        <div class="output-panel">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('output')">Output</button>
+                <button class="tab" onclick="showTab('canvas')">3D Canvas</button>
+            </div>
+            
+            <div id="output-tab" class="tab-content active">
+                <div id="output">
+                    <div class="output-line info">Initializing interpreter...</div>
+                </div>
+            </div>
+            
+            <div id="canvas-tab" class="tab-content">
+                <div id="canvas-container">
+                    <canvas id="game-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar">
+        <div class="status-item">
+            <span class="status-indicator" id="status-indicator"></span>
+            <span id="status-text">Loading...</span>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,2321 @@
+//
+//  Parser.swift
+//  Blitz3DCompiler
+//
+//  Recursive descent parser for Blitz3D BASIC
+//
+
+import Foundation
+
+/// Represents a parsing error with location information
+public struct ParseError: CustomStringConvertible {
+    public let message: String
+    public let line: Int
+    public let column: Int
+    public let sourceFile: String
+
+    public var description: String {
+        return "\(sourceFile):\(line):\(column): error: \(message)"
+    }
+
+    public init(message: String, line: Int, column: Int, sourceFile: String) {
+        self.message = message
+        self.line = line
+        self.column = column
+        self.sourceFile = sourceFile
+    }
+
+    public init(message: String, token: Token) {
+        self.message = message
+        self.line = token.line
+        self.column = token.column
+        self.sourceFile = token.sourceFile
+    }
+}
+
+public struct Parser {
+    private var lexer: Lexer
+    private var currentToken: Token
+    private var previousToken: Token
+    private var sourceFile: String
+    private var lineMap: [Int: (file: String, line: Int)]?
+    private(set) public var errors: [ParseError] = []
+    private var includedFiles: Set<String> = []
+    private var includeSearchPaths: [String] = ["./", "Data/", "../"]
+
+    public init(
+        source: String, sourceFile: String = "unknown",
+        lineMap: [Int: (file: String, line: Int)]? = nil
+    ) {
+        self.lexer = Lexer(source: source, sourceFile: sourceFile, lineMap: lineMap)
+        self.sourceFile = sourceFile
+        self.lineMap = lineMap
+        self.currentToken = Token(
+            type: .endOfFile, text: "", line: 1, column: 1, sourceFile: sourceFile)
+        self.previousToken = self.currentToken
+        self.currentToken = self.lexer.nextToken()
+    }
+
+    /// Reports an error at the current token position
+    private mutating func reportError(_ message: String) {
+        errors.append(ParseError(message: message, token: currentToken))
+    }
+
+    /// Reports an error with a specific token
+    private mutating func reportError(_ message: String, at token: Token) {
+        errors.append(ParseError(message: message, token: token))
+    }
+
+    /// Attempts to synchronize to a known good state after an error
+    private mutating func synchronize() {
+        // Skip tokens until we find a statement boundary
+        while currentToken.type != .endOfFile {
+            // Stop at newlines (statement boundaries)
+            if currentToken.type == .newline {
+                advance()
+                return
+            }
+            // Stop before keywords that start statements
+            switch currentToken.type {
+            case .keywordIf, .keywordWhile, .keywordFor, .keywordRepeat,
+                .keywordFunction, .keywordType, .keywordSelect,
+                .keywordLocal, .keywordGlobal, .keywordConst, .keywordDim,
+                .keywordReturn, .keywordExit, .keywordGoto, .keywordGosub:
+                return
+            default:
+                advance()
+            }
+        }
+    }
+
+    /// Returns true if there were any parsing errors
+    public var hasErrors: Bool {
+        return !errors.isEmpty
+    }
+
+    /// Validates the parsed program for semantic errors
+    /// Call this after parse() to check for label validation, etc.
+    public mutating func validate(_ program: ProgramNode) {
+        var labels = Set<String>()
+        var gotoTargets: [(String, Int, Int, String)] = []  // (name, line, column, sourceFile)
+        var gosubTargets: [(String, Int, Int, String)] = []
+
+        // Collect constant names for validation
+        var constantNames = Set<String>()
+        for statement in program.statements {
+            collectConstantNames(from: statement, constants: &constantNames)
+        }
+
+        // Collect labels and goto/gosub targets from main statements
+        collectLabelsAndTargets(
+            from: program.statements, labels: &labels, gotoTargets: &gotoTargets,
+            gosubTargets: &gosubTargets)
+
+        // Collect from function bodies
+        for function in program.functions {
+            collectLabelsAndTargets(
+                from: function.body, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+        }
+
+        // Validate Goto targets
+        for (target, line, column, file) in gotoTargets {
+            if !labels.contains(target) {
+                errors.append(
+                    ParseError(
+                        message: "Goto target '\(target)' not found", line: line, column: column,
+                        sourceFile: file))
+            }
+        }
+
+        // Validate Gosub targets
+        for (target, line, column, file) in gosubTargets {
+            if !labels.contains(target) {
+                errors.append(
+                    ParseError(
+                        message: "Gosub target '\(target)' not found", line: line, column: column,
+                        sourceFile: file))
+            }
+        }
+
+        // Validate Case values are constants
+        validateCaseConstants(in: program.statements, constants: constantNames)
+        for function in program.functions {
+            validateCaseConstants(in: function.body, constants: constantNames)
+        }
+    }
+
+    /// Collects constant names from statements
+    private func collectConstantNames(from statement: StatementNode, constants: inout Set<String>) {
+        switch statement {
+        case .constant(let decl, _):
+            constants.insert(decl.name)
+        case .constants(let decls, _):
+            for decl in decls {
+                constants.insert(decl.name)
+            }
+        default:
+            break
+        }
+    }
+
+    /// Validates that Case values are constant expressions
+    private mutating func validateCaseConstants(
+        in statements: [StatementNode], constants: Set<String>
+    ) {
+        for statement in statements {
+            validateCaseConstantsRecursive(in: statement, constants: constants)
+        }
+    }
+
+    /// Recursively validates Case constants in a statement
+    private mutating func validateCaseConstantsRecursive(
+        in statement: StatementNode, constants: Set<String>
+    ) {
+        switch statement {
+        case .select(let selectNode, _):
+            for caseNode in selectNode.cases {
+                for value in caseNode.values {
+                    switch value {
+                    case .single(let expr):
+                        if !isConstantExpression(expr, constants: constants) {
+                            errors.append(
+                                ParseError(
+                                    message: "Case value must be a constant expression",
+                                    line: 0, column: 0, sourceFile: sourceFile
+                                ))
+                        }
+                    case .range(let start, let end):
+                        if !isConstantExpression(start, constants: constants) {
+                            errors.append(
+                                ParseError(
+                                    message: "Case range start must be a constant expression",
+                                    line: 0, column: 0, sourceFile: sourceFile
+                                ))
+                        }
+                        if !isConstantExpression(end, constants: constants) {
+                            errors.append(
+                                ParseError(
+                                    message: "Case range end must be a constant expression",
+                                    line: 0, column: 0, sourceFile: sourceFile
+                                ))
+                        }
+                    }
+                }
+                // Also validate nested statements in case body
+                validateCaseConstants(in: caseNode.body, constants: constants)
+            }
+            if let defaultCase = selectNode.defaultCase {
+                validateCaseConstants(in: defaultCase, constants: constants)
+            }
+
+        case .ifStatement(let ifNode, _):
+            validateCaseConstants(in: ifNode.thenBranch, constants: constants)
+            for (_, branch) in ifNode.elseIfs {
+                validateCaseConstants(in: branch, constants: constants)
+            }
+            validateCaseConstants(in: ifNode.elseBranch, constants: constants)
+
+        case .whileLoop(let whileNode, _):
+            validateCaseConstants(in: whileNode.body, constants: constants)
+
+        case .forLoop(let forNode, _):
+            validateCaseConstants(in: forNode.body, constants: constants)
+
+        case .forEach(let forEachNode, _):
+            validateCaseConstants(in: forEachNode.body, constants: constants)
+
+        case .repeatLoop(let repeatNode, _):
+            validateCaseConstants(in: repeatNode.body, constants: constants)
+
+        default:
+            break
+        }
+    }
+
+    /// Checks if an expression is a constant (literal, const, or binary/unary on constants)
+    private func isConstantExpression(_ expr: ExpressionNode, constants: Set<String>) -> Bool {
+        switch expr {
+        case .integerLiteral, .floatLiteral, .stringLiteral:
+            return true
+
+        case .identifier(let id, _):
+            // Check if it's a known constant
+            return constants.contains(id.name)
+
+        case .unary(let unaryOp, _):
+            return isConstantExpression(unaryOp.expression, constants: constants)
+
+        case .binary(let binaryOp, _):
+            return isConstantExpression(binaryOp.left, constants: constants)
+                && isConstantExpression(binaryOp.right, constants: constants)
+
+        default:
+            return false
+        }
+    }
+
+    /// Helper to collect labels and goto/gosub targets from statements
+    private func collectLabelsAndTargets(
+        from statements: [StatementNode],
+        labels: inout Set<String>,
+        gotoTargets: inout [(String, Int, Int, String)],
+        gosubTargets: inout [(String, Int, Int, String)]
+    ) {
+        for statement in statements {
+            collectLabelsAndTargetsRecursive(
+                from: statement, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+        }
+    }
+
+    /// Recursively collect labels and targets from a statement
+    private func collectLabelsAndTargetsRecursive(
+        from statement: StatementNode,
+        labels: inout Set<String>,
+        gotoTargets: inout [(String, Int, Int, String)],
+        gosubTargets: inout [(String, Int, Int, String)]
+    ) {
+        switch statement {
+        case .label(let name, _):
+            labels.insert(name)
+
+        case .goto(let name, _):
+            // We don't have exact token info here, so use defaults
+            gotoTargets.append((name, 0, 0, sourceFile))
+
+        case .gosub(let name, _):
+            gosubTargets.append((name, 0, 0, sourceFile))
+
+        case .ifStatement(let ifNode, _):
+            collectLabelsAndTargets(
+                from: ifNode.thenBranch, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+            for (_, elseIfBranch) in ifNode.elseIfs {
+                collectLabelsAndTargets(
+                    from: elseIfBranch, labels: &labels, gotoTargets: &gotoTargets,
+                    gosubTargets: &gosubTargets)
+            }
+            collectLabelsAndTargets(
+                from: ifNode.elseBranch, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+
+        case .whileLoop(let whileNode, _):
+            collectLabelsAndTargets(
+                from: whileNode.body, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+
+        case .forLoop(let forNode, _):
+            collectLabelsAndTargets(
+                from: forNode.body, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+
+        case .forEach(let forEachNode, _):
+            collectLabelsAndTargets(
+                from: forEachNode.body, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+
+        case .repeatLoop(let repeatNode, _):
+            collectLabelsAndTargets(
+                from: repeatNode.body, labels: &labels, gotoTargets: &gotoTargets,
+                gosubTargets: &gosubTargets)
+
+        case .select(let selectNode, _):
+            for caseNode in selectNode.cases {
+                collectLabelsAndTargets(
+                    from: caseNode.body, labels: &labels, gotoTargets: &gotoTargets,
+                    gosubTargets: &gosubTargets)
+            }
+            if let defaultCase = selectNode.defaultCase {
+                collectLabelsAndTargets(
+                    from: defaultCase, labels: &labels, gotoTargets: &gotoTargets,
+                    gosubTargets: &gosubTargets)
+            }
+
+        default:
+            break
+        }
+    }
+
+    public mutating func parse() -> ProgramNode {
+        var program = ProgramNode()
+        var globalCount = 0
+        var functionCount = 0
+
+        var statementCount = 0
+        while currentToken.type != .endOfFile {
+            let startToken = currentToken
+            statementCount += 1
+
+            if currentToken.type == .newline {
+                advance()
+                continue
+            }
+
+            if let statement = parseTopLevelStatement() {
+                switch statement {
+                case .function(let funcNode, _):
+                    functionCount += 1
+                    CompilerLogger.debug(
+                        "DEBUG_PARSER: Added function '\(funcNode.name)' (#\(functionCount))")
+                    program.functions.append(funcNode)
+                case .typeDeclaration(let typeDecl, _):
+                    let typeNode = TypeNode(name: typeDecl.typeName, fields: typeDecl.fields)
+                    program.types.append(typeNode)
+                case .empty:
+                    break
+                case .global:
+                    globalCount += 1
+                    CompilerLogger.debug(
+                        "DEBUG_PARSER: Found Global statement #\(globalCount) (after \(functionCount) functions)"
+                    )
+                    program.statements.append(statement)
+                default:
+                    program.statements.append(statement)
+                }
+
+                // Handle colon-separated statements on the same line
+                while currentToken.type == .colon {
+                    advance()  // consume the colon
+
+                    // Skip any newlines after colon (malformed but be lenient)
+                    while currentToken.type == .newline {
+                        advance()
+                    }
+
+                    // Parse next statement on same line
+                    if let nextStatement = parseTopLevelStatement() {
+                        switch nextStatement {
+                        case .function(let funcNode, _):
+                            program.functions.append(funcNode)
+                        case .typeDeclaration(let typeDecl, _):
+                            let typeNode = TypeNode(
+                                name: typeDecl.typeName, fields: typeDecl.fields)
+                            program.types.append(typeNode)
+                        case .empty:
+                            break
+                        default:
+                            program.statements.append(nextStatement)
+                        }
+                    } else {
+                        break
+                    }
+                }
+            } else {
+                // parseTopLevelStatement() returned nil - this is the problem!
+                CompilerLogger.warn("ERROR: parseTopLevelStatement() returned nil!")
+                CompilerLogger.debug("  Statement #\(statementCount)")
+                CompilerLogger.debug(
+                    "  Token: type=\(currentToken.type) text='\(currentToken.text)'")
+                CompilerLogger.debug(
+                    "  Position: After \(functionCount) functions, \(globalCount) globals")
+                CompilerLogger.debug(
+                    "  Started at: type=\(startToken.type) text='\(startToken.text)'")
+
+                // Report error and attempt recovery
+                if currentToken.type != .endOfFile {
+                    reportError("Unexpected token '\(currentToken.text)'")
+                    synchronize()
+                } else {
+                    CompilerLogger.debug("  Reason: EOF reached")
+                    break  // Normal termination
+                }
+            }
+        }
+
+        CompilerLogger.debug("DEBUG_PARSER: === PARSING COMPLETE ===")
+        CompilerLogger.debug("  Total items processed: \(statementCount)")
+        CompilerLogger.debug("  Functions found: \(functionCount)")
+        CompilerLogger.debug("  Globals found: \(globalCount)")
+        CompilerLogger.debug("  Final token: type=\(currentToken.type) text='\(currentToken.text)'")
+
+        return program
+    }
+
+    private mutating func advance() {
+        previousToken = currentToken
+        currentToken = lexer.nextToken()
+    }
+
+    private mutating func ensureProgress(from token: Token, context: String) {
+        if currentToken == token {
+            reportError("Parser made no progress \(context) at token '\(currentToken.text)'")
+            advance()
+        }
+    }
+
+    private func isBlockBoundaryToken() -> Bool {
+        switch currentToken.type {
+        case .keywordEndFunction, .keywordFunction, .keywordType, .keywordEndType:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private mutating func reportUnexpectedBlockBoundary(expected: String) {
+        reportError("Expected \(expected) before '\(currentToken.text)'")
+    }
+
+    private func expect(_ type: TokenType) -> Bool {
+        return currentToken.type == type
+    }
+
+    private mutating func startSpan() -> SourceLocation {
+        return SourceLocation(
+            line: currentToken.line, column: currentToken.column,
+            sourceFile: currentToken.sourceFile)
+    }
+
+    private mutating func endSpan(from start: SourceLocation) -> SourceSpan {
+        let endLoc = SourceLocation(
+            line: previousToken.line, column: previousToken.column,
+            sourceFile: previousToken.sourceFile)
+        return SourceSpan(start: start, end: endLoc)
+    }
+
+    private mutating func consume(_ type: TokenType) -> Bool {
+        if expect(type) {
+            advance()
+            return true
+        }
+        return false
+    }
+
+    private mutating func parseTopLevelStatement() -> StatementNode? {
+        switch currentToken.type {
+        case .keywordFunction:
+            return parseFunction()
+        case .keywordType:
+            return parseTypeDeclaration()
+        case .keywordLocal:
+            return parseLocalDeclaration()
+        case .keywordGlobal:
+            return parseGlobalDeclaration()
+        case .keywordConst:
+            return parseConstantDeclaration()
+        case .keywordDim:
+            return parseDimDeclaration()
+        case .keywordInclude:
+            return parseInclude()
+        default:
+            return parseStatement()
+        }
+    }
+
+    private mutating func parseFunction() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Function'
+
+        guard expect(.identifier) else {
+            reportError("Expected function name after 'Function'")
+            return nil
+        }
+        var name = currentToken.text
+        var returnType: TypeAnnotation? = nil
+        var explicitReturnTypeSuffix = false
+
+        // Parse return type from function name suffix
+        if name.hasSuffix("%") {
+            returnType = .integer
+            explicitReturnTypeSuffix = true
+            name = String(name.dropLast())
+        } else if name.hasSuffix("#") {
+            returnType = .float
+            explicitReturnTypeSuffix = true
+            name = String(name.dropLast())
+        } else if name.hasSuffix("$") {
+            returnType = .string
+            explicitReturnTypeSuffix = true
+            name = String(name.dropLast())
+        }
+        advance()
+
+        // Check for .TypeName return type (e.g., Function CreateDoorEntity.Doors(...))
+        // This means the function returns a custom Type instance
+        var returnTypeName: String? = nil
+        if consume(.period) {
+            if expect(.identifier) {
+                let typeNameStr = currentToken.text
+                if let annotation = TypeAnnotation(rawValue: typeNameStr) {
+                    returnType = annotation
+                } else {
+                    returnTypeName = typeNameStr
+                    returnType = .integer
+                }
+                advance()
+                explicitReturnTypeSuffix = true
+            }
+        }
+
+        var parameters: [ParameterNode] = []
+        if consume(.leftParen) {
+            if !expect(.rightParen) {
+                while true {
+                    if expect(.identifier) {
+                        let paramStart = startSpan()
+                        var paramName = currentToken.text
+                        var paramType: TypeAnnotation? = nil
+
+                        // Parse type suffix from parameter name
+                        if paramName.hasSuffix("%") {
+                            paramType = .integer
+                            paramName = String(paramName.dropLast())
+                        } else if paramName.hasSuffix("#") {
+                            paramType = .float
+                            paramName = String(paramName.dropLast())
+                        } else if paramName.hasSuffix("$") {
+                            paramType = .string
+                            paramName = String(paramName.dropLast())
+                        }
+
+                        advance()
+
+                        // Also check for explicit type annotation (param.TypeName)
+                        var paramTypeName: String? = nil
+                        if consume(.period) {
+                            if expect(.identifier) {
+                                let typeNameStr = currentToken.text
+                                if let annotation = TypeAnnotation(rawValue: typeNameStr) {
+                                    paramType = annotation
+                                } else {
+                                    paramTypeName = typeNameStr
+                                    paramType = .integer
+                                }
+                                advance()
+                            }
+                        }
+
+                        // Check for default value (param = defaultValue)
+                        var defaultValue: ExpressionNode? = nil
+                        if consume(.equals) {
+                            defaultValue = parseExpression()
+                        }
+
+                        parameters.append(
+                            ParameterNode(
+                                name: paramName, type: paramType, typeName: paramTypeName,
+                                defaultValue: defaultValue, span: endSpan(from: paramStart)))
+                        if consume(.comma) {
+                            continue
+                        }
+                    }
+                    break
+                }
+            }
+            _ = consume(.rightParen)
+        }
+
+        var body: [StatementNode] = []
+        CompilerLogger.debug("DEBUG: Parsing function '\(name)' body...")
+        while !isEndFunction() && !expect(.endOfFile) {
+            let loopToken = currentToken
+            // Skip newlines in function body
+            if currentToken.type == .newline {
+                advance()
+                continue
+            }
+
+            if let stmt = parseStatement() {
+                if name == "UpdateLauncher" && body.count >= 15 {
+                    CompilerLogger.debug(
+                        "  Statement #\(body.count + 1): \(stmt), currentToken now at line \(currentToken.line)"
+                    )
+                }
+                body.append(stmt)
+
+                // Handle colon-separated statements on the same line
+                while currentToken.type == .colon {
+                    advance()  // consume the colon
+
+                    // Skip any newlines after colon
+                    while currentToken.type == .newline {
+                        advance()
+                    }
+
+                    // Check if we hit End Function
+                    if isEndFunction() {
+                        break
+                    }
+
+                    // Parse next statement
+                    if let nextStmt = parseStatement() {
+                        body.append(nextStmt)
+                    } else {
+                        break
+                    }
+                }
+            } else {
+                // Unknown statement - report error and try to recover
+                reportError("Unexpected token '\(currentToken.text)' in function body")
+                advance()
+            }
+
+            ensureProgress(from: loopToken, context: "in function body")
+        }
+
+        // Consume "End Function"
+        _ = consume(.keywordEndFunction)
+        CompilerLogger.debug(
+            "DEBUG: Finished parsing function '\(name)', found \(body.count) statements in body")
+        CompilerLogger.debug(
+            "DEBUG: Current token after End Function: type=\(currentToken.type) text='\(currentToken.text)'"
+        )
+
+        return .function(
+            FunctionNode(
+                name: name, parameters: parameters, body: body, returnType: returnType,
+                returnTypeName: returnTypeName, explicitReturnTypeSuffix: explicitReturnTypeSuffix,
+                span: endSpan(from: start)), endSpan(from: start))
+    }
+
+    private func isEndFunction() -> Bool {
+        let result = currentToken.type == .keywordEndFunction
+        return result
+    }
+
+    private mutating func parseTypeDeclaration() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Type'
+
+        guard expect(.identifier) else {
+            reportError("Expected type name after 'Type'")
+            return nil
+        }
+        let typeName = currentToken.text
+        advance()
+
+        var fields: [FieldNode] = []
+
+        while !isEndType() && !expect(.endOfFile) {
+            let loopToken = currentToken
+            if consume(.keywordField) {
+                repeat {
+                    if expect(.identifier) {
+                        var name = currentToken.text
+                        var typeAnnotation: TypeAnnotation? = nil
+                        var dimensions: [ExpressionNode] = []
+                        var defaultValue: ExpressionNode? = nil
+
+                        // Handle type suffix (%, #, $)
+                        if name.hasSuffix("%") {
+                            typeAnnotation = .integer
+                            name = String(name.dropLast())
+                        } else if name.hasSuffix("#") {
+                            typeAnnotation = .float
+                            name = String(name.dropLast())
+                        } else if name.hasSuffix("$") {
+                            typeAnnotation = .string
+                            name = String(name.dropLast())
+                        }
+
+                        advance()
+
+                        // Handle explicit Type annotation (Field x.Int)
+                        var fieldTypeName: String? = nil
+                        if consume(.period) {
+                            if expect(.identifier) {
+                                let typeNameStr = currentToken.text
+                                if let annotation = TypeAnnotation(rawValue: typeNameStr) {
+                                    typeAnnotation = annotation
+                                } else {
+                                    fieldTypeName = typeNameStr
+                                }
+                                advance()
+                            }
+                        }
+
+                        // Handle fixed array [size]
+                        if consume(.leftBracket) {
+                            var dims: [ExpressionNode] = []
+                            repeat {
+                                let expr = parseExpression()
+                                dims.append(expr)
+                            } while consume(.comma)
+                            _ = consume(.rightBracket)
+                            dimensions = dims
+                        }
+
+                        // Handle default value = expression
+                        if consume(.equals) {
+                            defaultValue = parseExpression()
+                        }
+
+                        fields.append(
+                            FieldNode(
+                                name: name, type: typeAnnotation, typeName: fieldTypeName,
+                                dimensions: dimensions, defaultValue: defaultValue))
+                    }
+                } while consume(.comma)
+            } else {
+                advance()
+            }
+            ensureProgress(from: loopToken, context: "in type declaration")
+        }
+
+        // Consume "End Type"
+        if expect(.keywordEndType) {
+            advance()
+        } else if expect(.identifier) && currentToken.text == "End" {
+            advance()
+            _ = consume(.keywordType)
+        }
+
+        let span = endSpan(from: start)
+        let node = TypeDeclarationNode(
+            typeName: typeName, variable: IdentifierNode(name: typeName, span: span),
+            fields: fields, span: span)
+        return .typeDeclaration(node, span)
+    }
+
+    private func isEndType() -> Bool {
+        if expect(.keywordEndType) { return true }
+        if expect(.identifier) && currentToken.text == "End" {
+            // Check next token? Can't peek easily.
+            // But we can check if it's "End Type" by assuming "End" followed by "Type" is the terminator.
+            // However, inside loop we rely on this.
+            // Let's assume if we see "End", it might be "End Type".
+            // Since "End" is not a valid field declaration start, it's safe to assume it's terminating the block if followed by Type.
+            return true  // Simplified check, we'll verify "Type" when consuming.
+        }
+        return false
+    }
+
+    private mutating func parseLocalDeclaration() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Local'
+
+        var variables: [IdentifierNode] = []
+        var initializers: [String: ExpressionNode] = [:]
+        var arrayDeclarations: [DimDeclaration] = []
+
+        repeat {
+            if expect(.identifier) {
+                let itemStart = startSpan()
+                var name = currentToken.text
+                var typeSuffix: TypeSuffix? = nil
+                var typeName: String? = nil
+
+                if name.hasSuffix("%") {
+                    typeSuffix = .integer
+                    name = String(name.dropLast())
+                } else if name.hasSuffix("#") {
+                    typeSuffix = .float
+                    name = String(name.dropLast())
+                } else if name.hasSuffix("$") {
+                    typeSuffix = .string
+                    name = String(name.dropLast())
+                }
+                advance()
+
+                if consume(.period) {
+                    if expect(.identifier) {
+                        typeName = currentToken.text
+                        advance()
+                    }
+                }
+
+                // Support SCPCB-style fixed array declarations in Local statements:
+                // `Local tex%[2]` / `Local hmap[ROOM4]`
+                if consume(.leftBracket) {
+                    var dimensions: [ExpressionNode] = []
+                    if !expect(.rightBracket) {
+                        while true {
+                            dimensions.append(parseExpression())
+                            if consume(.comma) { continue }
+                            break
+                        }
+                    }
+                    _ = consume(.rightBracket)
+
+                    let elemTypeName: String?
+                    switch typeSuffix {
+                    case .integer: elemTypeName = "Int"
+                    case .float: elemTypeName = "Float"
+                    case .string: elemTypeName = "String"
+                    case .object, nil: elemTypeName = nil
+                    }
+
+                    arrayDeclarations.append(
+                        DimDeclaration(
+                            name: name,
+                            typeName: elemTypeName ?? typeName,
+                            dimensions: dimensions,
+                            span: endSpan(from: itemStart)
+                        )
+                    )
+                } else {
+                    let id = IdentifierNode(
+                        name: name, typeSuffix: typeSuffix, typeName: typeName,
+                        span: endSpan(from: itemStart))
+                    variables.append(id)
+
+                    // Consume optional initializer
+                    if consume(.equals) {
+                        let expr = parseExpression()
+                        initializers[name] = expr
+                    }
+                }
+            }
+        } while consume(.comma)
+
+        return .local(
+            LocalDeclaration(
+                variables: variables,
+                initializers: initializers,
+                arrayDeclarations: arrayDeclarations,
+                span: endSpan(from: start)
+            ),
+            endSpan(from: start)
+        )
+    }
+
+    private mutating func parseGlobalDeclaration() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Global'
+
+        var variables: [IdentifierNode] = []
+        var initializers: [String: ExpressionNode] = [:]
+        var arrayDeclarations: [DimDeclaration] = []
+
+        repeat {
+            if expect(.identifier) {
+                let itemStart = startSpan()
+                var name = currentToken.text
+                var typeSuffix: TypeSuffix? = nil
+                var typeName: String? = nil
+
+                if name.hasSuffix("%") {
+                    typeSuffix = .integer
+                    name = String(name.dropLast())
+                } else if name.hasSuffix("#") {
+                    typeSuffix = .float
+                    name = String(name.dropLast())
+                } else if name.hasSuffix("$") {
+                    typeSuffix = .string
+                    name = String(name.dropLast())
+                }
+                advance()
+
+                if consume(.period) {
+                    if expect(.identifier) {
+                        typeName = currentToken.text
+                        advance()
+                    }
+                }
+
+                // Support fixed array declarations in Global statements: `Global arr[10]`
+                if consume(.leftBracket) {
+                    var dimensions: [ExpressionNode] = []
+                    if !expect(.rightBracket) {
+                        while true {
+                            dimensions.append(parseExpression())
+                            if consume(.comma) { continue }
+                            break
+                        }
+                    }
+                    _ = consume(.rightBracket)
+
+                    let elemTypeName: String?
+                    switch typeSuffix {
+                    case .integer: elemTypeName = "Int"
+                    case .float: elemTypeName = "Float"
+                    case .string: elemTypeName = "String"
+                    case .object, nil: elemTypeName = nil
+                    }
+
+                    arrayDeclarations.append(
+                        DimDeclaration(
+                            name: name,
+                            typeName: elemTypeName ?? typeName,
+                            dimensions: dimensions,
+                            span: endSpan(from: itemStart)
+                        )
+                    )
+                } else {
+                    let id = IdentifierNode(
+                        name: name, typeSuffix: typeSuffix, typeName: typeName,
+                        span: endSpan(from: itemStart))
+                    variables.append(id)
+
+                    // Consume optional initializer
+                    if consume(.equals) {
+                        let expr = parseExpression()
+                        initializers[name] = expr
+                    }
+                }
+            }
+        } while consume(.comma)
+
+        return .global(
+            GlobalDeclaration(
+                variables: variables,
+                initializers: initializers,
+                arrayDeclarations: arrayDeclarations,
+                span: endSpan(from: start)
+            ),
+            endSpan(from: start)
+        )
+    }
+
+    private mutating func parseConstantDeclaration() -> StatementNode? {
+        advance()  // consume 'Const'
+
+        var constants: [ConstantDeclaration] = []
+
+        repeat {
+            guard expect(.identifier) else {
+                break
+            }
+            let name = currentToken.text
+            advance()
+
+            _ = consume(.equals)
+            let value = parseExpression()
+            constants.append(
+                ConstantDeclaration(name: name, value: value, span: endSpan(from: startSpan())))
+        } while consume(.comma)
+
+        if constants.count == 1 {
+            return .constant(constants[0], constants[0].span)
+        } else {
+            return .constants(constants, endSpan(from: startSpan()))
+        }
+    }
+
+    private mutating func parseDimDeclaration() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Dim'
+
+        func splitNameAndSuffix(_ raw: String) -> (base: String, suffix: Character?) {
+            guard let last = raw.last else { return (raw, nil) }
+            if last == "%" || last == "#" || last == "$" {
+                return (String(raw.dropLast()), last)
+            }
+            return (raw, nil)
+        }
+
+        func typeNameFromSuffix(_ suffix: Character?) -> String? {
+            switch suffix {
+            case "%": return "Int"
+            case "#": return "Float"
+            case "$": return "String"
+            default: return nil
+            }
+        }
+
+        var decls: [DimDeclaration] = []
+
+        repeat {
+            let itemStart = startSpan()
+            guard expect(.identifier) else {
+                reportError("Expected array name after 'Dim'")
+                return nil
+            }
+
+            let rawName = currentToken.text
+            advance()
+
+            var explicitTypeName: String? = nil
+            if consume(.period) {
+                if expect(.identifier) {
+                    explicitTypeName = currentToken.text
+                    advance()
+                }
+            }
+
+            let (baseName, suffix) = splitNameAndSuffix(rawName)
+            let inferredTypeName = typeNameFromSuffix(suffix)
+            let finalTypeName = explicitTypeName ?? inferredTypeName
+
+            guard consume(.leftParen) else {
+                reportError("Expected '(' after array name in Dim")
+                return nil
+            }
+
+            var dimensions: [ExpressionNode] = []
+            repeat {
+                dimensions.append(parseExpression())
+            } while consume(.comma)
+            _ = consume(.rightParen)
+
+            decls.append(
+                DimDeclaration(
+                    name: baseName,
+                    typeName: finalTypeName,
+                    dimensions: dimensions,
+                    span: endSpan(from: itemStart)
+                ))
+        } while consume(.comma)
+
+        let stmtSpan = endSpan(from: start)
+        if decls.count == 1 {
+            return .dim(decls[0], stmtSpan)
+        }
+        return .dims(decls, stmtSpan)
+    }
+
+    private mutating func parseStatement() -> StatementNode? {
+        let start = startSpan()
+        switch currentToken.type {
+        case .keywordIf:
+            return parseIfStatement()
+        case .keywordWhile:
+            return parseWhileStatement()
+        case .keywordFor:
+            return parseForStatement()
+        case .keywordRepeat:
+            return parseRepeatStatement()
+        case .keywordLocal:
+            return parseLocalDeclaration()
+        case .keywordGlobal:
+            return parseGlobalDeclaration()
+        case .keywordConst:
+            return parseConstantDeclaration()
+        case .keywordDim:
+            return parseDimDeclaration()
+        case .keywordReturn:
+            advance()
+            // Check if this is a bare Return (followed by statement-ending keywords)
+            if currentToken.type == .endOfFile || currentToken.type == .newline
+                || currentToken.type == .colon || currentToken.type == .keywordEndIf
+                || currentToken.type == .keywordElse || currentToken.type == .keywordElseIf
+                || currentToken.type == .keywordWend || currentToken.type == .keywordNext
+                || currentToken.type == .keywordUntil || currentToken.type == .keywordEndFunction
+                || (currentToken.type == .identifier && currentToken.text == "End")
+            {
+                return .returnStatement(nil, endSpan(from: start))
+            }
+            let value = parseExpression()
+            return .returnStatement(value, endSpan(from: start))
+        case .keywordExit:
+            advance()
+            return .exit(endSpan(from: start))
+        case .keywordGoto:
+            advance()
+            if expect(.identifier) {
+                let name = currentToken.text
+                advance()
+                return .goto(name, endSpan(from: start))
+            }
+            reportError("Expected label name after 'Goto'")
+            return nil
+        case .keywordGosub:
+            advance()
+            if expect(.identifier) {
+                let name = currentToken.text
+                advance()
+                return .gosub(name, endSpan(from: start))
+            }
+            reportError("Expected label name after 'Gosub'")
+            return nil
+        case .keywordData:
+            return parseDataStatement()
+        case .keywordRead:
+            return parseReadStatement()
+        case .keywordRestore:
+            return parseRestoreStatement()
+        case .keywordDelete:
+            advance()
+            // Check for "Delete Each TypeName" pattern
+            if consume(.keywordEach) {
+                if expect(.identifier) {
+                    let typeName = currentToken.text
+                    advance()
+                    // Delete Each is handled as delete with First of type
+                    let span = endSpan(from: start)
+                    return .delete(.first(typeName, span), span)
+                }
+            }
+            let expr = parseExpression()
+            return .delete(expr, endSpan(from: start))
+        case .keywordInsert:
+            advance()
+            let insertExpr = parseExpression()
+            if consume(.keywordBefore) {
+                let targetExpr = parseExpression()
+                return .insert(insertExpr, .before(targetExpr), endSpan(from: start))
+            } else if consume(.keywordAfter) {
+                let targetExpr = parseExpression()
+                return .insert(insertExpr, .after(targetExpr), endSpan(from: start))
+            }
+            return nil
+        case .identifier, .keywordNew, .keywordFirst, .keywordLast:
+            return parseIdentifierStatement()
+        case .keywordSelect:
+            return parseSelectStatement()
+        case .period:
+            advance()
+            if expect(.identifier) {
+                let name = currentToken.text
+                advance()
+                return .label(name, endSpan(from: start))
+            }
+            return nil
+        default:
+            return nil
+        }
+    }
+
+    private func isStatementStart() -> Bool {
+        switch currentToken.type {
+        case .keywordIf, .keywordWhile, .keywordFor, .keywordRepeat,
+            .keywordReturn, .keywordExit, .keywordGoto, .keywordGosub,
+            .keywordSelect, .keywordData, .keywordRead, .keywordRestore,
+            .keywordDelete, .keywordInsert,
+            .keywordLocal, .keywordGlobal, .keywordConst, .keywordDim,
+            .identifier, .keywordNew, .keywordFirst, .keywordLast:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private mutating func parseIfStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'If'
+        let condition = parseExpression()
+
+        _ = consume(.keywordThen)
+
+        var thenBranch: [StatementNode] = []
+        var elseIfs: [(ExpressionNode, [StatementNode])] = []
+        var elseBranch: [StatementNode] = []
+
+        // Parse then branch
+        if consume(.colon) || isStatementStart() {
+            // Single line
+            while !expect(.keywordElse) && !expect(.keywordElseIf) && !expect(.keywordEndIf)
+                && !expect(.endOfFile) && !expect(.newline) && !isBlockBoundaryToken()
+            {
+                let loopToken = currentToken
+                defer { ensureProgress(from: loopToken, context: "in single-line If then") }
+                if let stmt = parseStatement() {
+                    thenBranch.append(stmt)
+
+                    // Handle colon-separated statements on same line
+                    while currentToken.type == .colon {
+                        advance()  // consume the colon
+
+                        // Check if we hit end conditions
+                        if expect(.keywordElse) || expect(.keywordElseIf) || expect(.keywordEndIf)
+                            || expect(.endOfFile) || expect(.newline)
+                        {
+                            break
+                        }
+
+                        // Parse next statement
+                        if let nextStmt = parseStatement() {
+                            thenBranch.append(nextStmt)
+                        } else {
+                            break
+                        }
+                    }
+                } else {
+                    advance()
+                }
+            }
+        } else {
+            // Multi-line
+            while !expect(.keywordElse) && !expect(.keywordElseIf) && !expect(.keywordEndIf)
+                && !expect(.endOfFile) && !isBlockBoundaryToken()
+            {
+                let loopToken = currentToken
+                defer { ensureProgress(from: loopToken, context: "in multi-line If then") }
+                if currentToken.type == .newline {
+                    advance()
+                    continue
+                }
+                if let stmt = parseStatement() {
+                    thenBranch.append(stmt)
+                } else {
+                    advance()
+                }
+            }
+        }
+
+        // Check for ElseIf or Else
+        while expect(.keywordElseIf) {
+            advance()  // consume 'ElseIf'
+            let elseifCondition = parseExpression()
+            _ = consume(.keywordThen)
+
+            var elseifThen: [StatementNode] = []
+
+            if consume(.colon) || isStatementStart() {
+                // Single line ElseIf
+                while !expect(.keywordElse) && !expect(.keywordElseIf) && !expect(.keywordEndIf)
+                    && !expect(.endOfFile) && !expect(.newline) && !isBlockBoundaryToken()
+                {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in single-line ElseIf then") }
+                    if let stmt = parseStatement() {
+                        elseifThen.append(stmt)
+
+                        // Handle colon-separated statements on same line
+                        while currentToken.type == .colon {
+                            advance()  // consume the colon
+
+                            // Check if we hit end conditions
+                            if expect(.keywordElse) || expect(.keywordElseIf)
+                                || expect(.keywordEndIf) || expect(.endOfFile) || expect(.newline)
+                            {
+                                break
+                            }
+
+                            // Parse next statement
+                            if let nextStmt = parseStatement() {
+                                elseifThen.append(nextStmt)
+                            } else {
+                                break
+                            }
+                        }
+                    } else {
+                        advance()
+                    }
+                }
+            } else {
+                // Multi-line ElseIf
+                while !expect(.keywordElse) && !expect(.keywordElseIf) && !expect(.keywordEndIf)
+                    && !expect(.endOfFile) && !isBlockBoundaryToken()
+                {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in multi-line ElseIf then") }
+                    if currentToken.type == .newline {
+                        advance()
+                        continue
+                    }
+                    if let stmt = parseStatement() {
+                        elseifThen.append(stmt)
+                    } else {
+                        advance()
+                    }
+                }
+            }
+            elseIfs.append((elseifCondition, elseifThen))
+        }
+
+        if expect(.keywordElse) {
+            advance()  // consume 'Else'
+            // Else handles both single and multi-line naturally because newline is skipped or terminates single line?
+            // Actually, for Else:
+            // If Single Line If: Else must be on same line.
+            // If Multi Line If: Else is on new line.
+
+            // Blitz3D syntax:
+            // If A Then B Else C (Single line)
+            // If A Then
+            //   B
+            // Else
+            //   C
+            // EndIf
+
+            // My "Multi-line" check above handles it. But for Else, we need to know if we are in single line mode?
+            // Actually, if we are in multi-line mode, we consumed everything until 'Else'.
+            // So now we are at 'Else'.
+
+            // We need to parse Else body.
+            // Is Else body single line or multi line?
+            // It depends on if it's followed by newline?
+            // If A Then ... Else \n ... EndIf -> Multi
+            // If A Then ... Else C \n -> Single
+
+            if consume(.colon) || isStatementStart() {
+                // Single line Else
+                while !expect(.keywordEndIf) && !expect(.endOfFile) && !expect(.newline)
+                    && !isBlockBoundaryToken()
+                {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in single-line Else") }
+                    if let stmt = parseStatement() {
+                        elseBranch.append(stmt)
+
+                        // Handle colon-separated statements on same line
+                        while currentToken.type == .colon {
+                            advance()  // consume the colon
+
+                            // Check if we hit end conditions
+                            if expect(.keywordEndIf) || expect(.endOfFile) || expect(.newline) {
+                                break
+                            }
+
+                            // Parse next statement
+                            if let nextStmt = parseStatement() {
+                                elseBranch.append(nextStmt)
+                            } else {
+                                break
+                            }
+                        }
+                    } else {
+                        advance()
+                    }
+                }
+            } else {
+                // Multi-line Else
+                while !expect(.keywordEndIf) && !expect(.endOfFile) && !isBlockBoundaryToken() {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in multi-line Else") }
+                    if currentToken.type == .newline {
+                        advance()
+                        continue
+                    }
+                    if let stmt = parseStatement() {
+                        elseBranch.append(stmt)
+                    } else {
+                        advance()
+                    }
+                }
+            }
+        }
+
+        if isBlockBoundaryToken() {
+            reportUnexpectedBlockBoundary(expected: "EndIf")
+            return .ifStatement(
+                IfNode(
+                    condition: condition, thenBranch: thenBranch, elseIfs: elseIfs,
+                    elseBranch: elseBranch, span: endSpan(from: start)), endSpan(from: start))
+        }
+
+        _ = consume(.keywordEndIf)
+
+        return .ifStatement(
+            IfNode(
+                condition: condition, thenBranch: thenBranch, elseIfs: elseIfs,
+                elseBranch: elseBranch, span: endSpan(from: start)), endSpan(from: start))
+    }
+
+    private mutating func parseWhileStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'While'
+        let condition = parseExpression()
+
+        var body: [StatementNode] = []
+        while !expect(.keywordWend) && !expect(.endOfFile) && !isBlockBoundaryToken() {
+            let loopToken = currentToken
+            defer { ensureProgress(from: loopToken, context: "in While loop body") }
+            if let stmt = parseStatement() {
+                body.append(stmt)
+            } else {
+                advance()
+            }
+        }
+        if isBlockBoundaryToken() {
+            reportUnexpectedBlockBoundary(expected: "Wend")
+            let span = endSpan(from: start)
+            return .whileLoop(WhileNode(condition: condition, body: body, span: span), span)
+        }
+
+        _ = consume(.keywordWend)
+
+        let span = endSpan(from: start)
+        return .whileLoop(WhileNode(condition: condition, body: body, span: span), span)
+    }
+
+    private mutating func parseForStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'For'
+
+        guard expect(.identifier) else {
+            reportError("Expected variable name after 'For'")
+            return nil
+        }
+        let firstIdentifier = currentToken.text
+        advance()
+
+        // Optional type annotation: "For x.Type = ..."
+        if consume(.period) && expect(.identifier) {
+            _ = currentToken.text
+            advance()
+        }
+
+        if consume(.equals) {
+            // ForEach pattern: "For x = Each TypeName" (with or without x.Type)
+            if consume(.keywordEach) {
+                if expect(.identifier) {
+                    let eachTypeName = currentToken.text
+                    advance()
+
+                    var body: [StatementNode] = []
+                    while !expect(.keywordNext) && !expect(.endOfFile) && !isBlockBoundaryToken() {
+                        let loopToken = currentToken
+                        defer { ensureProgress(from: loopToken, context: "in For Each body") }
+                        if let stmt = parseStatement() {
+                            body.append(stmt)
+                        } else {
+                            advance()
+                        }
+                    }
+                    if isBlockBoundaryToken() {
+                        reportUnexpectedBlockBoundary(expected: "Next")
+                        let span = endSpan(from: start)
+                        return .forEach(
+                            ForEachNode(
+                                iteratorName: firstIdentifier, typeName: eachTypeName, body: body,
+                                span: span), span)
+                    }
+
+                    _ = consume(.keywordNext)
+
+                    let span = endSpan(from: start)
+                    return .forEach(
+                        ForEachNode(
+                            iteratorName: firstIdentifier, typeName: eachTypeName, body: body,
+                            span: span), span)
+                } else {
+                    reportError("Expected type name after 'Each'")
+                    return nil
+                }
+            }
+        } else {
+            reportError("Expected '=' after 'For' variable")
+        }
+
+        // Regular For...Next loop
+        let variable = IdentifierNode(name: firstIdentifier)
+        let startValue = parseExpression()
+        _ = consume(.keywordTo)
+        let endValue = parseExpression()
+
+        var stepValue: ExpressionNode? = nil
+        if expect(.keywordStep) {
+            advance()
+            stepValue = parseExpression()
+        }
+
+        var body: [StatementNode] = []
+        while !expect(.keywordNext) && !expect(.endOfFile) && !isBlockBoundaryToken() {
+            let loopToken = currentToken
+            defer { ensureProgress(from: loopToken, context: "in For loop body") }
+            if let stmt = parseStatement() {
+                body.append(stmt)
+            } else {
+                advance()
+            }
+        }
+        if isBlockBoundaryToken() {
+            reportUnexpectedBlockBoundary(expected: "Next")
+            return .forLoop(
+                ForNode(
+                    variable: variable, startValue: startValue, endValue: endValue,
+                    stepValue: stepValue, body: body, span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        _ = consume(.keywordNext)
+
+        return .forLoop(
+            ForNode(
+                variable: variable, startValue: startValue, endValue: endValue,
+                stepValue: stepValue, body: body, span: endSpan(from: start)), endSpan(from: start))
+    }
+
+    private mutating func parseRepeatStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Repeat'
+
+        var body: [StatementNode] = []
+        while !expect(.keywordUntil) && !expect(.keywordForever) && !expect(.endOfFile)
+            && !isBlockBoundaryToken()
+        {
+            let loopToken = currentToken
+            defer { ensureProgress(from: loopToken, context: "in Repeat loop body") }
+            if let stmt = parseStatement() {
+                body.append(stmt)
+            } else {
+                advance()
+            }
+        }
+        if isBlockBoundaryToken() {
+            reportUnexpectedBlockBoundary(expected: "Until/Forever")
+            return .repeatLoop(
+                RepeatNode(
+                    body: body, condition: .integerLiteral(1, .unknown), span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        if expect(.keywordForever) {
+            // Infinite loop - use True as condition
+            _ = consume(.keywordForever)
+            return .repeatLoop(
+                RepeatNode(
+                    body: body, condition: .integerLiteral(1, .unknown), span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        _ = consume(.keywordUntil)
+        let condition = parseExpression()
+
+        return .repeatLoop(
+            RepeatNode(body: body, condition: condition, span: endSpan(from: start)),
+            endSpan(from: start))
+    }
+
+    private mutating func parseDataStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Data'
+
+        var values: [DataValue] = []
+
+        repeat {
+            let value = parseDataValue()
+            values.append(value)
+        } while consume(.comma)
+
+        return .data(values, endSpan(from: start))
+    }
+
+    private mutating func parseDataValue() -> DataValue {
+        var multiplier: Double = 1.0
+        if consume(.plus) {
+            multiplier = 1.0
+        } else if consume(.minus) {
+            multiplier = -1.0
+        }
+
+        switch currentToken.type {
+        case .integerLiteral:
+            let value = Int(currentToken.text) ?? 0
+            advance()
+            return .integer(Int(Double(value) * multiplier))
+
+        case .floatLiteral:
+            let value = Double(currentToken.text) ?? 0.0
+            advance()
+            return .float(value * multiplier)
+
+        case .stringLiteral:
+            let text = currentToken.text
+            advance()
+            return .string(text)
+
+        default:
+            // Try to parse as identifier (might be a constant)
+            if expect(.identifier) {
+                let text = currentToken.text
+                advance()
+                // For now, treat identifiers as string literals (they'll be resolved at runtime)
+                return .string(text)
+            }
+            advance()
+            return .integer(0)
+        }
+    }
+
+    private mutating func parseReadStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Read'
+
+        var variables: [IdentifierNode] = []
+
+        repeat {
+            if expect(.identifier) {
+                let name = currentToken.text
+                var typeSuffix: TypeSuffix? = nil
+                if name.hasSuffix("%") {
+                    typeSuffix = .integer
+                } else if name.hasSuffix("#") {
+                    typeSuffix = .float
+                } else if name.hasSuffix("$") {
+                    typeSuffix = .string
+                }
+                let cleanName = name.replacingOccurrences(of: "%", with: "")
+                    .replacingOccurrences(of: "#", with: "")
+                    .replacingOccurrences(of: "$", with: "")
+                variables.append(IdentifierNode(name: cleanName, typeSuffix: typeSuffix))
+                advance()
+            }
+        } while consume(.comma)
+
+        return .read(variables, endSpan(from: start))
+    }
+
+    private mutating func parseRestoreStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Restore'
+
+        // Optional label
+        if expect(.identifier) {
+            let label = currentToken.text
+            advance()
+            return .restore(label, endSpan(from: start))
+        }
+
+        return .restore(nil, endSpan(from: start))
+    }
+
+    private mutating func parseSelectStatement() -> StatementNode? {
+        let start = startSpan()
+        advance()  // consume 'Select'
+        let expression = parseExpression()
+
+        var cases: [CaseNode] = []
+        var defaultCase: [StatementNode]? = nil
+
+        while !expect(.keywordEndSelect) && !expect(.endOfFile) && !isBlockBoundaryToken() {
+            let loopToken = currentToken
+            defer { ensureProgress(from: loopToken, context: "in Select") }
+            if currentToken.type == .newline {
+                advance()
+                continue
+            }
+
+            if consume(.keywordCase) {
+                // Parse case values (comma separated, may include ranges with "To")
+                var caseValues: [CaseValue] = []
+                repeat {
+                    let firstExpr = parseExpression()
+                    // Check for "To" keyword indicating a range
+                    if consume(.keywordTo) {
+                        let secondExpr = parseExpression()
+                        caseValues.append(.range(firstExpr, secondExpr))
+                    } else {
+                        caseValues.append(.single(firstExpr))
+                    }
+                } while consume(.comma)
+
+                // Parse body until next Case, Default, or End Select
+                var body: [StatementNode] = []
+                while !expect(.keywordCase) && !expect(.keywordDefault)
+                    && !expect(.keywordEndSelect) && !expect(.endOfFile) && !isBlockBoundaryToken()
+                {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in Case body") }
+                    if currentToken.type == .newline {
+                        advance()
+                        continue
+                    }
+                    if let stmt = parseStatement() {
+                        body.append(stmt)
+                    } else {
+                        advance()
+                    }
+                }
+                cases.append(CaseNode(values: caseValues, body: body))
+            } else if consume(.keywordDefault) {
+                var body: [StatementNode] = []
+                while !expect(.keywordCase) && !expect(.keywordDefault)
+                    && !expect(.keywordEndSelect) && !expect(.endOfFile) && !isBlockBoundaryToken()
+                {
+                    let loopToken = currentToken
+                    defer { ensureProgress(from: loopToken, context: "in Default case body") }
+                    if currentToken.type == .newline {
+                        advance()
+                        continue
+                    }
+                    if let stmt = parseStatement() {
+                        body.append(stmt)
+                    } else {
+                        advance()
+                    }
+                }
+                defaultCase = body
+            } else {
+                advance()
+            }
+        }
+        if isBlockBoundaryToken() {
+            reportUnexpectedBlockBoundary(expected: "End Select")
+            let span = endSpan(from: start)
+            return .select(
+                SelectNode(expression: expression, cases: cases, defaultCase: defaultCase), span)
+        }
+
+        _ = consume(.keywordEndSelect)
+
+        let span = endSpan(from: start)
+        return .select(
+            SelectNode(expression: expression, cases: cases, defaultCase: defaultCase), span)
+    }
+
+    private mutating func parseIdentifierStatement() -> StatementNode? {
+        let start = startSpan()
+        var expr = parsePostfixExpression(permitLeadingWhitespace: false)
+
+        // Check for type annotation on implicit declaration (e.g. t.MyType = ...)
+        if case .identifier(var id, let idSpan) = expr {
+            // Handle Type suffix/annotation if it wasn't parsed as part of initial identifier
+            // (Standard identifiers might have %, #, $ suffixes handled by tokenizer/parseIdentifier)
+            // But .TypeName is separate tokens
+            if consume(.period) {
+                if expect(.identifier) {
+                    let typeName = currentToken.text
+                    id.typeName = typeName
+                    advance()
+                    expr = .identifier(id, idSpan)
+                }
+            }
+        }
+
+        // Check for assignment (expr = ...)
+        if consume(.equals) {
+            let value = parseExpression()
+            return .assignment(
+                AssignmentNode(target: expr, value: value, span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        // If it was just a primary/postfix without assignment, it might be a function call
+        // (already handled by parsePostfixExpression)
+        if case .functionCall(let call, _) = expr {
+            return .functionCall(call, endSpan(from: start))
+        }
+
+        // In Blitz3D, a function call can also be without parentheses: Print "Hello"
+        if case .identifier(let id, _) = expr {
+            // Special case for 'End' statement which is an identifier but acts as a void function call
+            if id.name.lowercased() == "end" {
+                return .functionCall(
+                    FunctionCallNode(name: "End", arguments: [], span: endSpan(from: start)),
+                    endSpan(from: start))
+            }
+
+            // Check if there's an expression following it (argument)
+            // But be careful not to consume next statement
+            if isExpressionStart() {
+                var args: [ExpressionNode] = []
+
+                // Handle complex case: identifier followed by ( with whitespace.
+                // Could be Text (arg1), arg2... (parens are part of first arg)
+                // Or Text (arg1, arg2) (parens wrap all args)
+                // We use lookahead to disambiguate: if (...) is followed by terminator, assume it wraps args.
+                if currentToken.type == .leftParen && lookAheadForTerminatorAfterMatchingParen() {
+                    _ = consume(.leftParen)
+                    if !expect(.rightParen) {
+                        while true {
+                            args.append(parseExpression())
+                            if consume(.comma) {
+                                continue
+                            }
+                            break
+                        }
+                    }
+                    _ = consume(.rightParen)
+                } else {
+                    // Standard parsing: comma-separated expressions
+                    args.append(parseExpression())
+                    while consume(.comma) {
+                        args.append(parseExpression())
+                    }
+                }
+
+                CompilerLogger.debug("DEBUG_PARSER: Produced functionCall for '\(id.name)'")
+                return .functionCall(
+                    FunctionCallNode(name: id.name, arguments: args, span: endSpan(from: start)),
+                    endSpan(from: start))
+            }
+
+            // Also allow no-argument calls as standalone statements:
+            // `Cls`, `RenderWorld`, etc.
+            return .functionCall(
+                FunctionCallNode(name: id.name, arguments: [], span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        return nil
+    }
+
+    private func isExpressionStart() -> Bool {
+        switch currentToken.type {
+        case .integerLiteral, .floatLiteral, .stringLiteral, .identifier,
+            .leftParen, .keywordNew, .keywordFirst, .keywordLast,
+            .keywordTrue, .keywordFalse, .keywordNull, .keywordInt, .keywordFloat, .keywordStr:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private mutating func parseExpression() -> ExpressionNode {
+        return parseOrExpression()
+    }
+
+    private mutating func parseOrExpression() -> ExpressionNode {
+        var left = parseAndExpression()
+
+        while expect(.keywordOr) || expect(.keywordXor) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parseAndExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseAndExpression() -> ExpressionNode {
+        var left = parseComparisonExpression()
+
+        while expect(.keywordAnd) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parseComparisonExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseComparisonExpression() -> ExpressionNode {
+        var left = parseShiftExpression()
+
+        if expect(.equals) || expect(.notEquals) || expect(.lessThan) || expect(.greaterThan)
+            || expect(.lessThanOrEqual) || expect(.greaterThanOrEqual)
+        {
+            let startLoc = left.span.start
+            // Canonicalize operators where Blitz3D accepts multiple spellings (e.g. "=<" as "<=").
+            let op: String
+            switch currentToken.type {
+            case .lessThanOrEqual:
+                op = "<="
+            case .greaterThanOrEqual:
+                op = ">="
+            default:
+                op = currentToken.text
+            }
+            advance()
+            let right = parseShiftExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseShiftExpression() -> ExpressionNode {
+        var left = parseAddSubExpression()
+
+        while expect(.keywordShl) || expect(.keywordShr) || expect(.keywordSar) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parseAddSubExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseAddSubExpression() -> ExpressionNode {
+        var left = parseMulDivModExpression()
+
+        while expect(.plus) || expect(.minus) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parseMulDivModExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseMulDivModExpression() -> ExpressionNode {
+        var left = parsePowerExpression()
+
+        while expect(.multiply) || expect(.divide) || expect(.keywordMod) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parsePowerExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parsePowerExpression() -> ExpressionNode {
+        var left = parseUnaryExpression()
+
+        // Power is right-associative, but we'll use left-to-right for simplicity
+        while expect(.power) {
+            let startLoc = left.span.start
+            let op = currentToken.text
+            advance()
+            let right = parseUnaryExpression()
+            let span = endSpan(from: startLoc)
+            left = .binary(BinaryOpNode(left: left, op: op, right: right, span: span), span)
+        }
+
+        return left
+    }
+
+    private mutating func parseUnaryExpression() -> ExpressionNode {
+        let start = startSpan()
+        if expect(.minus) {
+            advance()
+            let expr = parseUnaryExpression()
+            return .unary(
+                UnaryOpNode(op: "-", expression: expr, span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        if expect(.keywordNot) {
+            advance()
+            let expr = parseUnaryExpression()
+            return .unary(
+                UnaryOpNode(op: "Not", expression: expr, span: endSpan(from: start)),
+                endSpan(from: start))
+        }
+
+        return parsePostfixExpression()
+    }
+
+    private mutating func parsePostfixExpression(permitLeadingWhitespace: Bool = true)
+        -> ExpressionNode
+    {
+        var expr = parsePrimary()
+
+        while true {
+            if consume(.backslash) {
+                let startLoc = expr.span.start
+                // Field names can be identifiers or keywords in Blitz3D
+                if expect(.identifier) || expect(.keywordField) || expect(.keywordNew)
+                    || expect(.keywordFirst) || expect(.keywordLast) || expect(.keywordDelete)
+                {
+                    let field = currentToken.text
+                    advance()
+                    let span = endSpan(from: startLoc)
+                    let node = FieldAccessNode(object: expr, field: field, span: span)
+                    expr = .fieldAccess(node, span)
+                    continue
+                }
+            }
+
+            // Only treat ( as function call syntax if immediately adjacent (no whitespace)
+            // UNLESS permitLeadingWhitespace is true (expression context) where identifier (expr) is always a call
+            if expect(.leftParen) && (permitLeadingWhitespace || !currentToken.hadLeadingWhitespace)
+            {
+                let startLoc = expr.span.start
+                var args: [ExpressionNode] = []
+                _ = consume(.leftParen)
+                if !expect(.rightParen) {
+                    while true {
+                        args.append(parseExpression())
+                        if consume(.comma) {
+                            continue
+                        }
+                        break
+                    }
+                }
+                _ = consume(.rightParen)
+
+                // Get function name from identifier
+                if case .identifier(let id, _) = expr {
+                    let span = endSpan(from: startLoc)
+                    let node = FunctionCallNode(name: id.name, arguments: args, span: span)
+                    expr = .functionCall(node, span)
+                }
+                continue
+            }
+
+            if expect(.leftBracket) {
+                let startLoc = expr.span.start
+                var indices: [ExpressionNode] = []
+                _ = consume(.leftBracket)
+                if !expect(.rightBracket) {
+                    while true {
+                        indices.append(parseExpression())
+                        if consume(.comma) {
+                            continue
+                        }
+                        break
+                    }
+                }
+                _ = consume(.rightBracket)
+                let span = endSpan(from: startLoc)
+                let node = ArrayAccessNode(array: expr, indices: indices, span: span)
+                expr = .arrayAccess(node, span)
+                continue
+            }
+
+            break
+        }
+
+        return expr
+    }
+
+    private mutating func parsePrimary() -> ExpressionNode {
+        let start = startSpan()
+        switch currentToken.type {
+        case .integerLiteral:
+            let value = Int(currentToken.text) ?? 0
+            advance()
+            return .integerLiteral(value, endSpan(from: start))
+
+        case .floatLiteral:
+            let value = Double(currentToken.text) ?? 0.0
+            advance()
+            return .floatLiteral(value, endSpan(from: start))
+
+        case .stringLiteral:
+            let text = currentToken.text
+            advance()
+            return .stringLiteral(text, endSpan(from: start))
+
+        case .identifier:
+            var name = currentToken.text
+            var typeSuffix: TypeSuffix? = nil
+            if name.hasSuffix("%") {
+                typeSuffix = .integer
+                name = String(name.dropLast())
+            } else if name.hasSuffix("#") {
+                typeSuffix = .float
+                name = String(name.dropLast())
+            } else if name.hasSuffix("$") {
+                typeSuffix = .string
+                name = String(name.dropLast())
+            }
+            advance()
+            return .identifier(
+                IdentifierNode(name: name, typeSuffix: typeSuffix, span: endSpan(from: start)),
+                endSpan(from: start))
+
+        case .keywordTrue:
+            advance()
+            return .integerLiteral(1, endSpan(from: start))
+
+        case .keywordFalse:
+            advance()
+            return .integerLiteral(0, endSpan(from: start))
+
+        case .keywordAbs, .keywordSgn:
+            let name = currentToken.text
+            advance()
+            return .identifier(
+                IdentifierNode(name: name, span: endSpan(from: start)), endSpan(from: start))
+
+        case .keywordPi:
+            advance()
+            return .floatLiteral(Double.pi, endSpan(from: start))
+
+        case .keywordNull:
+            advance()
+            let span = endSpan(from: start)
+            return .identifier(IdentifierNode(name: "Null", span: span), span)
+
+        case .keywordNew:
+            advance()
+            if expect(.identifier) {
+                let name = currentToken.text
+                advance()
+                return .new(name, endSpan(from: start))
+            }
+            return .integerLiteral(0, endSpan(from: start))
+
+        case .keywordFirst:
+            advance()
+            if expect(.identifier) {
+                let typeName = currentToken.text
+                advance()
+                return .first(typeName, endSpan(from: start))
+            }
+            return .integerLiteral(0, endSpan(from: start))
+
+        case .keywordLast:
+            advance()
+            if expect(.identifier) {
+                let typeName = currentToken.text
+                advance()
+                return .last(typeName, endSpan(from: start))
+            }
+            return .integerLiteral(0, endSpan(from: start))
+
+        case .keywordBefore:
+            advance()
+            let expr = parsePostfixExpression()
+            return .before(expr, endSpan(from: start))
+
+        case .keywordAfter:
+            advance()
+            let expr = parsePostfixExpression()
+            return .after(expr, endSpan(from: start))
+
+        case .keywordHandle:
+            advance()
+            _ = consume(.leftParen)
+            let expr = parseExpression()
+            _ = consume(.rightParen)
+            return .handle(expr, endSpan(from: start))
+
+        case .keywordObject:
+            advance()
+            _ = consume(.period)
+            if expect(.identifier) {
+                let typeName = currentToken.text
+                advance()
+                _ = consume(.leftParen)
+                let handle = parseExpression()
+                _ = consume(.rightParen)
+                return .objectCast(typeName, handle, endSpan(from: start))
+            }
+            return .integerLiteral(0, endSpan(from: start))
+
+        case .leftParen:
+            advance()
+            let expr = parseExpression()
+            _ = consume(.rightParen)
+            return expr
+
+        case .keywordInt, .keywordFloat, .keywordStr:
+            return parseTypeCast()
+
+        default:
+            return .integerLiteral(0, endSpan(from: start))
+        }
+    }
+
+    private mutating func parseTypeCast() -> ExpressionNode {
+        let start = startSpan()
+        let castType: TypeAnnotation
+        switch currentToken.type {
+        case .keywordInt:
+            castType = .integer
+        case .keywordFloat:
+            castType = .float
+        case .keywordStr:
+            castType = .string
+        default:
+            return .integerLiteral(0, endSpan(from: start))
+        }
+        advance()
+
+        _ = consume(.leftParen)
+        let expr = parseExpression()
+        _ = consume(.rightParen)
+
+        return .typeCast(
+            TypeCastNode(expression: expr, targetType: castType, span: endSpan(from: start)),
+            endSpan(from: start))
+    }
+
+    private mutating func parseTypeSuffix() -> TypeSuffix? {
+        switch currentToken.type {
+        case .intSuffix:
+            advance()
+            return .integer
+        case .floatSuffix:
+            advance()
+            return .float
+        case .stringSuffix:
+            advance()
+            return .string
+        default:
+            return nil
+        }
+    }
+
+    private mutating func lookAheadForTerminatorAfterMatchingParen() -> Bool {
+        // Look ahead to find matching paren and see if it is followed by statement terminator
+        var scanner = self.lexer
+        var nesting = 1
+        var tok = scanner.nextToken()  // Skip current left paren
+
+        while tok.type != .endOfFile {
+            if tok.type == .leftParen {
+                nesting += 1
+            } else if tok.type == .rightParen {
+                nesting -= 1
+                if nesting == 0 {
+                    // Found matching closing paren. Check next token.
+                    let next = scanner.nextToken()
+                    // Check for statement terminators: newline, colon, or EOF
+                    return next.type == .newline || next.type == .colon || next.type == .endOfFile
+                }
+            }
+            tok = scanner.nextToken()
+        }
+
+        return false
+    }
+    
+    // MARK: - Include File Support
+    
+    private mutating func parseInclude() -> StatementNode? {
+        let start = startSpan()
+        advance()  // Skip 'Include'
+        
+        guard case .stringLiteral = currentToken.type else {
+            reportError("Expected filename after Include")
+            return nil
+        }
+        
+        let filename = currentToken.text
+        advance()
+        
+        // Resolve the full path
+        guard let fullPath = resolveIncludePath(filename) else {
+            reportError("Include file not found: \(filename)")
+            return .empty(endSpan(from: start))
+        }
+        
+        // Check if already included (prevent duplicates and circular includes)
+        if includedFiles.contains(fullPath) {
+            return .empty(endSpan(from: start))
+        }
+        includedFiles.insert(fullPath)
+        
+        // Load the file
+        guard let source = try? String(contentsOfFile: fullPath, encoding: .utf8) else {
+            reportError("Failed to read include file: \(fullPath)")
+            return .empty(endSpan(from: start))
+        }
+        
+        // Save current parser state
+        let savedLexer = lexer
+        let savedCurrentToken = currentToken
+        let savedPreviousToken = previousToken
+        let savedSourceFile = sourceFile
+        let savedLineMap = lineMap
+        
+        // Parse the included file
+        var includeParser = Parser(source: source, sourceFile: fullPath, lineMap: lineMap)
+        includeParser.includedFiles = self.includedFiles  // Share included files set
+        includeParser.includeSearchPaths = self.includeSearchPaths  // Share search paths
+        
+        let includedProgram = includeParser.parse()
+        let includedStatements = includedProgram.statements
+        
+        // Merge errors from included file
+        self.errors.append(contentsOf: includeParser.errors)
+        
+        // Update shared included files set
+        self.includedFiles = includeParser.includedFiles
+        
+        // Restore parser state
+        lexer = savedLexer
+        currentToken = savedCurrentToken
+        previousToken = savedPreviousToken
+        sourceFile = savedSourceFile
+        lineMap = savedLineMap
+        
+        return .include(fullPath, includedStatements, endSpan(from: start))
+    }
+    
+    private func resolveIncludePath(_ filename: String) -> String? {
+        // Try relative to current source file first
+        if sourceFile != "unknown" {
+            let currentDir = URL(fileURLWithPath: sourceFile).deletingLastPathComponent().path
+            let relativePath = URL(fileURLWithPath: currentDir).appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: relativePath) {
+                return relativePath
+            }
+        }
+        
+        // Try search paths
+        for searchPath in includeSearchPaths {
+            let fullPath = URL(fileURLWithPath: searchPath).appendingPathComponent(filename).path
+            if FileManager.default.fileExists(atPath: fullPath) {
+                return fullPath
+            }
+        }
+        
+        return nil
+    }
+}

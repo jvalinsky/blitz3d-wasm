@@ -1,6 +1,6 @@
 /**
  * Blitz3D Runtime File I/O Module
- * Handles file reading, virtual file system, and asset bundling
+ * Handles file reading, virtual file system, and asset bundling.
  */
 
 type AssetManifestEntry = {
@@ -27,6 +27,13 @@ interface VirtualFile {
   position: number;
   path: string;
   eof: boolean;
+}
+
+type OpenFileMode = "r" | "w";
+
+interface OpenFile extends VirtualFile {
+  mode: OpenFileMode;
+  out?: number[]; // present for "w" handles
 }
 
 interface Core {
@@ -61,6 +68,13 @@ interface WASMImportsEnv {
   FileTell?: (stream: number) => number;
   ReadPString?: (stream: number) => number;
   ReadLString?: (stream: number) => number;
+  WriteByte?: (stream: number, v: number) => number;
+  WriteShort?: (stream: number, v: number) => number;
+  WriteInt?: (stream: number, v: number) => number;
+  WriteFloat?: (stream: number, v: number) => number;
+  WriteDouble?: (stream: number, v: number) => number;
+  WriteString?: (stream: number, strPtr: number) => number;
+  WriteLine?: (stream: number, strPtr: number) => number;
 }
 
 interface WASMImports {
@@ -78,7 +92,7 @@ export class Blitz3DFileIO {
   core: Core;
   fileSystem: Map<string, VirtualFile>;
   _fileSystemByLower: Map<string, string>;
-  openFiles: Map<number, VirtualFile>;
+  openFiles: Map<number, OpenFile>;
   nextFileHandle: number;
   assetBundle: { files: AssetBundleFile[] } | null;
   assetManifest: AssetManifest | null;
@@ -547,7 +561,7 @@ export class Blitz3DFileIO {
         const file = this.fileSystem.get(vfsKey)!;
         file.position = 0;
         const handle = this.nextFileHandle++;
-        this.openFiles.set(handle, { ...file, path: vfsKey, eof: false });
+        this.openFiles.set(handle, { ...file, path: vfsKey, eof: false, mode: "r" });
         console.log(`Opened file from VFS: ${vfsKey} (handle: ${handle})`);
         return handle;
       }
@@ -564,6 +578,7 @@ export class Blitz3DFileIO {
             position: 0,
             path: resolvedPath,
             eof: false,
+            mode: "r",
           });
           console.log(
             `Opened file from bundle: ${resolvedPath} (handle: ${handle})`,
@@ -584,6 +599,27 @@ export class Blitz3DFileIO {
     return 0;
   }
 
+  openWriteFile(filePath: string): number {
+    if (!this._validatePath(filePath)) {
+      console.warn(`[FileIO] Invalid path rejected: ${filePath}`);
+      return 0;
+    }
+
+    const resolvedPath = this.resolvePath(filePath);
+    if (!resolvedPath) return 0;
+    const handle = this.nextFileHandle++;
+    this.openFiles.set(handle, {
+      data: new Uint8Array(0),
+      size: 0,
+      position: 0,
+      path: resolvedPath,
+      eof: false,
+      mode: "w",
+      out: [],
+    });
+    return handle;
+  }
+
   /**
    * Close a file handle
    * @param {number} handle - File handle
@@ -592,6 +628,10 @@ export class Blitz3DFileIO {
     if (this.openFiles.has(handle)) {
       const file = this.openFiles.get(handle)!;
       this.openFiles.delete(handle);
+      if (file.mode === "w") {
+        const bytes = new Uint8Array(file.out ?? []);
+        this.registerFile(file.path, bytes);
+      }
       console.log(`Closed file handle: ${handle} (${file.path})`);
     }
   }
@@ -603,8 +643,8 @@ export class Blitz3DFileIO {
    */
   readByte(handle: number): number {
     const file = this.openFiles.get(handle);
-    if (!file || file.position >= file.size) {
-      file!.eof = true;
+    if (!file || file.mode !== "r" || file.position >= file.size) {
+      if (file) file.eof = true;
       return -1;
     }
     return file.data[file.position++];
@@ -884,7 +924,15 @@ export class Blitz3DFileIO {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
 
+    if (file.mode === "w") {
+      const pos = Math.max(0, position | 0);
+      file.position = pos;
+      file.size = Math.max(file.size, pos);
+      return file.position;
+    }
+
     file.position = Math.max(0, Math.min(position, file.size));
+    file.eof = false;
     return file.position;
   }
 
@@ -897,6 +945,73 @@ export class Blitz3DFileIO {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
     return file.position;
+  }
+
+  _writeBytes(handle: number, bytes: Uint8Array): number {
+    const file = this.openFiles.get(handle);
+    if (!file || file.mode !== "w") return 0;
+    if (!file.out) file.out = [];
+    const out = file.out;
+    const start = Math.max(0, file.position | 0);
+    while (out.length < start) out.push(0);
+    for (let i = 0; i < bytes.length; i++) {
+      const idx = start + i;
+      if (idx < out.length) out[idx] = bytes[i]!;
+      else out.push(bytes[i]!);
+    }
+    file.position = start + bytes.length;
+    file.size = out.length;
+    return bytes.length;
+  }
+
+  writeByte(handle: number, value: number): number {
+    return this._writeBytes(handle, new Uint8Array([value & 0xFF]));
+  }
+
+  writeShort(handle: number, value: number): number {
+    const v = value | 0;
+    return this._writeBytes(handle, new Uint8Array([v & 0xFF, (v >> 8) & 0xFF]));
+  }
+
+  writeInt(handle: number, value: number): number {
+    const v = value | 0;
+    return this._writeBytes(
+      handle,
+      new Uint8Array([
+        v & 0xFF,
+        (v >> 8) & 0xFF,
+        (v >> 16) & 0xFF,
+        (v >> 24) & 0xFF,
+      ]),
+    );
+  }
+
+  writeFloat(handle: number, value: number): number {
+    const buf = new ArrayBuffer(4);
+    new DataView(buf).setFloat32(0, value, true);
+    return this._writeBytes(handle, new Uint8Array(buf));
+  }
+
+  writeDouble(handle: number, value: number): number {
+    const buf = new ArrayBuffer(8);
+    new DataView(buf).setFloat64(0, value, true);
+    return this._writeBytes(handle, new Uint8Array(buf));
+  }
+
+  writeString(handle: number, ptr: number): number {
+    const s = this.core.readString(ptr);
+    const bytes = new TextEncoder().encode(s);
+    // Length-prefixed i32 (Blitz WriteString).
+    this.writeInt(handle, bytes.length);
+    this._writeBytes(handle, bytes);
+    return bytes.length;
+  }
+
+  writeLine(handle: number, ptr: number): number {
+    const s = this.core.readString(ptr);
+    const bytes = new TextEncoder().encode(s + "\n");
+    this._writeBytes(handle, bytes);
+    return bytes.length;
   }
 
   _validatePath(filePath: string): boolean {
@@ -987,8 +1102,7 @@ export class Blitz3DFileIO {
 
       WriteFile: (pathPtr: number) => {
         const path = self.core.readString(pathPtr);
-        console.log(`WriteFile not fully implemented: ${path}`);
-        return 0;
+        return self.openWriteFile(path);
       },
 
       CloseFile: (stream: number) => {
@@ -1059,6 +1173,34 @@ export class Blitz3DFileIO {
 
       ReadLString: (stream: number) => {
         return self.readLString(stream);
+      },
+
+      WriteByte: (stream: number, v: number) => {
+        return self.writeByte(stream, v) ? 1 : 0;
+      },
+
+      WriteShort: (stream: number, v: number) => {
+        return self.writeShort(stream, v) ? 1 : 0;
+      },
+
+      WriteInt: (stream: number, v: number) => {
+        return self.writeInt(stream, v) ? 1 : 0;
+      },
+
+      WriteFloat: (stream: number, v: number) => {
+        return self.writeFloat(stream, v) ? 1 : 0;
+      },
+
+      WriteDouble: (stream: number, v: number) => {
+        return self.writeDouble(stream, v) ? 1 : 0;
+      },
+
+      WriteString: (stream: number, ptr: number) => {
+        return self.writeString(stream, ptr) ? 1 : 0;
+      },
+
+      WriteLine: (stream: number, ptr: number) => {
+        return self.writeLine(stream, ptr) ? 1 : 0;
       },
     });
   }

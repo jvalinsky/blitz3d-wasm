@@ -624,6 +624,34 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         }
     };
 
+    imports.env.CopyEntity = (ent: number) => {
+        // TODO: engine-backed copy; for now, implement the legacy Three.js path.
+        if (graphics.wasmManager || graphics.nativeManager) {
+            console.warn("CopyEntity not supported in engine mode yet");
+            return 0;
+        }
+        const entity = graphics.entities[ent];
+        if (!entity) return 0;
+
+        const clone = entity.clone(true);
+        // Ensure cloned meshes have unique materials (so wireframe/color edits don't affect original).
+        try {
+            clone.traverse((child: any) => {
+                if (child?.isMesh) graphics.ensureUniqueMaterial(child);
+            });
+        } catch { }
+
+        const id = graphics.nextEntityId++;
+        graphics.entities[id] = clone;
+        graphics.engineCreate(id, ENGINE_ENTITY_TYPE.MESH, undefined);
+
+        const parent = entity.parent;
+        if (parent && parent !== graphics.scene) parent.add(clone);
+        else if (graphics.scene) graphics.scene.add(clone);
+
+        return id;
+    };
+
     imports.env.EntityTexture = (ent: number, tex: number, frame: number, index: number) => {
         const entity = graphics.entities[ent];
         const texture = graphics.textures[tex];

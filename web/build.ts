@@ -193,9 +193,9 @@ if (await existsDir(examplesAssetsRoot)) {
 }
 
 if (assetSources.length === 0) {
-  throw new Error(
-    `[build] no asset source found. Expected either ${examplesAssetsRoot} ` +
-      `or a sibling ../scpcb/{Data,GFX,SFX} tree.`,
+  console.warn(
+    `[build] no asset source found. Skipping SCPCB asset packaging (expected either ${examplesAssetsRoot} ` +
+      `or a sibling ../scpcb/{Data,GFX,SFX} tree).`,
   );
 }
 

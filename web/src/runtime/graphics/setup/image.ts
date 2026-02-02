@@ -2,6 +2,17 @@ import { Blitz3DGraphicsInterface, Blitz3DImage } from "../types.ts";
 import * as THREE from "three";
 
 export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
+    const resolveUrl = (path: string): string => {
+        const r = (globalThis as any).__BLITZ3D_URL_RESOLVER;
+        if (typeof r === "function") {
+            try {
+                const out = r(path);
+                if (typeof out === "string" && out) return out;
+            } catch { }
+        }
+        return path;
+    };
+
     // Helpers for buffer-backed pixel operations (ImageBuffer/TextureBuffer/etc).
     const getBufferContext = (bufferId: number) => {
         // BackBuffer/front buffer use the shared text canvas
@@ -56,12 +67,17 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
             flags: 0,
         };
 
-        img.src = path;
+        img.src = resolveUrl(path);
         return id;
     };
 
     imports.env.LoadImage_Strict = (pathPtr: number) => {
         return imports.env.LoadImage(pathPtr);
+    };
+
+    imports.env.ImageLoaded = (imgId: number) => {
+        const img = graphics.images[imgId];
+        return (img && img.type === "image" && img.loaded) ? 1 : 0;
     };
 
     imports.env.CreateImage = (width: number, height: number, frames: number) => {
@@ -104,6 +120,59 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
             flags: flags
         };
         return id;
+    };
+
+    // Texture loading (async)
+    imports.env.LoadTexture = (pathPtr: number, flags: number) => {
+        const path = graphics.core.readString(pathPtr);
+        const url = resolveUrl(path);
+        const id = graphics.nextTextureId++;
+        const placeholder = new THREE.Texture();
+        (placeholder as any).name = `runtime_texture_${id}`;
+        const rec: any = {
+            type: "texture",
+            texture: placeholder,
+            width: 0,
+            height: 0,
+            flags: flags || 0,
+            loaded: false,
+        };
+        graphics.textures[id] = rec;
+
+        const loader = new THREE.TextureLoader();
+        loader.load(
+            url,
+            (tex) => {
+                rec.texture = tex;
+                rec.loaded = true;
+                rec.width = (tex as any).image?.width ?? 0;
+                rec.height = (tex as any).image?.height ?? 0;
+            },
+            undefined,
+            () => {
+                delete graphics.textures[id];
+            },
+        );
+        return id;
+    };
+
+    imports.env.LoadTexture_Strict = (pathPtr: number, flags: number) => {
+        return imports.env.LoadTexture(pathPtr, flags);
+    };
+
+    imports.env.TextureLoaded = (texId: number) => {
+        const tex = graphics.textures[texId] as any;
+        return tex?.loaded ? 1 : 0;
+    };
+
+    imports.env.TextureWidth = (texId: number) => {
+        const tex = graphics.textures[texId] as any;
+        return tex?.width ?? 0;
+    };
+
+    imports.env.TextureHeight = (texId: number) => {
+        const tex = graphics.textures[texId] as any;
+        return tex?.height ?? 0;
     };
 
     const drawImageTransformed = (ctx: CanvasRenderingContext2D, img: Blitz3DImage, x: number, y: number, drawFn: (dx: number, dy: number) => void) => {

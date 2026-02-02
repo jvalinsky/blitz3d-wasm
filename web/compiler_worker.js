@@ -241,6 +241,7 @@ async function initCompiler() {
     "hideentity",
     "showentity",
     "freeentity",
+    "copyentity",
     "entityparent",
     "getparent",
     "renderworld",

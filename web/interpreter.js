@@ -3,11 +3,20 @@
 // ============================================
 
 import * as THREE from "three";
+import { Blitz3DCore } from "./src/runtime/core.ts";
+import { Blitz3DFileIO } from "./src/runtime/fileio.ts";
+import { Blitz3DGraphics } from "./src/runtime/graphics/index.ts";
 
 // --- STATE ---
 let compilerWASM = null;
 let compiledModule = null;
 let runtimeInstance = null;
+let sharedCore = null;
+let sharedFileIO = null;
+let sharedGraphics = null;
+let sharedInstance = null;
+let sharedStepRaf = 0;
+let sharedStopRequested = false;
 let threeScene = null;
 let threeRenderer = null;
 let threeCamera = null;
@@ -22,6 +31,9 @@ let compileReqId = 1;
 let compileInFlight = null;
 let demoRAF = null;
 let isRunning = false;
+
+const useLegacyGraphicsRuntime = new URLSearchParams(window.location.search)
+  .has("legacy");
 
 let ambientLight = null;
 let fogMode = 0;
@@ -374,6 +386,35 @@ Function __Step%()
   Flip
 End Function`,
 
+  rotatingCubeEdges: `; Rotating Cube (Blue + Edges) Demo (stepped, no loops)
+;
+; Builds a blue cube and a slightly scaled wireframe copy for black edges.
+; Click Stop to end.
+Global cube
+Global edges
+
+Graphics3D 800, 600, 32, 2
+ClsColor 26, 26, 42
+
+cube = CreateCube()
+EntityColor cube, 30, 144, 255 ; blue faces
+PositionEntity cube, 0, 0, 5
+
+edges = CopyEntity(cube)
+EntityColor edges, 0, 0, 0 ; black edges
+EntityFX edges, 1          ; wireframe (runtime-defined)
+ScaleEntity edges, 1.02, 1.02, 1.02
+EntityParent edges, cube
+
+Print "Rotating cube (blue + edges) running (stepped)."
+Print "Click Stop to end."
+
+Function __Step%()
+  TurnEntity cube, 0, 1, 0
+  RenderWorld
+  Flip
+End Function`,
+
   rotatingCubeColor: `; Rotating Cube + Color Cycle Demo (stepped, no loops)
 ;
 ; Tints the cube over time using EntityColor.
@@ -639,8 +680,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     { passive: true },
   );
 
-  if (THREE) {
+  if (THREE && useLegacyGraphicsRuntime) {
+    printOutput("legacy=1: using interpreter legacy graphics runtime.", "warning");
     initThreeJS();
+  } else {
+    printOutput(`Three.js v${THREE.REVISION} loaded.`, "success");
+    printOutput("Using shared SCPCB runtime for graphics.", "info");
   }
 
   await initCompiler();
@@ -690,7 +735,9 @@ let runnerWatchdog = null;
 
 function stopExecution() {
   mainThreadStopRequested = true;
+  sharedStopRequested = true;
   stopDemoAnimation();
+  disposeSharedRuntime();
   isRunning = false;
   if (runnerWatchdog !== null) {
     clearTimeout(runnerWatchdog);
@@ -709,6 +756,32 @@ function stopDemoAnimation() {
     cancelAnimationFrame(demoRAF);
     demoRAF = null;
   }
+}
+
+function disposeSharedRuntime() {
+  sharedStopRequested = true;
+  try {
+    globalThis.__BLITZ3D_URL_RESOLVER = null;
+  } catch {}
+  if (sharedStepRaf) {
+    try {
+      cancelAnimationFrame(sharedStepRaf);
+    } catch {}
+    sharedStepRaf = 0;
+  }
+  try {
+    sharedGraphics?.dispose?.();
+  } catch {}
+  try {
+    sharedFileIO?.dispose?.({ clearCache: false });
+  } catch {}
+  try {
+    sharedCore?.dispose?.();
+  } catch {}
+  sharedGraphics = null;
+  sharedFileIO = null;
+  sharedCore = null;
+  sharedInstance = null;
 }
 
 function stopRun() {
@@ -1348,80 +1421,157 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
   setStatus("running", "Running (main thread)...");
 
   mainThreadStopRequested = false;
+  sharedStopRequested = false;
+
+  // Ensure the canvas tab is visible before measuring sizing in core.init().
+  showTab("canvas");
+
   // Best-effort deadline for init. In stepped mode, we disable this and treat
   // timeoutMs as a per-step budget hint.
   mainThreadRunDeadline = timeoutMs > 0 ? Date.now() + timeoutMs : 0;
 
-  const module = await WebAssembly.compile(wasmBytes);
-  const imports = createRuntimeImports();
-  stubMissingImports(imports, module);
+  const module = new WebAssembly.Module(normalizeWasmBytes(wasmBytes));
 
-  const result = await WebAssembly.instantiate(module, imports);
-  // (Module) instantiate returns Instance
-  runtimeInstance = result;
+  sharedCore = new Blitz3DCore();
+  sharedCore.init("game-canvas");
+  sharedGraphics = new Blitz3DGraphics(sharedCore);
+  sharedFileIO = new Blitz3DFileIO(sharedCore);
+  sharedFileIO.init("", null, null);
+  let registerIntoRuntime = (p, data) => sharedFileIO.registerFile(p, data);
+  // Keep writes performed by WASM visible in the interpreter VFS UI.
+  try {
+    const origRegister = sharedFileIO.registerFile.bind(sharedFileIO);
+    registerIntoRuntime = origRegister;
+    sharedFileIO.registerFile = (p, data) => {
+      origRegister(p, data);
+      try {
+        vfsPut(p, data, guessMime(p));
+      } catch {}
+    };
+  } catch {}
 
-  const exports = runtimeInstance.exports || {};
-  const entry = exports.main || exports._start;
-  const step =
-    exports.__Step || exports["__Step%"] || exports.Step || exports["Step%"];
-
-  const renderOnce = () => {
-    if (threeRenderer && threeScene && threeCamera) {
-      showTab("canvas");
-      resizeThreeToContainer();
-      threeRenderer.render(threeScene, threeCamera);
+  // Mirror interpreter VFS into the shared runtime VFS.
+  // (This enables LoadImage/LoadTexture/ReadFile for uploaded assets.)
+  for (const [path, rec] of vfs.entries()) {
+    try {
+      registerIntoRuntime(path, rec.bytes);
+    } catch (e) {
+      console.warn("[interpreter] failed to register VFS file:", path, e);
     }
+  }
+
+  // Let the shared runtime resolve VFS paths (assets/foo.png) to blob: URLs.
+  try {
+    globalThis.__BLITZ3D_URL_RESOLVER = (p) => vfsGetObjectUrl(p) || null;
+  } catch {}
+
+  const imports = { env: {}, blitz3d: {} };
+  // Ensure table import exists for indirect calls.
+  imports.env.__indirect_function_table = new WebAssembly.Table({
+    initial: 0,
+    element: "anyfunc",
+  });
+
+  if (sharedCore.setupCommonImports) sharedCore.setupCommonImports(imports);
+  if (sharedGraphics.setupImports) sharedGraphics.setupImports(imports);
+  if (sharedFileIO.setupImports) sharedFileIO.setupImports(imports);
+
+  // Route Print/DebugLog to the interpreter output pane.
+  imports.env.Print = (ptr) => {
+    const s = sharedCore.readString(ptr | 0);
+    printOutput(s, "output");
+  };
+  imports.env.DebugLog = (ptr) => {
+    const s = sharedCore.readString(ptr | 0);
+    printOutput(`[DebugLog] ${s}`, "info");
   };
 
+  stubMissingImports(imports, module);
+
+  const instance = await WebAssembly.instantiate(module, imports);
+  sharedInstance = instance;
+  runtimeInstance = instance; // keep legacy helpers (decode/alloc) working if referenced
+
+  // Wire memory & allocString
+  sharedCore.memory = instance.exports.memory;
+  sharedCore.instance = instance;
+  sharedCore.module = module;
+  sharedCore.exports = instance.exports;
+  if (typeof instance.exports.__StringAlloc === "function" && sharedCore.memory) {
+    const alloc = instance.exports.__StringAlloc;
+    const mem = sharedCore.memory;
+    sharedCore.allocString = (text) => {
+      const utf8 = new TextEncoder().encode(String(text));
+      const ptr = alloc(utf8.length) | 0;
+      if (!ptr) return 0;
+      const view = new DataView(mem.buffer);
+      view.setInt32(ptr + 0, 1, true); // refcount
+      view.setInt32(ptr + 4, utf8.length, true); // length
+      new Uint8Array(mem.buffer, ptr + 8, utf8.length).set(utf8);
+      new Uint8Array(mem.buffer, ptr + 8 + utf8.length, 1)[0] = 0;
+      return ptr;
+    };
+  }
+  try {
+    sharedFileIO.setMemory(sharedCore.memory);
+  } catch {}
+
+  const exports = instance.exports || {};
+  const step = exports.__Step || exports["__Step%"] || exports.Step ||
+    exports["Step%"];
+
+  // Prefer stepping (non-blocking) if present.
+  if (typeof step === "function") {
+    mainThreadRunDeadline = 0;
+    isRunning = true;
+
+    const tick = () => {
+      if (mainThreadStopRequested || sharedStopRequested) {
+        isRunning = false;
+        return;
+      }
+
+      const started = performance.now();
+      try {
+        step();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        printOutput(`Execution error: ${msg}`, "error");
+        stopExecution();
+        return;
+      }
+
+      const elapsed = performance.now() - started;
+      if (timeoutMs > 0 && elapsed > timeoutMs) {
+        printOutput(
+          `Step exceeded budget (${Math.round(elapsed)}ms > ${timeoutMs}ms). Stopping.`,
+          "error",
+        );
+        stopExecution();
+        return;
+      }
+
+      sharedStepRaf = requestAnimationFrame(tick);
+    };
+
+    sharedStepRaf = requestAnimationFrame(tick);
+    return { startedStepping: true };
+  }
+
+  // Fallback: run entrypoint directly (can freeze if user wrote a tight loop).
+  const entry = exports.main || exports._start || exports.Main;
   if (typeof entry === "function") {
     try {
       entry();
-    } finally {
-      renderOnce();
-    }
-  } else {
-    renderOnce();
-  }
-
-  if (typeof step !== "function") {
-    return { startedStepping: false };
-  }
-
-  mainThreadRunDeadline = 0;
-  isRunning = true;
-  showTab("canvas");
-
-  const tick = () => {
-    if (mainThreadStopRequested) {
-      isRunning = false;
-      return;
-    }
-
-    const started = performance.now();
-    try {
-      step();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       printOutput(`Execution error: ${msg}`, "error");
       stopExecution();
-      return;
+      return { startedStepping: false };
     }
+  }
 
-    const elapsed = performance.now() - started;
-    if (timeoutMs > 0 && elapsed > timeoutMs) {
-      printOutput(
-        `Step exceeded budget (${Math.round(elapsed)}ms > ${timeoutMs}ms). Stopping.`,
-        "error",
-      );
-      stopExecution();
-      return;
-    }
-
-    demoRAF = requestAnimationFrame(tick);
-  };
-
-  demoRAF = requestAnimationFrame(tick);
-  return { startedStepping: true };
+  return { startedStepping: false };
 }
 
 // --- RUNTIME IMPORTS FOR COMPILED CODE ---

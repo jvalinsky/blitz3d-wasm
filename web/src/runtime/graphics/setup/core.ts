@@ -8,6 +8,16 @@ export function setupCore(graphics: Blitz3DGraphicsInterface, imports: any) {
             ", mode=" + mode,
         );
 
+        // Lazy-init renderer/scene/camera the first time Graphics3D is called.
+        try {
+            const anyG = graphics as any;
+            if (!graphics.renderer || !graphics.scene || !graphics.camera) {
+                if (typeof anyG.init3D === "function") anyG.init3D();
+            }
+        } catch (e) {
+            console.error("Graphics3D: init3D failed", e);
+        }
+
         // Validate dimensions
         if (width <= 0 || height <= 0) {
             console.error(

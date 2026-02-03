@@ -3,6 +3,13 @@
 // ============================================
 
 import * as THREE from "three";
+
+// Some runtime modules still reference window.THREE for instanceof checks.
+// Ensure it exists when running the interpreter.
+try {
+  if (!(globalThis).THREE) (globalThis).THREE = THREE;
+} catch {}
+
 import { Blitz3DCore } from "./src/runtime/core.ts";
 import { Blitz3DFileIO } from "./src/runtime/fileio.ts";
 import { Blitz3DGraphics } from "./src/runtime/graphics/index.ts";

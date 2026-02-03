@@ -480,6 +480,33 @@ export class XLoader {
         while (existing.children.length) existing.remove(existing.children[0]!);
         return existing;
       }
+      if (existing instanceof THREE.Object3D) {
+        const root = new THREE.Group();
+        root.userData.entityId = targetId;
+
+        root.name = existing.name;
+        root.position.copy(existing.position);
+        root.quaternion.copy(existing.quaternion);
+        root.scale.copy(existing.scale);
+        root.matrixAutoUpdate = existing.matrixAutoUpdate;
+        root.userData = { ...existing.userData, entityId: targetId };
+
+        const parent = existing.parent;
+        if (parent) {
+          parent.add(root);
+          parent.remove(existing);
+        } else if (this.graphics.scene) {
+          try {
+            this.graphics.scene.remove(existing);
+          } catch {
+            // ignore
+          }
+          this.graphics.scene.add(root);
+        }
+
+        this.graphics.entities[targetId] = root;
+        return root;
+      }
       const root = new THREE.Group();
       this.graphics.entities[targetId] = root;
       root.userData.entityId = targetId;

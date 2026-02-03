@@ -50,6 +50,7 @@ If you only read one page, start with:
 - `docs/SMPK_FORMAT.md` and `docs/SMPK_SYSTEM.md` — SMPK format + asset pipeline.
 - `docs/ASSET_PIPELINE.md` — Asset conversion and packaging strategy.
 - `docs/FILE_FORMAT_LOADERS.md` — Loader formats (RMesh/B3D/etc).
+- `docs/formats/README.md` — Deeper notes on B3D/.X/RMESH (source formats).
 
 **SCPCB target analysis**
 - `docs/CORE_SYSTEMS.md`, `docs/ENTITY_SYSTEMS.md`, `docs/GAME_MECHANICS.md` — Target game behavior.

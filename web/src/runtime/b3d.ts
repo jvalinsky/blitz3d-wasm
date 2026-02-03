@@ -168,6 +168,85 @@ export class B3DLoader {
     return candidates[0] ?? null;
   }
 
+  /**
+   * Pick a reasonable "diffuse" texture for display, and optionally a normal map.
+   *
+   * Blitz3D supports multi-texturing; SCP:CB assets may use multiple stages for
+   * lightmaps/detail/etc. For the interpreter demo we try to select a sensible
+   * `map` and avoid accidentally showing a normal/lightmap as diffuse.
+   */
+  private selectBrushTextures(
+    brush: B3DBrush,
+    b3dData: B3DParsedData,
+  ): { diffuse?: B3DTexture; normal?: B3DTexture } {
+    const ids = (brush.textureIds ?? []).filter((id) => Number.isFinite(id) && id >= 0);
+    const textures = ids
+      .map((id) => b3dData.textures[id])
+      .filter((t): t is B3DTexture => !!t && typeof t.name === "string");
+
+    const classify = (name: string) => {
+      const n = name.toLowerCase().replace(/\\/g, "/");
+      const leaf = n.split("/").pop() ?? n;
+      const base = leaf.replace(/\.[a-z0-9]+$/i, "");
+
+      const isNormal = /(^|[_\-.])(normal|nrm|norm|_n)([_\-.]|$)/i.test(base) ||
+        /normalmap/i.test(base);
+      const isSpec = /(^|[_\-.])(spec|spc|gloss|rough|metal)([_\-.]|$)/i.test(base);
+      const isLight = /(^|[_\-.])(light|lm|lightmap)([_\-.]|$)/i.test(base);
+      const isDiffuse = /(^|[_\-.])(diffuse|albedo|basecolor|color|col|diff)([_\-.]|$)/i.test(
+        base,
+      );
+
+      // Higher is better for "diffuse map" selection.
+      let score = 10;
+      if (isDiffuse) score += 50;
+      if (isNormal) score -= 80;
+      if (isLight) score -= 40;
+      if (isSpec) score -= 30;
+      return { isNormal, score };
+    };
+
+    let bestDiffuse: B3DTexture | undefined;
+    let bestDiffuseScore = -Infinity;
+    let bestNormal: B3DTexture | undefined;
+    let bestNormalScore = -Infinity;
+
+    for (const t of textures) {
+      const { isNormal, score } = classify(t.name);
+      if (score > bestDiffuseScore) {
+        bestDiffuseScore = score;
+        bestDiffuse = t;
+      }
+      if (isNormal && score > bestNormalScore) {
+        bestNormalScore = score;
+        bestNormal = t;
+      }
+    }
+
+    // If the best diffuse candidate is actually a strong normal candidate, drop it.
+    if (bestDiffuse && classify(bestDiffuse.name).isNormal) {
+      bestDiffuse = undefined;
+    }
+
+    return { diffuse: bestDiffuse, normal: bestNormal };
+  }
+
+  private async loadTextureFromUrl(
+    url: string,
+    opts: { srgb?: boolean } = {},
+  ): Promise<THREE.Texture> {
+    const loader = new THREE.TextureLoader();
+    const texture = await new Promise<THREE.Texture>((resolve, reject) => {
+      loader.load(url, resolve, undefined, reject);
+    });
+    texture.flipY = false;
+    if (opts.srgb) {
+      // Three r152+ uses `colorSpace` instead of `encoding`.
+      (texture as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
+    }
+    return texture;
+  }
+
   async loadWithWasm(data: Uint8Array, parentId: number) {
     // @ts-ignore
     const engine = window.Blitz3D.engineExports;
@@ -560,10 +639,12 @@ export class B3DLoader {
           mesh.texCoordSets = this.readInt32LE();
           mesh.texCoordSize = this.readInt32LE();
           this.readVerticesInternal(mesh, subEndOffset);
+          this.offset = subEndOffset;
           break;
         case "TRIS":
           mesh.brushIndex = this.readInt32LE();
           this.readTrianglesInternal(mesh, subEndOffset);
+          this.offset = subEndOffset;
           break;
         default:
           this.offset = subEndOffset;
@@ -585,8 +666,8 @@ export class B3DLoader {
 
     if (!this.data) return;
 
-    while (this.offset < chunkEnd - 12) {
-      // Check if we've read enough bytes for at least one vertex (x,y,z = 12 bytes minimum)
+    while (this.offset < chunkEnd) {
+      // Need at least 3 floats for position.
       if (this.offset + 12 > chunkEnd) break;
 
       const x = this.readFloat32();
@@ -605,23 +686,36 @@ export class B3DLoader {
       }
 
       if (mesh.vertexFlags & 2) {
-        // Color present (RGBA = 4 bytes)
-        if (this.offset + 4 > chunkEnd) break;
-        colors.push(
-          this.data[this.offset++] / 255,
-          this.data[this.offset++] / 255,
-          this.data[this.offset++] / 255,
-          this.data[this.offset++] / 255,
-        );
+        // Color present (RGBA as 4 float32 values).
+        // See `Tools/b3d/parse.ts` for the reference parser.
+        if (this.offset + 16 > chunkEnd) break;
+        const r = this.readFloat32();
+        const g = this.readFloat32();
+        const b = this.readFloat32();
+        // Alpha is handled via brush/material; ignore per-vertex alpha for now.
+        this.readFloat32();
+        colors.push(r, g, b);
       }
 
       // Texture coordinates
-      for (let tc = 0; tc < mesh.texCoordSets && tc < 2; tc++) {
+      // Each texcoord set contains `texCoordSize` floats (usually 2, but some
+      // exporters include additional coords).
+      const sets = Math.max(0, mesh.texCoordSets | 0);
+      const size = Math.max(0, mesh.texCoordSize | 0);
+      for (let tc = 0; tc < sets; tc++) {
+        if (size < 2) break;
         if (this.offset + 8 > chunkEnd) break;
         const u = this.readFloat32();
         const v = this.readFloat32();
+
+        // Skip extra per-vertex texcoord floats beyond U/V.
+        for (let k = 2; k < size; k++) {
+          if (this.offset + 4 > chunkEnd) break;
+          this.readFloat32();
+        }
+
         if (tc === 0) uvs0.push(u, 1 - v);
-        else uvs1.push(u, 1 - v);
+        else if (tc === 1) uvs1.push(u, 1 - v);
       }
     }
 
@@ -635,13 +729,14 @@ export class B3DLoader {
   readTrianglesInternal(mesh: any, chunkEnd: number) {
     const indices = [];
 
-    while (this.offset < chunkEnd - 12) {
-      // Check if we have at least 3 vertex indices (12 bytes)
+    // TRIS records are 3x u32 vertex indices.
+    // (The brush index is read by the caller.)
+    while (this.offset < chunkEnd) {
       if (this.offset + 12 > chunkEnd) break;
 
-      const v0 = this.readInt32LE();
-      const v1 = this.readInt32LE();
-      const v2 = this.readInt32LE();
+      const v0 = this.readInt32LE() >>> 0;
+      const v1 = this.readInt32LE() >>> 0;
+      const v2 = this.readInt32LE() >>> 0;
 
       indices.push(v0, v1, v2);
 
@@ -818,25 +913,41 @@ export class B3DLoader {
   }
 
   readBoneKeys(chunkSize: number) {
+    const endOffset = this.offset + chunkSize;
     const flags = this.readInt32LE();
-    const keys = [];
+    const frames: number[] = [];
+    const positions: number[] = [];
+    const scales: number[] = [];
+    const rotationsWxyz: number[] = [];
 
-    while (
-      this.offset < (this.data ? this.data.length : 0) &&
-      this.offset < this.offset + chunkSize
-    ) {
+    while (this.offset < endOffset) {
+      if (this.offset + 4 > endOffset) break;
       const frame = this.readInt32LE();
-      const position = {
-        x: this.readFloat32(),
-        y: this.readFloat32(),
-        z: this.readFloat32(),
-      };
-      keys.push({ frame, position });
+      frames.push(frame);
+      if (flags & 1) {
+        if (this.offset + 12 > endOffset) break;
+        positions.push(this.readFloat32(), this.readFloat32(), this.readFloat32());
+      }
+      if (flags & 2) {
+        if (this.offset + 12 > endOffset) break;
+        scales.push(this.readFloat32(), this.readFloat32(), this.readFloat32());
+      }
+      if (flags & 4) {
+        if (this.offset + 16 > endOffset) break;
+        rotationsWxyz.push(
+          this.readFloat32(),
+          this.readFloat32(),
+          this.readFloat32(),
+          this.readFloat32(),
+        );
+      }
     }
 
     if (this.animations.length > 0) {
-      this.animations[this.animations.length - 1].boneKeys = keys;
+      const anim = this.animations[this.animations.length - 1] as any;
+      anim.boneKeys = { flags, frames, positions, scales, rotationsWxyz };
     }
+    this.offset = endOffset;
   }
 
   readSequences(chunkSize: number) {
@@ -926,7 +1037,7 @@ export class B3DLoader {
     if (meshData.colors && meshData.colors.length > 0) {
       geometry.setAttribute(
         "color",
-        new THREE.Float32BufferAttribute(meshData.colors, 4),
+        new THREE.Float32BufferAttribute(meshData.colors, 3),
       );
     }
 
@@ -963,38 +1074,64 @@ export class B3DLoader {
     return mesh;
   }
 
-  async createMaterial(brush: B3DBrush, b3dData: B3DParsedData) {
-    let texture = null;
+  async createMaterial(
+    brush: B3DBrush,
+    b3dData: B3DParsedData,
+  ): Promise<THREE.MeshStandardMaterial> {
+    let diffuse: THREE.Texture | undefined;
+    let normal: THREE.Texture | undefined;
 
-    if (
-      brush.textureIds && brush.textureIds.length > 0 &&
-      brush.textureIds[0] >= 0
-    ) {
-      const texIdx = brush.textureIds[0];
-      if (texIdx < b3dData.textures.length) {
-        const texData = b3dData.textures[texIdx];
-        const url = this.resolveTextureUrl(texData?.name);
-        if (url) {
-          try {
-            const loader = new THREE.TextureLoader();
-            texture = await new Promise<THREE.Texture>((resolve, reject) => {
-              loader.load(url, resolve, undefined, reject);
-            });
-            texture.flipY = false;
-          } catch {
-            texture = null;
-          }
+    const selected = this.selectBrushTextures(brush, b3dData);
+
+    // Try to load the selected diffuse map first; if it fails, fall back to other stages.
+    const stageNames = (brush.textureIds ?? [])
+      .filter((id) => Number.isFinite(id) && id >= 0)
+      .map((id) => b3dData.textures[id])
+      .filter((t): t is B3DTexture => !!t && typeof t.name === "string");
+
+    const diffuseCandidates: B3DTexture[] = [];
+    if (selected.diffuse) diffuseCandidates.push(selected.diffuse);
+    for (const t of stageNames) {
+      if (!diffuseCandidates.includes(t)) diffuseCandidates.push(t);
+    }
+
+    for (const t of diffuseCandidates) {
+      const url = this.resolveTextureUrl(t.name);
+      if (!url) continue;
+      try {
+        diffuse = await this.loadTextureFromUrl(url, { srgb: true });
+        break;
+      } catch {
+        // try next candidate
+      }
+    }
+
+    if (selected.normal) {
+      const url = this.resolveTextureUrl(selected.normal.name);
+      if (url) {
+        try {
+          normal = await this.loadTextureFromUrl(url, { srgb: false });
+        } catch {
+          normal = undefined;
         }
       }
     }
 
-    const materialOptions: any = {
+    const materialOptions: THREE.MeshStandardMaterialParameters = {
       color: new THREE.Color(brush.color.r, brush.color.g, brush.color.b),
       opacity: brush.alpha,
       transparent: brush.alpha < 1,
       side: THREE.DoubleSide,
-      shininess: brush.shininess,
     };
+
+    // `shininess` is a legacy Phong-ish concept; MeshStandardMaterial uses roughness/metalness.
+    // Treat higher shininess as lower roughness for a reasonable approximation.
+    const s = Number(brush.shininess);
+    if (Number.isFinite(s)) {
+      const clamped = Math.max(0, Math.min(1, s));
+      materialOptions.roughness = 1 - clamped;
+      materialOptions.metalness = 0;
+    }
 
     if (brush.blend === 1) {
       materialOptions.blending = THREE.AdditiveBlending;
@@ -1002,8 +1139,11 @@ export class B3DLoader {
       materialOptions.blending = THREE.MultiplyBlending;
     }
 
-    if (texture) {
-      materialOptions.map = texture;
+    if (diffuse) {
+      materialOptions.map = diffuse;
+    }
+    if (normal) {
+      materialOptions.normalMap = normal;
     }
 
     return new THREE.MeshStandardMaterial(materialOptions);
@@ -1086,6 +1226,35 @@ export class B3DLoader {
         // Clear existing children so repeated loads replace the model.
         while (existing.children.length) existing.remove(existing.children[0]!);
         return existing;
+      }
+      if (existing instanceof THREE.Object3D) {
+        const root = new THREE.Group();
+        root.userData.entityId = targetId;
+
+        // Preserve transform/name and replace in the scene graph.
+        root.name = existing.name;
+        root.position.copy(existing.position);
+        root.quaternion.copy(existing.quaternion);
+        root.scale.copy(existing.scale);
+        root.matrixAutoUpdate = existing.matrixAutoUpdate;
+        root.userData = { ...existing.userData, entityId: targetId };
+
+        const parent = existing.parent;
+        if (parent) {
+          parent.add(root);
+          parent.remove(existing);
+        } else if (this.graphics.scene) {
+          // Best-effort: if it was a direct scene child, replace it.
+          try {
+            this.graphics.scene.remove(existing);
+          } catch {
+            // ignore
+          }
+          this.graphics.scene.add(root);
+        }
+
+        this.graphics.entities[targetId] = root;
+        return root;
       }
       const root = new THREE.Group();
       this.graphics.entities[targetId] = root;

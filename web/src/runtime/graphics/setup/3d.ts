@@ -29,6 +29,33 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     }
   };
 
+  const autoFrameEntity = (entity: THREE.Object3D) => {
+    if (!entity) return;
+    const cam = graphics.camera;
+    if (!(cam instanceof THREE.PerspectiveCamera)) return;
+
+    const bounds = computeBounds(entity);
+    if (!bounds) return;
+
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    bounds.getCenter(center);
+    bounds.getSize(size);
+
+    const radius = Math.max(size.x, size.y, size.z) * 0.5;
+    if (!Number.isFinite(radius) || radius <= 0) return;
+
+    // Rough framing for a 75deg FOV camera.
+    const distance = radius / Math.tan((cam.fov * Math.PI / 180) * 0.5);
+    const z = distance * 1.4;
+
+    cam.near = Math.max(0.01, z / 2000);
+    cam.far = Math.max(cam.near + 10, z * 2000);
+    cam.position.set(center.x, center.y + radius * 0.15, center.z + z);
+    cam.lookAt(center);
+    cam.updateProjectionMatrix();
+  };
+
   const dimensionFromBounds = (
     entity: THREE.Object3D,
     axis: "x" | "y" | "z",
@@ -203,6 +230,46 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     graphics.scene.add(light);
     console.log("Light added to scene, ID: " + id);
     return id;
+  };
+
+  // Blitz3D light controls ----------------------------------------------------
+  imports.env.LightColor = (lightId: number, r: number, g: number, b: number) => {
+    const obj = graphics.entities[lightId];
+    if (obj instanceof THREE.Light) {
+      obj.color.setRGB(
+        Math.max(0, Math.min(255, r)) / 255,
+        Math.max(0, Math.min(255, g)) / 255,
+        Math.max(0, Math.min(255, b)) / 255,
+      );
+    }
+  };
+
+  imports.env.LightRange = (lightId: number, range: number) => {
+    const obj = graphics.entities[lightId];
+    const dist = Math.max(0, Number(range) || 0);
+    if (obj instanceof THREE.PointLight || obj instanceof THREE.SpotLight) {
+      obj.distance = dist;
+      // Blitz3D falloff is not identical; keep a reasonable default.
+      obj.decay = 2;
+    }
+  };
+
+  imports.env.AmbientLight = (r: number, g: number, b: number) => {
+    if (!graphics.scene) return;
+    const col = new THREE.Color(
+      Math.max(0, Math.min(255, r)) / 255,
+      Math.max(0, Math.min(255, g)) / 255,
+      Math.max(0, Math.min(255, b)) / 255,
+    );
+    const k = "_ambientLight";
+    const existing = graphics[k];
+    if (existing instanceof THREE.AmbientLight) {
+      existing.color.copy(col);
+      return;
+    }
+    const amb = new THREE.AmbientLight(col, 1);
+    graphics[k] = amb;
+    graphics.scene.add(amb);
   };
 
   imports.env.CreateMesh = (parent: number) => {
@@ -985,6 +1052,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             const { B3DLoader } = await import("../../b3d.ts");
             const b3d = new B3DLoader(graphics, coreWithFileIO);
             await b3d.loadFile(rawPath, parent || 0, placeholderId);
+            if (globalThis.__BLITZ3D_INTERPRETER_AUTOFRAME) {
+              const ent = graphics.entities[placeholderId];
+              if (ent) autoFrameEntity(ent);
+            }
             return;
           }
           if (lowerPath.endsWith(".x")) {
@@ -995,12 +1066,20 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
               fileIO,
             );
             await x.loadFile(rawPath, parent || 0, placeholderId);
+            if (globalThis.__BLITZ3D_INTERPRETER_AUTOFRAME) {
+              const ent = graphics.entities[placeholderId];
+              if (ent) autoFrameEntity(ent);
+            }
             return;
           }
           if (lowerPath.endsWith(".rmesh")) {
             const { RMeshLoader } = await import("../../rmesh.ts");
             const rm = new RMeshLoader(graphics, coreWithFileIO);
             await rm.loadFile(rawPath, parent || 0, placeholderId);
+            if (globalThis.__BLITZ3D_INTERPRETER_AUTOFRAME) {
+              const ent = graphics.entities[placeholderId];
+              if (ent) autoFrameEntity(ent);
+            }
             return;
           }
         } catch (e) {

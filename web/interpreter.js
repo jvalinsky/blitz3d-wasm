@@ -42,6 +42,9 @@ let isRunning = false;
 const useLegacyGraphicsRuntime = new URLSearchParams(window.location.search)
   .has("legacy");
 
+const showStacks = new URLSearchParams(window.location.search)
+  .has("stack");
+
 let ambientLight = null;
 let fogMode = 0;
 let fogColor = 0x000000;
@@ -1363,6 +1366,11 @@ async function executeCompiledWASM(wasmBase64) {
     await executeCompiledWASMBytes(wasmBytes);
   } catch (error) {
     printOutput(`Execution error: ${error.message}`, "error");
+    if (showStacks && error && error.stack) {
+      try {
+        printOutput(String(error.stack), "error");
+      } catch {}
+    }
     console.error("Execution error:", error);
   }
 }
@@ -1625,6 +1633,11 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
           return;
         }
         printOutput(`Execution error: ${msg}`, "error");
+        if (showStacks && e && e.stack) {
+          try {
+            printOutput(String(e.stack), "error");
+          } catch {}
+        }
         stopExecution();
         return;
       }

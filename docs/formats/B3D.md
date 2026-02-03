@@ -6,7 +6,7 @@ B3D is Blitz3D’s native, chunk-based binary 3D model format. Files typically s
 
 In SCPCB, B3D is commonly used for NPCs and item models.
 
-## High-level structure
+## On-disk structure (high level)
 
 Common top-level chunk tags include:
 - `TEXS` — textures (names + flags)
@@ -32,6 +32,12 @@ Blitz3D supports multiple “texture stages” per brush/material. In B3D this i
 Two practical implications for SCPCB assets:
 - A brush may reference multiple textures (e.g. base + lightmap/detail). A runtime renderer needs to decide how to map those stages into its own material system.
 - `TEXS.flags` correspond to Blitz3D’s texture flags (color/alpha/mipmapping/clamping/etc.). Many community docs describe these flags via the Blitz3D `LoadTexture`/`CreateTexture` commands.
+
+## How this maps into Blitz3D concepts
+
+- **Entity hierarchy**: `NODE` chunks represent the scene graph (local transforms + children).
+- **Meshes/surfaces**: `MESH` + `TRIS` map naturally to Blitz3D’s mesh + surfaces/material groups.
+- **Brush/material**: `BRUS` maps to a Blitz3D brush (diffuse color, alpha, blend, texture stages).
 
 ## What it can contain (conceptual)
 

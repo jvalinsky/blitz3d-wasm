@@ -59,4 +59,5 @@ Relevant code:
 - DirectX `.x` file overview (legacy): https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-file-format
 - B3D chunk format overview/spec: https://docs.luanti.org/for-creators/models/b3d-spec/
 - RMESH importer tooling (example community tool): https://godotengine.org/asset-library/asset/4168
-- RMESH lightmap convention notes (community): https://gist.github.com/VirtualBrightPlayz/0ff72ec7bed56c6c51051f8c90c8afc6
+- RMESH reverse-engineered notes (community converter): https://gist.github.com/qeaml/69855dc49d1a012f99f054a51c0a1b40
+- RMESH lightmap convention notes (community): https://gist.github.com/Omega47810/1d0459cc2ce52b5119b341c876468551

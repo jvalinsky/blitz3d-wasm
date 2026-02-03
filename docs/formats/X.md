@@ -6,6 +6,15 @@ DirectX `.x` is a legacy Microsoft 3D asset format that can represent meshes, ma
 
 SCPCB ships a number of `.x` assets alongside B3D/RMESH content.
 
+## On-disk structure (conceptual)
+
+An `.x` file is a sequence of objects written using **templates** (either built-in templates like `Mesh` / `MeshMaterialList` / `Material`, or custom templates). Microsoft’s documentation describes the object model and the canonical templates.¹
+
+In practice you’ll often encounter:
+- `Mesh { ... }` with vertex positions + faces
+- optional `MeshNormals`, `MeshTextureCoords`, `MeshVertexColors`
+- `MeshMaterialList` with one or more `Material` blocks, each optionally referencing a texture filename
+
 ## What it can contain
 
 Depending on the templates used, `.x` can include:
@@ -32,5 +41,6 @@ Blitz3D can load `.x` meshes directly, so it was a common “interop” format f
 
 ## References
 
-- Microsoft `.x` file format (legacy): https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-file-format
+- ¹ Microsoft `.x` file format (legacy): https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-file-format
+- Community notes/links (overview + references to classic `.x` docs): https://openbve-project.net/documentation/format/x/
 - SCPCB-related depot filetypes (example SteamDB depot showing `.x`): https://steamdb.info/depot/1782381/history/

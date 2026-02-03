@@ -6,6 +6,14 @@ RMESH is a SCPCB-specific room mesh format used to package a room’s geometry (
 
 Because RMESH is not a standardized public format, community tooling typically relies on reverse engineering and is often tailored to specific SCPCB forks/versions.
 
+## Common header identifiers
+
+Many RMESH variants begin with a length-prefixed string header such as:
+- `RoomMesh`
+- `RoomMesh.HasTriggerBox`
+
+These headers are used by community converters/importers to branch parsing logic.¹
+
 ## What it commonly contains (conceptual)
 
 Most RMESH variants include:
@@ -38,5 +46,6 @@ In practice, a common convention is using lightmap filenames with a suffix like 
 ## References
 
 - SCPCB-related depot filetypes (example SteamDB depot showing `.rmesh`): https://steamdb.info/depot/1782381/history/
-- Blender → RMESH conversion notes (lightmap UVs + `_lm` convention): https://gist.github.com/VirtualBrightPlayz/0ff72ec7bed56c6c51051f8c90c8afc6
+- ¹ `rmesh_convert.py` (reverse-engineered structure + header strings): https://gist.github.com/qeaml/69855dc49d1a012f99f054a51c0a1b40
+- Blender → RMESH conversion notes (lightmap UVs + `_lm` convention): https://gist.github.com/Omega47810/1d0459cc2ce52b5119b341c876468551
 - Example RMESH importer tooling (Godot asset; supports SCPCB variants): https://godotengine.org/asset-library/asset/4168

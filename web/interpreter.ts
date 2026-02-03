@@ -39,6 +39,21 @@ type VfsRecord = { bytes: Uint8Array; mime: string };
 
 type CompileInFlight = { id: number; timeoutId: number } | null;
 
+type ExampleInfo = {
+  title: string;
+  /**
+   * Paths you should upload into the interpreter VFS for the example to work.
+   * Use these exact strings in BB source (they are copy/paste targets).
+   */
+  requires?: string[];
+  /** Optional extra files that improve the demo (textures, etc). */
+  optional?: string[];
+  /** Small notes that help avoid common gotchas. */
+  notes?: string[];
+  prefersTab?: TabName;
+  defaultTimeoutMs?: number;
+};
+
 type CompileResult = {
   success: boolean;
   error?: string;
@@ -150,6 +165,7 @@ const vfsUploadEl = mustGetEl<HTMLInputElement>("vfs-upload");
 const vfsPrefixEl = mustGetEl<HTMLInputElement>("vfs-prefix");
 const vfsListEl = mustGetEl<HTMLDivElement>("vfs-list");
 const vfsClearBtnEl = mustGetEl<HTMLButtonElement>("vfs-clear-btn");
+const exampleReqEl = mustGetEl<HTMLDivElement>("example-req");
 
 // --- VFS (interpreter-only) ---
 const vfs = new Map<string, VfsRecord>(); // normalizedPath -> bytes/mime
@@ -921,10 +937,137 @@ Function __Step%()
 End Function`,
 };
 
+const exampleInfo: Record<string, ExampleInfo> = {
+  hello: { title: "Hello World", prefersTab: "output" },
+  languageBasics: { title: "Language Basics", prefersTab: "output" },
+  arrays: { title: "Arrays", prefersTab: "output" },
+  customTypes: { title: "Custom Types + For Each", prefersTab: "output" },
+  dataReadRestore: { title: "Data/Read/Restore", prefersTab: "output" },
+  stringsMath: { title: "Strings + Math", prefersTab: "output" },
+  graphics: { title: "Graphics Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  rotatingCube: { title: "Rotating Cube Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  rotatingCubeEdges: {
+    title: "Rotating Cube (Blue + Edges)",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
+  rotatingCubeColor: {
+    title: "Rotating Cube + Color Cycle",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
+  hud2D: { title: "2D HUD Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  inputHud: { title: "Input HUD Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  image2D: {
+    title: "2D Image Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/badge1.jpg"],
+    notes: ["Upload a JPG/PNG into the VFS as the required path."],
+  },
+  imageDebug: {
+    title: "Image Debug (PNG/JPG)",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/demo.png (or assets/demo.jpg)"],
+    notes: ["This demo is useful to confirm decoding + alpha in the VFS pipeline."],
+  },
+  textureCube: {
+    title: "Textured Cube Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/ws_in_the_chat_fd_signifier_clip.gif"],
+    optional: ["assets/wafrn-logo.png"],
+    notes: ["GIF decoding may be slower than PNG/JPG depending on browser."],
+  },
+  vfsFileIO: {
+    title: "VFS File I/O Demo",
+    prefersTab: "output",
+    defaultTimeoutMs: 0,
+    requires: ["assets/demo.txt"],
+    notes: ["Uses ReadFile/ReadLine to show Blitz-style file IO over the VFS."],
+  },
+  fogCube: { title: "Fog Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  proceduralMesh: { title: "Procedural Mesh Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  b3dInspectRender: {
+    title: "B3D: Inspect + Render",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/173_2.b3d (or assets/model.b3d)"],
+    optional: ["Any referenced textures (same folder or basename-matched)"],
+    notes: [
+      "If the model references Windows paths, upload the texture by basename (e.g. guard_diffuse.jpg).",
+      "The interpreter tries to pick a sensible diffuse texture stage, but multi-texture materials may still look off.",
+    ],
+  },
+  xInspectRender: {
+    title: "X: Inspect + Render",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/model.x"],
+    optional: ["Any referenced textures (same folder or basename-matched)"],
+    notes: ["Only text .x is supported in the interpreter path (header like xof 0303txt)."],
+  },
+  rmeshInspectRender: {
+    title: "RMESH: Inspect + Render",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/checkpoint2_opt.rmesh (or assets/room.rmesh)"],
+    optional: ["Room textures + optional lightmaps, if referenced"],
+    notes: ["RMESH variants differ across SCPCB forks; this is a best-effort exploration loader."],
+  },
+};
+
+function renderExampleRequirements(exampleKey: string): void {
+  const info = exampleInfo[exampleKey];
+  if (!info) {
+    exampleReqEl.innerHTML =
+      `<strong>Example requirements</strong>: select an example to see required VFS paths.`;
+    return;
+  }
+
+  const parts: string[] = [];
+  parts.push(`<strong>Example</strong>: ${escapeHtml(info.title)}`);
+
+  if (info.requires && info.requires.length > 0) {
+    parts.push(`<strong>Required uploads</strong>:` + renderPathList(info.requires));
+  } else {
+    parts.push(`<strong>Required uploads</strong>: none`);
+  }
+
+  if (info.optional && info.optional.length > 0) {
+    parts.push(`<strong>Optional</strong>:` + renderPathList(info.optional));
+  }
+
+  if (info.notes && info.notes.length > 0) {
+    parts.push(`<strong>Notes</strong>:` + renderNoteList(info.notes));
+  }
+
+  exampleReqEl.innerHTML = parts.join("<br/>");
+}
+
+function renderPathList(items: string[]): string {
+  return `<ul>` + items.map((p) => `<li><code>${escapeHtml(p)}</code></li>`).join("") + `</ul>`;
+}
+
+function renderNoteList(items: string[]): string {
+  return `<ul>` + items.map((p) => `<li>${escapeHtml(p)}</li>`).join("") + `</ul>`;
+}
+
+function escapeHtml(s: string): string {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", async () => {
   installGlobalErrorHandlers();
   editorEl.value = examples.hello;
+  renderExampleRequirements("hello");
   runBtnEl.disabled = true;
   printOutput(`Three.js v${THREE.REVISION} loaded.`, "success");
   printOutput("Using shared SCPCB runtime for graphics.", "info");
@@ -950,6 +1093,13 @@ function setupEventListeners() {
     const example = target?.value ?? "";
     if (example && examples[example]) {
       editorEl.value = examples[example];
+      renderExampleRequirements(example);
+
+      const info = exampleInfo[example];
+      if (info?.prefersTab) showTab(info.prefersTab);
+      if (typeof info?.defaultTimeoutMs === "number") {
+        timeoutMsEl.value = String(Math.max(0, Math.floor(info.defaultTimeoutMs)));
+      }
     }
   });
 

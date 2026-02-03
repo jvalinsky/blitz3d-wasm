@@ -158,6 +158,33 @@ select {
     color: #4fc3f7;
 }
 
+.example-req {
+    border: 1px solid #0f3460;
+    border-radius: 6px;
+    background: #081320;
+    padding: 0.5rem 0.6rem;
+    font-size: 12px;
+    line-height: 1.35;
+    color: #c5c5c5;
+}
+
+.example-req strong {
+    color: #4fc3f7;
+    font-weight: 600;
+}
+
+.example-req code {
+    color: #4fc3f7;
+}
+
+.example-req ul {
+    margin: 0.25rem 0 0 1.1rem;
+}
+
+.example-req li {
+    margin: 0.15rem 0;
+}
+
 .vfs-list {
     overflow: auto;
     border: 1px solid #0f3460;

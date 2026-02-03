@@ -362,9 +362,10 @@ Print "asc=" + Asc("Z")`,
   graphics: `; 3D Cube Demo (one-shot render)
 Graphics3D 800, 600, 32, 2
 
-; Create a simple cube and render one frame.
+; Create camera + cube and render one frame.
+cam = CreateCamera()
 cube = CreateCube()
-PositionEntity cube, 0, 0, 5
+PositionEntity cube, 0, 0, 0
 
 RenderWorld
 Flip
@@ -383,9 +384,10 @@ Global cube
 Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
 
+cam = CreateCamera()
 cube = CreateCube()
 EntityColor cube, 30, 144, 255 ; blue faces
-PositionEntity cube, 0, 0, 5
+PositionEntity cube, 0, 0, 0
 
 Print "Rotating cube demo running (stepped)."
 Print "Click Stop to end."
@@ -406,9 +408,10 @@ Global edges
 Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
 
+cam = CreateCamera()
 cube = CreateCube()
 EntityColor cube, 30, 144, 255 ; blue faces
-PositionEntity cube, 0, 0, 5
+PositionEntity cube, 0, 0, 0
 
 edges = CopyEntity(cube)
 EntityColor edges, 0, 0, 0 ; black edges
@@ -434,8 +437,9 @@ Global cube
 Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
 
+cam = CreateCamera()
 cube = CreateCube()
-PositionEntity cube, 0, 0, 5
+PositionEntity cube, 0, 0, 0
 
 Print "Rotating cube + color cycle demo running (stepped)."
 Print "Click Stop to end."
@@ -581,9 +585,10 @@ Global loaded%
 
 Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
+cam = CreateCamera()
 cube = CreateCube()
 EntityColor cube, 255, 255, 255 ; ensure texture isn't tinted dark
-PositionEntity cube, 0, 0, 5
+PositionEntity cube, 0, 0, 0
 
 tex = LoadTexture("assets/badge1.jpg")
 Print "Loading texture..."
@@ -647,11 +652,12 @@ Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
 FogColor 26, 26, 42
 FogMode 1
-FogRange 2, 8
+FogRange 2, 12
 
+cam = CreateCamera()
 cube = CreateCube()
 EntityColor cube, 30, 144, 255
-PositionEntity cube, 0, 0, 6
+PositionEntity cube, 0, 0, 0
 
 Print "Fog demo running (stepped)."
 Print "Click Stop to end."
@@ -671,6 +677,8 @@ Global m
 Graphics3D 800, 600, 32, 2
 ClsColor 26, 26, 42
 
+cam = CreateCamera()
+
 m = CreateMesh()
 Local s = CreateSurface(m)
 
@@ -681,7 +689,7 @@ AddTriangle s, v0, v1, v2
 UpdateNormals m
 
 EntityColor m, 30, 144, 255
-PositionEntity m, 0, 0, 5
+PositionEntity m, 0, 0, 0
 
 Print "Procedural mesh demo running (stepped)."
 Print "Click Stop to end."

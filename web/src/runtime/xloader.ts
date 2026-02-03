@@ -22,6 +22,65 @@ type XFileData = {
   textures: string[];
 };
 
+class XScanner {
+  private s: string;
+  i = 0;
+
+  constructor(s: string) {
+    this.s = s;
+  }
+
+  private skipString() {
+    // Skip a quoted string: "..."
+    if (this.s[this.i] !== "\"") return;
+    this.i++;
+    while (this.i < this.s.length) {
+      const c = this.s[this.i]!;
+      this.i++;
+      if (c === "\"") break;
+      // X text format doesn't have standard escapes; treat backslash as literal.
+    }
+  }
+
+  skipJunk() {
+    while (this.i < this.s.length) {
+      const c = this.s[this.i]!;
+      if (c === "\"") {
+        this.skipString();
+        continue;
+      }
+      // separators / whitespace
+      if (c <= " " || c === "," || c === ";" || c === "{" || c === "}") {
+        this.i++;
+        continue;
+      }
+      // identifiers / keywords inside blocks
+      if ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z") || c === "_") {
+        this.i++;
+        continue;
+      }
+      break;
+    }
+  }
+
+  readNumber(): number {
+    this.skipJunk();
+    const rest = this.s.slice(this.i);
+    const m = rest.match(/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/);
+    if (!m) throw new Error(`Expected number at offset ${this.i}`);
+    this.i += m[0].length;
+    return Number(m[0]);
+  }
+
+  readInt(): number {
+    return this.readNumber() | 0;
+  }
+
+  readFloat(): number {
+    return Number(this.readNumber());
+  }
+}
+
 export class XLoader {
   private graphics: Blitz3DGraphicsInterface;
   private core: GraphicsCore & { fileIO: Blitz3DFileIO };
@@ -235,39 +294,51 @@ export class XLoader {
   parseMeshBlock(block: string): XMeshData | null {
     try {
       // Clean the block - remove comments and normalize whitespace
-      let cleaned = block.replace(/\/\/[^\n]*/g, "").replace(
+      const cleaned = block.replace(/\/\/[^\n]*/g, "").replace(
         /\/\*[\s\S]*?\*\//g,
         "",
       );
 
-      // Parse vertices
-      const vertexMatch = cleaned.match(/^\s*(\d+)\s*;([\s\S]*?)(\d+)\s*;/);
-      if (!vertexMatch) {
-        this.log("Could not find vertex data");
+      const scan = new XScanner(cleaned);
+
+      const vertexCount = scan.readInt();
+      if (!Number.isFinite(vertexCount) || vertexCount <= 0 || vertexCount > 20_000_000) {
+        this.log("Bad vertex count:", vertexCount);
         return null;
       }
 
-      const vertexCount = parseInt(vertexMatch[1]);
-      const vertexData = vertexMatch[2];
-      const faceCount = parseInt(vertexMatch[3]);
+      const vertices: number[] = new Array(vertexCount * 3);
+      for (let i = 0; i < vertexCount; i++) {
+        const base = i * 3;
+        vertices[base + 0] = scan.readFloat();
+        vertices[base + 1] = scan.readFloat();
+        vertices[base + 2] = scan.readFloat();
+      }
+
+      const faceCount = scan.readInt();
+      if (!Number.isFinite(faceCount) || faceCount < 0 || faceCount > 20_000_000) {
+        this.log("Bad face count:", faceCount);
+        return null;
+      }
 
       this.log(`Parsing ${vertexCount} vertices, ${faceCount} faces`);
 
-      // Extract vertices
-      const vertices = this.parseVertices(vertexData, vertexCount);
-      if (vertices.length !== vertexCount * 3) {
-        this.log(
-          `Vertex count mismatch: expected ${
-            vertexCount * 3
-          }, got ${vertices.length}`,
-        );
+      const faces: number[] = [];
+      for (let i = 0; i < faceCount; i++) {
+        const n = scan.readInt();
+        if (!Number.isFinite(n) || n < 3 || n > 16) {
+          // skip invalid polygon
+          for (let j = 0; j < Math.max(0, n | 0); j++) scan.readInt();
+          continue;
+        }
+        const idx: number[] = new Array(n);
+        for (let j = 0; j < n; j++) idx[j] = scan.readInt();
+        // triangulate as a fan
+        const a = idx[0]!;
+        for (let j = 1; j + 1 < idx.length; j++) {
+          faces.push(a, idx[j]!, idx[j + 1]!);
+        }
       }
-
-      // Find and parse faces (after vertex section)
-      const afterVertices = cleaned.substring(
-        vertexMatch.index! + vertexMatch[0].length,
-      );
-      const faces = this.parseFaces(afterVertices, faceCount);
 
       // Parse MeshTextureCoords if present
       let uvs: number[] = [];
@@ -310,85 +381,35 @@ export class XLoader {
     }
   }
 
-  parseVertices(data: string, count: number): number[] {
-    const vertices = [];
-    // Match patterns like: x;y;z;, or x;y;z;;
-    const regex = /(-?[\d.]+)\s*;\s*(-?[\d.]+)\s*;\s*(-?[\d.]+)\s*;/g;
-    let match;
-
-    while ((match = regex.exec(data)) !== null && vertices.length < count * 3) {
-      vertices.push(parseFloat(match[1]));
-      vertices.push(parseFloat(match[2]));
-      vertices.push(parseFloat(match[3]));
-    }
-
-    return vertices;
-  }
-
-  parseFaces(data: string, count: number): number[] {
-    const faces = [];
-    // Match patterns like: 3;v0,v1,v2;,
-    const regex = /(\d+)\s*;\s*([\d,\s]+)\s*;/g;
-    let match;
-
-    while ((match = regex.exec(data)) !== null && faces.length / 3 < count) {
-      const numVerts = parseInt(match[1]);
-      const indices = match[2].split(",").map((s) => parseInt(s.trim()));
-
-      if (numVerts === 3) {
-        // Triangle
-        faces.push(indices[0], indices[1], indices[2]);
-      } else if (numVerts === 4) {
-        // Quad - split into two triangles
-        faces.push(indices[0], indices[1], indices[2]);
-        faces.push(indices[0], indices[2], indices[3]);
-      }
-    }
-
-    return faces;
-  }
-
   parseTextureCoords(block: string): number[] {
     const uvs: number[] = [];
-    // First number is count
-    const countMatch = block.match(/^\s*(\d+)\s*;/);
-    if (!countMatch) return uvs;
-
-    const count = parseInt(countMatch[1]);
-    const data = block.substring(countMatch.index! + countMatch[0].length);
-
-    // Match u;v; patterns
-    const regex = /(-?[\d.]+)\s*;\s*(-?[\d.]+)\s*;/g;
-    let match;
-
-    while ((match = regex.exec(data)) !== null && uvs.length < count * 2) {
-      uvs.push(parseFloat(match[1]));
-      uvs.push(parseFloat(match[2]));
+    try {
+      const scan = new XScanner(block);
+      const count = scan.readInt();
+      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) return uvs;
+      for (let i = 0; i < count; i++) {
+        uvs.push(scan.readFloat(), scan.readFloat());
+      }
+      return uvs;
+    } catch {
+      return uvs;
     }
-
-    return uvs;
   }
 
   parseMeshNormals(block: string): number[] {
     const normals: number[] = [];
-    // First number is count
-    const countMatch = block.match(/^\s*(\d+)\s*;/);
-    if (!countMatch) return normals;
-
-    const count = parseInt(countMatch[1]);
-    const data = block.substring(countMatch.index! + countMatch[0].length);
-
-    // Match x;y;z; patterns
-    const regex = /(-?[\d.]+)\s*;\s*(-?[\d.]+)\s*;\s*(-?[\d.]+)\s*;/g;
-    let match;
-
-    while ((match = regex.exec(data)) !== null && normals.length < count * 3) {
-      normals.push(parseFloat(match[1]));
-      normals.push(parseFloat(match[2]));
-      normals.push(parseFloat(match[3]));
+    try {
+      const scan = new XScanner(block);
+      const count = scan.readInt();
+      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) return normals;
+      for (let i = 0; i < count; i++) {
+        normals.push(scan.readFloat(), scan.readFloat(), scan.readFloat());
+      }
+      // Skip face-normal index data (not needed if we have per-vertex normals)
+      return normals;
+    } catch {
+      return normals;
     }
-
-    return normals;
   }
 
   extractTextureName(block: string): string | null {

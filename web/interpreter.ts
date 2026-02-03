@@ -815,9 +815,9 @@ Function __Step%()
 End Function`,
 
   xInspectRender: `; DirectX .x inspect + render (text format)
-; Suggested path: assets/model.x
+; Suggested path: assets/cup.x (SCPCB) or assets/model.x
 
-Local path$ = "assets/model.x"
+Local path$ = "assets/cup.x"
 
 Print "== X Inspect =="
 Print "Path: " + path$
@@ -1004,7 +1004,7 @@ const exampleInfo: Record<string, ExampleInfo> = {
     title: "X: Inspect + Render",
     prefersTab: "canvas",
     defaultTimeoutMs: 0,
-    requires: ["assets/model.x"],
+    requires: ["assets/cup.x (or assets/model.x)"],
     optional: ["Any referenced textures (same folder or basename-matched)"],
     notes: ["Only text .x is supported in the interpreter path (header like xof 0303txt)."],
   },

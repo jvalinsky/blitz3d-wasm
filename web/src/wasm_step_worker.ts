@@ -1,3 +1,5 @@
+import { stubMissingImports } from "./shared/wasm_imports.ts";
+
 type StepRequest = {
   wasm: ArrayBuffer;
   exportName: string;
@@ -18,14 +20,6 @@ const safeErrorString = (e: unknown) => {
     return String(e);
   } catch {
     return "unknown error";
-  }
-};
-
-const stubMissingImports = (imports: any, module: WebAssembly.Module) => {
-  for (const imp of WebAssembly.Module.imports(module)) {
-    if (!(imp.module in imports)) imports[imp.module] = {};
-    if (imp.name in imports[imp.module]) continue;
-    if (imp.kind === "function") imports[imp.module][imp.name] = (..._args: any[]) => 0;
   }
 };
 
@@ -63,7 +57,10 @@ self.onmessage = async (ev: MessageEvent<StepRequest>) => {
       throw err;
     };
 
-    stubMissingImports(imports, module);
+    stubMissingImports(imports, module, {
+      preferEnvForBlitz3d: true,
+      caseInsensitive: true,
+    });
     const instance = await WebAssembly.instantiate(module, imports);
 
     if (req.runInit) {
@@ -90,4 +87,3 @@ self.onmessage = async (ev: MessageEvent<StepRequest>) => {
     respond({ ok: false, exportName: req.exportName, ms, error: safeErrorString(e) });
   }
 };
-

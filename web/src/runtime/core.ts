@@ -1,10 +1,21 @@
 /**
- * Blitz3D Runtime Core Module
- * Essential functionality and initialization
+ * Blitz3D runtime core (browser).
+ *
+ * This module owns the shared WASM state (memory/exports) and browser resources
+ * (canvas, 2D context). Other subsystems (File I/O, Graphics, Audio) attach
+ * themselves to a single `Blitz3DCore` instance.
  */
 import JSZip from "jszip";
-import { EntityTableView } from "../shared/entity_table";
+import { EntityTableView } from "../shared/entity_table.ts";
 
+/**
+ * Shared state for a single Blitz3D runtime instance.
+ *
+ * The core is created early, then:
+ * - `init(canvasId)` wires DOM resources
+ * - WASM instantiation fills `memory` and `exports`
+ * - runtime subsystems attach themselves via `core.fileIO`, `core.graphics`, etc.
+ */
 export class Blitz3DCore {
   [key: string]: any;
   allocString: ((str: string) => number) | null;
@@ -50,7 +61,7 @@ export class Blitz3DCore {
   }
 
   // Performance monitoring
-  beginFrame() {
+  beginFrame(): void {
     const now = performance.now();
     if (this.lastFrameTime > 0) {
       const frameTime = now - this.lastFrameTime;
@@ -69,7 +80,13 @@ export class Blitz3DCore {
     this.frameCount++;
   }
 
-  getPerformanceStats() {
+  getPerformanceStats(): {
+    fps: string;
+    frameCount: number;
+    heapAllocations: number;
+    stringAllocations: number;
+    memoryUsage: string;
+  } {
     return {
       fps: this.fps.toFixed(1),
       frameCount: this.frameCount,
@@ -82,13 +99,13 @@ export class Blitz3DCore {
   }
 
   // Linear Congruential Generator for seeded random
-  seedRnd(seed) {
+  seedRnd(seed: number): void {
     this.randomSeed = seed;
     this.randomState = seed;
   }
 
   // Returns float in [0, 1)
-  rndFloat(min, max) {
+  rndFloat(min?: number, max?: number): number {
     if (min === undefined) min = 0;
     if (max === undefined) max = 1;
 
@@ -105,11 +122,16 @@ export class Blitz3DCore {
   }
 
   // Returns integer in [min, max]
-  rndInt(min, max) {
+  rndInt(min: number, max: number): number {
     return Math.floor(this.rndFloat(min, max + 1));
   }
 
-  init(canvasId) {
+  /**
+   * Initialize DOM resources for the runtime.
+   *
+   * This must be called before initializing graphics (`Graphics3D`).
+   */
+  init(canvasId: string): void {
     const existingCanvas = document.getElementById(canvasId) as
       | HTMLCanvasElement
       | null;

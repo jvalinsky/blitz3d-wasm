@@ -1,5 +1,6 @@
 import { normalizePath, openFileCandidates } from "../shared/path_alias.ts";
 import { VideoRuntime } from "../runtime/video.ts";
+import { stubMissingImports } from "../shared/wasm_imports.ts";
 
 type BbdbgFileInfo = { id: number; path: string };
 type BbdbgFunctionInfo = {
@@ -504,23 +505,6 @@ const readLineToWasmString = (h: number) => {
   }
   maybePostStatus();
   return writeString(memory, stringAlloc, latin1Decoder.decode(f.data.subarray(start, end)));
-};
-
-const stubMissingImports = (imports: any, m: WebAssembly.Module) => {
-  const required = WebAssembly.Module.imports(m);
-  for (const imp of required) {
-    if (!(imp.module in imports)) imports[imp.module] = {};
-    if (!(imp.name in imports[imp.module])) {
-      if (imp.kind === "function") {
-        const key = `missing:${imp.module}.${imp.name}`;
-        imports[imp.module][imp.name] = (..._args: any[]) => {
-          bump(key);
-          maybePostStatus();
-          return 0;
-        };
-      }
-    }
-  }
 };
 
 const buildImports = () => {
@@ -1080,7 +1064,16 @@ const instantiate = async (wasmUrl: string) => {
     (self as any).postMessage({ type: "bbdbgRequired", required: needs });
   } catch {}
   const imports = buildImports();
-  stubMissingImports(imports, module);
+  stubMissingImports(imports, module, {
+    preferEnvForBlitz3d: true,
+    caseInsensitive: true,
+    ensureEnvMemory: true,
+    stubMemory: true,
+    onCallMissingFunction: ({ key }) => {
+      bump(`missing:${key}`);
+      maybePostStatus();
+    },
+  });
   status.stage = "instantiate:wasm";
   postStatus();
   instance = await WebAssembly.instantiate(module, imports);

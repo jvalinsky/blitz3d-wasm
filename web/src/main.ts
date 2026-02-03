@@ -1,3 +1,5 @@
+import "./runtime/globals.ts";
+
 import { Blitz3DCore } from "./runtime/core.ts";
 import { Blitz3DGraphics } from "./runtime/graphics/index.ts";
 import { Blitz3DFileIO } from "./runtime/fileio.ts";
@@ -5,6 +7,7 @@ import { initCmdBuf } from "./shared/command_buffer.ts";
 import { assertCmdBufAbi } from "./shared/cmdbuf_abi.ts";
 import { EntityTableView } from "./shared/entity_table.ts";
 import { BootStateMachine } from "./shared/boot_state_machine.ts";
+import { stubMissingImports } from "./shared/wasm_imports.ts";
 
 type LoaderElements = {
   overlay: HTMLElement;
@@ -896,37 +899,6 @@ const setupImports = (
   return imports;
 };
 
-const stubMissingImports = (imports: any, module: WebAssembly.Module) => {
-  const requiredImports = WebAssembly.Module.imports(module);
-  const callCounts: Record<string, number> = {};
-
-  requiredImports.forEach((imp) => {
-    if (!(imp.module in imports)) {
-      imports[imp.module] = {};
-    }
-    if (!(imp.name in imports[imp.module])) {
-      if (imp.kind === "function") {
-        console.warn(
-          `[Runtime] Stubbing missing import: ${imp.module}.${imp.name}`,
-        );
-        const key = `${imp.module}.${imp.name}`;
-        imports[imp.module][imp.name] = (..._args: any[]) => {
-          callCounts[key] = (callCounts[key] ?? 0) + 1;
-          // Avoid log spam: only log the first call for each missing import.
-          if (callCounts[key] === 1) {
-            console.warn(`[WASM] Called missing function: ${key}`);
-          }
-          return 0;
-        };
-      } else if (imp.kind === "memory") {
-        console.warn(
-          `[Runtime] Missing memory import: ${imp.module}.${imp.name}`,
-        );
-      }
-    }
-  });
-};
-
 const instantiateWasm = async (
   buffer: ArrayBuffer,
   imports: any,
@@ -937,7 +909,23 @@ const instantiateWasm = async (
   await new Promise((r) => setTimeout(r, 10));
 
   const wasmModule = await WebAssembly.compile(buffer);
-  stubMissingImports(imports, wasmModule);
+  const callCounts: Record<string, number> = {};
+  stubMissingImports(imports, wasmModule, {
+    caseInsensitive: true,
+    onStub: ({ module, name, kind }) => {
+      if (kind === "function") {
+        console.warn(`[Runtime] Stubbing missing import: ${module}.${name}`);
+      } else if (kind === "memory") {
+        console.warn(`[Runtime] Missing memory import: ${module}.${name}`);
+      }
+    },
+    onCallMissingFunction: ({ key }) => {
+      callCounts[key] = (callCounts[key] ?? 0) + 1;
+      if (callCounts[key] === 1) {
+        console.warn(`[WASM] Called missing function: ${key}`);
+      }
+    },
+  });
 
   onProgress(0.95, "Instantiating WASM");
   // Yield before instantiation

@@ -34,6 +34,8 @@
     "web:build": "cd web && deno task build",
     "web:build:test": "cd web && ./build-test.ts",
     "web:preview": "cd web && deno task preview",
+    "docs:runtime": "deno doc --private web/src/runtime/core.ts web/src/runtime/fileio.ts web/src/runtime/graphics/index.ts web/src/runtime/graphics/types.ts web/src/runtime/globals.ts web/src/shared/wasm_imports.ts",
+    "docs:runtime:html": "deno doc --html --name=\"Blitz3D-WASM Runtime\" --output=docs/generated/runtime --private web/src/runtime/core.ts web/src/runtime/fileio.ts web/src/runtime/graphics/index.ts web/src/runtime/graphics/types.ts web/src/runtime/globals.ts web/src/shared/wasm_imports.ts",
     "scpcb:compile:main": "deno run -A Tools/compile_scpcb_main.ts",
     "scpcb:compile:main:debug": "deno run -A Tools/compile_scpcb_main.ts --debug --source-map",
     "deploy:staging": "deno task assets:scpcb:convert && deno task test:web:build",

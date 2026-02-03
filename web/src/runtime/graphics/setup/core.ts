@@ -61,8 +61,6 @@ export function setupCore(graphics: Blitz3DGraphicsInterface, imports: any) {
                     cam.updateProjectionMatrix();
                     console.log("Camera projection updated");
                 }
-            } else {
-                console.warn("Graphics3D: No camera to update aspect ratio");
             }
         } else {
             console.error("Graphics3D: renderer is not initialized!");

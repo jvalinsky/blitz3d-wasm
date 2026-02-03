@@ -1,134 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blitz3D WASM Interpreter</title>
     <link rel="stylesheet" href="interpreter.css">
-    <script>
-        // Immediate test to verify JS is working
-        console.log('Inline script executing');
-        window.addEventListener('DOMContentLoaded', () => {
-            console.log('DOMContentLoaded fired');
-            const output = document.getElementById('output');
-            if (output) {
-                const testDiv = document.createElement('div');
-                testDiv.className = 'output-line success';
-                testDiv.textContent = 'JavaScript is working!';
-                output.appendChild(testDiv);
-            }
-        });
-    </script>
-    <script type="module" src="interpreter.js"></script>
-    <script>
-        // Global error handler to catch WASM loading errors
-        window.addEventListener('error', (e) => {
-            console.error('Global error:', e);
-            const output = document.getElementById('output');
-            if (output) {
-                const line = document.createElement('div');
-                line.className = 'output-line error';
-                line.textContent = 'Error: ' + e.message;
-                output.appendChild(line);
-            }
-        });
-        
-        // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (e) => {
-            console.error('Unhandled rejection:', e);
-            const output = document.getElementById('output');
-            if (output) {
-                const line = document.createElement('div');
-                line.className = 'output-line error';
-                line.textContent = 'Promise rejection: ' + e.reason;
-                output.appendChild(line);
-            }
-        });
-    </script>
-</head>
-<body>
+    <script type="module" src="interpreter.ts"></script>
+  </head>
+  <body>
     <header>
-        <h1>Blitz3D WASM Interpreter</h1>
-        <p>Write Blitz3D BASIC code and run it in your browser</p>
+      <h1>Blitz3D WASM Interpreter</h1>
+      <p>Write Blitz3D BASIC code and run it in your browser</p>
     </header>
-    
+
     <div class="main-container">
-        <div class="editor-panel">
-            <div class="panel-header">
-                <span class="panel-title">Source Code</span>
-                <div style="display: flex; gap: 0.5rem;">
-                    <select id="example-select">
-                        <option value="">-- Examples --</option>
-                        <option value="hello">Hello World</option>
-                        <option value="languageBasics">Language Basics</option>
-                        <option value="arrays">Arrays</option>
-                        <option value="customTypes">Custom Types + For Each</option>
-                        <option value="dataReadRestore">Data/Read/Restore</option>
-                        <option value="stringsMath">Strings + Math</option>
-                        <option value="graphics">Graphics Demo</option>
-                        <option value="rotatingCube">Rotating Cube Demo</option>
-                        <option value="rotatingCubeEdges">Rotating Cube (Blue + Edges)</option>
-                        <option value="rotatingCubeColor">Rotating Cube + Color Cycle</option>
-                        <option value="hud2D">2D HUD Demo</option>
-                        <option value="inputHud">Input HUD Demo</option>
-                        <option value="image2D">2D Image Demo</option>
-                        <option value="imageDebug">Image Debug (PNG/JPG)</option>
-                        <option value="textureCube">Textured Cube Demo</option>
-                        <option value="vfsFileIO">VFS File I/O Demo</option>
-                        <option value="fogCube">Fog Demo</option>
-                        <option value="proceduralMesh">Procedural Mesh Demo</option>
-                    </select>
-                    <input id="timeout-ms" type="number" min="0" step="50" value="2000"
-                        title="Watchdog timeout (ms). 0 disables." style="width: 120px;" />
-                    <button class="btn btn-secondary" onclick="clearOutput()">Clear</button>
-                    <button class="btn btn-secondary" id="stop-btn" onclick="stopRun()" disabled>Stop</button>
-                    <button class="btn btn-primary" id="run-btn">Run</button>
-                </div>
-            </div>
-            <textarea id="editor" placeholder="' Type your Blitz3D BASIC code here..."></textarea>
-            <div class="vfs-panel">
-                <div class="vfs-header">
-                    <span class="panel-title">Virtual Filesystem</span>
-                    <div class="vfs-actions">
-                        <input id="vfs-prefix" class="vfs-prefix" type="text" value="assets/"
-                            title="Upload prefix (e.g. assets/)" />
-                        <input id="vfs-upload" type="file" multiple />
-                        <button class="btn btn-secondary" id="vfs-clear-btn" title="Clear VFS">Clear</button>
-                    </div>
-                </div>
-                <div class="vfs-hint">
-                    Selecting files uploads them immediately. Refer to them by path (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code>LoadTexture</code>.
-                </div>
-                <div id="vfs-list" class="vfs-list"></div>
-            </div>
+      <div class="editor-panel">
+        <div class="panel-header">
+          <span class="panel-title">Source Code</span>
+          <div style="display: flex; gap: 0.5rem">
+            <select id="example-select">
+              <option value="">-- Examples --</option>
+              <option value="hello">Hello World</option>
+              <option value="languageBasics">Language Basics</option>
+              <option value="arrays">Arrays</option>
+              <option value="customTypes">Custom Types + For Each</option>
+              <option value="dataReadRestore">Data/Read/Restore</option>
+              <option value="stringsMath">Strings + Math</option>
+              <option value="graphics">Graphics Demo</option>
+              <option value="rotatingCube">Rotating Cube Demo</option>
+              <option value="rotatingCubeEdges">
+                Rotating Cube (Blue + Edges)
+              </option>
+              <option value="rotatingCubeColor">
+                Rotating Cube + Color Cycle
+              </option>
+              <option value="hud2D">2D HUD Demo</option>
+              <option value="inputHud">Input HUD Demo</option>
+              <option value="image2D">2D Image Demo</option>
+              <option value="imageDebug">Image Debug (PNG/JPG)</option>
+              <option value="textureCube">Textured Cube Demo</option>
+              <option value="vfsFileIO">VFS File I/O Demo</option>
+              <option value="fogCube">Fog Demo</option>
+              <option value="proceduralMesh">Procedural Mesh Demo</option>
+              <option value="b3dInspectRender">B3D: Inspect + Render</option>
+              <option value="xInspectRender">X: Inspect + Render</option>
+              <option value="rmeshInspectRender">
+                RMESH: Inspect + Render
+              </option>
+            </select>
+            <input
+              id="timeout-ms"
+              type="number"
+              min="0"
+              step="50"
+              value="2000"
+              title="Watchdog timeout (ms). 0 disables."
+              style="width: 120px"
+            />
+            <button class="btn btn-secondary" id="clear-btn">Clear</button>
+            <button class="btn btn-secondary" id="stop-btn" disabled>
+              Stop
+            </button>
+            <button class="btn btn-primary" id="run-btn">Run</button>
+          </div>
         </div>
-        
-        <div class="output-panel">
-            <div class="tabs">
-                <button class="tab active" onclick="showTab('output')">Output</button>
-                <button class="tab" onclick="showTab('canvas')">3D Canvas</button>
+        <textarea
+          id="editor"
+          placeholder="' Type your Blitz3D BASIC code here..."
+        ></textarea>
+        <div class="vfs-panel">
+          <div class="vfs-header">
+            <span class="panel-title">Virtual Filesystem</span>
+            <div class="vfs-actions">
+              <input
+                id="vfs-prefix"
+                class="vfs-prefix"
+                type="text"
+                value="assets/"
+                title="Upload prefix (e.g. assets/)"
+              />
+              <input id="vfs-upload" type="file" multiple />
+              <button
+                class="btn btn-secondary"
+                id="vfs-clear-btn"
+                title="Clear VFS"
+              >
+                Clear
+              </button>
             </div>
-            
-            <div id="output-tab" class="tab-content active">
-                <div id="output">
-                    <div class="output-line info">Initializing interpreter...</div>
-                </div>
-            </div>
-            
-            <div id="canvas-tab" class="tab-content">
-                <div id="canvas-container">
-                    <canvas id="game-canvas"></canvas>
-                    <canvas id="hud-canvas"></canvas>
-                </div>
-            </div>
+          </div>
+          <div class="vfs-hint">
+            Selecting files uploads them immediately. Refer to them by path
+            (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code
+            >LoadTexture</code>.
+          </div>
+          <div id="vfs-list" class="vfs-list"></div>
         </div>
+      </div>
+
+      <div class="output-panel">
+        <div class="tabs">
+          <button class="tab active" id="tab-output" data-tab="output">
+            Output
+          </button>
+          <button class="tab" id="tab-canvas" data-tab="canvas">
+            3D Canvas
+          </button>
+        </div>
+
+        <div id="output-tab" class="tab-content active">
+          <div id="output">
+            <div class="output-line info">Initializing interpreter...</div>
+          </div>
+        </div>
+
+        <div id="canvas-tab" class="tab-content">
+          <div id="canvas-container">
+            <canvas id="game-canvas"></canvas>
+            <canvas id="hud-canvas"></canvas>
+          </div>
+        </div>
+      </div>
     </div>
-    
+
     <div class="status-bar">
-        <div class="status-item">
-            <span class="status-indicator" id="status-indicator"></span>
-            <span id="status-text">Loading...</span>
-        </div>
+      <div class="status-item">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span id="status-text">Loading...</span>
+      </div>
     </div>
-</body>
+  </body>
 </html>

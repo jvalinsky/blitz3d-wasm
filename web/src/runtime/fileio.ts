@@ -105,6 +105,16 @@ export class Blitz3DFileIO {
   _missingGlobalLastMs: number;
   _registeredCount: number;
 
+  /**
+   * File I/O + Virtual Filesystem for the Blitz3D web runtime.
+   *
+   * Responsibilities:
+   * - Maintain an in-memory virtual filesystem (VFS) for uploaded/preloaded assets
+   * - Provide handle-based file reading for WASM imports (ReadFile/ReadByte/etc)
+   * - Optionally preload assets based on a manifest (SCPCB loader)
+   *
+   * The interpreter uses this as its VFS backing store.
+   */
   constructor(core: Core = { readString: () => "", allocString: () => 0 }) {
     this.core = core;
     this.fileSystem = new Map();
@@ -637,6 +647,34 @@ export class Blitz3DFileIO {
   }
 
   /**
+   * Get the total byte size of an *open* file handle.
+   *
+   * Note: `fileSize(path)` queries by path. This helper exists for loaders that
+   * read from a handle returned by `openFile()`.
+   */
+  fileSizeFromHandle(handle: number): number {
+    const file = this.openFiles.get(handle);
+    return file?.size ?? 0;
+  }
+
+  /**
+   * Read all remaining bytes from an open handle.
+   *
+   * This is primarily intended for JS-side loaders (B3D/X/RMesh) that need the
+   * entire file payload in-memory.
+   */
+  readAllBytes(handle: number): Uint8Array {
+    const file = this.openFiles.get(handle);
+    if (!file || file.mode !== "r") return new Uint8Array(0);
+    const start = Math.max(0, file.position | 0);
+    const end = Math.max(start, file.size | 0);
+    const out = file.data.slice(start, end);
+    file.position = end;
+    file.eof = true;
+    return out;
+  }
+
+  /**
    * Read a byte from a file
    * @param {number} handle - File handle
    * @returns {number} Byte value (0-255), -1 on EOF
@@ -760,9 +798,7 @@ export class Blitz3DFileIO {
   
 
   /**
-   * Read a single line from a file (up to 
- or ).
-
+   * Read a single line from a file (up to `\n` or `\r\n`).
    * @param {number} handle - File handle
    * @returns {number} Pointer to string in WASM memory (0 on failure)
    */
@@ -783,8 +819,7 @@ export class Blitz3DFileIO {
 
     while (end < file.size) {
       const b = file.data[end];
-      if (b === 10 || b === 13) break; // 
- or 
+      if (b === 10 || b === 13) break; // \n or \r
       end++;
     }
 

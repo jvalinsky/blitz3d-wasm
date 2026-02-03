@@ -24,6 +24,21 @@ const contentTypes: Record<string, string> = {
   ".ico": "image/x-icon",
 };
 
+const cacheControlFor = (urlPath: string, ext: string): string => {
+  // HTML changes frequently and references hashed assets. If it is cached while
+  // the server deploys a new build, clients can end up requesting old hashed
+  // chunk URLs that no longer exist -> dynamic import 404s.
+  if (ext === ".html") return "no-store";
+
+  // Vite hashed assets are safe to cache forever.
+  if (urlPath.startsWith("/assets/")) {
+    return "public, max-age=31536000, immutable";
+  }
+
+  // Everything else (wasm, manifest, options.ini, etc): revalidate each load.
+  return "no-cache";
+};
+
 const handler = async (req: Request) => {
   const url = new URL(req.url);
   let path = url.pathname;
@@ -46,6 +61,7 @@ const handler = async (req: Request) => {
     const headers = new Headers({
       "content-type": contentType,
       "content-length": stat.size.toString(),
+      "cache-control": cacheControlFor(path, ext),
     });
     return new Response(file.readable, { headers });
   } catch {

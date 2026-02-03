@@ -82,6 +82,59 @@ export function setup2D(graphics: Blitz3DGraphicsInterface, imports: any) {
     imports.env.And = (a: number, b: number) => (a | 0) & (b | 0);
     imports.env.Or = (a: number, b: number) => (a | 0) | (b | 0);
 
+    // ------------------------------------------------------------------
+    // Blitz3D API aliases
+    //
+    // The compiler/runtime historically used `Rect/Text/Cls/...` names, but the
+    // modern runtime implementation lives under `js_*`. Provide aliases so
+    // interpreter demos (and older compiled modules) render correctly.
+    // ------------------------------------------------------------------
+
+    imports.env.Graphics = (width: number, height: number, _depth: number) => {
+        // 2D mode: no need to init 3D renderer, but we do want deterministic sizes.
+        const w = Math.max(1, width | 0);
+        const h = Math.max(1, height | 0);
+
+        const c = graphics.core.canvas as HTMLCanvasElement | undefined | null;
+        if (c) {
+            c.width = w;
+            c.height = h;
+        }
+        const tc = graphics.core.textCanvas as HTMLCanvasElement | undefined | null;
+        if (tc) {
+            tc.width = w;
+            tc.height = h;
+        }
+    };
+
+    // Core 2D drawing aliases.
+    imports.env.ClsColor = (r: number, g: number, b: number) => imports.env.js_ClsColor(r, g, b);
+    imports.env.Cls = () => imports.env.js_Cls();
+    imports.env.Color = (r: number, g: number, b: number) => imports.env.js_Color(r, g, b);
+    imports.env.GetColor = (x: number, y: number) => imports.env.js_GetColor(x, y);
+    imports.env.ColorRed = () => imports.env.js_ColorRed();
+    imports.env.ColorGreen = () => imports.env.js_ColorGreen();
+    imports.env.ColorBlue = () => imports.env.js_ColorBlue();
+
+    imports.env.Rect = (x: number, y: number, w: number, h: number, solid: number) =>
+        imports.env.js_Rect(x, y, w, h, solid);
+    imports.env.Oval = (x: number, y: number, w: number, h: number, solid: number) =>
+        imports.env.js_Oval(x, y, w, h, solid);
+    imports.env.Line = (x1: number, y1: number, x2: number, y2: number) =>
+        imports.env.js_Line(x1, y1, x2, y2);
+    // Blitz's `Text x,y,"msg",centerX[,centerY]` is common; wire to js_Text.
+    imports.env.Text = (x: number, y: number, txtPtr: number, centerX: number = 0, centerY: number = 0) =>
+        imports.env.js_Text(x, y, txtPtr, centerX, centerY);
+    imports.env.StringWidth = (txtPtr: number) => imports.env.js_StringWidth(txtPtr);
+    imports.env.StringHeight = (txtPtr: number) => imports.env.js_StringHeight(txtPtr);
+    imports.env.FontWidth = () => imports.env.js_FontWidth();
+    imports.env.FontHeight = () => imports.env.js_FontHeight();
+
+    imports.env.LoadFont = (namePtr: number, size: number, bold: number, italic: number, underline: number) =>
+        imports.env.js_LoadFont(namePtr, size, bold, italic, underline);
+    imports.env.SetFont = (fontId: number) => imports.env.js_SetFont(fontId);
+    imports.env.FreeFont = (fontId: number) => imports.env.js_FreeFont(fontId);
+
     imports.env.js_Rect = (x: number, y: number, w: number, h: number, solid: number) => {
         const ctx = getContext();
         if (ctx) {
@@ -131,11 +184,16 @@ export function setup2D(graphics: Blitz3DGraphicsInterface, imports: any) {
             let finalX = x;
             let finalY = y;
 
-            if (cx) {
+            // Treat these as Blitz-style booleans (usually 0 / 1 / -1). Some codegen
+            // paths can accidentally pass non-boolean values; avoid unintended centering.
+            const centerX = ((cx | 0) === 1) || ((cx | 0) === -1);
+            const centerY = ((cy | 0) === 1) || ((cy | 0) === -1);
+
+            if (centerX) {
                 const metrics = ctx.measureText(txt);
                 finalX -= metrics.width / 2;
             }
-            if (cy) {
+            if (centerY) {
                 finalY -= graphics.currentFontSize / 2;
             }
 

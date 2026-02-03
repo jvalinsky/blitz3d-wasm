@@ -24,12 +24,23 @@ import {
     PickResult,
     AAFontData,
     ENGINE_ENTITY_TYPE,
-    Blitz3DGraphicsInterface
+    Blitz3DGraphicsInterface,
+    AnimationSystem,
 } from "./types.ts";
 
 import { InputManager } from "./input.ts";
 import { setupAllImports } from "./setup/index.ts";
 
+/**
+ * Blitz3D graphics runtime for the web.
+ *
+ * This class is responsible for:
+ * - Installing WASM imports for graphics (`setupImports()`)
+ * - Managing a Three.js scene (legacy path) or an engine-backed manager (thin client)
+ * - Keeping runtime entity IDs stable and mapping them to render objects
+ *
+ * The SCPCB loader and the interpreter both use this class.
+ */
 export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     [key: string]: unknown;
     core: GraphicsCore;
@@ -48,7 +59,7 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     wasmManager: WasmSceneManager | null = null;
     // New native WebGL2 scene manager (Three.js-free)
     nativeManager: SceneManager | null = null;
-    inputManager: InputManager | null = null; // Added typed property
+    inputManager: InputManager | null = null;
 
     // Three.js
     renderer: THREE.WebGLRenderer | null = null;
@@ -56,8 +67,8 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     camera: THREE.Camera | null = null;
 
     // Animation
-    animationSystem: any = null; // Typed properly if possible
-    animMixers: Set<any> = new Set();
+    animationSystem: AnimationSystem | null = null;
+    animMixers: Set<THREE.AnimationMixer> = new Set();
 
     // State
     _stopped: boolean = false;
@@ -66,11 +77,11 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     frameCount: number = 0;
 
     // Resources
-    entities: Record<number, any> = {};
-    textures: Record<number, any> = {};
-    images: Record<number, any> = {};
-    surfaces: Record<number, any> = {};
-    brushes: Record<number, any> = {};
+    entities: Record<number, THREE.Object3D> = {};
+    textures: Record<number, Blitz3DTexture> = {};
+    images: Record<number, Blitz3DImage> = {};
+    surfaces: Record<number, unknown> = {};
+    brushes: Record<number, Blitz3DBrush> = {};
 
     // Audio
     audioSystem: Blitz3DAudio | null = null;
@@ -86,7 +97,9 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     constructor(core: GraphicsCore) {
         // ... existing constructor ...
         this.core = core;
-        this.animationSystem = new this.Blitz3DAnimation(this as any, core);
+        this.animationSystem = new this.Blitz3DAnimation(this as any, core) as unknown as AnimationSystem;
+        // Ensure input is available for KeyDown/MouseX/etc (interpreter path).
+        this.inputManager = new InputManager(this as any);
         // ...
         // Engine dual storage
         this._engine = null;
@@ -220,10 +233,15 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
 
         const isHeadless = (globalThis as any).__BLITZ3D_HEADLESS === true;
         const hasWebGL = (() => {
+            // IMPORTANT: never probe WebGL support by calling getContext() on the
+            // actual render canvas, because that would permanently claim a context
+            // (e.g. "webgl") and Three may later request a different type
+            // (e.g. "webgl2"), causing "Canvas has an existing context of a different type".
             try {
-                const c = this.core?.canvas;
-                if (!c || typeof c.getContext !== "function") return false;
-                return Boolean(c.getContext("webgl") || c.getContext("webgl2"));
+                if (isHeadless) return false;
+                if (typeof document === "undefined") return false;
+                const probe = document.createElement("canvas");
+                return Boolean(probe.getContext("webgl2") || probe.getContext("webgl"));
             } catch {
                 return false;
             }

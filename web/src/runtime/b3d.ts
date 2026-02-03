@@ -10,13 +10,20 @@ import type { Blitz3DFileIO } from "./fileio.ts";
 type B3DTexture = {
   name: string;
   flags?: number;
+  /** Blitz3D texture blend mode (0..3) as stored in TEXS. */
+  blend?: number;
+  position?: { u: number; v: number };
+  scale?: { u: number; v: number };
+  rotation?: number;
 };
 
 type B3DBrush = {
+  name?: string;
   color: { r: number; g: number; b: number };
   alpha: number;
   shininess: number;
   blend: number;
+  fx?: number;
   textureIds?: number[];
 };
 
@@ -184,7 +191,8 @@ export class B3DLoader {
       .map((id) => b3dData.textures[id])
       .filter((t): t is B3DTexture => !!t && typeof t.name === "string");
 
-    const classify = (name: string) => {
+    const classify = (t: B3DTexture) => {
+      const name = t.name;
       const n = name.toLowerCase().replace(/\\/g, "/");
       const leaf = n.split("/").pop() ?? n;
       const base = leaf.replace(/\.[a-z0-9]+$/i, "");
@@ -203,6 +211,14 @@ export class B3DLoader {
       if (isNormal) score -= 80;
       if (isLight) score -= 40;
       if (isSpec) score -= 30;
+
+      // TEXS blend is a strong hint for multi-texture setups:
+      // Multiply/add textures are frequently used as lightmaps/detail maps.
+      const blend = Number(t.blend);
+      if (Number.isFinite(blend)) {
+        if (blend === 2) score -= 60; // multiply
+        else if (blend === 3) score -= 40; // add
+      }
       return { isNormal, score };
     };
 
@@ -212,7 +228,7 @@ export class B3DLoader {
     let bestNormalScore = -Infinity;
 
     for (const t of textures) {
-      const { isNormal, score } = classify(t.name);
+      const { isNormal, score } = classify(t);
       if (score > bestDiffuseScore) {
         bestDiffuseScore = score;
         bestDiffuse = t;
@@ -224,7 +240,7 @@ export class B3DLoader {
     }
 
     // If the best diffuse candidate is actually a strong normal candidate, drop it.
-    if (bestDiffuse && classify(bestDiffuse.name).isNormal) {
+    if (bestDiffuse && classify(bestDiffuse).isNormal) {
       bestDiffuse = undefined;
     }
 
@@ -1061,10 +1077,15 @@ export class B3DLoader {
       const brush = b3dData.brushes[meshData.brushIndex];
       material = await this.createMaterial(brush, b3dData);
     } else {
-      material = new THREE.MeshStandardMaterial({
+      material = new THREE.MeshPhongMaterial({
         color: 0x888888,
         side: THREE.DoubleSide,
       });
+    }
+
+    // If the mesh includes vertex colors, enable them on the material.
+    if (meshData.colors && meshData.colors.length > 0) {
+      (material as THREE.MeshPhongMaterial).vertexColors = true;
     }
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -1077,7 +1098,7 @@ export class B3DLoader {
   async createMaterial(
     brush: B3DBrush,
     b3dData: B3DParsedData,
-  ): Promise<THREE.MeshStandardMaterial> {
+  ): Promise<THREE.MeshPhongMaterial> {
     let diffuse: THREE.Texture | undefined;
     let normal: THREE.Texture | undefined;
 
@@ -1117,20 +1138,19 @@ export class B3DLoader {
       }
     }
 
-    const materialOptions: THREE.MeshStandardMaterialParameters = {
+    const materialOptions: THREE.MeshPhongMaterialParameters = {
       color: new THREE.Color(brush.color.r, brush.color.g, brush.color.b),
       opacity: brush.alpha,
       transparent: brush.alpha < 1,
       side: THREE.DoubleSide,
     };
 
-    // `shininess` is a legacy Phong-ish concept; MeshStandardMaterial uses roughness/metalness.
-    // Treat higher shininess as lower roughness for a reasonable approximation.
+    // Blitz3D brush shininess is roughly normalized; MeshPhongMaterial expects [0..100].
     const s = Number(brush.shininess);
     if (Number.isFinite(s)) {
       const clamped = Math.max(0, Math.min(1, s));
-      materialOptions.roughness = 1 - clamped;
-      materialOptions.metalness = 0;
+      materialOptions.shininess = clamped * 100;
+      materialOptions.specular = new THREE.Color(0.2, 0.2, 0.2);
     }
 
     if (brush.blend === 1) {
@@ -1146,7 +1166,7 @@ export class B3DLoader {
       materialOptions.normalMap = normal;
     }
 
-    return new THREE.MeshStandardMaterial(materialOptions);
+    return new THREE.MeshPhongMaterial(materialOptions);
   }
 
   setupAnimation(root: THREE.Group, animation: any) {

@@ -953,15 +953,15 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     const entity = graphics.entities[ent];
     const texture = graphics.textures[tex];
     if (entity && texture) {
-      entity.traverse((child: THREE.Object3D) => { // Added type annotation
-        if ((child as THREE.Mesh).isMesh) {
-          graphics.ensureUniqueMaterial(child);
-          const mat = (child as THREE.Mesh).material as any;
-          if (Array.isArray(mat)) return;
-          mat.map = texture.texture;
-          mat.needsUpdate = true;
-        }
-      });
+          entity.traverse((child: THREE.Object3D) => {
+            if ((child as THREE.Mesh).isMesh) {
+              graphics.ensureUniqueMaterial(child);
+              const mat = (child as THREE.Mesh).material as any;
+              if (Array.isArray(mat)) return;
+              mat.map = texture.texture;
+              mat.needsUpdate = true;
+            }
+          });
     }
     graphics.engineCall(
       ent,
@@ -984,10 +984,6 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       entity.renderOrder = order;
     }
   };
-
-  // ... and so on. There are more functions.
-  // I will append the rest of the functions in a subsequent edit or include them here.
-  // Including more for completeness.
 
   imports.env.NameEntity = (ent: number, name: string) => {
     const entity = graphics.entities[ent];

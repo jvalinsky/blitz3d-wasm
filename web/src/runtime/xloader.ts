@@ -332,7 +332,13 @@ export class XLoader {
           continue;
         }
         const idx: number[] = new Array(n);
-        for (let j = 0; j < n; j++) idx[j] = scan.readInt();
+        let ok = true;
+        for (let j = 0; j < n; j++) {
+          const v = scan.readInt();
+          idx[j] = v;
+          if (v < 0 || v >= vertexCount) ok = false;
+        }
+        if (!ok) continue;
         // triangulate as a fan
         const a = idx[0]!;
         for (let j = 1; j + 1 < idx.length; j++) {
@@ -461,6 +467,8 @@ export class XLoader {
       return null;
     }
 
+    const vCount = (meshData.vertices.length / 3) | 0;
+
     // Create indexed geometry
     const geometry = new THREE.BufferGeometry();
 
@@ -474,7 +482,7 @@ export class XLoader {
     geometry.setIndex(meshData.faces);
 
     // Set UVs if available
-    if (meshData.uvs.length > 0) {
+    if (meshData.uvs.length === vCount * 2) {
       geometry.setAttribute(
         "uv",
         new THREE.Float32BufferAttribute(meshData.uvs, 2),
@@ -482,7 +490,7 @@ export class XLoader {
     }
 
     // Set normals if available, otherwise compute
-    if (meshData.normals.length > 0) {
+    if (meshData.normals.length === vCount * 3) {
       geometry.setAttribute(
         "normal",
         new THREE.Float32BufferAttribute(meshData.normals, 3),
@@ -503,20 +511,20 @@ export class XLoader {
         });
         texture.flipY = false;
         (texture as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
-        material = new THREE.MeshStandardMaterial({
+        material = new THREE.MeshPhongMaterial({
           map: texture,
           side: THREE.DoubleSide,
         });
         this.log(`Loaded texture: ${meshData.textureName}`);
       } catch {
         this.log(`Failed to load texture: ${meshData.textureName}`);
-        material = new THREE.MeshStandardMaterial({
+        material = new THREE.MeshPhongMaterial({
           color: 0x888888,
           side: THREE.DoubleSide,
         });
       }
     } else {
-      material = new THREE.MeshStandardMaterial({
+      material = new THREE.MeshPhongMaterial({
         color: 0xcccccc,
         side: THREE.DoubleSide,
       });

@@ -580,7 +580,7 @@ export class RMeshLoader {
       const lightmapTexUrl = resolveTexPath(lightmapName);
       const alphaMode = surf.textures[0]?.kind === 3 ? "BLEND" : "OPAQUE";
 
-      const material = new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         vertexColors: true,
         side: THREE.DoubleSide,

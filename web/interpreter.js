@@ -1616,8 +1616,35 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
   } catch {}
 
   const exports = instance.exports || {};
+
+  // If the program exports a __Step function, we still need to run the program
+  // entrypoint once so global initialization executes (Blitz semantics).
+  // WARNING: if user init contains a blocking loop, this will still freeze the tab.
+  const entry = exports.main || exports._start || exports.Main;
   const step = exports.__Step || exports["__Step%"] || exports.Step ||
     exports["Step%"];
+
+  if (typeof step === "function" && typeof entry === "function") {
+    try {
+      entry();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+        printOutput("Program ended.", "success");
+        stopExecution();
+        return { startedStepping: false };
+      }
+      // If init fails, surface it and stop before starting RAF.
+      printOutput(`Execution error: ${msg}`, "error");
+      if (showStacks && e && e.stack) {
+        try {
+          printOutput(String(e.stack), "error");
+        } catch {}
+      }
+      stopExecution();
+      return { startedStepping: false };
+    }
+  }
 
   // Prefer stepping (non-blocking) if present.
   if (typeof step === "function") {
@@ -1668,7 +1695,6 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
   }
 
   // Fallback: run entrypoint directly (can freeze if user wrote a tight loop).
-  const entry = exports.main || exports._start || exports.Main;
   if (typeof entry === "function") {
     try {
       entry();

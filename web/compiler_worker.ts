@@ -256,6 +256,7 @@ async function initCompiler() {
     "createcube",
     "createsphere",
     "createplane",
+    "createpivot",
     "createcamera",
     "createlight",
     "ambientlight",

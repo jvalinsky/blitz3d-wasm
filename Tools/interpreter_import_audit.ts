@@ -1,13 +1,14 @@
 // Audit a compiled BB->WASM module's `env.*` imports against the web
-// interpreter's thin runtime (`web/interpreter.js`).
+// runtime/import implementations (TypeScript under `web/src/runtime/` and
+// `web/interpreter.ts`).
 //
 // Usage:
 //   deno run -A Tools/interpreter_import_audit.ts path/to/program.wasm
 //
 // Output:
-// - total env imports
-// - runtime implemented symbols
-// - missing env imports (sorted)
+// - total imports by module
+// - implemented symbols by module (from sources)
+// - missing imports by module (sorted)
 //
 // Notes:
 // - The compiler currently imports a large default runtime surface even when
@@ -25,52 +26,80 @@ function uniqSorted(values: Iterable<string>): string[] {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
-function parseInterpreterRuntimeKeys(source: string): Set<string> {
-  const marker = "const functions = {";
-  const idx = source.indexOf(marker);
-  if (idx === -1) {
-    throw new Error(
-      "Failed to find `const functions = {` in web/interpreter.js",
-    );
-  }
+type Mod = "env" | "blitz3d" | "al";
 
-  const slice = source.slice(idx + marker.length);
-  const end = slice.indexOf("\n  };");
-  if (end === -1) {
-    throw new Error("Failed to find end of `functions` object in interpreter");
-  }
+function parseImportsAssignments(source: string): Map<Mod, Set<string>> {
+  const out = new Map<Mod, Set<string>>([
+    ["env", new Set()],
+    ["blitz3d", new Set()],
+    ["al", new Set()],
+  ]);
 
-  const body = slice.slice(0, end);
-  const keys = new Set<string>();
-  for (const line of body.split("\n")) {
-    const m = line.match(/^\s*([A-Za-z0-9_]+)\s*:\s*\(/);
-    if (m) keys.add(m[1]);
+  const re = /\bimports\.(env|blitz3d|al)\.([A-Za-z0-9_]+)\s*=\s*/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source)) !== null) {
+    const mod = m[1] as Mod;
+    out.get(mod)!.add(m[2]);
   }
-  return keys;
+  return out;
 }
 
-async function listEnvImports(wasmBytes: Uint8Array): Promise<string[]> {
+async function listFnImports(
+  wasmBytes: Uint8Array,
+): Promise<Map<string, Set<string>>> {
   const module = await WebAssembly.compile(wasmBytes);
-  return WebAssembly.Module.imports(module)
-    .filter((i) => i.module === "env" && i.kind === "function")
-    .map((i) => i.name);
+  const out = new Map<string, Set<string>>();
+  for (const i of WebAssembly.Module.imports(module)) {
+    if (i.kind !== "function") continue;
+    const set = out.get(i.module) ?? new Set<string>();
+    set.add(i.name);
+    out.set(i.module, set);
+  }
+  return out;
 }
 
 if (Deno.args.length < 1) usage();
 
-const interpreterJS = await Deno.readTextFile("web/interpreter.js");
-const implemented = parseInterpreterRuntimeKeys(interpreterJS);
-
-const allImports = new Set<string>();
-for (const wasmPath of Deno.args) {
-  const bytes = await Deno.readFile(wasmPath);
-  const imports = await listEnvImports(bytes);
-  for (const name of imports) allImports.add(name);
+async function* walkFiles(root: string): AsyncGenerator<string> {
+  for await (const entry of Deno.readDir(root)) {
+    const path = `${root}/${entry.name}`;
+    if (entry.isDirectory) {
+      yield* walkFiles(path);
+    } else if (entry.isFile) {
+      yield path;
+    }
+  }
 }
 
-const envImports = uniqSorted(allImports);
-const missing = envImports.filter((name) => !implemented.has(name));
-const extra = uniqSorted([...implemented].filter((k) => !allImports.has(k)));
+const sources: string[] = [];
+for await (const p of walkFiles("web/src/runtime")) {
+  if (p.endsWith(".ts")) sources.push(await Deno.readTextFile(p));
+}
+for await (const p of walkFiles("web/src/shared")) {
+  if (p.endsWith(".ts")) sources.push(await Deno.readTextFile(p));
+}
+sources.push(await Deno.readTextFile("web/interpreter.ts"));
+
+const implementedByModule = new Map<string, Set<string>>();
+for (const src of sources) {
+  const parsed = parseImportsAssignments(src);
+  for (const [mod, keys] of parsed.entries()) {
+    const set = implementedByModule.get(mod) ?? new Set<string>();
+    for (const k of keys) set.add(k);
+    implementedByModule.set(mod, set);
+  }
+}
+
+const requiredByModule = new Map<string, Set<string>>();
+for (const wasmPath of Deno.args) {
+  const bytes = await Deno.readFile(wasmPath);
+  const imports = await listFnImports(bytes);
+  for (const [mod, names] of imports.entries()) {
+    const set = requiredByModule.get(mod) ?? new Set<string>();
+    for (const n of names) set.add(n);
+    requiredByModule.set(mod, set);
+  }
+}
 
 function safeLog(text: string) {
   try {
@@ -82,16 +111,18 @@ function safeLog(text: string) {
   }
 }
 
-safeLog(`env imports: ${envImports.length}`);
-safeLog(`runtime implemented: ${implemented.size}`);
-safeLog(`missing in runtime: ${missing.length}`);
-if (missing.length) {
-  safeLog("\n--- missing env imports ---");
-  safeLog(missing.join("\n"));
-}
+for (const mod of uniqSorted(requiredByModule.keys())) {
+  const required = requiredByModule.get(mod)!;
+  const implemented = implementedByModule.get(mod) ?? new Set<string>();
+  const req = uniqSorted(required);
+  const miss = req.filter((n) => !implemented.has(n));
 
-safeLog(`\nimplemented but not required (by these modules): ${extra.length}`);
-if (extra.length) {
-  safeLog("\n--- extra runtime keys ---");
-  safeLog(extra.join("\n"));
+  safeLog(`${mod} imports: ${req.length}`);
+  safeLog(`${mod} implemented: ${implemented.size}`);
+  safeLog(`${mod} missing: ${miss.length}`);
+  if (miss.length) {
+    safeLog(`\n--- missing ${mod} imports ---`);
+    safeLog(miss.join("\n"));
+  }
+  safeLog("");
 }

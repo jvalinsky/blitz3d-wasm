@@ -1,8 +1,10 @@
 // SCPCB → Interpreter coverage report.
 //
 // Reads `import_requirements_full.json` (function usage across SCPCB sources)
-// and compares it to the interpreter thin runtime (`web/interpreter.js`) plus
-// the compiler-worker auto-import allowlist (`web/compiler_worker.js`).
+// and compares it to:
+// - the web runtime import implementations (TypeScript sources under `web/src/runtime/`)
+// - the interpreter’s sandbox worker imports (`web/interpreter.ts`)
+// - the compiler-worker auto-import allowlist (`web/compiler_worker.ts`)
 //
 // Usage:
 //   deno run -A Tools/scpcb_interpreter_coverage.ts [--top 80]
@@ -38,24 +40,16 @@ function uniqSorted(values: Iterable<string>): string[] {
   return [...new Set(values)].sort((a, b) => a.localeCompare(b));
 }
 
-function parseInterpreterRuntimeKeys(source: string): Set<string> {
-  const marker = "const functions = {";
-  const idx = source.indexOf(marker);
-  if (idx === -1) {
-    throw new Error("Failed to find `const functions = {` in web/interpreter.js");
-  }
-
-  const slice = source.slice(idx + marker.length);
-  const end = slice.indexOf("\n  };");
-  if (end === -1) {
-    throw new Error("Failed to find end of `functions` object in interpreter");
-  }
-
-  const body = slice.slice(0, end);
+function parseImportsAssignments(source: string): Set<string> {
   const keys = new Set<string>();
-  for (const line of body.split("\n")) {
-    const m = line.match(/^\s*([A-Za-z0-9_]+)\s*:\s*\(/);
-    if (m) keys.add(canonical(m[1]));
+  // Match common patterns across the runtime:
+  //   imports.env.Foo = ...
+  //   imports.blitz3d.ParseRMesh = ...
+  //   imports.al.alSourcePlay = ...
+  const re = /\bimports\.(env|blitz3d|al)\.([A-Za-z0-9_]+)\s*=\s*/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(source)) !== null) {
+    keys.add(canonical(m[2]));
   }
   return keys;
 }
@@ -64,12 +58,12 @@ function parseWorkerAutoImports(source: string): Set<string> {
   const marker = "const autoImports = [";
   const idx = source.indexOf(marker);
   if (idx === -1) {
-    throw new Error("Failed to find `const autoImports = [` in web/compiler_worker.js");
+    throw new Error("Failed to find `const autoImports = [` in web/compiler_worker.ts");
   }
   const slice = source.slice(idx + marker.length);
   const end = slice.indexOf("];");
   if (end === -1) {
-    throw new Error("Failed to find end of autoImports list in web/compiler_worker.js");
+    throw new Error("Failed to find end of autoImports list in web/compiler_worker.ts");
   }
   const body = slice.slice(0, end);
   const keys = new Set<string>();
@@ -89,17 +83,47 @@ function safePrint(line: string) {
   }
 }
 
+async function* walkFiles(root: string): AsyncGenerator<string> {
+  for await (const entry of Deno.readDir(root)) {
+    const path = `${root}/${entry.name}`;
+    if (entry.isDirectory) {
+      yield* walkFiles(path);
+    } else if (entry.isFile) {
+      yield path;
+    }
+  }
+}
+
+async function readSources(paths: string[]): Promise<string[]> {
+  const out: string[] = [];
+  for (const p of paths) out.push(await Deno.readTextFile(p));
+  return out;
+}
+
 const topN = parseArgNumber("--top", 80);
 const checkAllowlist = Deno.args.includes("--check-allowlist");
 
 const reqRaw = await Deno.readTextFile("import_requirements_full.json");
 const req = JSON.parse(reqRaw) as ImportReqMap;
 
-const interpreterJS = await Deno.readTextFile("web/interpreter.js");
-const workerJS = await Deno.readTextFile("web/compiler_worker.js");
+const workerTS = await Deno.readTextFile("web/compiler_worker.ts");
+const allowlisted = parseWorkerAutoImports(workerTS);
 
-const implemented = parseInterpreterRuntimeKeys(interpreterJS);
-const allowlisted = parseWorkerAutoImports(workerJS);
+// Collect runtime sources (TypeScript).
+const runtimeFiles: string[] = [];
+for await (const p of walkFiles("web/src/runtime")) {
+  if (p.endsWith(".ts")) runtimeFiles.push(p);
+}
+for await (const p of walkFiles("web/src/shared")) {
+  if (p.endsWith(".ts")) runtimeFiles.push(p);
+}
+runtimeFiles.push("web/interpreter.ts");
+
+const sources = await readSources(runtimeFiles);
+const implemented = new Set<string>();
+for (const src of sources) {
+  for (const k of parseImportsAssignments(src)) implemented.add(k);
+}
 
 const entries = Object.entries(req).map(([k, v]) => {
   const name = canonical(v?.name ?? k);
@@ -143,20 +167,26 @@ for (const e of missingAllowlist.slice(0, topN)) {
   safePrint(`${e.calls.toString().padStart(6, " ")}  ${e.name}`);
 }
 
-// Also show “implemented but not in allowlist” (can cause invalid-WASM when used in expressions).
-const implementedNotAllowlisted = uniqSorted(
-  [...implemented].filter((k) => !allowlisted.has(k)),
+// “Implemented but not allowlisted” can cause invalid-WASM when a function is
+// used in an expression position (e.g. `a = CreatePivot()`).
+//
+// The full runtime implements far more functions than we need to auto-import in
+// the compiler worker. Only flag functions that appear in SCPCB sources.
+const scpcbImplementedNotAllowlisted = uniqSorted(
+  scpcb
+    .filter((e) => e.implemented && !e.allowlisted)
+    .map((e) => e.name),
 );
 safePrint("");
 safePrint(
-  `Implemented in runtime but not allowlisted: ${implementedNotAllowlisted.length}`,
+  `SCPCB-used + implemented, but not allowlisted: ${scpcbImplementedNotAllowlisted.length}`,
 );
-if (implementedNotAllowlisted.length) {
+if (scpcbImplementedNotAllowlisted.length) {
   safePrint("");
-  safePrint("--- implemented but not allowlisted ---");
-  for (const k of implementedNotAllowlisted) safePrint(k);
+  safePrint("--- SCPCB-used implemented but not allowlisted ---");
+  for (const k of scpcbImplementedNotAllowlisted) safePrint(k);
 }
 
-if (checkAllowlist && implementedNotAllowlisted.length) {
+if (checkAllowlist && scpcbImplementedNotAllowlisted.length) {
   Deno.exit(1);
 }

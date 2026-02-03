@@ -74,7 +74,27 @@ export function setup2D(graphics: Blitz3DGraphicsInterface, imports: any) {
         }
     };
 
-    imports.env.js_GetColor = (x: number, y: number) => 0; // TODO impl
+    // Blitz3D GetColor reads the pixel at (x,y) from the current buffer and
+    // updates the internal "current color" registers used by ColorRed/Green/Blue.
+    imports.env.js_GetColor = (x: number, y: number) => {
+        const ctx = getContext();
+        if (!ctx) return 0;
+        const ix = x | 0;
+        const iy = y | 0;
+        if (
+            ix < 0 || iy < 0 || ix >= (ctx.canvas?.width ?? 0) ||
+            iy >= (ctx.canvas?.height ?? 0)
+        ) {
+            return 0;
+        }
+        const data = ctx.getImageData(ix, iy, 1, 1).data;
+        const r = data[0] ?? 0;
+        const g = data[1] ?? 0;
+        const b = data[2] ?? 0;
+        const a = data[3] ?? 255;
+        graphics.currentColor = [r, g, b, a];
+        return ((a & 0xff) << 24) | ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
+    };
     imports.env.js_ColorRed = () => graphics.currentColor[0] || 0;
     imports.env.js_ColorGreen = () => graphics.currentColor[1] || 0;
     imports.env.js_ColorBlue = () => graphics.currentColor[2] || 0;

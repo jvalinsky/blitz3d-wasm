@@ -343,7 +343,12 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     // Buffer accessors (used by SetBuffer/CopyRect/etc.)
     imports.env.BackBuffer = () => -1;
     imports.env.FrontBuffer = () => -1;
-    imports.env.GraphicsBuffer = () => -1; // TODO: return current buffer
+    imports.env.GraphicsBuffer = () => {
+        const buf = (graphics as any).currentBuffer;
+        // Default to back buffer (-1) if unset.
+        if (typeof buf !== "number") return -1;
+        return buf | 0;
+    };
     imports.env.ScanLine = () => 0;
     imports.env.AvailVidMem = () => 1024 * 1024 * 512; // Mock 512MB
     imports.env.TotalVidMem = () => 1024 * 1024 * 512;

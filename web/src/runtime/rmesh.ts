@@ -514,6 +514,17 @@ export class RMeshLoader {
       return resolveUrl(joined);
     };
 
+    const classifyTex = (name?: string): "lightmap" | "diffuse" | "unknown" => {
+      const n = String(name || "").toLowerCase();
+      if (!n) return "unknown";
+      const leaf = n.split("/").pop() ?? n;
+      const base = leaf.replace(/\.[a-z0-9]+$/i, "");
+      if (/(^|[_\-.])(lm|lightmap|light)([_\-.]|$)/i.test(base) || /_lm\b/i.test(base)) {
+        return "lightmap";
+      }
+      return "diffuse";
+    };
+
     for (let s = 0; s < rm.drawn.length; s++) {
       const surf = rm.drawn[s]!;
       const vCount = surf.positions.length / 3;
@@ -528,7 +539,11 @@ export class RMeshLoader {
       );
       geometry.setAttribute("normal", new THREE.BufferAttribute(normals, 3));
       geometry.setAttribute("uv", new THREE.BufferAttribute(surf.uvs0, 2));
-      geometry.setIndex(Array.from(surf.indices));
+      // Lightmaps in Three.js use UV2 by convention.
+      if (surf.uvs1 && surf.uvs1.length === vCount * 2) {
+        geometry.setAttribute("uv2", new THREE.BufferAttribute(surf.uvs1, 2));
+      }
+      geometry.setIndex(new THREE.BufferAttribute(surf.indices, 1));
 
       // Vertex colors in RMESH are RGB bytes.
       const colors = new Float32Array(vCount * 3);
@@ -539,8 +554,30 @@ export class RMeshLoader {
       }
       geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
-      // RMESH: slot0 is usually lightmap, slot1 is diffuse.
-      const diffuseTexUrl = resolveTexPath(surf.textures[1]?.name);
+      const t0 = surf.textures[0];
+      const t1 = surf.textures[1];
+      const t0Kind = classifyTex(t0?.name);
+      const t1Kind = classifyTex(t1?.name);
+
+      // Common SCPCB convention: one base texture + optional lightmap. We try
+      // to pick correctly using both slot ordering and filename heuristics.
+      const diffuseName = (t0Kind === "diffuse" && t1Kind === "lightmap")
+        ? t0?.name
+        : (t0Kind === "lightmap" && t1Kind === "diffuse")
+        ? t1?.name
+        : // fallback: many writers store lightmap in slot0, diffuse in slot1
+          (t1?.name ?? t0?.name);
+
+      const lightmapName = (t0Kind === "lightmap" && t1Kind !== "lightmap")
+        ? t0?.name
+        : (t1Kind === "lightmap" && t0Kind !== "lightmap")
+        ? t1?.name
+        : (t0?.name && classifyTex(t0.name) === "lightmap")
+        ? t0.name
+        : undefined;
+
+      const diffuseTexUrl = resolveTexPath(diffuseName);
+      const lightmapTexUrl = resolveTexPath(lightmapName);
       const alphaMode = surf.textures[0]?.kind === 3 ? "BLEND" : "OPAQUE";
 
       const material = new THREE.MeshStandardMaterial({
@@ -556,10 +593,25 @@ export class RMeshLoader {
             textureLoader.load(diffuseTexUrl, resolve, undefined, reject);
           });
           tex.flipY = false;
+          (tex as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
           material.map = tex;
           material.needsUpdate = true;
         } catch {
           // Texture is optional for inspection.
+        }
+      }
+
+      if (lightmapTexUrl) {
+        try {
+          const lm = await new Promise<THREE.Texture>((resolve, reject) => {
+            textureLoader.load(lightmapTexUrl, resolve, undefined, reject);
+          });
+          lm.flipY = false;
+          material.lightMap = lm;
+          material.lightMapIntensity = 1;
+          material.needsUpdate = true;
+        } catch {
+          // optional
         }
       }
 

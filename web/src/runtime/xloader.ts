@@ -27,6 +27,7 @@ export class XLoader {
   private core: GraphicsCore & { fileIO: Blitz3DFileIO };
   private fileIO: Blitz3DFileIO;
   private debug: boolean;
+  private _sourceFilePath: string | null;
 
   constructor(
     graphics: Blitz3DGraphicsInterface,
@@ -37,6 +38,7 @@ export class XLoader {
     this.core = core;
     this.fileIO = fileIO;
     this.debug = true;
+    this._sourceFilePath = null;
   }
 
   log(...args: unknown[]) {
@@ -48,6 +50,7 @@ export class XLoader {
    */
   async loadFile(filePath: string, parentId = 0, targetId?: number) {
     this.log(`Loading: ${filePath}`);
+    this._sourceFilePath = filePath;
 
     try {
       const data = await this.readTextFile(filePath);
@@ -73,6 +76,50 @@ export class XLoader {
       console.error(`[XLoader] Error loading ${filePath}:`, error);
       return 0;
     }
+  }
+
+  private resolveTextureUrl(textureName: unknown): string | null {
+    if (typeof textureName !== "string") return null;
+    const nameRaw = textureName.trim();
+    if (!nameRaw) return null;
+
+    const norm = nameRaw.replace(/\\/g, "/");
+    const leaf = norm.split("/").pop() || norm;
+
+    const baseDir = (this._sourceFilePath ?? "")
+      .replace(/\\/g, "/")
+      .replace(/\/[^/]+$/, "");
+
+    const candidates: string[] = [];
+    const push = (p: string) => {
+      const v = String(p || "").replace(/\\/g, "/").replace(/\/+/g, "/");
+      if (!v) return;
+      if (!candidates.includes(v)) candidates.push(v);
+    };
+
+    // As written in the file.
+    push(norm);
+    // Many assets embed Windows paths; try basename.
+    push(leaf);
+    // Relative to the .x directory.
+    if (baseDir) {
+      push(`${baseDir}/${leaf}`);
+      push(`${baseDir}/${norm}`);
+    }
+
+    const r = globalThis.__BLITZ3D_URL_RESOLVER;
+    if (typeof r === "function") {
+      for (const c of candidates) {
+        try {
+          const out = r(c);
+          if (typeof out === "string" && out) return out;
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return candidates[0] ?? null;
   }
 
   async readTextFile(filePath: string): Promise<string | null> {
@@ -426,27 +473,22 @@ export class XLoader {
     // Create material
     let material;
     if (meshData.textureName) {
-      // Load texture relative to X file path
-      const basePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
-      const texturePath = basePath + meshData.textureName;
+      const resolved = this.resolveTextureUrl(meshData.textureName);
 
       try {
         const textureLoader = new THREE.TextureLoader();
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
-          const r = globalThis.__BLITZ3D_URL_RESOLVER;
-          const resolved = typeof r === "function"
-            ? (r(texturePath) ?? texturePath)
-            : texturePath;
-          textureLoader.load(resolved, resolve, undefined, reject);
+          textureLoader.load(resolved ?? meshData.textureName!, resolve, undefined, reject);
         });
         texture.flipY = false;
+        (texture as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
         material = new THREE.MeshStandardMaterial({
           map: texture,
           side: THREE.DoubleSide,
         });
-        this.log(`Loaded texture: ${texturePath}`);
+        this.log(`Loaded texture: ${meshData.textureName}`);
       } catch {
-        this.log(`Failed to load texture: ${texturePath}`);
+        this.log(`Failed to load texture: ${meshData.textureName}`);
         material = new THREE.MeshStandardMaterial({
           color: 0x888888,
           side: THREE.DoubleSide,

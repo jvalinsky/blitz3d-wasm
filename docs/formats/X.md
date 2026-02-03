@@ -43,4 +43,3 @@ Blitz3D can load `.x` meshes directly, so it was a common “interop” format f
 
 - ¹ Microsoft `.x` file format (legacy): https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-file-format
 - Community notes/links (overview + references to classic `.x` docs): https://openbve-project.net/documentation/format/x/
-- SCPCB-related depot filetypes (example SteamDB depot showing `.x`): https://steamdb.info/depot/1782381/history/

@@ -45,7 +45,7 @@ In practice, a common convention is using lightmap filenames with a suffix like 
 
 ## References
 
-- SCPCB-related depot filetypes (example SteamDB depot showing `.rmesh`): https://steamdb.info/depot/1782381/history/
 - ¹ `rmesh_convert.py` (reverse-engineered structure + header strings): https://gist.github.com/qeaml/69855dc49d1a012f99f054a51c0a1b40
 - Blender → RMESH conversion notes (lightmap UVs + `_lm` convention): https://gist.github.com/Omega47810/1d0459cc2ce52b5119b341c876468551
+- CBRE guide (lists RMESH among supported/used formats): https://steamcommunity.com/sharedfiles/filedetails/?id=262795365
 - Example RMESH importer tooling (Godot asset; supports SCPCB variants): https://godotengine.org/asset-library/asset/4168

@@ -1716,16 +1716,18 @@ export class Blitz3DCore {
       "alUpdate",
     ];
 
+    if (!imports.al) imports.al = {};
+    const alImports = imports.al as Record<string, unknown>;
+
     alFunctions.forEach((fn) => {
-      // @ts-ignore
-      imports.al[fn] =
+      alImports[fn] =
         fn.includes("Set") || fn.includes("Stop") || fn.includes("Pause") ||
           fn.includes("Resume") || fn.includes("Seek") ||
           fn.includes("Update") || fn.includes("Destroy") || fn.includes("Free")
           ? alVoidStub
           : alStub;
       // Also keep in env for safety if some parts of the code still expect it there
-      imports.env[fn] = imports.al[fn];
+      imports.env[fn] = alImports[fn];
     });
 
     // --- Bank Stubs ---

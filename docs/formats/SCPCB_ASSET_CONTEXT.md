@@ -55,7 +55,6 @@ Relevant code:
 
 - SCPCB background / engine: https://scpcbgame.com/info.html
 - SCPCB overview: https://en.wikipedia.org/wiki/SCP_%E2%80%93_Containment_Breach
-- ¹ SteamDB depot file listing (example depot; browse by filetype): https://steamdb.info/depot/1782381/history/
 - DirectX `.x` file overview (legacy): https://learn.microsoft.com/en-us/windows/win32/direct3d9/x-file-format
 - B3D chunk format overview/spec: https://docs.luanti.org/for-creators/models/b3d-spec/
 - RMESH importer tooling (example community tool): https://godotengine.org/asset-library/asset/4168

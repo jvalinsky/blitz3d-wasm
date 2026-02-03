@@ -104,12 +104,10 @@ export class B3DLoader {
       const data = await this.readFile(handle, filePath);
 
       // Try WASM parser first if available
-      // @ts-ignore
-      if (
-        window.Blitz3D && window.Blitz3D.engineExports &&
-        window.Blitz3D.engineExports.ParseB3D
-      ) {
-        // @ts-ignore
+      const engineExports = (typeof window !== "undefined")
+        ? (window.Blitz3D?.engineExports as Record<string, unknown> | undefined)
+        : undefined;
+      if (engineExports && typeof engineExports["ParseB3D"] === "function") {
         return await this.loadWithWasm(data, parentId);
       }
 
@@ -264,33 +262,62 @@ export class B3DLoader {
   }
 
   async loadWithWasm(data: Uint8Array, parentId: number) {
-    // @ts-ignore
-    const engine = window.Blitz3D.engineExports;
+    if (typeof window === "undefined") return this.createPlaceholder(parentId);
+    const engine = window.Blitz3D?.engineExports as Record<string, unknown> | undefined;
+    if (!engine) return this.createPlaceholder(parentId);
 
     // 1. Create a bank in WASM memory for the file data
-    const bankId = engine.CreateBank(data.length);
+    const CreateBank = engine["CreateBank"] as ((n: number) => number) | undefined;
+    const GetBankPtr = engine["GetBankPtr"] as ((bankId: number) => number) | undefined;
+    const ParseB3D = engine["ParseB3D"] as ((bankId: number) => number) | undefined;
+    const FreeBank = engine["FreeBank"] as ((bankId: number) => void) | undefined;
+    const memory = engine["memory"] as WebAssembly.Memory | undefined;
+    if (!CreateBank || !GetBankPtr || !ParseB3D || !FreeBank || !memory) {
+      return this.createPlaceholder(parentId);
+    }
+
+    const bankId = CreateBank(data.length);
 
     // 2. Copy data to WASM memory efficiently
-    const ptr = engine.GetBankPtr(bankId);
-    const dest = new Uint8Array(engine.memory.buffer, ptr, data.length);
+    const ptr = GetBankPtr(bankId);
+    const dest = new Uint8Array(memory.buffer, ptr, data.length);
     dest.set(data);
 
     // 3. Parse in WASM
-    const meshId = engine.ParseB3D(bankId);
+    const meshId = ParseB3D(bankId);
     if (meshId === 0) throw new Error("WASM B3D Parser failed");
 
     // 4. Create Three.js objects using shared memory
-    const entityId = await this.createThreeJSFromWasm(meshId, parentId);
+    const entityId = await this.createThreeJSFromWasm(engine, meshId, parentId);
 
     // 5. Cleanup bank
-    engine.FreeBank(bankId);
+    FreeBank(bankId);
 
     return entityId;
   }
 
-  async createThreeJSFromWasm(meshId: number, parentId: number) {
-    // @ts-ignore
-    const engine = window.Blitz3D.engineExports;
+  async createThreeJSFromWasm(
+    engine: Record<string, unknown>,
+    meshId: number,
+    parentId: number,
+  ) {
+    const GetMeshSurfaceCount =
+      engine["GetMeshSurfaceCount"] as ((meshId: number) => number) | undefined;
+    const GetSurfaceVertexCount =
+      engine["GetSurfaceVertexCount"] as ((meshId: number, surfIndex: number) => number) | undefined;
+    const GetSurfaceIndexCount =
+      engine["GetSurfaceIndexCount"] as ((meshId: number, surfIndex: number) => number) | undefined;
+    const GetSurfaceVerticesPtr =
+      engine["GetSurfaceVerticesPtr"] as ((meshId: number, surfIndex: number) => number) | undefined;
+    const GetSurfaceIndicesPtr =
+      engine["GetSurfaceIndicesPtr"] as ((meshId: number, surfIndex: number) => number) | undefined;
+    const memory = engine["memory"] as WebAssembly.Memory | undefined;
+    if (
+      !GetMeshSurfaceCount || !GetSurfaceVertexCount || !GetSurfaceIndexCount ||
+      !GetSurfaceVerticesPtr || !GetSurfaceIndicesPtr || !memory
+    ) {
+      return this.createPlaceholder(parentId);
+    }
     const root = new THREE.Group();
     const rootId = this.graphics.nextEntityId++;
     this.graphics.entities[rootId] = root;
@@ -302,21 +329,20 @@ export class B3DLoader {
       this.graphics.scene.add(root);
     }
 
-    const surfCount = engine.GetMeshSurfaceCount(meshId);
+    const surfCount = GetMeshSurfaceCount(meshId);
     for (let i = 0; i < surfCount; i++) {
-      const vCount = engine.GetSurfaceVertexCount(meshId, i);
-      const iCount = engine.GetSurfaceIndexCount(meshId, i);
+      const vCount = GetSurfaceVertexCount(meshId, i);
+      const iCount = GetSurfaceIndexCount(meshId, i);
 
-      const vPtr = engine.GetSurfaceVerticesPtr(meshId, i);
-      const iPtr = engine.GetSurfaceIndicesPtr(meshId, i);
+      const vPtr = GetSurfaceVerticesPtr(meshId, i);
+      const iPtr = GetSurfaceIndicesPtr(meshId, i);
 
       // Create views directly into WASM memory! (Zero-copy)
-      // Note: engine.memory.buffer is the SharedArrayBuffer or ArrayBuffer
-      const memory = engine.memory.buffer;
+      const buf = memory.buffer;
 
       // Vertex data: x,y,z, nx,ny,nz, u,v, r,g,b (11 floats per vertex)
-      const vertices = new Float32Array(memory, vPtr, vCount * 11);
-      const indices = new Int32Array(memory, iPtr, iCount);
+      const vertices = new Float32Array(buf, vPtr, vCount * 11);
+      const indices = new Int32Array(buf, iPtr, iCount);
 
       const geometry = new THREE.BufferGeometry();
 
@@ -342,7 +368,7 @@ export class B3DLoader {
 
       geometry.setIndex(new THREE.BufferAttribute(indices, 1));
 
-      const material = new THREE.MeshStandardMaterial({
+      const material = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         vertexColors: true,
         side: THREE.DoubleSide,

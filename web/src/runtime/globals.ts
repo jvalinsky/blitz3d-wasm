@@ -10,6 +10,18 @@
 
 declare global {
   /**
+   * Optional global installed by some demos that embed the Swift/WASM engine
+   * exports into the page.
+   *
+   * This is primarily used by the interpreter and exploration harnesses.
+   */
+  interface Window {
+    Blitz3D?: {
+      engineExports?: Record<string, unknown>;
+    };
+  }
+
+  /**
    * When `true`, `LoadMesh()` is allowed to load source formats directly
    * (`.b3d`, `.x`, `.rmesh`) instead of rewriting to `.smpk`.
    *

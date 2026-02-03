@@ -60,4 +60,3 @@ Two practical implications for SCPCB assets:
 
 - ¹ Luanti “Blitz3d file format specification”: https://docs.luanti.org/for-creators/models/b3d-spec/
 - Blitz3D texture flags reference (`LoadTexture`): https://kippykip.com/b3ddocs/commands/3d_commands/LoadTexture.htm
-- SCPCB-related depot filetypes (example SteamDB depot showing `.b3d`): https://steamdb.info/depot/1782381/history/

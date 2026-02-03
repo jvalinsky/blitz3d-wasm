@@ -111,7 +111,7 @@ blitz3d-wasm/
 │       ├── tools/             # Development tools
 │       └── *.wasm/*.wat       # Compiled test outputs
 │       ├── debug.js           # Debug utilities
-│       └── scpcb.wasm         # Compiled SCPB WASM module
+│       └── scpcb.wasm         # Generated SCPCB WASM module (do not commit; produced into `web/public/` + copied to `dist/`)
 ├── Tools/
 │   └── wasm-cli/              # CLI compiler tool
 ├── Tests/

@@ -30,8 +30,10 @@ const parseArgs = (args: string[]): Options => {
   const opts: Options = {
     scpcbRoot: new URL("../../scpcb/", import.meta.url).pathname,
     entryBb: "Main.bb",
-    outRuntimeWasm:
-      new URL("../Sources/Runtime/scpcb.wasm", import.meta.url).pathname,
+    // Default to a temp output. The Track B web loader consumes `web/public/scpcb.wasm`
+    // (copied to dist during `deno task web:build`), and we avoid writing generated
+    // artifacts into source directories.
+    outRuntimeWasm: "/tmp/scpcb_cmdbuf.wasm",
     outWebPublicWasm:
       new URL("../web/public/scpcb.wasm", import.meta.url).pathname,
     buildCompiler: true,
@@ -64,7 +66,7 @@ const parseArgs = (args: string[]): Options => {
           "Options:",
           "  --scpcb-root <dir>        path to SCPCB repo (default: ../../scpcb)",
           "  --entry <file.bb>         entry BB file inside scpcb root (default: Main.bb)",
-          "  --out-runtime <path>      write to Sources/Runtime/scpcb.wasm",
+          "  --out-runtime <path>      write to a .wasm output (default: /tmp/scpcb_cmdbuf.wasm)",
           "  --out-web-public <path>   also write to web/public/scpcb.wasm",
           "  --no-web-public           do not write web/public/scpcb.wasm",
           "  --no-build                skip swift build step",
@@ -348,14 +350,13 @@ const main = async () => {
     );
   }
 
-  // If the user compiles something other than Main.bb, default output to /tmp and
-  // avoid overwriting Sources/Runtime/scpcb.wasm unless they explicitly asked for it.
+  // If the user compiles something other than Main.bb, avoid overwriting the
+  // web loader's `web/public/scpcb.wasm` unless they explicitly asked for it.
   if (
     opts.entryBb.toLowerCase() != "main.bb" &&
-    Deno.args.every((a) => a !== "--out-runtime")
+    Deno.args.every((a) => a !== "--out-web-public") &&
+    Deno.args.every((a) => a !== "--no-web-public")
   ) {
-    const base = opts.entryBb.replace(/.*[\\/]/g, "").replace(/\\.[^.]+$/g, "");
-    opts.outRuntimeWasm = `/tmp/${base}_cmdbuf.wasm`;
     opts.outWebPublicWasm = null;
   }
 

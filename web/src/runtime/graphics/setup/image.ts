@@ -39,6 +39,16 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
         return blitzImg.canvasCtx || null;
     };
 
+    // Best-effort "locked buffer" acceleration for ReadPixelFast/WritePixelFast.
+    // Blitz3D code often wraps tight pixel loops with LockBuffer/UnlockBuffer.
+    const normalizeBufferKey = (bufferId: number) => {
+        // Match getBufferContext behavior: 0/-1 mean the main 2D buffer.
+        if (!bufferId || bufferId === -1) return -1;
+        return bufferId | 0;
+    };
+    type LockedBuffer = { ctx: CanvasRenderingContext2D; imgData: ImageData; dirty: boolean };
+    const lockedBuffers = new Map<number, LockedBuffer>();
+
     // Image Functions
     imports.env.LoadImage = (pathPtr: number) => {
         const path = graphics.core.readString(pathPtr);
@@ -314,7 +324,38 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     };
 
     imports.env.MaskImage = (imgId: number, r: number, g: number, b: number) => {
-        // Color masking - complex, stub for now
+        const img = graphics.images[imgId];
+        if (!img || img.type !== "image") return;
+        const ctx = getBufferContext(imgId);
+        if (!ctx) return;
+
+        const rr = Math.max(0, Math.min(255, r | 0));
+        const gg = Math.max(0, Math.min(255, g | 0));
+        const bb = Math.max(0, Math.min(255, b | 0));
+
+        try {
+            const w = Math.max(1, ctx.canvas.width | 0);
+            const h = Math.max(1, ctx.canvas.height | 0);
+            const imgData = ctx.getImageData(0, 0, w, h);
+            const d = imgData.data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i] === rr && d[i + 1] === gg && d[i + 2] === bb) {
+                    d[i + 3] = 0;
+                }
+            }
+            ctx.putImageData(imgData, 0, 0);
+
+            // Ensure future draws use the masked canvas (not the original HTMLImageElement).
+            const blitzImg = img as any;
+            if (blitzImg.canvas) {
+                img.element = blitzImg.canvas;
+                img.width = blitzImg.canvas.width;
+                img.height = blitzImg.canvas.height;
+                img.loaded = true;
+            }
+        } catch {
+            // ignore (tainted canvas or unsupported)
+        }
     };
 
     imports.env.FreeImage = (imgId: number) => {
@@ -362,36 +403,86 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     };
 
     imports.env.LockBuffer = (bufferId: number) => {
-        // Return a dummy pointer/handle for the locked buffer
-        // In a real implementation, this might CopyImageData to a WASM memory bank
-        return 1;
+        const key = normalizeBufferKey(bufferId);
+        const ctx = getBufferContext(key);
+        if (!ctx) return;
+        try {
+            const w = Math.max(1, ctx.canvas.width | 0);
+            const h = Math.max(1, ctx.canvas.height | 0);
+            const imgData = ctx.getImageData(0, 0, w, h);
+            lockedBuffers.set(key, { ctx, imgData, dirty: false });
+        } catch {
+            // ignore
+        }
     };
 
     imports.env.UnlockBuffer = (bufferId: number) => {
-        // Commit changes if we were using a shadow buffer
+        const key = normalizeBufferKey(bufferId);
+        const lock = lockedBuffers.get(key);
+        if (!lock) return;
+        try {
+            if (lock.dirty) lock.ctx.putImageData(lock.imgData, 0, 0);
+        } catch {
+            // ignore
+        } finally {
+            lockedBuffers.delete(key);
+        }
     };
 
     imports.env.WritePixelFast = (x: number, y: number, color: number, bufferId: number) => {
-        const ctx = getBufferContext(bufferId);
+        const key = normalizeBufferKey(bufferId);
+        const lock = lockedBuffers.get(key);
+        const ix = x | 0;
+        const iy = y | 0;
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+        const a = ((color >>> 24) & 0xff) || 0xff;
+
+        if (lock) {
+            const w = lock.imgData.width | 0;
+            const h = lock.imgData.height | 0;
+            if (ix < 0 || iy < 0 || ix >= w || iy >= h) return;
+            const off = (iy * w + ix) * 4;
+            const d = lock.imgData.data;
+            d[off + 0] = r;
+            d[off + 1] = g;
+            d[off + 2] = b;
+            d[off + 3] = a;
+            lock.dirty = true;
+            return;
+        }
+
+        const ctx = getBufferContext(key);
         if (!ctx) return;
-        const r = (color >> 16) & 0xFF;
-        const g = (color >> 8) & 0xFF;
-        const b = color & 0xFF;
-        const a = (color >>> 24) & 0xFF || 0xFF;
         const imgData = ctx.createImageData(1, 1);
         imgData.data[0] = r;
         imgData.data[1] = g;
         imgData.data[2] = b;
         imgData.data[3] = a;
-        ctx.putImageData(imgData, x, y);
+        ctx.putImageData(imgData, ix, iy);
     };
 
     imports.env.ReadPixelFast = (x: number, y: number, bufferId: number) => {
-        const ctx = getBufferContext(bufferId);
+        const key = normalizeBufferKey(bufferId);
+        const lock = lockedBuffers.get(key);
+        const ix = x | 0;
+        const iy = y | 0;
+
+        if (lock) {
+            const w = lock.imgData.width | 0;
+            const h = lock.imgData.height | 0;
+            if (ix < 0 || iy < 0 || ix >= w || iy >= h) return 0;
+            const off = (iy * w + ix) * 4;
+            const d = lock.imgData.data;
+            return ((d[off + 3] || 0) << 24) | (d[off + 0] << 16) | (d[off + 1] << 8) |
+                (d[off + 2] || 0);
+        }
+
+        const ctx = getBufferContext(key);
         if (!ctx) return 0;
-        const data = ctx.getImageData(x, y, 1, 1).data;
-        return ((data[3] || 0) << 24) | (data[0] << 16) | (data[1] << 8) |
-            data[2];
+        const data = ctx.getImageData(ix, iy, 1, 1).data;
+        return ((data[3] || 0) << 24) | (data[0] << 16) | (data[1] << 8) | data[2];
     };
 
     imports.env.ReadPixel = imports.env.ReadPixelFast;

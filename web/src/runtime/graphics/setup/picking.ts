@@ -1,7 +1,12 @@
 import { Blitz3DGraphicsInterface } from "../types.ts";
 import * as THREE from "three";
 
-export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: any) {
+type Imports = {
+    env: Record<string, unknown>;
+    [k: string]: unknown;
+};
+
+export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: Imports) {
     imports.env.EntityPickMode = (ent: number, mode: number, obs: number) => {
         if (graphics.wasmManager) {
             graphics.wasmManager.setPickMode(ent, mode);
@@ -17,7 +22,7 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: any) {
         }
     };
 
-    const updatePickResult = (intersect: any) => {
+    const updatePickResult = (intersect: THREE.Intersection<THREE.Object3D> | null) => {
         if (!intersect) {
             graphics.lastPick = {
                 entity: 0,
@@ -60,6 +65,16 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: any) {
                 graphics.lastPick.ny = intersect.face.normal.y;
                 graphics.lastPick.nz = intersect.face.normal.z;
             }
+
+            // Best-effort mapping:
+            // - "triangle" is the faceIndex (triangle number) when available.
+            // - "surface" is a runtime-specific id; if loaders attach one, return it.
+            const faceIndex = (intersect as unknown as { faceIndex?: number }).faceIndex;
+            graphics.lastPick.triangle = Number.isFinite(faceIndex) ? (faceIndex as number) : 0;
+            const surfId = (intersect.object.userData?.surfaceId ??
+                intersect.object.userData?.surface ??
+                intersect.object.userData?.surfaceIndex);
+            graphics.lastPick.surface = (typeof surfId === "number" && Number.isFinite(surfId)) ? surfId : 0;
         }
         return pickedEnt;
     };
@@ -205,8 +220,8 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: any) {
     imports.env.PickedNY = () => graphics.lastPick ? graphics.lastPick.ny : 0;
     imports.env.PickedNZ = () => graphics.lastPick ? graphics.lastPick.nz : 0;
     imports.env.PickedEntity = () => graphics.lastPick ? graphics.lastPick.entity : 0;
-    imports.env.PickedSurface = () => 0; // Stub
-    imports.env.PickedTriangle = () => 0; // Stub
+    imports.env.PickedSurface = () => graphics.lastPick ? graphics.lastPick.surface : 0;
+    imports.env.PickedTriangle = () => graphics.lastPick ? graphics.lastPick.triangle : 0;
 
     imports.env.PointEntity = (ent: number, target: number) => {
         const entity = graphics.entities[ent];

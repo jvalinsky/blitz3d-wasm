@@ -5,30 +5,40 @@ This directory contains detailed implementation plans for the Blitz3D→WASM com
 ## Completed Plans ✅
 
 ### Phase 1: WASM Integration
-- **Plan**: `2026-02-01-wasm-integration.md`
+- **Plan**: `COMPLETED/2026-02-01-wasm-integration.md`
 - **Status**: ✅ COMPLETE (Feb 1, 2026)
 - **Time**: 4 hours actual
 - **Result**: 13/13 tests passing, Array refactor solved Dictionary memory issue
 
 ### Phase 2: Graphics Migration
-- **Plan**: `2026-02-01-phase-2-graphics-migration.md`
+- **Plan**: `COMPLETED/2026-02-01-phase-2-graphics-migration.md`
 - **Status**: ✅ COMPLETE (Feb 1, 2026)
 - **Time**: 3 hours actual
 - **Result**: 1,302 lines, 11/11 tests passing, WebGPU + WebGL working
 
-## Active Plans 🚧
-
 ### Phase 3: Browser Integration
-- **Plan**: `2026-02-01-phase-3-detailed-plan.md`
+- **Plan**: `COMPLETED/2026-02-01-phase-3-detailed-plan.md`
 - **Status**: ✅ COMPLETE (Feb 1, 2026)
 - **Time**: 15+ hours actual
 - **Result**: Model browser + video system working
 
-### Phase 4: Full SCPCB Integration
-- **Plan**: `../docs/SCPCB_WEB_PORT_ROADMAP.md`
-- **Status**: 🚧 NEXT
-- **Estimate**: 54-61 hours
-- **Next Steps**: Runtime completion, WASM integration, asset pipeline
+### Phase 3 Addendum: Export Fix
+- **Plan**: `COMPLETED/2026-02-01-export-fix.md`
+- **Status**: ✅ COMPLETE (Feb 1, 2026)
+
+## Current Plans 🚧
+
+### SCPCB Web Port (Track B)
+- **Execution checklists**: `scpcb-web-track-b/README.md`
+- **Principles + strategy**: `../docs/scpcb/WEB_PORT_PLAN_TRACK_B.md`
+- **Status**: Active (see per-plan checkboxes for progress)
+
+### Native macOS Host (Swift + WasmKit)
+- **Plan set**: `native-swift-wasmkit/README.md`
+- **Status**: Proposed / Ready to start
+
+### Ongoing workstreams
+- `ACTIVE/` — Current active workstreams (compiler maintenance, freeze mitigation, integration, etc.)
 
 ## Plan Structure
 
@@ -65,7 +75,7 @@ Each plan follows this template:
 
 ---
 
-*Last updated: February 1, 2026*
+*Last updated: February 3, 2026*
 
 ## 2026-02-02 update (reliability)
 

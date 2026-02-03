@@ -63,7 +63,7 @@ The Blitz3D Swift engine is **93% foundation-complete** with ~391 functions impl
 
 ## Cross-References
 
-- [SCPCB Web Port Roadmap](../docs/SCPCB_WEB_PORT_ROADMAP.md)
+- [SCPCB Web Port Plan (Track B)](../../../../docs/scpcb/WEB_PORT_PLAN_TRACK_B.md)
 - [Compiler Status Analysis](../docs/COMPILER_STATUS_ANALYSIS.md)
 - [Model Browser Docs](../docs/MODEL_BROWSER.md)
 - [Video System Docs](../docs/VIDEO_SYSTEM.md)

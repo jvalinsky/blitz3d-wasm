@@ -4,19 +4,18 @@ Implementation roadmaps and phase plans.
 
 ## Current Phases
 
-| Phase | File | Status |
-|-------|------|--------|
-| 1 | PHASE_1_LANGUAGE_COMPLETION.md | Complete |
-| 2 | PHASE_2_GRAPHICS_API_EXPANSION.md | Complete |
-| 3 | PHASE_3_UTILITY_IMPORTS.md | In Progress |
-| 4 | PHASE_4_RUNTIME_CONNECTIVITY.md | Planned |
-| 5 | scpcb-web-track-b/ | In Progress |
+| Track | Location | Status |
+|------:|----------|--------|
+| A | `ACTIVE/` | Active workstreams |
+| B | `scpcb-web-track-b/` | Active (SCPCB web port checklists) |
+| — | `COMPLETED/` | Completed plan snapshots |
+| — | `ARCHIVED/` | Historical/legacy plan snapshots |
 
 ## Long-term Plans
 
-- SCPCB_FULL_IMPLEMENTATION_PLAN.md - Complete SCPCB port strategy
-- SCPCB_REFINED_TECHNICAL_PLAN.md - Technical approach
-- SCPB_WASM_BROWSER_DEPLOYMENT_PLAN.md - Deployment strategy
+- `REFERENCE/SCPCB_STRATEGY/SCPCB_FULL_IMPLEMENTATION_PLAN.md` — Legacy comprehensive SCPCB strategy (reference)
+- `ARCHIVED/legacy-scpcb/` — Superseded SCPCB deployment/technical plans (historical reference)
+- `ARCHIVED/legacy-phases/` — Original phase plan set (historical reference)
 
 ## Archived
 

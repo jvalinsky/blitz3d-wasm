@@ -266,4 +266,4 @@ After completing 4A, proceed to:
 ## References
 
 - [Main Plan Index](./README.md)
-- [SCPCB Roadmap](../docs/SCPCB_WEB_PORT_ROADMAP.md)
+- [SCPCB Web Port Plan (Track B)](../../../../docs/scpcb/WEB_PORT_PLAN_TRACK_B.md)

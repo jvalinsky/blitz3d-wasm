@@ -24,7 +24,7 @@ This collection contains strategic planning documents for implementing SCP: Cont
 - Integration with web runtime requirements
 
 ### 2. Technical Implementation Plan
-**File**: `SCPCB_REFINED_TECHNICAL_PLAN.md`  
+**File**: `../../ARCHIVED/legacy-scpcb/2026-01-18_SCPCB_REFINED_TECHNICAL_PLAN.md`  
 **Status**: Reference (implemented)
 **Key Components**:
 - Advanced entity system design
@@ -33,7 +33,7 @@ This collection contains strategic planning documents for implementing SCP: Cont
 - Performance optimization strategies
 
 ### 3. Browser Deployment Strategy
-**File**: `SCPCB_WASM_BROWSER_DEPLOYMENT_PLAN.md`
+**File**: `../../ARCHIVED/legacy-scpcb/2026-01-18_SCPB_WASM_BROWSER_DEPLOYMENT_PLAN.md`
 **Status**: Reference (partially implemented)
 **Deployment Architecture**:
 - WebAssembly compilation pipeline
@@ -42,7 +42,7 @@ This collection contains strategic planning documents for implementing SCP: Cont
 - User interface considerations
 
 ### 4. Web Track B Implementation
-**Directory**: `scpcb-web-track-b/`
+**Directory**: `../../scpcb-web-track-b/`
 **Status**: Active development
 **Focus Areas**:
 - Real-time debugging and profiling

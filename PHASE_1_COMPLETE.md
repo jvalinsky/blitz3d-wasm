@@ -138,8 +138,8 @@ Replace stub implementations:
 
 ## Documentation Created
 
-- `plan/2026-02-01-wasm-integration.md` - Full Phase 1-3 plan (15KB)
-- `plan/2026-02-01-export-fix.md` - Export solution details (7KB)
+- `plan/COMPLETED/2026-02-01-wasm-integration.md` - Full Phase 1-3 plan (15KB)
+- `plan/COMPLETED/2026-02-01-export-fix.md` - Export solution details (7KB)
 - `PHASE_1_COMPLETE.md` - This file
 
 ## Conclusion

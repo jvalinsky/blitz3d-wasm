@@ -294,7 +294,7 @@ open http://localhost:8000/web/game.html
 - `web/menu-canvas.html` - Standalone authentic menu (630 lines)
 - `web/src/main.ts` - Existing WASM loader (~1,700 lines)
 - `docs/MENU_GAME_INTEGRATION.md` - Integration guide
-- `docs/SCPCB_WEB_PORT_ROADMAP.md` - Master plan
+- `docs/scpcb/WEB_PORT_PLAN_TRACK_B.md` - Master plan (Track B)
 
 ---
 

@@ -122,8 +122,8 @@ private var banks: [Bank?] = []
 ### Documentation
 - `PHASE_1_COMPLETE.md` - Initial results (62%)
 - `PHASE_1_COMPLETE_SUCCESS.md` - Final results (100%)
-- `plan/2026-02-01-export-fix.md` - Export solution
-- `plan/2026-02-01-wasm-integration.md` - Full plan
+- `plan/COMPLETED/2026-02-01-export-fix.md` - Export solution
+- `plan/COMPLETED/2026-02-01-wasm-integration.md` - Full plan
 
 ## What Works (Everything!)
 

@@ -1542,10 +1542,20 @@ async function runWasmBytesOnMainThread(wasmBytes, { timeoutMs = 2000 } = {}) {
   if (sharedGraphics.setupImports) sharedGraphics.setupImports(imports);
   if (sharedFileIO.setupImports) sharedFileIO.setupImports(imports);
 
-  // Route Print/DebugLog to the interpreter output pane.
+  // Route Print/PrintString/PrintInt/PrintFloat/DebugLog to the interpreter output pane.
   imports.env.Print = (ptr) => {
     const s = sharedCore.readString(ptr | 0);
     printOutput(s, "output");
+  };
+  imports.env.PrintString = (ptr) => {
+    const s = sharedCore.readString(ptr | 0);
+    printOutput(s, "output");
+  };
+  imports.env.PrintInt = (val) => {
+    printOutput(String(val | 0), "output");
+  };
+  imports.env.PrintFloat = (val) => {
+    printOutput(String(val), "output");
   };
   imports.env.DebugLog = (ptr) => {
     const s = sharedCore.readString(ptr | 0);

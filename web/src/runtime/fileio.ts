@@ -757,7 +757,64 @@ export class Blitz3DFileIO {
     return view.getFloat32(0, true);
   }
 
+  
+
   /**
+   * Read a single line from a file (up to 
+ or ).
+
+   * @param {number} handle - File handle
+   * @returns {number} Pointer to string in WASM memory (0 on failure)
+   */
+  readLine(handle: number): number {
+    const file = this.openFiles.get(handle);
+    if (!file) return 0;
+
+    if (file.position >= file.size) {
+      file.eof = true;
+      if (this.core && typeof this.core.allocString === "function") {
+        return this.core.allocString("");
+      }
+      return 0;
+    }
+
+    const start = file.position;
+    let end = start;
+
+    while (end < file.size) {
+      const b = file.data[end];
+      if (b === 10 || b === 13) break; // 
+ or 
+      end++;
+    }
+
+    // Build string from [start, end)
+    let str = "";
+    for (let i = start; i < end; i++) {
+      str += String.fromCharCode(file.data[i]);
+    }
+
+    // Consume line terminator(s)
+    if (end < file.size) {
+      const b = file.data[end];
+      end++;
+      // If CRLF, consume LF too.
+      if (b === 13 && end < file.size && file.data[end] === 10) {
+        end++;
+      }
+    }
+
+    file.position = end;
+    if (file.position >= file.size) file.eof = true;
+
+    if (this.core && typeof this.core.allocString === "function") {
+      return this.core.allocString(str);
+    }
+
+    console.error("Cannot allocate string: allocString not available");
+    return 0;
+  }
+/**
    * Read a null-terminated string from a file
    * @param {number} handle - File handle
    * @returns {number} Pointer to string in WASM memory (0 on failure)
@@ -1121,6 +1178,10 @@ export class Blitz3DFileIO {
 
       ReadString: (stream: number) => {
         return self.readString(stream);
+      },
+
+      ReadLine: (stream: number) => {
+        return self.readLine(stream);
       },
 
       ReadByte: (stream: number) => {

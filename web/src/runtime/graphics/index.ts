@@ -236,26 +236,12 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         } else {
             try {
                 this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.core.canvas as HTMLCanvasElement,
                     antialias: false,
                     alpha: false,
                     powerPreference: "high-performance",
                 });
                 console.log("WebGLRenderer created successfully");
-
-                // Ensure renderer canvas is attached to DOM
-                if (
-                    this.renderer.domElement && this.core.canvas &&
-                    this.renderer.domElement !== this.core.canvas
-                ) {
-                    const oldCanvas = this.core.canvas;
-                    if (oldCanvas.parentElement) {
-                        oldCanvas.parentElement.replaceChild(
-                            this.renderer.domElement,
-                            oldCanvas,
-                        );
-                    }
-                    this.core.canvas = this.renderer.domElement;
-                }
 
                 // Verify renderer was created properly
                 if (!this.renderer) {

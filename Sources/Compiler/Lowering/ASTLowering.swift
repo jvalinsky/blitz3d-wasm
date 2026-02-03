@@ -837,9 +837,19 @@ public final class ASTLowering {
             return builder.buildConstI32(0)
             
         case .binary(let binop, _):
-            let lhs = lowerExpression(binop.left)
-            let rhs = lowerExpression(binop.right)
-            
+            var lhs = lowerExpression(binop.left)
+            if lhs.type == .void {
+                // Preserve side effects, but replace the value with 0 so the module remains valid.
+                builder.append(builder.buildDiscard(lhs))
+                lhs = builder.buildConstI32(0)
+            }
+
+            var rhs = lowerExpression(binop.right)
+            if rhs.type == .void {
+                builder.append(builder.buildDiscard(rhs))
+                rhs = builder.buildConstI32(0)
+            }
+
             // Check for string concatenation
             if binop.op == "+" && (isStringExpression(binop.left) || isStringExpression(binop.right)) {
                 // Ensure both are strings. If one is int/float, we might need conversion (Str$)
@@ -1171,6 +1181,19 @@ public final class ASTLowering {
     }
 
     private func coerce(_ value: IRValue, to target: IRType) -> IRValue {
+        if value.type == .void && target != .void {
+            // Preserve side effects when void expressions are used in value contexts.
+            builder.append(builder.buildDiscard(value))
+            switch target {
+            case .i32:
+                return builder.buildConstI32(0)
+            case .f32:
+                return builder.buildConstF32(0)
+            case .void:
+                return value
+            }
+        }
+
         guard value.type != target else { return value }
         guard target != .void else { return value }
         return .convert(value: value, from: value.type, to: target)

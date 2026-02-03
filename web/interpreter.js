@@ -497,9 +497,9 @@ Graphics 800, 600, 0
 ClsColor 0, 0, 0
 Cls
 Color 255, 255, 255
-Text 16, 16, "Loading assets/294test.png ...", False
+Text 16, 16, "Loading assets/badge1.jpg ... (upload via VFS)", False
 
-img = LoadImage("assets/294test.png")
+img = LoadImage("assets/badge1.jpg")
 If img = 0 Then
   Print "LoadImage failed (returned 0)."
 Else
@@ -523,6 +523,47 @@ Function __Step%()
   EndIf
 End Function`,
 
+  imageDebug: `; Image Debug Demo (stepped, no loops)
+;
+; Use this to verify PNG/JPG decoding from the VFS.
+; Upload an image to VFS as assets/demo.png or assets/demo.jpg.
+Global img
+Global shown%
+
+Graphics 800, 600, 0
+ClsColor 0, 0, 0
+Cls
+Color 255, 255, 255
+Text 16, 16, "Upload assets/demo.png (or .jpg) in VFS, then Run.", False
+
+img = LoadImage("assets/demo.png")
+If img = 0 Then
+  Print "LoadImage failed (returned 0)."
+Else
+  Print "Requested image load: assets/demo.png"
+EndIf
+
+Function __Step%()
+  If shown <> 0 Then Return
+
+  If img <> 0 And ImageLoaded(img) <> 0 Then
+    Local w = ImageWidth(img)
+    Local h = ImageHeight(img)
+    MidHandle img
+    Cls
+    DrawImage img, 400, 300
+    Color 0, 255, 0
+    Rect 400 - (w/2), 300 - (h/2), w, h, False
+    Color 255, 255, 255
+    Text 16, 16, "Loaded: " + w + "x" + h, False
+    Print "Loaded image: " + w + "x" + h
+    shown = 1
+  Else
+    Color 255, 255, 255
+    Text 16, 36, "Waiting for decode...", False
+  EndIf
+End Function`,
+
   textureCube: `; Textured Cube Demo (stepped, no loops)
 Global cube
 Global tex
@@ -534,7 +575,7 @@ cube = CreateCube()
 EntityColor cube, 255, 255, 255 ; ensure texture isn't tinted dark
 PositionEntity cube, 0, 0, 5
 
-tex = LoadTexture("assets/scplogo.jpg")
+tex = LoadTexture("assets/badge1.jpg")
 Print "Loading texture..."
 Print "Click Stop to end."
 
@@ -1163,6 +1204,7 @@ async function initCompiler() {
     printOutput("Blitz3D compiler loaded successfully! (worker)", "success");
     setStatus("ready", "Ready");
     runBtnEl.disabled = false;
+    return true;
   } catch (error) {
     const errorMsg = `Failed to load compiler: ${error.message}`;
     printOutput(errorMsg, "error");
@@ -1178,15 +1220,14 @@ async function initCompiler() {
       errorDiv.textContent = errorMsg;
       outputDiv.appendChild(errorDiv);
     }
+    return false;
   }
 }
 
 async function ensureCompilerReady() {
   if (compilerWorker && compilerWorkerReady) return;
   if (!compilerInitPromise) {
-    compilerInitPromise = (async () => {
-      await initCompiler();
-    })();
+    compilerInitPromise = initCompiler();
     compilerInitPromise.finally(() => {
       compilerInitPromise = null;
     });
@@ -1257,12 +1298,8 @@ async function runCode() {
   // If the user stopped compilation earlier (or the worker crashed), re-init.
   if (!compilerWorker || !compilerWorkerReady) {
     printOutput("Compiler not ready yet — reinitializing...", "warning");
-    try {
-      await initCompiler();
-    } catch {
-      // initCompiler already printed errors
-      return;
-    }
+    const ok = await initCompiler();
+    if (!ok) return;
   }
 
   // Stop any prior run before compiling a new module.

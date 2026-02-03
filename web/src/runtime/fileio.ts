@@ -1048,6 +1048,8 @@ export class Blitz3DFileIO {
    */
   resolvePath(filePath: string): string {
     let resolved = filePath.replace(/\\/g, "/");
+    resolved = resolved.replace(/\/+/g, "/");
+    resolved = resolved.replace(/^\.\/+/, "");
     resolved = resolved.replace(/^\/+|\/+$/g, "");
     return resolved;
   }

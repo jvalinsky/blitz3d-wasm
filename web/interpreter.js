@@ -895,6 +895,10 @@ function makeRunnerWorker() {
 
       const stubMissingImports = (imports, module) => {
         for (const imp of WebAssembly.Module.imports(module)) {
+          if (imp.module === "blitz3d" && imports.env && (imp.name in imports.env)) {
+            if (!("blitz3d" in imports)) imports.blitz3d = {};
+            if (!(imp.name in imports.blitz3d)) imports.blitz3d[imp.name] = imports.env[imp.name];
+          }
           if (!(imp.module in imports)) imports[imp.module] = {};
           if (imp.name in imports[imp.module]) continue;
           if (imp.kind === "function") imports[imp.module][imp.name] = () => 0;
@@ -1450,6 +1454,13 @@ function wasmLikelyNeedsGraphics(wasmBytes) {
 
 function stubMissingImports(imports, module) {
   for (const imp of WebAssembly.Module.imports(module)) {
+    // Prefer real implementations if they exist under env but the module requests blitz3d.
+    if (imp.module === "blitz3d" && imports.env && (imp.name in imports.env)) {
+      if (!("blitz3d" in imports)) imports.blitz3d = {};
+      if (!(imp.name in imports.blitz3d)) {
+        imports.blitz3d[imp.name] = imports.env[imp.name];
+      }
+    }
     if (!(imp.module in imports)) imports[imp.module] = {};
     if (imp.name in imports[imp.module]) continue;
     if (imp.kind === "function") imports[imp.module][imp.name] = () => 0;

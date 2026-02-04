@@ -57,7 +57,15 @@ export function setupCollision(graphics: Blitz3DGraphicsInterface, imports: any)
     };
 
     imports.env.ClearCollisions = () => {
-
+        if (graphics.wasmManager) {
+            try {
+                graphics.wasmManager.bridge.clearCollisions();
+            } catch {
+                // Best-effort: some engine builds may not export this (older wasm).
+            }
+            return;
+        }
+        (graphics as any).collisions = [];
     };
 
     imports.env.UpdateWorld = (step: number) => {
@@ -106,8 +114,7 @@ export function setupCollision(graphics: Blitz3DGraphicsInterface, imports: any)
 
     imports.env.GetEntityType = (entId: number) => {
         if (graphics.wasmManager) {
-            // Not exposed in bridge yet, but usually not critical?
-            return 0;
+            return graphics.wasmManager.bridge.getEntityType(entId);
         }
         const ent = graphics.entities[entId];
         return ent ? (ent.userData.typeId || 0) : 0;

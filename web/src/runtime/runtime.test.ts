@@ -9,7 +9,17 @@
 /// <reference lib="dom" />
 
 import { Blitz3DFileIO } from "./fileio.ts";
-import { assert, assertEquals } from "std/assert/mod.ts";
+import { EngineBridge } from "../engine/bridge.ts";
+
+function assert(condition: unknown, message = "assertion failed"): asserts condition {
+    if (!condition) throw new Error(message);
+}
+
+function assertEquals<T>(actual: T, expected: T, message = "assertEquals failed") {
+    if (actual !== expected) {
+        throw new Error(`${message}: expected=${String(expected)} actual=${String(actual)}`);
+    }
+}
 
 function createMockCore(): { readString: (ptr: number) => string; allocString: (str: string) => number; memory?: WebAssembly.Memory } {
     return {
@@ -119,6 +129,20 @@ Deno.test("VFS - register files", () => {
     assert(fileIO.fileSystem.has("test.bin"), "File should be in VFS");
 
     fileIO.dispose();
+});
+
+Deno.test("EngineBridge.clearCollisions delegates to exports", () => {
+    let called = 0;
+    const exports = {
+        memory: new WebAssembly.Memory({ initial: 1 }),
+        ClearCollisions: () => {
+            called++;
+        },
+    } as any;
+
+    const bridge = new EngineBridge(exports);
+    bridge.clearCollisions();
+    assertEquals(called, 1);
 });
 
 Deno.test("VFS - register files case-insensitively", () => {

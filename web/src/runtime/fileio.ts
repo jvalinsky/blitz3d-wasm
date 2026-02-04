@@ -1112,6 +1112,15 @@ export class Blitz3DFileIO {
       return false;
     }
 
+    // Reject double slashes in the *input* before normalization. This prevents
+    // ambiguous paths like `assets//foo` from silently collapsing to `assets/foo`.
+    // (Also helps avoid protocol-looking strings like `http://`.)
+    const inputNormalized = filePath.replace(/\\/g, "/");
+    if (inputNormalized.includes("//")) {
+      console.warn(`[FileIO] Rejected unsafe path: ${filePath}`);
+      return false;
+    }
+
     const resolved = this.resolvePath(filePath);
 
     if (resolved.startsWith("/") || resolved.startsWith("\\")) {

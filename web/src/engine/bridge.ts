@@ -62,6 +62,7 @@ export interface EngineExports {
   EngineCollisions(srcType: number, destType: number, method: number, response: number): void;
   EngineUpdateWorld(step: number): void;
   EngineResetEntity(id: number): void;
+  ClearCollisions(): void;
   EngineEntityType(id: number, type: number): void;
   EngineEntityRadius(id: number, rx: number, ry: number): void;
   EngineEntityBox(id: number, x: number, y: number, z: number, w: number, h: number, d: number): void;
@@ -397,6 +398,10 @@ export class EngineBridge {
 
   collisions(srcType: number, destType: number, method: number, response: number) {
     this.exports.EngineCollisions(srcType, destType, method, response);
+  }
+
+  clearCollisions() {
+    this.exports.ClearCollisions();
   }
 
   updateWorld(step: number) {

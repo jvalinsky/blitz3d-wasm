@@ -129,8 +129,60 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: Import
     };
 
     imports.env.EntityPick = (entId: number, range: number) => {
-        // TODO: Implement EntityPick for WASM (picking from an entity's position)
-        if (graphics.wasmManager) return 0;
+        if (graphics.wasmManager) {
+            // Engine-backed path: derive origin + forward direction from engine transforms.
+            try {
+                const ex = graphics.wasmManager.bridge.exports as any;
+                const ox = ex.EngineEntityX(entId, 1);
+                const oy = ex.EngineEntityY(entId, 1);
+                const oz = ex.EngineEntityZ(entId, 1);
+                const pitchDeg = ex.EngineEntityPitch(entId, 1);
+                const yawDeg = ex.EngineEntityYaw(entId, 1);
+
+                const pitch = (pitchDeg * Math.PI) / 180;
+                const yaw = (yawDeg * Math.PI) / 180;
+
+                // Blitz-style forward vector: yaw=0 => +Z, yaw=90 => +X.
+                const dirX = Math.sin(yaw) * Math.cos(pitch);
+                const dirY = Math.sin(pitch);
+                const dirZ = Math.cos(yaw) * Math.cos(pitch);
+
+                const len = (Number(range) > 0) ? Number(range) : 1000.0;
+                const hit = graphics.wasmManager.linePick?.(
+                    ox,
+                    oy,
+                    oz,
+                    dirX * len,
+                    dirY * len,
+                    dirZ * len,
+                );
+
+                if (hit) {
+                    const dLen = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ) || 1;
+                    const nx = dirX / dLen;
+                    const ny = dirY / dLen;
+                    const nz = dirZ / dLen;
+                    graphics.lastPick = {
+                        entity: hit.id,
+                        x: ox + nx * hit.t,
+                        y: oy + ny * hit.t,
+                        z: oz + nz * hit.t,
+                        nx: hit.nx,
+                        ny: hit.ny,
+                        nz: hit.nz,
+                        surface: 0,
+                        triangle: 0,
+                    };
+                    return hit.id;
+                }
+
+                if (graphics.lastPick) graphics.lastPick.entity = 0;
+                return 0;
+            } catch {
+                if (graphics.lastPick) graphics.lastPick.entity = 0;
+                return 0;
+            }
+        }
 
         const ent = graphics.entities[entId];
         if (!ent) return 0;

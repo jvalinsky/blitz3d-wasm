@@ -9,8 +9,8 @@ import { decodeSmpk, SMPKLoader } from "../smpk.ts";
 import { Blitz3DAnimation } from "../animation.ts";
 import { XLoader } from "../xloader.ts";
 import { Blitz3DAudio } from "../audio.ts";
-import { CmdOpcode, drainCmds } from "../../shared/command_buffer.ts";
-import { dispatchCmd } from "../command_executor.ts";
+import { drainCmds } from "../../shared/command_buffer.ts";
+import { dispatchCmd, type CommandExecutor } from "../command_executor.ts";
 import { EngineExports, EngineBridge } from "../../engine/bridge.ts";
 import { WasmSceneManager } from "../../engine/wasm_scene_manager.ts"; // IMPORT ADDED (legacy)
 import { SceneManager } from "../../engine/scene_manager.ts";
@@ -482,6 +482,375 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         });
     }
 
+    private ensureSceneForCmdBuf(): void {
+        if (this.scene) return;
+        try {
+            this.init3D();
+        } catch { }
+    }
+
+    private cmdCreateEntityWithId(entityType: number, parentGameId: number, id: number): void {
+        // Avoid id collisions if some code paths still allocate entities on the JS side.
+        if (id >= this.nextEntityId) this.nextEntityId = id + 1;
+
+        // If the entity already exists, treat this as idempotent.
+        if (this.entities[id]) return;
+
+        this.ensureSceneForCmdBuf();
+
+        const canvas = this.core?.canvas;
+        const aspect = canvas && canvas.height ? (canvas.width / canvas.height) : 1.0;
+
+        let obj: THREE.Object3D;
+        switch (entityType | 0) {
+            case ENGINE_ENTITY_TYPE.MESH: {
+                const mesh = new THREE.Mesh();
+                mesh.material = new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    vertexColors: true,
+                    side: THREE.DoubleSide,
+                });
+                obj = mesh;
+                break;
+            }
+            case ENGINE_ENTITY_TYPE.CAMERA: {
+                obj = new THREE.PerspectiveCamera(70, aspect, 0.1, 1000);
+                break;
+            }
+            case ENGINE_ENTITY_TYPE.LIGHT: {
+                // Default to a point light. Type-specific light configuration is handled by separate runtime calls.
+                obj = new THREE.PointLight(0xffffff, 1, 0);
+                break;
+            }
+            case ENGINE_ENTITY_TYPE.SPRITE: {
+                obj = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0xffffff }));
+                break;
+            }
+            case ENGINE_ENTITY_TYPE.TERRAIN:
+            case ENGINE_ENTITY_TYPE.PIVOT:
+            default:
+                obj = new THREE.Object3D();
+                break;
+        }
+
+        this.entities[id] = obj;
+
+        // Mirror to the engine-backed scene (if active).
+        this.engineCreate(id, entityType, parentGameId || undefined);
+
+        const parentObj = parentGameId ? this.entities[parentGameId] : null;
+        if (parentObj) parentObj.add(obj);
+        else if (this.scene) this.scene.add(obj);
+
+        // If this is the first camera created, adopt it as the active camera for the legacy renderer path.
+        if (!this.camera && obj instanceof THREE.Camera) {
+            this.camera = obj;
+        }
+    }
+
+    private cmdFreeEntity(id: number): void {
+        const entity = this.entities[id];
+        if (!entity) return;
+
+        try {
+            this.disposeObject3D(entity);
+        } catch { }
+        try {
+            entity.removeFromParent();
+        } catch { }
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const engineId = this._engineIds.get(id) ?? 0;
+            if (manager && engineId) manager.freeEntity(engineId);
+        } catch { }
+
+        this._engineIds.delete(id);
+        delete this.entities[id];
+    }
+
+    private cmdSetParent(childId: number, parentId: number, global: number): void {
+        const child = this.entities[childId];
+        if (!child) return;
+
+        this.ensureSceneForCmdBuf();
+
+        const parent = parentId ? this.entities[parentId] : this.scene;
+        if (!parent) return;
+
+        const keepGlobal = (global | 0) !== 0;
+        let worldMatrix: THREE.Matrix4 | null = null;
+        if (keepGlobal) {
+            try {
+                child.updateMatrixWorld(true);
+                worldMatrix = child.matrixWorld.clone();
+            } catch {
+                worldMatrix = null;
+            }
+        }
+
+        try {
+            child.removeFromParent();
+        } catch { }
+        try {
+            parent.add(child);
+        } catch { }
+
+        if (keepGlobal && worldMatrix) {
+            try {
+                parent.updateMatrixWorld(true);
+                const inv = new THREE.Matrix4();
+                inv.copy((parent as any).matrixWorld ?? new THREE.Matrix4()).invert();
+                const local = new THREE.Matrix4().multiplyMatrices(inv, worldMatrix);
+                local.decompose(child.position, child.quaternion, child.scale);
+                child.updateMatrixWorld(true);
+            } catch { }
+        }
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const childEid = this._engineIds.get(childId) ?? 0;
+            if (manager && childEid) {
+                const parentEid = parentId ? (this._engineIds.get(parentId) ?? 0) : 0;
+                manager.bridge.setParent(childEid, parentEid);
+            }
+        } catch { }
+    }
+
+    private cmdSetVisibility(id: number, visible: number): void {
+        const entity = this.entities[id];
+        if (!entity) return;
+        entity.visible = (visible | 0) !== 0;
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) {
+                if ((visible | 0) !== 0) manager.bridge.exports.EngineShowEntity(eid);
+                else manager.bridge.exports.EngineHideEntity(eid);
+            }
+        } catch { }
+    }
+
+    private cmdSetPosition(id: number, x: number, y: number, z: number): void {
+        const entity = this.entities[id];
+        if (entity) entity.position.set(x, y, -z);
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) manager.bridge.setPosition(eid, x, y, z);
+        } catch { }
+    }
+
+    private cmdSetRotationEuler(id: number, pitch: number, yaw: number, roll: number): void {
+        const entity = this.entities[id];
+        if (entity) {
+            entity.rotation.set(
+                pitch * Math.PI / 180,
+                yaw * Math.PI / 180,
+                roll * Math.PI / 180,
+            );
+        }
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) manager.bridge.setRotation(eid, pitch, yaw, roll);
+        } catch { }
+    }
+
+    private cmdSetScale(id: number, x: number, y: number, z: number): void {
+        const entity = this.entities[id];
+        if (entity) entity.scale.set(x, y, z);
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) manager.bridge.setScale(eid, x, y, z);
+        } catch { }
+    }
+
+    private cmdSetTransform(id: number, pos: [number, number, number], rot: [number, number, number, number], scl: [number, number, number]): void {
+        const entity = this.entities[id];
+        if (!entity) return;
+
+        // Keep consistent with the legacy Blitz3D->Three coordinate convention used elsewhere in this runtime:
+        // - JS Three scene uses -Z for game +Z.
+        entity.position.set(pos[0], pos[1], -pos[2]);
+        entity.scale.set(scl[0], scl[1], scl[2]);
+
+        // Quaternion is currently assumed to be in the same coordinate basis as the WASM writer.
+        // If we later standardize quaternion basis for Track B, adjust this mapping accordingly.
+        try {
+            (entity as any).quaternion?.set?.(rot[0], rot[1], rot[2], rot[3]);
+        } catch { }
+    }
+
+    private forEachRenderable(ent: THREE.Object3D, fn: (obj: any) => void): void {
+        if (!ent) return;
+        if (typeof (ent as any).traverse === "function") {
+            (ent as any).traverse((o: any) => {
+                try {
+                    fn(o);
+                } catch { }
+            });
+            return;
+        }
+        fn(ent as any);
+    }
+
+    private forEachMaterial(obj: any, fn: (mat: any) => void): void {
+        const mat = obj?.material;
+        if (!mat) return;
+        const mats = Array.isArray(mat) ? mat : [mat];
+        for (const m of mats) {
+            if (!m) continue;
+            try {
+                fn(m);
+            } catch { }
+        }
+    }
+
+    private cmdEntityColor(entityId: number, r: number, g: number, b: number): void {
+        const ent = this.entities[entityId];
+        if (!ent) return;
+        const col = new THREE.Color((r | 0) / 255, (g | 0) / 255, (b | 0) / 255);
+        this.forEachRenderable(ent, (obj) => {
+            if (obj?.isMesh) this.ensureUniqueMaterial(obj);
+            this.forEachMaterial(obj, (mat) => {
+                if (mat?.color?.set) mat.color.set(col);
+                if (typeof mat?.needsUpdate === "boolean") mat.needsUpdate = true;
+            });
+        });
+    }
+
+    private cmdEntityAlpha(entityId: number, a: number): void {
+        const ent = this.entities[entityId];
+        if (!ent) return;
+        const alpha = Math.max(0, Math.min(1, Number(a)));
+        this.forEachRenderable(ent, (obj) => {
+            if (obj?.isMesh) this.ensureUniqueMaterial(obj);
+            this.forEachMaterial(obj, (mat) => {
+                if (typeof mat?.opacity === "number") mat.opacity = alpha;
+                if (typeof mat?.transparent === "boolean") mat.transparent = alpha < 0.999;
+                if (typeof mat?.needsUpdate === "boolean") mat.needsUpdate = true;
+            });
+        });
+    }
+
+    private cmdEntityFX(entityId: number, fx: number): void {
+        // Best-effort: match the subset currently used elsewhere in the runtime (bit 0 => wireframe).
+        const ent = this.entities[entityId];
+        if (!ent) return;
+        const flags = fx | 0;
+        const wireframe = (flags & 1) !== 0;
+        this.forEachRenderable(ent, (obj) => {
+            if (obj?.isMesh) this.ensureUniqueMaterial(obj);
+            this.forEachMaterial(obj, (mat) => {
+                if (typeof mat?.wireframe === "boolean") mat.wireframe = wireframe;
+                if (typeof mat?.needsUpdate === "boolean") mat.needsUpdate = true;
+            });
+        });
+    }
+
+    private cmdEntityBlend(entityId: number, blend: number): void {
+        // Best-effort mapping (Blitz3D blend modes are not 1:1 with Three).
+        const ent = this.entities[entityId];
+        if (!ent) return;
+        const mode = blend | 0;
+        this.forEachRenderable(ent, (obj) => {
+            if (obj?.isMesh) this.ensureUniqueMaterial(obj);
+            this.forEachMaterial(obj, (mat) => {
+                try {
+                    if (mode === 2) mat.blending = THREE.MultiplyBlending;
+                    else if (mode === 3) mat.blending = THREE.AdditiveBlending;
+                    else mat.blending = THREE.NormalBlending;
+                    if (typeof mat?.transparent === "boolean") {
+                        // Multiply/Additive generally requires transparency enabled.
+                        if (mode === 2 || mode === 3) mat.transparent = true;
+                    }
+                    if (typeof mat?.needsUpdate === "boolean") mat.needsUpdate = true;
+                } catch { }
+            });
+        });
+    }
+
+    private cmdEntityTexture(entityId: number, textureId: number, _frame: number, _index: number): void {
+        const ent = this.entities[entityId];
+        const tex = this.textures[textureId];
+        if (!ent || !tex?.texture) return;
+        this.forEachRenderable(ent, (obj) => {
+            if (obj?.isMesh) this.ensureUniqueMaterial(obj);
+            this.forEachMaterial(obj, (mat) => {
+                if (Array.isArray(mat)) return;
+                (mat as any).map = tex.texture;
+                if (typeof (mat as any).needsUpdate === "boolean") (mat as any).needsUpdate = true;
+            });
+        });
+    }
+
+    private cmdMoveEntity(id: number, x: number, y: number, z: number): void {
+        const entity = this.entities[id];
+        if (entity) {
+            entity.translateX(x);
+            entity.translateY(y);
+            entity.translateZ(-z);
+        }
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) manager.bridge.exports.EngineMoveEntity(eid, x, y, z);
+        } catch { }
+    }
+
+    private cmdTurnEntity(id: number, pitch: number, yaw: number, roll: number): void {
+        const entity = this.entities[id];
+        if (entity) {
+            entity.rotateX(pitch * Math.PI / 180);
+            entity.rotateY(yaw * Math.PI / 180);
+            entity.rotateZ(roll * Math.PI / 180);
+        }
+
+        // Mirror to the engine-backed scene (if active).
+        try {
+            const manager = this.nativeManager ?? this.wasmManager;
+            const eid = this._engineIds.get(id) ?? 0;
+            if (manager && eid) manager.bridge.exports.EngineTurnEntity(eid, pitch, yaw, roll);
+        } catch { }
+    }
+
+    private cmdDebugLog(ptr: number, len: number): void {
+        const mem = this.core?.memory;
+        if (!mem) return;
+        if (!ptr || !len) return;
+        if (ptr + len > mem.buffer.byteLength) return;
+        try {
+            const bytes = new Uint8Array(mem.buffer, ptr, len);
+            const msg = this._cmdTextDecoder.decode(bytes);
+            console.log(`[CMDB] ${msg}`);
+        } catch { }
+    }
+
+    private cmdPlaySound(soundId: number, volume: number, loop: number, outChannelPtr?: number): void {
+        const audio = this.audioSystem;
+        if (!audio?.playSound) return;
+        const chan = audio.playSound(soundId, volume, 0, 1, (loop | 0) !== 0) | 0;
+        if (outChannelPtr && this.core?.memory) {
+            try {
+                new DataView(this.core.memory.buffer).setInt32(outChannelPtr, chan, true);
+            } catch { }
+        }
+    }
+
     drainCommandBuffer() {
         const mem: WebAssembly.Memory | null = this.core?.memory ?? null;
         const ptr: number = (this.core as any)?.cmdBufPtr ?? 0;
@@ -493,40 +862,60 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
             console.warn("[CMDB] ptr/len out of bounds; skipping drain");
             return 0;
         }
-        // Re-use implementation logic or keep generic implementation here?
-        // Since it's large, I kept it in the previous file. I'll put a simplified version or the full version.
-        // I'll assume the full version is needed.
-        // For brevity in this edit, I will omit the full 800-line implementation of drainCommandBuffer 
-        // and assume it should have been preserved. Since I'm overwriting, I MUST include it.
-        // I will put a placeholder comment here because I don't want to output 800 lines of code blindly 
-        // if I can avoid it, but verify_file showed it has logic.
-        // The logic was basically a loop with a switch statement calling `exec.onCreateEntity` etc.
-        // I will implement a minimal functional stub that calls `dispatchCmd` which seems to be imported.
 
-        // Wait, line 12: `import { dispatchCmd } from "./command_executor";`
-        // The original `drainCommandBuffer` was manually implementing dispatching? 
-        // Or was it using `dispatchCmd`?
-        // Looking at my view_file output... it had `const exec = { ... }` and manual handling.
-        // Use `dispatchCmd` if available?
-        // `command_executor.ts` might be a better place for this logic, but for now I must preserve it.
-        // Since I don't have the full code of drainCommandBuffer in my recent memory/view (it was truncated?),
-        // I will use `drainCmds` from `../shared/command_buffer` which calls `dispatchCmd`.
-        // Line 11: `import { CmdOpcode, drainCmds } from "../shared/command_buffer";`
-        // So I can just call `drainCmds(this.core, (cmd, ...args) => dispatchCmd(this, cmd, ...args))`.
+        const dv = new DataView(mem.buffer, ptr, bytes);
+        let drained = 0;
 
-        if (!this.core.memory || !this._engine) return 0;
-        const view = new DataView(this.core.memory.buffer);
-        const exec = {
-            onCreateEntity: (type: number, parent: number, id: number) => {
-                this.engineCreate(id, type, parent);
+        const exec: CommandExecutor = {
+            onCreateEntity: (entityType, parent, id) => {
+                this.cmdCreateEntityWithId(entityType, parent, id);
             },
-            onFreeEntity: (id: number) => {
-                this.wasmManager?.freeEntity(this.eid(id));
-            }
+            onDestroyEntity: (id) => this.cmdFreeEntity(id),
+            onFreeEntity: (id) => this.cmdFreeEntity(id),
+            onSetTransform: (id, pos, rot, scl) => this.cmdSetTransform(id, pos, rot, scl),
+            onSetVisibility: (id, visible) => this.cmdSetVisibility(id, visible),
+            onSetPosition: (id, x, y, z) => this.cmdSetPosition(id, x, y, z),
+            onSetRotationEuler: (id, pitch, yaw, roll, _global) => {
+                this.cmdSetRotationEuler(id, pitch, yaw, roll);
+            },
+            onSetScale: (id, x, y, z) => this.cmdSetScale(id, x, y, z),
+            onMoveEntity: (id, x, y, z) => this.cmdMoveEntity(id, x, y, z),
+            onTurnEntity: (id, pitch, yaw, roll, _global) => {
+                this.cmdTurnEntity(id, pitch, yaw, roll);
+            },
+            onSetParent: (id, parent, global) => this.cmdSetParent(id, parent, global),
+            onDebugLogPtrLen: (ptr, len) => this.cmdDebugLog(ptr, len),
+            onPlaySound: (soundId, volume, loop, outChannelPtr) => {
+                this.cmdPlaySound(soundId, volume, loop, outChannelPtr);
+            },
+            // Not currently emitted by the Swift compiler CMDB lowering (as of Feb 2026),
+            // but accepted by the decoder; keep these safe no-ops for forward compatibility.
+            onSetMaterial: (_id, _matId) => { },
+            onLoadMesh: (_id, _parent, _pathPtr) => { },
+            onLoadAnimMesh: (_id, _parent, _pathPtr) => { },
+            onCreateMesh: (_id, _parent) => { },
+            onLoadTexture: (_id, _pathPtr, _flags) => { },
+            onTextureBlend: (_id, _blend) => { },
+            onTextureCoords: (_id, _coords) => { },
+            onCreateBrush: (_id) => { },
+            onBrushColor: (_id, _r, _g, _b) => { },
+            onBrushAlpha: (_id, _a) => { },
+            onBrushShininess: (_id, _s) => { },
+            onBrushTexture: (_brushId, _textureId, _frame, _index) => { },
+            onEntityTexture: (entityId, textureId, frame, index) => this.cmdEntityTexture(entityId, textureId, frame, index),
+            onEntityColor: (entityId, r, g, b) => this.cmdEntityColor(entityId, r, g, b),
+            onEntityAlpha: (entityId, a) => this.cmdEntityAlpha(entityId, a),
+            onEntityShininess: (_entityId, _s) => { },
+            onEntityFX: (entityId, fx) => this.cmdEntityFX(entityId, fx),
+            onEntityBlend: (entityId, blend) => this.cmdEntityBlend(entityId, blend),
         };
-        drainCmds(view, (cmd: any) => {
+
+        drainCmds(dv, (cmd) => {
+            drained++;
             dispatchCmd(exec, cmd);
         });
+
+        return drained;
     }
 
     dispose() {

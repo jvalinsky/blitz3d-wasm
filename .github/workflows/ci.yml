@@ -19,11 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         # Use different Swift versions if needed
-        swift-version: [5.9, 5.10]
-        exclude:
-          # Exclude some combinations to reduce CI load if needed
-          - os: ubuntu-latest
-            swift-version: 5.10
+        swift-version: [6.0]
 
     steps:
     - name: Checkout repository
@@ -105,7 +101,9 @@ jobs:
       run: deno lint
 
     - name: Run Deno type checking
-      run: deno check **/*.ts
+      run: |
+        shopt -s globstar nullglob
+        deno check **/*.ts
 
     - name: Run Deno unit tests
       run: deno task test:deno
@@ -136,7 +134,7 @@ jobs:
         # Build the compiler if not already built
         swift build -c release
         # Compile test BB file for leak testing
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o test-particles.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o test-particles.wasm
 
     - name: Run SCPCB leak test (if WASM available)
       if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -221,7 +219,7 @@ jobs:
 
     - name: Compile test WASM for browser
       run: |
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o browser-test.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o browser-test.wasm
         wasm-validate browser-test.wasm
 
     - name: Run browser-based tests
@@ -371,7 +369,7 @@ jobs:
     - name: Validate WASM output
       run: |
         # Test that compiler produces valid WASM
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o integration-test.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o integration-test.wasm
         wasm-validate integration-test.wasm
         
         # Check that WASM can be instantiated

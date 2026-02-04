@@ -14,7 +14,7 @@ on:
 
 env:
   # Use specific versions for consistency
-  SWIFT_VERSION: '6.0'
+  SWIFT_VERSION: '6.0.3'
   DENO_VERSION: 'v2.x'
   NODE_VERSION: '20'
 

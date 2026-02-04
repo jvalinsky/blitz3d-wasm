@@ -375,11 +375,22 @@ const getExampleKeys = async (page: Page): Promise<string[]> => {
 const waitForOutputAny = async (
   page: Page,
   expected: string[],
+  timeoutMs: number,
 ): Promise<string> => {
-  await page.waitForFunction((subs: string[]) => {
-    const txt = document.querySelector("#output")?.textContent ?? "";
-    return subs.some((s) => txt.includes(s));
-  }, expected);
+  try {
+    await page.waitForFunction(
+      (subs: string[]) => {
+        const txt = document.querySelector("#output")?.textContent ?? "";
+        return subs.some((s) => txt.includes(s));
+      },
+      expected,
+      { timeout: timeoutMs },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn(`[interpreter test] output wait timed out after ${timeoutMs}ms`, msg);
+    return "";
+  }
 
   const output = await getTextContent(page, "#output");
   for (const s of expected) {
@@ -394,12 +405,16 @@ const runExample = async (page: Page, key: string): Promise<ExampleReport> => {
   const timeoutMs = String(
     Math.max(250, Number(Deno.env.get("INTERPRETER_TEST_TIMEOUT_MS") ?? "15000") || 15000),
   );
+  const outputTimeoutMs = Math.max(
+    500,
+    Number(Deno.env.get("INTERPRETER_TEST_OUTPUT_TIMEOUT_MS") ?? timeoutMs) || Number(timeoutMs),
+  );
   await page.fill("#timeout-ms", timeoutMs);
   await page.click("#run-btn");
 
   const expected = EXAMPLE_EXPECTATIONS[key] ?? [];
   const matched = expected.length > 0
-    ? await waitForOutputAny(page, expected)
+    ? await waitForOutputAny(page, expected, outputTimeoutMs)
     : "";
 
   if (key === "debugStubs") {

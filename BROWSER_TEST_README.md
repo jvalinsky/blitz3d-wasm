@@ -194,6 +194,8 @@ export PLAYWRIGHT_FALLBACK_HEADED=1
 - It writes a JSON report to `/tmp/interpreter_demo_report.json` (override with `INTERPRETER_TEST_REPORT_PATH`).
 - For faster iteration, run a subset: `INTERPRETER_TEST_ONLY=hello,debugStubs deno task test:web:interpreter`.
 - Override per-run interpreter timeout (ms): `INTERPRETER_TEST_TIMEOUT_MS=15000`.
+- Override the per-example output wait (ms): `INTERPRETER_TEST_OUTPUT_TIMEOUT_MS=15000` (useful if a looping demo fails to print its expected banner).
+- If a demo runs forever but never emits its expected output, the test will now time out while waiting for output and report the example as failed; add/adjust its initial `Print` or narrow the test with `INTERPRETER_TEST_ONLY` to keep CI quick.
 
 ---
 

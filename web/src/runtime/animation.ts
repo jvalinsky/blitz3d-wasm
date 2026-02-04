@@ -95,7 +95,11 @@ export class Blitz3DAnimation {
             // SCPCB/Blitz3D semantics: SetAnimTime takes a *frame* cursor.
             const fps = entity.userData.fps || 30;
             const frame = time || 0;
-            entity.userData.action.time = frame / fps;
+            const action = entity.userData.action;
+            action.enabled = true;
+            action.paused = true;
+            if (!action.isRunning?.()) action.play?.();
+            action.time = frame / fps;
             entity.userData.mixer.update(0);
         }
     }

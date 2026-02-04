@@ -3,9 +3,6 @@ import PackageDescription
 
 let package = Package(
     name: "Blitz3DCompilerWASM",
-    platforms: [
-        .macOS(.v13)
-    ],
     products: [
         .executable(
             name: "blitz3d-compiler",
@@ -22,13 +19,27 @@ let package = Package(
                 .enableExperimentalFeature("Extern")
             ],
             linkerSettings: [
-                .unsafeFlags(["-Xlinker", "--export=malloc", "-Xlinker", "--export=free", "-Xlinker", "--export=compile_blitz3d"])
+                .unsafeFlags(
+                    ["-Xlinker", "--export=malloc", "-Xlinker", "--export=free", "-Xlinker", "--export=compile_blitz3d"],
+                    .when(platforms: [.wasi])
+                )
             ]
         ),
         .target(
             name: "Blitz3DCompiler",
             path: "Sources/Compiler",
-            exclude: ["AGENTs.md", "REFACTORING_PLAN.md", "PLACEHOLDER.md"]
+            exclude: [
+                "AGENTs.md",
+                "AST/AGENTs.md",
+                "CodeGen/AGENTs.md",
+                "CodeGen/REFACTORING_PLAN.md",
+                "IR/AGENTs.md",
+                "IR/PLACEHOLDER.md",
+                "Lexer/AGENTs.md",
+                "Lowering/AGENTs.md",
+                "Parser/AGENTs.md",
+                "Preprocessor/AGENTs.md",
+            ]
         )
     ]
 )

@@ -143,6 +143,60 @@ Navigate to: `http://localhost:8000/test_runtime.html`
 
 ---
 
+## Interpreter Demo (Playwright + Deno)
+
+Run a quick browser automation check against `web/interpreter.html` using the Vite dev server.
+
+### Setup (one-time)
+
+```bash
+# Install Playwright browsers (default cache)
+npx playwright install
+```
+
+If downloads are blocked, use a system Chrome instead:
+
+```bash
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+export PLAYWRIGHT_EXECUTABLE_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+```
+
+The test also auto-detects a Playwright headless shell under
+`~/Library/Caches/ms-playwright` if present.
+
+### Run
+
+```bash
+deno task test:web:interpreter
+```
+
+### Browser Overrides
+
+```bash
+# Prefer a specific browser (chromium|firefox|webkit)
+export PLAYWRIGHT_BROWSER=firefox
+
+# Force headed mode
+export PLAYWRIGHT_HEADLESS=0
+
+# Use a specific Chromium channel (requires system install)
+export PLAYWRIGHT_CHANNEL=chrome
+
+# Allow headless → headed fallback on launch errors (default on, set to 0 to disable)
+export PLAYWRIGHT_FALLBACK_HEADED=1
+```
+
+### Notes
+
+- The test starts `deno task web:dev` on port `5173` by default.
+- Override the port with `INTERPRETER_TEST_PORT=XXXX`.
+- It uploads a small set of VFS fixtures (`badge1.jpg`, `demo.png`, `demo.txt`, plus sample `.b3d/.x/.rmesh`) and then cycles every example in the dropdown, clicking **Run** and asserting expected output.
+- It writes a JSON report to `/tmp/interpreter_demo_report.json` (override with `INTERPRETER_TEST_REPORT_PATH`).
+- For faster iteration, run a subset: `INTERPRETER_TEST_ONLY=hello,debugStubs deno task test:web:interpreter`.
+- Override per-run interpreter timeout (ms): `INTERPRETER_TEST_TIMEOUT_MS=15000`.
+
+---
+
 ## Loading SCPCB Assets
 
 ### With ZIP Files

@@ -152,6 +152,9 @@ export class SMPKLoader {
 
     const clips: THREE.AnimationClip[] = [];
     for (const a of json.animations) {
+      if (this.core?.env?.debugAnim) {
+        console.log(`[SMPK] animation ${a.name ?? "clip"} channels=${a.channels?.length ?? 0}`);
+      }
       const tracks: THREE.KeyframeTrack[] = [];
       for (const ch of a.channels) {
         const samp = a.samplers[ch.sampler]!;
@@ -161,6 +164,9 @@ export class SMPKLoader {
         const values = accessorView(bin, oAcc) as Float32Array;
         const target = objs[ch.targetNode]!;
         const path = ch.path;
+        if (this.core?.env?.debugAnim) {
+          console.log(`[SMPK] ch path=${path} target=${target?.name ?? "?"} sampler=${ch.sampler} t=${times.length}`);
+        }
         if (path === "translation") {
           tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.position`, times, values));
         } else if (path === "scale") {
@@ -368,6 +374,11 @@ export class SMPKLoader {
           const wv = accessorView(bin, json.accessors[weightsIdx]!) as Float32Array;
           geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(wv, 4));
         }
+        if ((geo as any).attributes?.skinWeight) {
+          try {
+            geo.normalizeSkinWeights();
+          } catch { }
+        }
 
         if (typeof prim.indices === "number") {
           const idxAcc = json.accessors[prim.indices]!;
@@ -409,6 +420,9 @@ export class SMPKLoader {
               mat4.fromArray(m, i * 16);
               boneInverses.push(mat4);
             }
+            if (this.core?.env?.debugAnim) {
+              console.log(`[SMPK] read ${boneInverses.length} inverse bind matrices`);
+            }
           }
 
           const sk = new THREE.Skeleton(bones, boneInverses.length ? boneInverses : undefined);
@@ -421,6 +435,10 @@ export class SMPKLoader {
 
           // Update all world matrices before binding
           root.updateMatrixWorld(true);
+          if (this.core?.env?.debugAnim) {
+            const hasNaN = boneInverses.some((m) => m.elements.some((v) => !Number.isFinite(v)));
+            if (hasNaN) console.warn("[SMPK] NaN/Inf in inverse bind matrices");
+          }
 
           // Pass explicit bind matrix to preserve file-provided boneInverses
           sm.bind(sk, sm.matrixWorld);
@@ -435,6 +453,7 @@ export class SMPKLoader {
     if (json.animations?.length) {
       const clips = this.buildAnimationClips(json, bin, objs);
       const mixer = new THREE.AnimationMixer(root);
+      if (this.graphics?.animMixers?.add) this.graphics.animMixers.add(mixer);
       root.userData.mixer = mixer;
       root.userData.animationClips = clips;
       root.userData.fps = json.animations[0]?.fps || 30;

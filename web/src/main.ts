@@ -1377,6 +1377,9 @@ async function init() {
 
   const core = new Blitz3DCore();
   core.init("canvas");
+  if (flags.debug) {
+    core.env.debugAnim = true;
+  }
   // HUD should work even in paused/manual mode (before starting any WASM entrypoints).
   currentHudCancel = startDebugHudLoop(core);
 

@@ -1919,9 +1919,8 @@ const exampleInfo: Record<string, ExampleInfo> = {
     title: "Textured Cube Demo",
     prefersTab: "canvas",
     defaultTimeoutMs: 0,
-    requires: ["assets/ws_in_the_chat_fd_signifier_clip.gif"],
-    optional: ["assets/wafrn-logo.png"],
-    notes: ["GIF decoding may be slower than PNG/JPG depending on browser."],
+    requires: ["assets/badge1.jpg"],
+    notes: ["Upload a JPG/PNG into the VFS as the required path."],
   },
   vfsFileIO: {
     title: "VFS File I/O Demo",

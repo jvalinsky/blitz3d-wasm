@@ -71,19 +71,29 @@ function base64ToBytes(base64: string): Uint8Array {
 }
 
 async function initCompiler() {
-  // This URL is resolved at runtime from the bundled worker location.
-  // Vite doesn't see the file at build time (it's copied by web/build.ts).
-  const wasmUrl = /* @vite-ignore */ new URL(
-    "../blitz3d-compiler.wasm",
-    import.meta.url,
-  );
-  const response = await fetch(wasmUrl);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch compiler: ${response.status} ${response.statusText}`,
-    );
+  // In dev, fetch from the public root. In prod, the file is copied into dist/.
+  const candidates = [
+    "/blitz3d-compiler.wasm",
+    /* @vite-ignore */ new URL("../blitz3d-compiler.wasm", import.meta.url)
+      .toString(),
+  ];
+  let bytes: ArrayBuffer | null = null;
+  for (const url of candidates) {
+    const res = await fetch(url);
+    if (!res.ok) continue;
+    const buf = await res.arrayBuffer();
+    const magic = new Uint8Array(buf, 0, Math.min(4, buf.byteLength));
+    if (
+      magic.length === 4 && magic[0] === 0x00 && magic[1] === 0x61 &&
+      magic[2] === 0x73 && magic[3] === 0x6d
+    ) {
+      bytes = buf;
+      break;
+    }
   }
-  const bytes = await response.arrayBuffer();
+  if (!bytes) {
+    throw new Error("Failed to fetch compiler: no candidate URL succeeded");
+  }
 
   let wasmMemoryRef: WebAssembly.Memory | null = null;
   const wasiImports = {

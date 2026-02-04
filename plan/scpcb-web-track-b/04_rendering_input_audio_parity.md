@@ -1,7 +1,7 @@
 # Plan 04 — Rendering/Input/Audio Parity (Gameplay Correctness)
 
 Created: 2026-01-29
-Last updated: 2026-01-29
+Last updated: 2026-02-04
 
 Goal: match SCPCB gameplay feel and visuals closely enough that core loops and navigation are correct.
 
@@ -33,6 +33,7 @@ Goal: match SCPCB gameplay feel and visuals closely enough that core loops and n
   - [x] decode policy (preload vs streaming) (2026-01-29: `audio.ts`)
   - [x] mixing categories (music/sfx/ambience/voice) (2026-01-29)
   - [x] pause/resume on visibility change (2026-01-29)
+- [x] Handle contract correctness (2026-02-04: sync IDs, pending play, stream/channel separation)
 - [x] 3D audio:
   - [x] listener position/orientation updates (2026-01-29)
   - [x] distance attenuation model (2026-01-29: PannerNode)

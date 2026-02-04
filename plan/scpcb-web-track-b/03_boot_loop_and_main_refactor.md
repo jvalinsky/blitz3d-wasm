@@ -1,7 +1,7 @@
 # Plan 03 — Boot/Init + Main Loop Refactor (No Tab Freezes)
 
 Created: 2026-01-29
-Last updated: 2026-01-30
+Last updated: 2026-02-04
 
 Goal: prevent blocking loops; make initialization resumable; keep the tab responsive.
 
@@ -11,6 +11,7 @@ Goal: prevent blocking loops; make initialization resumable; keep the tab respon
   - [ ] `InitOnce()` (fast, no blocking loops)
   - [ ] `UpdateGame(dt)` (single step)
   - [ ] `RenderStep()` (optional, if split)
+- [x] Export aliases for `InitOnce` / `UpdateGame` (temporary) (2026-02-04: alias to `UpdateMainMenu` via `Tools/compile_scpcb_main.ts`)
 - [x] Keep unsafe entrypoints opt-in only. (2026-01-29)
   - [x] `Main()` behind `?run=main`/`?init=main` style flags / UI buttons (paused default). (2026-01-29)
 

@@ -4,318 +4,272 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blitz3D WASM Interpreter</title>
+    <link rel="stylesheet" href="/vendor/98.css/dist/98.css">
     <link rel="stylesheet" href="interpreter.css">
     <script type="module" src="interpreter.ts"></script>
   </head>
   <body>
-    <header>
-      <h1>Blitz3D WASM Interpreter</h1>
-      <p>Write Blitz3D BASIC code and run it in your browser</p>
-    </header>
-
-    <div class="main-container">
-      <div class="editor-panel">
-        <div class="panel-header">
-          <span class="panel-title">Source Code</span>
-          <div style="display: flex; gap: 0.5rem">
-            <select id="example-select">
-              <option value="">-- Examples --</option>
-              <option value="hello">Hello World</option>
-              <option value="languageBasics">Language Basics</option>
-              <option value="arrays">Arrays</option>
-              <option value="customTypes">Custom Types + For Each</option>
-              <option value="dataReadRestore">Data/Read/Restore</option>
-              <option value="stringsMath">Strings + Math</option>
-              <option value="debugCallStack">Debug: Call Stack</option>
-              <option value="debugStubs">Debug: Runtime Gaps</option>
-              <option value="memoryArray">Debug: Memory (Array Fill)</option>
-              <option value="graphics">Graphics Demo</option>
-              <option value="rotatingCube">Rotating Cube Demo</option>
-              <option value="rotatingCubeEdges">
-                Rotating Cube (Blue + Edges)
-              </option>
-              <option value="rotatingCubeColor">
-                Rotating Cube + Color Cycle
-              </option>
-              <option value="hud2D">2D HUD Demo</option>
-              <option value="inputHud">Input HUD Demo</option>
-              <option value="image2D">2D Image Demo</option>
-              <option value="imageDebug">Image Debug (PNG/JPG)</option>
-              <option value="textureCube">Textured Cube Demo</option>
-              <option value="vfsFileIO">VFS File I/O Demo</option>
-              <option value="fogCube">Fog Demo</option>
-              <option value="proceduralMesh">Procedural Mesh Demo</option>
-              <option value="b3dInspectRender">B3D: Inspect + Render</option>
-              <option value="xInspectRender">X: Inspect + Render</option>
-              <option value="rmeshInspectRender">
-                RMESH: Inspect + Render
-              </option>
-            </select>
-            <input
-              id="timeout-ms"
-              type="number"
-              min="0"
-              step="50"
-              value="2000"
-              title="Watchdog timeout (ms). 0 disables."
-              style="width: 120px"
-            />
-            <button class="btn btn-secondary" id="clear-btn">Clear</button>
-            <button class="btn btn-secondary" id="stop-btn" disabled>
-              Stop
-            </button>
-            <button class="btn btn-secondary" id="compile-btn" disabled>
-              Compile
-            </button>
-            <button class="btn btn-primary" id="run-btn">Run</button>
-          </div>
-        </div>
-        <div class="editor-wrap" id="editor-wrap">
-          <div class="editor-gutter" id="editor-gutter" aria-hidden="true">
-          </div>
-          <div class="editor-code">
-            <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
-            <textarea
-              id="editor"
-              wrap="off"
-              spellcheck="false"
-              autocomplete="off"
-              autocapitalize="off"
-              autocorrect="off"
-              placeholder="' Type your Blitz3D BASIC code here..."
-            ></textarea>
-          </div>
-        </div>
-        <div class="vfs-panel">
-          <div class="vfs-header">
-            <span class="panel-title">Virtual Filesystem</span>
-            <div class="vfs-actions">
-              <input
-                id="vfs-prefix"
-                class="vfs-prefix"
-                type="text"
-                value="assets/"
-                title="Upload prefix (e.g. assets/)"
-              />
-              <input id="vfs-upload" type="file" multiple />
-              <button
-                class="btn btn-secondary"
-                id="vfs-clear-btn"
-                title="Clear VFS"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-          <div class="vfs-hint">
-            Selecting files uploads them immediately. Refer to them by path
-            (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code
-            >LoadTexture</code>. Uploaded files are listed below.
-          </div>
-          <div id="vfs-list" class="vfs-list"></div>
-          <div id="example-req" class="example-req"></div>
-        </div>
+    <div class="window app-window">
+      <div class="title-bar">
+        <div class="title-bar-text">Blitz3D WASM Interpreter</div>
       </div>
+      <div class="window-body app-body">
+        <p class="app-subtitle">Write Blitz3D BASIC code and run it in your browser.</p>
 
-      <div class="output-panel">
-        <div class="tabs">
-          <button class="tab active" id="tab-output" data-tab="output">
-            Output
-          </button>
-          <button class="tab" id="tab-debug" data-tab="debug">
-            Debug
-          </button>
-          <button class="tab" id="tab-canvas" data-tab="canvas">
-            3D Canvas
-          </button>
+        <div class="main-container">
+          <div class="editor-panel">
+            <div class="window source-window">
+              <div class="title-bar">
+                <div class="title-bar-text">Source Code</div>
+              </div>
+              <div class="window-body">
+                <div class="field-row">
+                  <label for="example-select">Example</label>
+                  <select id="example-select">
+                    <option value="">-- Examples --</option>
+                    <option value="hello">Hello World</option>
+                    <option value="languageBasics">Language Basics</option>
+                    <option value="arrays">Arrays</option>
+                    <option value="customTypes">Custom Types + For Each</option>
+                    <option value="dataReadRestore">Data/Read/Restore</option>
+                    <option value="stringsMath">Strings + Math</option>
+                    <option value="debugCallStack">Debug: Call Stack</option>
+                    <option value="debugStubs">Debug: Runtime Gaps</option>
+                    <option value="memoryArray">Debug: Memory (Array Fill)</option>
+                    <option value="graphics">Graphics Demo</option>
+                    <option value="rotatingCube">Rotating Cube Demo</option>
+                    <option value="rotatingCubeEdges">Rotating Cube (Blue + Edges)</option>
+                    <option value="rotatingCubeColor">Rotating Cube + Color Cycle</option>
+                    <option value="hud2D">2D HUD Demo</option>
+                    <option value="inputHud">Input HUD Demo</option>
+                    <option value="image2D">2D Image Demo</option>
+                    <option value="imageDebug">Image Debug (PNG/JPG)</option>
+                    <option value="textureCube">Textured Cube Demo</option>
+                    <option value="vfsFileIO">VFS File I/O Demo</option>
+                    <option value="fogCube">Fog Demo</option>
+                    <option value="proceduralMesh">Procedural Mesh Demo</option>
+                    <option value="b3dInspectRender">B3D: Inspect + Render</option>
+                    <option value="xInspectRender">X: Inspect + Render</option>
+                    <option value="rmeshInspectRender">RMESH: Inspect + Render</option>
+                  </select>
+
+                  <label for="timeout-ms">Timeout (ms)</label>
+                  <input
+                    id="timeout-ms"
+                    type="number"
+                    min="0"
+                    step="50"
+                    value="2000"
+                    title="Watchdog timeout (ms). 0 disables."
+                  />
+                </div>
+
+                <div class="field-row actions-row">
+                  <button id="clear-btn">Clear</button>
+                  <button id="stop-btn" disabled>Stop</button>
+                  <button id="compile-btn" disabled>Compile</button>
+                  <button id="run-btn">Run</button>
+                </div>
+
+                <div class="sunken-panel editor-wrap" id="editor-wrap">
+                  <div class="editor-gutter" id="editor-gutter" aria-hidden="true"></div>
+                  <div class="editor-code">
+                    <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
+                    <textarea
+                      id="editor"
+                      wrap="off"
+                      spellcheck="false"
+                      autocomplete="off"
+                      autocapitalize="off"
+                      autocorrect="off"
+                      placeholder="' Type your Blitz3D BASIC code here..."
+                    ></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="window vfs-window">
+              <div class="title-bar">
+                <div class="title-bar-text">Virtual Filesystem</div>
+              </div>
+              <div class="window-body">
+                <div class="field-row vfs-row">
+                  <label for="vfs-prefix">Prefix</label>
+                  <input
+                    id="vfs-prefix"
+                    class="vfs-prefix"
+                    type="text"
+                    value="assets/"
+                    title="Upload prefix (e.g. assets/)"
+                  />
+                  <input id="vfs-upload" type="file" multiple />
+                  <button id="vfs-clear-btn" title="Clear VFS">Clear</button>
+                </div>
+
+                <p class="hint">
+                  Selecting files uploads them immediately. Refer to them by path
+                  (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code>LoadTexture</code>.
+                  Uploaded files are listed below.
+                </p>
+
+                <div id="vfs-list" class="sunken-panel vfs-list"></div>
+                <div id="example-req" class="sunken-panel example-req"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-panel">
+            <menu role="tablist" class="tabs">
+              <li role="tab" aria-selected="true">
+                <a class="tab active" id="tab-output" data-tab="output" href="#output-tab">Output</a>
+              </li>
+              <li role="tab" aria-selected="false">
+                <a class="tab" id="tab-debug" data-tab="debug" href="#debug-tab">Debug</a>
+              </li>
+              <li role="tab" aria-selected="false">
+                <a class="tab" id="tab-canvas" data-tab="canvas" href="#canvas-tab">3D Canvas</a>
+              </li>
+            </menu>
+
+            <div id="output-tab" class="window tab-content active" role="tabpanel">
+              <div class="window-body">
+                <div id="output" class="sunken-panel output">
+                  <div class="output-line info">Initializing interpreter...</div>
+                </div>
+              </div>
+            </div>
+
+            <div id="debug-tab" class="window tab-content" role="tabpanel">
+              <div class="window-body debug-stack">
+                <fieldset>
+                  <legend>Runtime Gaps</legend>
+                  <div class="field-row">
+                    <button id="stubs-clear-btn">Clear</button>
+                    <button id="stubs-copy-btn">Copy JSON</button>
+                    <button id="stubs-export-btn">Export JSON</button>
+                  </div>
+                  <div id="stubs-summary" class="section-summary">No stubbed imports yet.</div>
+                  <div id="stubs-list" class="sunken-panel runtime-gaps-list"></div>
+                  <div id="stubs-called" class="sunken-panel runtime-gaps-called"></div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Debug (bbdbg)</legend>
+                  <div class="field-row">
+                    <label class="inline-check">
+                      <input id="bbdbg-enabled" type="checkbox" checked />
+                      Enabled
+                    </label>
+                    <button id="bbdbg-pause-btn" disabled>Pause</button>
+                    <button id="bbdbg-continue-btn" disabled>Continue</button>
+                    <button id="bbdbg-step-btn" disabled>Step</button>
+                    <button
+                      id="bbdbg-restart-btn"
+                      disabled
+                      title="Restart execution from the beginning (requires a compiled module)"
+                    >
+                      Restart
+                    </button>
+                    <label class="inline-field">
+                      Rewind
+                      <input
+                        id="bbdbg-rewind-steps"
+                        type="number"
+                        min="1"
+                        step="1"
+                        value="1"
+                        title="Steps to rewind (restart + fast-forward)"
+                        disabled
+                      />
+                    </label>
+                    <button
+                      id="bbdbg-rewind-btn"
+                      disabled
+                      title="Rewind by restarting and fast-forwarding (best-effort)"
+                    >
+                      Rewind
+                    </button>
+                    <button id="bbdbg-clear-bps-btn" title="Clear breakpoints">Clear BPs</button>
+                    <button id="bbdbg-clear-btn">Clear Trace</button>
+                    <button id="bbdbg-copy-btn">Copy Snapshot</button>
+                    <button id="bbdbg-download-meta-btn">Download bbdbg</button>
+                    <button id="bbdbg-load-saved-btn">Load Saved</button>
+                  </div>
+
+                  <div id="bbdbg-summary" class="section-summary">No debug metadata loaded.</div>
+                  <div id="bbdbg-breakpoints" class="section-summary"></div>
+                  <div id="bbdbg-stack" class="sunken-panel bbdbg-stack"></div>
+                  <div id="bbdbg-trace" class="sunken-panel bbdbg-trace"></div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>WASM Memory</legend>
+                  <div class="field-row">
+                    <label class="inline-field">
+                      Offset
+                      <input
+                        id="mem-offset"
+                        type="text"
+                        value="0x0"
+                        title="Hex or decimal byte offset"
+                      />
+                    </label>
+                    <label class="inline-field">
+                      Len
+                      <input
+                        id="mem-len"
+                        type="number"
+                        min="16"
+                        step="16"
+                        value="256"
+                        title="Bytes to dump"
+                      />
+                    </label>
+                    <label class="inline-check">
+                      <input id="mem-auto" type="checkbox" />
+                      Auto
+                    </label>
+                    <button id="mem-refresh-btn">Refresh</button>
+                  </div>
+                  <div id="mem-summary" class="section-summary">No active module memory yet.</div>
+                  <pre class="sunken-panel mem-dump" id="mem-dump"></pre>
+                </fieldset>
+
+                <fieldset>
+                  <legend>WAT (WebAssembly Text)</legend>
+                  <div class="field-row">
+                    <label class="inline-check" title="Include WAT in compile result">
+                      <input id="wat-enabled" type="checkbox" />
+                      Emit on compile
+                    </label>
+                    <button id="wat-clear-btn">Clear</button>
+                    <button id="wat-copy-btn" disabled>Copy</button>
+                    <button id="wat-download-btn" disabled>Download</button>
+                  </div>
+                  <div id="wat-summary" class="section-summary">No WAT yet.</div>
+                  <pre class="sunken-panel wat-code" id="wat-code"></pre>
+                </fieldset>
+              </div>
+            </div>
+
+            <div id="canvas-tab" class="window tab-content" role="tabpanel">
+              <div class="window-body">
+                <div id="canvas-container" class="sunken-panel canvas-wrap">
+                  <canvas id="game-canvas"></canvas>
+                  <canvas id="hud-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="status-bar app-status">
+              <p class="status-bar-field status-item">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status-text">Loading...</span>
+              </p>
+            </div>
+          </div>
         </div>
-
-        <div id="output-tab" class="tab-content active">
-          <div id="output">
-            <div class="output-line info">Initializing interpreter...</div>
-          </div>
-        </div>
-
-        <div id="debug-tab" class="tab-content">
-          <div class="runtime-gaps">
-            <div class="runtime-gaps-header">
-              <span class="panel-title">Runtime Gaps</span>
-              <div class="runtime-gaps-actions">
-                <button class="btn btn-secondary" id="stubs-clear-btn">
-                  Clear
-                </button>
-                <button class="btn btn-secondary" id="stubs-copy-btn">
-                  Copy JSON
-                </button>
-                <button class="btn btn-secondary" id="stubs-export-btn">
-                  Export JSON
-                </button>
-              </div>
-            </div>
-            <div class="runtime-gaps-body">
-              <div class="runtime-gaps-summary" id="stubs-summary">
-                No stubbed imports yet.
-              </div>
-              <div class="runtime-gaps-list" id="stubs-list"></div>
-              <div class="runtime-gaps-called" id="stubs-called"></div>
-            </div>
-          </div>
-          <div class="bbdbg-panel">
-            <div class="bbdbg-header">
-              <span class="panel-title">Debug (bbdbg)</span>
-              <div class="bbdbg-actions">
-                <label class="bbdbg-toggle">
-                  <input id="bbdbg-enabled" type="checkbox" checked />
-                  <span>Enabled</span>
-                </label>
-                <button class="btn btn-secondary" id="bbdbg-pause-btn" disabled>
-                  Pause
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  id="bbdbg-continue-btn"
-                  disabled
-                >
-                  Continue
-                </button>
-                <button class="btn btn-secondary" id="bbdbg-step-btn" disabled>
-                  Step
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  id="bbdbg-restart-btn"
-                  disabled
-                  title="Restart execution from the beginning (requires a compiled module)"
-                >
-                  Restart
-                </button>
-                <input
-                  id="bbdbg-rewind-steps"
-                  type="number"
-                  min="1"
-                  step="1"
-                  value="1"
-                  title="Steps to rewind (restart + fast-forward)"
-                  style="width: 70px"
-                  disabled
-                />
-                <button
-                  class="btn btn-secondary"
-                  id="bbdbg-rewind-btn"
-                  disabled
-                  title="Rewind by restarting and fast-forwarding (best-effort)"
-                >
-                  Rewind
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  id="bbdbg-clear-bps-btn"
-                  title="Clear breakpoints"
-                >
-                  Clear BPs
-                </button>
-                <button class="btn btn-secondary" id="bbdbg-clear-btn">
-                  Clear Trace
-                </button>
-                <button class="btn btn-secondary" id="bbdbg-copy-btn">
-                  Copy Snapshot
-                </button>
-                <button class="btn btn-secondary" id="bbdbg-download-meta-btn">
-                  Download bbdbg
-                </button>
-                <button class="btn btn-secondary" id="bbdbg-load-saved-btn">
-                  Load Saved
-                </button>
-              </div>
-            </div>
-            <div class="bbdbg-body">
-              <div class="bbdbg-summary" id="bbdbg-summary">
-                No debug metadata loaded.
-              </div>
-              <div class="bbdbg-breakpoints" id="bbdbg-breakpoints"></div>
-              <div class="bbdbg-stack" id="bbdbg-stack"></div>
-              <div class="bbdbg-trace" id="bbdbg-trace"></div>
-            </div>
-          </div>
-          <div class="mem-panel">
-            <div class="mem-header">
-              <span class="panel-title">WASM Memory</span>
-              <div class="mem-actions">
-                <input
-                  id="mem-offset"
-                  type="text"
-                  value="0x0"
-                  title="Hex or decimal byte offset"
-                  style="width: 120px"
-                />
-                <input
-                  id="mem-len"
-                  type="number"
-                  min="16"
-                  step="16"
-                  value="256"
-                  title="Bytes to dump"
-                  style="width: 90px"
-                />
-                <label class="mem-toggle">
-                  <input id="mem-auto" type="checkbox" />
-                  <span>Auto</span>
-                </label>
-                <button class="btn btn-secondary" id="mem-refresh-btn">
-                  Refresh
-                </button>
-              </div>
-            </div>
-            <div class="mem-body">
-              <div class="mem-summary" id="mem-summary">
-                No active module memory yet.
-              </div>
-              <pre class="mem-dump" id="mem-dump"></pre>
-            </div>
-          </div>
-          <div class="wat-panel">
-            <div class="wat-header">
-              <span class="panel-title">WAT (WebAssembly Text)</span>
-              <div class="wat-actions">
-                <label class="wat-toggle" title="Include WAT in compile result">
-                  <input id="wat-enabled" type="checkbox" />
-                  <span>Emit on compile</span>
-                </label>
-                <button class="btn btn-secondary" id="wat-clear-btn">
-                  Clear
-                </button>
-                <button class="btn btn-secondary" id="wat-copy-btn" disabled>
-                  Copy
-                </button>
-                <button
-                  class="btn btn-secondary"
-                  id="wat-download-btn"
-                  disabled
-                >
-                  Download
-                </button>
-              </div>
-            </div>
-            <div class="wat-body">
-              <div class="wat-summary" id="wat-summary">No WAT yet.</div>
-              <pre class="wat-code" id="wat-code"></pre>
-            </div>
-          </div>
-        </div>
-
-        <div id="canvas-tab" class="tab-content">
-          <div id="canvas-container">
-            <canvas id="game-canvas"></canvas>
-            <canvas id="hud-canvas"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="status-bar">
-      <div class="status-item">
-        <span class="status-indicator" id="status-indicator"></span>
-        <span id="status-text">Loading...</span>
       </div>
     </div>
   </body>

@@ -86,6 +86,125 @@ const dec = new TextDecoder();
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
+type WasmExport = { name: string; kind: number; index: number };
+
+const readU32 = (bytes: Uint8Array, offset: number) => {
+  let result = 0;
+  let shift = 0;
+  let pos = offset;
+  while (true) {
+    const byte = bytes[pos++]!;
+    result |= (byte & 0x7f) << shift;
+    if ((byte & 0x80) === 0) break;
+    shift += 7;
+  }
+  return { value: result >>> 0, next: pos };
+};
+
+const writeU32 = (value: number) => {
+  const out: number[] = [];
+  let v = value >>> 0;
+  do {
+    let byte = v & 0x7f;
+    v >>>= 7;
+    if (v !== 0) byte |= 0x80;
+    out.push(byte);
+  } while (v !== 0);
+  return new Uint8Array(out);
+};
+
+const concatBytes = (parts: Uint8Array[]) => {
+  const total = parts.reduce((acc, p) => acc + p.length, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const p of parts) {
+    out.set(p, offset);
+    offset += p.length;
+  }
+  return out;
+};
+
+const parseExportSection = (bytes: Uint8Array) => {
+  let offset = 8; // magic + version
+  while (offset < bytes.length) {
+    const id = bytes[offset++]!;
+    const sizeInfo = readU32(bytes, offset);
+    const size = sizeInfo.value;
+    const payloadStart = sizeInfo.next;
+    const payloadEnd = payloadStart + size;
+    if (id === 7) {
+      const countInfo = readU32(bytes, payloadStart);
+      let pos = countInfo.next;
+      const exports: WasmExport[] = [];
+      for (let i = 0; i < countInfo.value; i++) {
+        const nameLenInfo = readU32(bytes, pos);
+        const nameLen = nameLenInfo.value;
+        pos = nameLenInfo.next;
+        const name = dec.decode(bytes.subarray(pos, pos + nameLen));
+        pos += nameLen;
+        const kind = bytes[pos++]!;
+        const idxInfo = readU32(bytes, pos);
+        pos = idxInfo.next;
+        exports.push({ name, kind, index: idxInfo.value });
+      }
+      return { sectionStart: offset - 1, sectionEnd: payloadEnd, exports };
+    }
+    offset = payloadEnd;
+  }
+  return null;
+};
+
+const encodeExportSection = (exports: WasmExport[]) => {
+  const parts: Uint8Array[] = [writeU32(exports.length)];
+  for (const exp of exports) {
+    const nameBytes = enc.encode(exp.name);
+    parts.push(writeU32(nameBytes.length));
+    parts.push(nameBytes);
+    parts.push(Uint8Array.of(exp.kind));
+    parts.push(writeU32(exp.index));
+  }
+  const payload = concatBytes(parts);
+  const size = writeU32(payload.length);
+  return concatBytes([Uint8Array.of(7), size, payload]);
+};
+
+const addExportAliases = (
+  bytes: Uint8Array,
+  aliases: Array<{ name: string; target: string }>,
+) => {
+  const parsed = parseExportSection(bytes);
+  if (!parsed) {
+    return { bytes, added: 0, skipped: aliases.map((a) => a.name), missing: [] as string[] };
+  }
+  const { sectionStart, sectionEnd } = parsed;
+  const exports = [...parsed.exports];
+  const byName = new Map(exports.map((e) => [e.name, e]));
+  const missing: string[] = [];
+  let added = 0;
+
+  for (const alias of aliases) {
+    if (byName.has(alias.name)) continue;
+    const target = byName.get(alias.target);
+    if (!target) {
+      missing.push(alias.target);
+      continue;
+    }
+    exports.push({ name: alias.name, kind: target.kind, index: target.index });
+    byName.set(alias.name, exports[exports.length - 1]!);
+    added++;
+  }
+
+  if (!added) return { bytes, added: 0, skipped: [], missing };
+
+  const newSection = encodeExportSection(exports);
+  const out = concatBytes([
+    bytes.subarray(0, sectionStart),
+    newSection,
+    bytes.subarray(sectionEnd),
+  ]);
+  return { bytes: out, added, skipped: [], missing };
+};
+
 const fmtBar = (ratio: number, width: number) => {
   const r = clamp01(ratio);
   const filled = Math.round(r * width);
@@ -386,12 +505,30 @@ const main = async () => {
   }
 
   // Validate module parses and has required CMDB exports.
-  const bytes = await Deno.readFile(opts.outRuntimeWasm);
+  let bytes = await Deno.readFile(opts.outRuntimeWasm);
   const r = checkCmdbufExports(bytes);
   if (r.missing.length) {
     throw new Error(
       `compiled wasm missing CMDB exports: ${r.missing.join(", ")}`,
     );
+  }
+
+  // Add web-port export aliases when SCPCB lacks safe entrypoints.
+  const aliasResult = addExportAliases(bytes, [
+    { name: "__WebUpdate", target: "UpdateMainMenu" },
+    { name: "UpdateGame", target: "UpdateMainMenu" },
+    { name: "__WebInit", target: "UpdateMainMenu" },
+    { name: "InitOnce", target: "UpdateMainMenu" },
+  ]);
+  if (aliasResult.missing.length) {
+    console.warn(
+      `[scpcb] missing alias targets: ${[...new Set(aliasResult.missing)].join(", ")}`,
+    );
+  }
+  if (aliasResult.added > 0) {
+    bytes = aliasResult.bytes;
+    await Deno.writeFile(opts.outRuntimeWasm, bytes);
+    console.log(`[scpcb] added ${aliasResult.added} export alias(es)`);
   }
 
   if (opts.outWebPublicWasm) {

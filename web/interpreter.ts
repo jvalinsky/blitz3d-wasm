@@ -2365,8 +2365,9 @@ function setupEventListeners() {
   watCopyBtnEl.addEventListener("click", () => void copyWat());
   watDownloadBtnEl.addEventListener("click", () => downloadWat());
 
-  for (const tabBtn of document.querySelectorAll<HTMLButtonElement>(".tab")) {
-    tabBtn.addEventListener("click", () => {
+  for (const tabBtn of document.querySelectorAll<HTMLElement>(".tab")) {
+    tabBtn.addEventListener("click", (ev) => {
+      if (tabBtn instanceof HTMLAnchorElement) ev.preventDefault();
       const tab = (tabBtn.dataset.tab ?? "") as TabName | "";
       if (tab === "output" || tab === "debug" || tab === "canvas") showTab(tab);
     });
@@ -6054,11 +6055,12 @@ function setStatus(state: string, text: string): void {
 }
 
 function showTab(tabName: TabName): void {
-  document.querySelectorAll<HTMLButtonElement>(".tab").forEach((tab) => {
+  document.querySelectorAll<HTMLElement>(".tab").forEach((tab) => {
     tab.classList.remove("active");
-    if ((tab.dataset.tab ?? "") === tabName) {
-      tab.classList.add("active");
-    }
+    const isActive = (tab.dataset.tab ?? "") === tabName;
+    if (isActive) tab.classList.add("active");
+    const li = tab.closest("[role='tab']");
+    if (li) li.setAttribute("aria-selected", isActive ? "true" : "false");
   });
 
   document.querySelectorAll<HTMLElement>(".tab-content").forEach((content) => {

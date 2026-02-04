@@ -167,7 +167,10 @@ const compileWithWebCompiler = async (source: string) => {
     return ptr;
   };
 
-  const workerSrc = await Deno.readTextFile("web/compiler_worker.js");
+  // `web/compiler_worker.ts` is bundled by Vite for the web UI. We keep the
+  // authoritative `autoImports` list in the TS source (no checked-in JS
+  // artifact in this repo).
+  const workerSrc = await Deno.readTextFile("web/compiler_worker.ts");
   const m = workerSrc.match(/const autoImports = \[(.*?)\];/s);
   const autoImports = m
     ? Array.from(m[1].matchAll(/"([^"]+)"/g)).map((x) => x[1]!)
@@ -216,17 +219,19 @@ const compileWithWebCompiler = async (source: string) => {
 };
 
 const validateWasm = async (wasm: Uint8Array) => {
-  const tmp = await Deno.makeTempFile({ suffix: ".wasm" });
-  await Deno.writeFile(tmp, wasm);
-  const p = new Deno.Command("wasm-validate", {
-    args: [tmp],
-    stdout: "piped",
-    stderr: "piped",
-  }).spawn();
-  const out = await p.output();
-  if (out.code !== 0) {
-    const err = new TextDecoder().decode(out.stderr);
-    throw new Error(`wasm-validate failed: ${err.trim()}`);
+  // Keep this test hermetic: CI runs with `--allow-run=deno` (no `wasm-validate`).
+  // `WebAssembly.validate` catches structural issues; `new WebAssembly.Module`
+  // provides a stronger parse-time check.
+  const copy = new Uint8Array(wasm.byteLength);
+  copy.set(wasm);
+  const buf = copy.buffer;
+
+  if (!WebAssembly.validate(buf)) throw new Error("WebAssembly.validate failed");
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const _mod = new WebAssembly.Module(buf);
+  } catch (e) {
+    throw new Error(`WebAssembly.Module parse failed: ${(e as Error).message}`);
   }
 };
 

@@ -520,7 +520,9 @@ const readLineToWasmString = (h: number) => {
 
 const buildImports = () => {
   // Initialize video runtime if needed
-  if (!videoRuntime) {
+  // In Deno worker tests there is no DOM; keep this optional so the worker can
+  // still instantiate and run headless smoke tests.
+  if (!videoRuntime && typeof document !== "undefined") {
     videoRuntime = new VideoRuntime();
   }
   

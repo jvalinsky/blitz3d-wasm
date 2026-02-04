@@ -43,10 +43,21 @@ export interface AnimationSystem {
  */
 export interface AudioSystem {
     nextSoundId: number;
-    loadSound: (path: string, flags: number) => void;
+    ensureContext?: () => boolean;
+    loadSound: (path: string, flags: number) => number;
+    openStream?: (path: string, mode: number) => number;
+    playStream?: (streamId: number, vol?: number, pan?: number, rate?: number, loop?: boolean) => number;
+    stopStream?: (streamId: number) => void;
+    closeStream?: (streamId: number) => void;
     resume?: () => void;
+    dispose?: () => void;
     freeSound?: (soundId: number) => void;
-    playSound?: (soundId: number, vol: number, pan: number, rate: number, loop: boolean) => number;
+    loopSound?: (soundId: number, loop: boolean) => void;
+    setSoundVolume?: (soundId: number, volume: number) => void;
+    setSoundPan?: (soundId: number, pan: number) => void;
+    setSoundPitch?: (soundId: number, pitch: number) => void;
+    setSoundPosition?: (soundId: number, x: number, y: number, z: number) => void;
+    playSound?: (soundId: number, vol?: number, pan?: number, rate?: number, loop?: boolean) => number;
     stopChannel?: (chanId: number) => void;
     pauseChannel?: (chanId: number) => void;
     resumeChannel?: (chanId: number) => void;

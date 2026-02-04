@@ -6,7 +6,7 @@
  * sources compared to a checked-in baseline audit JSON.
  *
  * This is intended for CI environments where the SCPCB repo exists adjacent to
- * this repo (default: `../scpcb`).
+ * this repo (default: `../../scpcb` relative to this script).
  */
 
 import { scanScpcb } from "./scpcb_audit.ts";
@@ -25,7 +25,7 @@ const usage = () => {
       "                               [--require-root] [--allow-dynamic]",
       "",
       "Defaults:",
-      "  --root     ../scpcb",
+      "  --root     ../../scpcb",
       "  --baseline docs/scpcb/scpcb_audit_baseline.json",
       "",
       "Exit codes:",
@@ -38,7 +38,7 @@ const usage = () => {
 
 const parseArgs = (): GateOptions => {
   const opts: GateOptions = {
-    root: new URL("../scpcb/", import.meta.url).pathname,
+    root: new URL("../../scpcb/", import.meta.url).pathname,
     baselinePath: new URL("../docs/scpcb/scpcb_audit_baseline.json", import.meta.url).pathname,
     requireRoot: false,
     allowDynamic: false,
@@ -156,4 +156,3 @@ const main = async () => {
 };
 
 if (import.meta.main) await main();
-

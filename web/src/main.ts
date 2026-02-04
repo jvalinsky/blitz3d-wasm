@@ -1,6 +1,7 @@
 import "./runtime/globals.ts";
 
 import { Blitz3DCore } from "./runtime/core.ts";
+import { Blitz3DAudio } from "./runtime/audio.ts";
 import { Blitz3DGraphics } from "./runtime/graphics/index.ts";
 import { Blitz3DFileIO } from "./runtime/fileio.ts";
 import { initCmdBuf } from "./shared/command_buffer.ts";
@@ -1095,6 +1096,8 @@ const runInitIfPresent = async (
       } catch (e) {
         console.error(`[Blitz3D] ${name} error:`, e);
       }
+      (window as any).__SCPCB_INIT_DONE = true;
+      (window as any).__SCPCB_INIT_STAGE = `done:${name}`;
       ensureScpcbScaleGlobals(core, instance);
 
       // After a non-blocking init, we should automatically start the game loop
@@ -1384,6 +1387,9 @@ async function init() {
 
   core.graphics = graphics;
   core.fileIO = fileIO;
+  if (!flags.noAudio) {
+    graphics.audioSystem = new Blitz3DAudio(core);
+  }
 
   // WebGL can crash/hang the tab in some driver states. Allow disabling it.
   if (!flags.noGL && !flags.safe) {

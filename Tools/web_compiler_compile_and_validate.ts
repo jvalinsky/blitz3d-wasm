@@ -148,7 +148,10 @@ const allocU32 = () => {
   return ptr;
 };
 
-const workerSrc = await Deno.readTextFile("web/compiler_worker.js");
+// `web/compiler_worker.ts` is bundled by Vite for the web UI. We keep the
+// authoritative `autoImports` list in the TS source (no checked-in JS
+// artifact in this repo).
+const workerSrc = await Deno.readTextFile("web/compiler_worker.ts");
 const m = workerSrc.match(/const autoImports = \[(.*?)\];/s);
 const autoImports = m
   ? Array.from(m[1].matchAll(/"([^"]+)"/g)).map((x) => x[1]!)
@@ -210,7 +213,9 @@ if (outPath) {
 }
 
 if (shouldValidate) {
-  const tmp = outPath ?? await Deno.makeTempFile({ suffix: ".wasm" });
+  // Default temp dir on macOS is often under `/var/folders`, but many tasks/tests
+  // run with `--allow-write=/tmp`. Prefer `/tmp` for the default output.
+  const tmp = outPath ?? await Deno.makeTempFile({ dir: "/tmp", suffix: ".wasm" });
   if (!outPath) await Deno.writeFile(tmp, wasmBytes);
   const p = new Deno.Command("wasm-validate", {
     args: [tmp],

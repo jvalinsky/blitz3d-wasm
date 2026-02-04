@@ -169,10 +169,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     const path = graphics.core.readString(pathPtr);
     const audio = graphics.audioSystem;
     if (!audio) return 0;
-
-    const id = audio.nextSoundId++;
-    audio.loadSound(path, 0); // Background load
-    return id;
+    return audio.loadSound(path, 0);
   };
 
   imports.env.EmitSound = (soundId: number, entityId: number) => {

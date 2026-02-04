@@ -142,6 +142,21 @@ public struct CodeGenerator {
             progressHandler?(.init(phase: "function", current: userFunctionProgress, total: totalUserFunctions, name: "_main"))
         }
         generateMainFunction(topLevelStatements)
+
+        // Export a stable entrypoint for top-level scripts.
+        // Prefer "__main" to avoid colliding with user-defined `main`.
+        if !topLevelStatements.isEmpty,
+           let mainIdx = context.functionIndexMap["_main"] ?? context.functionIndexMap["main"] {
+            var exportNames = Set(context.module.exports.map { $0.name })
+            if !exportNames.contains("__main") {
+                context.module.exports.append(WASMExport(name: "__main", kind: .function, index: mainIdx))
+                exportNames.insert("__main")
+            }
+            // Export "main" as a convenience alias when it won't collide with a user export named exactly "main".
+            if context.functionOriginalNames["main"] != "main", !exportNames.contains("main") {
+                context.module.exports.append(WASMExport(name: "main", kind: .function, index: mainIdx))
+            }
+        }
         
         // Export only user-defined functions.
         // Do NOT export imports: export names must be unique across kinds, and SCPCB frequently uses

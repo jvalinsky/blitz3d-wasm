@@ -158,7 +158,10 @@ for (const tc of cases) {
     const repoRoot = Deno.cwd();
     const bbPath = join(repoRoot, tc.bbRelPath);
 
-    const cmd = new Deno.Command(Deno.execPath(), {
+    // `deno task test:deno` runs with `--allow-run=deno`. Use the `deno`
+    // executable name (not `Deno.execPath()`) so the permission allowlist
+    // matches in sandboxed environments.
+    const cmd = new Deno.Command("deno", {
       args: ["run", "-A", "Tools/bb_deno_compile_and_run.ts", bbPath],
       env: {
         BB_DENO_VERBOSE: "0",

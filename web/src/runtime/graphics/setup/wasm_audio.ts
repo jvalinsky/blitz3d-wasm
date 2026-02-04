@@ -21,11 +21,8 @@ export function setupWasmAudio(graphics: Blitz3DGraphicsInterface, imports: any)
             str += String.fromCharCode(char);
         }
 
-        // WARN: Blitz3D LoadSound is synchronous, but WebAudio is async.
-        // For now, we return 0 or a placeholder ID if the system supports it.
-        // Assuming graphics.audioSystem.loadSound returns an ID (number).
-        // If it returns a Promise, we have a problem for the WASM synchronous call.
-        // Checking Blitz3DAudio signature would be best, but let's assume it returns ID.
+        // Blitz3D LoadSound is synchronous; audioSystem returns a stable ID immediately
+        // and loads/decode buffers asynchronously behind the handle.
         return graphics.audioSystem.loadSound(str, flags);
     };
 

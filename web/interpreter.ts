@@ -108,6 +108,7 @@ type RunnerWorkerToMainMessage =
     type: "debug_state";
     stepping: boolean;
     paused: boolean;
+    stepCount?: number;
     reason?: string;
     fileId?: number;
     line?: number;
@@ -194,6 +195,10 @@ let debugSteppingActive = false;
 let debugSteppingPaused = false;
 let debugSteppingStepOnce = false;
 let debugSteppingTick: (() => void) | null = null;
+let debugSteppingStepCount = 0;
+let debugSteppingStepFn: (() => unknown) | null = null;
+let debugSteppingFastForwarding = false;
+let debugSteppingIgnoreBreakpoints = false;
 
 let watTextFull: string | null = null;
 const WAT_PREVIEW_MAX_CHARS = 200_000;
@@ -384,6 +389,14 @@ const updateBbdbgButtons = (): void => {
   bbdbgPauseBtnEl.disabled = !active || paused;
   bbdbgContinueBtnEl.disabled = !active || !paused;
   bbdbgStepBtnEl.disabled = !active || !paused;
+
+  const hasCompiled = Boolean(lastCompiled?.wasmBytes);
+  bbdbgRestartBtnEl.disabled = !hasCompiled || isCompiling;
+  bbdbgRewindStepsEl.disabled = !hasCompiled || isCompiling;
+  const steps = debugSteppingActive
+    ? debugSteppingStepCount
+    : (workerDebugSteppingActive ? workerDebugStepCount : 0);
+  bbdbgRewindBtnEl.disabled = !hasCompiled || isCompiling || steps <= 0;
 };
 
 const bbdbgLocString = (fileId: number, line: number): string => {
@@ -473,6 +486,9 @@ const renderBbdbgPanel = (): void => {
       ? " Debug: paused (sandbox worker)."
       : " Debug: running (sandbox worker).")
     : " Debug: idle (Pause/Step require a program that exports __Step%()).";
+  const steps = debugSteppingActive
+    ? debugSteppingStepCount
+    : (workerDebugSteppingActive ? workerDebugStepCount : 0);
 
   const saved = bbdbgSavedWasmSha256
     ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${
@@ -483,8 +499,8 @@ const renderBbdbgPanel = (): void => {
   bbdbgSummaryEl.textContent = hasMeta
     ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
       lastLoc || "(none)"
-    }. Breakpoints: ${bpCount}.${mode}${saved}`
-    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}. Breakpoints: ${bpCount}.${mode}${saved}`;
+    }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`
+    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`;
 
   if (!bpCount) {
     bbdbgBreakpointsEl.textContent =
@@ -853,6 +869,12 @@ let compilerInitPromise: Promise<boolean> | null = null;
 let compileReqId = 1;
 let compileInFlight: CompileInFlight = null;
 let isRunning = false;
+let lastCompiled: {
+  source: string;
+  wasmBytes: ArrayBuffer | null;
+  needsGraphics: boolean;
+  compiledAtMs: number;
+} | null = null;
 let runtimeGaps: RuntimeGapsState = {
   source: null,
   total: 0,
@@ -896,6 +918,9 @@ const bbdbgEnabledEl = mustGetEl<HTMLInputElement>("bbdbg-enabled");
 const bbdbgPauseBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-pause-btn");
 const bbdbgContinueBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-continue-btn");
 const bbdbgStepBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-step-btn");
+const bbdbgRestartBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-restart-btn");
+const bbdbgRewindStepsEl = mustGetEl<HTMLInputElement>("bbdbg-rewind-steps");
+const bbdbgRewindBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-rewind-btn");
 const bbdbgClearBpsBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-clear-bps-btn");
 const bbdbgClearBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-clear-btn");
 const bbdbgCopyBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-copy-btn");
@@ -908,6 +933,7 @@ const bbdbgLoadSavedBtnEl = mustGetEl<HTMLButtonElement>(
 const runBtnEl = mustGetEl<HTMLButtonElement>("run-btn");
 const stopBtnEl = mustGetEl<HTMLButtonElement>("stop-btn");
 const clearBtnEl = mustGetEl<HTMLButtonElement>("clear-btn");
+const compileBtnEl = mustGetEl<HTMLButtonElement>("compile-btn");
 const exampleSelectEl = mustGetEl<HTMLSelectElement>("example-select");
 const timeoutMsEl = mustGetEl<HTMLInputElement>("timeout-ms");
 const vfsUploadEl = mustGetEl<HTMLInputElement>("vfs-upload");
@@ -959,6 +985,7 @@ let workerBbdbgLast: {
 } | null = null;
 let workerDebugSteppingActive = false;
 let workerDebugPaused = false;
+let workerDebugStepCount = 0;
 
 // --- VFS (interpreter-only) ---
 const vfs = new Map<string, VfsRecord>(); // normalizedPath -> bytes/mime
@@ -2258,6 +2285,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 function setupEventListeners() {
   runBtnEl.addEventListener("click", runCode);
+  compileBtnEl.addEventListener("click", compileOnly);
   stopBtnEl.addEventListener("click", () => stopExecution());
   clearBtnEl.addEventListener("click", () => clearOutput());
   editorEl.addEventListener("input", () => scheduleEditorDecorRender());
@@ -2282,6 +2310,8 @@ function setupEventListeners() {
     bbdbgEnabled = Boolean(bbdbgEnabledEl.checked);
     scheduleBbdbgRender();
   });
+  bbdbgRestartBtnEl.addEventListener("click", () => void restartExecution());
+  bbdbgRewindBtnEl.addEventListener("click", () => void rewindExecution());
   bbdbgPauseBtnEl.addEventListener("click", () => requestDebugPause());
   bbdbgContinueBtnEl.addEventListener("click", () => requestDebugContinue());
   bbdbgStepBtnEl.addEventListener("click", () => requestDebugStep());
@@ -2395,10 +2425,15 @@ function stopExecution() {
   debugSteppingPaused = false;
   debugSteppingStepOnce = false;
   debugSteppingTick = null;
+  debugSteppingStepCount = 0;
+  debugSteppingStepFn = null;
+  debugSteppingFastForwarding = false;
+  debugSteppingIgnoreBreakpoints = false;
   bbdbgBreakpointHitThisStep = false;
   bbdbgBreakpointLastHit = null;
   workerDebugSteppingActive = false;
   workerDebugPaused = false;
+  workerDebugStepCount = 0;
   updateBbdbgButtons();
   if (runnerWatchdog !== null) {
     clearTimeout(runnerWatchdog);
@@ -2485,12 +2520,17 @@ function makeRunnerWorker(): Worker {
       let debugStepping = false;
       let debugPaused = false;
       let debugStepOnce = false;
-      let debugLooping = false;
-      let debugEntryFn = null;
-      let debugStepFn = null;
-      let debugBreakpointHit = false;
-      let debugBreakpointFileId = 0;
-      let debugBreakpointLine = 0;
+	      let debugLooping = false;
+	      let debugEntryFn = null;
+	      let debugStepFn = null;
+	      let debugStepCount = 0;
+	      let debugSeekActive = false;
+	      let debugSeekTarget = 0;
+	      let debugSeekPauseAfter = true;
+	      let debugIgnoreBreakpoints = false;
+	      let debugBreakpointHit = false;
+	      let debugBreakpointFileId = 0;
+	      let debugBreakpointLine = 0;
       const breakpointsByFileId = new Map();
       const send = (msg, transfer) => {
         try {
@@ -2653,18 +2693,19 @@ function makeRunnerWorker(): Worker {
       const maybeSendBbdbg = () => sendBbdbg(false);
       const sendBbdbgNow = () => sendBbdbg(true);
 
-      const sendDebugState = (reason) => {
-        try {
-          send({
-            type: "debug_state",
-            stepping: Boolean(debugStepping),
-            paused: Boolean(debugPaused),
-            reason: reason ? String(reason) : "",
-            fileId: bbdbgLastFileId | 0,
-            line: bbdbgLastLine | 0,
-          });
-        } catch {}
-      };
+	      const sendDebugState = (reason) => {
+	        try {
+	          send({
+	            type: "debug_state",
+	            stepping: Boolean(debugStepping),
+	            paused: Boolean(debugPaused),
+	            stepCount: Number(debugStepCount) | 0,
+	            reason: reason ? String(reason) : "",
+	            fileId: bbdbgLastFileId | 0,
+	            line: bbdbgLastLine | 0,
+	          });
+	        } catch {}
+	      };
 
       const setBreakpoints = (bpObj) => {
         breakpointsByFileId.clear();
@@ -2684,50 +2725,71 @@ function makeRunnerWorker(): Worker {
         } catch {}
       };
 
-      const tick = () => {
-        debugLooping = false;
-        if (!debugStepping || typeof debugStepFn !== "function") return;
-        if (debugPaused) {
-          try { sendDebugState(""); } catch {}
-          return;
-        }
+	      const tick = () => {
+	        debugLooping = false;
+	        if (!debugStepping || typeof debugStepFn !== "function") return;
+	        if (debugPaused) {
+	          try { sendDebugState(""); } catch {}
+	          return;
+	        }
 
         debugBreakpointHit = false;
         debugBreakpointFileId = 0;
-        debugBreakpointLine = 0;
+	        debugBreakpointLine = 0;
 
-        try {
-          debugStepFn();
-        } catch (e) {
-          const msg = e instanceof Error ? e.message : String(e);
-          const stack = e instanceof Error ? e.stack : "";
-          if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-            debugStepping = false;
-            debugPaused = false;
-            debugStepOnce = false;
-            debugStepFn = null;
-            debugEntryFn = null;
-            try { sendDebugState("ended"); } catch {}
-            send({ type: "done" });
-            return;
-          }
-          send({ type: "error", message: msg, stack });
-          return;
-        }
+	        try {
+	          debugStepFn();
+	          debugStepCount = (debugStepCount + 1) | 0;
+	        } catch (e) {
+	          const msg = e instanceof Error ? e.message : String(e);
+	          const stack = e instanceof Error ? e.stack : "";
+	          if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+	            debugStepping = false;
+	            debugPaused = false;
+	            debugStepOnce = false;
+	            debugStepFn = null;
+	            debugEntryFn = null;
+	            debugSeekActive = false;
+	            debugIgnoreBreakpoints = false;
+	            try { sendDebugState("ended"); } catch {}
+	            send({ type: "done" });
+	            return;
+	          }
+	          send({ type: "error", message: msg, stack });
+	          return;
+	        }
 
-        try { maybeSendMemAuto(); } catch {}
-        try { maybeSendBbdbg(); } catch {}
+	        try { maybeSendMemAuto(); } catch {}
+	        try { maybeSendBbdbg(); } catch {}
 
-        if (debugStepOnce || debugBreakpointHit) {
-          debugStepOnce = false;
-          debugPaused = true;
-          try { sendDebugState(debugBreakpointHit ? "breakpoint" : "step"); } catch {}
-          return;
-        }
+	        if (debugSeekActive) {
+	          if (debugStepCount >= debugSeekTarget) {
+	            debugSeekActive = false;
+	            debugIgnoreBreakpoints = false;
+	            debugPaused = Boolean(debugSeekPauseAfter);
+	            try { sendDebugState("seek"); } catch {}
+	            if (!debugPaused) {
+	              debugLooping = true;
+	              setTimeout(tick, 0);
+	            }
+	            return;
+	          }
+	        }
 
-        debugLooping = true;
-        setTimeout(tick, 0);
-      };
+	        if (debugStepOnce || (debugBreakpointHit && !debugIgnoreBreakpoints)) {
+	          debugStepOnce = false;
+	          debugPaused = true;
+	          try { sendDebugState(debugBreakpointHit ? "breakpoint" : "step"); } catch {}
+	          return;
+	        }
+
+	        if ((debugStepCount % 50) === 0) {
+	          try { sendDebugState(""); } catch {}
+	        }
+
+	        debugLooping = true;
+	        setTimeout(tick, 0);
+	      };
 
       const stubMissingImports = (imports, module) => {
         const stubbedLimit = 200;
@@ -2839,32 +2901,60 @@ function makeRunnerWorker(): Worker {
           return;
         }
 
-        if (ev.data && ev.data.type === "debug_step") {
-          if (debugStepping) {
-            debugPaused = false;
-            debugStepOnce = true;
-            sendDebugState("");
-            const kick = () => {
-              if (!debugStepping || !debugStepFn || debugPaused || debugLooping) return;
-              debugLooping = true;
-              setTimeout(tick, 0);
+	        if (ev.data && ev.data.type === "debug_step") {
+	          if (debugStepping) {
+	            debugPaused = false;
+	            debugStepOnce = true;
+	            debugSeekActive = false;
+	            debugIgnoreBreakpoints = false;
+	            sendDebugState("");
+	            const kick = () => {
+	              if (!debugStepping || !debugStepFn || debugPaused || debugLooping) return;
+	              debugLooping = true;
+	              setTimeout(tick, 0);
             };
             kick();
           }
-          return;
-        }
+	          return;
+	        }
 
-        const { wasmBytes, maxLines } = ev.data;
-        let emitted = 0;
-        debugStepping = false;
-        debugPaused = false;
-        debugStepOnce = false;
-        debugLooping = false;
-        debugStepFn = null;
-        debugEntryFn = null;
-        debugBreakpointHit = false;
-        debugBreakpointFileId = 0;
-        debugBreakpointLine = 0;
+	        if (ev.data && ev.data.type === "debug_seek") {
+	          if (debugStepping && typeof debugStepFn === "function") {
+	            const target = Math.max(0, Number(ev.data.targetStep || 0) | 0);
+	            const pauseAfter = ev.data.pauseAfter === undefined ? true : Boolean(ev.data.pauseAfter);
+	            debugSeekActive = true;
+	            debugSeekTarget = target | 0;
+	            debugSeekPauseAfter = pauseAfter;
+	            debugIgnoreBreakpoints = true;
+	            debugPaused = false;
+	            debugStepOnce = false;
+	            sendDebugState("seek");
+	            const kick = () => {
+	              if (!debugStepping || !debugStepFn || debugPaused || debugLooping) return;
+	              debugLooping = true;
+	              setTimeout(tick, 0);
+	            };
+	            kick();
+	          }
+	          return;
+	        }
+
+	        const { wasmBytes, maxLines, startPaused } = ev.data;
+	        let emitted = 0;
+	        debugStepping = false;
+	        debugPaused = false;
+	        debugStepOnce = false;
+	        debugLooping = false;
+	        debugStepFn = null;
+	        debugEntryFn = null;
+	        debugStepCount = 0;
+	        debugSeekActive = false;
+	        debugSeekTarget = 0;
+	        debugSeekPauseAfter = true;
+	        debugIgnoreBreakpoints = false;
+	        debugBreakpointHit = false;
+	        debugBreakpointFileId = 0;
+	        debugBreakpointLine = 0;
 
         try {
           const module = await WebAssembly.compile(wasmBytes);
@@ -3195,13 +3285,13 @@ function makeRunnerWorker(): Worker {
           const entry = inst.exports.main || inst.exports._start || inst.exports.Main || inst.exports.Main_ || inst.exports.__main;
           const stepFn = inst.exports.__Step || inst.exports["__Step%"] || inst.exports.Step || inst.exports["Step%"];
 
-          if (typeof stepFn === "function") {
-            debugEntryFn = entry;
-            debugStepFn = stepFn;
-            debugStepping = true;
-            debugPaused = false;
-            debugStepOnce = false;
-            try { sendDebugState(""); } catch {}
+	          if (typeof stepFn === "function") {
+	            debugEntryFn = entry;
+	            debugStepFn = stepFn;
+	            debugStepping = true;
+	            debugPaused = Boolean(startPaused);
+	            debugStepOnce = false;
+	            try { sendDebugState(""); } catch {}
 
             if (typeof debugEntryFn === "function") {
               try {
@@ -3224,10 +3314,12 @@ function makeRunnerWorker(): Worker {
               }
             }
 
-            debugLooping = true;
-            setTimeout(tick, 0);
-            return;
-          }
+	            if (!debugPaused) {
+	              debugLooping = true;
+	              setTimeout(tick, 0);
+	            }
+	            return;
+	          }
 
           let ran = false;
           for (const name of entryPoints) {
@@ -3309,9 +3401,10 @@ function makeRunnerWorker(): Worker {
 
 async function runWasmBytesInSandbox(
   wasmBytes: ArrayBuffer | ArrayBufferView,
-  { timeoutMs = 2000, maxLines = 2000 }: {
+  { timeoutMs = 2000, maxLines = 2000, startPaused = false }: {
     timeoutMs?: number;
     maxLines?: number;
+    startPaused?: boolean;
   } = {},
 ): Promise<{ startedStepping: boolean }> {
   stopExecution();
@@ -3322,6 +3415,7 @@ async function runWasmBytesInSandbox(
   stopBtnEl.disabled = false;
   workerDebugSteppingActive = false;
   workerDebugPaused = false;
+  workerDebugStepCount = 0;
 
   setStatus(
     "running",
@@ -3358,6 +3452,9 @@ async function runWasmBytesInSandbox(
       if (msg.type === "debug_state") {
         workerDebugSteppingActive = Boolean(msg.stepping);
         workerDebugPaused = Boolean(msg.paused);
+        if (typeof msg.stepCount === "number") {
+          workerDebugStepCount = msg.stepCount | 0;
+        }
         scheduleBbdbgRender();
         updateBbdbgButtons();
         const reason = String(msg.reason || "");
@@ -3533,7 +3630,10 @@ async function runWasmBytesInSandbox(
 
     const bytes = normalizeWasmBytes(wasmBytes);
     postRunnerWorkerBreakpoints();
-    w.postMessage({ wasmBytes: bytes, maxLines }, [bytes]);
+    w.postMessage(
+      { wasmBytes: bytes, maxLines, startPaused: Boolean(startPaused) },
+      [bytes],
+    );
   });
 }
 
@@ -3543,6 +3643,7 @@ async function initCompiler() {
   printOutput("Starting compiler initialization...", "info");
   setStatus("loading", "Loading compiler...");
   runBtnEl.disabled = true;
+  compileBtnEl.disabled = true;
 
   try {
     stopCompile();
@@ -3584,12 +3685,14 @@ async function initCompiler() {
     printOutput("Blitz3D compiler loaded successfully! (worker)", "success");
     setStatus("ready", "Ready");
     runBtnEl.disabled = false;
+    compileBtnEl.disabled = false;
     return true;
   } catch (error: unknown) {
     const errorMsg = `Failed to load compiler: ${errorMessage(error)}`;
     printOutput(errorMsg, "error");
     setStatus("error", "Compiler load failed");
     runBtnEl.disabled = true;
+    compileBtnEl.disabled = true;
     console.error("Compiler load error:", error);
 
     const outputDiv = document.getElementById("output");
@@ -3665,6 +3768,82 @@ async function compileSource(source: string): Promise<CompileResult> {
   });
 }
 
+function recordLastCompiled(source: string, result: CompileResult): void {
+  lastCompiled = {
+    source,
+    wasmBytes: (result.success && result.wasmBytes) ? result.wasmBytes : null,
+    needsGraphics: sourceLikelyNeedsGraphics(source),
+    compiledAtMs: Date.now(),
+  };
+  updateBbdbgButtons();
+}
+
+async function compileOnly(): Promise<void> {
+  const source = editorEl.value.trim();
+  if (!source) {
+    printOutput("Please enter some code to compile.", "error");
+    return;
+  }
+  if (isCompiling) {
+    printOutput("Compilation already in progress...", "warning");
+    return;
+  }
+  if (!compilerWorker || !compilerWorkerReady) {
+    printOutput("Compiler not ready yet — reinitializing...", "warning");
+    const ok = await initCompiler();
+    if (!ok) return;
+  }
+
+  isCompiling = true;
+  runBtnEl.disabled = true;
+  compileBtnEl.disabled = true;
+  updateBbdbgButtons();
+  setStatus("compiling", "Compiling...");
+  printOutput("Compiling Blitz3D code...", "info");
+
+  try {
+    const result = await compileSource(source);
+    setBbdbgMetadata(result.bbdbg);
+    setWatText(typeof result.wat === "string" ? result.wat : null);
+    bbdbgSavedWasmSha256 = null;
+    bbdbgSavedAtMs = null;
+
+    if (result.success && result.wasmBytes && result.bbdbg) {
+      try {
+        const sha = await persistBbdbgToIdb(result.wasmBytes, result.bbdbg);
+        bbdbgSavedWasmSha256 = sha;
+        bbdbgSavedAtMs = Date.now();
+      } catch (err) {
+        printOutput(
+          `[bbdbg] save failed (IndexedDB): ${errorMessage(err)}`,
+          "warning",
+        );
+      }
+    }
+
+    recordLastCompiled(source, result);
+
+    if (result.success) {
+      printOutput("Compilation successful!", "success");
+      printOutput(`WASM size: ${result.size || 0} bytes`, "info");
+      setStatus("ready", "Compiled");
+    } else {
+      printOutput("Compilation failed:", "error");
+      printOutput(result.error || "Unknown error", "error");
+      setStatus("ready", "Ready");
+    }
+  } catch (error: unknown) {
+    printOutput(`Error: ${errorMessage(error)}`, "error");
+    console.error("Compile error:", error);
+    setStatus("ready", "Ready");
+  } finally {
+    isCompiling = false;
+    runBtnEl.disabled = false;
+    compileBtnEl.disabled = false;
+    updateBbdbgButtons();
+  }
+}
+
 // --- CODE EXECUTION ---
 async function runCode() {
   const source = editorEl.value.trim();
@@ -3691,6 +3870,7 @@ async function runCode() {
 
   isCompiling = true;
   runBtnEl.disabled = true;
+  compileBtnEl.disabled = true;
   stopBtnEl.disabled = true;
   runBtnEl.textContent = "Compiling...";
   setStatus("compiling", "Compiling...");
@@ -3706,6 +3886,7 @@ async function runCode() {
     setWatText(typeof result.wat === "string" ? result.wat : null);
     bbdbgSavedWasmSha256 = null;
     bbdbgSavedAtMs = null;
+    recordLastCompiled(source, result);
 
     if (result.success && result.wasmBytes && result.bbdbg) {
       try {
@@ -3745,8 +3926,124 @@ async function runCode() {
     isCompiling = false;
     runBtnEl.disabled = false;
     runBtnEl.textContent = "Run";
+    compileBtnEl.disabled = false;
+    updateBbdbgButtons();
     if (!isRunning) setStatus("ready", "Ready");
   }
+}
+
+async function restartExecution(): Promise<void> {
+  if (!lastCompiled?.wasmBytes) {
+    printOutput("Restart requires a successful compile (no WASM bytes available).", "warning");
+    return;
+  }
+  await restartAndSeek(0);
+}
+
+async function rewindExecution(): Promise<void> {
+  if (!lastCompiled?.wasmBytes) {
+    printOutput("Rewind requires a successful compile (no WASM bytes available).", "warning");
+    return;
+  }
+  const current = debugSteppingActive
+    ? debugSteppingStepCount
+    : (workerDebugSteppingActive ? workerDebugStepCount : 0);
+  const n = Math.max(1, Number(bbdbgRewindStepsEl.value ?? "1") | 0);
+  const target = Math.max(0, (current | 0) - n);
+  await restartAndSeek(target);
+}
+
+async function restartAndSeek(targetStep: number): Promise<void> {
+  if (!lastCompiled?.wasmBytes) return;
+  if (isCompiling) {
+    printOutput("Cannot restart while compilation is in progress.", "warning");
+    return;
+  }
+
+  const bytes = lastCompiled.wasmBytes;
+  const needsGraphics = Boolean(lastCompiled.needsGraphics);
+
+  printOutput(
+    targetStep > 0
+      ? `Restarting and seeking to step ${targetStep}...`
+      : "Restarting...",
+    "info",
+  );
+
+  stopExecution();
+
+  const runResult = await executeCompiledWASMBytes(bytes, {
+    forceMainThread: needsGraphics,
+    startPaused: true,
+  });
+  if (!runResult?.startedStepping) {
+    printOutput("Restart failed: program did not enter stepping mode.", "error");
+    return;
+  }
+
+  if (targetStep > 0) {
+    if (needsGraphics) {
+      await fastForwardMainThreadTo(targetStep);
+    } else {
+      await seekWorkerTo(targetStep);
+    }
+  }
+
+  // Ensure we end paused.
+  if (debugSteppingActive && !debugSteppingPaused) pauseStepping("Paused");
+  if (workerDebugSteppingActive && !workerDebugPaused) requestWorkerDebugPause();
+  scheduleBbdbgRender();
+  updateBbdbgButtons();
+}
+
+async function fastForwardMainThreadTo(targetStep: number): Promise<void> {
+  const target = Math.max(0, targetStep | 0);
+  if (!debugSteppingActive || !debugSteppingStepFn) return;
+  if (debugSteppingStepCount >= target) return;
+
+  debugSteppingFastForwarding = true;
+  debugSteppingIgnoreBreakpoints = true;
+  setStatus("running", `Seeking (main thread) to step ${target}...`);
+
+  const chunk = 50;
+  try {
+    while (debugSteppingActive && debugSteppingStepCount < target) {
+      if (mainThreadStopRequested || sharedStopRequested) break;
+      const start = debugSteppingStepCount;
+      const end = Math.min(target, start + chunk);
+      for (let i = start; i < end; i++) {
+        try {
+          bbdbgBreakpointHitThisStep = false;
+          debugSteppingStepFn();
+          debugSteppingStepCount++;
+        } catch (e) {
+          const msg = errorMessage(e);
+          if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+            printOutput("Program ended while seeking.", "warning");
+            stopExecution();
+            return;
+          }
+          printOutput(`Execution error while seeking: ${msg}`, "error");
+          stopExecution();
+          return;
+        }
+      }
+      scheduleBbdbgRender();
+      await new Promise((r) => setTimeout(r, 0));
+    }
+  } finally {
+    debugSteppingFastForwarding = false;
+    debugSteppingIgnoreBreakpoints = false;
+    debugSteppingPaused = true;
+    setStatus("paused", `Paused (step ${debugSteppingStepCount})`);
+  }
+}
+
+async function seekWorkerTo(targetStep: number): Promise<void> {
+  if (!runnerWorker || !workerDebugSteppingActive) return;
+  const target = Math.max(0, targetStep | 0);
+  runnerWorker.postMessage({ type: "debug_seek", targetStep: target, pauseAfter: true });
+  // Pause will arrive via debug_state.
 }
 
 async function executeCompiledWASM(wasmBase64: string): Promise<void> {
@@ -3776,12 +4073,12 @@ function sourceLikelyNeedsGraphics(source: string): boolean {
 
 async function executeCompiledWASMBytes(
   wasmBytes: ArrayBuffer | ArrayBufferView,
-  opts: { forceMainThread?: boolean } = {},
+  opts: { forceMainThread?: boolean; startPaused?: boolean } = {},
 ): Promise<{ startedStepping: boolean } | undefined> {
   try {
     printOutput("Loading compiled module...", "info");
 
-    const { forceMainThread } = opts;
+    const { forceMainThread, startPaused } = opts;
     const bytes = normalizeWasmBytes(wasmBytes);
     const magic = new Uint8Array(bytes, 0, Math.min(4, bytes.byteLength));
     if (
@@ -3803,7 +4100,10 @@ async function executeCompiledWASMBytes(
         "Graphics imports detected: running on main thread (Stop/timeout are best-effort).",
         "info",
       );
-      const runResult = await runWasmBytesOnMainThread(bytes, { timeoutMs });
+      const runResult = await runWasmBytesOnMainThread(bytes, {
+        timeoutMs,
+        startPaused,
+      });
       if (runResult?.startedStepping) {
         printOutput(
           "Execution started (stepping). Click Stop to end.",
@@ -3815,6 +4115,7 @@ async function executeCompiledWASMBytes(
       const runResult = await runWasmBytesInSandbox(bytes, {
         timeoutMs,
         maxLines: 2000,
+        startPaused,
       });
       if (runResult?.startedStepping) {
         printOutput(
@@ -3883,7 +4184,10 @@ let mainThreadStopRequested = false;
 
 async function runWasmBytesOnMainThread(
   wasmBytes: ArrayBuffer | ArrayBufferView,
-  { timeoutMs = 2000 }: { timeoutMs?: number } = {},
+  { timeoutMs = 2000, startPaused = false }: {
+    timeoutMs?: number;
+    startPaused?: boolean;
+  } = {},
 ): Promise<{ startedStepping: boolean }> {
   stopExecution();
   stopBtnEl.disabled = false;
@@ -4270,15 +4574,17 @@ async function runWasmBytesOnMainThread(
   }
 
   // Prefer stepping (non-blocking) if present.
-  if (typeof step === "function") {
-    mainThreadRunDeadline = 0;
-    isRunning = true;
-    debugSteppingActive = true;
-    debugSteppingPaused = false;
-    debugSteppingStepOnce = false;
-    bbdbgBreakpointHitThisStep = false;
-    bbdbgBreakpointLastHit = null;
-    updateBbdbgButtons();
+	  if (typeof step === "function") {
+	    mainThreadRunDeadline = 0;
+	    isRunning = true;
+	    debugSteppingActive = true;
+	    debugSteppingPaused = Boolean(startPaused);
+	    debugSteppingStepOnce = false;
+	    debugSteppingStepCount = 0;
+	    debugSteppingStepFn = step;
+	    bbdbgBreakpointHitThisStep = false;
+	    bbdbgBreakpointLastHit = null;
+	    updateBbdbgButtons();
 
     const tick = () => {
       if (mainThreadStopRequested || sharedStopRequested) {
@@ -4292,14 +4598,15 @@ async function runWasmBytesOnMainThread(
       }
       if (debugSteppingPaused) return;
 
-      const started = performance.now();
-      bbdbgBreakpointHitThisStep = false;
-      try {
-        step();
-      } catch (e) {
-        const msg = errorMessage(e);
-        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-          printOutput("Program ended.", "success");
+	      const started = performance.now();
+	      bbdbgBreakpointHitThisStep = false;
+	      try {
+	        step();
+	        debugSteppingStepCount++;
+	      } catch (e) {
+	        const msg = errorMessage(e);
+	        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+	          printOutput("Program ended.", "success");
           stopExecution();
           return;
         }
@@ -4324,13 +4631,16 @@ async function runWasmBytesOnMainThread(
         );
         stopExecution();
         return;
-      }
+	      }
 
-      if (debugSteppingStepOnce || bbdbgBreakpointHitThisStep) {
-        debugSteppingStepOnce = false;
-        const loc = bbdbgBreakpointLastHit
-          ? bbdbgLocString(
-            bbdbgBreakpointLastHit.fileId,
+	      if (
+	        debugSteppingStepOnce ||
+	        (bbdbgBreakpointHitThisStep && !debugSteppingIgnoreBreakpoints)
+	      ) {
+	        debugSteppingStepOnce = false;
+	        const loc = bbdbgBreakpointLastHit
+	          ? bbdbgLocString(
+	            bbdbgBreakpointLastHit.fileId,
             bbdbgBreakpointLastHit.line,
           )
           : "";
@@ -4338,13 +4648,19 @@ async function runWasmBytesOnMainThread(
         return;
       }
 
-      sharedStepRaf = requestAnimationFrame(tick);
-    };
+	      sharedStepRaf = requestAnimationFrame(tick);
+	    };
 
-    debugSteppingTick = tick;
-    sharedStepRaf = requestAnimationFrame(tick);
-    return { startedStepping: true };
-  }
+	    debugSteppingTick = tick;
+	    if (debugSteppingPaused) {
+	      setStatus("paused", "Paused");
+	      updateBbdbgButtons();
+	      scheduleBbdbgRender();
+	    } else {
+	      sharedStepRaf = requestAnimationFrame(tick);
+	    }
+	    return { startedStepping: true };
+	  }
 
   // Fallback: run entrypoint directly (can freeze if user wrote a tight loop).
   if (typeof entry === "function") {
@@ -4485,18 +4801,18 @@ function createLegacyRuntimeImports_UNUSED(): Record<
     return false;
   };
 
-  const vfsListDir = (path) => {
-    const p = normalizeVfsPath(path);
-    const prefix = p ? (p.endsWith("/") ? p : `${p}/`) : "";
-    const out = new Set();
-    for (const k of vfs.keys()) {
-      if (!k.startsWith(prefix)) continue;
-      const rest = k.slice(prefix.length);
-      const first = rest.split("/")[0];
-      if (first) out.add(first);
-    }
-    return [...out].sort((a, b) => a.localeCompare(b));
-  };
+	  const vfsListDir = (path) => {
+	    const p = normalizeVfsPath(path);
+	    const prefix = p ? (p.endsWith("/") ? p : `${p}/`) : "";
+	    const out = new Set<string>();
+	    for (const k of vfs.keys()) {
+	      if (!k.startsWith(prefix)) continue;
+	      const rest = k.slice(prefix.length);
+	      const first = rest.split("/")[0];
+	      if (first) out.add(first);
+	    }
+	    return [...out].sort((a, b) => a.localeCompare(b));
+	  };
 
   const readU8 = (h) => {
     const rec = fileHandles.get(h | 0);
@@ -4849,11 +5165,11 @@ function createLegacyRuntimeImports_UNUSED(): Record<
       keyHitSet.delete(c);
       return 1;
     },
-    GetKey: () => {
-      if (keyQueue.length === 0) return 0;
-      const ch = keyQueue.shift();
-      return ch ? ch.charCodeAt(0) : 0;
-    },
+	    GetKey: () => {
+	      if (keyQueue.length === 0) return 0;
+	      const ch = keyQueue.shift();
+	      return (typeof ch === "number" ? ch : 0) | 0;
+	    },
     MouseX: () => mouseX | 0,
     MouseY: () => mouseY | 0,
     MouseZ: () => mouseZ | 0,
@@ -4984,21 +5300,18 @@ function createLegacyRuntimeImports_UNUSED(): Record<
       threeScene.background = c;
       return 1;
     },
-    CreateLight: (type = 1) => {
-      if (!THREE || !threeScene) return 0;
-      let light = null;
-      const t = type | 0;
-      if (t === 2) {
-        light = new THREE.PointLight(0xffffff, 1.0, 0);
-      } else {
-        light = new THREE.DirectionalLight(0xffffff, 1.0);
-        light.position.set(0, 1, 0);
-      }
-      const id = nextEntityId++;
-      entities.set(id, light);
-      threeScene.add(light);
-      return id;
-    },
+	    CreateLight: (type = 1) => {
+	      if (!THREE || !threeScene) return 0;
+	      const t = type | 0;
+	      const light: any = (t === 2)
+	        ? new THREE.PointLight(0xffffff, 1.0, 0)
+	        : new THREE.DirectionalLight(0xffffff, 1.0);
+	      if (t !== 2) light.position.set(0, 1, 0);
+	      const id = nextEntityId++;
+	      entities.set(id, light);
+	      threeScene.add(light);
+	      return id;
+	    },
     AmbientLight: (r, g, b) => {
       if (!THREE || !threeScene) return 0;
       const c = new THREE.Color((r | 0) / 255, (g | 0) / 255, (b | 0) / 255);

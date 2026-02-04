@@ -83,6 +83,8 @@ public final class CFGBuilder {
     private func preScanLabels(in effects: [IREffect]) {
         for effect in effects {
             switch effect {
+            case .sourceLocation(_, let body):
+                preScanLabels(in: body)
             case .label(let name):
                 _ = getOrCreateLabelBlock(name)
             case .ifStmt(_, let thenBody, let elseBody):
@@ -170,6 +172,29 @@ public final class CFGBuilder {
     private func process(_ effects: [IREffect], loopStack: inout [LoopContext]) {
         for effect in effects {
             switch effect {
+            case .sourceLocation(let span, let body):
+                // Preserve the span wrapper through CFG->Relooper by storing span-tagged
+                // instruction effects in the current block when possible.
+                //
+                // Control-flow effects are still processed normally, but we insert a marker
+                // into the current block so the relooper output will still have a stmt hook.
+                for child in body {
+                    switch child {
+                    case .nop,
+                         .discard,
+                         .assign,
+                         .assignLocal,
+                         .assignGlobal,
+                         .assignField,
+                         .assignArray,
+                         .delete:
+                        currentBlock.instructions.append(.sourceLocation(span: span, body: [child]))
+                    default:
+                        currentBlock.instructions.append(.sourceLocation(span: span, body: [.nop]))
+                        process([child], loopStack: &loopStack)
+                    }
+                }
+
             case .label(let name):
                 switchToLabel(name)
 

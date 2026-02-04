@@ -26,6 +26,9 @@
               <option value="customTypes">Custom Types + For Each</option>
               <option value="dataReadRestore">Data/Read/Restore</option>
               <option value="stringsMath">Strings + Math</option>
+              <option value="debugCallStack">Debug: Call Stack</option>
+              <option value="debugStubs">Debug: Runtime Gaps</option>
+              <option value="memoryArray">Debug: Memory (Array Fill)</option>
               <option value="graphics">Graphics Demo</option>
               <option value="rotatingCube">Rotating Cube Demo</option>
               <option value="rotatingCubeEdges">
@@ -64,10 +67,22 @@
             <button class="btn btn-primary" id="run-btn">Run</button>
           </div>
         </div>
-        <textarea
-          id="editor"
-          placeholder="' Type your Blitz3D BASIC code here..."
-        ></textarea>
+        <div class="editor-wrap" id="editor-wrap">
+          <div class="editor-gutter" id="editor-gutter" aria-hidden="true">
+          </div>
+          <div class="editor-code">
+            <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
+            <textarea
+              id="editor"
+              wrap="off"
+              spellcheck="false"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              placeholder="' Type your Blitz3D BASIC code here..."
+            ></textarea>
+          </div>
+        </div>
         <div class="vfs-panel">
           <div class="vfs-header">
             <span class="panel-title">Virtual Filesystem</span>
@@ -92,10 +107,10 @@
           <div class="vfs-hint">
             Selecting files uploads them immediately. Refer to them by path
             (e.g. <code>assets/my.png</code>) in <code>LoadImage</code>/<code
-            >LoadTexture</code>.
+            >LoadTexture</code>. Uploaded files are listed below.
           </div>
-          <div id="example-req" class="example-req"></div>
           <div id="vfs-list" class="vfs-list"></div>
+          <div id="example-req" class="example-req"></div>
         </div>
       </div>
 
@@ -112,6 +127,95 @@
         <div id="output-tab" class="tab-content active">
           <div id="output">
             <div class="output-line info">Initializing interpreter...</div>
+          </div>
+          <div class="runtime-gaps">
+            <div class="runtime-gaps-header">
+              <span class="panel-title">Runtime Gaps</span>
+              <div class="runtime-gaps-actions">
+                <button class="btn btn-secondary" id="stubs-clear-btn">
+                  Clear
+                </button>
+                <button class="btn btn-secondary" id="stubs-copy-btn">
+                  Copy JSON
+                </button>
+                <button class="btn btn-secondary" id="stubs-export-btn">
+                  Export JSON
+                </button>
+              </div>
+            </div>
+            <div class="runtime-gaps-body">
+              <div class="runtime-gaps-summary" id="stubs-summary">
+                No stubbed imports yet.
+              </div>
+              <div class="runtime-gaps-list" id="stubs-list"></div>
+              <div class="runtime-gaps-called" id="stubs-called"></div>
+            </div>
+          </div>
+          <div class="bbdbg-panel">
+            <div class="bbdbg-header">
+              <span class="panel-title">Debug (bbdbg)</span>
+              <div class="bbdbg-actions">
+                <label class="bbdbg-toggle">
+                  <input id="bbdbg-enabled" type="checkbox" checked />
+                  <span>Enabled</span>
+                </label>
+                <button class="btn btn-secondary" id="bbdbg-clear-btn">
+                  Clear Trace
+                </button>
+                <button class="btn btn-secondary" id="bbdbg-copy-btn">
+                  Copy Snapshot
+                </button>
+                <button class="btn btn-secondary" id="bbdbg-download-meta-btn">
+                  Download bbdbg
+                </button>
+                <button class="btn btn-secondary" id="bbdbg-load-saved-btn">
+                  Load Saved
+                </button>
+              </div>
+            </div>
+            <div class="bbdbg-body">
+              <div class="bbdbg-summary" id="bbdbg-summary">
+                No debug metadata loaded.
+              </div>
+              <div class="bbdbg-stack" id="bbdbg-stack"></div>
+              <div class="bbdbg-trace" id="bbdbg-trace"></div>
+            </div>
+          </div>
+          <div class="mem-panel">
+            <div class="mem-header">
+              <span class="panel-title">WASM Memory</span>
+              <div class="mem-actions">
+                <input
+                  id="mem-offset"
+                  type="text"
+                  value="0x0"
+                  title="Hex or decimal byte offset"
+                  style="width: 120px"
+                />
+                <input
+                  id="mem-len"
+                  type="number"
+                  min="16"
+                  step="16"
+                  value="256"
+                  title="Bytes to dump"
+                  style="width: 90px"
+                />
+                <label class="mem-toggle">
+                  <input id="mem-auto" type="checkbox" />
+                  <span>Auto</span>
+                </label>
+                <button class="btn btn-secondary" id="mem-refresh-btn">
+                  Refresh
+                </button>
+              </div>
+            </div>
+            <div class="mem-body">
+              <div class="mem-summary" id="mem-summary">
+                No active module memory yet.
+              </div>
+              <pre class="mem-dump" id="mem-dump"></pre>
+            </div>
           </div>
         </div>
 

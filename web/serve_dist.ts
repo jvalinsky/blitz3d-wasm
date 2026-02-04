@@ -2,6 +2,14 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { extname, join } from "https://deno.land/std@0.224.0/path/mod.ts";
 
 const port = Number(Deno.env.get("PORT") ?? 8082);
+// Enable COOP/COEP headers so the page becomes `crossOriginIsolated` and can use
+// SharedArrayBuffer (required for shared WASM memory / worker-side live inspectors).
+//
+// Note: This will break any pages that load cross-origin scripts/assets without
+// proper CORS/CORP headers (e.g. CDN-hosted libs). Prefer `dist/` builds with
+// same-origin assets when enabling.
+const enableCrossOriginIsolation = Deno.env.get("CROSS_ORIGIN_ISOLATION") ===
+  "1";
 
 // Serve from public/ for demos, or dist/ for production
 const usePublic = Deno.env.get("SERVE_PUBLIC") === "1";
@@ -63,11 +71,21 @@ const handler = async (req: Request) => {
       "content-length": stat.size.toString(),
       "cache-control": cacheControlFor(path, ext),
     });
+    if (enableCrossOriginIsolation) {
+      headers.set("cross-origin-opener-policy", "same-origin");
+      headers.set("cross-origin-embedder-policy", "require-corp");
+      headers.set("cross-origin-resource-policy", "same-origin");
+      headers.set("origin-agent-cluster", "?1");
+    }
     return new Response(file.readable, { headers });
   } catch {
     return new Response("Not found", { status: 404 });
   }
 };
 
-console.log(`Serving ${usePublic ? "public/" : "dist/"} on http://localhost:${port}`);
+console.log(
+  `Serving ${usePublic ? "public/" : "dist/"} on http://localhost:${port}${
+    enableCrossOriginIsolation ? " (crossOriginIsolated)" : ""
+  }`,
+);
 serve(handler, { port, hostname: "0.0.0.0" });

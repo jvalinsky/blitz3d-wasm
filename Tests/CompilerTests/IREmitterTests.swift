@@ -3,10 +3,10 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class IREmitterTests: XCTestCase {
+struct IREmitterTests {
     private func contains(_ needle: WASMInstruction, in instrs: [WASMInstruction]) -> Bool {
         for instr in instrs {
             if instr == needle { return true }
@@ -25,7 +25,7 @@ final class IREmitterTests: XCTestCase {
         return false
     }
 
-    func testBranchResolvesLabelDepth() throws {
+    @Test func testBranchResolvesLabelDepth() throws {
         let function = IRFunction(
             name: "Main",
             returnType: .void,
@@ -48,7 +48,7 @@ final class IREmitterTests: XCTestCase {
         )
     }
 
-    func testDeclaresLocalsIndependentlyFromParameters() throws {
+    @Test func testDeclaresLocalsIndependentlyFromParameters() throws {
         let function = IRFunction(
             name: "Main",
             parameters: [("p", .i32, nil)],
@@ -69,7 +69,7 @@ final class IREmitterTests: XCTestCase {
         )
     }
 
-    func testAssignFieldEncodesMemArgAlignAndOffset() throws {
+    @Test func testAssignFieldEncodesMemArgAlignAndOffset() throws {
         let function = IRFunction(
             name: "Main",
             returnType: .void,
@@ -92,7 +92,7 @@ final class IREmitterTests: XCTestCase {
         )
     }
 
-    func testAssignFieldUsesF32StoreForF32Fields() throws {
+    @Test func testAssignFieldUsesF32StoreForF32Fields() throws {
         let function = IRFunction(
             name: "Main",
             returnType: .void,
@@ -115,7 +115,7 @@ final class IREmitterTests: XCTestCase {
         )
     }
 
-    func testBeforeAfterLoadUseCorrectMemArg() throws {
+    @Test func testBeforeAfterLoadUseCorrectMemArg() throws {
         let function = IRFunction(
             name: "Main",
             returnType: .void,

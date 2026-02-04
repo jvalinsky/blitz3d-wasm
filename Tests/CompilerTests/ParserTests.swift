@@ -3,12 +3,12 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class ParserTests: XCTestCase {
+struct ParserTests {
     
-    func testParseIntegerLiteral() throws {
+    @Test func testParseIntegerLiteral() throws {
         var parser = Parser(source: "Const x = 42")
         let program = parser.parse()
         
@@ -24,7 +24,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseFloatLiteral() throws {
+    @Test func testParseFloatLiteral() throws {
         var parser = Parser(source: "Const x = 3.14")
         let program = parser.parse()
         
@@ -40,7 +40,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseStringLiteral() throws {
+    @Test func testParseStringLiteral() throws {
         var parser = Parser(source: "Const x = \"hello\"")
         let program = parser.parse()
         
@@ -56,7 +56,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseIdentifier() throws {
+    @Test func testParseIdentifier() throws {
         var parser = Parser(source: "Const x = myVar")
         let program = parser.parse()
         
@@ -72,7 +72,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseBinaryExpression() throws {
+    @Test func testParseBinaryExpression() throws {
         var parser = Parser(source: "Const x = 1 + 2")
         let program = parser.parse()
         
@@ -88,7 +88,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseAssignment() throws {
+    @Test func testParseAssignment() throws {
         var parser = Parser(source: "x = 42")
         let program = parser.parse()
         
@@ -104,7 +104,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseLocalDeclaration() throws {
+    @Test func testParseLocalDeclaration() throws {
         var parser = Parser(source: "Local x, y")
         let program = parser.parse()
         
@@ -118,7 +118,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseGlobalDeclaration() throws {
+    @Test func testParseGlobalDeclaration() throws {
         var parser = Parser(source: "Global count%")
         let program = parser.parse()
         
@@ -132,7 +132,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseConstant() throws {
+    @Test func testParseConstant() throws {
         var parser = Parser(source: "Const MAX = 100")
         let program = parser.parse()
         
@@ -144,7 +144,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseIfStatement() throws {
+    @Test func testParseIfStatement() throws {
         var parser = Parser(source: "If x = 1 Then x = 2 EndIf")
         let program = parser.parse()
         
@@ -161,7 +161,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseWhileLoop() throws {
+    @Test func testParseWhileLoop() throws {
         var parser = Parser(source: "While x < 10 Wend")
         let program = parser.parse()
         
@@ -173,7 +173,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseForLoop() throws {
+    @Test func testParseForLoop() throws {
         var parser = Parser(source: "For i = 1 To 10 Next")
         let program = parser.parse()
         
@@ -186,7 +186,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseForLoopWithStep() throws {
+    @Test func testParseForLoopWithStep() throws {
         var parser = Parser(source: "For i = 1 To 10 Step 2 Next")
         let program = parser.parse()
         
@@ -198,7 +198,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseRepeatUntil() throws {
+    @Test func testParseRepeatUntil() throws {
         var parser = Parser(source: "Repeat Until x = 0")
         let program = parser.parse()
         
@@ -210,7 +210,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseFunction() throws {
+    @Test func testParseFunction() throws {
         var parser = Parser(source: "Function Test(x) End Function")
         let program = parser.parse()
         
@@ -220,7 +220,7 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(program.functions[0].parameters[0].name, "x")
     }
     
-    func testParseFunctionWithBody() throws {
+    @Test func testParseFunctionWithBody() throws {
         var parser = Parser(source: "Function Add(x, y) Return x + y End Function")
         let program = parser.parse()
         
@@ -233,7 +233,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseTypeDeclaration() throws {
+    @Test func testParseTypeDeclaration() throws {
         var parser = Parser(source: "Type TField End Type")
         let program = parser.parse()
         
@@ -241,7 +241,7 @@ final class ParserTests: XCTestCase {
         XCTAssertEqual(program.types[0].name, "TField")
     }
     
-    func testParseFieldAccess() throws {
+    @Test func testParseFieldAccess() throws {
         var parser = Parser(source: "Const x = obj\\field")
         let program = parser.parse()
         
@@ -257,7 +257,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseFunctionCall() throws {
+    @Test func testParseFunctionCall() throws {
         var parser = Parser(source: "Print(\"hello\")")
         let program = parser.parse()
         
@@ -270,7 +270,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseArrayAccess() throws {
+    @Test func testParseArrayAccess() throws {
         var parser = Parser(source: "Const x = arr[0]")
         let program = parser.parse()
         
@@ -286,7 +286,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseReturnStatement() throws {
+    @Test func testParseReturnStatement() throws {
         var parser = Parser(source: "Function Test() Return 42 End Function")
         let program = parser.parse()
         
@@ -302,7 +302,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseReturnWithoutValue() throws {
+    @Test func testParseReturnWithoutValue() throws {
         var parser = Parser(source: "Function Test() Return End Function")
         let program = parser.parse()
         
@@ -314,7 +314,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseExitStatement() throws {
+    @Test func testParseExitStatement() throws {
         var parser = Parser(source: "Exit")
         let program = parser.parse()
         
@@ -326,7 +326,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseComplexExpression() throws {
+    @Test func testParseComplexExpression() throws {
         var parser = Parser(source: "Const x = a + b * c - d / e")
         let program = parser.parse()
         
@@ -342,7 +342,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseComparison() throws {
+    @Test func testParseComparison() throws {
         var parser = Parser(source: "Const x = x >= y And z <> w")
         let program = parser.parse()
         
@@ -358,14 +358,14 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseMultipleStatements() throws {
+    @Test func testParseMultipleStatements() throws {
         var parser = Parser(source: "x = 1 : y = 2 : z = 3")
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 3)
     }
     
-    func testParseNotExpression() throws {
+    @Test func testParseNotExpression() throws {
         var parser = Parser(source: "Const x = Not x")
         let program = parser.parse()
         
@@ -381,14 +381,14 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseTypeSuffixes() throws {
+    @Test func testParseTypeSuffixes() throws {
         var parser = Parser(source: "Const x = x% + y# + z$")
         let program = parser.parse()
         
         XCTAssertEqual(program.statements.count, 1)
     }
     
-    func testParseGoto() throws {
+    @Test func testParseGoto() throws {
         var parser = Parser(source: "Goto label")
         let program = parser.parse()
         
@@ -400,7 +400,7 @@ final class ParserTests: XCTestCase {
         }
     }
     
-    func testParseGosub() throws {
+    @Test func testParseGosub() throws {
         var parser = Parser(source: "Gosub subroutine")
         let program = parser.parse()
         

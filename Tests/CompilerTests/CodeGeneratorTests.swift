@@ -3,12 +3,119 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
+import Darwin
 @testable import Blitz3DCompiler
 
-final class CodeGeneratorTests: XCTestCase {
+private struct PosixError: Error, CustomStringConvertible {
+    let function: String
+    let code: Int32
+
+    init(_ function: String) {
+        self.function = function
+        self.code = errno
+    }
+
+    var description: String {
+        let msg = String(cString: strerror(code))
+        return "\(function) failed: errno=\(code) (\(msg))"
+    }
+}
+
+private func randomSuffix(_ digits: Int = 8) -> String {
+    let v = UInt64.random(in: 0..<UInt64.max)
+    let s = String(v, radix: 16)
+    return String(s.prefix(max(1, digits)))
+}
+
+private func joinPath(_ dir: String, _ component: String) -> String {
+    if dir.hasSuffix("/") { return dir + component }
+    return dir + "/" + component
+}
+
+private func fileExists(_ path: String) -> Bool {
+    path.withCString { access($0, F_OK) == 0 }
+}
+
+private func readTextFile(_ path: String) throws -> String {
+    let fd = path.withCString { open($0, O_RDONLY) }
+    if fd < 0 { throw PosixError("open") }
+    defer { _ = close(fd) }
+
+    var bytes: [UInt8] = []
+    bytes.reserveCapacity(4096)
+
+    var buf = [UInt8](repeating: 0, count: 4096)
+    while true {
+        let n = buf.withUnsafeMutableBytes { raw -> Int in
+            guard let base = raw.baseAddress else { return -1 }
+            return read(fd, base, raw.count)
+        }
+        if n < 0 { throw PosixError("read") }
+        if n == 0 { break }
+        bytes.append(contentsOf: buf[0..<n])
+    }
+
+    guard let s = String(bytes: bytes, encoding: .utf8) else {
+        throw PosixError("String(utf8)")
+    }
+    return s
+}
+
+private func writeTextFile(_ path: String, _ contents: String) throws {
+    let fd = path.withCString { open($0, O_CREAT | O_TRUNC | O_WRONLY, 0o644) }
+    if fd < 0 { throw PosixError("open") }
+    defer { _ = close(fd) }
+
+    var bytes = Array(contents.utf8)
+    while !bytes.isEmpty {
+        let n = bytes.withUnsafeBytes { raw -> Int in
+            guard let base = raw.baseAddress else { return -1 }
+            return write(fd, base, raw.count)
+        }
+        if n < 0 { throw PosixError("write") }
+        if n == 0 { break }
+        bytes.removeFirst(n)
+    }
+}
+
+private let _removeTreeCallback: @convention(c) (
+    UnsafePointer<CChar>?,
+    UnsafePointer<stat>?,
+    Int32,
+    UnsafeMutablePointer<FTW>?
+) -> Int32 = { fpath, _, typeflag, _ in
+    guard let fpath else { return 0 }
+    switch typeflag {
+    case FTW_D, FTW_DP, FTW_DNR:
+        _ = rmdir(fpath)
+    default:
+        _ = unlink(fpath)
+    }
+    return 0
+}
+
+private func removeTree(_ path: String) {
+    _ = path.withCString { cstr in
+        nftw(cstr, _removeTreeCallback, 64, FTW_DEPTH | FTW_PHYS)
+    }
+}
+
+private func withTempDir(prefix: String = "blitz3d-codegen", _ body: (String) throws -> Void) throws {
+    var template = Array("/tmp/\(prefix).XXXXXX".utf8CString)
+    let dirPtr = template.withUnsafeMutableBufferPointer { buf -> UnsafeMutablePointer<CChar>? in
+        guard let base = buf.baseAddress else { return nil }
+        return mkdtemp(base)
+    }
+    guard let dirPtr else { throw PosixError("mkdtemp") }
+    let dir = String(cString: dirPtr)
+    defer { removeTree(dir) }
+    try body(dir)
+}
+
+struct CodeGeneratorTests {
     
-    func testGenerateSimpleProgram() throws {
+    @Test func testGenerateSimpleProgram() throws {
         var parser = Parser(source: "x = 42")
         let program = parser.parse()
         
@@ -22,25 +129,66 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 0)
     }
     
-    func testGenerateAssignment() throws {
+    @Test func testGenerateAssignment() throws {
         var parser = Parser(source: "x = 42")
         let program = parser.parse()
         
         var codeGen = CodeGenerator()
         let module = codeGen.generate(from: program)
         
-        // Check that function was created
-        XCTAssertGreaterThanOrEqual(module.code.count, 1)
-        let funcBody = module.code[0].body
+        // Find the top-level "Main" function (top-level statements are wrapped into Main()).
+        // NOTE: The top-level Main() wrapper is not necessarily exported.
+        guard let localIndex = module.functionNames.firstIndex(of: "Main") else {
+            XCTFail("Expected Main() to be generated for top-level statements. functionNames=\(module.functionNames)")
+            return
+        }
+        XCTAssertLessThan(localIndex, module.code.count)
+        let funcBody = module.code[localIndex].body
         
-        // Should have at least a return instruction
-        XCTAssertTrue(funcBody.contains { instr in
-            if case .return = instr { return true }
-            return false
-        }, "Function body should contain return, but got: \(funcBody)")
+        // CodeGenerator wraps many statements in `.sourceLocation(...)` for debug info.
+        // Validate that the assignment emits the expected constant regardless of wrappers.
+        func containsI32Const(_ expected: Int32, _ instr: WASMInstruction) -> Bool {
+            switch instr {
+            case .i32Const(let val):
+                return val == expected
+            case .sourceLocation(_, let inner):
+                return containsI32Const(expected, inner)
+            case .block(_, let body):
+                return body.contains { containsI32Const(expected, $0) }
+            case .loop(_, let body):
+                return body.contains { containsI32Const(expected, $0) }
+            case .if(_, let thenBody, let elseBody):
+                if thenBody.contains(where: { containsI32Const(expected, $0) }) { return true }
+                if let elseBody, elseBody.contains(where: { containsI32Const(expected, $0) }) { return true }
+                return false
+            default:
+                return false
+            }
+        }
+        
+        XCTAssertTrue(funcBody.contains(where: { containsI32Const(42, $0) }), "Expected i32.const 42 to appear in function body, but got: \(funcBody)")
+    }
+
+    @Test func testTopLevelMainIsGeneratedAfterAllocators() throws {
+        var parser = Parser(source: "x = 1")
+        let program = parser.parse()
+        
+        var codeGen = CodeGenerator()
+        let module = codeGen.generate(from: program)
+        
+        XCTAssertGreaterThanOrEqual(module.functionNames.count, 4)
+        XCTAssertEqual(module.functionNames[0], "__Alloc")
+        XCTAssertEqual(module.functionNames[1], "__StringAlloc")
+        XCTAssertEqual(module.functionNames[2], "__StringConcat")
+        
+        guard let mainIdx = module.functionNames.firstIndex(of: "Main") else {
+            XCTFail("Expected Main() wrapper for top-level statements. functionNames=\(module.functionNames)")
+            return
+        }
+        XCTAssertGreaterThanOrEqual(mainIdx, 3)
     }
     
-    func testGenerateFunction() throws {
+    @Test func testGenerateFunction() throws {
         var parser = Parser(source: "Function Test() Return 42 End Function")
         let program = parser.parse()
         
@@ -55,7 +203,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertNotNil(testExport)
     }
     
-    func testGenerateIfStatement() throws {
+    @Test func testGenerateIfStatement() throws {
         var parser = Parser(source: "If x = 1 Then x = 2 EndIf")
         let program = parser.parse()
         
@@ -65,7 +213,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testGenerateWhileLoop() throws {
+    @Test func testGenerateWhileLoop() throws {
         var parser = Parser(source: "While x < 10 Wend")
         let program = parser.parse()
         
@@ -75,7 +223,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testGenerateForLoop() throws {
+    @Test func testGenerateForLoop() throws {
         var parser = Parser(source: "For i = 1 To 10 Next")
         let program = parser.parse()
         
@@ -85,7 +233,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testGenerateBinaryExpression() throws {
+    @Test func testGenerateBinaryExpression() throws {
         var parser = Parser(source: "Local x = 1 + 2 * 3")
         let program = parser.parse()
         
@@ -96,7 +244,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testGenerateFunctionCall() throws {
+    @Test func testGenerateFunctionCall() throws {
         var parser = Parser(source: "Print(\"hello\")")
         let program = parser.parse()
         
@@ -106,7 +254,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testWASMModuleOutput() throws {
+    @Test func testWASMModuleOutput() throws {
         var parser = Parser(source: "Function Main() Return 0 End Function")
         let program = parser.parse()
         
@@ -121,15 +269,34 @@ final class CodeGeneratorTests: XCTestCase {
         // Should end with )
         XCTAssertTrue(watOutput.hasSuffix(")\n"))
     }
+
+    @Test func testWASMTextWriterEmitsSourceLocationComments() throws {
+        let span = SourceSpan(start: SourceLocation(line: 1, column: 1, sourceFile: "test.bb"))
+        
+        var module = WASMModule()
+        module.types = [WASMFunctionType(parameters: [], results: [])]
+        module.functions = [0]
+        module.code = [
+            WASMFunction(typeIndex: 0, locals: [], body: [
+                .sourceLocation(span, .return)
+            ])
+        ]
+        
+        var writer = WASMTextWriter()
+        let watOutput = writer.write(module)
+        
+        XCTAssertTrue(watOutput.contains(";; test.bb:1:1"), "Expected source location comment in WAT")
+        XCTAssertTrue(watOutput.contains("return"), "Expected return instruction in WAT")
+    }
     
-    func testWASMFunctionType() throws {
+    @Test func testWASMFunctionType() throws {
         let funcType = WASMFunctionType(parameters: [.i32, .i32], results: [.i32])
         
         XCTAssertEqual(funcType.parameters.count, 2)
         XCTAssertEqual(funcType.results.count, 1)
     }
     
-    func testWASMInstructions() throws {
+    @Test func testWASMInstructions() throws {
         // Test that instruction enums work
         let addInstr: WASMInstruction = .i32Add
         let constInstr: WASMInstruction = .i32Const(42)
@@ -142,7 +309,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertEqual(localGetInstr, .localGet(0))
     }
     
-    func testWASMModuleStructure() throws {
+    @Test func testWASMModuleStructure() throws {
         var module = WASMModule()
         
         // Add a function type
@@ -168,7 +335,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertTrue(watOutput.contains("(export \"test\""))
     }
     
-    func testWASMDataSection() throws {
+    @Test func testWASMDataSection() throws {
         let data = WASMData(
             memoryIndex: 0,
             offset: .i32Const(0),
@@ -184,7 +351,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertTrue(watOutput.contains("(data"))
     }
     
-    func testGenerateGoto() throws {
+    @Test func testGenerateGoto() throws {
         let source = """
         Function Test()
             .start
@@ -243,7 +410,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertTrue(containsBr0(in: testFunc.body), "Function with Goto should contain a br 0")
     }
     
-    func testGenerateDataStatement() throws {
+    @Test func testGenerateDataStatement() throws {
         let source = """
         Data 1, 2.5, "hello"
         """
@@ -257,7 +424,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThan(module.data.count, 0, "Should have data section entries")
     }
     
-    func testGenerateReadStatement() throws {
+    @Test func testGenerateReadStatement() throws {
         let source = """
         Local x%, y#, z$
         Data 1, 2.5, "hello"
@@ -273,7 +440,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
 
-    func testDataStringsUseBlitzStringLayoutAndReadAssignsPointer() throws {
+    @Test func testDataStringsUseBlitzStringLayoutAndReadAssignsPointer() throws {
         let source = """
         Function Main()
             Local s$
@@ -323,7 +490,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertTrue(mainFunc.body.contains(.i32Load(2, 4)), "READ s$ should load the string length (offset 4) to advance the DATA pointer")
     }
     
-    func testGenerateRestoreStatement() throws {
+    @Test func testGenerateRestoreStatement() throws {
         let source = """
         Data 1, 2, 3
         Restore
@@ -341,7 +508,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testGenerateDataWithExpressions() throws {
+    @Test func testGenerateDataWithExpressions() throws {
         let source = """
         Data 1 + 2, "test", 3.14
         """
@@ -356,7 +523,7 @@ final class CodeGeneratorTests: XCTestCase {
     
     // MARK: - Input Function Tests
     
-    func testCompileKeyDownFunction() throws {
+    @Test func testCompileKeyDownFunction() throws {
         let source = """
         Function Main()
             While Not KeyDown(1)
@@ -380,7 +547,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileMouseFunctions() throws {
+    @Test func testCompileMouseFunctions() throws {
         let source = """
         Function Main()
             Local x = MouseX()
@@ -403,7 +570,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileInputInGameLoop() throws {
+    @Test func testCompileInputInGameLoop() throws {
         let source = """
         Function Main()
             Graphics3D 800, 600
@@ -425,13 +592,13 @@ final class CodeGeneratorTests: XCTestCase {
     
     // MARK: - SCPCB Compilation Tests
     
-    func testCompileSCPCBKeyName() throws {
+    @Test func testCompileSCPCBKeyName() throws {
         let scpcbPath = "/Users/jack/Software/scp_port/SCPCB/KeyName.bb"
-        guard FileManager.default.fileExists(atPath: scpcbPath) else {
+        guard fileExists(scpcbPath) else {
             return // Skip if file doesn't exist
         }
         
-        let source = try String(contentsOfFile: scpcbPath, encoding: .utf8)
+        let source = try readTextFile(scpcbPath)
         var parser = Parser(source: source)
         let program = parser.parse()
         
@@ -446,7 +613,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.functions.count + module.imports.count, 0)
     }
     
-    func testCompileSCPPCBConstants() throws {
+    @Test func testCompileSCPPCBConstants() throws {
         let source = """
         Const VERSION$ = "1.0"
         Const MAX_ITEMS = 100
@@ -463,7 +630,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPPCBTypeDeclaration() throws {
+    @Test func testCompileSCPPCBTypeDeclaration() throws {
         let source = """
         Type TPlayer
             Field x#
@@ -485,7 +652,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBFunctionWithMultipleStatements() throws {
+    @Test func testCompileSCPCBFunctionWithMultipleStatements() throws {
         let source = """
         Function InitializeGame()
             Graphics3D 800, 600, 32, 0
@@ -506,7 +673,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBForLoop() throws {
+    @Test func testCompileSCPCBForLoop() throws {
         let source = """
         For i = 1 To 10 Step 2
             Print i
@@ -521,7 +688,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBWhileLoop() throws {
+    @Test func testCompileSCPCBWhileLoop() throws {
         let source = """
         While Not KeyHit(1)
             UpdateWorld
@@ -538,7 +705,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBIfElseStatement() throws {
+    @Test func testCompileSCPCBIfElseStatement() throws {
         let source = """
         If health <= 0 Then
             Die()
@@ -557,7 +724,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBSelectCase() throws {
+    @Test func testCompileSCPCBSelectCase() throws {
         let source = """
         Select difficulty
             Case 1
@@ -579,7 +746,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBSelectWithMultipleCaseExpressions() throws {
+    @Test func testCompileSCPCBSelectWithMultipleCaseExpressions() throws {
         let source = """
         Select command$
             Case "help","h","?"
@@ -601,7 +768,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBNestedSelect() throws {
+    @Test func testCompileSCPCBNestedSelect() throws {
         let source = """
         Select mode
             Case 1
@@ -624,7 +791,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPPCBArrayAccess() throws {
+    @Test func testCompileSCPPCBArrayAccess() throws {
         let source = """
         Local items[10]
         For i = 0 To 9
@@ -640,7 +807,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPPCBFieldAccess() throws {
+    @Test func testCompileSCPPCBFieldAccess() throws {
         let source = """
         Local player.TPlayer
         player = New TPlayer
@@ -657,7 +824,7 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileSCPCBFunctionCallWithArguments() throws {
+    @Test func testCompileSCPCBFunctionCallWithArguments() throws {
         let source = """
         PositionEntity camera, 0.0, 10.0, -50.0
         RotateEntity light, 90, 0, 0
@@ -674,7 +841,7 @@ final class CodeGeneratorTests: XCTestCase {
     
     // MARK: - Include/Multi-file Tests
     
-    func testPreprocessorIncludeSingleFile() throws {
+    @Test func testPreprocessorIncludeSingleFile() throws {
         let source = """
         Include "utils.bb"
         """
@@ -685,459 +852,435 @@ final class CodeGeneratorTests: XCTestCase {
         XCTAssertFalse(processed.contains("Include"))
     }
     
-    func testPreprocessorIncludeWithFileContent() throws {
-        let tempDir = NSTemporaryDirectory()
-        let utilsUUID = UUID().uuidString.prefix(8)
-        let utilsPath = tempDir + "utils_\(utilsUUID).bb"
-        let mainPath = tempDir + "main_\(UUID().uuidString.prefix(8)).bb"
-        
-        let utilsContent = """
-        Function GetGreeting$()
-            Return "Hello from utils!"
-        End Function
-        """
-        
-        let mainContent = """
-        Include "utils_\(utilsUUID).bb"
-        Print GetGreeting()
-        """
-        
-        try utilsContent.write(toFile: utilsPath, atomically: true, encoding: .utf8)
-        try mainContent.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        // Should contain the included function
-        XCTAssertTrue(processed.contains("Function GetGreeting"))
-        XCTAssertTrue(processed.contains("Return"))
-        XCTAssertTrue(processed.contains("Print GetGreeting"))
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: utilsPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testPreprocessorIncludeWithFileContent() throws {
+        try withTempDir { dir in
+            let utilsID = randomSuffix()
+            let utilsName = "utils_\(utilsID).bb"
+            let utilsPath = joinPath(dir, utilsName)
+            let mainPath = joinPath(dir, "main_\(randomSuffix()).bb")
+
+            let utilsContent = """
+            Function GetGreeting$()
+                Return "Hello from utils!"
+            End Function
+            """
+
+            let mainContent = """
+            Include "\(utilsName)"
+            Print GetGreeting()
+            """
+
+            try writeTextFile(utilsPath, utilsContent)
+            try writeTextFile(mainPath, mainContent)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            // Should contain the included function
+            XCTAssertTrue(processed.contains("Function GetGreeting"))
+            XCTAssertTrue(processed.contains("Return"))
+            XCTAssertTrue(processed.contains("Print GetGreeting"))
+        }
     }
     
-    func testPreprocessorNestedIncludes() throws {
-        let tempDir = NSTemporaryDirectory()
-        
-        let level3UUID = UUID().uuidString.prefix(8)
-        let level2UUID = UUID().uuidString.prefix(8)
-        let level1UUID = UUID().uuidString.prefix(8)
-        
-        let level3Path = tempDir + "level3_\(level3UUID).bb"
-        let level2Path = tempDir + "level2_\(level2UUID).bb"
-        let level1Path = tempDir + "level1_\(level1UUID).bb"
-        
-        let level3Content = """
-        Function Level3Func()
-            Return "Level 3"
-        End Function
-        """
-        
-        let level2Content = """
-        Include "level3_\(level3UUID).bb"
-        Function Level2Func()
-            Return "Level 2"
-        End Function
-        """
-        
-        let level1Content = """
-        Include "level2_\(level2UUID).bb"
-        Function Level1Func()
-            Return "Level 1"
-        End Function
-        """
-        
-        try level3Content.write(toFile: level3Path, atomically: true, encoding: .utf8)
-        try level2Content.write(toFile: level2Path, atomically: true, encoding: .utf8)
-        try level1Content.write(toFile: level1Path, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: level1Path)
-        
-        // All functions should be included
-        XCTAssertTrue(processed.contains("Function Level1Func"))
-        XCTAssertTrue(processed.contains("Function Level2Func"))
-        XCTAssertTrue(processed.contains("Function Level3Func"))
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: level3Path)
-        try FileManager.default.removeItem(atPath: level2Path)
-        try FileManager.default.removeItem(atPath: level1Path)
+    @Test func testPreprocessorNestedIncludes() throws {
+        try withTempDir { dir in
+            let level3ID = randomSuffix()
+            let level2ID = randomSuffix()
+            let level1ID = randomSuffix()
+
+            let level3Name = "level3_\(level3ID).bb"
+            let level2Name = "level2_\(level2ID).bb"
+            let level1Name = "level1_\(level1ID).bb"
+
+            let level3Path = joinPath(dir, level3Name)
+            let level2Path = joinPath(dir, level2Name)
+            let level1Path = joinPath(dir, level1Name)
+
+            let level3Content = """
+            Function Level3Func()
+                Return "Level 3"
+            End Function
+            """
+
+            let level2Content = """
+            Include "\(level3Name)"
+            Function Level2Func()
+                Return "Level 2"
+            End Function
+            """
+
+            let level1Content = """
+            Include "\(level2Name)"
+            Function Level1Func()
+                Return "Level 1"
+            End Function
+            """
+
+            try writeTextFile(level3Path, level3Content)
+            try writeTextFile(level2Path, level2Content)
+            try writeTextFile(level1Path, level1Content)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: level1Path)
+
+            // All functions should be included
+            XCTAssertTrue(processed.contains("Function Level1Func"))
+            XCTAssertTrue(processed.contains("Function Level2Func"))
+            XCTAssertTrue(processed.contains("Function Level3Func"))
+        }
     }
     
-    func testCompileIncludedFunction() throws {
-        let tempDir = NSTemporaryDirectory()
-        let utilsUUID = UUID().uuidString.prefix(8)
-        let utilsPath = tempDir + "utils_inc_\(utilsUUID).bb"
-        
-        let utilsContent = """
-        Function AddNumbers%(a%, b%)
-            Return a + b
-        End Function
-        """
-        
-        try utilsContent.write(toFile: utilsPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "utils_inc_\(utilsUUID).bb"
-        Function Main()
-            Local result% = AddNumbers(5, 3)
-            Print result%
-        End Function
-        """
-        
-        // Write main source to temp file for processing
-        let mainPath = tempDir + "main_inc_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        // Parse and combine
-        var preprocessor = Preprocessor()
-        let processedSource = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processedSource)
-        let program = parser.parse()
-        
-        // Should have both functions
-        XCTAssertEqual(program.functions.count, 2)
-        
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        // Should have compiled functions
-        XCTAssertGreaterThanOrEqual(module.code.count, 2)
-        
-        // Both functions should be exported
-        let mainExport = module.exports.first { $0.name == "Main" }
-        let addExport = module.exports.first { $0.name == "AddNumbers%" }
-        XCTAssertNotNil(mainExport, "Main should be exported")
-        XCTAssertNotNil(addExport, "AddNumbers% should be exported")
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: utilsPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testCompileIncludedFunction() throws {
+        try withTempDir { dir in
+            let utilsID = randomSuffix()
+            let utilsName = "utils_inc_\(utilsID).bb"
+            let utilsPath = joinPath(dir, utilsName)
+
+            let utilsContent = """
+            Function AddNumbers%(a%, b%)
+                Return a + b
+            End Function
+            """
+
+            try writeTextFile(utilsPath, utilsContent)
+
+            let mainSource = """
+            Include "\(utilsName)"
+            Function Main()
+                Local result% = AddNumbers(5, 3)
+                Print result%
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_inc_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processedSource = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processedSource)
+            let program = parser.parse()
+
+            // Should have both functions
+            XCTAssertEqual(program.functions.count, 2)
+
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            // Should have compiled functions
+            XCTAssertGreaterThanOrEqual(module.code.count, 2)
+
+            // Both functions should be exported
+            let mainExport = module.exports.first { $0.name == "Main" }
+            let addExport = module.exports.first { $0.name == "AddNumbers%" }
+            XCTAssertNotNil(mainExport, "Main should be exported")
+            XCTAssertNotNil(addExport, "AddNumbers% should be exported")
+        }
     }
     
-    func testCompileMultipleIncludedFiles() throws {
-        let tempDir = NSTemporaryDirectory()
-        
-        let mathUUID = UUID().uuidString.prefix(8)
-        let stringUUID = UUID().uuidString.prefix(8)
-        
-        let mathPath = tempDir + "math_multi_\(mathUUID).bb"
-        let stringPath = tempDir + "string_multi_\(stringUUID).bb"
-        let mainPath = tempDir + "multi_\(UUID().uuidString.prefix(8)).bb"
-        
-        let mathContent = """
-        Function Add%(a%, b%)
-            Return a + b
-        End Function
-        Function Subtract%(a%, b%)
-            Return a - b
-        End Function
-        """
-        
-        let stringContent = """
-        Function Greet$(name$)
-            Return "Hello, " + name$
-        End Function
-        """
-        
-        let mainContent = """
-        Include "math_multi_\(mathUUID).bb"
-        Include "string_multi_\(stringUUID).bb"
-        Function Main()
-            Local sum% = Add(10, 5)
-            Local greeting$ = Greet("World")
-            Print sum%
-            Print greeting$
-        End Function
-        """
-        
-        try mathContent.write(toFile: mathPath, atomically: true, encoding: .utf8)
-        try stringContent.write(toFile: stringPath, atomically: true, encoding: .utf8)
-        try mainContent.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processed)
-        let program = parser.parse()
-        
-        // Should have Main + 3 included functions
-        XCTAssertEqual(program.functions.count, 4)
-        
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        // All functions exported
-        XCTAssertGreaterThanOrEqual(module.exports.count, 4)
-        
-        let addExport = module.exports.first { $0.name == "Add%" }
-        let subExport = module.exports.first { $0.name == "Subtract%" }
-        let greetExport = module.exports.first { $0.name == "Greet$" }
-        XCTAssertNotNil(addExport)
-        XCTAssertNotNil(subExport)
-        XCTAssertNotNil(greetExport)
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: mathPath)
-        try FileManager.default.removeItem(atPath: stringPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testCompileMultipleIncludedFiles() throws {
+        try withTempDir { dir in
+            let mathID = randomSuffix()
+            let stringID = randomSuffix()
+
+            let mathName = "math_multi_\(mathID).bb"
+            let stringName = "string_multi_\(stringID).bb"
+
+            let mathPath = joinPath(dir, mathName)
+            let stringPath = joinPath(dir, stringName)
+            let mainPath = joinPath(dir, "multi_\(randomSuffix()).bb")
+
+            let mathContent = """
+            Function Add%(a%, b%)
+                Return a + b
+            End Function
+            Function Subtract%(a%, b%)
+                Return a - b
+            End Function
+            """
+
+            let stringContent = """
+            Function Greet$(name$)
+                Return "Hello, " + name$
+            End Function
+            """
+
+            let mainContent = """
+            Include "\(mathName)"
+            Include "\(stringName)"
+            Function Main()
+                Local sum% = Add(10, 5)
+                Local greeting$ = Greet("World")
+                Print sum%
+                Print greeting$
+            End Function
+            """
+
+            try writeTextFile(mathPath, mathContent)
+            try writeTextFile(stringPath, stringContent)
+            try writeTextFile(mainPath, mainContent)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processed)
+            let program = parser.parse()
+
+            // Should have Main + 3 included functions
+            XCTAssertEqual(program.functions.count, 4)
+
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            // All functions exported
+            XCTAssertGreaterThanOrEqual(module.exports.count, 4)
+
+            let addExport = module.exports.first { $0.name == "Add%" }
+            let subExport = module.exports.first { $0.name == "Subtract%" }
+            let greetExport = module.exports.first { $0.name == "Greet$" }
+            XCTAssertNotNil(addExport)
+            XCTAssertNotNil(subExport)
+            XCTAssertNotNil(greetExport)
+        }
     }
     
-    func testIncludeWithTypeDeclaration() throws {
-        let tempDir = NSTemporaryDirectory()
-        let typesUUID = UUID().uuidString.prefix(8)
-        let typesPath = tempDir + "types_inc_\(typesUUID).bb"
-        
-        let typesContent = """
-        Type TPoint
-            Field x#
-            Field y#
-        End Type
-        """
-        
-        try typesContent.write(toFile: typesPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "types_inc_\(typesUUID).bb"
-        Function Main()
-            Local pt.TPoint
-            pt = New TPoint
-            pt\\x = 10.5
-            pt\\y = 20.5
-            Print pt\\x
-        End Function
-        """
-        
-        let mainPath = tempDir + "main_types_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processed)
-        let program = parser.parse()
-        
-        // Should have type declaration
-        XCTAssertEqual(program.types.count, 1)
-        XCTAssertEqual(program.types[0].name, "TPoint")
-        XCTAssertEqual(program.types[0].fields.count, 2)
-        
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        XCTAssertGreaterThanOrEqual(module.code.count, 1)
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: typesPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludeWithTypeDeclaration() throws {
+        try withTempDir { dir in
+            let typesID = randomSuffix()
+            let typesName = "types_inc_\(typesID).bb"
+            let typesPath = joinPath(dir, typesName)
+
+            let typesContent = """
+            Type TPoint
+                Field x#
+                Field y#
+            End Type
+            """
+
+            try writeTextFile(typesPath, typesContent)
+
+            let mainSource = """
+            Include "\(typesName)"
+            Function Main()
+                Local pt.TPoint
+                pt = New TPoint
+                pt\\x = 10.5
+                pt\\y = 20.5
+                Print pt\\x
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_types_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processed)
+            let program = parser.parse()
+
+            // Should have type declaration
+            XCTAssertEqual(program.types.count, 1)
+            XCTAssertEqual(program.types[0].name, "TPoint")
+            XCTAssertEqual(program.types[0].fields.count, 2)
+
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            XCTAssertGreaterThanOrEqual(module.code.count, 1)
+        }
     }
     
-    func testIncludeWithDataStatements() throws {
-        let tempDir = NSTemporaryDirectory()
-        let dataUUID = UUID().uuidString.prefix(8)
-        let dataPath = tempDir + "data_inc_\(dataUUID).bb"
-        
-        let dataContent = """
-        Const MAX_ITEMS = 100
-        Data 1, 2, 3, 4, 5
-        Data "apple", "banana", "cherry"
-        """
-        
-        try dataContent.write(toFile: dataPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "data_inc_\(dataUUID).bb"
-        Function Main()
-            Local value%
-            Read value%
-            Print value%
-            Restore
-            Read value%
-            Print value%
-        End Function
-        """
-        
-        let mainPath = tempDir + "main_data_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processed)
-        let program = parser.parse()
-        
-        // Should compile successfully
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        // Should have data segments
-        XCTAssertGreaterThan(module.data.count, 0, "Should have embedded data")
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: dataPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludeWithDataStatements() throws {
+        try withTempDir { dir in
+            let dataID = randomSuffix()
+            let dataName = "data_inc_\(dataID).bb"
+            let dataPath = joinPath(dir, dataName)
+
+            let dataContent = """
+            Const MAX_ITEMS = 100
+            Data 1, 2, 3, 4, 5
+            Data "apple", "banana", "cherry"
+            """
+
+            try writeTextFile(dataPath, dataContent)
+
+            let mainSource = """
+            Include "\(dataName)"
+            Function Main()
+                Local value%
+                Read value%
+                Print value%
+                Restore
+                Read value%
+                Print value%
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_data_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processed)
+            let program = parser.parse()
+
+            // Should compile successfully
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            // Should have data segments
+            XCTAssertGreaterThan(module.data.count, 0, "Should have embedded data")
+        }
     }
     
-    func testIncludePreventsDuplicateProcessing() throws {
-        let tempDir = NSTemporaryDirectory()
-        let utilsUUID = UUID().uuidString.prefix(8)
-        let utilsPath = tempDir + "dup_inc_\(utilsUUID).bb"
-        
-        let utilsContent = """
-        Function CountCalls()
-            Return 1
-        End Function
-        """
-        
-        try utilsContent.write(toFile: utilsPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "dup_inc_\(utilsUUID).bb"
-        Include "dup_inc_\(utilsUUID).bb"
-        Function Main()
-            Print CountCalls()
-        End Function
-        """
-        
-        let mainPath = tempDir + "main_dup_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        // Include deduplication prevents duplicate processing.
-        let count = processed.components(separatedBy: "Function CountCalls").count - 1
-        XCTAssertEqual(count, 1, "Include twice should only include content once")
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: utilsPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludePreventsDuplicateProcessing() throws {
+        try withTempDir { dir in
+            let utilsID = randomSuffix()
+            let utilsName = "dup_inc_\(utilsID).bb"
+            let utilsPath = joinPath(dir, utilsName)
+
+            let utilsContent = """
+            Function CountCalls()
+                Return 1
+            End Function
+            """
+
+            try writeTextFile(utilsPath, utilsContent)
+
+            let mainSource = """
+            Include "\(utilsName)"
+            Include "\(utilsName)"
+            Function Main()
+                Print CountCalls()
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_dup_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            // Include deduplication prevents duplicate processing.
+            let count = processed.components(separatedBy: "Function CountCalls").count - 1
+            XCTAssertEqual(count, 1, "Include twice should only include content once")
+        }
     }
     
-    func testIncludeWithRelativePath() throws {
-        let tempDir = NSTemporaryDirectory()
-        let subdirName = "subdir_test_\(UUID().uuidString.prefix(8))"
-        let subdirPath = tempDir + subdirName + "/"
-        let mainPath = tempDir + "main_rel_\(UUID().uuidString.prefix(8)).bb"
-        
-        try FileManager.default.createDirectory(atPath: subdirPath, withIntermediateDirectories: true)
-        
-        let utilsContent = """
-        Function SubdirFunc()
-            Return "From subdir"
-        End Function
-        """
-        
-        let utilsPath = subdirPath + "utils.bb"
-        try utilsContent.write(toFile: utilsPath, atomically: true, encoding: .utf8)
-        
-        let mainContent = """
-        Include "\(subdirName)/utils.bb"
-        Function Main()
-            Print SubdirFunc()
-        End Function
-        """
-        
-        try mainContent.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        // Should include the function from subdirectory
-        XCTAssertTrue(processed.contains("Function SubdirFunc"))
-        
-        // Clean up (ignore errors)
-        _ = try? FileManager.default.removeItem(atPath: utilsPath)
-        _ = try? FileManager.default.removeItem(atPath: subdirPath)
-        _ = try? FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludeWithRelativePath() throws {
+        try withTempDir { dir in
+            let subdirName = "subdir_test_\(randomSuffix())"
+            let subdirPath = joinPath(dir, subdirName)
+            _ = subdirPath.withCString { mkdir($0, 0o755) }
+
+            let utilsContent = """
+            Function SubdirFunc()
+                Return "From subdir"
+            End Function
+            """
+
+            let utilsPath = joinPath(subdirPath, "utils.bb")
+            try writeTextFile(utilsPath, utilsContent)
+
+            let mainContent = """
+            Include "\(subdirName)/utils.bb"
+            Function Main()
+                Print SubdirFunc()
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_rel_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainContent)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            // Should include the function from subdirectory
+            XCTAssertTrue(processed.contains("Function SubdirFunc"))
+        }
     }
     
-    func testIncludeWithConstants() throws {
-        let tempDir = NSTemporaryDirectory()
-        let constUUID = UUID().uuidString.prefix(8)
-        let constPath = tempDir + "const_test_\(constUUID).bb"
-        
-        let constContent = """
-        Const VERSION$ = "1.0.0"
-        Const MAX_SCORE = 9999
-        Const GRAVITY# = 0.01
-        """
-        
-        try constContent.write(toFile: constPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "const_test_\(constUUID).bb"
-        Function Main()
-            Print VERSION$
-            Print MAX_SCORE
-            Print GRAVITY#
-        End Function
-        """
-        
-        let mainPath = tempDir + "main_const_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processed)
-        let program = parser.parse()
-        
-        // Should have 4 constants (3 from include + 1 implicit main function)
-        XCTAssertEqual(program.functions.count, 1)
-        
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        XCTAssertGreaterThanOrEqual(module.code.count, 1)
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: constPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludeWithConstants() throws {
+        try withTempDir { dir in
+            let constID = randomSuffix()
+            let constName = "const_test_\(constID).bb"
+            let constPath = joinPath(dir, constName)
+
+            let constContent = """
+            Const VERSION$ = "1.0.0"
+            Const MAX_SCORE = 9999
+            Const GRAVITY# = 0.01
+            """
+
+            try writeTextFile(constPath, constContent)
+
+            let mainSource = """
+            Include "\(constName)"
+            Function Main()
+                Print VERSION$
+                Print MAX_SCORE
+                Print GRAVITY#
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_const_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processed)
+            let program = parser.parse()
+
+            // Should have 1 function (Main)
+            XCTAssertEqual(program.functions.count, 1)
+
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            XCTAssertGreaterThanOrEqual(module.code.count, 1)
+        }
     }
     
-    func testIncludeWithGlobalDeclarations() throws {
-        let tempDir = NSTemporaryDirectory()
-        let globalsUUID = UUID().uuidString.prefix(8)
-        let globalsPath = tempDir + "globals_test_\(globalsUUID).bb"
-        
-        let globalsContent = """
-        Global SCORE% = 0
-        Global PLAYER_NAME$ = "Unknown"
-        Global HEALTH# = 100.0
-        """
-        
-        try globalsContent.write(toFile: globalsPath, atomically: true, encoding: .utf8)
-        
-        let mainSource = """
-        Include "globals_test_\(globalsUUID).bb"
-        Function Main()
-            SCORE% = 100
-            Print SCORE%
-        End Function
-        """
-        
-        let mainPath = tempDir + "main_globals_\(UUID().uuidString.prefix(8)).bb"
-        try mainSource.write(toFile: mainPath, atomically: true, encoding: .utf8)
-        
-        var preprocessor = Preprocessor()
-        let processed = try preprocessor.process(file: mainPath)
-        
-        var parser = Parser(source: processed)
-        let program = parser.parse()
-        
-        // Should compile successfully
-        var codeGen = CodeGenerator()
-        let module = codeGen.generate(from: program)
-        
-        XCTAssertGreaterThanOrEqual(module.code.count, 1)
-        
-        // Clean up
-        try FileManager.default.removeItem(atPath: globalsPath)
-        try FileManager.default.removeItem(atPath: mainPath)
+    @Test func testIncludeWithGlobalDeclarations() throws {
+        try withTempDir { dir in
+            let globalsID = randomSuffix()
+            let globalsName = "globals_test_\(globalsID).bb"
+            let globalsPath = joinPath(dir, globalsName)
+
+            let globalsContent = """
+            Global SCORE% = 0
+            Global PLAYER_NAME$ = "Unknown"
+            Global HEALTH# = 100.0
+            """
+
+            try writeTextFile(globalsPath, globalsContent)
+
+            let mainSource = """
+            Include "\(globalsName)"
+            Function Main()
+                SCORE% = 100
+                Print SCORE%
+            End Function
+            """
+
+            let mainPath = joinPath(dir, "main_globals_\(randomSuffix()).bb")
+            try writeTextFile(mainPath, mainSource)
+
+            var preprocessor = Preprocessor()
+            let processed = try preprocessor.process(file: mainPath)
+
+            var parser = Parser(source: processed)
+            let program = parser.parse()
+
+            // Should compile successfully
+            var codeGen = CodeGenerator()
+            let module = codeGen.generate(from: program)
+
+            XCTAssertGreaterThanOrEqual(module.code.count, 1)
+        }
     }
 }

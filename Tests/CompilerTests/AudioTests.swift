@@ -5,12 +5,12 @@
 //  Tests for Audio API functions compilation
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class AudioTests: XCTestCase {
+struct AudioTests {
     
-    func testLoadSound() throws {
+    @Test func testLoadSound() throws {
         let source = """
         Function TestLoadSound()
             Local snd = LoadSound("scream.wav")
@@ -26,7 +26,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testPlaySound() throws {
+    @Test func testPlaySound() throws {
         let source = """
         Function TestPlaySound()
             Local snd = LoadSound("scream.wav")
@@ -43,7 +43,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFreeSound() throws {
+    @Test func testFreeSound() throws {
         let source = """
         Function TestFreeSound()
             Local snd = LoadSound("scream.wav")
@@ -60,7 +60,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testChannelVolume() throws {
+    @Test func testChannelVolume() throws {
         let source = """
         Function TestChannelVolume()
             Local ch = PlaySound(1)
@@ -77,7 +77,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testChannelPaused() throws {
+    @Test func testChannelPaused() throws {
         let source = """
         Function TestChannelPaused()
             Local ch = PlaySound(1)
@@ -95,7 +95,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFSOUND_Init() throws {
+    @Test func testFSOUND_Init() throws {
         let source = """
         Function TestFSOUND_Init()
             Local result = FSOUND_Init(44100, 32, 0)
@@ -111,7 +111,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFSOUND_StreamOpen() throws {
+    @Test func testFSOUND_StreamOpen() throws {
         let source = """
         Function TestStreamOpen()
             Local stream = FSOUND_Stream_Open("ambient.ogg", 0, 0, 0)
@@ -127,7 +127,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFSOUND_StreamPlay() throws {
+    @Test func testFSOUND_StreamPlay() throws {
         let source = """
         Function TestStreamPlay()
             Local stream = FSOUND_Stream_Open("music.mp3", 0, 0, 0)
@@ -144,7 +144,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFSOUND_StreamStop() throws {
+    @Test func testFSOUND_StreamStop() throws {
         let source = """
         Function TestStreamStop()
             Local stream = FSOUND_Stream_Open("music.mp3", 0, 0, 0)
@@ -162,7 +162,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testFSOUND_SetVolume() throws {
+    @Test func testFSOUND_SetVolume() throws {
         let source = """
         Function TestSetVolume()
             Local stream = FSOUND_Stream_Open("music.mp3", 0, 0, 0)
@@ -179,7 +179,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSound3D() throws {
+    @Test func testSound3D() throws {
         let source = """
         Function TestSound3D()
             Local snd = LoadSound("footstep.wav")
@@ -196,7 +196,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSetListenerLocation() throws {
+    @Test func testSetListenerLocation() throws {
         let source = """
         Function TestListener()
             SetListenerLocation(0, 0, 0, 0, 0, -1, 0, 1, 0)
@@ -212,7 +212,7 @@ final class AudioTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testAudioSystemIntegration() throws {
+    @Test func testAudioSystemIntegration() throws {
         let source = """
         Function InitAudio()
             FSOUND_Init(44100, 32, 0)

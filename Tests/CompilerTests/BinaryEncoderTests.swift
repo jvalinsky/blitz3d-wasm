@@ -3,12 +3,12 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class BinaryEncoderTests: XCTestCase {
+struct BinaryEncoderTests {
     
-    func testEncodeSimpleModule() throws {
+    @Test func testEncodeSimpleModule() throws {
         var module = WASMModule()
         
         // Add a simple function type: () -> i32
@@ -45,7 +45,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertEqual(bytes[7], 0x00)
     }
     
-    func testEncodeTypeSection() throws {
+    @Test func testEncodeTypeSection() throws {
         var module = WASMModule()
         
         // Add function types
@@ -59,7 +59,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x01), "Should have type section")
     }
     
-    func testEncodeFunctionSection() throws {
+    @Test func testEncodeFunctionSection() throws {
         var module = WASMModule()
         
         // Add function type
@@ -76,7 +76,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x03), "Should have function section")
     }
     
-    func testEncodeMemorySection() throws {
+    @Test func testEncodeMemorySection() throws {
         var module = WASMModule()
         module.memories = [WASMMemory(initial: 1, maximum: 2)]
         
@@ -87,7 +87,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x05), "Should have memory section")
     }
     
-    func testEncodeExportSection() throws {
+    @Test func testEncodeExportSection() throws {
         var module = WASMModule()
         
         // Add function type
@@ -107,7 +107,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x07), "Should have export section")
     }
     
-    func testEncodeCodeSection() throws {
+    @Test func testEncodeCodeSection() throws {
         var module = WASMModule()
         
         // Add function type
@@ -129,7 +129,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x0A), "Should have code section")
     }
     
-    func testEncodeInstructions() throws {
+    @Test func testEncodeInstructions() throws {
         // Test encoding of various instructions by encoding a module
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: []))
@@ -167,7 +167,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x0F), "Should contain return opcode")
     }
     
-    func testEncodeDataSection() throws {
+    @Test func testEncodeDataSection() throws {
         var module = WASMModule()
         
         // Add data segment
@@ -185,7 +185,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x0B), "Should have data section")
     }
     
-    func testRoundTripTextToBinary() throws {
+    @Test func testRoundTripTextToBinary() throws {
         // Create a simple module
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
@@ -218,7 +218,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - Float Opcode Validation Tests
 
-    func testF32ArithmeticOpcodes() throws {
+    @Test func testF32ArithmeticOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f32]))
 
@@ -251,7 +251,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x95), "f32.div should be encoded as 0x95")
     }
 
-    func testF64ArithmeticOpcodes() throws {
+    @Test func testF64ArithmeticOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f64]))
 
@@ -284,7 +284,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xA3), "f64.div should be encoded as 0xA3")
     }
 
-    func testI32ArithmeticOpcodes() throws {
+    @Test func testI32ArithmeticOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -317,7 +317,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x6D), "i32.div_s should be encoded as 0x6D")
     }
 
-    func testConversionOpcodes() throws {
+    @Test func testConversionOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f32]))
 
@@ -340,7 +340,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xB2), "f32.convert_i32_s should be encoded as 0xB2")
     }
 
-    func testReinterpretOpcodes() throws {
+    @Test func testReinterpretOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -363,7 +363,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xBC), "i32.reinterpret_f32 should be encoded as 0xBC")
     }
 
-    func testF32ReinterpretI32Opcode() throws {
+    @Test func testF32ReinterpretI32Opcode() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f32]))
 
@@ -388,7 +388,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - Control Flow Opcode Tests
 
-    func testControlFlowOpcodes() throws {
+    @Test func testControlFlowOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: []))
 
@@ -417,7 +417,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - Comparison Opcode Tests
 
-    func testComparisonOpcodes() throws {
+    @Test func testComparisonOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -441,7 +441,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x48), "i32.lt_s should be encoded as 0x48")
     }
 
-    func testF32ComparisonOpcodes() throws {
+    @Test func testF32ComparisonOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -467,7 +467,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - Memory Opcode Tests
 
-    func testMemoryOpcodes() throws {
+    @Test func testMemoryOpcodes() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
         module.memories = [WASMMemory(initial: 1, maximum: nil)]
@@ -493,7 +493,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - Type Encoding Tests
 
-    func testTypeEncodings() throws {
+    @Test func testTypeEncodings() throws {
         var module = WASMModule()
 
         // Add function types with different parameter/result types
@@ -515,7 +515,7 @@ final class BinaryEncoderTests: XCTestCase {
 
     // MARK: - LEB128 Encoding Tests
 
-    func testLEB128SmallPositive() throws {
+    @Test func testLEB128SmallPositive() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -534,7 +534,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x2A), "42 should be encoded as 0x2A in SLEB128")
     }
 
-    func testLEB128Negative() throws {
+    @Test func testLEB128Negative() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -553,7 +553,7 @@ final class BinaryEncoderTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x7F), "-1 should be encoded as 0x7F in SLEB128")
     }
 
-    func testLEB128LargePositive() throws {
+    @Test func testLEB128LargePositive() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 

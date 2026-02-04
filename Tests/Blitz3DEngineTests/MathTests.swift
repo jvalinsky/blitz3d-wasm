@@ -5,259 +5,248 @@
 //  Unit tests for Math functions
 //
 
-import XCTest
-@testable import Blitz3DEngineWASM
+import Testing
+@testable import Blitz3DEngine
 
-final class MathTests: XCTestCase {
-    
-    // MARK: - Trigonometric Tests
-    
-    func testSin() {
-        XCTAssertEqual(Sin(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Sin(Float.pi / 2), 1, accuracy: 0.001)
-        XCTAssertEqual(Sin(Float.pi), 0, accuracy: 0.001)
-        XCTAssertEqual(Sin(3 * Float.pi / 2), -1, accuracy: 0.001)
+@inline(__always)
+private func expectApprox(_ a: Float, _ b: Float, accuracy: Float = 0.001) {
+    #expect(abs(a - b) <= accuracy)
+}
+
+// MARK: - Trigonometric
+
+@Test func sin() {
+    expectApprox(Sin(0), 0)
+    expectApprox(Sin(Float.pi / 2), 1)
+    expectApprox(Sin(Float.pi), 0)
+    expectApprox(Sin(3 * Float.pi / 2), -1)
+}
+
+@Test func cos() {
+    expectApprox(Cos(0), 1)
+    expectApprox(Cos(Float.pi / 2), 0)
+    expectApprox(Cos(Float.pi), -1)
+    expectApprox(Cos(2 * Float.pi), 1)
+}
+
+@Test func tan() {
+    expectApprox(Tan(0), 0)
+    expectApprox(Tan(Float.pi / 4), 1)
+    expectApprox(Tan(Float.pi), 0)
+}
+
+@Test func asin() {
+    expectApprox(ASin(0), 0)
+    expectApprox(ASin(1), Float.pi / 2)
+    expectApprox(ASin(-1), -Float.pi / 2)
+}
+
+@Test func acos() {
+    expectApprox(ACos(1), 0)
+    expectApprox(ACos(0), Float.pi / 2)
+    expectApprox(ACos(-1), Float.pi)
+}
+
+@Test func atan() {
+    expectApprox(ATan(0), 0)
+    expectApprox(ATan(1), Float.pi / 4)
+    expectApprox(ATan(-1), -Float.pi / 4)
+}
+
+@Test func atan2() {
+    expectApprox(ATan2(0, 1), 0)
+    expectApprox(ATan2(1, 0), Float.pi / 2)
+    expectApprox(ATan2(0, -1), Float.pi)
+    expectApprox(ATan2(-1, 0), -Float.pi / 2)
+}
+
+// MARK: - Arithmetic
+
+@Test func sqrt() {
+    expectApprox(Sqrt(0), 0)
+    expectApprox(Sqrt(4), 2)
+    expectApprox(Sqrt(9), 3)
+    expectApprox(Sqrt(2), 1.414)
+}
+
+@Test func sqr() {
+    expectApprox(Sqr(0), 0)
+    expectApprox(Sqr(2), 4)
+    expectApprox(Sqr(3), 9)
+    expectApprox(Sqr(-5), 25)
+}
+
+@Test func absFloat() {
+    expectApprox(Abs(0), 0)
+    expectApprox(Abs(5), 5)
+    expectApprox(Abs(-5), 5)
+    expectApprox(Abs(3.14), 3.14)
+}
+
+@Test func absInt() {
+    #expect(AbsInt(0) == 0)
+    #expect(AbsInt(5) == 5)
+    #expect(AbsInt(-5) == 5)
+    #expect(AbsInt(100) == 100)
+}
+
+@Test func sgn() {
+    #expect(Sgn(5) == 1)
+    #expect(Sgn(-5) == -1)
+    #expect(Sgn(0) == 0)
+    #expect(Sgn(0.001) == 1)
+    #expect(Sgn(-0.001) == -1)
+}
+
+@Test func floor() {
+    expectApprox(Floor(0), 0)
+    expectApprox(Floor(3.7), 3)
+    expectApprox(Floor(3.2), 3)
+    expectApprox(Floor(-3.7), -4)
+    expectApprox(Floor(-3.2), -4)
+}
+
+@Test func ceil() {
+    expectApprox(Ceil(0), 0)
+    expectApprox(Ceil(3.7), 4)
+    expectApprox(Ceil(3.2), 4)
+    expectApprox(Ceil(-3.7), -3)
+    expectApprox(Ceil(-3.2), -3)
+}
+
+@Test func exp() {
+    expectApprox(Exp(0), 1)
+    expectApprox(Exp(1), 2.718)
+    expectApprox(Exp(2), 7.389)
+}
+
+@Test func log() {
+    expectApprox(Log(1), 0)
+    expectApprox(Log(2.718), 1)
+    expectApprox(Log(7.389), 2)
+}
+
+@Test func log10() {
+    expectApprox(Log10(1), 0)
+    expectApprox(Log10(10), 1)
+    expectApprox(Log10(100), 2)
+    expectApprox(Log10(1000), 3)
+}
+
+// MARK: - Random
+
+@Test @MainActor func rand() {
+    for _ in 0..<100 {
+        let value = Rand(0, 10)
+        #expect(value >= 0)
+        #expect(value <= 10)
     }
-    
-    func testCos() {
-        XCTAssertEqual(Cos(0), 1, accuracy: 0.001)
-        XCTAssertEqual(Cos(Float.pi / 2), 0, accuracy: 0.001)
-        XCTAssertEqual(Cos(Float.pi), -1, accuracy: 0.001)
-        XCTAssertEqual(Cos(2 * Float.pi), 1, accuracy: 0.001)
+
+    for _ in 0..<100 {
+        let value = Rand(5, 15)
+        #expect(value >= 5)
+        #expect(value <= 15)
     }
-    
-    func testTan() {
-        XCTAssertEqual(Tan(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Tan(Float.pi / 4), 1, accuracy: 0.001)
-        XCTAssertEqual(Tan(Float.pi), 0, accuracy: 0.001)
+
+    for _ in 0..<100 {
+        let value = Rand(-10, -5)
+        #expect(value >= -10)
+        #expect(value <= -5)
     }
-    
-    func testASin() {
-        XCTAssertEqual(ASin(0), 0, accuracy: 0.001)
-        XCTAssertEqual(ASin(1), Float.pi / 2, accuracy: 0.001)
-        XCTAssertEqual(ASin(-1), -Float.pi / 2, accuracy: 0.001)
+}
+
+@Test @MainActor func rnd() {
+    for _ in 0..<100 {
+        let value = Rnd(1.0)
+        #expect(value >= 0.0)
+        #expect(value < 1.0)
     }
-    
-    func testACos() {
-        XCTAssertEqual(ACos(1), 0, accuracy: 0.001)
-        XCTAssertEqual(ACos(0), Float.pi / 2, accuracy: 0.001)
-        XCTAssertEqual(ACos(-1), Float.pi, accuracy: 0.001)
+
+    for _ in 0..<100 {
+        let value = Rnd(10.0)
+        #expect(value >= 0.0)
+        #expect(value < 10.0)
     }
-    
-    func testATan() {
-        XCTAssertEqual(ATan(0), 0, accuracy: 0.001)
-        XCTAssertEqual(ATan(1), Float.pi / 4, accuracy: 0.001)
-        XCTAssertEqual(ATan(-1), -Float.pi / 4, accuracy: 0.001)
-    }
-    
-    func testATan2() {
-        XCTAssertEqual(ATan2(0, 1), 0, accuracy: 0.001)
-        XCTAssertEqual(ATan2(1, 0), Float.pi / 2, accuracy: 0.001)
-        XCTAssertEqual(ATan2(0, -1), Float.pi, accuracy: 0.001)
-        XCTAssertEqual(ATan2(-1, 0), -Float.pi / 2, accuracy: 0.001)
-    }
-    
-    // MARK: - Arithmetic Tests
-    
-    func testSqrt() {
-        XCTAssertEqual(Sqrt(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Sqrt(4), 2, accuracy: 0.001)
-        XCTAssertEqual(Sqrt(9), 3, accuracy: 0.001)
-        XCTAssertEqual(Sqrt(2), 1.414, accuracy: 0.001)
-    }
-    
-    func testSqr() {
-        XCTAssertEqual(Sqr(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Sqr(2), 4, accuracy: 0.001)
-        XCTAssertEqual(Sqr(3), 9, accuracy: 0.001)
-        XCTAssertEqual(Sqr(-5), 25, accuracy: 0.001)
-    }
-    
-    func testAbs() {
-        XCTAssertEqual(Abs(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Abs(5), 5, accuracy: 0.001)
-        XCTAssertEqual(Abs(-5), 5, accuracy: 0.001)
-        XCTAssertEqual(Abs(3.14), 3.14, accuracy: 0.001)
-        XCTAssertEqual(Abs(-3.14), 3.14, accuracy: 0.001)
-    }
-    
-    func testAbsInt() {
-        XCTAssertEqual(AbsInt(0), 0)
-        XCTAssertEqual(AbsInt(5), 5)
-        XCTAssertEqual(AbsInt(-5), 5)
-        XCTAssertEqual(AbsInt(100), 100)
-        XCTAssertEqual(AbsInt(-100), 100)
-    }
-    
-    func testSgn() {
-        XCTAssertEqual(Sgn(0), 0)
-        XCTAssertEqual(Sgn(5), 1)
-        XCTAssertEqual(Sgn(-5), -1)
-        XCTAssertEqual(Sgn(0.001), 1)
-        XCTAssertEqual(Sgn(-0.001), -1)
-    }
-    
-    func testFloor() {
-        XCTAssertEqual(Floor(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Floor(3.7), 3, accuracy: 0.001)
-        XCTAssertEqual(Floor(3.2), 3, accuracy: 0.001)
-        XCTAssertEqual(Floor(-3.2), -4, accuracy: 0.001)
-        XCTAssertEqual(Floor(-3.7), -4, accuracy: 0.001)
-    }
-    
-    func testCeil() {
-        XCTAssertEqual(Ceil(0), 0, accuracy: 0.001)
-        XCTAssertEqual(Ceil(3.2), 4, accuracy: 0.001)
-        XCTAssertEqual(Ceil(3.7), 4, accuracy: 0.001)
-        XCTAssertEqual(Ceil(-3.7), -3, accuracy: 0.001)
-        XCTAssertEqual(Ceil(-3.2), -3, accuracy: 0.001)
-    }
-    
-    func testExp() {
-        XCTAssertEqual(Exp(0), 1, accuracy: 0.001)
-        XCTAssertEqual(Exp(1), 2.718, accuracy: 0.001)
-        XCTAssertEqual(Exp(2), 7.389, accuracy: 0.001)
-    }
-    
-    func testLog() {
-        XCTAssertEqual(Log(1), 0, accuracy: 0.001)
-        XCTAssertEqual(Log(2.718), 1, accuracy: 0.001)
-        XCTAssertEqual(Log(7.389), 2, accuracy: 0.001)
-    }
-    
-    func testLog10() {
-        XCTAssertEqual(Log10(1), 0, accuracy: 0.001)
-        XCTAssertEqual(Log10(10), 1, accuracy: 0.001)
-        XCTAssertEqual(Log10(100), 2, accuracy: 0.001)
-        XCTAssertEqual(Log10(1000), 3, accuracy: 0.001)
-    }
-    
-    // MARK: - Random Tests
-    
-    @MainActor
-    func testRand() {
-        // Test range [0, 10]
-        for _ in 0..<100 {
-            let value = Rand(0, 10)
-            XCTAssertGreaterThanOrEqual(value, 0)
-            XCTAssertLessThanOrEqual(value, 10)
-        }
-        
-        // Test range [5, 15]
-        for _ in 0..<100 {
-            let value = Rand(5, 15)
-            XCTAssertGreaterThanOrEqual(value, 5)
-            XCTAssertLessThanOrEqual(value, 15)
-        }
-        
-        // Test negative range
-        for _ in 0..<100 {
-            let value = Rand(-10, -5)
-            XCTAssertGreaterThanOrEqual(value, -10)
-            XCTAssertLessThanOrEqual(value, -5)
-        }
-    }
-    
-    @MainActor
-    func testRnd() {
-        // Test range [0, 1)
-        for _ in 0..<100 {
-            let value = Rnd(1.0)
-            XCTAssertGreaterThanOrEqual(value, 0.0)
-            XCTAssertLessThan(value, 1.0)
-        }
-        
-        // Test range [0, 10)
-        for _ in 0..<100 {
-            let value = Rnd(10.0)
-            XCTAssertGreaterThanOrEqual(value, 0.0)
-            XCTAssertLessThan(value, 10.0)
-        }
-    }
-    
-    @MainActor
-    func testSeedRnd() {
-        // Test deterministic behavior with seed
-        SeedRnd(12345)
-        let value1 = Rand(0, 1000)
-        let value2 = Rand(0, 1000)
-        
-        // Reset with same seed
-        SeedRnd(12345)
-        let value3 = Rand(0, 1000)
-        let value4 = Rand(0, 1000)
-        
-        // Should get same sequence
-        XCTAssertEqual(value1, value3)
-        XCTAssertEqual(value2, value4)
-    }
-    
-    // MARK: - Utility Tests
-    
-    func testMin() {
-        XCTAssertEqual(Min(1, 2), 1, accuracy: 0.001)
-        XCTAssertEqual(Min(2, 1), 1, accuracy: 0.001)
-        XCTAssertEqual(Min(-1, -2), -2, accuracy: 0.001)
-        XCTAssertEqual(Min(0, 0), 0, accuracy: 0.001)
-    }
-    
-    func testMinInt() {
-        XCTAssertEqual(MinInt(1, 2), 1)
-        XCTAssertEqual(MinInt(2, 1), 1)
-        XCTAssertEqual(MinInt(-1, -2), -2)
-        XCTAssertEqual(MinInt(0, 0), 0)
-    }
-    
-    func testMax() {
-        XCTAssertEqual(Max(1, 2), 2, accuracy: 0.001)
-        XCTAssertEqual(Max(2, 1), 2, accuracy: 0.001)
-        XCTAssertEqual(Max(-1, -2), -1, accuracy: 0.001)
-        XCTAssertEqual(Max(0, 0), 0, accuracy: 0.001)
-    }
-    
-    func testMaxInt() {
-        XCTAssertEqual(MaxInt(1, 2), 2)
-        XCTAssertEqual(MaxInt(2, 1), 2)
-        XCTAssertEqual(MaxInt(-1, -2), -1)
-        XCTAssertEqual(MaxInt(0, 0), 0)
-    }
-    
-    func testMod() {
-        XCTAssertEqual(Mod(10, 3), 1)
-        XCTAssertEqual(Mod(15, 4), 3)
-        XCTAssertEqual(Mod(8, 2), 0)
-        XCTAssertEqual(Mod(7, 7), 0)
-        XCTAssertEqual(Mod(5, 0), 0)  // Division by zero returns 0
-    }
-    
-    func testModFloat() {
-        XCTAssertEqual(ModFloat(10.5, 3.0), 1.5, accuracy: 0.001)
-        XCTAssertEqual(ModFloat(15.7, 4.0), 3.7, accuracy: 0.001)
-        XCTAssertEqual(ModFloat(8.0, 2.0), 0.0, accuracy: 0.001)
-        XCTAssertEqual(ModFloat(5.0, 0.0), 0.0, accuracy: 0.001)  // Division by zero returns 0
-    }
-    
-    func testPow() {
-        XCTAssertEqual(Pow(2, 3), 8, accuracy: 0.001)
-        XCTAssertEqual(Pow(3, 2), 9, accuracy: 0.001)
-        XCTAssertEqual(Pow(5, 0), 1, accuracy: 0.001)
-        XCTAssertEqual(Pow(2, 0.5), 1.414, accuracy: 0.001)  // sqrt(2)
-    }
-    
-    // MARK: - Conversion Tests
-    
-    func testInt() {
-        XCTAssertEqual(Int(3.7), 3)
-        XCTAssertEqual(Int(3.2), 3)
-        XCTAssertEqual(Int(-3.7), -3)
-        XCTAssertEqual(Int(-3.2), -3)
-        XCTAssertEqual(Int(0.0), 0)
-    }
-    
-    func testFloat() {
-        XCTAssertEqual(Float_(0), 0.0, accuracy: 0.001)
-        XCTAssertEqual(Float_(5), 5.0, accuracy: 0.001)
-        XCTAssertEqual(Float_(-5), -5.0, accuracy: 0.001)
-        XCTAssertEqual(Float_(100), 100.0, accuracy: 0.001)
-    }
+}
+
+@Test @MainActor func seedRnd() {
+    SeedRnd(12345)
+    let value1 = Rand(0, 1000)
+    let value2 = Rand(0, 1000)
+
+    SeedRnd(12345)
+    let value3 = Rand(0, 1000)
+    let value4 = Rand(0, 1000)
+
+    #expect(value1 == value3)
+    #expect(value2 == value4)
+}
+
+// MARK: - Utility
+
+@Test func minFloat() {
+    expectApprox(Min(1, 2), 1)
+    expectApprox(Min(2, 1), 1)
+    expectApprox(Min(-1, -2), -2)
+    expectApprox(Min(0, 0), 0)
+}
+
+@Test func minInt() {
+    #expect(MinInt(1, 2) == 1)
+    #expect(MinInt(2, 1) == 1)
+    #expect(MinInt(-1, -2) == -2)
+    #expect(MinInt(0, 0) == 0)
+}
+
+@Test func maxFloat() {
+    expectApprox(Max(1, 2), 2)
+    expectApprox(Max(2, 1), 2)
+    expectApprox(Max(-1, -2), -1)
+    expectApprox(Max(0, 0), 0)
+}
+
+@Test func maxInt() {
+    #expect(MaxInt(1, 2) == 2)
+    #expect(MaxInt(2, 1) == 2)
+    #expect(MaxInt(-1, -2) == -1)
+    #expect(MaxInt(0, 0) == 0)
+}
+
+@Test func mod() {
+    #expect(Mod(10, 3) == 1)
+    #expect(Mod(15, 4) == 3)
+    #expect(Mod(8, 2) == 0)
+    #expect(Mod(7, 7) == 0)
+    #expect(Mod(5, 0) == 0)
+}
+
+@Test func modFloat() {
+    expectApprox(ModFloat(10.5, 3.0), 1.5)
+    expectApprox(ModFloat(15.7, 4.0), 3.7)
+    expectApprox(ModFloat(8.0, 2.0), 0.0)
+    expectApprox(ModFloat(5.0, 0.0), 0.0)
+}
+
+@Test func pow() {
+    expectApprox(Pow(2, 3), 8)
+    expectApprox(Pow(3, 2), 9)
+    expectApprox(Pow(5, 0), 1)
+    expectApprox(Pow(2, 0.5), 1.414)
+}
+
+// MARK: - Conversion
+
+@Test func intConversion() {
+    #expect(Int(3.7) == 3)
+    #expect(Int(3.2) == 3)
+    #expect(Int(-3.7) == -3)
+    #expect(Int(-3.2) == -3)
+    #expect(Int(0.0) == 0)
+}
+
+@Test func floatConversion() {
+    expectApprox(Float_(0), 0.0)
+    expectApprox(Float_(5), 5.0)
+    expectApprox(Float_(-5), -5.0)
+    expectApprox(Float_(100), 100.0)
 }

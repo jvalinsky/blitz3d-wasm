@@ -1,8 +1,8 @@
 import Blitz3DCompiler
-import XCTest
+import Testing
 
-final class WASMBinaryEncoderParallelTests: XCTestCase {
-    func testParallelCodeSectionEncodingIsDeterministic() {
+struct WASMBinaryEncoderParallelTests {
+    @Test func testParallelCodeSectionEncodingIsDeterministic() {
         var module = WASMModule()
         module.memories = [WASMMemory(initial: 1, maximum: 1)]
         module.exports.append(WASMExport(name: "memory", kind: .memory, index: 0))
@@ -53,4 +53,3 @@ final class WASMBinaryEncoderParallelTests: XCTestCase {
         XCTAssertEqual(b1, b4)
     }
 }
-

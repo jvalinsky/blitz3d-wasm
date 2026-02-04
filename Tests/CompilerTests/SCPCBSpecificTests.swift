@@ -5,12 +5,12 @@
 //  Tests for SCP:CB specific functions
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class SCPCBSpecificTests: XCTestCase {
+struct SCPCBSpecificTests {
     
-    func testOpenMovie() throws {
+    @Test func testOpenMovie() throws {
         let source = """
         Function TestOpenMovie()
             Local movie = OpenMovie("intro.mp4")
@@ -26,7 +26,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testDrawMovie() throws {
+    @Test func testDrawMovie() throws {
         let source = """
         Function TestDrawMovie()
             Local movie = OpenMovie("intro.mp4")
@@ -43,7 +43,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testMoviePlaying() throws {
+    @Test func testMoviePlaying() throws {
         let source = """
         Function TestMoviePlaying()
             Local movie = OpenMovie("intro.mp4")
@@ -60,7 +60,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testZlibWapiOpen() throws {
+    @Test func testZlibWapiOpen() throws {
         let source = """
         Function TestZlibOpen()
             Local zip = ZlibWapi_Open("assets.zip")
@@ -76,7 +76,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testZlibWapiGetFileCount() throws {
+    @Test func testZlibWapiGetFileCount() throws {
         let source = """
         Function TestZlibGetFileCount()
             Local zip = ZlibWapi_Open("assets.zip")
@@ -93,7 +93,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testZlibWapiExtractFile() throws {
+    @Test func testZlibWapiExtractFile() throws {
         let source = """
         Function TestZlibExtract()
             Local zip = ZlibWapi_Open("assets.zip")
@@ -110,7 +110,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testOpenTCPStream() throws {
+    @Test func testOpenTCPStream() throws {
         let source = """
         Function TestTCPStream()
             Local stream = OpenTCPStream("localhost", 8080)
@@ -126,7 +126,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testWriteLine() throws {
+    @Test func testWriteLine() throws {
         let source = """
         Function TestWriteLine()
             Local stream = OpenTCPStream("localhost", 8080)
@@ -143,7 +143,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testReadLine() throws {
+    @Test func testReadLine() throws {
         let source = """
         Function TestReadLine()
             Local stream = OpenTCPStream("localhost", 8080)
@@ -160,7 +160,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testReadAvail() throws {
+    @Test func testReadAvail() throws {
         let source = """
         Function TestReadAvail()
             Local stream = OpenTCPStream("localhost", 8080)
@@ -177,7 +177,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSendNetMsg() throws {
+    @Test func testSendNetMsg() throws {
         let source = """
         Function TestSendNetMsg()
             Local stream = OpenTCPStream("localhost", 8080)
@@ -194,7 +194,7 @@ final class SCPCBSpecificTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSCPIntroSequence() throws {
+    @Test func testSCPIntroSequence() throws {
         let source = """
         Function PlayIntro()
             ' Open and play intro movie

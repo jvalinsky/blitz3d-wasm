@@ -26,6 +26,7 @@
     "memleak:wasm:timeout": "deno run -A Tools/memleak/wasm_timeout_probe.ts",
     "memleak:fxsnapshot:strings": "deno run -A Tools/memleak/fxsnapshot_strings.ts",
     "scpcb:audit": "deno run -A Tools/scpcb_audit_gate.ts --require-root",
+    "scpcb:imports:gate": "deno run -A Tools/scpcb_import_leak_gate.ts --require-root",
     "interpreter:audit": "deno run -A Tools/interpreter_import_audit.ts",
     "interpreter:scpcb-coverage": "deno run -A Tools/scpcb_interpreter_coverage.ts",
     "interpreter:scpcb-coverage:check": "deno run -A Tools/scpcb_interpreter_coverage.ts --check-allowlist --top 1",

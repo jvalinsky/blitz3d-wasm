@@ -5,12 +5,12 @@
 //  Tests for Graphics API functions compilation
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class GraphicsAPITests: XCTestCase {
+struct GraphicsAPITests {
     
-    func testEntityAlpha() throws {
+    @Test func testEntityAlpha() throws {
         let source = """
         Function TestAlpha()
             Local ent = CreateCube()
@@ -27,7 +27,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testEntityColor() throws {
+    @Test func testEntityColor() throws {
         let source = """
         Function TestColor()
             Local ent = CreateSphere()
@@ -44,7 +44,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testEntityFX() throws {
+    @Test func testEntityFX() throws {
         let source = """
         Function TestFX()
             Local ent = CreatePlane()
@@ -61,7 +61,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testEntityBlend() throws {
+    @Test func testEntityBlend() throws {
         let source = """
         Function TestBlend()
             Local ent = CreateCube()
@@ -78,7 +78,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testPointEntity() throws {
+    @Test func testPointEntity() throws {
         let source = """
         Function TestPointEntity()
             Local cam = CreateCamera()
@@ -96,7 +96,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testNameEntity() throws {
+    @Test func testNameEntity() throws {
         let source = """
         Function TestNameEntity()
             Local ent = CreateLight()
@@ -113,7 +113,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testEntityName() throws {
+    @Test func testEntityName() throws {
         let source = """
         Function TestEntityName()
             Local ent = CreatePivot()
@@ -130,7 +130,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testVertexTexCoords() throws {
+    @Test func testVertexTexCoords() throws {
         let source = """
         Function TestVertexTexCoords()
             Local mesh = CreateMesh()
@@ -149,7 +149,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testCombinedEntityProperties() throws {
+    @Test func testCombinedEntityProperties() throws {
         let source = """
         Function SetupNPC(npc%)
             Local ent = CreateCube()
@@ -176,7 +176,7 @@ final class GraphicsAPITests: XCTestCase {
 
     // MARK: - Entity Parenting Tests
 
-    func testEntityParentingCompiles() throws {
+    @Test func testEntityParentingCompiles() throws {
         let source = """
         Local grandparent = CreatePivot()
         Local parent = CreatePivot()
@@ -215,7 +215,7 @@ final class GraphicsAPITests: XCTestCase {
         XCTAssertEqual(bytes[3], 0x6D) // 'm'
     }
 
-    func testEntityGlobalPositionQuery() throws {
+    @Test func testEntityGlobalPositionQuery() throws {
         // Tests that EntityX/Y/Z with global=1 compiles correctly
         // This exercises the parent chain walk with rotation and scale
         let source = """

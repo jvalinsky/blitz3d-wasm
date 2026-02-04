@@ -153,6 +153,45 @@ swift build
 wasm-validate output.wasm
 ```
 
+### Rebuild Web Compiler WASM (`web/blitz3d-compiler.wasm`)
+
+The web interpreter/IDE uses the WASI-built compiler at `web/blitz3d-compiler.wasm`.
+
+Build it from `compiler-wasm/` using the Swift WASM SDK that matches your host Swift toolchain:
+
+```bash
+# Pick an SDK that matches your installed Swift patch version (see: swift sdk list)
+swift build --package-path compiler-wasm \
+  --product blitz3d-compiler \
+  --swift-sdk swift-6.2.3-RELEASE_wasm \
+  -c release
+
+# Copy into web/ (this is what the interpreter loads)
+cp compiler-wasm/.build/wasm32-unknown-wasip1/release/blitz3d-compiler.wasm \
+  web/blitz3d-compiler.wasm
+```
+
+If you see an error like “module compiled with Swift 6.2 cannot be imported by the Swift 6.2.3 compiler”, use an SDK built for Swift 6.2.3 (e.g. `swift-6.2.3-RELEASE_wasm`) instead of `6.2-RELEASE-wasm32-unknown-wasip1`.
+
+### Web Interpreter Debugging (bbdbg)
+
+`web/interpreter.html` includes a **Debug (bbdbg)** panel. When the web compiler is built with `debugInfo: true`, it returns a `bbdbg` JSON object alongside the compiled WASM. The interpreter:
+
+- Hooks `bbdbg.__bbdbg_enter/leave/stmt` imports to track a live call stack and recent statement trace.
+- Saves the latest `bbdbg` metadata to **IndexedDB** (keyed by `sha256(wasmBytes)`) so it persists across reloads.
+- Exposes buttons to **Download bbdbg** (`program.bbdbg.json`) and **Load Saved** (from IndexedDB).
+
+### Swift Tests (No XCTest)
+
+`swift test` runs the Swift Testing-based suites (no Xcode/XCTest needed), including:
+
+- `Tests/Blitz3DEngineTests/`
+- `Tests/Blitz3DCompilerTests/`
+- `Tests/CompilerTests/` (migrated from XCTest)
+- `Tests/IntegrationTests/` (migrated from XCTest)
+
+If SwiftPM sandboxing causes issues in this environment, use `swift test --disable-sandbox` and set caches to a writable location (e.g. `CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache` and `SWIFTPM_CACHE_PATH=/tmp/swiftpm-cache`).
+
 ### Run Thin Demo (Minimal Particle Demo)
 
 ```bash

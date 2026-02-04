@@ -5,15 +5,40 @@
 //  Integration tests that compile BASIC code and execute the resulting WASM
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
-import JavaScriptKit
+// (JavaScriptKit import removed; not used in these tests.)
 
-final class IntegrationTests: XCTestCase {
+struct IntegrationTests {
+
+    private func containsSubsequence(_ haystack: [UInt8], _ needle: [UInt8]) -> Bool {
+        guard !needle.isEmpty else { return true }
+        guard haystack.count >= needle.count else { return false }
+        for start in 0...(haystack.count - needle.count) {
+            if haystack[start..<(start + needle.count)].elementsEqual(needle) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func hexBytes(_ bytes: [UInt8]) -> String {
+        let hexChars = Array("0123456789abcdef".utf8)
+        var out: [UInt8] = []
+        out.reserveCapacity(bytes.count * 3)
+        for (i, b) in bytes.enumerated() {
+            let hi = Int(b >> 4)
+            let lo = Int(b & 0x0F)
+            out.append(hexChars[hi])
+            out.append(hexChars[lo])
+            if i != bytes.count - 1 { out.append(UInt8(ascii: " ")) }
+        }
+        return String(decoding: out, as: UTF8.self)
+    }
     
     // MARK: - Asset Compilation Tests
     
-    func testCompileWithEmbeddedData() throws {
+    @Test func testCompileWithEmbeddedData() throws {
         let source = """
         Function Main()
             Local message$
@@ -40,7 +65,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThan(wasmBytes.count, 0, "WASM binary should not be empty")
     }
     
-    func testCompileWithMultipleDataStatements() throws {
+    @Test func testCompileWithMultipleDataStatements() throws {
         let source = """
         Function Main()
             Local a%, b#, c$
@@ -67,7 +92,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThan(wasmBytes.count, 0)
     }
     
-    func testCompileWithDataAndReadLoop() throws {
+    @Test func testCompileWithDataAndReadLoop() throws {
         let source = """
         Function Main()
             Local i, values[3]
@@ -93,7 +118,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThan(wasmBytes.count, 0)
     }
     
-    func testCompileWithRestoreStatement() throws {
+    @Test func testCompileWithRestoreStatement() throws {
         let source = """
         Function Main()
             Local x, y
@@ -121,7 +146,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThan(wasmBytes.count, 0)
     }
     
-    func testCompileWithLabeledData() throws {
+    @Test func testCompileWithLabeledData() throws {
         let source = """
         Function Main()
             Local x
@@ -147,7 +172,7 @@ final class IntegrationTests: XCTestCase {
     
     // MARK: - WAT Output Tests
     
-    func testGenerateWATWithDataSection() throws {
+    @Test func testGenerateWATWithDataSection() throws {
         let source = """
         Function Main()
             Local message$
@@ -168,10 +193,15 @@ final class IntegrationTests: XCTestCase {
         
         // WAT should contain data section
         XCTAssertTrue(watOutput.contains("(data"), "WAT should contain data section")
-        XCTAssertTrue(watOutput.contains("Hello World"), "WAT should contain the embedded string")
+        // WASMTextWriter prints data payload bytes as a hex string. Ensure the string bytes appear in at least one data segment.
+        let messageBytes = Array("Hello World".utf8)
+        let dataContainsMessage = module.data.contains { containsSubsequence($0.bytes, messageBytes) }
+        XCTAssertTrue(dataContainsMessage, "Expected data section to contain UTF-8 bytes for the embedded string")
+        let expectedHexSubsequence = hexBytes(messageBytes)
+        XCTAssertTrue(watOutput.contains(expectedHexSubsequence), "WAT should contain the embedded string bytes in hex form")
     }
     
-    func testWATDataSectionFormat() throws {
+    @Test func testWATDataSectionFormat() throws {
         let source = """
         Function Main()
             Data 42, "test", 3.14
@@ -193,7 +223,7 @@ final class IntegrationTests: XCTestCase {
     
     // MARK: - Binary Encoding Tests
     
-    func testBinaryEncodeDataSection() throws {
+    @Test func testBinaryEncodeDataSection() throws {
         let source = """
         Function Main()
             Local value%
@@ -227,7 +257,7 @@ final class IntegrationTests: XCTestCase {
     
     // MARK: - Multi-file Project Tests
     
-    func testCompileWithIncludeStatement() throws {
+    @Test func testCompileWithIncludeStatement() throws {
         let mainSource = """
         Include "test_utils.bb"
         Function Main()
@@ -262,14 +292,15 @@ final class IntegrationTests: XCTestCase {
         
         // Both functions should be exported
         let mainExport = module.exports.first { $0.name == "Main" }
-        let getMessageExport = module.exports.first { $0.name == "GetMessage" }
+        // String-returning functions keep their explicit `$` suffix in exports.
+        let getMessageExport = module.exports.first { $0.name == "GetMessage$" }
         XCTAssertNotNil(mainExport)
         XCTAssertNotNil(getMessageExport)
     }
     
     // MARK: - Asset Manifest Tests
     
-    func testAssetManifestGeneration() throws {
+    @Test func testAssetManifestGeneration() throws {
         let source = """
         Function Main()
             Local message$
@@ -305,7 +336,7 @@ final class IntegrationTests: XCTestCase {
     
     // MARK: - Complex Data Structures
     
-    func testCompileNestedData() throws {
+    @Test func testCompileNestedData() throws {
         let source = """
         Function Main()
             Local x, y, z
@@ -335,7 +366,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThan(wasmBytes.count, 0)
     }
     
-    func testCompileDataWithExpressions() throws {
+    @Test func testCompileDataWithExpressions() throws {
         let source = """
         Function Main()
             Local result
@@ -356,7 +387,7 @@ final class IntegrationTests: XCTestCase {
     
     // MARK: - Edge Cases
     
-    func testCompileEmptyData() throws {
+    @Test func testCompileEmptyData() throws {
         let source = """
         Function Main()
             Data
@@ -373,7 +404,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(module.code.count, 1)
     }
     
-    func testCompileDataWithSingleValue() throws {
+    @Test func testCompileDataWithSingleValue() throws {
         let source = """
         Function Main()
             Local value

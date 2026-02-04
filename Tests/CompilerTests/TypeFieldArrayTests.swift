@@ -5,12 +5,12 @@
 //  Tests for Type Field Array support
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class TypeFieldArrayTests: XCTestCase {
+struct TypeFieldArrayTests {
     
-    func testTypeFieldArrayDeclaration() throws {
+    @Test func testTypeFieldArrayDeclaration() throws {
         let source = """
         Type TSCP
             Field NPCs[12]
@@ -43,7 +43,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testTypeFieldArrayWithTypeAnnotation() throws {
+    @Test func testTypeFieldArrayWithTypeAnnotation() throws {
         let source = """
         Type TNPC
             Field Position#[3]
@@ -60,7 +60,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertEqual(program.types[0].fields[0].dimensions.count, 1)
     }
     
-    func testTypeFieldArrayMultiDimensional() throws {
+    @Test func testTypeFieldArrayMultiDimensional() throws {
         let source = """
         Type TMatrix
             Field Values#[4, 4]
@@ -76,7 +76,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertEqual(program.types[0].fields[0].dimensions.count, 2)
     }
     
-    func testTypeFieldArrayWithDefaultValue() throws {
+    @Test func testTypeFieldArrayWithDefaultValue() throws {
         let source = """
         Type TSCP
             Field MaxHealth% = 100
@@ -115,7 +115,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testTypeFieldArrayWithMultipleFields() throws {
+    @Test func testTypeFieldArrayWithMultipleFields() throws {
         let source = """
         Type TSCP
             Field NPCs[12]
@@ -150,7 +150,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testTypeFieldArrayInstanceSizeCalculation() throws {
+    @Test func testTypeFieldArrayInstanceSizeCalculation() throws {
         let source = """
         Type TTest
             Field A%
@@ -171,7 +171,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertEqual(module.globals.count > 0, true)
     }
     
-    func testTypeFieldArrayWithExpressionDimension() throws {
+    @Test func testTypeFieldArrayWithExpressionDimension() throws {
         let source = """
         Type TTest
             Field Items[4 * 3]
@@ -200,7 +200,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testHandleAndObjectCasting() throws {
+    @Test func testHandleAndObjectCasting() throws {
         let source = """
         Type TNPC
             Field Name$
@@ -228,7 +228,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testObjectCastWithTypeMismatch() throws {
+    @Test func testObjectCastWithTypeMismatch() throws {
         let source = """
         Type TA
             Field X%
@@ -254,7 +254,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testMultiValueCaseStatements() throws {
+    @Test func testMultiValueCaseStatements() throws {
         let source = """
         Function TestMultiValue(x%)
             Select x
@@ -280,7 +280,7 @@ final class TypeFieldArrayTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSingleValueCaseStatements() throws {
+    @Test func testSingleValueCaseStatements() throws {
         let source = """
         Function TestSingleValue(x%)
             Select x

@@ -45,6 +45,9 @@ public indirect enum IRValue {
 
 public indirect enum IREffect {
     case nop
+    /// Debug/source wrapper that does not affect control flow semantics.
+    /// Consumers should treat this as a transparent container for `body`.
+    case sourceLocation(span: SourceSpan, body: [IREffect])
     case discard(IRValue)
     case assign(target: String, value: IRValue)
     case assignLocal(index: Int, value: IRValue)

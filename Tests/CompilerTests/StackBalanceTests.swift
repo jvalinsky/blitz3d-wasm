@@ -1,14 +1,14 @@
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
 /// Tests for stack balance correctness - catching real bugs from Session 6
-final class StackBalanceTests: XCTestCase {
+struct StackBalanceTests {
     
     // MARK: - Statement Balance Tests
     
     // Note: calculateStackDelta tests removed - function is private and tested indirectly
     
-    func testReturnStatement_DoesNotLeaveValue() throws {
+    @Test func testReturnStatement_DoesNotLeaveValue() throws {
         let source = """
         Function GetValue%()
             Local x% = 5
@@ -22,7 +22,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Return statement should not leave value on stack")
     }
     
-    func testFunctionCallStatement_DropsReturnValue() throws {
+    @Test func testFunctionCallStatement_DropsReturnValue() throws {
         let source = """
         Function DoSomething%()
             Return 42
@@ -37,7 +37,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Function call as statement should drop return value")
     }
     
-    func testArrayAssignment_FunctionCallSyntax() throws {
+    @Test func testArrayAssignment_FunctionCallSyntax() throws {
         // Bug discovered: IntroSFX(5) = value wasn't handled
         let source = """
         Dim MyArray%(10)
@@ -51,7 +51,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Array assignment via function-call syntax should work")
     }
     
-    func testFieldArrayAssignment_ResolutionFailure() throws {
+    @Test func testFieldArrayAssignment_ResolutionFailure() throws {
         // Bug discovered: field array assignments failed resolution and left dummy i32.const(0)
         // This test verifies graceful handling even when field isn't found
         let source = """
@@ -71,7 +71,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Failed field resolution should still balance stack")
     }
     
-    func testAssignmentInIfThen_SingleLine() throws {
+    @Test func testAssignmentInIfThen_SingleLine() throws {
         // Colon-separated statements in single-line if-then
         let source = """
         Function Main()
@@ -86,7 +86,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Colon-separated assignments in if-then should balance")
     }
     
-    func testStringConcatenationAssignment() throws {
+    @Test func testStringConcatenationAssignment() throws {
         // Bug pattern: string concatenation assignments left 2 values
         let source = """
         Function Main()
@@ -99,7 +99,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "String concatenation assignment should balance")
     }
     
-    func testLocalDeclarationWithInitializer() throws {
+    @Test func testLocalDeclarationWithInitializer() throws {
         // Bug found: local declarations with function call initializers
         let source = """
         Function GetValue%()
@@ -115,7 +115,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Local with function call initializer should balance")
     }
     
-    func testNestedIfStatements_CouldLeaveValues() throws {
+    @Test func testNestedIfStatements_CouldLeaveValues() throws {
         let source = """
         Function Main()
             Local x% = 1
@@ -135,7 +135,7 @@ final class StackBalanceTests: XCTestCase {
     
     // MARK: - Regression Tests from Session 6
     
-    func testUpdateEventsPattern_FieldArrayAssignment() throws {
+    @Test func testUpdateEventsPattern_FieldArrayAssignment() throws {
         // Exact pattern from UpdateEvents.bb line 87
         let source = """
         Type NPCs
@@ -166,7 +166,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "UpdateEvents pattern should compile and validate")
     }
     
-    func testAchievementsPattern_FunctionCallArray() throws {
+    @Test func testAchievementsPattern_FunctionCallArray() throws {
         // Pattern from Achievements.bb
         let source = """
         Dim AchievementStrings$(10)
@@ -183,7 +183,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Achievements array pattern should work")
     }
 
-    func testComparisonOperatorEqualLess_IsCanonicalized() throws {
+    @Test func testComparisonOperatorEqualLess_IsCanonicalized() throws {
         // Blitz3D accepts `=<` as a synonym for `<=` (SCPCB uses this).
         let source = """
         Function Main()
@@ -196,7 +196,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module))
     }
 
-    func testDeleteStatement_DoesNotAssumeLocal0Exists() throws {
+    @Test func testDeleteStatement_DoesNotAssumeLocal0Exists() throws {
         // Regression: Delete used a hard-coded local[0] scratch, which fails in functions with no locals.
         let source = """
         Type T
@@ -212,7 +212,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module))
     }
 
-    func testForwardCallStatement_DropsReturnValue() throws {
+    @Test func testForwardCallStatement_DropsReturnValue() throws {
         // Regression: statement-level drop decisions must work even when the callee is defined later.
         let source = """
         Function Main()
@@ -228,7 +228,7 @@ final class StackBalanceTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module))
     }
 
-    func testVoidImportCallInIf_DoesNotUnderflow() throws {
+    @Test func testVoidImportCallInIf_DoesNotUnderflow() throws {
         // Regression: do not drop after void imports (e.g. Flip).
         let source = """
         Function Main()

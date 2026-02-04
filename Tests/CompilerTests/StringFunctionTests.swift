@@ -5,12 +5,12 @@
 //  Tests for string function compilation
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class StringFunctionTests: XCTestCase {
+struct StringFunctionTests {
     
-    func testStringLength() throws {
+    @Test func testStringLength() throws {
         let source = """
         Function TestLen()
             Local s$ = "hello"
@@ -27,7 +27,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringLeft() throws {
+    @Test func testStringLeft() throws {
         let source = """
         Function TestLeft()
             Local s$ = "hello"
@@ -44,7 +44,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringRight() throws {
+    @Test func testStringRight() throws {
         let source = """
         Function TestRight()
             Local s$ = "hello"
@@ -61,7 +61,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringMid() throws {
+    @Test func testStringMid() throws {
         let source = """
         Function TestMid()
             Local s$ = "hello"
@@ -78,7 +78,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringUpper() throws {
+    @Test func testStringUpper() throws {
         let source = """
         Function TestUpper()
             Local s$ = "hello"
@@ -95,7 +95,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringLower() throws {
+    @Test func testStringLower() throws {
         let source = """
         Function TestLower()
             Local s$ = "HELLO"
@@ -112,7 +112,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringReplace() throws {
+    @Test func testStringReplace() throws {
         let source = """
         Function TestReplace()
             Local s$ = "hello world"
@@ -129,7 +129,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringInstr() throws {
+    @Test func testStringInstr() throws {
         let source = """
         Function TestInstr()
             Local s$ = "hello world"
@@ -146,7 +146,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testStringTrim() throws {
+    @Test func testStringTrim() throws {
         let source = """
         Function TestTrim()
             Local s$ = "  hello  "
@@ -163,7 +163,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testAsc() throws {
+    @Test func testAsc() throws {
         let source = """
         Function TestAsc()
             Local s$ = "A"
@@ -180,7 +180,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testChr() throws {
+    @Test func testChr() throws {
         let source = """
         Function TestChr()
             Local c$ = Chr(65)
@@ -196,7 +196,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testHex() throws {
+    @Test func testHex() throws {
         let source = """
         Function TestHex()
             Local h$ = Hex(255)
@@ -212,7 +212,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testBin() throws {
+    @Test func testBin() throws {
         let source = """
         Function TestBin()
             Local b$ = Bin(10)
@@ -228,7 +228,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testSeededRandom() throws {
+    @Test func testSeededRandom() throws {
         let source = """
         Function TestSeededRnd()
             SeedRnd(12345)
@@ -249,7 +249,7 @@ final class StringFunctionTests: XCTestCase {
         XCTAssertGreaterThan(module.code.count, 0)
     }
     
-    func testCombinedStringFunctions() throws {
+    @Test func testCombinedStringFunctions() throws {
         let source = """
         Function ProcessString(text$)
             Local upper$ = Upper(text)

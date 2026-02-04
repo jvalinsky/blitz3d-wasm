@@ -3,11 +3,11 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class CFGBuilderTests: XCTestCase {
-    func testForwardGotoResolvesLabel() throws {
+struct CFGBuilderTests {
+    @Test func testForwardGotoResolvesLabel() throws {
         let effects: [IREffect] = [
             .branch(label: "L1"),
             .discard(.constI32(123)),
@@ -29,7 +29,7 @@ final class CFGBuilderTests: XCTestCase {
         XCTAssertEqual(target.label?.lowercased(), "l1")
     }
 
-    func testBranchIfCreatesCondBranchWithFallthrough() throws {
+    @Test func testBranchIfCreatesCondBranchWithFallthrough() throws {
         let effects: [IREffect] = [
             .branchIf(condition: .constI32(1), label: "T"),
             .discard(.constI32(10)),
@@ -52,7 +52,7 @@ final class CFGBuilderTests: XCTestCase {
         XCTAssertNil(falseTarget.label)
     }
 
-    func testBreakTargetsExitBlockInWhile() throws {
+    @Test func testBreakTargetsExitBlockInWhile() throws {
         let effects: [IREffect] = [
             .whileStmt(condition: .constI32(1), body: [
                 .breakStmt,
@@ -84,7 +84,7 @@ final class CFGBuilderTests: XCTestCase {
         XCTAssertTrue(target === exitBlock, "Expected break to branch to loop exit")
     }
 
-    func testContinueTargetsHeaderInWhile() throws {
+    @Test func testContinueTargetsHeaderInWhile() throws {
         let effects: [IREffect] = [
             .whileStmt(condition: .constI32(1), body: [
                 .continueStmt,

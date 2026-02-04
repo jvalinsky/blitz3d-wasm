@@ -78,8 +78,9 @@ public final class ASTLowering {
         }
         
         // 1. Register all Types first
-        for typeNode in program.types {
-            lowerTypeDeclaration(typeNode, to: &irModule)
+        for (idx, typeNode) in program.types.enumerated() {
+            // Keep type IDs stable (1..N) in declaration order, matching the AST pipeline.
+            lowerTypeDeclaration(typeNode, typeId: idx + 1, to: &irModule)
         }
         
         // 2. Pre-pass: register all function signatures
@@ -119,11 +120,43 @@ public final class ASTLowering {
         return irModule
     }
     
-    private func lowerTypeDeclaration(_ typeNode: TypeNode, to module: inout IRModule) {
+    private func lowerTypeDeclaration(_ typeNode: TypeNode, typeId: Int, to module: inout IRModule) {
         var fieldOffsets: [String: Int] = [:]
         var fieldTypes: [String: IRType] = [:]
         var fieldDimensions: [String: [Int]] = [:]
         var currentOffset = 12 // Header: prev(4), next(4), typeID(4)
+
+        var debugFields: [DebugFieldInfo] = []
+        debugFields.append(
+            DebugFieldInfo(
+                name: "__prev",
+                offsetBytes: 0,
+                wasmType: "i32",
+                declaredType: "Int",
+                customTypeName: nil,
+                dimensions: nil
+            )
+        )
+        debugFields.append(
+            DebugFieldInfo(
+                name: "__next",
+                offsetBytes: 4,
+                wasmType: "i32",
+                declaredType: "Int",
+                customTypeName: nil,
+                dimensions: nil
+            )
+        )
+        debugFields.append(
+            DebugFieldInfo(
+                name: "__typeID",
+                offsetBytes: 8,
+                wasmType: "i32",
+                declaredType: "Int",
+                customTypeName: nil,
+                dimensions: nil
+            )
+        )
         
         for field in typeNode.fields {
             let type = lowerType(from: field.type)
@@ -145,6 +178,24 @@ public final class ASTLowering {
             if !dims.isEmpty {
                 fieldDimensions[field.name.lowercased()] = dims
             }
+
+            let wasmType: String
+            switch type {
+            case .i32: wasmType = "i32"
+            case .f32: wasmType = "f32"
+            case .void: wasmType = "void"
+            }
+            let declaredType = field.type?.rawValue ?? "Int"
+            debugFields.append(
+                DebugFieldInfo(
+                    name: field.name,
+                    offsetBytes: currentOffset,
+                    wasmType: wasmType,
+                    declaredType: declaredType,
+                    customTypeName: field.typeName,
+                    dimensions: dims.isEmpty ? nil : dims
+                )
+            )
             
             currentOffset += 4 * elementCount // Everything 4 bytes for now in WASM32
         }
@@ -171,6 +222,18 @@ public final class ASTLowering {
         
         symbolTable.addType(typeNode.name, info: typeInfo)
         module.types[typeNode.name.lowercased()] = typeInfo
+
+        if let gen = context.debugGenerator {
+            gen.registerType(
+                DebugTypeInfo(
+                    id: typeId,
+                    name: typeNode.name,
+                    instanceSizeBytes: currentOffset,
+                    fields: debugFields
+                )
+            )
+        }
+
         CompilerLogger.debug("DEBUG_LOWER: Registered type '\(typeNode.name.lowercased())'")
     }
     
@@ -361,6 +424,9 @@ public final class ASTLowering {
     }
     
     private func lowerStatement(_ statement: StatementNode, into body: inout [IREffect]) {
+        let span = statement.span
+        let startIndex = body.count
+
         switch statement {
         case .local(let decl, _):
             for arrayDecl in decl.arrayDeclarations {
@@ -734,6 +800,12 @@ public final class ASTLowering {
         case .function, .forEach, .data, .empty:
             break
         }
+
+        if body.count > startIndex {
+            let emitted = Array(body[startIndex..<body.count])
+            body.removeSubrange(startIndex..<body.count)
+            body.append(.sourceLocation(span: span, body: emitted))
+        }
     }
 
     private func lowerDimDeclaration(_ decl: DimDeclaration, into body: inout [IREffect]) {
@@ -1012,7 +1084,7 @@ public final class ASTLowering {
         CompilerLogger.debug("DEBUG_LOWER: Resolving call to '\(call.name)' at \(call.span.start)")
         let resolver = SignatureResolver(context: context)
         
-        if let def = resolver.definition(forName: call.name) {
+        if let (resolvedName, def) = resolver.resolveCall(forName: call.name) {
             let expectedCount = def.params.count
             if args.count < expectedCount {
                 for i in args.count..<expectedCount {
@@ -1033,7 +1105,7 @@ public final class ASTLowering {
             }
             
             let irResult = irType(from: def.results.first ?? .void)
-            return .call(name: call.name.lowercased(), args: args, resultType: irResult)
+            return .call(name: resolvedName, args: args, resultType: irResult)
         }
 
         if context.canAutoImport(call.name) {
@@ -1048,7 +1120,7 @@ public final class ASTLowering {
                 results = [.i32]
             }
             _ = context.registerAutoImport(name: call.name, params: params, results: results)
-            if let def = resolver.definition(forName: call.name) {
+            if let (resolvedName, def) = resolver.resolveCall(forName: call.name) {
                 let irResult = irType(from: def.results.first ?? .void)
                 // Coerce arguments to the registered signature types.
                 if !def.params.isEmpty {
@@ -1057,7 +1129,7 @@ public final class ASTLowering {
                         args[i] = coerce(args[i], to: expected)
                     }
                 }
-                return .call(name: call.name.lowercased(), args: args, resultType: irResult)
+                return .call(name: resolvedName, args: args, resultType: irResult)
             }
         }
 

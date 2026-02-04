@@ -17,7 +17,7 @@ struct CompilerError: Error, CustomStringConvertible {
 /// WASM-compatible compiler interface
 struct CompilerWASM {
     
-    static func compile(source: String, options: CompilerOptions = .default) -> Result<Data, CompilerError> {
+    static func compile(source: String, options: CompilerOptions = .default) -> Result<(wasm: Data, bbdbg: String?), CompilerError> {
         do {
             var parser = Parser(source: source, sourceFile: "stdin")
             let program = parser.parse()
@@ -33,6 +33,14 @@ struct CompilerWASM {
             if options.commandBuffer {
                 codeGen.enableCommandBuffer()
             }
+
+            var debugGenerator: DebugGenerator? = nil
+            if options.debugInfo {
+                let gen = DebugGenerator()
+                debugGenerator = gen
+                codeGen.enableDebugging(gen)
+            }
+
             let wasmModule = codeGen.generateFromIR(program)
             
             if codeGen.hasDiagnostics {
@@ -41,8 +49,8 @@ struct CompilerWASM {
             
             var encoder = WASMBinaryEncoder()
             let wasmBinary = encoder.encode(wasmModule)
-            
-            return .success(Data(wasmBinary))
+            let bbdbgJSON = debugGenerator?.generateJSON()
+            return .success((Data(wasmBinary), bbdbgJSON))
         } catch {
             return .failure(CompilerError(message: "Compilation failed: \(error)"))
         }
@@ -53,13 +61,21 @@ struct CompilerWASM {
         let result = compile(source: source, options: options)
         
         switch result {
-        case .success(let wasmData):
+        case .success(let pair):
+            let wasmData = pair.wasm
             let base64 = wasmData.base64EncodedString()
+            let bbdbgField: String
+            if let bbdbgJSON = pair.bbdbg, bbdbgJSON != "{}" {
+                bbdbgField = ",\n                \"bbdbg\": \(bbdbgJSON)"
+            } else {
+                bbdbgField = ""
+            }
             return """
             {
                 "success": true,
                 "wasm": "\(base64)",
                 "size": \(wasmData.count)
+                \(bbdbgField)
             }
             """
         case .failure(let error):

@@ -343,7 +343,7 @@ async function initCompiler() {
 
   const optionsJSON = JSON.stringify({
     optimize: true,
-    debugInfo: false,
+    debugInfo: true,
     sourceMap: false,
     commandBuffer: false,
     autoImports,

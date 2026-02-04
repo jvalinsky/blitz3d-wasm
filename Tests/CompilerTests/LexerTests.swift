@@ -3,12 +3,12 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class LexerTests: XCTestCase {
+struct LexerTests {
     
-    func testBasicTokens() throws {
+    @Test func testBasicTokens() throws {
         var lexer = Lexer(source: "Local x = 42", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -20,7 +20,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(tokens[3].type, .integerLiteral)
     }
     
-    func testKeywords() throws {
+    @Test func testKeywords() throws {
         var lexer = Lexer(source: "Function Test()", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -30,7 +30,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(tokens[3].type, .rightParen)
     }
     
-    func testStringLiteral() throws {
+    @Test func testStringLiteral() throws {
         var lexer = Lexer(source: "x = \"hello\"", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -40,7 +40,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(stringToken?.text, "hello")
     }
     
-    func testFloatLiteral() throws {
+    @Test func testFloatLiteral() throws {
         var lexer = Lexer(source: "x = 3.14", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -49,7 +49,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(floatToken?.text, "3.14")
     }
     
-    func testIntegerLiteral() throws {
+    @Test func testIntegerLiteral() throws {
         var lexer = Lexer(source: "x = 42", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -58,7 +58,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(intToken?.text, "42")
     }
     
-    func testOperators() throws {
+    @Test func testOperators() throws {
         var lexer = Lexer(source: "a <> b <= c", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -68,7 +68,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(tokens[3].type, .lessThanOrEqual)  // <=
     }
     
-    func testEndOfFile() throws {
+    @Test func testEndOfFile() throws {
         var lexer = Lexer(source: "x = 1", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -76,7 +76,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(lastToken.type, .endOfFile)
     }
     
-    func testSCPCBKeywords() throws {
+    @Test func testSCPCBKeywords() throws {
         let source = """
         If x = 1 Then
             While y < 10
@@ -106,7 +106,7 @@ final class LexerTests: XCTestCase {
         XCTAssertNotNil(returnToken)
     }
     
-    func testColonSeparator() throws {
+    @Test func testColonSeparator() throws {
         var lexer = Lexer(source: "x = 1 : y = 2", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         
@@ -114,7 +114,7 @@ final class LexerTests: XCTestCase {
         XCTAssertNotNil(colonToken)
     }
 
-    func testEqualsSemicolonLine_IsComment() throws {
+    @Test func testEqualsSemicolonLine_IsComment() throws {
         // SCPCB/IDE metadata lines sometimes start with "=;".
         let source = """
         =; ID: 123
@@ -129,7 +129,7 @@ final class LexerTests: XCTestCase {
         XCTAssertEqual(firstNonNewline?.type, .keywordFunction, "Lexer should skip '=;' lines")
     }
     
-    func testFieldAccess() throws {
+    @Test func testFieldAccess() throws {
         var lexer = Lexer(source: "obj\\xfield", sourceFile: "test.bb")
         let tokens = lexer.tokenize()
         

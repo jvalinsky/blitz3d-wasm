@@ -44,6 +44,7 @@ public class StringManager {
     /// Extract substring (Mid)
     public func mid(_ id: Int32, start: Int32, length: Int32) -> Int32 {
         guard let string = stringTable[id] else { return storeString("") }
+        if length <= 0 { return storeString("") }
         
         let startIndex = max(0, Int(start) - 1)  // Blitz3D is 1-indexed
         guard startIndex < string.count else { return storeString("") }
@@ -159,7 +160,7 @@ public class StringManager {
     /// Repeat a string n times
     public func stringRepeat(_ id: Int32, count: Int32) -> Int32 {
         guard let string = stringTable[id] else { return storeString("") }
-        let repeated = String(repeating: string, count: Int(count))
+        let repeated = String(repeating: string, count: max(0, Int(count)))
         return storeString(repeated)
     }
     

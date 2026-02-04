@@ -60,6 +60,7 @@ type CompileResult = {
   wasm?: string;
   wasmBytes?: ArrayBuffer;
   size?: number;
+  bbdbg?: unknown;
 };
 
 type CompilerInitMessage = { type: "init" };
@@ -91,7 +92,359 @@ type RunnerWorkerToMainMessage =
   | { type: "stdout"; line: string }
   | { type: "warn"; line: string }
   | { type: "error"; message: string; stack?: string }
+  | {
+    type: "wasm_diag";
+    importsTotal: number;
+    bbdbgImports: string[];
+    hasBbdbgEnter: boolean;
+    hasBbdbgLeave: boolean;
+    hasBbdbgStmt: boolean;
+    importsMemory: boolean;
+    exportsMemory: boolean;
+  }
+  | {
+    type: "bbdbg";
+    fileId: number;
+    line: number;
+    stack: number[];
+  }
+  | {
+    type: "mem_info";
+    totalBytes: number;
+    pages: number;
+    heapBase?: number;
+    dataEnd?: number;
+    stackPtr?: number;
+    suggestOffset?: number;
+  }
+  | {
+    type: "mem";
+    id: number;
+    offset: number;
+    len: number;
+    bytes: ArrayBuffer;
+    totalBytes: number;
+    pages: number;
+  }
+  | {
+    type: "stubs";
+    total: number;
+    shown: string[];
+    called: Array<
+      { key: string; count: number; fileId?: number; line?: number }
+    >;
+  }
   | { type: "done" };
+
+type StubCall = { key: string; count: number; fileId?: number; line?: number };
+type RuntimeGapsState = {
+  source: "worker" | "main" | null;
+  total: number;
+  shown: string[];
+  called: Map<string, number>;
+  callSites: Map<string, string>;
+  updatedAt: number;
+};
+
+type BbdbgFileInfo = { id: number; path: string };
+type BbdbgFunctionInfo = { id: number; name: string };
+type BbdbgMetadata = {
+  files?: BbdbgFileInfo[];
+  functions?: BbdbgFunctionInfo[];
+};
+
+let bbdbgMeta: {
+  fileById: Map<number, string>;
+  funcById: Map<number, string>;
+} = { fileById: new Map(), funcById: new Map() };
+let bbdbgRaw: unknown = null;
+let bbdbgLastFileId = 0;
+let bbdbgLastLine = 0;
+let bbdbgStack: string[] = [];
+let bbdbgTrace: Array<{ fileId: number; line: number; stack: string[] }> = [];
+let bbdbgRenderQueued = false;
+let bbdbgEnabled = true;
+let bbdbgSavedWasmSha256: string | null = null;
+let bbdbgSavedAtMs: number | null = null;
+
+type StoredBbdbgRecord = {
+  wasmSha256: string;
+  createdAtMs: number;
+  bbdbgJson: string;
+  sourceSha256?: string;
+};
+
+const BBDBG_DB_NAME = "blitz3d-wasm";
+const BBDBG_DB_VERSION = 1;
+let bbdbgDbPromise: Promise<IDBDatabase> | null = null;
+
+function openBbdbgDb(): Promise<IDBDatabase> {
+  if (bbdbgDbPromise) return bbdbgDbPromise;
+  bbdbgDbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(BBDBG_DB_NAME, BBDBG_DB_VERSION);
+    req.onerror = () => reject(req.error ?? new Error("IndexedDB open failed"));
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains("bbdbg")) {
+        const store = db.createObjectStore("bbdbg", { keyPath: "wasmSha256" });
+        store.createIndex("createdAtMs", "createdAtMs", { unique: false });
+      }
+      if (!db.objectStoreNames.contains("meta")) {
+        db.createObjectStore("meta", { keyPath: "key" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+  });
+  return bbdbgDbPromise;
+}
+
+function idbReq<T>(req: IDBRequest<T>): Promise<T> {
+  return new Promise((resolve, reject) => {
+    req.onerror = () =>
+      reject(req.error ?? new Error("IndexedDB request failed"));
+    req.onsuccess = () => resolve(req.result);
+  });
+}
+
+function idbTxDone(tx: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error ?? new Error("IndexedDB tx failed"));
+    tx.onabort = () => reject(tx.error ?? new Error("IndexedDB tx aborted"));
+  });
+}
+
+async function sha256Hex(
+  bytes: ArrayBuffer | ArrayBufferView,
+): Promise<string> {
+  const u8 = normalizeWasmBytes(bytes);
+  const digest = await crypto.subtle.digest("SHA-256", u8);
+  const out = new Uint8Array(digest);
+  let hex = "";
+  for (const b of out) hex += b.toString(16).padStart(2, "0");
+  return hex;
+}
+
+async function persistBbdbgToIdb(
+  wasmBytes: ArrayBuffer | ArrayBufferView,
+  bbdbg: unknown,
+): Promise<string> {
+  const wasmSha = await sha256Hex(wasmBytes);
+  const bbdbgJson = JSON.stringify(bbdbg ?? {}, null, 2);
+  const record: StoredBbdbgRecord = {
+    wasmSha256: wasmSha,
+    createdAtMs: Date.now(),
+    bbdbgJson,
+  };
+
+  const db = await openBbdbgDb();
+  const tx = db.transaction(["bbdbg", "meta"], "readwrite");
+  const bbdbgStore = tx.objectStore("bbdbg");
+  const metaStore = tx.objectStore("meta");
+  bbdbgStore.put(record);
+  metaStore.put({ key: "bbdbg_latest", wasmSha256: wasmSha });
+  await idbTxDone(tx);
+  return wasmSha;
+}
+
+async function loadLatestBbdbgFromIdb(): Promise<StoredBbdbgRecord | null> {
+  const db = await openBbdbgDb();
+  const tx = db.transaction(["bbdbg", "meta"], "readonly");
+  const metaStore = tx.objectStore("meta");
+  const meta = await idbReq<any>(metaStore.get("bbdbg_latest"));
+  const wasmSha = meta?.wasmSha256 ? String(meta.wasmSha256) : "";
+  if (!wasmSha) return null;
+  const bbdbgStore = tx.objectStore("bbdbg");
+  const rec = await idbReq<any>(bbdbgStore.get(wasmSha));
+  await idbTxDone(tx);
+  if (!rec || typeof rec !== "object") return null;
+  return rec as StoredBbdbgRecord;
+}
+
+const setBbdbgMetadata = (bbdbg: unknown): void => {
+  bbdbgMeta = { fileById: new Map(), funcById: new Map() };
+  bbdbgRaw = bbdbg;
+  bbdbgLastFileId = 0;
+  bbdbgLastLine = 0;
+  bbdbgStack = [];
+  bbdbgTrace = [];
+
+  if (!bbdbg || typeof bbdbg !== "object") {
+    scheduleBbdbgRender();
+    return;
+  }
+  const meta = bbdbg as BbdbgMetadata;
+  const files = Array.isArray(meta.files) ? meta.files : [];
+  for (const f of files) {
+    const id = Number((f as any)?.id ?? 0) | 0;
+    const path = String((f as any)?.path ?? "");
+    if (id > 0 && path) bbdbgMeta.fileById.set(id, path);
+  }
+  const funcs = Array.isArray(meta.functions) ? meta.functions : [];
+  for (const fn of funcs) {
+    const id = Number((fn as any)?.id ?? -1) | 0;
+    const name = String((fn as any)?.name ?? "");
+    if (id >= 0 && name) bbdbgMeta.funcById.set(id, name);
+  }
+  scheduleBbdbgRender();
+};
+
+const bbdbgLocString = (fileId: number, line: number): string => {
+  const fid = fileId | 0;
+  const l = line | 0;
+  const file = bbdbgMeta.fileById.get(fid) ?? `file_${fid}`;
+  return `${file}:${l}`;
+};
+
+const renderBbdbgPanel = (): void => {
+  bbdbgRenderQueued = false;
+  const fileCount = bbdbgMeta.fileById.size;
+  const funcCount = bbdbgMeta.funcById.size;
+  const hasMeta = fileCount > 0 || funcCount > 0;
+  const lastLoc = (bbdbgLastFileId > 0 && bbdbgLastLine > 0)
+    ? bbdbgLocString(bbdbgLastFileId, bbdbgLastLine)
+    : "";
+
+  const saved = bbdbgSavedWasmSha256
+    ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${
+      bbdbgSavedAtMs ? ` @${new Date(bbdbgSavedAtMs).toLocaleTimeString()}` : ""
+    }.`
+    : "";
+
+  bbdbgSummaryEl.textContent = hasMeta
+    ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
+      lastLoc || "(none)"
+    }.${saved}`
+    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}.${saved}`;
+
+  const stack = bbdbgStack.length ? bbdbgStack.slice().reverse() : [];
+  if (!stack.length) {
+    bbdbgStackEl.textContent = "Stack: (empty)";
+    bbdbgStackEl.classList.add("empty");
+  } else {
+    bbdbgStackEl.classList.remove("empty");
+    bbdbgStackEl.textContent = `Stack:\n${stack.join(" -> ")}`;
+  }
+
+  const traceLines = bbdbgTrace.slice(-30).map((t) => {
+    const loc = (t.fileId > 0 && t.line > 0)
+      ? bbdbgLocString(t.fileId, t.line)
+      : "(unknown)";
+    const st = t.stack.length ? ` stack=${t.stack.join(" -> ")}` : "";
+    return `${loc}${st}`;
+  });
+  if (!traceLines.length) {
+    bbdbgTraceEl.textContent = "Trace: (empty)";
+    bbdbgTraceEl.classList.add("empty");
+  } else {
+    bbdbgTraceEl.classList.remove("empty");
+    bbdbgTraceEl.textContent = `Trace (last ${
+      Math.min(30, bbdbgTrace.length)
+    }):\n${traceLines.join("\n")}`;
+  }
+
+  setEditorExecLine(bbdbgEnabled ? bbdbgLastLine : 0);
+};
+
+const scheduleBbdbgRender = (): void => {
+  if (bbdbgRenderQueued) return;
+  bbdbgRenderQueued = true;
+  requestAnimationFrame(renderBbdbgPanel);
+};
+
+const resetBbdbgState = (): void => {
+  bbdbgLastFileId = 0;
+  bbdbgLastLine = 0;
+  bbdbgStack = [];
+  bbdbgTrace = [];
+  renderBbdbgPanel();
+  setEditorExecLine(0);
+};
+
+const copyBbdbgSnapshot = async (): Promise<void> => {
+  try {
+    const payload = {
+      schemaVersion: 1,
+      generatedAt: new Date().toISOString(),
+      enabled: bbdbgEnabled,
+      meta: {
+        files: bbdbgMeta.fileById.size,
+        functions: bbdbgMeta.funcById.size,
+      },
+      last: (bbdbgLastFileId > 0 && bbdbgLastLine > 0)
+        ? bbdbgLocString(bbdbgLastFileId, bbdbgLastLine)
+        : null,
+      stack: bbdbgStack.slice().reverse(),
+      trace: bbdbgTrace.slice(-200).map((t) => ({
+        loc: (t.fileId > 0 && t.line > 0)
+          ? bbdbgLocString(t.fileId, t.line)
+          : null,
+        stack: t.stack,
+      })),
+    };
+    await navigator.clipboard.writeText(JSON.stringify(payload, null, 2));
+    printOutput("bbdbg snapshot copied to clipboard.", "success");
+  } catch (err) {
+    printOutput(`Copy failed: ${errorMessage(err)}`, "error");
+  }
+};
+
+function downloadTextFile(
+  filename: string,
+  text: string,
+  mime = "text/plain",
+): void {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  try {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 250);
+  }
+}
+
+async function downloadBbdbgMetadata(): Promise<void> {
+  try {
+    const obj = bbdbgRaw;
+    if (!obj || typeof obj !== "object") {
+      printOutput("No bbdbg metadata loaded.", "warning");
+      return;
+    }
+    const json = JSON.stringify(obj, null, 2);
+    downloadTextFile("program.bbdbg.json", json, "application/json");
+    printOutput("Downloaded program.bbdbg.json.", "success");
+  } catch (err) {
+    printOutput(`Download failed: ${errorMessage(err)}`, "error");
+  }
+}
+
+async function loadSavedBbdbgMetadata(): Promise<void> {
+  try {
+    const rec = await loadLatestBbdbgFromIdb();
+    if (!rec) {
+      printOutput("No saved bbdbg found in IndexedDB.", "warning");
+      return;
+    }
+    const obj = JSON.parse(String(rec.bbdbgJson || "{}"));
+    bbdbgSavedWasmSha256 = String(rec.wasmSha256 || "") || null;
+    bbdbgSavedAtMs = Number(rec.createdAtMs || 0) || null;
+    setBbdbgMetadata(obj);
+    printOutput(
+      `Loaded saved bbdbg (${
+        bbdbgSavedWasmSha256?.slice(0, 12) ?? "unknown"
+      }).`,
+      "success",
+    );
+  } catch (err) {
+    printOutput(`Load failed: ${errorMessage(err)}`, "error");
+  }
+}
 
 const errorMessage = (err: unknown): string => {
   if (err instanceof Error) return err.message;
@@ -124,6 +477,127 @@ const installGlobalErrorHandlers = (): void => {
   });
 };
 
+const summarizeRuntimeGaps = (): string => {
+  if (runtimeGaps.total <= 0) return "No stubbed imports yet.";
+  const source = runtimeGaps.source ? ` (${runtimeGaps.source})` : "";
+  const calledCount = runtimeGaps.called.size;
+  return `Stubbed imports: ${runtimeGaps.total}${source}. Called: ${calledCount}.`;
+};
+
+const renderRuntimeGaps = (): void => {
+  runtimeGapsRenderQueued = false;
+  stubsSummaryEl.textContent = summarizeRuntimeGaps();
+
+  const shown = runtimeGaps.shown;
+  if (shown.length === 0) {
+    stubsListEl.textContent = "No stubbed imports captured.";
+    stubsListEl.classList.add("empty");
+  } else {
+    stubsListEl.classList.remove("empty");
+    stubsListEl.textContent = shown.slice(0, 50).join("\n");
+  }
+
+  const calledList = Array.from(runtimeGaps.called.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([key, count]) => {
+      const loc = runtimeGaps.callSites.get(key);
+      return loc ? `${key} ×${count} @${loc}` : `${key} ×${count}`;
+    });
+  if (calledList.length === 0) {
+    stubsCalledEl.textContent = "No stubbed calls observed.";
+    stubsCalledEl.classList.add("empty");
+  } else {
+    stubsCalledEl.classList.remove("empty");
+    stubsCalledEl.textContent = calledList.join("\n");
+  }
+};
+
+const scheduleRuntimeGapsRender = (): void => {
+  if (runtimeGapsRenderQueued) return;
+  runtimeGapsRenderQueued = true;
+  requestAnimationFrame(renderRuntimeGaps);
+};
+
+const resetRuntimeGaps = (): void => {
+  runtimeGaps = {
+    source: null,
+    total: 0,
+    shown: [],
+    called: new Map(),
+    callSites: new Map(),
+    updatedAt: Date.now(),
+  };
+  renderRuntimeGaps();
+};
+
+const applyRuntimeGapsReport = (
+  source: RuntimeGapsState["source"],
+  total: number,
+  shown: string[],
+  called: StubCall[],
+): void => {
+  runtimeGaps.source = source;
+  runtimeGaps.total = Math.max(total | 0, 0);
+  runtimeGaps.shown = shown.slice(0, 200);
+  runtimeGaps.called = new Map(
+    called.map((c) => [c.key, Math.max(0, c.count | 0)]),
+  );
+  const mergedSites = new Map<string, string>();
+  for (const c of called) {
+    const fileId = Number(c.fileId ?? 0) | 0;
+    const line = Number(c.line ?? 0) | 0;
+    if (fileId > 0 && line > 0) {
+      mergedSites.set(c.key, bbdbgLocString(fileId, line));
+      continue;
+    }
+    const prev = runtimeGaps.callSites.get(c.key);
+    if (prev) mergedSites.set(c.key, prev);
+  }
+  runtimeGaps.callSites = mergedSites;
+  runtimeGaps.updatedAt = Date.now();
+  renderRuntimeGaps();
+};
+
+const buildRuntimeGapsPayload = () => {
+  const called = Array.from(runtimeGaps.called.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, count]) => ({
+      key,
+      count,
+      loc: runtimeGaps.callSites.get(key) ?? null,
+    }));
+  return {
+    schemaVersion: 2,
+    generatedAt: new Date().toISOString(),
+    source: runtimeGaps.source,
+    total: runtimeGaps.total,
+    shown: runtimeGaps.shown.slice(0, 200),
+    called,
+  };
+};
+
+const exportRuntimeGaps = (): void => {
+  const json = JSON.stringify(buildRuntimeGapsPayload(), null, 2);
+  const blob = new Blob([json], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `blitz3d-runtime-gaps-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const copyRuntimeGaps = async (): Promise<void> => {
+  try {
+    const json = JSON.stringify(buildRuntimeGapsPayload(), null, 2);
+    await navigator.clipboard.writeText(json);
+    printOutput("Runtime gaps JSON copied to clipboard.", "success");
+  } catch (err) {
+    printOutput(`Copy failed: ${errorMessage(err)}`, "error");
+  }
+};
+
 // --- STATE ---
 let sharedCore: Blitz3DCore | null = null;
 let sharedFileIO: Blitz3DFileIO | null = null;
@@ -138,6 +612,15 @@ let compilerInitPromise: Promise<boolean> | null = null;
 let compileReqId = 1;
 let compileInFlight: CompileInFlight = null;
 let isRunning = false;
+let runtimeGaps: RuntimeGapsState = {
+  source: null,
+  total: 0,
+  shown: [],
+  called: new Map(),
+  callSites: new Map(),
+  updatedAt: 0,
+};
+let runtimeGapsRenderQueued = false;
 
 const showStacks = new URLSearchParams(window.location.search)
   .has("stack");
@@ -150,12 +633,32 @@ const mustGetEl = <T extends HTMLElement>(id: string): T => {
 };
 
 const editorEl = mustGetEl<HTMLTextAreaElement>("editor");
+const editorGutterEl = mustGetEl<HTMLDivElement>("editor-gutter");
+const editorHighlightEl = mustGetEl<HTMLPreElement>("editor-highlight");
 const outputEl = mustGetEl<HTMLDivElement>("output");
 const statusIndicatorEl = mustGetEl<HTMLSpanElement>("status-indicator");
 const statusTextEl = mustGetEl<HTMLSpanElement>("status-text");
 const canvasContainerEl = mustGetEl<HTMLDivElement>("canvas-container");
 const gameCanvasEl = mustGetEl<HTMLCanvasElement>("game-canvas");
 const hudCanvasEl = mustGetEl<HTMLCanvasElement>("hud-canvas");
+const stubsSummaryEl = mustGetEl<HTMLDivElement>("stubs-summary");
+const stubsListEl = mustGetEl<HTMLDivElement>("stubs-list");
+const stubsCalledEl = mustGetEl<HTMLDivElement>("stubs-called");
+const stubsClearBtnEl = mustGetEl<HTMLButtonElement>("stubs-clear-btn");
+const stubsCopyBtnEl = mustGetEl<HTMLButtonElement>("stubs-copy-btn");
+const stubsExportBtnEl = mustGetEl<HTMLButtonElement>("stubs-export-btn");
+const bbdbgSummaryEl = mustGetEl<HTMLDivElement>("bbdbg-summary");
+const bbdbgStackEl = mustGetEl<HTMLDivElement>("bbdbg-stack");
+const bbdbgTraceEl = mustGetEl<HTMLDivElement>("bbdbg-trace");
+const bbdbgEnabledEl = mustGetEl<HTMLInputElement>("bbdbg-enabled");
+const bbdbgClearBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-clear-btn");
+const bbdbgCopyBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-copy-btn");
+const bbdbgDownloadMetaBtnEl = mustGetEl<HTMLButtonElement>(
+  "bbdbg-download-meta-btn",
+);
+const bbdbgLoadSavedBtnEl = mustGetEl<HTMLButtonElement>(
+  "bbdbg-load-saved-btn",
+);
 const runBtnEl = mustGetEl<HTMLButtonElement>("run-btn");
 const stopBtnEl = mustGetEl<HTMLButtonElement>("stop-btn");
 const clearBtnEl = mustGetEl<HTMLButtonElement>("clear-btn");
@@ -166,6 +669,42 @@ const vfsPrefixEl = mustGetEl<HTMLInputElement>("vfs-prefix");
 const vfsListEl = mustGetEl<HTMLDivElement>("vfs-list");
 const vfsClearBtnEl = mustGetEl<HTMLButtonElement>("vfs-clear-btn");
 const exampleReqEl = mustGetEl<HTMLDivElement>("example-req");
+const memOffsetEl = mustGetEl<HTMLInputElement>("mem-offset");
+const memLenEl = mustGetEl<HTMLInputElement>("mem-len");
+const memAutoEl = mustGetEl<HTMLInputElement>("mem-auto");
+const memRefreshBtnEl = mustGetEl<HTMLButtonElement>("mem-refresh-btn");
+const memSummaryEl = mustGetEl<HTMLDivElement>("mem-summary");
+const memDumpEl = mustGetEl<HTMLPreElement>("mem-dump");
+
+let editorDecorQueued = false;
+let editorExecLine = 0;
+let memAutoTimer: number | null = null;
+let memOffsetTouched = false;
+let workerMemReqId = 1;
+let workerMemInFlight = false;
+let workerMemSnapshot: {
+  id: number;
+  offset: number;
+  len: number;
+  bytes: Uint8Array;
+  totalBytes: number;
+  pages: number;
+  updatedAtMs: number;
+} | null = null;
+let workerMemInfo: {
+  totalBytes: number;
+  pages: number;
+  heapBase?: number;
+  dataEnd?: number;
+  stackPtr?: number;
+  suggestOffset?: number;
+} | null = null;
+let workerBbdbgLast: {
+  fileId: number;
+  line: number;
+  stack: number[];
+  updatedAtMs: number;
+} | null = null;
 
 // --- VFS (interpreter-only) ---
 const vfs = new Map<string, VfsRecord>(); // normalizedPath -> bytes/mime
@@ -289,6 +828,12 @@ function renderVfsList(): void {
     vfsListEl.appendChild(empty);
     return;
   }
+
+  const header = document.createElement("div");
+  header.className = "output-line info";
+  header.textContent = `Uploaded: ${entries.length} file(s)`;
+  vfsListEl.appendChild(header);
+
   for (const [path, rec] of entries) {
     const row = document.createElement("div");
     row.className = "vfs-item";
@@ -415,6 +960,73 @@ Print "replace=" + Replace("a-b-a", "-", "+")
 Print "instr=" + Instr("abcd", "bc")
 Print "chr=" + Chr(65)
 Print "asc=" + Asc("Z")`,
+
+  debugCallStack: `; Debug: Call Stack + Trace (prints only)
+;
+; This example is meant to exercise bbdbg function enter/leave and statement trace.
+; It also allocates many strings (useful for the WASM Memory panel).
+
+Function Add%(a%, b%)
+  Return a + b
+End Function
+
+Function MakeMsg$(i%)
+  Local s$ = "i=" + i
+  s$ = s$ + " sum=" + Add(i, i * 2)
+  s$ = s$ + " rnd=" + Rand(1, 9)
+  Return s$
+End Function
+
+Function Work%()
+  SeedRnd 123
+  Local total% = 0
+  Local i%
+  For i = 1 To 25
+    total% = total% + i
+    Print MakeMsg(i)
+  Next
+  Return total%
+End Function
+
+Local t% = Work()
+Print "total=" + t`,
+
+  debugStubs: `; Debug: Runtime Gaps (prints only)
+;
+; Intentionally call unknown functions so they become stubbed imports.
+; When bbdbg stmt hooks are enabled, the stubs panel should attribute call sites.
+
+Print "About to call missing imports..."
+MissingFuncA 123
+MissingFuncB "hello"
+Print "If you see this, the stubs returned 0 and execution continued."`,
+
+  memoryArray: `; Debug: Memory (Array Fill) (prints only)
+;
+; Fills a large integer array so the heap contains non-zero data beyond strings.
+; (Avoids edge-case operators that may not be supported in all builds.)
+
+; Oversize by 1 to avoid ambiguity in Dim semantics (0..n vs 0..n-1).
+Dim a%(2048)
+Local i%
+For i = 0 To 2047
+  a(i) = i * 37 + i * 2 + 123
+Next
+
+Print "a(0)=" + a(0)
+Print "a(1)=" + a(1)
+Print "a(1024)=" + a(1024)
+Print "a(2047)=" + a(2047)
+
+; Also allocate some strings to create readable patterns in memory dumps.
+Local s$ = ""
+Local idx% = 1
+For i = 1 To 120
+  s$ = s$ + Chr(64 + idx)
+  idx% = idx% + 1
+  If idx% > 26 Then idx% = 1
+Next
+Print "slen=" + Len(s$)`,
 
   graphics: `; 3D Cube Demo (one-shot render)
 Graphics3D 800, 600, 32, 2
@@ -944,8 +1556,40 @@ const exampleInfo: Record<string, ExampleInfo> = {
   customTypes: { title: "Custom Types + For Each", prefersTab: "output" },
   dataReadRestore: { title: "Data/Read/Restore", prefersTab: "output" },
   stringsMath: { title: "Strings + Math", prefersTab: "output" },
-  graphics: { title: "Graphics Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
-  rotatingCube: { title: "Rotating Cube Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  debugCallStack: {
+    title: "Debug: Call Stack",
+    prefersTab: "output",
+    notes: [
+      "Watch the Debug (bbdbg) panel update with a stack + recent trace.",
+      "The WASM Memory panel should also show changing heap contents.",
+    ],
+  },
+  debugStubs: {
+    title: "Debug: Runtime Gaps",
+    prefersTab: "output",
+    notes: [
+      "This intentionally calls unknown functions to generate stubbed imports.",
+      "If bbdbg stmt hooks are present, the stubs panel should capture call sites.",
+    ],
+  },
+  memoryArray: {
+    title: "Debug: Memory (Array Fill)",
+    prefersTab: "output",
+    notes: [
+      "This fills a large integer array so memory dumps show non-zero data.",
+      "Try the WASM Memory panel with Auto enabled while it runs.",
+    ],
+  },
+  graphics: {
+    title: "Graphics Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
+  rotatingCube: {
+    title: "Rotating Cube Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
   rotatingCubeEdges: {
     title: "Rotating Cube (Blue + Edges)",
     prefersTab: "canvas",
@@ -957,7 +1601,11 @@ const exampleInfo: Record<string, ExampleInfo> = {
     defaultTimeoutMs: 0,
   },
   hud2D: { title: "2D HUD Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
-  inputHud: { title: "Input HUD Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  inputHud: {
+    title: "Input HUD Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
   image2D: {
     title: "2D Image Demo",
     prefersTab: "canvas",
@@ -970,7 +1618,9 @@ const exampleInfo: Record<string, ExampleInfo> = {
     prefersTab: "canvas",
     defaultTimeoutMs: 0,
     requires: ["assets/demo.png (or assets/demo.jpg)"],
-    notes: ["This demo is useful to confirm decoding + alpha in the VFS pipeline."],
+    notes: [
+      "This demo is useful to confirm decoding + alpha in the VFS pipeline.",
+    ],
   },
   textureCube: {
     title: "Textured Cube Demo",
@@ -988,7 +1638,11 @@ const exampleInfo: Record<string, ExampleInfo> = {
     notes: ["Uses ReadFile/ReadLine to show Blitz-style file IO over the VFS."],
   },
   fogCube: { title: "Fog Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
-  proceduralMesh: { title: "Procedural Mesh Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
+  proceduralMesh: {
+    title: "Procedural Mesh Demo",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
   b3dInspectRender: {
     title: "B3D: Inspect + Render",
     prefersTab: "canvas",
@@ -1006,7 +1660,9 @@ const exampleInfo: Record<string, ExampleInfo> = {
     defaultTimeoutMs: 0,
     requires: ["assets/cup.x (or assets/model.x)"],
     optional: ["Any referenced textures (same folder or basename-matched)"],
-    notes: ["Only text .x is supported in the interpreter path (header like xof 0303txt)."],
+    notes: [
+      "Only text .x is supported in the interpreter path (header like xof 0303txt).",
+    ],
   },
   rmeshInspectRender: {
     title: "RMESH: Inspect + Render",
@@ -1014,7 +1670,9 @@ const exampleInfo: Record<string, ExampleInfo> = {
     defaultTimeoutMs: 0,
     requires: ["assets/checkpoint2_opt.rmesh (or assets/room.rmesh)"],
     optional: ["Room textures + optional lightmaps, if referenced"],
-    notes: ["RMESH variants differ across SCPCB forks; this is a best-effort exploration loader."],
+    notes: [
+      "RMESH variants differ across SCPCB forks; this is a best-effort exploration loader.",
+    ],
   },
 };
 
@@ -1030,7 +1688,9 @@ function renderExampleRequirements(exampleKey: string): void {
   parts.push(`<strong>Example</strong>: ${escapeHtml(info.title)}`);
 
   if (info.requires && info.requires.length > 0) {
-    parts.push(`<strong>Required uploads</strong>:` + renderPathList(info.requires));
+    parts.push(
+      `<strong>Required uploads</strong>:` + renderPathList(info.requires),
+    );
   } else {
     parts.push(`<strong>Required uploads</strong>: none`);
   }
@@ -1047,11 +1707,14 @@ function renderExampleRequirements(exampleKey: string): void {
 }
 
 function renderPathList(items: string[]): string {
-  return `<ul>` + items.map((p) => `<li><code>${escapeHtml(p)}</code></li>`).join("") + `</ul>`;
+  return `<ul>` +
+    items.map((p) => `<li><code>${escapeHtml(p)}</code></li>`).join("") +
+    `</ul>`;
 }
 
 function renderNoteList(items: string[]): string {
-  return `<ul>` + items.map((p) => `<li>${escapeHtml(p)}</li>`).join("") + `</ul>`;
+  return `<ul>` + items.map((p) => `<li>${escapeHtml(p)}</li>`).join("") +
+    `</ul>`;
 }
 
 function escapeHtml(s: string): string {
@@ -1059,18 +1722,522 @@ function escapeHtml(s: string): string {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll("\"", "&quot;")
+    .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+// --- EDITOR (syntax highlighting + line numbers) ---
+const blitzKeywords = new Set(
+  [
+    "if",
+    "then",
+    "else",
+    "elseif",
+    "endif",
+    "select",
+    "case",
+    "default",
+    "endselect",
+    "for",
+    "to",
+    "step",
+    "next",
+    "while",
+    "wend",
+    "repeat",
+    "until",
+    "forever",
+    "exit",
+    "continue",
+    "gosub",
+    "goto",
+    "return",
+    "function",
+    "endfunction",
+    "type",
+    "endtype",
+    "field",
+    "new",
+    "delete",
+    "first",
+    "last",
+    "after",
+    "before",
+    "dim",
+    "local",
+    "global",
+    "const",
+    "include",
+    "data",
+    "read",
+    "restore",
+    "true",
+    "false",
+    "null",
+    "and",
+    "or",
+    "not",
+    "xor",
+    "mod",
+  ],
+);
+
+const blitzBuiltins = new Set(
+  [
+    // common across demos
+    "print",
+    "debuglog",
+    "graphics3d",
+    "setbuffer",
+    "backbuffer",
+    "frontbuffer",
+    "flip",
+    "cls",
+    "appterminate",
+    "keyhit",
+    "keydown",
+    "mousex",
+    "mousey",
+    "mousehit",
+    "createcamera",
+    "createcube",
+    "createsphere",
+    "createlight",
+    "positionentity",
+    "rotateentity",
+    "scaleentity",
+    "entitycolor",
+    "entityalpha",
+    "entityfx",
+    "cameraclscolor",
+    "camerazoom",
+    "camerafogmode",
+    "camerafogrange",
+    "camerafogcolor",
+    "renderworld",
+    "loadtexture",
+    "loadimage",
+    "drawimage",
+    "text",
+    "color",
+    "rect",
+    "line",
+    "sin",
+    "cos",
+    "tan",
+    "abs",
+    "sqrt",
+    "rand",
+    "seedrnd",
+    "millisecs",
+  ],
+);
+
+const isWordChar = (c: string): boolean => /[A-Za-z0-9_]/.test(c);
+
+function highlightBlitzBasicToHtml(
+  source: string,
+): { html: string; lineCount: number } {
+  const normalized = String(source || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  const lines = normalized.split("\n");
+  const out: string[] = [];
+  let inRemBlock = false;
+
+  for (const lineRaw of lines) {
+    const line = String(lineRaw ?? "");
+    const trimmed = line.trimStart();
+
+    if (inRemBlock) {
+      out.push(`<span class="tok comment">${escapeHtml(line)}</span>`);
+      if (/^end\s*rem\b/i.test(trimmed)) inRemBlock = false;
+      continue;
+    }
+
+    if (/^rem\b/i.test(trimmed)) {
+      inRemBlock = true;
+      out.push(`<span class="tok comment">${escapeHtml(line)}</span>`);
+      continue;
+    }
+
+    out.push(highlightBlitzBasicLine(line));
+  }
+
+  return { html: out.join("\n"), lineCount: lines.length };
+}
+
+function highlightBlitzBasicLine(line: string): string {
+  let i = 0;
+  let out = "";
+
+  const emit = (cls: string, text: string) => {
+    if (!text) return;
+    out += `<span class="tok ${cls}">${escapeHtml(text)}</span>`;
+  };
+  const emitRaw = (text: string) => {
+    if (!text) return;
+    out += escapeHtml(text);
+  };
+
+  while (i < line.length) {
+    const ch = line[i]!;
+
+    // Strings: " ... "
+    if (ch === "\"") {
+      let j = i + 1;
+      while (j < line.length) {
+        if (line[j] === "\"") {
+          // allow "" inside a string
+          if (line[j + 1] === "\"") {
+            j += 2;
+            continue;
+          }
+          j += 1;
+          break;
+        }
+        j += 1;
+      }
+      emit("string", line.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    // Line comments: ' or ;
+    if (ch === "'" || ch === ";") {
+      emit("comment", line.slice(i));
+      break;
+    }
+
+    // Whitespace
+    if (ch === " " || ch === "\t") {
+      let j = i + 1;
+      while (j < line.length && (line[j] === " " || line[j] === "\t")) j++;
+      emitRaw(line.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    // Numbers (decimal / float) + optional sign.
+    if (ch === "-" || ch === "+" || (ch >= "0" && ch <= "9")) {
+      const next = line[i + 1] ?? "";
+      const isNumStart = (ch >= "0" && ch <= "9") ||
+        ((ch === "-" || ch === "+") && (next >= "0" && next <= "9"));
+      if (isNumStart) {
+        let j = i + 1;
+        while (j < line.length && /[0-9.]/.test(line[j]!)) j++;
+        emit("number", line.slice(i, j));
+        i = j;
+        continue;
+      }
+    }
+
+    // Hex numbers: $FF
+    if (ch === "$") {
+      let j = i + 1;
+      while (j < line.length && /[0-9a-fA-F]/.test(line[j]!)) j++;
+      emit("number", line.slice(i, j));
+      i = j;
+      continue;
+    }
+
+    // Identifiers / keywords / builtins (with optional type suffixes).
+    if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z") || ch === "_") {
+      let j = i + 1;
+      while (j < line.length && isWordChar(line[j]!)) j++;
+      // type suffixes ($ % # !)
+      if (j < line.length && /[$%#!]/.test(line[j]!)) j++;
+      const raw = line.slice(i, j);
+      const core = raw.replace(/[$%#!]$/, "");
+      const lower = core.toLowerCase();
+
+      if (lower === "type" || lower === "endtype") {
+        emit("type", raw);
+      } else if (blitzKeywords.has(lower)) {
+        emit("keyword", raw);
+      } else if (blitzBuiltins.has(lower)) {
+        emit("builtin", raw);
+      } else {
+        emit("ident", raw);
+      }
+      i = j;
+      continue;
+    }
+
+    // Operators/punct
+    if (/[*\\/=<>()\\[\\],.:^]/.test(ch)) {
+      emit("operator", ch);
+      i += 1;
+      continue;
+    }
+
+    emitRaw(ch);
+    i += 1;
+  }
+
+  return out;
+}
+
+function enableEditorEnhancements(): void {
+  document.body.classList.add("editor-enhanced");
+  scheduleEditorDecorRender();
+}
+
+function scheduleEditorDecorRender(): void {
+  if (editorDecorQueued) return;
+  editorDecorQueued = true;
+  requestAnimationFrame(() => {
+    editorDecorQueued = false;
+    renderEditorDecor();
+  });
+}
+
+function renderEditorDecor(): void {
+  const { html, lineCount } = highlightBlitzBasicToHtml(editorEl.value ?? "");
+  editorHighlightEl.innerHTML = html;
+  renderEditorGutter(lineCount);
+  syncEditorScroll();
+}
+
+function renderEditorGutter(lineCount: number): void {
+  const n = Math.max(1, lineCount | 0);
+  const parts: string[] = [];
+  for (let i = 1; i <= n; i++) {
+    const cls = i === editorExecLine ? "editor-linenum exec" : "editor-linenum";
+    parts.push(`<div class="${cls}" data-line="${i}">${i}</div>`);
+  }
+  editorGutterEl.innerHTML = parts.join("");
+}
+
+function syncEditorScroll(): void {
+  editorHighlightEl.scrollTop = editorEl.scrollTop;
+  editorHighlightEl.scrollLeft = editorEl.scrollLeft;
+  editorGutterEl.scrollTop = editorEl.scrollTop;
+}
+
+function setEditorExecLine(line: number): void {
+  const next = Math.max(0, line | 0);
+  if (next === editorExecLine) return;
+  editorExecLine = next;
+  scheduleEditorDecorRender();
+}
+
+function jumpToEditorLine(line: number): void {
+  const target = Math.max(1, line | 0);
+  const text = editorEl.value ?? "";
+  let pos = 0;
+  let current = 1;
+  while (current < target && pos < text.length) {
+    const nl = text.indexOf("\n", pos);
+    if (nl === -1) break;
+    pos = nl + 1;
+    current++;
+  }
+  editorEl.focus();
+  editorEl.setSelectionRange(pos, pos);
+  scheduleEditorDecorRender();
+}
+
+// --- WASM MEMORY VIEWER (main-thread runtime only) ---
+function parseByteOffset(s: string): number {
+  const t = String(s ?? "").trim().toLowerCase();
+  if (!t) return 0;
+  if (t.startsWith("0x")) return Number.parseInt(t.slice(2), 16) || 0;
+  if (t.startsWith("$")) return Number.parseInt(t.slice(1), 16) || 0;
+  return Number.parseInt(t, 10) || 0;
+}
+
+function getActiveMemory(): WebAssembly.Memory | null {
+  const mem: WebAssembly.Memory | undefined =
+    sharedCore?.memory ||
+    (sharedInstance ? (sharedInstance.exports as any)?.memory : undefined);
+  return mem instanceof WebAssembly.Memory ? mem : null;
+}
+
+function resetWorkerMemSnapshot(): void {
+  workerMemInFlight = false;
+  workerMemSnapshot = null;
+}
+
+function isAllZero(bytes: Uint8Array): boolean {
+  for (let i = 0; i < bytes.length; i++) if (bytes[i] !== 0) return false;
+  return true;
+}
+
+function requestWorkerMemorySnapshot(force = false): void {
+  if (!runnerWorker) return;
+  if (workerMemInFlight && !force) return;
+
+  const offset = Math.max(0, parseByteOffset(memOffsetEl.value));
+  const wantLen = Math.min(
+    16384,
+    Math.max(16, Number(memLenEl.value || 256) | 0),
+  );
+  const id = workerMemReqId++;
+  workerMemInFlight = true;
+  runnerWorker.postMessage({
+    type: "mem_request",
+    id,
+    offset,
+    len: wantLen,
+  });
+}
+
+function postWorkerMemConfig(): void {
+  if (!runnerWorker) return;
+  if (getActiveMemory()) return;
+  const offset = Math.max(0, parseByteOffset(memOffsetEl.value));
+  const wantLen = Math.min(
+    16384,
+    Math.max(16, Number(memLenEl.value || 256) | 0),
+  );
+  runnerWorker.postMessage({
+    type: "mem_config",
+    auto: Boolean(memAutoEl.checked),
+    offset,
+    len: wantLen,
+    intervalMs: 250,
+  });
+}
+
+function renderMemoryPanel(): void {
+  const mem = getActiveMemory();
+  if (!mem) {
+    if (runnerWorker) {
+      const offset = Math.max(0, parseByteOffset(memOffsetEl.value));
+      const wantLen = Math.min(
+        16384,
+        Math.max(16, Number(memLenEl.value || 256) | 0),
+      );
+      const snap = workerMemSnapshot;
+      const matches = snap && snap.offset === offset && snap.len === wantLen;
+
+      postWorkerMemConfig();
+      if (!matches) requestWorkerMemorySnapshot();
+
+      if (!snap) {
+        memSummaryEl.textContent =
+          `worker: waiting for snapshot @${offset} len=${wantLen}`;
+        memDumpEl.textContent = "";
+        return;
+      }
+
+      if (
+        !memOffsetTouched &&
+        offset === 0 &&
+        isAllZero(snap.bytes) &&
+        workerMemInfo?.heapBase &&
+        workerMemInfo.heapBase > 0
+      ) {
+        memOffsetEl.value = `0x${workerMemInfo.heapBase.toString(16)}`;
+        requestWorkerMemorySnapshot(true);
+        memSummaryEl.textContent =
+          `worker: @0x0 was all zeros; jumping to heap @0x${
+            workerMemInfo.heapBase.toString(16)
+          }`;
+        memDumpEl.textContent = "";
+        return;
+      }
+
+      const ageMs = Math.max(0, Date.now() - snap.updatedAtMs);
+      const hints: string[] = [];
+      if (workerMemInfo?.heapBase) hints.push(`heap=0x${workerMemInfo.heapBase.toString(16)}`);
+      if (workerMemInfo?.dataEnd) hints.push(`data_end=0x${workerMemInfo.dataEnd.toString(16)}`);
+      if (workerMemInfo?.stackPtr) hints.push(`sp=0x${workerMemInfo.stackPtr.toString(16)}`);
+      const hintStr = hints.length ? `; ${hints.join(" ")}` : "";
+
+      memSummaryEl.textContent =
+        `worker: memory=${snap.pages} page(s) (${snap.totalBytes} bytes), ` +
+        `dump @${snap.offset} len=${snap.len} (age ${ageMs}ms)${hintStr}`;
+      memDumpEl.textContent = formatHexDump(snap.bytes, snap.offset);
+      return;
+    }
+
+    if (workerMemSnapshot) {
+      const snap = workerMemSnapshot;
+      const ageMs = Math.max(0, Date.now() - snap.updatedAtMs);
+      memSummaryEl.textContent =
+        `worker: last snapshot (stale) memory=${snap.pages} page(s) (${snap.totalBytes} bytes), ` +
+        `dump @${snap.offset} len=${snap.len} (age ${ageMs}ms)`;
+      memDumpEl.textContent = formatHexDump(snap.bytes, snap.offset);
+      return;
+    }
+
+    memSummaryEl.textContent = "No active module memory yet.";
+    memDumpEl.textContent = "";
+    return;
+  }
+
+  const totalBytes = mem.buffer.byteLength;
+  const pages = Math.floor(totalBytes / 65536);
+  const offset = Math.max(0, parseByteOffset(memOffsetEl.value));
+  const wantLen = Math.min(
+    16384,
+    Math.max(16, Number(memLenEl.value || 256) | 0),
+  );
+  const start = Math.min(offset, Math.max(0, totalBytes - 1));
+  const len = Math.min(wantLen, Math.max(0, totalBytes - start));
+
+  memSummaryEl.textContent =
+    `memory=${pages} page(s) (${totalBytes} bytes), dump @${start} len=${len}`;
+
+  const view = new Uint8Array(mem.buffer, start, len);
+  memDumpEl.textContent = formatHexDump(view, start);
+}
+
+function formatHexDump(bytes: Uint8Array, baseOffset: number): string {
+  const lines: string[] = [];
+  const row = 16;
+  for (let i = 0; i < bytes.length; i += row) {
+    const off = (baseOffset + i) >>> 0;
+    const slice = bytes.subarray(i, Math.min(bytes.length, i + row));
+    const hex = [...slice].map((b) => b.toString(16).padStart(2, "0")).join(" ");
+    const pad = "   ".repeat(row - slice.length);
+    const ascii = [...slice].map((b) => (b >= 32 && b <= 126) ? String.fromCharCode(b) : ".").join("");
+    lines.push(`${off.toString(16).padStart(8, "0")}: ${hex}${pad}  |${ascii}|`);
+  }
+  return lines.join("\n");
+}
+
+function stopMemoryAutoRefresh(): void {
+  if (memAutoTimer !== null) {
+    clearInterval(memAutoTimer);
+    memAutoTimer = null;
+  }
+}
+
+function applyMemoryAutoRefresh(): void {
+  stopMemoryAutoRefresh();
+  if (!memAutoEl.checked) return;
+  renderMemoryPanel();
+  memAutoTimer = setInterval(() => {
+    try {
+      if (getActiveMemory()) {
+        renderMemoryPanel();
+        return;
+      }
+      if (runnerWorker) {
+        requestWorkerMemorySnapshot();
+        return;
+      }
+    } catch {
+      // keep best-effort
+    }
+  }, 250) as unknown as number;
 }
 
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", async () => {
   installGlobalErrorHandlers();
   editorEl.value = examples.hello;
+  enableEditorEnhancements();
   renderExampleRequirements("hello");
   runBtnEl.disabled = true;
   printOutput(`Three.js v${THREE.REVISION} loaded.`, "success");
   printOutput("Using shared SCPCB runtime for graphics.", "info");
+  resetRuntimeGaps();
+  bbdbgEnabled = true;
+  bbdbgEnabledEl.checked = true;
+  resetBbdbgState();
+  renderMemoryPanel();
 
   await initCompiler();
   setupEventListeners();
@@ -1080,6 +2247,53 @@ function setupEventListeners() {
   runBtnEl.addEventListener("click", runCode);
   stopBtnEl.addEventListener("click", () => stopExecution());
   clearBtnEl.addEventListener("click", () => clearOutput());
+  editorEl.addEventListener("input", () => scheduleEditorDecorRender());
+  editorEl.addEventListener("scroll", () => syncEditorScroll());
+  editorGutterEl.addEventListener("click", (e) => {
+    const target = e.target as HTMLElement | null;
+    const lineEl = target?.closest?.(".editor-linenum") as HTMLElement | null;
+    const raw = lineEl?.getAttribute?.("data-line") ?? "";
+    const line = Number(raw) | 0;
+    if (line > 0) jumpToEditorLine(line);
+  });
+  stubsClearBtnEl.addEventListener("click", () => resetRuntimeGaps());
+  stubsCopyBtnEl.addEventListener("click", () => void copyRuntimeGaps());
+  stubsExportBtnEl.addEventListener("click", () => exportRuntimeGaps());
+  bbdbgEnabledEl.addEventListener("change", () => {
+    bbdbgEnabled = Boolean(bbdbgEnabledEl.checked);
+    scheduleBbdbgRender();
+  });
+  bbdbgClearBtnEl.addEventListener("click", () => resetBbdbgState());
+  bbdbgCopyBtnEl.addEventListener("click", () => void copyBbdbgSnapshot());
+  bbdbgDownloadMetaBtnEl.addEventListener(
+    "click",
+    () => void downloadBbdbgMetadata(),
+  );
+  bbdbgLoadSavedBtnEl.addEventListener(
+    "click",
+    () => void loadSavedBbdbgMetadata(),
+  );
+  memRefreshBtnEl.addEventListener("click", () => {
+    if (runnerWorker && !getActiveMemory()) requestWorkerMemorySnapshot(true);
+    postWorkerMemConfig();
+    renderMemoryPanel();
+  });
+  memOffsetEl.addEventListener("change", () => {
+    memOffsetTouched = true;
+    postWorkerMemConfig();
+    renderMemoryPanel();
+  });
+  memOffsetEl.addEventListener("input", () => {
+    memOffsetTouched = true;
+  });
+  memLenEl.addEventListener("change", () => {
+    postWorkerMemConfig();
+    renderMemoryPanel();
+  });
+  memAutoEl.addEventListener("change", () => {
+    postWorkerMemConfig();
+    applyMemoryAutoRefresh();
+  });
 
   for (const tabBtn of document.querySelectorAll<HTMLButtonElement>(".tab")) {
     tabBtn.addEventListener("click", () => {
@@ -1093,12 +2307,15 @@ function setupEventListeners() {
     const example = target?.value ?? "";
     if (example && examples[example]) {
       editorEl.value = examples[example];
+      scheduleEditorDecorRender();
       renderExampleRequirements(example);
 
       const info = exampleInfo[example];
       if (info?.prefersTab) showTab(info.prefersTab);
       if (typeof info?.defaultTimeoutMs === "number") {
-        timeoutMsEl.value = String(Math.max(0, Math.floor(info.defaultTimeoutMs)));
+        timeoutMsEl.value = String(
+          Math.max(0, Math.floor(info.defaultTimeoutMs)),
+        );
       }
     }
   });
@@ -1131,6 +2348,7 @@ let runnerWatchdog: number | null = null;
 function stopExecution() {
   mainThreadStopRequested = true;
   sharedStopRequested = true;
+  stopMemoryAutoRefresh();
   disposeSharedRuntime();
   isRunning = false;
   if (runnerWatchdog !== null) {
@@ -1143,10 +2361,12 @@ function stopExecution() {
   }
   stopBtnEl.disabled = true;
   setStatus("ready", "Ready");
+  renderMemoryPanel();
 }
 
 function disposeSharedRuntime() {
   sharedStopRequested = true;
+  stopMemoryAutoRefresh();
   globalThis.__BLITZ3D_URL_RESOLVER = undefined;
   if (sharedStepRaf) {
     try {
@@ -1196,6 +2416,31 @@ function shouldAbortMainThreadRun() {
 function makeRunnerWorker(): Worker {
   const workerCode = `
       const entryPoints = ["main", "_start", "Main", "Main_", "__main"];
+      let bbdbgCurrentFileId = 0;
+      let bbdbgCurrentLine = 0;
+      /** @type {WebAssembly.Instance | null} */
+      let inst = null;
+      /** @type {WebAssembly.Memory | null} */
+      let envMem = null;
+      let memAutoEnabled = false;
+      let memAutoOffset = 0;
+      let memAutoLen = 256;
+      let memAutoIntervalMs = 250;
+      let memAutoLastSent = 0;
+      let memAutoSeq = 1;
+      let memSuggestOverride = null;
+      let bbdbgStack = [];
+      let bbdbgLastFileId = 0;
+      let bbdbgLastLine = 0;
+      let bbdbgLastSent = 0;
+      const send = (msg, transfer) => {
+        try {
+          if (Array.isArray(transfer) && transfer.length) self.postMessage(msg, transfer);
+          else self.postMessage(msg);
+        } catch {
+          self.postMessage(msg);
+        }
+      };
 
       const decodeB3DString = (ptr, memory) => {
         if (!ptr) return "";
@@ -1219,7 +2464,143 @@ function makeRunnerWorker(): Worker {
         return ptr;
       };
 
+      const getActiveMemory = () => {
+        const m = (inst && inst.exports && inst.exports.memory instanceof WebAssembly.Memory)
+          ? inst.exports.memory
+          : (envMem instanceof WebAssembly.Memory ? envMem : null);
+        return m || null;
+      };
+
+      const maybeSendMemAuto = () => {
+        if (!memAutoEnabled) return;
+        const now = Date.now();
+        if (now - memAutoLastSent < memAutoIntervalMs) return;
+        const mem = getActiveMemory();
+        if (!mem) return;
+
+        memAutoLastSent = now;
+        const totalBytes = mem.buffer.byteLength;
+        const pages = Math.floor(totalBytes / 65536);
+        const offset = Math.max(0, memAutoOffset | 0);
+        const wantLen = Math.min(16384, Math.max(16, memAutoLen | 0));
+        const start = Math.min(offset, Math.max(0, totalBytes - 1));
+        const len = Math.min(wantLen, Math.max(0, totalBytes - start));
+        const snap = mem.buffer.slice(start, start + len);
+        send({
+          type: "mem",
+          id: memAutoSeq++,
+          offset: start,
+          len,
+          bytes: snap,
+          totalBytes,
+          pages,
+        }, [snap]);
+      };
+
+      const getExportedGlobalNumber = (name) => {
+        try {
+          const v = inst && inst.exports ? inst.exports[name] : null;
+          if (v instanceof WebAssembly.Global) {
+            const val = v.value;
+            if (typeof val === "number") return val | 0;
+          }
+        } catch {}
+        return null;
+      };
+
+      const sendMemInfo = () => {
+        try {
+          const mem = getActiveMemory();
+          if (!mem) return;
+          const totalBytes = mem.buffer.byteLength;
+          const pages = Math.floor(totalBytes / 65536);
+          const heapBase = getExportedGlobalNumber("__heap_base");
+          const dataEnd = getExportedGlobalNumber("__data_end");
+          const stackPtr = getExportedGlobalNumber("__stack_pointer");
+          const guessNonZeroOffset = () => {
+            try {
+              const candidates = [
+                0x0,
+                0x200,
+                0x300,
+                0x380,
+                0x400,
+                0x500,
+                0x1000,
+                0x4000,
+                0x8000,
+                0x10000,
+                0x20000,
+                0x40000,
+                0x80000,
+                0x100000,
+                0x200000,
+              ];
+              for (const off of candidates) {
+                if (off < 0 || off >= totalBytes) continue;
+                const len = Math.min(256, totalBytes - off);
+                const view = new Uint8Array(mem.buffer, off, len);
+                for (let i = 0; i < view.length; i++) {
+                  if (view[i] !== 0) return off | 0;
+                }
+              }
+
+              // Fall back to scanning each page start (cheap heuristic that finds
+              // non-zero content even when the "interesting" region isn't one
+              // of the common hard-coded candidates).
+              for (let p = 0; p < pages; p++) {
+                const off = (p * 65536) | 0;
+                if (off < 0 || off >= totalBytes) continue;
+                const len = Math.min(p === 0 ? 4096 : 256, totalBytes - off);
+                const view = new Uint8Array(mem.buffer, off, len);
+                for (let i = 0; i < view.length; i++) {
+                  if (view[i] !== 0) return off | 0;
+                }
+              }
+            } catch {}
+            return null;
+          };
+          const suggestOffset =
+            (heapBase !== null && heapBase > 0) ? (heapBase | 0)
+            : (dataEnd !== null && dataEnd > 0) ? (dataEnd | 0)
+            : (memSuggestOverride !== null && (memSuggestOverride | 0) > 0)
+              ? (memSuggestOverride | 0)
+            : guessNonZeroOffset();
+          send({
+            type: "mem_info",
+            totalBytes,
+            pages,
+            heapBase: heapBase !== null ? heapBase : undefined,
+            dataEnd: dataEnd !== null ? dataEnd : undefined,
+            stackPtr: stackPtr !== null ? stackPtr : undefined,
+            suggestOffset: suggestOffset !== null ? suggestOffset : undefined,
+          });
+        } catch {}
+      };
+
+      const sendBbdbg = (force) => {
+        const now = Date.now();
+        if (!force && now - bbdbgLastSent < 50) return;
+        bbdbgLastSent = now;
+        try {
+          send({
+            type: "bbdbg",
+            fileId: bbdbgLastFileId | 0,
+            line: bbdbgLastLine | 0,
+            stack: bbdbgStack.slice(0, 64),
+          });
+        } catch {}
+      };
+      const maybeSendBbdbg = () => sendBbdbg(false);
+      const sendBbdbgNow = () => sendBbdbg(true);
+
       const stubMissingImports = (imports, module) => {
+        const stubbedLimit = 200;
+        const shown = [];
+        let total = 0;
+        const called = new Map();
+        const firstSite = new Map();
+
         for (const imp of WebAssembly.Module.imports(module)) {
           if (imp.module === "blitz3d" && imports.env && (imp.name in imports.env)) {
             if (!("blitz3d" in imports)) imports.blitz3d = {};
@@ -1227,7 +2608,20 @@ function makeRunnerWorker(): Worker {
           }
           if (!(imp.module in imports)) imports[imp.module] = {};
           if (imp.name in imports[imp.module]) continue;
-          if (imp.kind === "function") imports[imp.module][imp.name] = () => 0;
+          const key = imp.module + "." + imp.name;
+          total++;
+          if (shown.length < stubbedLimit) shown.push(key);
+
+          if (imp.kind === "function") {
+            imports[imp.module][imp.name] = (..._args) => {
+              called.set(key, (called.get(key) || 0) + 1);
+              if (!firstSite.has(key)) {
+                firstSite.set(key, { fileId: bbdbgCurrentFileId | 0, line: bbdbgCurrentLine | 0 });
+              }
+              try { maybeSendMemAuto(); } catch {}
+              return 0;
+            };
+          }
           else if (imp.kind === "global") imports[imp.module][imp.name] = 0;
           else if (imp.kind === "table") {
             imports[imp.module][imp.name] = new WebAssembly.Table({ initial: 0, element: "anyfunc" });
@@ -1235,26 +2629,114 @@ function makeRunnerWorker(): Worker {
             if (!imports[imp.module].memory) imports[imp.module].memory = imports.env.memory;
           }
         }
+
+        return { total, shown, called, firstSite };
       };
 
       self.onmessage = async (ev) => {
+        if (ev.data && ev.data.type === "mem_config") {
+          memAutoEnabled = Boolean(ev.data.auto);
+          memAutoOffset = Math.max(0, Number(ev.data.offset || 0) | 0);
+          memAutoLen = Math.min(16384, Math.max(16, Number(ev.data.len || 256) | 0));
+          memAutoIntervalMs = Math.max(50, Number(ev.data.intervalMs || 250) | 0);
+          // If we already have an instance, send a snapshot immediately.
+          try { maybeSendMemAuto(); } catch {}
+          return;
+        }
+
+        if (ev.data && ev.data.type === "mem_request") {
+          try {
+            const mem = getActiveMemory();
+            if (!mem) {
+              send({ type: "warn", line: "[mem] no active memory yet" });
+              return;
+            }
+            const totalBytes = mem.buffer.byteLength;
+            const pages = Math.floor(totalBytes / 65536);
+            const offset = Math.max(0, Number(ev.data.offset || 0) | 0);
+            const wantLen = Math.min(16384, Math.max(16, Number(ev.data.len || 256) | 0));
+            const start = Math.min(offset, Math.max(0, totalBytes - 1));
+            const len = Math.min(wantLen, Math.max(0, totalBytes - start));
+            const snap = mem.buffer.slice(start, start + len);
+            send({
+              type: "mem",
+              id: Number(ev.data.id || 0) | 0,
+              offset: start,
+              len,
+              bytes: snap,
+              totalBytes,
+              pages,
+            }, [snap]);
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            send({ type: "warn", line: "[mem] snapshot failed: " + msg });
+          }
+          return;
+        }
+
         const { wasmBytes, maxLines } = ev.data;
-        const send = (msg) => self.postMessage(msg);
         let emitted = 0;
 
         try {
           const module = await WebAssembly.compile(wasmBytes);
-          const imports = { env: {}, blitz3d: {}, al: {} };
+          try {
+            const importsList = WebAssembly.Module.imports(module);
+            const exportsList = WebAssembly.Module.exports(module);
+            const bbdbg = importsList.filter((i) => i.module === "bbdbg").map((i) => String(i.name));
+            const has = (name) => bbdbg.includes(name);
+            const hasBbdbgEnter = has("enter") || has("__bbdbg_enter");
+            const hasBbdbgLeave = has("leave") || has("__bbdbg_leave");
+            const hasBbdbgStmt = has("stmt") || has("__bbdbg_stmt");
+            const importsMemory = importsList.some((i) => i.kind === "memory");
+            const exportsMemory = exportsList.some((e) => e.kind === "memory");
+            send({
+              type: "wasm_diag",
+              importsTotal: importsList.length | 0,
+              bbdbgImports: bbdbg.slice(0, 16),
+              hasBbdbgEnter: Boolean(hasBbdbgEnter),
+              hasBbdbgLeave: Boolean(hasBbdbgLeave),
+              hasBbdbgStmt: Boolean(hasBbdbgStmt),
+              importsMemory: Boolean(importsMemory),
+              exportsMemory: Boolean(exportsMemory),
+            });
+          } catch {}
+          const imports = { env: {}, blitz3d: {}, al: {}, bbdbg: {} };
           imports.env.memory = new WebAssembly.Memory({ initial: 256, maximum: 512 });
+          envMem = imports.env.memory;
+          const bbdbgEnter = (funcId) => {
+            const id = funcId | 0;
+            bbdbgStack.push(id);
+            if (bbdbgStack.length > 64) bbdbgStack.splice(0, bbdbgStack.length - 64);
+            bbdbgCurrentFileId = bbdbgLastFileId | 0;
+            bbdbgCurrentLine = bbdbgLastLine | 0;
+            try { maybeSendBbdbg(); } catch {}
+          };
+          const bbdbgLeave = (_funcId) => {
+            bbdbgStack.pop();
+            try { maybeSendBbdbg(); } catch {}
+          };
+          const bbdbgStmt = (fileId, line) => {
+            bbdbgCurrentFileId = fileId | 0;
+            bbdbgCurrentLine = line | 0;
+            bbdbgLastFileId = bbdbgCurrentFileId | 0;
+            bbdbgLastLine = bbdbgCurrentLine | 0;
+            try { maybeSendBbdbg(); } catch {}
+          };
 
-          /** @type {WebAssembly.Instance | null} */
-          let inst = null;
+          // Support both naming conventions (some builds import bbdbg.enter vs bbdbg.__bbdbg_enter).
+          imports.bbdbg.__bbdbg_enter = bbdbgEnter;
+          imports.bbdbg.__bbdbg_leave = bbdbgLeave;
+          imports.bbdbg.__bbdbg_stmt = bbdbgStmt;
+          imports.bbdbg.enter = bbdbgEnter;
+          imports.bbdbg.leave = bbdbgLeave;
+          imports.bbdbg.stmt = bbdbgStmt;
 
           const emit = (line) => {
             emitted++;
             if (maxLines && emitted > maxLines) {
               throw new Error("Output limit exceeded (" + maxLines + " lines).");
             }
+            try { maybeSendMemAuto(); } catch {}
             send({ type: "stdout", line });
           };
 
@@ -1262,6 +2744,13 @@ function makeRunnerWorker(): Worker {
             if (!inst) return;
             const memory = inst.exports.memory;
             emit(decodeB3DString(ptr | 0, memory));
+            if (memAutoOffset === 0 && memSuggestOverride === null && (ptr | 0) > 0) {
+              const hb = getExportedGlobalNumber("__heap_base");
+              if (hb !== null && hb > 0) return;
+              memSuggestOverride = Math.max(0, (ptr | 0) - 128);
+              memAutoOffset = memSuggestOverride | 0;
+              try { sendMemInfo(); } catch {}
+            }
           };
 
           const getStringAlloc = () => {
@@ -1279,6 +2768,170 @@ function makeRunnerWorker(): Worker {
             } catch {}
             return null;
           };
+
+          // Minimal non-graphics builtins so print-only examples work in the sandbox runner.
+          // These are best-effort and only cover the most common signatures used in demos.
+          let rngState = 0x12345678 | 0;
+          const rngNextU32 = () => {
+            rngState = (rngState * 1103515245 + 12345) | 0;
+            return rngState >>> 0;
+          };
+          const rngNextF = () => rngNextU32() / 0x100000000;
+
+          const readStr = (ptr) => {
+            if (!inst) return "";
+            const memory = inst.exports.memory;
+            return decodeB3DString(ptr | 0, memory);
+          };
+          const allocStr = (text) => {
+            if (!inst) return 0;
+            const alloc = getStringAlloc();
+            const memory = inst.exports.memory;
+            if (typeof alloc !== "function") return 0;
+            const p = writeStringObj(alloc, memory, String(text));
+            if (memAutoOffset === 0 && memSuggestOverride === null && (p | 0) > 0) {
+              const hb = getExportedGlobalNumber("__heap_base");
+              if (hb !== null && hb > 0) return p;
+              memSuggestOverride = Math.max(0, (p | 0) - 128);
+              memAutoOffset = memSuggestOverride | 0;
+              try { sendMemInfo(); } catch {}
+            }
+            return p;
+          };
+
+          const StringConcat = (aPtr, bPtr) => {
+            const out = readStr(aPtr) + readStr(bPtr);
+            const ptr = allocStr(out);
+            try { maybeSendMemAuto(); } catch {}
+            return ptr;
+          };
+          const ModInt = (a, b) => {
+            const aa = Number(a) | 0;
+            const bb = Number(b) | 0;
+            if (bb === 0) return 0;
+            return (aa % bb) | 0;
+          };
+          const ModFloat = (a, b) => {
+            const aa = Number(a);
+            const bb = Number(b);
+            if (!Number.isFinite(aa) || !Number.isFinite(bb) || bb === 0) return 0;
+            return aa % bb;
+          };
+          const Abs = (v) => Math.abs(Number(v));
+          const Min = (a, b) => Math.min(Number(a), Number(b));
+          const Max = (a, b) => Math.max(Number(a), Number(b));
+          const SeedRnd = (seed) => {
+            rngState = (Number(seed) | 0) || 1;
+            return 0;
+          };
+          const Rnd = (max) => {
+            const m = Number(max);
+            return rngNextF() * (Number.isFinite(m) ? m : 1);
+          };
+          const Rand = (a, b) => {
+            const lo = Number(a) | 0;
+            const hi = Number(b) | 0;
+            const min = Math.min(lo, hi);
+            const max = Math.max(lo, hi);
+            const span = (max - min + 1) | 0;
+            if (span <= 0) return min | 0;
+            return (min + (rngNextU32() % span)) | 0;
+          };
+
+          const Len = (ptr) => readStr(ptr).length | 0;
+          const Left = (ptr, n) => {
+            const s = readStr(ptr);
+            const nn = Math.max(0, Number(n) | 0);
+            const out = s.slice(0, nn);
+            const p = allocStr(out);
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Right = (ptr, n) => {
+            const s = readStr(ptr);
+            const nn = Math.max(0, Number(n) | 0);
+            const out = nn >= s.length ? s : s.slice(s.length - nn);
+            const p = allocStr(out);
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Mid = (ptr, start, count) => {
+            const s = readStr(ptr);
+            let st = (Number(start) | 0) - 1;
+            if (st < 0) st = 0;
+            const hasCount = typeof count === "number" && Number.isFinite(count);
+            const nn = hasCount ? (Number(count) | 0) : s.length;
+            const out = hasCount ? s.slice(st, st + Math.max(0, nn)) : s.slice(st);
+            const p = allocStr(out);
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Lower = (ptr) => {
+            const p = allocStr(readStr(ptr).toLowerCase());
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Upper = (ptr) => {
+            const p = allocStr(readStr(ptr).toUpperCase());
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Trim = (ptr) => {
+            const p = allocStr(readStr(ptr).trim());
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Replace = (srcPtr, fromPtr, toPtr) => {
+            const src = readStr(srcPtr);
+            const from = readStr(fromPtr);
+            const to = readStr(toPtr);
+            const out = from ? src.split(from).join(to) : src;
+            const p = allocStr(out);
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Instr = (hayPtr, needlePtr) => {
+            const hay = readStr(hayPtr);
+            const needle = readStr(needlePtr);
+            if (!needle) return 0;
+            const idx = hay.indexOf(needle);
+            return idx >= 0 ? (idx + 1) | 0 : 0;
+          };
+          const Chr = (code) => {
+            const c = String.fromCharCode((Number(code) | 0) & 0xff);
+            const p = allocStr(c);
+            try { maybeSendMemAuto(); } catch {}
+            return p;
+          };
+          const Asc = (ptr) => {
+            const s = readStr(ptr);
+            return s.length ? (s.charCodeAt(0) | 0) : 0;
+          };
+
+          // Bind to both env and blitz3d namespaces (the compiler/runtime mix these).
+          for (const ns of ["env", "blitz3d"]) {
+            imports[ns].StringConcat = StringConcat;
+            imports[ns].Abs = Abs;
+            imports[ns].Min = Min;
+            imports[ns].Max = Max;
+            imports[ns].SeedRnd = SeedRnd;
+            imports[ns].Rnd = Rnd;
+            imports[ns].Rand = Rand;
+            imports[ns].Len = Len;
+            imports[ns].Left = Left;
+            imports[ns].Right = Right;
+            imports[ns].Mid = Mid;
+            imports[ns].Lower = Lower;
+            imports[ns].Upper = Upper;
+            imports[ns].Trim = Trim;
+            imports[ns].Replace = Replace;
+            imports[ns].Instr = Instr;
+            imports[ns].Chr = Chr;
+            imports[ns].Asc = Asc;
+          }
+          // Separate Mod bindings: integer vs float signatures differ by namespace in practice.
+          imports.blitz3d.Mod = ModInt;
+          imports.env.Mod = ModFloat;
 
           const intToString = (val) => {
             if (!inst) return 0;
@@ -1305,7 +2958,7 @@ function makeRunnerWorker(): Worker {
             imports[ns].FloatToString = floatToString;
           }
 
-          stubMissingImports(imports, module, {
+          const stubReport = stubMissingImports(imports, module, {
             preferEnvForBlitz3d: true,
             caseInsensitive: true,
             ensureEnvMemory: true,
@@ -1316,6 +2969,31 @@ function makeRunnerWorker(): Worker {
 
           // When passing a pre-compiled Module, instantiate() returns an Instance (not { module, instance }).
           inst = await WebAssembly.instantiate(module, imports);
+          // Send at least one snapshot + debug update once the instance exists.
+          try { maybeSendMemAuto(); } catch {}
+          try { sendMemInfo(); } catch {}
+          try {
+            const mem = getActiveMemory();
+            if (mem) {
+              const totalBytes = mem.buffer.byteLength;
+              const pages = Math.floor(totalBytes / 65536);
+              const offset = Math.max(0, memAutoOffset | 0);
+              const wantLen = Math.min(16384, Math.max(16, memAutoLen | 0));
+              const start = Math.min(offset, Math.max(0, totalBytes - 1));
+              const len = Math.min(wantLen, Math.max(0, totalBytes - start));
+              const snap = mem.buffer.slice(start, start + len);
+              send({
+                type: "mem",
+                id: 0,
+                offset: start,
+                len,
+                bytes: snap,
+                totalBytes,
+                pages,
+              }, [snap]);
+            }
+          } catch {}
+          try { maybeSendBbdbg(); } catch {}
 
           let ran = false;
           for (const name of entryPoints) {
@@ -1331,6 +3009,53 @@ function makeRunnerWorker(): Worker {
             const names = Object.keys(inst.exports).slice(0, 20).join(", ");
             send({ type: "warn", line: "No entry point found. Exports: " + names + (Object.keys(inst.exports).length > 20 ? "..." : "") });
           }
+
+          // Ensure the UI sees a post-run snapshot even for very fast programs
+          // (throttled updates may never fire before execution completes).
+          try { sendMemInfo(); } catch {}
+          try {
+            const mem = getActiveMemory();
+            if (mem) {
+              const totalBytes = mem.buffer.byteLength;
+              const pages = Math.floor(totalBytes / 65536);
+              const offset = Math.max(0, memAutoOffset | 0);
+              const wantLen = Math.min(16384, Math.max(16, memAutoLen | 0));
+              const start = Math.min(offset, Math.max(0, totalBytes - 1));
+              const len = Math.min(wantLen, Math.max(0, totalBytes - start));
+              const snap = mem.buffer.slice(start, start + len);
+              send({
+                type: "mem",
+                id: memAutoSeq++,
+                offset: start,
+                len,
+                bytes: snap,
+                totalBytes,
+                pages,
+              }, [snap]);
+            }
+          } catch {}
+          try { sendBbdbgNow(); } catch {}
+
+          try {
+            const calledList = Array.from((stubReport?.called ?? new Map()).entries())
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 50)
+              .map(([key, count]) => {
+                const site = (stubReport?.firstSite && stubReport.firstSite.get) ? stubReport.firstSite.get(key) : null;
+                return {
+                  key,
+                  count,
+                  fileId: site && typeof site.fileId === "number" ? (site.fileId | 0) : 0,
+                  line: site && typeof site.line === "number" ? (site.line | 0) : 0,
+                };
+              });
+            send({
+              type: "stubs",
+              total: Number(stubReport?.total ?? 0) || 0,
+              shown: Array.isArray(stubReport?.shown) ? stubReport.shown : [],
+              called: calledList,
+            });
+          } catch {}
 
           send({ type: "done" });
         } catch (e) {
@@ -1356,6 +3081,10 @@ async function runWasmBytesInSandbox(
   } = {},
 ): Promise<void> {
   stopExecution();
+  resetWorkerMemSnapshot();
+  workerBbdbgLast = null;
+  workerMemInfo = null;
+  memOffsetTouched = false;
   stopBtnEl.disabled = false;
 
   setStatus(
@@ -1365,32 +3094,157 @@ async function runWasmBytesInSandbox(
 
   const w = makeRunnerWorker();
   runnerWorker = w;
+  renderMemoryPanel();
+  applyMemoryAutoRefresh();
   let timeoutReject: ((reason?: unknown) => void) | null = null;
 
-  if (timeoutMs > 0) {
-    runnerWatchdog = setTimeout(() => {
-      const msg =
-        `Execution timed out after ${timeoutMs}ms (worker terminated).`;
-      if (runnerWorker) runnerWorker.terminate();
-      runnerWorker = null;
-      runnerWatchdog = null;
-      stopBtnEl.disabled = true;
-      setStatus("error", `Timed out after ${timeoutMs}ms`);
-      printOutput(msg, "error");
-      if (typeof timeoutReject === "function") timeoutReject(new Error(msg));
-    }, timeoutMs);
-  }
+      if (timeoutMs > 0) {
+        runnerWatchdog = setTimeout(() => {
+          const msg =
+            `Execution timed out after ${timeoutMs}ms (worker terminated).`;
+          if (runnerWorker) runnerWorker.terminate();
+          runnerWorker = null;
+          runnerWatchdog = null;
+          stopBtnEl.disabled = true;
+          stopMemoryAutoRefresh();
+          renderMemoryPanel();
+          setStatus("error", `Timed out after ${timeoutMs}ms`);
+          printOutput(msg, "error");
+          if (typeof timeoutReject === "function") timeoutReject(new Error(msg));
+        }, timeoutMs);
+      }
 
   await new Promise<void>((resolve, reject) => {
     timeoutReject = reject;
     w.onmessage = (ev: MessageEvent<RunnerWorkerToMainMessage>) => {
       const msg = ev.data;
+      if (msg.type === "wasm_diag") {
+        const hooks =
+          (msg.hasBbdbgEnter && msg.hasBbdbgLeave && msg.hasBbdbgStmt)
+            ? "bbdbg hooks present"
+            : (msg.bbdbgImports.length
+              ? `bbdbg imports present but incomplete (enter=${msg.hasBbdbgEnter ? "y" : "n"} leave=${
+                msg.hasBbdbgLeave ? "y" : "n"
+              } stmt=${msg.hasBbdbgStmt ? "y" : "n"})`
+              : "no bbdbg imports");
+        printOutput(
+          `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${
+            msg.importsMemory ? "y" : "n"
+          } export=${msg.exportsMemory ? "y" : "n"}`,
+          msg.bbdbgImports.length ? "info" : "warning",
+        );
+        return;
+      }
+      if (msg.type === "mem_info") {
+        workerMemInfo = {
+          totalBytes: msg.totalBytes | 0,
+          pages: msg.pages | 0,
+          heapBase: typeof msg.heapBase === "number" ? (msg.heapBase | 0) : undefined,
+          dataEnd: typeof msg.dataEnd === "number" ? (msg.dataEnd | 0) : undefined,
+          stackPtr: typeof msg.stackPtr === "number" ? (msg.stackPtr | 0) : undefined,
+          suggestOffset: typeof msg.suggestOffset === "number"
+            ? (msg.suggestOffset | 0)
+            : undefined,
+        };
+        if (!memOffsetTouched) {
+          const current = Math.max(0, parseByteOffset(memOffsetEl.value));
+          const suggested = workerMemInfo.suggestOffset ?? 0;
+          if (current === 0 && suggested > 0) {
+            memOffsetEl.value = `0x${suggested.toString(16)}`;
+            requestWorkerMemorySnapshot(true);
+          }
+        }
+        renderMemoryPanel();
+        return;
+      }
+      if (msg.type === "bbdbg") {
+        try {
+          workerBbdbgLast = {
+            fileId: msg.fileId | 0,
+            line: msg.line | 0,
+            stack: Array.isArray(msg.stack) ? msg.stack.map((n) => n | 0) : [],
+            updatedAtMs: Date.now(),
+          };
+          // Update the existing bbdbg UI state so the panel renders for worker runs too.
+          bbdbgLastFileId = workerBbdbgLast.fileId;
+          bbdbgLastLine = workerBbdbgLast.line;
+          const names = (workerBbdbgLast.stack || [])
+            .slice()
+            .reverse()
+            .map((id) => bbdbgMeta.funcById.get(id) ?? `func_${id}`);
+          bbdbgStack = names;
+
+          if (bbdbgLastFileId > 0 && bbdbgLastLine > 0) {
+            const stackSnap = bbdbgStack.slice();
+            const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
+            if (!last || last.fileId !== bbdbgLastFileId || last.line !== bbdbgLastLine) {
+              bbdbgTrace.push({ fileId: bbdbgLastFileId, line: bbdbgLastLine, stack: stackSnap });
+              if (bbdbgTrace.length > 200) {
+                bbdbgTrace.splice(0, bbdbgTrace.length - 200);
+              }
+            }
+          }
+          scheduleBbdbgRender();
+        } catch {}
+        return;
+      }
+      if (msg.type === "mem") {
+        try {
+          workerMemSnapshot = {
+            id: msg.id | 0,
+            offset: msg.offset | 0,
+            len: msg.len | 0,
+            bytes: new Uint8Array(msg.bytes),
+            totalBytes: msg.totalBytes | 0,
+            pages: msg.pages | 0,
+            updatedAtMs: Date.now(),
+          };
+          workerMemInFlight = false;
+          renderMemoryPanel();
+        } catch {
+          workerMemInFlight = false;
+        }
+        return;
+      }
+      if (msg.type === "stubs") {
+        const shown = (msg.shown || []).slice(0, 30);
+        const called = (msg.called || []).slice(0, 10);
+        applyRuntimeGapsReport(
+          "worker",
+          msg.total || 0,
+          msg.shown || [],
+          msg.called || [],
+        );
+        if (msg.total > 0) {
+          printOutput(
+            `[stubs] stubbed ${msg.total} missing import(s) (showing ${shown.length})`,
+            "info",
+          );
+          if (shown.length) {
+            printOutput(`[stubs] ${shown.join(", ")}`, "info");
+          }
+        }
+        if (called.length) {
+          printOutput(
+            `[stubs] called: ${
+              called.map((c) => `${c.key}×${c.count}`).join(", ")
+            }`,
+            "warning",
+          );
+        }
+        return;
+      }
       if (msg.type === "stdout") {
-        printOutput(msg.line, "success");
+        printOutput(msg.line, "output");
         return;
       }
       if (msg.type === "warn") {
-        printOutput(msg.line, "warning");
+        const line = String(msg.line || "");
+        if (line.startsWith("[mem]")) {
+          workerMemInFlight = false;
+          return;
+        }
+        printOutput(line, "warning");
         return;
       }
       if (msg.type === "error") {
@@ -1572,10 +3426,29 @@ async function runCode() {
   runBtnEl.textContent = "Compiling...";
   setStatus("compiling", "Compiling...");
   clearOutput();
+  resetRuntimeGaps();
+  resetBbdbgState();
   printOutput("Compiling Blitz3D code...", "info");
 
   try {
     const result = await compileSource(source);
+    setBbdbgMetadata(result.bbdbg);
+    bbdbgSavedWasmSha256 = null;
+    bbdbgSavedAtMs = null;
+
+    if (result.success && result.wasmBytes && result.bbdbg) {
+      try {
+        const sha = await persistBbdbgToIdb(result.wasmBytes, result.bbdbg);
+        bbdbgSavedWasmSha256 = sha;
+        bbdbgSavedAtMs = Date.now();
+        scheduleBbdbgRender();
+      } catch (err) {
+        printOutput(
+          `[bbdbg] save failed (IndexedDB): ${errorMessage(err)}`,
+          "warning",
+        );
+      }
+    }
 
     if (result.success) {
       printOutput(`Compilation successful!`, "success");
@@ -1783,6 +3656,7 @@ async function runWasmBytesOnMainThread(
   globalThis.__BLITZ3D_URL_RESOLVER = (p: string) => vfsGetObjectUrl(p) || null;
 
   const imports: Record<string, Record<string, any>> = { env: {}, blitz3d: {} };
+  imports.bbdbg = {};
   // Ensure table import exists for indirect calls.
   imports.env.__indirect_function_table = new WebAssembly.Table({
     initial: 0,
@@ -1900,6 +3774,56 @@ async function runWasmBytesOnMainThread(
     imports[ns].FloatToString = floatToString;
   }
 
+  // bbdbg hooks (enabled when the module imports `bbdbg.__bbdbg_*`).
+  // These are used to attribute stubbed runtime calls to a source line.
+  bbdbgLastFileId = 0;
+  bbdbgLastLine = 0;
+  bbdbgStack = [];
+  imports.bbdbg.__bbdbg_enter = (funcId: number) => {
+    if (!bbdbgEnabled) return;
+    const id = funcId | 0;
+    const name = bbdbgMeta.funcById.get(id) ?? `func_${id}`;
+    bbdbgStack.push(name);
+    scheduleBbdbgRender();
+  };
+  imports.bbdbg.__bbdbg_leave = (_funcId: number) => {
+    if (!bbdbgEnabled) return;
+    bbdbgStack.pop();
+    scheduleBbdbgRender();
+  };
+  imports.bbdbg.__bbdbg_stmt = (fileId: number, line: number) => {
+    if (!bbdbgEnabled) return;
+    bbdbgLastFileId = fileId | 0;
+    bbdbgLastLine = line | 0;
+    const stackSnap = bbdbgStack.slice().reverse();
+    const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
+    const fid = bbdbgLastFileId | 0;
+    const ln = bbdbgLastLine | 0;
+    if (!last || last.fileId !== fid || last.line !== ln) {
+      bbdbgTrace.push({ fileId: fid, line: ln, stack: stackSnap });
+      if (bbdbgTrace.length > 200) {
+        bbdbgTrace.splice(0, bbdbgTrace.length - 200);
+      }
+    }
+    scheduleBbdbgRender();
+  };
+  // Some builds import `bbdbg.enter/leave/stmt` instead of `bbdbg.__bbdbg_*`.
+  (imports.bbdbg as any).enter = (funcId: number) => {
+    (imports.bbdbg as any).__bbdbg_enter?.(funcId);
+  };
+  (imports.bbdbg as any).leave = (funcId: number) => {
+    (imports.bbdbg as any).__bbdbg_leave?.(funcId);
+  };
+  (imports.bbdbg as any).stmt = (fileId: number, line: number) => {
+    (imports.bbdbg as any).__bbdbg_stmt?.(fileId, line);
+  };
+
+  const stubbedKeys: string[] = [];
+  let stubbedTotal = 0;
+  const calledMissing = new Map<string, number>();
+  let calledNotices = 0;
+  const calledNoticeLimit = 10;
+
   stubMissingImports(imports, module, {
     preferEnvForBlitz3d: true,
     caseInsensitive: true,
@@ -1907,7 +3831,54 @@ async function runWasmBytesOnMainThread(
     stubGlobals: true,
     stubTables: true,
     stubMemory: true,
+    onStub: (info) => {
+      stubbedTotal++;
+      const key = `${info.module}.${info.name}`;
+      if (stubbedKeys.length < 200) stubbedKeys.push(key);
+    },
+    onCallMissingFunction: ({ key }) => {
+      const next = (calledMissing.get(key) ?? 0) + 1;
+      calledMissing.set(key, next);
+      runtimeGaps.called.set(key, next);
+      if (
+        !runtimeGaps.callSites.has(key) && bbdbgLastFileId > 0 &&
+        bbdbgLastLine > 0
+      ) {
+        const loc = bbdbgLocString(bbdbgLastFileId, bbdbgLastLine);
+        const stack = bbdbgStack.length
+          ? ` stack=${bbdbgStack.slice().reverse().join(" -> ")}`
+          : "";
+        runtimeGaps.callSites.set(key, `${loc}${stack}`);
+      }
+      scheduleRuntimeGapsRender();
+      if (next !== 1) return;
+      calledNotices++;
+      if (calledNotices <= calledNoticeLimit) {
+        printOutput(`[stub] called ${key}`, "warning");
+        if (calledNotices === calledNoticeLimit) {
+          printOutput("[stub] more stub calls suppressed", "warning");
+        }
+      }
+    },
   });
+
+  if (stubbedTotal > 0) {
+    const shown = stubbedKeys.slice(0, 30);
+    applyRuntimeGapsReport(
+      "main",
+      stubbedTotal,
+      stubbedKeys,
+      Array.from(calledMissing.entries()).map(([key, count]) => ({
+        key,
+        count,
+      })),
+    );
+    printOutput(
+      `[stubs] stubbed ${stubbedTotal} missing import(s) (showing ${shown.length})`,
+      "info",
+    );
+    printOutput(`[stubs] ${shown.join(", ")}`, "info");
+  }
 
   const instance = await WebAssembly.instantiate(module, imports);
   sharedInstance = instance;
@@ -1918,6 +3889,8 @@ async function runWasmBytesOnMainThread(
   sharedCore.instance = instance;
   sharedCore.module = module;
   sharedCore.exports = instance.exports;
+  renderMemoryPanel();
+  applyMemoryAutoRefresh();
   const stringAllocExport = (() => {
     const ex = instance.exports as Record<string, any>;
     if (typeof ex?.__StringAlloc === "function") return ex.__StringAlloc;

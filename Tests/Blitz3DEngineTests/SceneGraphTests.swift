@@ -1,128 +1,103 @@
-import XCTest
-
+import Testing
 @testable import Blitz3DEngine
 
-final class SceneGraphTests: XCTestCase {
-    var sceneGraph: SceneGraph!
+@inline(__always)
+private func expectApprox(_ a: Float, _ b: Float, accuracy: Float = 0.001) {
+    #expect(abs(a - b) <= accuracy)
+}
 
-    override func setUp() {
-        super.setUp()
-        sceneGraph = SceneGraph()
-    }
+@Test func createEntity() {
+    let sceneGraph = SceneGraph()
+    let entity = sceneGraph.createEntity(type: .pivot, parent: nil)
+    #expect(entity.type == .pivot)
+    #expect(entity.parent === sceneGraph.root)
+}
 
-    override func tearDown() {
-        sceneGraph = nil
-        super.tearDown()
-    }
+@Test func parenting() {
+    let sceneGraph = SceneGraph()
+    let parent = sceneGraph.createEntity(type: .pivot, parent: nil)
+    let child = sceneGraph.createEntity(type: .pivot, parent: parent)
 
-    func testCreateEntity() {
-        let entity = sceneGraph.createEntity(type: .pivot, parent: nil)
-        XCTAssertNotNil(entity)
-        XCTAssertEqual(entity.type, .pivot)
-        // Root is parent if nil passed
-        XCTAssertEqual(entity.parent, sceneGraph.root)
-    }
+    #expect(child.parent === parent)
+    #expect(parent.children.contains { $0 === child })
+}
 
-    func testParenting() {
-        let parent = sceneGraph.createEntity(type: .pivot, parent: nil)
-        let child = sceneGraph.createEntity(type: .pivot, parent: parent)
+@Test func hierarchyClean() {
+    let sceneGraph = SceneGraph()
+    let root = sceneGraph.createEntity(type: .pivot, parent: nil)
+    let child1 = sceneGraph.createEntity(type: .pivot, parent: root)
+    let child2 = sceneGraph.createEntity(type: .pivot, parent: root)
 
-        XCTAssertEqual(child.parent, parent)
-        XCTAssertTrue(parent.children.contains { $0 === child })
-    }
+    #expect(root.children.count == 2)
+    #expect(child1.parent === root)
+    #expect(child2.parent === root)
+}
 
-    func testHierarchyClean() {
-        // Test that removing a parent removes children
-        // (This behavior depends on implementation, usually in engines destroying parent destroys children)
-        // For now just test basic tree structure validity
-        let root = sceneGraph.createEntity(type: .pivot, parent: nil)
-        let child1 = sceneGraph.createEntity(type: .pivot, parent: root)
-        let child2 = sceneGraph.createEntity(type: .pivot, parent: root)
+@Test func transform() {
+    let sceneGraph = SceneGraph()
+    let entity = sceneGraph.createEntity(type: .pivot, parent: nil)
+    entity.localPosition = Vec3(x: 1, y: 2, z: 3)
 
-        XCTAssertEqual(root.children.count, 2)
-        XCTAssertEqual(child1.parent, root)
-        XCTAssertEqual(child2.parent, root)
-    }
+    expectApprox(entity.localPosition.x, 1)
+    expectApprox(entity.localPosition.y, 2)
+    expectApprox(entity.localPosition.z, 3)
+}
 
-    func testTransform() {
-        let entity = sceneGraph.createEntity(type: .pivot, parent: nil)
-        entity.localPosition = Vec3(x: 1, y: 2, z: 3)
-        // Check local transform update? Or just property
-        XCTAssertEqual(entity.localPosition.x, 1)
-        XCTAssertEqual(entity.localPosition.y, 2)
-        XCTAssertEqual(entity.localPosition.z, 3)
-    }
+@Test func transformHierarchy() {
+    let sceneGraph = SceneGraph()
+    let root = sceneGraph.createEntity(type: .pivot, parent: nil)
+    let child = sceneGraph.createEntity(type: .pivot, parent: root)
 
-    func testTransformHierarchy() {
-        let root = sceneGraph.createEntity(type: .pivot, parent: nil)
-        let child = sceneGraph.createEntity(type: .pivot, parent: root)
+    root.localPosition = Vec3(x: 10, y: 0, z: 0)
+    child.localPosition = Vec3(x: 0, y: 5, z: 0)
 
-        // Move root to (10, 0, 0)
-        root.localPosition = Vec3(x: 10, y: 0, z: 0)
+    sceneGraph.updateTransforms()
 
-        // Move child to (0, 5, 0) relative to root
-        child.localPosition = Vec3(x: 0, y: 5, z: 0)
+    let rootPos = sceneGraph.entityPosition(root.id, global: true)
+    let childPos = sceneGraph.entityPosition(child.id, global: true)
 
-        // Update transforms (usually done by engine loop)
-        sceneGraph.updateTransforms()
+    expectApprox(rootPos.x, 10)
+    expectApprox(rootPos.y, 0)
+    expectApprox(rootPos.z, 0)
 
-        // Check global positions
-        let rootPos = sceneGraph.entityPosition(root.id, global: true)
-        let childPos = sceneGraph.entityPosition(child.id, global: true)
+    expectApprox(childPos.x, 10)
+    expectApprox(childPos.y, 5)
+    expectApprox(childPos.z, 0)
+}
 
-        XCTAssertEqual(rootPos.x, 10, accuracy: 0.001)
-        XCTAssertEqual(rootPos.y, 0, accuracy: 0.001)
-        XCTAssertEqual(rootPos.z, 0, accuracy: 0.001)
+@Test func rotationHierarchy() {
+    let sceneGraph = SceneGraph()
+    let root = sceneGraph.createEntity(type: .pivot, parent: nil)
+    let child = sceneGraph.createEntity(type: .pivot, parent: root)
 
-        // Child world pos should be (10, 5, 0)
-        XCTAssertEqual(childPos.x, 10, accuracy: 0.001)
-        XCTAssertEqual(childPos.y, 5, accuracy: 0.001)
-        XCTAssertEqual(childPos.z, 0, accuracy: 0.001)
-    }
+    child.localPosition = Vec3(x: 0, y: 0, z: 10)
+    root.localRotation = Vec3(x: 0, y: 90, z: 0)
 
-    func testRotationHierarchy() {
-        let root = sceneGraph.createEntity(type: .pivot, parent: nil)
-        let child = sceneGraph.createEntity(type: .pivot, parent: root)
+    sceneGraph.updateTransforms()
 
-        // Place child at (0, 0, 10)
-        child.localPosition = Vec3(x: 0, y: 0, z: 10)
+    let childPos = sceneGraph.entityPosition(child.id, global: true)
 
-        // Rotate root by 90 degrees around Y axis
-        // We need to know the rotation direction.
-        // Assuming Y-up.
-        root.localRotation = Vec3(x: 0, y: 90, z: 0)
+    #expect(abs(childPos.x) > 0.001)
+    expectApprox(childPos.z, 0)
+    expectApprox(childPos.y, 0)
+}
 
-        sceneGraph.updateTransforms()
+@Test func collectRenderables() {
+    let sceneGraph = SceneGraph()
+    let root = sceneGraph.createEntity(type: .pivot, parent: nil)
 
-        let childPos = sceneGraph.entityPosition(child.id, global: true)
+    let mesh1 = sceneGraph.createEntity(type: .mesh, parent: root)
+    let sprite1 = sceneGraph.createEntity(type: .sprite, parent: root)
+    let camera = sceneGraph.createEntity(type: .camera, parent: root)
+    let hiddenMesh = sceneGraph.createEntity(type: .mesh, parent: root)
 
-        // If CCW rotation around Y:
-        // x' = x cos - z sin = 0 - 10 * 1 = -10 (or 10 if CW/Left-handed)
-        // Let's assert non-zero x and zero z first to confirm rotation happened
+    sceneGraph.setEntityVisibility(hiddenMesh.id, visible: false)
 
-        XCTAssertNotEqual(childPos.x, 0, accuracy: 0.001)
-        XCTAssertEqual(childPos.z, 0, accuracy: 0.001)
-        XCTAssertEqual(childPos.y, 0, accuracy: 0.001)
-    }
+    let renderables = sceneGraph.collectRenderables()
 
-    func testCollectRenderables() {
-        let root = sceneGraph.createEntity(type: .pivot, parent: nil)
-
-        let mesh1 = sceneGraph.createEntity(type: .mesh, parent: root)
-        let sprite1 = sceneGraph.createEntity(type: .sprite, parent: root)
-        let camera = sceneGraph.createEntity(type: .camera, parent: root)  // Should skip
-        let hiddenMesh = sceneGraph.createEntity(type: .mesh, parent: root)
-
-        // Check filtering
-        sceneGraph.setEntityVisibility(hiddenMesh.id, visible: false)
-
-        let renderables = sceneGraph.collectRenderables()
-
-        // Should contain mesh1 and sprite1. Hidden mesh and camera should be excluded.
-        XCTAssertEqual(renderables.count, 2)
-        XCTAssertTrue(renderables.contains(mesh1))
-        XCTAssertTrue(renderables.contains(sprite1))
-        XCTAssertFalse(renderables.contains(hiddenMesh))
-        XCTAssertFalse(renderables.contains(camera))
-    }
+    #expect(renderables.count == 2)
+    #expect(renderables.contains(mesh1))
+    #expect(renderables.contains(sprite1))
+    #expect(!renderables.contains(hiddenMesh))
+    #expect(!renderables.contains(camera))
 }

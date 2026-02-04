@@ -1,8 +1,8 @@
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class IRPipelineTests: XCTestCase {
+struct IRPipelineTests {
 
     private func compile(_ source: String) -> WASMModule {
         var parser = Parser(source: source)
@@ -114,7 +114,7 @@ final class IRPipelineTests: XCTestCase {
         }
     }
 
-    func testIfStatementStackBalance() throws {
+    @Test func testIfStatementStackBalance() throws {
         let source = """
         Function Main()
             Local x = 1
@@ -132,7 +132,7 @@ final class IRPipelineTests: XCTestCase {
         assertStackValid(module, function: main)
     }
 
-    func testWhileLoopStackBalance() throws {
+    @Test func testWhileLoopStackBalance() throws {
         let source = """
         Function Main()
             Local x = 0
@@ -150,7 +150,7 @@ final class IRPipelineTests: XCTestCase {
         assertStackValid(module, function: main)
     }
 
-    func testForLoopStackBalance() throws {
+    @Test func testForLoopStackBalance() throws {
         let source = """
         Function Main()
             Local i
@@ -168,7 +168,7 @@ final class IRPipelineTests: XCTestCase {
         assertStackValid(module, function: main)
     }
 
-    func testTypePromotion() throws {
+    @Test func testTypePromotion() throws {
         let source = """
         Function Main()
             Local x# = 1 + 2.5
@@ -188,7 +188,7 @@ final class IRPipelineTests: XCTestCase {
         XCTAssertTrue(hasF32Add)
     }
 
-    func testMultiDimensionalArray() throws {
+    @Test func testMultiDimensionalArray() throws {
         let source = """
         Function Main()
             Dim A(10, 10)
@@ -226,7 +226,7 @@ final class IRPipelineTests: XCTestCase {
         XCTAssertTrue(hasAdd, "Should use addition for indexing")
     }
 
-    func testForLoopNegativeStep() throws {
+    @Test func testForLoopNegativeStep() throws {
         let source = """
         Function Main()
             Local i
@@ -248,7 +248,7 @@ final class IRPipelineTests: XCTestCase {
         XCTAssertTrue(bodyStr.contains("i32GeS"), "Negative step loop should use i32.ge_s comparison")
     }
 
-    func testDefaultArguments() throws {
+    @Test func testDefaultArguments() throws {
         let source = """
         Function TestDef(a, b=42)
             Return a + b
@@ -272,7 +272,7 @@ final class IRPipelineTests: XCTestCase {
         XCTAssertTrue(found42, "Should synthesize default argument 42")
     }
 
-    func testStringDeduplication() throws {
+    @Test func testStringDeduplication() throws {
         let source = """
         Function Main()
             Local a$ = "hello"

@@ -3,10 +3,10 @@
 //  CompilerTests
 //
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class RelooperStateMachineTests: XCTestCase {
+struct RelooperStateMachineTests {
     private func walk(_ instrs: [WASMInstruction], visit: (WASMInstruction) -> Void) {
         for instr in instrs {
             visit(instr)
@@ -24,7 +24,7 @@ final class RelooperStateMachineTests: XCTestCase {
         }
     }
 
-    func testRelooperLowersGotoToStateMachine() throws {
+    @Test func testRelooperLowersGotoToStateMachine() throws {
         // _entry -> L0 -> (if cond goto L1 else fallthrough) -> L2 -> return
         let effects: [IREffect] = [
             .label("L0"),

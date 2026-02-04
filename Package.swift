@@ -3,6 +3,10 @@ import PackageDescription
 
 let package = Package(
     name: "Blitz3DCompiler",
+    platforms: [
+        // Swift Testing (and structured concurrency) require macOS 10.15+.
+        .macOS(.v10_15),
+    ],
     products: [
         // Native compiler executable
         .executable(
@@ -80,6 +84,22 @@ let package = Package(
             name: "Blitz3DEngineTests",
             dependencies: ["Blitz3DEngine"],
             path: "Tests/Blitz3DEngineTests"
+        ),
+        .testTarget(
+            name: "Blitz3DCompilerTests",
+            dependencies: ["Blitz3DCompiler"],
+            path: "Tests/Blitz3DCompilerTests"
+        ),
+        .testTarget(
+            name: "CompilerTests",
+            dependencies: ["Blitz3DCompiler"],
+            path: "Tests/CompilerTests",
+            exclude: ["AGENTs.md"]
+        ),
+        .testTarget(
+            name: "IntegrationTests",
+            dependencies: ["Blitz3DCompiler"],
+            path: "Tests/IntegrationTests"
         ),
     ]
 )

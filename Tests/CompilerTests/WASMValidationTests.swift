@@ -4,10 +4,10 @@
 //
 //  Comprehensive tests for WASM binary format validation and BB→WASM compilation
 
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
-final class WASMValidationTests: XCTestCase {
+struct WASMValidationTests {
 
     // MARK: - Helper Functions
 
@@ -47,7 +47,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Binary Format Structure Tests
 
-    func testMagicNumberAndVersion() throws {
+    @Test func testMagicNumberAndVersion() throws {
         let bytes = compile("x = 1")
 
         // WASM magic number: "\0asm"
@@ -64,7 +64,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertEqual(bytes[7], 0x00, "Version fourth byte should be 0x00")
     }
 
-    func testSectionOrdering() throws {
+    @Test func testSectionOrdering() throws {
         // Create a module with multiple sections
         let bytes = compile("""
             Global x = 1
@@ -112,7 +112,7 @@ final class WASMValidationTests: XCTestCase {
         }
     }
 
-    func testTypeSectionFormat() throws {
+    @Test func testTypeSectionFormat() throws {
         let bytes = compile("Function Test() Return 42 End Function")
 
         // Type section starts with section ID 1
@@ -144,7 +144,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - BB to WASM Integration Tests
 
-    func testSimpleIntegerAssignment() throws {
+    @Test func testSimpleIntegerAssignment() throws {
         let bytes = compile("Local x% = 42")
 
         // Should contain i32.const opcode (0x41)
@@ -154,70 +154,70 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x2A), "Should contain value 42 encoded")
     }
 
-    func testIntegerArithmetic() throws {
+    @Test func testIntegerArithmetic() throws {
         let bytes = compile("Local x% = 1 + 2")
 
         // Should contain i32.add opcode
         XCTAssertTrue(bytes.contains(0x6A), "Should contain i32.add opcode (0x6A)")
     }
 
-    func testIntegerSubtraction() throws {
+    @Test func testIntegerSubtraction() throws {
         let bytes = compile("Local x% = 10 - 3")
 
         // Should contain i32.sub opcode
         XCTAssertTrue(bytes.contains(0x6B), "Should contain i32.sub opcode (0x6B)")
     }
 
-    func testIntegerMultiplication() throws {
+    @Test func testIntegerMultiplication() throws {
         let bytes = compile("Local x% = 5 * 4")
 
         // Should contain i32.mul opcode
         XCTAssertTrue(bytes.contains(0x6C), "Should contain i32.mul opcode (0x6C)")
     }
 
-    func testIntegerDivision() throws {
+    @Test func testIntegerDivision() throws {
         let bytes = compile("Local x% = 20 / 4")
 
         // Should contain i32.div_s opcode
         XCTAssertTrue(bytes.contains(0x6D), "Should contain i32.div_s opcode (0x6D)")
     }
 
-    func testFloatAssignment() throws {
+    @Test func testFloatAssignment() throws {
         let bytes = compile("Local x# = 3.14")
 
         // Should contain f32.const opcode (0x43)
         XCTAssertTrue(bytes.contains(0x43), "Should contain f32.const opcode")
     }
 
-    func testFloatArithmetic() throws {
+    @Test func testFloatArithmetic() throws {
         let bytes = compile("Local x# = 1.5 + 2.5")
 
         // Should contain f32.add opcode (0x92, NOT 0xA0)
         XCTAssertTrue(bytes.contains(0x92), "Should contain f32.add opcode (0x92)")
     }
 
-    func testFloatSubtraction() throws {
+    @Test func testFloatSubtraction() throws {
         let bytes = compile("Local x# = 5.0 - 2.0")
 
         // Should contain f32.sub opcode (0x93)
         XCTAssertTrue(bytes.contains(0x93), "Should contain f32.sub opcode (0x93)")
     }
 
-    func testFloatMultiplication() throws {
+    @Test func testFloatMultiplication() throws {
         let bytes = compile("Local x# = 2.0 * 3.0")
 
         // Should contain f32.mul opcode (0x94)
         XCTAssertTrue(bytes.contains(0x94), "Should contain f32.mul opcode (0x94)")
     }
 
-    func testFloatDivision() throws {
+    @Test func testFloatDivision() throws {
         let bytes = compile("Local x# = 10.0 / 2.0")
 
         // Should contain f32.div opcode (0x95)
         XCTAssertTrue(bytes.contains(0x95), "Should contain f32.div opcode (0x95)")
     }
 
-    func testIfStatement() throws {
+    @Test func testIfStatement() throws {
         let bytes = compile("If 1 Then x = 2 EndIf")
 
         // Should contain if opcode (0x04)
@@ -227,7 +227,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x0B), "Should contain end opcode (0x0B)")
     }
 
-    func testIfElseStatement() throws {
+    @Test func testIfElseStatement() throws {
         let bytes = compile("If 1 Then x = 2 Else x = 3 EndIf")
 
         // Should contain if opcode (0x04)
@@ -237,7 +237,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x05), "Should contain else opcode (0x05)")
     }
 
-    func testWhileLoop() throws {
+    @Test func testWhileLoop() throws {
         let bytes = compile("While x < 10 Wend")
 
         // Should contain block opcode (0x02)
@@ -250,7 +250,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x0D), "Should contain br_if opcode (0x0D)")
     }
 
-    func testForLoop() throws {
+    @Test func testForLoop() throws {
         let bytes = compile("For i = 1 To 10 Next")
 
         // For loops use block/loop structure
@@ -258,7 +258,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x03), "Should contain loop opcode (0x03)")
     }
 
-    func testFunctionDeclaration() throws {
+    @Test func testFunctionDeclaration() throws {
         let module = compileToModule("Function Foo() Return 42 End Function")
 
         // Should have the function exported
@@ -267,21 +267,21 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertEqual(fooExport?.kind, .function, "Export should be a function")
     }
 
-    func testFunctionWithReturn() throws {
+    @Test func testFunctionWithReturn() throws {
         let bytes = compile("Function Foo() Return 42 End Function")
 
         // Should contain return opcode (0x0F)
         XCTAssertTrue(bytes.contains(0x0F), "Should contain return opcode (0x0F)")
     }
 
-    func testLocalVariables() throws {
+    @Test func testLocalVariables() throws {
         let bytes = compile("Local x% = 1")
 
         // Should contain local.set opcode (0x21)
         XCTAssertTrue(bytes.contains(0x21), "Should contain local.set opcode (0x21)")
     }
 
-    func testGlobalVariables() throws {
+    @Test func testGlobalVariables() throws {
         let module = compileToModule("Global g% = 100")
 
         // Should have global exported
@@ -291,28 +291,28 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Comparison Operator Tests
 
-    func testIntegerLessThan() throws {
+    @Test func testIntegerLessThan() throws {
         let bytes = compile("If x < 5 Then y = 1 EndIf")
 
         // Should contain i32.lt_s opcode (0x48)
         XCTAssertTrue(bytes.contains(0x48), "Should contain i32.lt_s opcode (0x48)")
     }
 
-    func testIntegerGreaterThan() throws {
+    @Test func testIntegerGreaterThan() throws {
         let bytes = compile("If x > 5 Then y = 1 EndIf")
 
         // Should contain i32.gt_s opcode (0x4A)
         XCTAssertTrue(bytes.contains(0x4A), "Should contain i32.gt_s opcode (0x4A)")
     }
 
-    func testIntegerEqual() throws {
+    @Test func testIntegerEqual() throws {
         let bytes = compile("If x = 5 Then y = 1 EndIf")
 
         // Should contain i32.eq opcode (0x46)
         XCTAssertTrue(bytes.contains(0x46), "Should contain i32.eq opcode (0x46)")
     }
 
-    func testIntegerNotEqual() throws {
+    @Test func testIntegerNotEqual() throws {
         let bytes = compile("If x <> 5 Then y = 1 EndIf")
 
         // Should contain i32.ne opcode (0x47)
@@ -321,7 +321,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Memory Operation Tests
 
-    func testMemoryExport() throws {
+    @Test func testMemoryExport() throws {
         let module = compileToModule("x = 1")
 
         // Should have memory defined
@@ -330,7 +330,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Opcode Verification Tests
 
-    func testCorrectF32Opcodes() throws {
+    @Test func testCorrectF32Opcodes() throws {
         // Test that f32 arithmetic uses correct opcodes
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f32]))
@@ -368,7 +368,7 @@ final class WASMValidationTests: XCTestCase {
         // (The old incorrect opcodes were 0xA0-0xA3)
     }
 
-    func testCorrectF64Opcodes() throws {
+    @Test func testCorrectF64Opcodes() throws {
         // Test that f64 arithmetic uses correct opcodes
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f64]))
@@ -403,7 +403,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xA3), "f64.div should be 0xA3")
     }
 
-    func testCorrectReinterpretOpcodes() throws {
+    @Test func testCorrectReinterpretOpcodes() throws {
         // Test reinterpret opcodes are correct
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.f32]))
@@ -428,7 +428,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xBE), "f32.reinterpret_i32 should be 0xBE")
     }
 
-    func testCorrectI32ReinterpretF32Opcode() throws {
+    @Test func testCorrectI32ReinterpretF32Opcode() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -452,7 +452,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0xBC), "i32.reinterpret_f32 should be 0xBC")
     }
 
-    func testCorrectI64ReinterpretF64Opcode() throws {
+    @Test func testCorrectI64ReinterpretF64Opcode() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i64]))
 
@@ -478,7 +478,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Complex Expression Tests
 
-    func testMixedArithmetic() throws {
+    @Test func testMixedArithmetic() throws {
         let bytes = compile("Local x% = (1 + 2) * 3")
 
         // Should contain both i32.add and i32.mul
@@ -486,7 +486,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x6C), "Should contain i32.mul (0x6C)")
     }
 
-    func testNestedIfStatements() throws {
+    @Test func testNestedIfStatements() throws {
         let bytes = compile("""
             If x = 1 Then
                 If y = 2 Then
@@ -505,7 +505,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Data Section Tests
 
-    func testStringLiteralInDataSection() throws {
+    @Test func testStringLiteralInDataSection() throws {
         let module = compileToModule("Print \"Hello\"")
 
         // Should have data section with string
@@ -516,7 +516,7 @@ final class WASMValidationTests: XCTestCase {
     // Note: These tests verify SLEB128 encoding directly on the encoder, not through full compilation
     // which may transform or optimize the values
 
-    func testSLEB128ZeroEncoding() throws {
+    @Test func testSLEB128ZeroEncoding() throws {
         // Test SLEB128 encoding directly
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
@@ -536,7 +536,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(containsSequence(bytes, [0x41, 0x00]), "Should encode i32.const 0 as [0x41, 0x00]")
     }
 
-    func testSLEB128MaxPositive7Bit() throws {
+    @Test func testSLEB128MaxPositive7Bit() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -556,7 +556,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(containsSequence(bytes, [0x41, 0x3F]), "Should encode i32.const 63 as [0x41, 0x3F]")
     }
 
-    func testSLEB128NeedsExtraByte() throws {
+    @Test func testSLEB128NeedsExtraByte() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -578,7 +578,7 @@ final class WASMValidationTests: XCTestCase {
 
     // MARK: - Control Flow Completeness
 
-    func testSelectInstruction() throws {
+    @Test func testSelectInstruction() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: [.i32]))
 
@@ -602,7 +602,7 @@ final class WASMValidationTests: XCTestCase {
         XCTAssertTrue(bytes.contains(0x1B), "select should be encoded as 0x1B")
     }
 
-    func testDropInstruction() throws {
+    @Test func testDropInstruction() throws {
         var module = WASMModule()
         module.types.append(WASMFunctionType(parameters: [], results: []))
 

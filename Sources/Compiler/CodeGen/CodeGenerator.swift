@@ -102,8 +102,11 @@ public struct CodeGenerator {
         context.module.exports.append(WASMExport(name: "memory", kind: .memory, index: 0))
 
         dataGenerator.setup()
-        
-        addImports()
+
+        // Avoid registering imports that collide with user-defined functions.
+        // Imports are required at instantiation time even if later shadowed by a local definition.
+        let userFunctionNames = Set(program.functions.map { $0.name.lowercased() })
+        addImports(excluding: userFunctionNames)
 
         // IMPORTANT: finalize any auto-imported stubs before we assign/emit any local function indices.
         // Adding imports later would shift all local function indices and invalidate previously emitted calls.
@@ -217,7 +220,7 @@ public struct CodeGenerator {
         }
     }
     
-    private mutating func addImports() {
+    private mutating func addImports(excluding excludedInternalNames: Set<String>) {
         var imports: [(String, String, [WASMType], [WASMType], String)] = [
             ("PrintInt", "printint", [.i32], [], "env"),
             ("PrintFloat", "printfloat", [.f32], [], "env"),
@@ -401,13 +404,11 @@ public struct CodeGenerator {
             ("LoadMesh_Strict", "LoadMesh_Strict", [.i32], [.i32], "env"),
             ("LoadAnimMesh_Strict", "LoadAnimMesh_Strict", [.i32], [.i32], "env"),
             ("LoadTexture_Strict", "LoadTexture_Strict", [.i32, .i32], [.i32], "env"),
-            ("LoadSound_Strict", "LoadSound_Strict", [.i32], [.i32], "env"),
             ("LoadImage_Strict", "LoadImage_Strict", [.i32], [.i32], "env"),
             ("FreeSound_Strict", "FreeSound_Strict", [.i32], [], "env"),
             ("LoadTempSound", "LoadTempSound", [.i32], [.i32], "env"),
             
             // Sound Functions  
-            ("PlaySound_Strict", "PlaySound_Strict", [.i32], [.i32], "env"),
             ("LoopSound2", "LoopSound2", [.i32, .i32, .f32, .f32], [.i32], "env"),
             
             // Debug/Utility
@@ -923,13 +924,11 @@ public struct CodeGenerator {
             ("UpdateItems", "UpdateItems", [], [], "env"),
             ("PickItem", "PickItem", [.i32], [], "env"),
             ("DropItem", "DropItem", [.i32], [], "env"),
-            ("AnimateNPC", "AnimateNPC", [.i32, .f32, .f32, .f32, .f32, .i32], [], "env"),
             // Animate2 mirrors Blitz3D Animate2 semantics: entity, currentFrame, start, end, speed, loopFlag -> returns new frame (f32)
             ("Animate2", "Animate2", [.i32, .f32, .f32, .f32, .f32, .i32], [.f32], "env"),
             ("ChangeNPCTextureID", "ChangeNPCTextureID", [.i32, .i32], [], "env"),
             ("CheckForNPCInFacility", "CheckForNPCInFacility", [.i32], [.i32], "env"),
             ("Console_SpawnNPC", "Console_SpawnNPC", [.i32], [], "env"),
-            ("CreateConsoleMsg", "CreateConsoleMsg", [.i32], [], "env"),
             ("ChangeAngleValueForCorrectBoneAssigning", "ChangeAngleValueForCorrectBoneAssigning", [.f32], [.f32], "env"),
             ("UseDoor", "UseDoor", [.i32, .i32, .i32], [], "env"),
             ("PlaySound2", "PlaySound2", [.i32, .i32, .i32, .f32, .f32], [.i32], "env"),
@@ -937,7 +936,6 @@ public struct CodeGenerator {
             ("UpdateSoundOrigin", "UpdateSoundOrigin", [.i32, .i32, .i32, .f32, .f32], [], "env"),
             ("UpdateSoundOrigin2", "UpdateSoundOrigin2", [.i32, .i32, .i32, .f32, .f32], [], "env"),
             ("SetNPCFrame", "SetNPCFrame", [.i32, .f32], [], "env"),
-            ("CreateNPC", "CreateNPC", [.i32, .f32, .f32, .f32], [.i32], "env"),
             ("RemoveNPC", "RemoveNPC", [.i32], [], "env"),
             ("FindPath", "FindPath", [.i32, .f32, .f32, .f32], [.i32], "env"),
             ("PointEntity", "PointEntity", [.i32, .i32], [], "env"),
@@ -991,12 +989,18 @@ public struct CodeGenerator {
         
         // Add debug helper imports if debugging is enabled
         if context.debugGenerator != nil {
-            imports.append(("enter", "__bbdbg_enter", [.i32], [], "bbdbg"))
-            imports.append(("leave", "__bbdbg_leave", [.i32], [], "bbdbg"))
-            imports.append(("stmt", "__bbdbg_stmt", [.i32, .i32], [], "bbdbg"))
+            // Note: the runtime debug module expects these exact names.
+            imports.append(("__bbdbg_enter", "__bbdbg_enter", [.i32], [], "bbdbg"))
+            imports.append(("__bbdbg_leave", "__bbdbg_leave", [.i32], [], "bbdbg"))
+            imports.append(("__bbdbg_stmt", "__bbdbg_stmt", [.i32, .i32], [], "bbdbg"))
         }
 
         for (name, internalName, params, results, moduleName) in imports {
+            let lowerName = name.lowercased()
+            let lowerInternal = internalName.lowercased()
+            if excludedInternalNames.contains(lowerName) || excludedInternalNames.contains(lowerInternal) {
+                continue
+            }
             var defaults: [Int: ExpressionNode]? = nil
             
             // Add some common defaults
@@ -1623,7 +1627,8 @@ public struct CodeGenerator {
             context.debugFunctionSpans["_start"] = firstStmt.span
         }
 
-        addImports()
+        let userFunctionNames = Set(program.functions.map { $0.name.lowercased() })
+        addImports(excluding: userFunctionNames)
         let lowering = ASTLowering(context: context)
         var irModule = lowering.lower(program)
         

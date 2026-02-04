@@ -1,10 +1,10 @@
-import XCTest
+import Testing
 
 @testable import Blitz3DCompiler
 
-final class ParserTestsExt: XCTestCase {
+struct ParserTestsExt {
 
-    func testParseFunctionCallWithWhitespace() throws {
+    @Test func testParseFunctionCallWithWhitespace() throws {
         // Case 1: Text (x) - Parentheses wrap single argument
         // Should parse as CallNode("Text", [Identifier("x")])
         var parser1 = Parser(source: "Text (x)")

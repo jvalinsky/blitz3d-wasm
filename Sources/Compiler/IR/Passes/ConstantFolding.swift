@@ -39,6 +39,9 @@ public struct ConstantFoldingPass {
 
     private func optimizeEffect(_ effect: IREffect) -> IREffect {
         switch effect {
+        case .sourceLocation(let span, let body):
+            return .sourceLocation(span: span, body: optimizeEffects(body))
+
         case .assign(let target, let value):
             return .assign(target: target, value: optimizeValue(value))
 

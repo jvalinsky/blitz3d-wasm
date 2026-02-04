@@ -259,6 +259,30 @@ public final class IREmitter {
         switch effect {
         case .nop:
             return []
+
+        case .sourceLocation(let span, let body):
+            if body.isEmpty { return [] }
+
+            var inner: [WASMInstruction] = []
+
+            if let gen = context?.debugGenerator, let indices = context?.debugIndices {
+                let fileId = gen.registerFile(span.start.sourceFile)
+                let line = max(0, span.start.line)
+                if fileId > 0 && line > 0 {
+                    inner.append(.i32Const(Int32(fileId)))
+                    inner.append(.i32Const(Int32(line)))
+                    inner.append(.call(indices.stmt))
+                }
+            }
+
+            for e in body {
+                inner.append(contentsOf: emitEffect(e, labelStack: &labelStack))
+            }
+
+            if (context?.sourceMapGenerator != nil || context?.debugGenerator != nil) && !inner.isEmpty {
+                return [.sourceLocation(span, .block(.void, inner))]
+            }
+            return inner
             
         case .discard(let value):
             var instructions = emitValue(value)

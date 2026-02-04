@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 /**
  * Video playback runtime for Blitz3D WASM engine
  * 

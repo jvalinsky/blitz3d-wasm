@@ -1,13 +1,13 @@
-import XCTest
+import Testing
 @testable import Blitz3DCompiler
 
 /// Tests for type inference bugs discovered in Session 6
 /// These bugs caused "expected [i32, i32] but got [f32, i32]" errors
-final class TypeInferenceRegressionTests: XCTestCase {
+struct TypeInferenceRegressionTests {
     
     // MARK: - Float vs Integer Type Mismatches
     
-    func testFloatVariableInIntegerComparison() throws {
+    @Test func testFloatVariableInIntegerComparison() throws {
         // Bug from NPCs.bb: float variable used in i32.gt_s
         let source = """
         Function Main()
@@ -25,7 +25,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Float in integer comparison should auto-convert")
     }
     
-    func testFloatVariableInIntegerArithmetic() throws {
+    @Test func testFloatVariableInIntegerArithmetic() throws {
         // Bug from UpdateEvents.bb: f32 + i32 generated i32.add
         let source = """
         Function Main()
@@ -38,7 +38,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Float + integer should use f32.add")
     }
     
-    func testLocalSetTypeMismatch() throws {
+    @Test func testLocalSetTypeMismatch() throws {
         // Bug from Save.bb: local.set expected [f32] but got [i32]
         let source = """
         Function Main()
@@ -51,7 +51,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Assigning int to float should auto-convert")
     }
     
-    func testMixedTypeComparison_FloatFloat() throws {
+    @Test func testMixedTypeComparison_FloatFloat() throws {
         // Bug: i32.gt_s with [f32, f32]
         let source = """
         Function Main()
@@ -70,7 +70,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
     
     // MARK: - Forward Type Inference Edge Cases
     
-    func testVariableUsedBeforeDeclaredWithSuffix() throws {
+    @Test func testVariableUsedBeforeDeclaredWithSuffix() throws {
         // Pattern that caused type inference failures
         let source = """
         Function Main()
@@ -89,7 +89,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Forward type inference should detect float usage")
     }
     
-    func testAutoDeclarationWithFloatUsage() throws {
+    @Test func testAutoDeclarationWithFloatUsage() throws {
         // Variables auto-declared should infer correct type from first usage
         let source = """
         Function Main()
@@ -105,7 +105,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Auto-declared variable should infer float type")
     }
     
-    func testComplexExpressionTypePropagation() throws {
+    @Test func testComplexExpressionTypePropagation() throws {
         // Type should propagate correctly through complex expressions
         let source = """
         Function Main()
@@ -124,7 +124,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
     
     // MARK: - Field and Array Type Resolution
     
-    func testFieldAccessTypePreservation() throws {
+    @Test func testFieldAccessTypePreservation() throws {
         let source = """
         Type MyType
             Field timer#
@@ -146,7 +146,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Field types should be preserved correctly")
     }
     
-    func testArrayElementTypeInference() throws {
+    @Test func testArrayElementTypeInference() throws {
         let source = """
         Dim floatArray#(10)
         Dim intArray%(10)
@@ -168,7 +168,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
     
     // MARK: - Real Bug Reproductions from Session 6
     
-    func testNPCsBug_FloatLocalSet() throws {
+    @Test func testNPCsBug_FloatLocalSet() throws {
         // Exact pattern from NPCs.bb error
         let source = """
         Function Main()
@@ -185,7 +185,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "NPCs.bb pattern should preserve variable types")
     }
     
-    func testSaveBug_FloatIntegerMix() throws {
+    @Test func testSaveBug_FloatIntegerMix() throws {
         // Pattern from Save.bb
         let source = """
         Function Main()
@@ -203,7 +203,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Save.bb comparison pattern should work")
     }
     
-    func testUpdateEventsBug_FloatArithmetic() throws {
+    @Test func testUpdateEventsBug_FloatArithmetic() throws {
         // Pattern from UpdateEvents.bb
         let source = """
         Function Main()
@@ -220,7 +220,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
     
     // MARK: - Type Coercion Edge Cases
     
-    func testImplicitFloatToIntTruncation() throws {
+    @Test func testImplicitFloatToIntTruncation() throws {
         let source = """
         Function Main()
             Local f# = 5.7
@@ -235,7 +235,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Float to int assignment should truncate")
     }
     
-    func testImplicitIntToFloatWidening() throws {
+    @Test func testImplicitIntToFloatWidening() throws {
         let source = """
         Function Main()
             Local i% = 5
@@ -250,7 +250,7 @@ final class TypeInferenceRegressionTests: XCTestCase {
         XCTAssertNoThrow(try validateWASM(module), "Int to float assignment should widen")
     }
     
-    func testFunctionReturnTypeInference() throws {
+    @Test func testFunctionReturnTypeInference() throws {
         let source = """
         Function GetFloat#()
             Return 42  ; Int literal but function returns float

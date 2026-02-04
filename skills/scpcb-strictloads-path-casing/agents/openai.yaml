@@ -1,0 +1,5 @@
+interface:
+  display_name: "SCPCB StrictLoads/Paths"
+  short_description: "Fix StrictLoads + casing/backslash issues"
+  default_prompt: "Use $scpcb-strictloads-path-casing to diagnose this SCPCB missing-file/path-casing failure and propose the minimal manifest/runtime/SCPCB change to restore correct Load*/FileType behavior."
+

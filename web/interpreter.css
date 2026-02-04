@@ -146,14 +146,35 @@ select {
 }
 
 .editor-linenum {
+  position: relative;
   height: 1.5em;
-  padding: 0 0.1rem;
+  padding: 0 0.1rem 0 0.6rem;
   border-radius: 4px;
+}
+
+.editor-linenum:hover {
+  background: rgba(233, 69, 96, 0.08);
+}
+
+.editor-linenum.breakpoint::before {
+  content: "";
+  position: absolute;
+  left: 0.15rem;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  transform: translateY(-50%);
 }
 
 .editor-linenum.exec {
   background: rgba(79, 195, 247, 0.14);
   color: #4fc3f7;
+}
+
+.editor-linenum.exec.breakpoint::before {
+  background: #ffb74d;
 }
 
 .editor-code {
@@ -485,6 +506,34 @@ select {
   color: #c5c5c5;
 }
 
+.bbdbg-breakpoints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  min-height: 1.2rem;
+}
+
+.bbdbg-breakpoints.empty {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.bbdbg-bp {
+  border: 1px solid #0f3460;
+  background: rgba(233, 69, 96, 0.14);
+  color: #ffb3bf;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 12px;
+  font-family: "Monaco", "Menlo", "Consolas", monospace;
+  cursor: pointer;
+}
+
+.bbdbg-bp:hover {
+  background: rgba(233, 69, 96, 0.22);
+}
+
 .bbdbg-stack,
 .bbdbg-trace {
   border: 1px solid #0f3460;
@@ -567,6 +616,70 @@ select {
   color: #e0e0e0;
 }
 
+.wat-panel {
+  border-top: 1px solid #0f3460;
+  background: #0d1b2a;
+  display: flex;
+  flex-direction: column;
+}
+
+.wat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.9rem;
+  background: #16213e;
+  border-bottom: 1px solid #0f3460;
+  gap: 1rem;
+}
+
+.wat-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wat-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #c5c5c5;
+  user-select: none;
+}
+
+.wat-toggle input {
+  accent-color: #4fc3f7;
+}
+
+.wat-body {
+  padding: 0.75rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 380px;
+  overflow: hidden;
+}
+
+.wat-summary {
+  font-size: 0.85rem;
+  color: #c5c5c5;
+}
+
+.wat-code {
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  background: #081320;
+  font-family: "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  max-height: 300px;
+  overflow: auto;
+  white-space: pre;
+  color: #e0e0e0;
+}
+
 .output-line {
   padding: 2px 0;
 }
@@ -643,6 +756,10 @@ select {
 
 .status-indicator.error {
   background: #f44336;
+}
+
+.status-indicator.paused {
+  background: #4fc3f7;
 }
 
 @keyframes pulse {

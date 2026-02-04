@@ -1,0 +1,5 @@
+interface:
+  display_name: "wasm-validate Triage"
+  short_description: "Turn wasm-validate output into actionable fixes"
+  default_prompt: "Use $wasm-validate-triage to bucket these wasm-validate errors, identify the earliest root cause, and propose a minimal repro + next debugging step."
+

@@ -17,7 +17,7 @@ struct CompilerError: Error, CustomStringConvertible {
 /// WASM-compatible compiler interface
 struct CompilerWASM {
     
-    static func compile(source: String, options: CompilerOptions = .default) -> Result<(wasm: Data, bbdbg: String?), CompilerError> {
+    static func compile(source: String, options: CompilerOptions = .default) -> Result<(wasm: Data, bbdbg: String?, wat: String?), CompilerError> {
         do {
             var parser = Parser(source: source, sourceFile: "stdin")
             let program = parser.parse()
@@ -47,15 +47,32 @@ struct CompilerWASM {
                 return .failure(CompilerError(message: codeGen.diagnostics.map { $0.description }.joined(separator: "\n")))
             }
             
+            let watText: String?
+            if options.emitWat {
+                var watWriter = WASMTextWriter()
+                watText = watWriter.write(wasmModule)
+            } else {
+                watText = nil
+            }
+
             var encoder = WASMBinaryEncoder()
             let wasmBinary = encoder.encode(wasmModule)
             let bbdbgJSON = debugGenerator?.generateJSON()
-            return .success((Data(wasmBinary), bbdbgJSON))
+            return .success((Data(wasmBinary), bbdbgJSON, watText))
         } catch {
             return .failure(CompilerError(message: "Compilation failed: \(error)"))
         }
     }
     
+    static func jsonEscape(_ s: String) -> String {
+        return s
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\t", with: "\\t")
+    }
+
     static func compileToJSON(source: String, optionsJSON: String = "{}") -> String {
         let options = CompilerOptions.from(json: optionsJSON)
         let result = compile(source: source, options: options)
@@ -70,19 +87,22 @@ struct CompilerWASM {
             } else {
                 bbdbgField = ""
             }
+            let watField: String
+            if let watText = pair.wat, !watText.isEmpty {
+                watField = ",\n                \"wat\": \"\(jsonEscape(watText))\""
+            } else {
+                watField = ""
+            }
             return """
             {
                 "success": true,
                 "wasm": "\(base64)",
                 "size": \(wasmData.count)
-                \(bbdbgField)
+                \(bbdbgField)\(watField)
             }
             """
         case .failure(let error):
-            let escapedError = error.description
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
-                .replacingOccurrences(of: "\n", with: "\\n")
+            let escapedError = jsonEscape(error.description)
             return """
             {
                 "success": false,
@@ -100,13 +120,15 @@ struct CompilerOptions {
     var sourceMap: Bool
     var autoImports: [String]
     var commandBuffer: Bool
+    var emitWat: Bool
     
     static let `default` = CompilerOptions(
         optimize: true,
         debugInfo: false,
         sourceMap: false,
         autoImports: [],
-        commandBuffer: false
+        commandBuffer: false,
+        emitWat: false
     )
     
     static func from(json: String) -> CompilerOptions {
@@ -120,6 +142,7 @@ struct CompilerOptions {
         if json.contains("\"debugInfo\":true") { options.debugInfo = true }
         if json.contains("\"sourceMap\":true") { options.sourceMap = true }
         if json.contains("\"commandBuffer\":true") { options.commandBuffer = true }
+        if json.contains("\"emitWat\":true") { options.emitWat = true }
 
         // Parse: "autoImports": ["A","B",...]
         if let keyRange = json.range(of: "\"autoImports\"") {

@@ -119,6 +119,9 @@
           <button class="tab active" id="tab-output" data-tab="output">
             Output
           </button>
+          <button class="tab" id="tab-debug" data-tab="debug">
+            Debug
+          </button>
           <button class="tab" id="tab-canvas" data-tab="canvas">
             3D Canvas
           </button>
@@ -128,6 +131,9 @@
           <div id="output">
             <div class="output-line info">Initializing interpreter...</div>
           </div>
+        </div>
+
+        <div id="debug-tab" class="tab-content">
           <div class="runtime-gaps">
             <div class="runtime-gaps-header">
               <span class="panel-title">Runtime Gaps</span>
@@ -159,6 +165,26 @@
                   <input id="bbdbg-enabled" type="checkbox" checked />
                   <span>Enabled</span>
                 </label>
+                <button class="btn btn-secondary" id="bbdbg-pause-btn" disabled>
+                  Pause
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  id="bbdbg-continue-btn"
+                  disabled
+                >
+                  Continue
+                </button>
+                <button class="btn btn-secondary" id="bbdbg-step-btn" disabled>
+                  Step
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  id="bbdbg-clear-bps-btn"
+                  title="Clear breakpoints"
+                >
+                  Clear BPs
+                </button>
                 <button class="btn btn-secondary" id="bbdbg-clear-btn">
                   Clear Trace
                 </button>
@@ -177,6 +203,7 @@
               <div class="bbdbg-summary" id="bbdbg-summary">
                 No debug metadata loaded.
               </div>
+              <div class="bbdbg-breakpoints" id="bbdbg-breakpoints"></div>
               <div class="bbdbg-stack" id="bbdbg-stack"></div>
               <div class="bbdbg-trace" id="bbdbg-trace"></div>
             </div>
@@ -215,6 +242,34 @@
                 No active module memory yet.
               </div>
               <pre class="mem-dump" id="mem-dump"></pre>
+            </div>
+          </div>
+          <div class="wat-panel">
+            <div class="wat-header">
+              <span class="panel-title">WAT (WebAssembly Text)</span>
+              <div class="wat-actions">
+                <label class="wat-toggle" title="Include WAT in compile result">
+                  <input id="wat-enabled" type="checkbox" />
+                  <span>Emit on compile</span>
+                </label>
+                <button class="btn btn-secondary" id="wat-clear-btn">
+                  Clear
+                </button>
+                <button class="btn btn-secondary" id="wat-copy-btn" disabled>
+                  Copy
+                </button>
+                <button
+                  class="btn btn-secondary"
+                  id="wat-download-btn"
+                  disabled
+                >
+                  Download
+                </button>
+              </div>
+            </div>
+            <div class="wat-body">
+              <div class="wat-summary" id="wat-summary">No WAT yet.</div>
+              <pre class="wat-code" id="wat-code"></pre>
             </div>
           </div>
         </div>

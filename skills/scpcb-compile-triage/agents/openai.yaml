@@ -1,0 +1,5 @@
+interface:
+  display_name: "SCPCB Compile Triage"
+  short_description: "Compile SCPCB→WASM and debug failures fast"
+  default_prompt: "Use $scpcb-compile-triage to compile SCPCB to Track B WASM, then run the right gates (import leak, cmdbuf) and explain the next fix step."
+

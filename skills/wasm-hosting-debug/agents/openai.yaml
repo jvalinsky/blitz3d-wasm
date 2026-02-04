@@ -1,0 +1,5 @@
+interface:
+  display_name: "WASM Hosting Debug"
+  short_description: "Debug instantiation/imports/memory in this repo"
+  default_prompt: "Use $wasm-hosting-debug to triage a WASM instantiation/trap issue here (imports/exports/memory/string ABI/worker differences) and suggest the next concrete fix."
+

@@ -135,6 +135,9 @@ public struct ConstantFoldingPass {
         case .loop(let label, let body):
             return .loop(label: label, body: optimizeEffects(body))
 
+        case .sourceLocation(let span, let body):
+            return .sourceLocation(span: span, body: optimizeEffects(body))
+
         case .branchIf(let cond, let label):
             let optimizedCond = optimizeValue(cond)
 

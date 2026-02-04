@@ -98,6 +98,8 @@ public final class CFGBuilder {
                 preScanLabels(in: body)
             case .loop(_, let body):
                 preScanLabels(in: body)
+            case .sourceLocation(_, let body):
+                preScanLabels(in: body)
             case .selectStmt(_, let cases, let `default`):
                 for (_, body) in cases { preScanLabels(in: body) }
                 if let `default` { preScanLabels(in: `default`) }
@@ -342,6 +344,12 @@ public final class CFGBuilder {
                 currentBlock.terminator = .branch(target: headerBlock)
 
                 currentBlock = exitBlock
+
+            case .sourceLocation(let span, let body):
+                // Preserve the marker for debuggers/source maps, but allow CFG analysis
+                // to see through it for control flow.
+                currentBlock.instructions.append(.sourceLocation(span: span, body: []))
+                process(body, loopStack: &loopStack)
 
             default:
                 currentBlock.instructions.append(effect)

@@ -1,0 +1,5 @@
+interface:
+  display_name: "SCPCB Audio Porting"
+  short_description: "Map FMOD/StrictLoads audio to WebAudio"
+  default_prompt: "Use $scpcb-audio-porting to map SCPCB audio calls to the current web runtime, identify what’s stubbed/mismatched (sync vs async, looping, channels), and propose the smallest fix."
+

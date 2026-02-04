@@ -1,0 +1,5 @@
+interface:
+  display_name: "Blitz3D Animation System"
+  short_description: "Implement SCPCB/Blitz3D frame-based animation"
+  default_prompt: "Use $blitz3d-animation-system to design or debug animation support (SetAnimTime/AnimTime/AnimLength, optional Animate), including the correct frames↔seconds mapping, where to wire WASM imports in main/worker paths, and a minimal validation checklist using existing SMPK assets."
+

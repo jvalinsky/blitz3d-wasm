@@ -52,18 +52,19 @@ public indirect enum IREffect {
     case assignField(base: IRValue, fieldOffset: Int, fieldType: IRType, value: IRValue)
     case assignArray(base: IRValue, index: IRValue, elementSize: Int, elementType: IRType, value: IRValue)
     case delete(value: IRValue)
-    
+
     case ifStmt(condition: IRValue, then: [IREffect], else: [IREffect]?)
     case whileStmt(condition: IRValue, body: [IREffect])
     case forStmt(index: Int, start: IRValue, end: IRValue, step: IRValue?, body: [IREffect])
     case repeatStmt(body: [IREffect], condition: IRValue)
-    
+
     case returnStmt(value: IRValue?)
     case breakStmt
     case continueStmt
-    
+
     case block(label: String, body: [IREffect])
     case loop(label: String, body: [IREffect])
+    case sourceLocation(span: SourceSpan, body: [IREffect])
     case selectStmt(value: IRValue, cases: [(Int32, [IREffect])], default: [IREffect]?)
     case label(String)
     case branch(label: String)

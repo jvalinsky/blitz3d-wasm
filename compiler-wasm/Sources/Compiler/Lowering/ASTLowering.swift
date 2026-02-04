@@ -361,6 +361,12 @@ public final class ASTLowering {
     }
     
     private func lowerStatement(_ statement: StatementNode, into body: inout [IREffect]) {
+        let span = statement.span
+        if context.sourceMapGenerator != nil || context.debugGenerator != nil {
+            // Emit a location marker that survives the CFG/Relooper passes.
+            body.append(.sourceLocation(span: span, body: []))
+        }
+
         switch statement {
         case .local(let decl, _):
             for arrayDecl in decl.arrayDeclarations {

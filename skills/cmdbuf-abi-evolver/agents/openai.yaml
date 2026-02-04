@@ -1,0 +1,5 @@
+interface:
+  display_name: "CmdBuf ABI Evolver"
+  short_description: "Add opcodes safely; prevent ABI mismatches"
+  default_prompt: "Use $cmdbuf-abi-evolver to add a new command-buffer opcode end-to-end (types/decoder/dispatcher) and list the verification commands to run."
+

@@ -1,0 +1,5 @@
+interface:
+  display_name: "BB Repro Reducer"
+  short_description: "Reduce failing .bb to a minimal fixture"
+  default_prompt: "Use $bb-repro-reducer to shrink this failing .bb program to a minimal repro using the compile-and-run harness, then classify the likely compiler stage."
+

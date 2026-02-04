@@ -11,7 +11,12 @@
  */
 
 type InitMessage = { type: "init" };
-type CompileMessage = { type: "compile"; id: number; source: string };
+type CompileMessage = {
+  type: "compile";
+  id: number;
+  source: string;
+  emitWat?: boolean;
+};
 type MainToWorker = InitMessage | CompileMessage;
 
 type ReadyMessage = { type: "ready" };
@@ -42,6 +47,8 @@ let compilerInstance: WebAssembly.Instance | null = null;
 let memory: WebAssembly.Memory | null = null;
 let optionsPtr = 0;
 let optionsLen = 0;
+let optionsWatPtr = 0;
+let optionsWatLen = 0;
 
 type CompilerJsonResult = {
   success: boolean;
@@ -348,8 +355,17 @@ async function initCompiler() {
     commandBuffer: false,
     autoImports,
   });
+  const optionsWatJSON = JSON.stringify({
+    optimize: true,
+    debugInfo: true,
+    sourceMap: false,
+    commandBuffer: false,
+    emitWat: true,
+    autoImports,
+  });
 
   const optionsBytes = new TextEncoder().encode(optionsJSON);
+  const optionsWatBytes = new TextEncoder().encode(optionsWatJSON);
   const malloc = (compilerInstance.exports as any).malloc as
     | ((n: number) => number)
     | undefined;
@@ -357,6 +373,12 @@ async function initCompiler() {
     optionsLen = optionsBytes.length;
     optionsPtr = malloc(optionsLen);
     new Uint8Array(memory.buffer, optionsPtr, optionsLen).set(optionsBytes);
+
+    optionsWatLen = optionsWatBytes.length;
+    optionsWatPtr = malloc(optionsWatLen);
+    new Uint8Array(memory.buffer, optionsWatPtr, optionsWatLen).set(
+      optionsWatBytes,
+    );
   }
 
   // Best-effort Swift runtime init.
@@ -369,6 +391,7 @@ async function initCompiler() {
 
 function compileSource(
   source: string,
+  { emitWat = false }: { emitWat?: boolean } = {},
 ): { ok: true; result: Record<string, unknown>; wasmBytes?: Uint8Array } {
   if (!compilerInstance) throw new Error("Compiler not initialized");
 
@@ -403,11 +426,13 @@ function compileSource(
     }
 
     try {
+      const optsPtr = emitWat && optionsWatPtr ? optionsWatPtr : optionsPtr;
+      const optsLen = emitWat && optionsWatPtr ? optionsWatLen : optionsLen;
       const ret = compileFunc(
         sourcePtr,
         sourceBytes.length,
-        optionsPtr ? optionsPtr : 0,
-        optionsLen | 0,
+        optsPtr ? optsPtr : 0,
+        optsLen | 0,
         resultPtrPtr,
         resultLenPtr,
       );
@@ -461,7 +486,7 @@ ctx.onmessage = async (ev: MessageEvent<MainToWorker>) => {
     if (msg.type === "compile") {
       const id = msg.id;
       const source = String(msg.source ?? "");
-      const compiled = compileSource(source);
+      const compiled = compileSource(source, { emitWat: Boolean(msg.emitWat) });
       if (compiled.wasmBytes) {
         // Send a detached, exact-length ArrayBuffer (avoid TypedArray view quirks).
         const buf = compiled.wasmBytes.buffer.slice(

@@ -26,13 +26,19 @@ import { Blitz3DCore } from "./src/runtime/core.ts";
 import { Blitz3DFileIO } from "./src/runtime/fileio.ts";
 import { Blitz3DGraphics } from "./src/runtime/graphics/index.ts";
 import { stubMissingImports } from "./src/shared/wasm_imports.ts";
+import { highlightBlitzBasicToHtml } from "./interpreter_syntax.ts";
+import {
+  formatHexDump,
+  isAllZero,
+  parseByteOffset,
+} from "./interpreter_memory.ts";
 
 // Interpreter-only: allow loading raw source model formats from the in-page VFS.
 // Track B production builds should still prefer `.smpk` at runtime.
 globalThis.__BLITZ3D_ALLOW_SOURCE_MODELS = true;
 globalThis.__BLITZ3D_INTERPRETER_AUTOFRAME = true;
 
-type TabName = "output" | "canvas";
+type TabName = "output" | "debug" | "canvas";
 type OutputLineKind = "info" | "success" | "warning" | "error" | "output";
 
 type VfsRecord = { bytes: Uint8Array; mime: string };
@@ -61,12 +67,18 @@ type CompileResult = {
   wasmBytes?: ArrayBuffer;
   size?: number;
   bbdbg?: unknown;
+  wat?: string;
 };
 
 type CompilerInitMessage = { type: "init" };
 type CompilerReadyMessage = { type: "ready" };
 type CompilerErrorMessage = { type: "error"; message: string; stack?: string };
-type CompilerCompileMessage = { type: "compile"; id: number; source: string };
+type CompilerCompileMessage = {
+  type: "compile";
+  id: number;
+  source: string;
+  emitWat?: boolean;
+};
 type CompilerCompileResultMessage =
   | {
     type: "compile_result";
@@ -92,6 +104,14 @@ type RunnerWorkerToMainMessage =
   | { type: "stdout"; line: string }
   | { type: "warn"; line: string }
   | { type: "error"; message: string; stack?: string }
+  | {
+    type: "debug_state";
+    stepping: boolean;
+    paused: boolean;
+    reason?: string;
+    fileId?: number;
+    line?: number;
+  }
   | {
     type: "wasm_diag";
     importsTotal: number;
@@ -166,6 +186,17 @@ let bbdbgRenderQueued = false;
 let bbdbgEnabled = true;
 let bbdbgSavedWasmSha256: string | null = null;
 let bbdbgSavedAtMs: number | null = null;
+let bbdbgBreakpointsByFileId = new Map<number, Set<number>>();
+let bbdbgBreakpointHitThisStep = false;
+let bbdbgBreakpointLastHit: { fileId: number; line: number } | null = null;
+
+let debugSteppingActive = false;
+let debugSteppingPaused = false;
+let debugSteppingStepOnce = false;
+let debugSteppingTick: (() => void) | null = null;
+
+let watTextFull: string | null = null;
+const WAT_PREVIEW_MAX_CHARS = 200_000;
 
 type StoredBbdbgRecord = {
   wasmSha256: string;
@@ -289,12 +320,139 @@ const setBbdbgMetadata = (bbdbg: unknown): void => {
   scheduleBbdbgRender();
 };
 
+const bbdbgPrimaryFileId = (): number => {
+  if (bbdbgMeta.fileById.size === 1) {
+    const first = bbdbgMeta.fileById.keys().next();
+    if (!first.done && typeof first.value === "number") return first.value | 0;
+  }
+  if (bbdbgLastFileId > 0) return bbdbgLastFileId | 0;
+  const next = bbdbgMeta.fileById.keys().next();
+  if (!next.done && typeof next.value === "number") return next.value | 0;
+  return 1;
+};
+
+const bbdbgBreakpointSetForPrimaryFile = (): Set<number> | null => {
+  const fid = bbdbgPrimaryFileId();
+  return bbdbgBreakpointsByFileId.get(fid) ?? null;
+};
+
+const toggleBreakpointAtLine = (line: number): void => {
+  const ln = line | 0;
+  if (ln <= 0) return;
+  const fid = bbdbgPrimaryFileId();
+  const existing = bbdbgBreakpointsByFileId.get(fid);
+  const set = existing ? new Set(existing) : new Set<number>();
+  if (set.has(ln)) set.delete(ln);
+  else set.add(ln);
+  if (set.size > 0) bbdbgBreakpointsByFileId.set(fid, set);
+  else bbdbgBreakpointsByFileId.delete(fid);
+  postRunnerWorkerBreakpoints();
+  scheduleBbdbgRender();
+  scheduleEditorDecorRender();
+};
+
+const clearAllBreakpoints = (): void => {
+  bbdbgBreakpointsByFileId.clear();
+  postRunnerWorkerBreakpoints();
+  scheduleBbdbgRender();
+  scheduleEditorDecorRender();
+};
+
+const serializeBreakpointsByFileId = (): Record<string, number[]> => {
+  const out: Record<string, number[]> = {};
+  for (const [fid, set] of bbdbgBreakpointsByFileId.entries()) {
+    out[String(fid | 0)] = [...set].map((n) => n | 0).filter((n) => n > 0)
+      .sort((a, b) => a - b);
+  }
+  return out;
+};
+
+const postRunnerWorkerBreakpoints = (): void => {
+  if (!runnerWorker) return;
+  if (getActiveMemory()) return; // main-thread run uses local hooks
+  runnerWorker.postMessage({
+    type: "debug_breakpoints",
+    breakpointsByFileId: serializeBreakpointsByFileId(),
+  });
+};
+
+const updateBbdbgButtons = (): void => {
+  const active = debugSteppingActive || workerDebugSteppingActive;
+  const paused = debugSteppingActive
+    ? debugSteppingPaused
+    : (workerDebugSteppingActive ? workerDebugPaused : false);
+  bbdbgPauseBtnEl.disabled = !active || paused;
+  bbdbgContinueBtnEl.disabled = !active || !paused;
+  bbdbgStepBtnEl.disabled = !active || !paused;
+};
+
 const bbdbgLocString = (fileId: number, line: number): string => {
   const fid = fileId | 0;
   const l = line | 0;
   const file = bbdbgMeta.fileById.get(fid) ?? `file_${fid}`;
   return `${file}:${l}`;
 };
+
+function pauseStepping(reason: string): void {
+  if (!debugSteppingActive || debugSteppingPaused) return;
+  debugSteppingPaused = true;
+  if (sharedStepRaf) {
+    try {
+      cancelAnimationFrame(sharedStepRaf);
+    } catch {}
+    sharedStepRaf = 0;
+  }
+  setStatus("paused", reason || "Paused");
+  updateBbdbgButtons();
+  scheduleBbdbgRender();
+}
+
+function resumeStepping(): void {
+  if (!debugSteppingActive || !debugSteppingPaused) return;
+  debugSteppingPaused = false;
+  setStatus("running", "Running (main thread)...");
+  updateBbdbgButtons();
+  if (debugSteppingTick) sharedStepRaf = requestAnimationFrame(debugSteppingTick);
+}
+
+function stepOnce(): void {
+  if (!debugSteppingActive || !debugSteppingPaused) return;
+  debugSteppingStepOnce = true;
+  debugSteppingPaused = false;
+  setStatus("running", "Stepping...");
+  updateBbdbgButtons();
+  if (debugSteppingTick) sharedStepRaf = requestAnimationFrame(debugSteppingTick);
+}
+
+function requestWorkerDebugPause(): void {
+  if (!runnerWorker) return;
+  runnerWorker.postMessage({ type: "debug_pause" });
+}
+
+function requestWorkerDebugContinue(): void {
+  if (!runnerWorker) return;
+  runnerWorker.postMessage({ type: "debug_continue" });
+}
+
+function requestWorkerDebugStep(): void {
+  if (!runnerWorker) return;
+  runnerWorker.postMessage({ type: "debug_step" });
+}
+
+function requestDebugPause(): void {
+  if (debugSteppingActive) pauseStepping("Paused");
+  else if (workerDebugSteppingActive) requestWorkerDebugPause();
+}
+
+function requestDebugContinue(): void {
+  if (debugSteppingActive) resumeStepping();
+  else if (workerDebugSteppingActive) requestWorkerDebugContinue();
+}
+
+function requestDebugStep(): void {
+  if (debugSteppingActive) stepOnce();
+  else if (workerDebugSteppingActive) requestWorkerDebugStep();
+}
 
 const renderBbdbgPanel = (): void => {
   bbdbgRenderQueued = false;
@@ -304,6 +462,17 @@ const renderBbdbgPanel = (): void => {
   const lastLoc = (bbdbgLastFileId > 0 && bbdbgLastLine > 0)
     ? bbdbgLocString(bbdbgLastFileId, bbdbgLastLine)
     : "";
+  const bp = bbdbgBreakpointSetForPrimaryFile();
+  const bpCount = bp?.size ?? 0;
+  const mode = debugSteppingActive
+    ? (debugSteppingPaused
+      ? " Debug: paused (main thread)."
+      : " Debug: running (main thread).")
+    : workerDebugSteppingActive
+    ? (workerDebugPaused
+      ? " Debug: paused (sandbox worker)."
+      : " Debug: running (sandbox worker).")
+    : " Debug: idle (Pause/Step require a program that exports __Step%()).";
 
   const saved = bbdbgSavedWasmSha256
     ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${
@@ -314,8 +483,20 @@ const renderBbdbgPanel = (): void => {
   bbdbgSummaryEl.textContent = hasMeta
     ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
       lastLoc || "(none)"
-    }.${saved}`
-    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}.${saved}`;
+    }. Breakpoints: ${bpCount}.${mode}${saved}`
+    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}. Breakpoints: ${bpCount}.${mode}${saved}`;
+
+  if (!bpCount) {
+    bbdbgBreakpointsEl.textContent =
+      "Breakpoints: (none) — click the line gutter to toggle.";
+    bbdbgBreakpointsEl.classList.add("empty");
+  } else {
+    bbdbgBreakpointsEl.classList.remove("empty");
+    const lines = [...(bp ?? [])].sort((a, b) => a - b).slice(0, 200);
+    bbdbgBreakpointsEl.innerHTML = lines
+      .map((ln) => `<button class="bbdbg-bp" data-line="${ln}">${ln}</button>`)
+      .join("");
+  }
 
   const stack = bbdbgStack.length ? bbdbgStack.slice().reverse() : [];
   if (!stack.length) {
@@ -344,6 +525,7 @@ const renderBbdbgPanel = (): void => {
   }
 
   setEditorExecLine(bbdbgEnabled ? bbdbgLastLine : 0);
+  updateBbdbgButtons();
 };
 
 const scheduleBbdbgRender = (): void => {
@@ -360,6 +542,65 @@ const resetBbdbgState = (): void => {
   renderBbdbgPanel();
   setEditorExecLine(0);
 };
+
+function setWatText(next: string | null): void {
+  watTextFull = next ? String(next) : null;
+  renderWatPanel();
+}
+
+function renderWatPanel(): void {
+  const enabled = Boolean(watEnabledEl.checked);
+  const text = watTextFull;
+
+  if (!enabled && !text) {
+    watSummaryEl.textContent =
+      "WAT capture disabled. Enable “Emit on compile” and click Run.";
+    watCodeEl.textContent = "";
+    watCopyBtnEl.disabled = true;
+    watDownloadBtnEl.disabled = true;
+    return;
+  }
+
+  if (!text) {
+    watSummaryEl.textContent = enabled
+      ? "No WAT yet. Click Run to compile with WAT enabled."
+      : "No WAT yet.";
+    watCodeEl.textContent = "";
+    watCopyBtnEl.disabled = true;
+    watDownloadBtnEl.disabled = true;
+    return;
+  }
+
+  const truncated = text.length > WAT_PREVIEW_MAX_CHARS;
+  const preview = truncated ? text.slice(0, WAT_PREVIEW_MAX_CHARS) : text;
+  watSummaryEl.textContent = truncated
+    ? `WAT: ${text.length} chars (showing first ${WAT_PREVIEW_MAX_CHARS}).`
+    : `WAT: ${text.length} chars.`;
+  watCodeEl.textContent = preview;
+  watCopyBtnEl.disabled = false;
+  watDownloadBtnEl.disabled = false;
+}
+
+async function copyWat(): Promise<void> {
+  if (!watTextFull) {
+    printOutput("No WAT to copy.", "warning");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(watTextFull);
+    printOutput("WAT copied to clipboard.", "success");
+  } catch (err) {
+    printOutput(`Copy failed: ${errorMessage(err)}`, "error");
+  }
+}
+
+function downloadWat(): void {
+  if (!watTextFull) {
+    printOutput("No WAT to download.", "warning");
+    return;
+  }
+  downloadTextFile("program.wat", watTextFull, "text/plain");
+}
 
 const copyBbdbgSnapshot = async (): Promise<void> => {
   try {
@@ -648,9 +889,14 @@ const stubsClearBtnEl = mustGetEl<HTMLButtonElement>("stubs-clear-btn");
 const stubsCopyBtnEl = mustGetEl<HTMLButtonElement>("stubs-copy-btn");
 const stubsExportBtnEl = mustGetEl<HTMLButtonElement>("stubs-export-btn");
 const bbdbgSummaryEl = mustGetEl<HTMLDivElement>("bbdbg-summary");
+const bbdbgBreakpointsEl = mustGetEl<HTMLDivElement>("bbdbg-breakpoints");
 const bbdbgStackEl = mustGetEl<HTMLDivElement>("bbdbg-stack");
 const bbdbgTraceEl = mustGetEl<HTMLDivElement>("bbdbg-trace");
 const bbdbgEnabledEl = mustGetEl<HTMLInputElement>("bbdbg-enabled");
+const bbdbgPauseBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-pause-btn");
+const bbdbgContinueBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-continue-btn");
+const bbdbgStepBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-step-btn");
+const bbdbgClearBpsBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-clear-bps-btn");
 const bbdbgClearBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-clear-btn");
 const bbdbgCopyBtnEl = mustGetEl<HTMLButtonElement>("bbdbg-copy-btn");
 const bbdbgDownloadMetaBtnEl = mustGetEl<HTMLButtonElement>(
@@ -675,6 +921,12 @@ const memAutoEl = mustGetEl<HTMLInputElement>("mem-auto");
 const memRefreshBtnEl = mustGetEl<HTMLButtonElement>("mem-refresh-btn");
 const memSummaryEl = mustGetEl<HTMLDivElement>("mem-summary");
 const memDumpEl = mustGetEl<HTMLPreElement>("mem-dump");
+const watEnabledEl = mustGetEl<HTMLInputElement>("wat-enabled");
+const watClearBtnEl = mustGetEl<HTMLButtonElement>("wat-clear-btn");
+const watCopyBtnEl = mustGetEl<HTMLButtonElement>("wat-copy-btn");
+const watDownloadBtnEl = mustGetEl<HTMLButtonElement>("wat-download-btn");
+const watSummaryEl = mustGetEl<HTMLDivElement>("wat-summary");
+const watCodeEl = mustGetEl<HTMLPreElement>("wat-code");
 
 let editorDecorQueued = false;
 let editorExecLine = 0;
@@ -705,6 +957,8 @@ let workerBbdbgLast: {
   stack: number[];
   updatedAtMs: number;
 } | null = null;
+let workerDebugSteppingActive = false;
+let workerDebugPaused = false;
 
 // --- VFS (interpreter-only) ---
 const vfs = new Map<string, VfsRecord>(); // normalizedPath -> bytes/mime
@@ -966,6 +1220,17 @@ Print "asc=" + Asc("Z")`,
 ; This example is meant to exercise bbdbg function enter/leave and statement trace.
 ; It also allocates many strings (useful for the WASM Memory panel).
 
+Global g_i% = 1
+Global g_total% = 0
+Global g_inited% = 0
+
+Function Init%()
+  SeedRnd 123
+  g_i = 1
+  g_total = 0
+  g_inited = 1
+End Function
+
 Function Add%(a%, b%)
   Return a + b
 End Function
@@ -977,19 +1242,17 @@ Function MakeMsg$(i%)
   Return s$
 End Function
 
-Function Work%()
-  SeedRnd 123
-  Local total% = 0
-  Local i%
-  For i = 1 To 25
-    total% = total% + i
-    Print MakeMsg(i)
-  Next
-  Return total%
-End Function
-
-Local t% = Work()
-Print "total=" + t`,
+Function __Step%()
+  If g_inited = 0 Then Init()
+  If g_i <= 25 Then
+    g_total = g_total + g_i
+    Print MakeMsg(g_i)
+    g_i = g_i + 1
+    Return 0
+  EndIf
+  Print "total=" + g_total
+  End
+End Function`,
 
   debugStubs: `; Debug: Runtime Gaps (prints only)
 ;
@@ -1558,7 +1821,7 @@ const exampleInfo: Record<string, ExampleInfo> = {
   stringsMath: { title: "Strings + Math", prefersTab: "output" },
   debugCallStack: {
     title: "Debug: Call Stack",
-    prefersTab: "output",
+    prefersTab: "debug",
     notes: [
       "Watch the Debug (bbdbg) panel update with a stack + recent trace.",
       "The WASM Memory panel should also show changing heap contents.",
@@ -1566,7 +1829,7 @@ const exampleInfo: Record<string, ExampleInfo> = {
   },
   debugStubs: {
     title: "Debug: Runtime Gaps",
-    prefersTab: "output",
+    prefersTab: "debug",
     notes: [
       "This intentionally calls unknown functions to generate stubbed imports.",
       "If bbdbg stmt hooks are present, the stubs panel should capture call sites.",
@@ -1574,7 +1837,7 @@ const exampleInfo: Record<string, ExampleInfo> = {
   },
   memoryArray: {
     title: "Debug: Memory (Array Fill)",
-    prefersTab: "output",
+    prefersTab: "debug",
     notes: [
       "This fills a large integer array so memory dumps show non-zero data.",
       "Try the WASM Memory panel with Auto enabled while it runs.",
@@ -1727,254 +1990,7 @@ function escapeHtml(s: string): string {
 }
 
 // --- EDITOR (syntax highlighting + line numbers) ---
-const blitzKeywords = new Set(
-  [
-    "if",
-    "then",
-    "else",
-    "elseif",
-    "endif",
-    "select",
-    "case",
-    "default",
-    "endselect",
-    "for",
-    "to",
-    "step",
-    "next",
-    "while",
-    "wend",
-    "repeat",
-    "until",
-    "forever",
-    "exit",
-    "continue",
-    "gosub",
-    "goto",
-    "return",
-    "function",
-    "endfunction",
-    "type",
-    "endtype",
-    "field",
-    "new",
-    "delete",
-    "first",
-    "last",
-    "after",
-    "before",
-    "dim",
-    "local",
-    "global",
-    "const",
-    "include",
-    "data",
-    "read",
-    "restore",
-    "true",
-    "false",
-    "null",
-    "and",
-    "or",
-    "not",
-    "xor",
-    "mod",
-  ],
-);
-
-const blitzBuiltins = new Set(
-  [
-    // common across demos
-    "print",
-    "debuglog",
-    "graphics3d",
-    "setbuffer",
-    "backbuffer",
-    "frontbuffer",
-    "flip",
-    "cls",
-    "appterminate",
-    "keyhit",
-    "keydown",
-    "mousex",
-    "mousey",
-    "mousehit",
-    "createcamera",
-    "createcube",
-    "createsphere",
-    "createlight",
-    "positionentity",
-    "rotateentity",
-    "scaleentity",
-    "entitycolor",
-    "entityalpha",
-    "entityfx",
-    "cameraclscolor",
-    "camerazoom",
-    "camerafogmode",
-    "camerafogrange",
-    "camerafogcolor",
-    "renderworld",
-    "loadtexture",
-    "loadimage",
-    "drawimage",
-    "text",
-    "color",
-    "rect",
-    "line",
-    "sin",
-    "cos",
-    "tan",
-    "abs",
-    "sqrt",
-    "rand",
-    "seedrnd",
-    "millisecs",
-  ],
-);
-
-const isWordChar = (c: string): boolean => /[A-Za-z0-9_]/.test(c);
-
-function highlightBlitzBasicToHtml(
-  source: string,
-): { html: string; lineCount: number } {
-  const normalized = String(source || "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-  const lines = normalized.split("\n");
-  const out: string[] = [];
-  let inRemBlock = false;
-
-  for (const lineRaw of lines) {
-    const line = String(lineRaw ?? "");
-    const trimmed = line.trimStart();
-
-    if (inRemBlock) {
-      out.push(`<span class="tok comment">${escapeHtml(line)}</span>`);
-      if (/^end\s*rem\b/i.test(trimmed)) inRemBlock = false;
-      continue;
-    }
-
-    if (/^rem\b/i.test(trimmed)) {
-      inRemBlock = true;
-      out.push(`<span class="tok comment">${escapeHtml(line)}</span>`);
-      continue;
-    }
-
-    out.push(highlightBlitzBasicLine(line));
-  }
-
-  return { html: out.join("\n"), lineCount: lines.length };
-}
-
-function highlightBlitzBasicLine(line: string): string {
-  let i = 0;
-  let out = "";
-
-  const emit = (cls: string, text: string) => {
-    if (!text) return;
-    out += `<span class="tok ${cls}">${escapeHtml(text)}</span>`;
-  };
-  const emitRaw = (text: string) => {
-    if (!text) return;
-    out += escapeHtml(text);
-  };
-
-  while (i < line.length) {
-    const ch = line[i]!;
-
-    // Strings: " ... "
-    if (ch === "\"") {
-      let j = i + 1;
-      while (j < line.length) {
-        if (line[j] === "\"") {
-          // allow "" inside a string
-          if (line[j + 1] === "\"") {
-            j += 2;
-            continue;
-          }
-          j += 1;
-          break;
-        }
-        j += 1;
-      }
-      emit("string", line.slice(i, j));
-      i = j;
-      continue;
-    }
-
-    // Line comments: ' or ;
-    if (ch === "'" || ch === ";") {
-      emit("comment", line.slice(i));
-      break;
-    }
-
-    // Whitespace
-    if (ch === " " || ch === "\t") {
-      let j = i + 1;
-      while (j < line.length && (line[j] === " " || line[j] === "\t")) j++;
-      emitRaw(line.slice(i, j));
-      i = j;
-      continue;
-    }
-
-    // Numbers (decimal / float) + optional sign.
-    if (ch === "-" || ch === "+" || (ch >= "0" && ch <= "9")) {
-      const next = line[i + 1] ?? "";
-      const isNumStart = (ch >= "0" && ch <= "9") ||
-        ((ch === "-" || ch === "+") && (next >= "0" && next <= "9"));
-      if (isNumStart) {
-        let j = i + 1;
-        while (j < line.length && /[0-9.]/.test(line[j]!)) j++;
-        emit("number", line.slice(i, j));
-        i = j;
-        continue;
-      }
-    }
-
-    // Hex numbers: $FF
-    if (ch === "$") {
-      let j = i + 1;
-      while (j < line.length && /[0-9a-fA-F]/.test(line[j]!)) j++;
-      emit("number", line.slice(i, j));
-      i = j;
-      continue;
-    }
-
-    // Identifiers / keywords / builtins (with optional type suffixes).
-    if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z") || ch === "_") {
-      let j = i + 1;
-      while (j < line.length && isWordChar(line[j]!)) j++;
-      // type suffixes ($ % # !)
-      if (j < line.length && /[$%#!]/.test(line[j]!)) j++;
-      const raw = line.slice(i, j);
-      const core = raw.replace(/[$%#!]$/, "");
-      const lower = core.toLowerCase();
-
-      if (lower === "type" || lower === "endtype") {
-        emit("type", raw);
-      } else if (blitzKeywords.has(lower)) {
-        emit("keyword", raw);
-      } else if (blitzBuiltins.has(lower)) {
-        emit("builtin", raw);
-      } else {
-        emit("ident", raw);
-      }
-      i = j;
-      continue;
-    }
-
-    // Operators/punct
-    if (/[*\\/=<>()\\[\\],.:^]/.test(ch)) {
-      emit("operator", ch);
-      i += 1;
-      continue;
-    }
-
-    emitRaw(ch);
-    i += 1;
-  }
-
-  return out;
-}
+// (Syntax highlighting implementation lives in interpreter_syntax.ts)
 
 function enableEditorEnhancements(): void {
   document.body.classList.add("editor-enhanced");
@@ -1999,9 +2015,16 @@ function renderEditorDecor(): void {
 
 function renderEditorGutter(lineCount: number): void {
   const n = Math.max(1, lineCount | 0);
+  const bps = bbdbgBreakpointSetForPrimaryFile();
   const parts: string[] = [];
   for (let i = 1; i <= n; i++) {
-    const cls = i === editorExecLine ? "editor-linenum exec" : "editor-linenum";
+    const isExec = i === editorExecLine;
+    const isBp = Boolean(bps && bps.has(i));
+    const cls = [
+      "editor-linenum",
+      isExec ? "exec" : "",
+      isBp ? "breakpoint" : "",
+    ].filter(Boolean).join(" ");
     parts.push(`<div class="${cls}" data-line="${i}">${i}</div>`);
   }
   editorGutterEl.innerHTML = parts.join("");
@@ -2037,14 +2060,6 @@ function jumpToEditorLine(line: number): void {
 }
 
 // --- WASM MEMORY VIEWER (main-thread runtime only) ---
-function parseByteOffset(s: string): number {
-  const t = String(s ?? "").trim().toLowerCase();
-  if (!t) return 0;
-  if (t.startsWith("0x")) return Number.parseInt(t.slice(2), 16) || 0;
-  if (t.startsWith("$")) return Number.parseInt(t.slice(1), 16) || 0;
-  return Number.parseInt(t, 10) || 0;
-}
-
 function getActiveMemory(): WebAssembly.Memory | null {
   const mem: WebAssembly.Memory | undefined =
     sharedCore?.memory ||
@@ -2055,11 +2070,6 @@ function getActiveMemory(): WebAssembly.Memory | null {
 function resetWorkerMemSnapshot(): void {
   workerMemInFlight = false;
   workerMemSnapshot = null;
-}
-
-function isAllZero(bytes: Uint8Array): boolean {
-  for (let i = 0; i < bytes.length; i++) if (bytes[i] !== 0) return false;
-  return true;
 }
 
 function requestWorkerMemorySnapshot(force = false): void {
@@ -2183,20 +2193,6 @@ function renderMemoryPanel(): void {
   memDumpEl.textContent = formatHexDump(view, start);
 }
 
-function formatHexDump(bytes: Uint8Array, baseOffset: number): string {
-  const lines: string[] = [];
-  const row = 16;
-  for (let i = 0; i < bytes.length; i += row) {
-    const off = (baseOffset + i) >>> 0;
-    const slice = bytes.subarray(i, Math.min(bytes.length, i + row));
-    const hex = [...slice].map((b) => b.toString(16).padStart(2, "0")).join(" ");
-    const pad = "   ".repeat(row - slice.length);
-    const ascii = [...slice].map((b) => (b >= 32 && b <= 126) ? String.fromCharCode(b) : ".").join("");
-    lines.push(`${off.toString(16).padStart(8, "0")}: ${hex}${pad}  |${ascii}|`);
-  }
-  return lines.join("\n");
-}
-
 function stopMemoryAutoRefresh(): void {
   if (memAutoTimer !== null) {
     clearInterval(memAutoTimer);
@@ -2238,9 +2234,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   bbdbgEnabledEl.checked = true;
   resetBbdbgState();
   renderMemoryPanel();
+  renderWatPanel();
+  updateBbdbgButtons();
 
-  await initCompiler();
   setupEventListeners();
+  await initCompiler();
 });
 
 function setupEventListeners() {
@@ -2250,11 +2248,17 @@ function setupEventListeners() {
   editorEl.addEventListener("input", () => scheduleEditorDecorRender());
   editorEl.addEventListener("scroll", () => syncEditorScroll());
   editorGutterEl.addEventListener("click", (e) => {
+    const ev = e as MouseEvent;
     const target = e.target as HTMLElement | null;
     const lineEl = target?.closest?.(".editor-linenum") as HTMLElement | null;
     const raw = lineEl?.getAttribute?.("data-line") ?? "";
     const line = Number(raw) | 0;
-    if (line > 0) jumpToEditorLine(line);
+    if (line <= 0) return;
+    if (ev.metaKey || ev.ctrlKey) {
+      jumpToEditorLine(line);
+      return;
+    }
+    toggleBreakpointAtLine(line);
   });
   stubsClearBtnEl.addEventListener("click", () => resetRuntimeGaps());
   stubsCopyBtnEl.addEventListener("click", () => void copyRuntimeGaps());
@@ -2263,6 +2267,10 @@ function setupEventListeners() {
     bbdbgEnabled = Boolean(bbdbgEnabledEl.checked);
     scheduleBbdbgRender();
   });
+  bbdbgPauseBtnEl.addEventListener("click", () => requestDebugPause());
+  bbdbgContinueBtnEl.addEventListener("click", () => requestDebugContinue());
+  bbdbgStepBtnEl.addEventListener("click", () => requestDebugStep());
+  bbdbgClearBpsBtnEl.addEventListener("click", () => clearAllBreakpoints());
   bbdbgClearBtnEl.addEventListener("click", () => resetBbdbgState());
   bbdbgCopyBtnEl.addEventListener("click", () => void copyBbdbgSnapshot());
   bbdbgDownloadMetaBtnEl.addEventListener(
@@ -2273,6 +2281,19 @@ function setupEventListeners() {
     "click",
     () => void loadSavedBbdbgMetadata(),
   );
+  bbdbgBreakpointsEl.addEventListener("click", (e) => {
+    const ev = e as MouseEvent;
+    const target = e.target as HTMLElement | null;
+    const btn = target?.closest?.(".bbdbg-bp") as HTMLElement | null;
+    const raw = btn?.getAttribute?.("data-line") ?? "";
+    const line = Number(raw) | 0;
+    if (line <= 0) return;
+    if (ev.metaKey || ev.ctrlKey) {
+      toggleBreakpointAtLine(line);
+      return;
+    }
+    jumpToEditorLine(line);
+  });
   memRefreshBtnEl.addEventListener("click", () => {
     if (runnerWorker && !getActiveMemory()) requestWorkerMemorySnapshot(true);
     postWorkerMemConfig();
@@ -2294,11 +2315,15 @@ function setupEventListeners() {
     postWorkerMemConfig();
     applyMemoryAutoRefresh();
   });
+  watEnabledEl.addEventListener("change", () => renderWatPanel());
+  watClearBtnEl.addEventListener("click", () => setWatText(null));
+  watCopyBtnEl.addEventListener("click", () => void copyWat());
+  watDownloadBtnEl.addEventListener("click", () => downloadWat());
 
   for (const tabBtn of document.querySelectorAll<HTMLButtonElement>(".tab")) {
     tabBtn.addEventListener("click", () => {
       const tab = (tabBtn.dataset.tab ?? "") as TabName | "";
-      if (tab === "output" || tab === "canvas") showTab(tab);
+      if (tab === "output" || tab === "debug" || tab === "canvas") showTab(tab);
     });
   }
 
@@ -2351,6 +2376,15 @@ function stopExecution() {
   stopMemoryAutoRefresh();
   disposeSharedRuntime();
   isRunning = false;
+  debugSteppingActive = false;
+  debugSteppingPaused = false;
+  debugSteppingStepOnce = false;
+  debugSteppingTick = null;
+  bbdbgBreakpointHitThisStep = false;
+  bbdbgBreakpointLastHit = null;
+  workerDebugSteppingActive = false;
+  workerDebugPaused = false;
+  updateBbdbgButtons();
   if (runnerWatchdog !== null) {
     clearTimeout(runnerWatchdog);
     runnerWatchdog = null;
@@ -2433,6 +2467,16 @@ function makeRunnerWorker(): Worker {
       let bbdbgLastFileId = 0;
       let bbdbgLastLine = 0;
       let bbdbgLastSent = 0;
+      let debugStepping = false;
+      let debugPaused = false;
+      let debugStepOnce = false;
+      let debugLooping = false;
+      let debugEntryFn = null;
+      let debugStepFn = null;
+      let debugBreakpointHit = false;
+      let debugBreakpointFileId = 0;
+      let debugBreakpointLine = 0;
+      const breakpointsByFileId = new Map();
       const send = (msg, transfer) => {
         try {
           if (Array.isArray(transfer) && transfer.length) self.postMessage(msg, transfer);
@@ -2594,6 +2638,82 @@ function makeRunnerWorker(): Worker {
       const maybeSendBbdbg = () => sendBbdbg(false);
       const sendBbdbgNow = () => sendBbdbg(true);
 
+      const sendDebugState = (reason) => {
+        try {
+          send({
+            type: "debug_state",
+            stepping: Boolean(debugStepping),
+            paused: Boolean(debugPaused),
+            reason: reason ? String(reason) : "",
+            fileId: bbdbgLastFileId | 0,
+            line: bbdbgLastLine | 0,
+          });
+        } catch {}
+      };
+
+      const setBreakpoints = (bpObj) => {
+        breakpointsByFileId.clear();
+        try {
+          const entries = Object.entries(bpObj || {});
+          for (const [k, arr] of entries) {
+            const fid = Number(k) | 0;
+            if (fid <= 0) continue;
+            const set = new Set();
+            const list = Array.isArray(arr) ? arr : [];
+            for (const ln of list) {
+              const n = Number(ln) | 0;
+              if (n > 0) set.add(n);
+            }
+            if (set.size > 0) breakpointsByFileId.set(fid, set);
+          }
+        } catch {}
+      };
+
+      const tick = () => {
+        debugLooping = false;
+        if (!debugStepping || typeof debugStepFn !== "function") return;
+        if (debugPaused) {
+          try { sendDebugState(""); } catch {}
+          return;
+        }
+
+        debugBreakpointHit = false;
+        debugBreakpointFileId = 0;
+        debugBreakpointLine = 0;
+
+        try {
+          debugStepFn();
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          const stack = e instanceof Error ? e.stack : "";
+          if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+            debugStepping = false;
+            debugPaused = false;
+            debugStepOnce = false;
+            debugStepFn = null;
+            debugEntryFn = null;
+            try { sendDebugState("ended"); } catch {}
+            send({ type: "done" });
+            return;
+          }
+          send({ type: "error", message: msg, stack });
+          return;
+        }
+
+        try { maybeSendMemAuto(); } catch {}
+        try { maybeSendBbdbg(); } catch {}
+
+        if (debugStepOnce || debugBreakpointHit) {
+          debugStepOnce = false;
+          debugPaused = true;
+          try { sendDebugState(debugBreakpointHit ? "breakpoint" : "step"); } catch {}
+          return;
+        }
+
+        debugLooping = true;
+        setTimeout(tick, 0);
+      };
+
       const stubMissingImports = (imports, module) => {
         const stubbedLimit = 200;
         const shown = [];
@@ -2674,8 +2794,62 @@ function makeRunnerWorker(): Worker {
           return;
         }
 
+        if (ev.data && ev.data.type === "debug_breakpoints") {
+          try {
+            setBreakpoints(ev.data.breakpointsByFileId);
+          } catch {}
+          return;
+        }
+
+        if (ev.data && ev.data.type === "debug_pause") {
+          if (debugStepping) {
+            debugPaused = true;
+            sendDebugState("");
+          }
+          return;
+        }
+
+        if (ev.data && ev.data.type === "debug_continue") {
+          if (debugStepping) {
+            debugPaused = false;
+            debugStepOnce = false;
+            sendDebugState("");
+            const kick = () => {
+              if (!debugStepping || !debugStepFn || debugPaused || debugLooping) return;
+              debugLooping = true;
+              setTimeout(tick, 0);
+            };
+            kick();
+          }
+          return;
+        }
+
+        if (ev.data && ev.data.type === "debug_step") {
+          if (debugStepping) {
+            debugPaused = false;
+            debugStepOnce = true;
+            sendDebugState("");
+            const kick = () => {
+              if (!debugStepping || !debugStepFn || debugPaused || debugLooping) return;
+              debugLooping = true;
+              setTimeout(tick, 0);
+            };
+            kick();
+          }
+          return;
+        }
+
         const { wasmBytes, maxLines } = ev.data;
         let emitted = 0;
+        debugStepping = false;
+        debugPaused = false;
+        debugStepOnce = false;
+        debugLooping = false;
+        debugStepFn = null;
+        debugEntryFn = null;
+        debugBreakpointHit = false;
+        debugBreakpointFileId = 0;
+        debugBreakpointLine = 0;
 
         try {
           const module = await WebAssembly.compile(wasmBytes);
@@ -2720,6 +2894,14 @@ function makeRunnerWorker(): Worker {
             bbdbgCurrentLine = line | 0;
             bbdbgLastFileId = bbdbgCurrentFileId | 0;
             bbdbgLastLine = bbdbgCurrentLine | 0;
+            try {
+              const bp = breakpointsByFileId.get(bbdbgLastFileId | 0);
+              if (bp && bp.has(bbdbgLastLine | 0)) {
+                debugBreakpointHit = true;
+                debugBreakpointFileId = bbdbgLastFileId | 0;
+                debugBreakpointLine = bbdbgLastLine | 0;
+              }
+            } catch {}
             try { maybeSendBbdbg(); } catch {}
           };
 
@@ -2995,6 +3177,43 @@ function makeRunnerWorker(): Worker {
           } catch {}
           try { maybeSendBbdbg(); } catch {}
 
+          const entry = inst.exports.main || inst.exports._start || inst.exports.Main || inst.exports.Main_ || inst.exports.__main;
+          const stepFn = inst.exports.__Step || inst.exports["__Step%"] || inst.exports.Step || inst.exports["Step%"];
+
+          if (typeof stepFn === "function") {
+            debugEntryFn = entry;
+            debugStepFn = stepFn;
+            debugStepping = true;
+            debugPaused = false;
+            debugStepOnce = false;
+            try { sendDebugState(""); } catch {}
+
+            if (typeof debugEntryFn === "function") {
+              try {
+                debugEntryFn();
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                const stack = e instanceof Error ? e.stack : "";
+                if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+                  debugStepping = false;
+                  debugPaused = false;
+                  debugStepOnce = false;
+                  debugStepFn = null;
+                  debugEntryFn = null;
+                  try { sendDebugState("ended"); } catch {}
+                  send({ type: "done" });
+                  return;
+                }
+                send({ type: "error", message: msg, stack });
+                return;
+              }
+            }
+
+            debugLooping = true;
+            setTimeout(tick, 0);
+            return;
+          }
+
           let ran = false;
           for (const name of entryPoints) {
             const fn = inst.exports[name];
@@ -3079,13 +3298,15 @@ async function runWasmBytesInSandbox(
     timeoutMs?: number;
     maxLines?: number;
   } = {},
-): Promise<void> {
+): Promise<{ startedStepping: boolean }> {
   stopExecution();
   resetWorkerMemSnapshot();
   workerBbdbgLast = null;
   workerMemInfo = null;
   memOffsetTouched = false;
   stopBtnEl.disabled = false;
+  workerDebugSteppingActive = false;
+  workerDebugPaused = false;
 
   setStatus(
     "running",
@@ -3097,6 +3318,7 @@ async function runWasmBytesInSandbox(
   renderMemoryPanel();
   applyMemoryAutoRefresh();
   let timeoutReject: ((reason?: unknown) => void) | null = null;
+  let resolvedForStepping = false;
 
       if (timeoutMs > 0) {
         runnerWatchdog = setTimeout(() => {
@@ -3114,10 +3336,40 @@ async function runWasmBytesInSandbox(
         }, timeoutMs);
       }
 
-  await new Promise<void>((resolve, reject) => {
+  return await new Promise<{ startedStepping: boolean }>((resolve, reject) => {
     timeoutReject = reject;
     w.onmessage = (ev: MessageEvent<RunnerWorkerToMainMessage>) => {
       const msg = ev.data;
+      if (msg.type === "debug_state") {
+        workerDebugSteppingActive = Boolean(msg.stepping);
+        workerDebugPaused = Boolean(msg.paused);
+        scheduleBbdbgRender();
+        updateBbdbgButtons();
+        const reason = String(msg.reason || "");
+        if (workerDebugSteppingActive && runnerWatchdog !== null) {
+          // Interactive stepping should not be killed by the overall watchdog.
+          clearTimeout(runnerWatchdog);
+          runnerWatchdog = null;
+        }
+        if (workerDebugSteppingActive) {
+          const fileId = typeof msg.fileId === "number" ? (msg.fileId | 0) : 0;
+          const line = typeof msg.line === "number" ? (msg.line | 0) : 0;
+          const loc = (fileId > 0 && line > 0) ? bbdbgLocString(fileId, line) : "";
+          if (workerDebugPaused) {
+            setStatus("paused", reason || (loc ? `Paused at ${loc}` : "Paused"));
+          } else {
+            setStatus(
+              "running",
+              `Running (sandbox worker)...${loc ? ` @${loc}` : ""}`,
+            );
+          }
+          if (!resolvedForStepping) {
+            resolvedForStepping = true;
+            resolve({ startedStepping: true });
+          }
+        }
+        return;
+      }
       if (msg.type === "wasm_diag") {
         const hooks =
           (msg.hasBbdbgEnter && msg.hasBbdbgLeave && msg.hasBbdbgStmt)
@@ -3255,7 +3507,7 @@ async function runWasmBytesInSandbox(
       }
       if (msg.type === "done") {
         stopRun();
-        resolve();
+        resolve({ startedStepping: false });
       }
     };
 
@@ -3265,6 +3517,7 @@ async function runWasmBytesInSandbox(
     };
 
     const bytes = normalizeWasmBytes(wasmBytes);
+    postRunnerWorkerBreakpoints();
     w.postMessage({ wasmBytes: bytes, maxLines }, [bytes]);
   });
 }
@@ -3356,6 +3609,7 @@ async function compileSource(source: string): Promise<CompileResult> {
 
   const id = compileReqId++;
   const timeoutMs = Math.max(250, Number(timeoutMsEl.value ?? "2000") || 2000);
+  const emitWat = Boolean(watEnabledEl.checked);
 
   return await new Promise<CompileResult>((resolve, reject) => {
     if (compileInFlight) {
@@ -3391,7 +3645,7 @@ async function compileSource(source: string): Promise<CompileResult> {
 
     w.addEventListener("message", onMessage as EventListener);
     w.postMessage(
-      { type: "compile", id, source } satisfies CompilerCompileMessage,
+      { type: "compile", id, source, emitWat } satisfies CompilerCompileMessage,
     );
   });
 }
@@ -3428,11 +3682,13 @@ async function runCode() {
   clearOutput();
   resetRuntimeGaps();
   resetBbdbgState();
+  setWatText(null);
   printOutput("Compiling Blitz3D code...", "info");
 
   try {
     const result = await compileSource(source);
     setBbdbgMetadata(result.bbdbg);
+    setWatText(typeof result.wat === "string" ? result.wat : null);
     bbdbgSavedWasmSha256 = null;
     bbdbgSavedAtMs = null;
 
@@ -3541,7 +3797,17 @@ async function executeCompiledWASMBytes(
         return runResult;
       }
     } else {
-      await runWasmBytesInSandbox(bytes, { timeoutMs, maxLines: 2000 });
+      const runResult = await runWasmBytesInSandbox(bytes, {
+        timeoutMs,
+        maxLines: 2000,
+      });
+      if (runResult?.startedStepping) {
+        printOutput(
+          "Execution started (stepping in sandbox worker). Click Stop to end.",
+          "success",
+        );
+        return runResult;
+      }
     }
     printOutput("Execution completed.", "success");
   } catch (error: unknown) {
@@ -3799,6 +4065,11 @@ async function runWasmBytesOnMainThread(
     const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
     const fid = bbdbgLastFileId | 0;
     const ln = bbdbgLastLine | 0;
+    const bp = bbdbgBreakpointsByFileId.get(fid);
+    if (bp && bp.has(ln)) {
+      bbdbgBreakpointHitThisStep = true;
+      bbdbgBreakpointLastHit = { fileId: fid, line: ln };
+    }
     if (!last || last.fileId !== fid || last.line !== ln) {
       bbdbgTrace.push({ fileId: fid, line: ln, stack: stackSnap });
       if (bbdbgTrace.length > 200) {
@@ -3967,14 +4238,27 @@ async function runWasmBytesOnMainThread(
   if (typeof step === "function") {
     mainThreadRunDeadline = 0;
     isRunning = true;
+    debugSteppingActive = true;
+    debugSteppingPaused = false;
+    debugSteppingStepOnce = false;
+    bbdbgBreakpointHitThisStep = false;
+    bbdbgBreakpointLastHit = null;
+    updateBbdbgButtons();
 
     const tick = () => {
       if (mainThreadStopRequested || sharedStopRequested) {
         isRunning = false;
+        debugSteppingActive = false;
+        debugSteppingPaused = false;
+        debugSteppingStepOnce = false;
+        debugSteppingTick = null;
+        updateBbdbgButtons();
         return;
       }
+      if (debugSteppingPaused) return;
 
       const started = performance.now();
+      bbdbgBreakpointHitThisStep = false;
       try {
         step();
       } catch (e) {
@@ -4007,9 +4291,22 @@ async function runWasmBytesOnMainThread(
         return;
       }
 
+      if (debugSteppingStepOnce || bbdbgBreakpointHitThisStep) {
+        debugSteppingStepOnce = false;
+        const loc = bbdbgBreakpointLastHit
+          ? bbdbgLocString(
+            bbdbgBreakpointLastHit.fileId,
+            bbdbgBreakpointLastHit.line,
+          )
+          : "";
+        pauseStepping(loc ? `Paused at ${loc}` : "Paused");
+        return;
+      }
+
       sharedStepRaf = requestAnimationFrame(tick);
     };
 
+    debugSteppingTick = tick;
     sharedStepRaf = requestAnimationFrame(tick);
     return { startedStepping: true };
   }

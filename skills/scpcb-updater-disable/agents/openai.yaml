@@ -1,0 +1,5 @@
+interface:
+  display_name: "SCPCB Updater Disable"
+  short_description: "Disable Update.bb TCP/HTTP updater safely"
+  default_prompt: "Use $scpcb-updater-disable to prevent Update.bb network/update logic from executing in the web port while keeping the rest of SCPCB compiling and running."
+

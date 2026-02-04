@@ -1,0 +1,5 @@
+interface:
+  display_name: "Memleak Triage (Blitz3D)"
+  short_description: "Run memleak tools and map to root causes"
+  default_prompt: "Use $memleak-triage-blitz3d to pick the right `deno task memleak:*` command, interpret results, and propose the smallest lifecycle fix to verify."
+

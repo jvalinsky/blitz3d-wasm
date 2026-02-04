@@ -30,28 +30,30 @@ export function setupWasmAudio(graphics: Blitz3DGraphicsInterface, imports: any)
     };
 
     imports.env.js_FreeSound = (soundId: number) => {
-        graphics.audioSystem?.freeSound(soundId);
+        graphics.audioSystem?.freeSound?.(soundId);
     };
 
     imports.env.js_PlaySound = (soundId: number, vol: number, pan: number, rate: number, loop: number) => {
-        return graphics.audioSystem ? graphics.audioSystem.playSound(soundId, vol, pan, rate, loop !== 0) : 0;
+        return graphics.audioSystem?.playSound
+            ? graphics.audioSystem.playSound(soundId, vol, pan, rate, loop !== 0)
+            : 0;
     };
 
     imports.env.js_StopChannel = (chanId: number) => {
-        graphics.audioSystem?.stopChannel(chanId);
+        graphics.audioSystem?.stopChannel?.(chanId);
     };
 
     imports.env.js_PauseChannel = (chanId: number) => {
-        graphics.audioSystem?.pauseChannel(chanId);
+        graphics.audioSystem?.pauseChannel?.(chanId);
     };
 
     imports.env.js_ResumeChannel = (chanId: number) => {
-        graphics.audioSystem?.resumeChannel(chanId);
+        graphics.audioSystem?.resumeChannel?.(chanId);
     };
 
-    imports.env.js_ChannelPitch = (chanId: number, pitch: number) => graphics.audioSystem?.setChannelPitch(chanId, pitch);
-    imports.env.js_ChannelVolume = (chanId: number, vol: number) => graphics.audioSystem?.setChannelVolume(chanId, vol);
-    imports.env.js_ChannelPan = (chanId: number, pan: number) => graphics.audioSystem?.setChannelPan(chanId, pan);
+    imports.env.js_ChannelPitch = (chanId: number, pitch: number) => graphics.audioSystem?.setChannelPitch?.(chanId, pitch);
+    imports.env.js_ChannelVolume = (chanId: number, vol: number) => graphics.audioSystem?.setChannelVolume?.(chanId, vol);
+    imports.env.js_ChannelPan = (chanId: number, pan: number) => graphics.audioSystem?.setChannelPan?.(chanId, pan);
 
-    imports.env.js_ChannelPlaying = (chanId: number) => graphics.audioSystem?.isChannelPlaying(chanId) ? 1 : 0;
+    imports.env.js_ChannelPlaying = (chanId: number) => graphics.audioSystem?.isChannelPlaying?.(chanId) ? 1 : 0;
 }

@@ -224,7 +224,7 @@ export class EngineBridge {
     return this.exports.memory;
   }
 
-  get memoryBuffer(): ArrayBuffer {
+  get memoryBuffer(): ArrayBuffer | SharedArrayBuffer {
     return this.exports.memory.buffer;
   }
 

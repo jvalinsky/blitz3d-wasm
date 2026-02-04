@@ -272,4 +272,66 @@ export class Blitz3DAudio {
             }
         }
     }
+
+    /**
+     * Update listener from a Three.js camera (legacy path).
+     *
+     * The SCPCB loader uses the legacy Three.js renderer path today; in that
+     * mode we can update the listener directly from camera transforms.
+     */
+    updateListener(camera: any) {
+        if (!this.context || !camera) return;
+        const l = this.context.listener;
+        const t = this.context.currentTime;
+
+        const px = camera.position?.x ?? 0;
+        const py = camera.position?.y ?? 0;
+        const pz = camera.position?.z ?? 0;
+
+        // Forward vector
+        let fx = 0, fy = 0, fz = -1;
+        try {
+            if (typeof camera.getWorldDirection === "function") {
+                const dir = camera.getWorldDirection({ x: 0, y: 0, z: -1 });
+                fx = dir?.x ?? fx;
+                fy = dir?.y ?? fy;
+                fz = dir?.z ?? fz;
+            } else if (camera.quaternion) {
+                // Best-effort: derive forward from quaternion if present.
+                // Forward = (0,0,-1) rotated by quaternion.
+                const q = camera.quaternion;
+                const x = q.x ?? 0, y = q.y ?? 0, z = q.z ?? 0, w = q.w ?? 1;
+                // v' = q * v * q^-1 (expanded for v=(0,0,-1))
+                const ix = -w * 0 + y * (-1) - z * 0;
+                const iy = -w * 0 + z * 0 - x * (-1);
+                const iz = -w * (-1) + x * 0 - y * 0;
+                const iw = x * 0 + y * 0 + z * (-1);
+                fx = ix * w + iw * -x + iy * -z - iz * -y;
+                fy = iy * w + iw * -y + iz * -x - ix * -z;
+                fz = iz * w + iw * -z + ix * -y - iy * -x;
+            }
+        } catch {
+            // ignore
+        }
+
+        // Up vector
+        const ux = camera.up?.x ?? 0;
+        const uy = camera.up?.y ?? 1;
+        const uz = camera.up?.z ?? 0;
+
+        if ((l as any).positionX) {
+            (l as any).positionX.setTargetAtTime(px, t, 0.02);
+            (l as any).positionY.setTargetAtTime(py, t, 0.02);
+            (l as any).positionZ.setTargetAtTime(pz, t, 0.02);
+            (l as any).forwardX.setTargetAtTime(fx, t, 0.02);
+            (l as any).forwardY.setTargetAtTime(fy, t, 0.02);
+            (l as any).forwardZ.setTargetAtTime(fz, t, 0.02);
+            (l as any).upX.setTargetAtTime(ux, t, 0.02);
+            (l as any).upY.setTargetAtTime(uy, t, 0.02);
+            (l as any).upZ.setTargetAtTime(uz, t, 0.02);
+        } else if (typeof (l as any).setPosition === "function") {
+            (l as any).setPosition(px, py, pz);
+            (l as any).setOrientation(fx, fy, fz, ux, uy, uz);
+        }
+    }
 }

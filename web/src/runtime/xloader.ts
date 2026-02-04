@@ -254,7 +254,7 @@ export class XLoader {
    * Find all blocks of a given type in content
    */
   findBlocks(content: string, blockType: string): string[] {
-    const blocks = [];
+    const blocks: string[] = [];
     const regex = new RegExp(`\\b${blockType}\\s*\\{`, "g");
     let match;
 

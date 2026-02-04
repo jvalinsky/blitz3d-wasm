@@ -18,6 +18,7 @@ import { EntityTableView } from "../shared/entity_table.ts";
  */
 export class Blitz3DCore {
   [key: string]: any;
+  env: Record<string, unknown>;
   allocString: ((str: string) => number) | null;
   textCanvas: HTMLCanvasElement | null;
 
@@ -33,6 +34,7 @@ export class Blitz3DCore {
     this.dataPointer = 256;
     this.allocString = null;
     this.entityTable = null;
+    this.env = {};
 
     // Seeded random number generator (LCG)
     this.randomSeed = 0;
@@ -71,7 +73,10 @@ export class Blitz3DCore {
       }
       // Calculate rolling average FPS
       if (this.frameTimes.length === this.maxFrameSamples) {
-        const avgFrameTime = this.frameTimes.reduce((a, b) => a + b, 0) /
+        const avgFrameTime = this.frameTimes.reduce(
+          (a: number, b: number) => a + b,
+          0,
+        ) /
           this.maxFrameSamples;
         this.fps = 1000 / avgFrameTime;
       }
@@ -202,7 +207,7 @@ export class Blitz3DCore {
     return bankId;
   }
 
-  readString(ptr) {
+  readString(ptr: number): string {
     if (!this.memory || !this.memory.buffer) {
       return "";
     }
@@ -248,39 +253,39 @@ export class Blitz3DCore {
     return str;
   }
 
-  setupCommonImports(imports) {
+  setupCommonImports(imports: any) {
     // Keep a reference so other runtime subsystems (e.g. command buffer executor)
     // can call existing import-backed implementations (audio, etc.) without duplicating logic.
     this.imports = imports;
 
     // Math utilities
-    imports.env.WrapAngle = (angle) => {
+    imports.env.WrapAngle = (angle: number) => {
       // Normalize angle to -180 to 180
       while (angle > 180) angle -= 360;
       while (angle < -180) angle += 360;
       return angle;
     };
 
-    imports.env.DeltaYaw = (src, dest) => {
+    imports.env.DeltaYaw = (src: number, dest: number) => {
       let delta = dest - src;
       while (delta > 180) delta -= 360;
       while (delta < -180) delta += 360;
       return delta;
     };
 
-    imports.env.DeltaPitch = (src, dest) => {
+    imports.env.DeltaPitch = (src: number, dest: number) => {
       let delta = dest - src;
       while (delta > 180) delta -= 360;
       while (delta < -180) delta += 360;
       return delta;
     };
 
-    imports.env.CurveValue = (current, target, speed) => {
+    imports.env.CurveValue = (current: number, target: number, speed: number) => {
       // Smooth interpolation towards target
       return current + (target - current) * speed;
     };
 
-    imports.env.CurveAngle = (current, target, speed) => {
+    imports.env.CurveAngle = (current: number, target: number, speed: number) => {
       // Smooth angle interpolation
       let delta = target - current;
       while (delta > 180) delta -= 360;
@@ -288,30 +293,30 @@ export class Blitz3DCore {
       return current + delta * speed;
     };
 
-    imports.env.Distance = (x1, y1, x2, y2) => {
+    imports.env.Distance = (x1: number, y1: number, x2: number, y2: number) => {
       const dx = x2 - x1;
       const dy = y2 - y1;
       return Math.sqrt(dx * dx + dy * dy);
     };
 
-    imports.env.Point_Direction = (x1, y1, x2, y2) => {
+    imports.env.Point_Direction = (x1: number, y1: number, x2: number, y2: number) => {
       const dx = x2 - x1;
       const dy = y2 - y1;
       return Math.atan2(dy, dx) * 180 / Math.PI;
     };
 
-    imports.env.DebugLog = (msgPtr) => {
+    imports.env.DebugLog = (msgPtr: number) => {
       const msg = this.readString(msgPtr);
       console.log(`[Blitz3D Debug] ${msg}`);
     };
 
-    imports.env.AppTitle = (titlePtr, closeMsgPtr) => {
+    imports.env.AppTitle = (titlePtr: number, _closeMsgPtr: number) => {
       const title = this.readString(titlePtr);
       document.title = title;
       console.log(`[Blitz3D] AppTitle: ${title}`);
     };
 
-    imports.env.SystemProperty = (propPtr) => {
+    imports.env.SystemProperty = (propPtr: number) => {
       const prop = this.readString(propPtr).toLowerCase();
       let result = "";
       if (prop === "os") result = "windows";
@@ -323,11 +328,11 @@ export class Blitz3DCore {
       return 0;
     };
 
-    imports.env.RemoveEvent = (eventPtr) => {
+    imports.env.RemoveEvent = (eventPtr: number) => {
       console.log(`RemoveEvent: event=${eventPtr}`);
     };
 
-    imports.env.RuntimeError = (msgPtr) => {
+    imports.env.RuntimeError = (msgPtr: number) => {
       const msg = this.readString(msgPtr);
       console.error(`[Blitz3D Error] ${msg}`);
       throw new Error(msg);
@@ -341,7 +346,7 @@ export class Blitz3DCore {
       throw err;
     };
 
-    imports.env.ExecFile = (filePtr) => {
+    imports.env.ExecFile = (filePtr: number) => {
       const file = this.readString(filePtr);
       console.warn(
         `[Blitz3D] ExecFile requested: ${file} (Ignored in browser)`,
@@ -395,7 +400,7 @@ export class Blitz3DCore {
     imports.env.CurrentDate = () => {
       const now = new Date();
       const dateStr = now.toLocaleDateString();
-      return this.allocString(dateStr);
+      return this.allocString ? this.allocString(dateStr) : 0;
     };
 
     // Math utilities
@@ -448,7 +453,7 @@ export class Blitz3DCore {
       if (this.gl) {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
       }
-      if (this.ctx2d) {
+      if (this.ctx2d && this.textCanvas) {
         this.ctx2d.clearRect(
           0,
           0,
@@ -837,7 +842,7 @@ export class Blitz3DCore {
     };
 
     imports.env.CurrentDir = () => {
-      return this.allocString(this.currentDir);
+      return this.allocString ? this.allocString(this.currentDir) : 0;
     };
 
     imports.env.DeleteFile = (pathPtr) => {
@@ -1512,7 +1517,8 @@ export class Blitz3DCore {
           while (
             stream.sendBuffer.length > 0 && ws.readyState === WebSocket.OPEN
           ) {
-            ws.send(stream.sendBuffer.shift());
+            const next = stream.sendBuffer.shift();
+            if (next !== undefined) ws.send(next);
           }
         };
 

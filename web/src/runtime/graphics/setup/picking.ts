@@ -9,7 +9,7 @@ type Imports = {
 export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: Imports) {
     imports.env.EntityPickMode = (ent: number, mode: number, obs: number) => {
         if (graphics.wasmManager) {
-            graphics.wasmManager.setPickMode(ent, mode);
+            graphics.wasmManager.setPickMode?.(ent, mode);
             return;
         }
 
@@ -81,7 +81,7 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: Import
 
     imports.env.CameraPick = (camId: number, x: number, y: number) => {
         if (graphics.wasmManager) {
-            const hit = graphics.wasmManager.cameraPick(camId, x, y);
+            const hit = graphics.wasmManager.cameraPick?.(camId, x, y);
             if (hit) {
                 graphics.lastPick = {
                     entity: hit.id,
@@ -167,7 +167,7 @@ export function setupPicking(graphics: Blitz3DGraphicsInterface, imports: Import
     imports.env.LinePick = (x: number, y: number, z: number, dx: number, dy: number, dz: number, radius: number) => {
         if (graphics.wasmManager) {
             // radius ignored for now
-            const hit = graphics.wasmManager.linePick(x, y, z, dx, dy, dz);
+            const hit = graphics.wasmManager.linePick?.(x, y, z, dx, dy, dz);
             if (hit) {
                 // Calc hit point
                 // linePick returns t (distance)

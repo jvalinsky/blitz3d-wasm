@@ -175,7 +175,7 @@ export class Blitz3DWasmSurface {
         const positions = new Float32Array(vertexCount * 3);
         const uvs = new Float32Array(vertexCount * 2);
         const colors = new Float32Array(vertexCount * 4);
-        const indices = [];
+        const indices: number[] = [];
 
         const memory = new Float32Array(this.core.memory.buffer);
         const byteMemory = new Uint8Array(this.core.memory.buffer);

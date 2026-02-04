@@ -262,13 +262,13 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       Math.max(0, Math.min(255, b)) / 255,
     );
     const k = "_ambientLight";
-    const existing = graphics[k];
+    const existing = (graphics as any)[k];
     if (existing instanceof THREE.AmbientLight) {
       existing.color.copy(col);
       return;
     }
     const amb = new THREE.AmbientLight(col, 1);
-    graphics[k] = amb;
+    (graphics as any)[k] = amb;
     graphics.scene.add(amb);
   };
 
@@ -697,8 +697,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     graphics.engineCall(
       childId,
-      (eid) =>
-        graphics._engine!.EngineEntityParent(eid, parentId | 0, global | 0),
+      (eid) => {
+        const parentEid = parentId ? graphics.eid(parentId) : 0;
+        graphics._engine!.EngineSetParent(eid, parentEid | 0);
+      },
     );
 
     return 1;
@@ -1080,6 +1082,18 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
           }
         } catch (e) {
           console.error(`[LoadMesh] Failed to load ${rawPath}:`, e);
+          try {
+            const hook = (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR;
+            if (typeof hook === "function") {
+              hook(
+                `[LoadMesh] Failed to load ${rawPath}: ${
+                  (e as any)?.message ? String((e as any).message) : String(e)
+                }`,
+              );
+            }
+          } catch {
+            // ignore
+          }
         }
       })();
     }

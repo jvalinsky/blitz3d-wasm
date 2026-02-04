@@ -188,12 +188,16 @@ export class InputManager {
         window.addEventListener("keydown", this._inputHandlers.keydown);
         window.addEventListener("keyup", this._inputHandlers.keyup);
         window.addEventListener("mousemove", this._inputHandlers.mousemove);
-        window.addEventListener("mousedown", this._inputHandlers.mousedown);
-        window.addEventListener("mouseup", this._inputHandlers.mouseup);
+        if (this._inputHandlers.mousedown) {
+            window.addEventListener("mousedown", this._inputHandlers.mousedown);
+        }
+        if (this._inputHandlers.mouseup) {
+            window.addEventListener("mouseup", this._inputHandlers.mouseup);
+        }
 
         // Resume Audio Context on interaction
         const resumeAudio = () => {
-            this.graphics.audioSystem?.resume();
+            this.graphics.audioSystem?.resume?.();
             window.removeEventListener("mousedown", resumeAudio);
             window.removeEventListener("keydown", resumeAudio);
         };
@@ -212,8 +216,12 @@ export class InputManager {
         window.removeEventListener("keydown", this._inputHandlers.keydown);
         window.removeEventListener("keyup", this._inputHandlers.keyup);
         window.removeEventListener("mousemove", this._inputHandlers.mousemove);
-        window.removeEventListener("mousedown", this._inputHandlers.mousedown);
-        window.removeEventListener("mouseup", this._inputHandlers.mouseup);
+        if (this._inputHandlers.mousedown) {
+            window.removeEventListener("mousedown", this._inputHandlers.mousedown);
+        }
+        if (this._inputHandlers.mouseup) {
+            window.removeEventListener("mouseup", this._inputHandlers.mouseup);
+        }
 
         this._inputInstalled = false;
         this._inputHandlers = null;

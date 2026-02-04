@@ -1179,7 +1179,7 @@ const runInitIfPresent = async (
     let lastLog = 0;
     await fileIO.preloadAssetGroup(group, {
       concurrency: 4,
-      onProgress: (loaded: number, total: number, file: string) => {
+      onProgress: (loaded: number, total: number | null, file?: string) => {
         const now = performance.now();
         if (now - last < 50 && loaded !== total) return;
         last = now;
@@ -1451,7 +1451,7 @@ async function init() {
           let lastUpdate = 0;
           bootPreload = fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
             concurrency: 4,
-            onProgress: (loaded: number, total: number, file: string) => {
+            onProgress: (loaded: number, total: number | null, file?: string) => {
               const now = performance.now();
               if (now - lastUpdate > 32 || loaded === total) {
                 const ratio = total ? loaded / total : 0;
@@ -3200,7 +3200,7 @@ async function init() {
 
       fileIO.preloadAssetGroup("facility_assets", {
         concurrency: 2, // Reduced concurrency
-        onProgress: (loaded: number, total: number, file: string) => {
+        onProgress: (loaded: number, total: number | null, file?: string) => {
           loadedAssets = loaded;
           const now = performance.now();
 

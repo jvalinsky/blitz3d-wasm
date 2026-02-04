@@ -1057,7 +1057,11 @@ function vfsGetObjectUrl(path: string): string | null {
     if (existing) return existing;
     const rec = vfs.get(key);
     if (!rec) continue;
-    const url = URL.createObjectURL(new Blob([rec.bytes], { type: rec.mime }));
+    // Deno's DOM lib types require ArrayBuffer-backed views for BlobParts.
+    // `Uint8Array` can be backed by a `SharedArrayBuffer`, so copy first.
+    const safeBytes = new Uint8Array(rec.bytes.byteLength);
+    safeBytes.set(rec.bytes);
+    const url = URL.createObjectURL(new Blob([safeBytes], { type: rec.mime }));
     vfsObjectUrls.set(key, url);
     return url;
   }
@@ -1118,10 +1122,9 @@ function renderVfsList(): void {
 function normalizeWasmBytes(input: ArrayBuffer | ArrayBufferView): ArrayBuffer {
   if (input instanceof ArrayBuffer) return input;
   if (ArrayBuffer.isView(input)) {
-    return input.buffer.slice(
-      input.byteOffset,
-      input.byteOffset + input.byteLength,
-    );
+    // `input.buffer` may be a SharedArrayBuffer; ensure we return a real ArrayBuffer.
+    const view = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+    return view.slice().buffer;
   }
   throw new Error("Invalid WASM bytes (expected ArrayBuffer or TypedArray)");
 }
@@ -2223,6 +2226,18 @@ function applyMemoryAutoRefresh(): void {
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", async () => {
   installGlobalErrorHandlers();
+  // Interpreter runs are stepped/cooperative; disable the graphics module's internal RAF loop
+  // so Pause/Step actually freeze rendering and `RenderWorld()` can be the explicit draw hook.
+  (globalThis as any).__BLITZ3D_NO_AUTO_RAF = true;
+  // Surface async loader failures (B3D/X/RMesh) in the Output pane instead of only the devtools console.
+  (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR = (msg: unknown) => {
+    try {
+      const s = typeof msg === "string" ? msg : String(msg);
+      printOutput(s, "error");
+    } catch {
+      // ignore
+    }
+  };
   editorEl.value = examples.hello;
   enableEditorEnhancements();
   renderExampleRequirements("hello");
@@ -2351,7 +2366,7 @@ function setupEventListeners() {
   });
 
   vfsUploadEl.addEventListener("change", async () => {
-    const files = vfsUploadEl.files ? [...vfsUploadEl.files] : [];
+    const files = Array.from(vfsUploadEl.files ?? []);
     if (files.length === 0) return;
     const prefixRaw = vfsPrefixEl.value ?? "";
     const prefix = normalizeVfsPath(prefixRaw);
@@ -3892,15 +3907,22 @@ async function runWasmBytesOnMainThread(
   sharedFileIO = new Blitz3DFileIO(sharedCore);
   sharedFileIO.init("", null, null);
 
+  if (!sharedCore || !sharedGraphics || !sharedFileIO) {
+    throw new Error("Failed to initialize shared runtime");
+  }
+  const core = sharedCore;
+  const graphics = sharedGraphics;
+  const fileIO = sharedFileIO;
+
   // Match the SCPCB loader wiring: some runtime helpers expect `core.fileIO` / `core.graphics`.
-  (sharedCore as any).graphics = sharedGraphics;
-  (sharedCore as any).fileIO = sharedFileIO;
-  let registerIntoRuntime = (p, data) => sharedFileIO.registerFile(p, data);
+  (core as any).graphics = graphics;
+  (core as any).fileIO = fileIO;
+  let registerIntoRuntime = (p, data) => fileIO.registerFile(p, data);
   // Keep writes performed by WASM visible in the interpreter VFS UI.
   try {
-    const origRegister = sharedFileIO.registerFile.bind(sharedFileIO);
+    const origRegister = fileIO.registerFile.bind(fileIO);
     registerIntoRuntime = origRegister;
-    sharedFileIO.registerFile = (p, data) => {
+    fileIO.registerFile = (p, data) => {
       origRegister(p, data);
       try {
         vfsPut(p, data, guessMime(p));
@@ -3921,7 +3943,7 @@ async function runWasmBytesOnMainThread(
   // Let the shared runtime resolve VFS paths (assets/foo.png) to blob: URLs.
   globalThis.__BLITZ3D_URL_RESOLVER = (p: string) => vfsGetObjectUrl(p) || null;
 
-  const imports: Record<string, Record<string, any>> = { env: {}, blitz3d: {} };
+  const imports: any = { env: {}, blitz3d: {} };
   imports.bbdbg = {};
   // Ensure table import exists for indirect calls.
   imports.env.__indirect_function_table = new WebAssembly.Table({
@@ -3968,13 +3990,26 @@ async function runWasmBytesOnMainThread(
   imports.blitz3d.__StringAlloc = imports.env.__StringAlloc;
   imports.blitz3d["__StringAlloc%"] = imports.env["__StringAlloc%"];
 
-  if (sharedCore.setupCommonImports) sharedCore.setupCommonImports(imports);
-  if (sharedGraphics.setupImports) sharedGraphics.setupImports(imports);
-  if (sharedFileIO.setupImports) sharedFileIO.setupImports(imports);
+  if (core.setupCommonImports) core.setupCommonImports(imports);
+  if (graphics.setupImports) graphics.setupImports(imports);
+  if (fileIO.setupImports) fileIO.setupImports(imports);
+
+  // The shared runtime is optimized for the SCPCB loader (its own RAF loop), but the interpreter
+  // runs cooperatively via `__Step%()`. Provide `RenderWorld()` so classic Blitz3D loops work,
+  // and so demos can render once per step while paused/resumed.
+  imports.env.RenderWorld = (_tween: number) => {
+    try {
+      const abort = shouldAbortMainThreadRun();
+      if (abort) throw new Error(abort);
+      graphics.render?.(performance.now());
+    } catch (e) {
+      throw e;
+    }
+  };
 
   // Route Print/PrintString/PrintInt/PrintFloat/DebugLog to the interpreter output pane.
   const tryDecodeStringObj = (ptr: number): string | null => {
-    const mem = sharedCore?.memory;
+    const mem = core.memory;
     if (!mem || !ptr) return null;
     const bufLen = mem.buffer.byteLength >>> 0;
     const p = ptr | 0;
@@ -3996,11 +4031,11 @@ async function runWasmBytesOnMainThread(
   };
 
   imports.env.Print = (ptr: number) => {
-    const s = sharedCore.readString(ptr | 0);
+    const s = core.readString(ptr | 0);
     printOutput(s, "output");
   };
   imports.env.PrintString = (ptr: number) => {
-    const s = sharedCore.readString(ptr | 0);
+    const s = core.readString(ptr | 0);
     printOutput(s, "output");
   };
   imports.env.PrintInt = (val: number) => {
@@ -4019,7 +4054,7 @@ async function runWasmBytesOnMainThread(
     printOutput(String(val), "output");
   };
   imports.env.DebugLog = (ptr: number) => {
-    const s = sharedCore.readString(ptr | 0);
+    const s = core.readString(ptr | 0);
     printOutput(`[DebugLog] ${s}`, "info");
   };
 
@@ -4028,7 +4063,7 @@ async function runWasmBytesOnMainThread(
   // when `IntToString` is imported but stubbed.
   const allocB3DString = (text: string): number => {
     try {
-      const fn = sharedCore?.allocString;
+      const fn = core.allocString;
       if (typeof fn === "function") return fn(String(text));
     } catch {}
     return 0;
@@ -4156,10 +4191,10 @@ async function runWasmBytesOnMainThread(
   instRef = instance;
 
   // Wire memory & allocString
-  sharedCore.memory = (instance.exports as any).memory;
-  sharedCore.instance = instance;
-  sharedCore.module = module;
-  sharedCore.exports = instance.exports;
+  core.memory = (instance.exports as any).memory;
+  core.instance = instance;
+  core.module = module;
+  core.exports = instance.exports;
   renderMemoryPanel();
   applyMemoryAutoRefresh();
   const stringAllocExport = (() => {
@@ -4184,9 +4219,9 @@ async function runWasmBytesOnMainThread(
   const alloc = (typeof stringAllocExport === "function")
     ? stringAllocExport
     : allocStringObjPtr;
-  if (sharedCore.memory) {
-    const mem = sharedCore.memory;
-    sharedCore.allocString = (text) => {
+  if (core.memory) {
+    const mem = core.memory;
+    core.allocString = (text) => {
       const utf8 = new TextEncoder().encode(String(text));
       const ptr = alloc(utf8.length) | 0;
       if (!ptr) return 0;
@@ -4199,7 +4234,7 @@ async function runWasmBytesOnMainThread(
     };
   }
   try {
-    sharedFileIO.setMemory(sharedCore.memory);
+    fileIO.setMemory(core.memory);
   } catch {}
 
   const exports = (instance.exports || {}) as Record<string, any>;
@@ -4216,7 +4251,7 @@ async function runWasmBytesOnMainThread(
       entry();
     } catch (e) {
       const msg = errorMessage(e);
-      if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+      if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
         printOutput("Program ended.", "success");
         stopExecution();
         return { startedStepping: false };
@@ -4263,7 +4298,7 @@ async function runWasmBytesOnMainThread(
         step();
       } catch (e) {
         const msg = errorMessage(e);
-        if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
           printOutput("Program ended.", "success");
           stopExecution();
           return;
@@ -4317,7 +4352,7 @@ async function runWasmBytesOnMainThread(
       entry();
     } catch (e) {
       const msg = errorMessage(e);
-      if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+      if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
         printOutput("Program ended.", "success");
         stopExecution();
         return { startedStepping: false };
@@ -4351,6 +4386,56 @@ function createLegacyRuntimeImports_UNUSED(): Record<
     blitz3d: {},
     al: {},
   };
+
+  // Local placeholders: this function is intentionally unused but kept as
+  // reference. Keep it type-checkable in module context.
+  const runtimeInstance: any = null;
+  const fileHandles = new Map<number, any>();
+  let nextFileHandle = 1;
+  const randU32 = (): number => (Math.random() * 0x100000000) >>> 0;
+  const randFloat01 = (): number => Math.random();
+  let draw2DColor = "#ffffff";
+  let draw2DFont = "16px sans-serif";
+  const hudCtx = hudCanvasEl.getContext("2d");
+  const fontHandles = new Map<number, string>();
+  let nextFontHandle = 1;
+  const imageHandles = new Map<number, any>();
+  let nextImageHandle = 1;
+  let rngState = 0x12345678;
+  const keyDownSet = new Set<number>();
+  const keyHitSet = new Set<number>();
+  const keyQueue: number[] = [];
+  let mouseX = 0;
+  let mouseY = 0;
+  let mouseZ = 0;
+  let mouseXSpeed = 0;
+  let mouseYSpeed = 0;
+  const mouseDownSet = new Set<number>();
+  const mouseHitSet = new Set<number>();
+  const entities = new Map<number, any>();
+  let nextEntityId = 1;
+  const surfaces = new Map<number, any>();
+  let nextSurfaceId = 1;
+  const meshSurfaces = new Map<number, any>();
+  const dirtySurfaceIds = new Set<number>();
+  const ensureSurfaceGeometry = (_surfaceId: number): void => {};
+  const textureHandles = new Map<number, any>();
+  let nextTextureHandle = 1;
+  const brushHandles = new Map<number, any>();
+  let nextBrushHandle = 1;
+  let threeRenderer: any = null;
+  let threeScene: any = null;
+  let threeCamera: any = null;
+  let cameraViewport: any = null;
+  const applyCameraViewport = (): void => {};
+  const resizeThreeToContainer = (): void => {};
+  let fogMode = 0;
+  let fogColor = 0;
+  let fogNear = 0;
+  let fogFar = 0;
+  let fogDensity = 0;
+  const updateFog = (): void => {};
+  let ambientLight: any = null;
 
   const decodeB3DStringObj = (ptr) => {
     if (!ptr || !runtimeInstance?.exports?.memory) return "";

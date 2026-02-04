@@ -62,7 +62,7 @@ export function setupCollision(graphics: Blitz3DGraphicsInterface, imports: any)
 
     imports.env.UpdateWorld = (step: number) => {
         if (graphics.wasmManager) {
-            graphics.wasmManager.updateWorld(step);
+            graphics.wasmManager.updateWorld?.(step);
             // Also need to update animations if they were separate
         }
 
@@ -72,7 +72,7 @@ export function setupCollision(graphics: Blitz3DGraphicsInterface, imports: any)
         graphics.lastTime = now;
 
         if (graphics.animationSystem) {
-            graphics.animationSystem.update(delta * step);
+            graphics.animationSystem.update?.(delta * step);
         }
     };
 

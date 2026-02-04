@@ -69,18 +69,24 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     // Animation
     animationSystem: AnimationSystem | null = null;
     animMixers: Set<THREE.AnimationMixer> = new Set();
+    smpkLoader: SMPKLoader | null = null;
 
     // State
     _stopped: boolean = false;
     _rafHandle: number | null = null;
     lastTime: number = 0;
     frameCount: number = 0;
+    clearColor: [number, number, number, number] = [0, 0, 0, 1];
+    currentColor: [number, number, number, number] = [255, 255, 255, 255];
+    currentBuffer: number = 0;
+    currentFont: string = "sans-serif";
+    currentFontSize: number = 16;
 
     // Resources
     entities: Record<number, THREE.Object3D> = {};
     textures: Record<number, Blitz3DTexture> = {};
     images: Record<number, Blitz3DImage> = {};
-    surfaces: Record<number, unknown> = {};
+    surfaces: Record<number, any> = {};
     brushes: Record<number, Blitz3DBrush> = {};
 
     // Audio
@@ -97,6 +103,11 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     constructor(core: GraphicsCore) {
         // ... existing constructor ...
         this.core = core;
+        this.clearColor = [0, 0, 0, 1];
+        this.currentColor = [255, 255, 255, 255];
+        this.currentBuffer = 0;
+        this.currentFont = "sans-serif";
+        this.currentFontSize = 16;
         this.animationSystem = new this.Blitz3DAnimation(this as any, core) as unknown as AnimationSystem;
         // Ensure input is available for KeyDown/MouseX/etc (interpreter path).
         this.inputManager = new InputManager(this as any);
@@ -232,6 +243,7 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         };
 
         const isHeadless = (globalThis as any).__BLITZ3D_HEADLESS === true;
+        const noAutoRaf = (globalThis as any).__BLITZ3D_NO_AUTO_RAF === true;
         const hasWebGL = (() => {
             // IMPORTANT: never probe WebGL support by calling getContext() on the
             // actual render canvas, because that would permanently claim a context
@@ -308,7 +320,10 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
 
         // In headless mode, skip RAF-based animation to keep tooling deterministic and avoid
         // WebGLRenderer creation entirely.
-        if (!isHeadless) {
+        //
+        // The interpreter also disables the internal RAF loop so that stepping + Pause truly
+        // freeze rendering, and `RenderWorld()` can act as the explicit draw trigger.
+        if (!isHeadless && !noAutoRaf) {
             this._stopped = false;
             this.animate(0);
             console.log("Animation loop started");

@@ -40,8 +40,8 @@ type B3DParsedData = {
   textures: B3DTexture[];
   brushes: B3DBrush[];
   meshes: B3DMeshData[];
-  animations: unknown[];
-  bones: unknown[];
+  animations: any[];
+  bones: any[];
 };
 
 export class B3DLoader {
@@ -57,8 +57,8 @@ export class B3DLoader {
   private textures: B3DTexture[];
   private brushes: B3DBrush[];
   private meshes: B3DMeshData[];
-  private animations: unknown[];
-  private bones: unknown[];
+  private animations: any[];
+  private bones: any[];
 
   private _sourceFilePath: string | null;
 
@@ -105,7 +105,7 @@ export class B3DLoader {
 
       // Try WASM parser first if available
       const engineExports = (typeof window !== "undefined")
-        ? (window.Blitz3D?.engineExports as Record<string, unknown> | undefined)
+        ? ((window as any).Blitz3D?.engineExports as Record<string, unknown> | undefined)
         : undefined;
       if (engineExports && typeof engineExports["ParseB3D"] === "function") {
         return await this.loadWithWasm(data, parentId);
@@ -120,7 +120,14 @@ export class B3DLoader {
       this.log(`[B3DLoader] Created entity: ${entityId}`);
       return entityId;
     } catch (error: any) {
-      console.error(`[B3DLoader] Error loading ${filePath}: ${error.message}`);
+      const msg = `[B3DLoader] Error loading ${filePath}: ${error?.message ?? String(error)}`;
+      console.error(msg);
+      try {
+        const hook = (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR;
+        if (typeof hook === "function") hook(msg);
+      } catch {
+        // ignore
+      }
       return this.createPlaceholder(parentId, targetId);
     } finally {
       this.fileIO.closeFile(handle);
@@ -263,7 +270,7 @@ export class B3DLoader {
 
   async loadWithWasm(data: Uint8Array, parentId: number) {
     if (typeof window === "undefined") return this.createPlaceholder(parentId);
-    const engine = window.Blitz3D?.engineExports as Record<string, unknown> | undefined;
+    const engine = (window as any).Blitz3D?.engineExports as Record<string, unknown> | undefined;
     if (!engine) return this.createPlaceholder(parentId);
 
     // 1. Create a bank in WASM memory for the file data
@@ -405,7 +412,7 @@ export class B3DLoader {
     this.animations = [];
     this.bones = [];
 
-    const headerBytes = [];
+    const headerBytes: number[] = [];
     for (let i = 0; i < 4; i++) {
       headerBytes.push(this.data[this.offset++]);
     }
@@ -524,6 +531,18 @@ export class B3DLoader {
     }
   }
 
+  // Top-level VRTS/TRIS chunks should not normally appear outside a MESH container.
+  // Keep these as safe skips so the loader remains robust and the module type-checks.
+  readVertices(chunkSize: number) {
+    const endOffset = this.offset + chunkSize;
+    this.offset = endOffset;
+  }
+
+  readTriangles(chunkSize: number) {
+    const endOffset = this.offset + chunkSize;
+    this.offset = endOffset;
+  }
+
   readInt32LE() {
     if (!this.data) return 0;
     const val = this.data[this.offset] |
@@ -612,7 +631,7 @@ export class B3DLoader {
       const blend = this.readInt32LE();
       const fx = this.readInt32LE();
 
-      const texIds = [];
+      const texIds: number[] = [];
       for (let i = 0; i < numTexs && this.offset < endOffset; i++) {
         texIds.push(this.readInt32LE());
       }
@@ -700,11 +719,11 @@ export class B3DLoader {
   }
 
   readVerticesInternal(mesh: any, chunkEnd: number) {
-    const positions = [];
-    const normals = [];
-    const colors = [];
-    const uvs0 = [];
-    const uvs1 = [];
+    const positions: number[] = [];
+    const normals: number[] = [];
+    const colors: number[] = [];
+    const uvs0: number[] = [];
+    const uvs1: number[] = [];
 
     if (!this.data) return;
 
@@ -769,7 +788,7 @@ export class B3DLoader {
   }
 
   readTrianglesInternal(mesh: any, chunkEnd: number) {
-    const indices = [];
+    const indices: number[] = [];
 
     // TRIS records are 3x u32 vertex indices.
     // (The brush index is read by the caller.)
@@ -1002,7 +1021,7 @@ export class B3DLoader {
       const numFrames = this.readInt32LE();
 
       if (this.animations.length > 0) {
-        const anim = this.animations[this.animations.length - 1];
+        const anim = this.animations[this.animations.length - 1] as any;
         if (!anim.sequences) anim.sequences = [];
         anim.sequences.push({
           name,
@@ -1200,7 +1219,7 @@ export class B3DLoader {
 
     const mixer = new THREE.AnimationMixer(root);
     root.userData.mixer = mixer;
-    this.graphics.animMixers.add(mixer);
+    this.graphics.animMixers?.add?.(mixer);
 
     if (animation.sequences && animation.sequences.length > 0) {
       const tracks = this.createAnimationTracks(animation);
@@ -1220,7 +1239,7 @@ export class B3DLoader {
   }
 
   createAnimationTracks(animation: any) {
-    const tracks = [];
+    const tracks: THREE.KeyframeTrack[] = [];
 
     if (animation.boneKeys && animation.boneKeys.length > 0) {
       for (const boneKey of animation.boneKeys) {

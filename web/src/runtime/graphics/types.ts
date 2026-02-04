@@ -5,11 +5,15 @@
  * that other runtime modules depend on, while allowing the underlying
  * implementation to evolve.
  */
+/// <reference lib="dom" />
 
 // Three.js import kept for legacy code path compatibility.
 // New native code path (SceneManager) does not use Three.js.
 import * as THREE from "three";
 import type { Blitz3DFileIO } from "../fileio.ts";
+import type { EntityTableView } from "../../shared/entity_table.ts";
+import type { EngineBridge, EngineExports } from "../../engine/bridge.ts";
+import type { SMPKLoader } from "../smpk.ts";
 
 /** Engine entity type IDs matching Swift EntityType enum */
 export const ENGINE_ENTITY_TYPE = { PIVOT: 0, MESH: 1, CAMERA: 2, LIGHT: 3, SPRITE: 4, TERRAIN: 5 } as const;
@@ -31,6 +35,7 @@ export interface AnimationSystem {
     setAnimTime?: (entityId: number, timeFrames: number, seq: number) => void;
     getAnimTime?: (entityId: number) => number; // frames
     getAnimLength?: (entityId: number) => number; // frames
+    update?: (deltaSeconds: number) => void;
 }
 
 /**
@@ -39,6 +44,17 @@ export interface AnimationSystem {
 export interface AudioSystem {
     nextSoundId: number;
     loadSound: (path: string, flags: number) => void;
+    resume?: () => void;
+    freeSound?: (soundId: number) => void;
+    playSound?: (soundId: number, vol: number, pan: number, rate: number, loop: boolean) => number;
+    stopChannel?: (chanId: number) => void;
+    pauseChannel?: (chanId: number) => void;
+    resumeChannel?: (chanId: number) => void;
+    setChannelPitch?: (chanId: number, pitch: number) => void;
+    setChannelVolume?: (chanId: number, vol: number) => void;
+    setChannelPan?: (chanId: number, pan: number) => void;
+    isChannelPlaying?: (chanId: number) => boolean;
+    updateListener?: (camera: unknown) => void;
     playSound3D: (soundId: number, x: number, y: number, z: number) => number;
 }
 
@@ -47,6 +63,26 @@ export interface AudioSystem {
  */
 export interface WasmEntityManager {
     createEntity: (type: number, parent: number) => number;
+    bridge: EngineBridge;
+    updateWorld?: (step: number) => void;
+    setPickMode?: (id: number, mode: number) => void;
+    cameraPick?: (camId: number, x: number, y: number) => any;
+    linePick?: (x: number, y: number, z: number, dx: number, dy: number, dz: number) => any;
+}
+
+export interface InputManagerLike {
+    installInputListeners: () => void;
+    keysDown: Record<number, boolean>;
+    keysHit: Record<number, number>;
+    keyQueue: number[];
+    mouseDown: Record<number, boolean>;
+    mouseHit: Record<number, number>;
+    mouseX: number;
+    mouseY: number;
+    mouseZ: number;
+    mouseXSpeed: number;
+    mouseYSpeed: number;
+    mouseZSpeed: number;
 }
 
 export interface GraphicsCore {
@@ -61,7 +97,7 @@ export interface GraphicsCore {
      * In the SCPCB loader, this is wired during runtime initialization.
      */
     fileIO?: Blitz3DFileIO;
-    entityTable?: unknown;
+    entityTable?: EntityTableView;
     banks?: Map<number, DataView>;
     textCanvas?: HTMLCanvasElement | null;
     /**
@@ -158,13 +194,13 @@ export interface Blitz3DGraphicsInterface {
     animationSystem: AnimationSystem | null;
     audioSystem: AudioSystem | null;
     wasmManager: WasmEntityManager | null;
-    inputManager: unknown | null;
+    inputManager: InputManagerLike | null;
 
     entities: Record<number, THREE.Object3D>;
     textures: Record<number, Blitz3DTexture>;
     images: Record<number, Blitz3DImage>;
     brushes: Record<number, Blitz3DBrush>;
-    surfaces: Record<number, unknown>;
+    surfaces: Record<number, any>;
 
     nextImageId: number;
     nextTextureId: number;
@@ -174,6 +210,25 @@ export interface Blitz3DGraphicsInterface {
     lastPick: PickResult | null;
 
     enablePointerLock?: boolean;
+
+    // 2D render state used by setup/2d.ts
+    clearColor: [number, number, number, number];
+    currentColor: [number, number, number, number];
+    currentBuffer: number;
+    currentFont: string;
+    currentFontSize: number;
+
+    // Animation mixer registry used by some loaders (B3D/SMPK).
+    animMixers?: Set<THREE.AnimationMixer>;
+
+    // Engine exports bag used by some import shims.
+    _engine?: EngineExports | null;
+    _engineIds: Map<number, number>;
+    smpkLoader?: SMPKLoader | null;
+
+    init3D: () => void;
+    disposeObject3D: (root: any) => void;
+    ensureUniqueMaterial: (child: any) => void;
 
     engineCreate(gameId: number, type: number, parentGameId?: number): number;
     eid(gameId: number): number;

@@ -189,6 +189,7 @@ export class SMPKLoader {
       // AND handle the scene graph replacement.
       const placeholder = this.graphics.entities[targetId];
       if (placeholder) {
+        const placeholderUserData = placeholder.userData ? { ...placeholder.userData } : null;
         // Transfer parent
         if (placeholder.parent) {
           placeholder.parent.add(root);
@@ -201,6 +202,11 @@ export class SMPKLoader {
 
         // Dispose placeholder geometry/material if any?
         // (Minimal cleanup)
+        if (placeholderUserData) {
+          // Preserve any runtime state applied to the placeholder before the async load completed
+          // (e.g. SCPCB calling SetAnimTime immediately after LoadAnimMesh returns).
+          root.userData = { ...placeholderUserData, ...root.userData };
+        }
       }
     } else {
       rootId = this.graphics.nextEntityId++;
@@ -436,6 +442,15 @@ export class SMPKLoader {
       root.userData.action = action;
       action.play();
       if (json.animations[0]?.sequences) root.userData.sequences = json.animations[0].sequences;
+
+      // If callers set an anim frame cursor on the placeholder before the async load completed,
+      // honor it once the mixer/action exists (SCPCB commonly does this).
+      const initialFrame = (root.userData as any).__b3d_animFrame;
+      if (typeof initialFrame === "number" && Number.isFinite(initialFrame) && initialFrame !== 0) {
+        const fps = root.userData.fps || 30;
+        action.time = initialFrame / fps;
+        mixer.update(0);
+      }
     }
 
     return rootId;

@@ -8,12 +8,14 @@ import { setupPicking } from "./picking.ts";
 import { setupCollision } from "./collision.ts";
 import { setupInput } from "./input.ts";
 import { setupWasmAudio } from "./wasm_audio.ts";
+import { setupAnimation } from "./animation.ts";
 
 export function setupAllImports(graphics: Blitz3DGraphicsInterface, imports: any) {
     setupCore(graphics, imports);
     setup2D(graphics, imports);
     setupImage(graphics, imports);
     setup3D(graphics, imports);
+    setupAnimation(graphics, imports);
     setupInput(graphics, imports);
     setupCollision(graphics, imports);
     setupPicking(graphics, imports);

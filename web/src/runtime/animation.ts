@@ -92,7 +92,10 @@ export class Blitz3DAnimation {
     setAnimTime(entityId: number, time: number, seq: number) {
         const entity = this.graphics.entities[entityId];
         if (entity && entity.userData.mixer && entity.userData.action) {
-            entity.userData.action.time = time;
+            // SCPCB/Blitz3D semantics: SetAnimTime takes a *frame* cursor.
+            const fps = entity.userData.fps || 30;
+            const frame = time || 0;
+            entity.userData.action.time = frame / fps;
             entity.userData.mixer.update(0);
         }
     }
@@ -142,7 +145,8 @@ export class Blitz3DAnimation {
     getAnimLength(entityId: number) {
         const entity = this.graphics.entities[entityId];
         if (entity && entity.userData.action) {
-            return entity.userData.action.getClip().duration * 30 || 0;
+            const fps = entity.userData.fps || 30;
+            return entity.userData.action.getClip().duration * fps || 0;
         }
         return 0;
     }
@@ -150,7 +154,8 @@ export class Blitz3DAnimation {
     getAnimTime(entityId: number) {
         const entity = this.graphics.entities[entityId];
         if (entity && entity.userData.action) {
-            return entity.userData.action.time * 30 || 0;
+            const fps = entity.userData.fps || 30;
+            return entity.userData.action.time * fps || 0;
         }
         return 0;
     }

@@ -22,6 +22,15 @@ export const ENGINE_ENTITY_TYPE = { PIVOT: 0, MESH: 1, CAMERA: 2, LIGHT: 3, SPRI
 export interface AnimationSystem {
     loadAnimMesh: (path: string, parentId: number, targetId?: number) => Promise<number>;
     animate?: (entityId: number, mode: number, speed: number, seq: number, trans: number) => void;
+    /**
+     * SCPCB/Blitz3D uses SetAnimTime/AnimTime in *frame units*.
+     *
+     * Concrete implementation (`web/src/runtime/animation.ts`) is responsible for
+     * mapping frames <-> seconds using the model's fps metadata.
+     */
+    setAnimTime?: (entityId: number, timeFrames: number, seq: number) => void;
+    getAnimTime?: (entityId: number) => number; // frames
+    getAnimLength?: (entityId: number) => number; // frames
 }
 
 /**

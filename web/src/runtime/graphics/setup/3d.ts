@@ -1021,7 +1021,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       if (!graphics.animationSystem) {
         throw new Error("LoadMesh(.smpk) requires graphics.animationSystem");
       }
-      graphics.animationSystem.loadAnimMesh(path, parent || 0).then(() => {
+      graphics.animationSystem.loadAnimMesh(path, parent || 0, placeholderId).then(() => {
         console.log(`[SMPK] Loaded ${path} `);
       }).catch((err: unknown) => console.error(`[SMPK] ${path}: `, err));
     } else if (

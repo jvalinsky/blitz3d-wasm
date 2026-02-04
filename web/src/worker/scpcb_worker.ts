@@ -153,6 +153,17 @@ const postLog = (...args: any[]) => {
   });
 };
 
+type AnimState = { frame: number; mode: number; speed: number; seq: number };
+const animStateByEntity = new Map<number, AnimState>();
+const getAnimState = (ent: number): AnimState => {
+  const id = ent | 0;
+  const prev = animStateByEntity.get(id);
+  if (prev) return prev;
+  const next: AnimState = { frame: 0, mode: 0, speed: 1, seq: 0 };
+  animStateByEntity.set(id, next);
+  return next;
+};
+
 const latin1Decoder = new TextDecoder("latin1");
 
 const readString = (mem: WebAssembly.Memory, ptr: number) => {
@@ -832,6 +843,43 @@ const buildImports = () => {
   imports.env.Cls = noop;
   imports.env.Color = noop;
   imports.env.Text = noop;
+  imports.env.CreatePivot = (_parent?: number) => newHandle();
+  imports.env.CreateMesh = (_parent?: number) => newHandle();
+  imports.env.LoadMesh = (_pathPtr: number, _parent?: number) => newHandle();
+  imports.env.LoadMesh_Strict = imports.env.LoadMesh;
+  imports.env.LoadAnimMesh = (_pathPtr: number, _parent?: number) => newHandle();
+  imports.env.LoadAnimMesh_Strict = imports.env.LoadAnimMesh;
+
+  // Animation: SCPCB relies heavily on SetAnimTime/AnimTime for NPCs and scripted objects.
+  // In the worker harness we don't render, but we must preserve the frame cursor so
+  // branching/save logic stays correct.
+  imports.env.SetAnimTime = (ent: number, time: number, seq: number) => {
+    bump("SetAnimTime");
+    const s = getAnimState(ent);
+    s.frame = time || 0;
+    s.seq = seq | 0;
+  };
+  imports.env.AnimTime = (ent: number) => {
+    bump("AnimTime");
+    return getAnimState(ent).frame || 0;
+  };
+  imports.env.AnimLength = (_ent: number) => {
+    bump("AnimLength");
+    return 0;
+  };
+  imports.env.Animate = (ent: number, mode: number, speed: number, seq: number, _trans: number) => {
+    bump("Animate");
+    const s = getAnimState(ent);
+    s.mode = mode | 0;
+    s.speed = Number.isFinite(speed) ? speed : 1;
+    s.seq = seq | 0;
+    // When switching into a playing mode, reset to 0 (best-effort; SCPCB usually uses SetAnimTime anyway).
+    if (s.mode !== 0) s.frame = 0;
+  };
+  imports.env.Animating = (ent: number) => (getAnimState(ent).mode !== 0 ? 1 : 0);
+  imports.env.AnimSeq = (ent: number) => getAnimState(ent).seq | 0;
+  imports.env.ExtractAnimSeq = (_ent: number, _first: number, _last: number) => 0;
+  imports.env.AddAnimSeq = (_ent: number, _len: number) => 0;
 
   // Images/textures/fonts (return non-zero handles so init code doesn't spin on failures).
   const defaultImageW = 512;

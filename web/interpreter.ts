@@ -3519,7 +3519,28 @@ function makeRunnerWorker(): Worker {
           for (const ns of ["env", "blitz3d"]) {
             imports[ns].Print = printPtr;
             imports[ns].PrintString = printPtr;
-            imports[ns].PrintInt = (v) => emit(String(v | 0));
+            imports[ns].PrintInt = (v) => {
+              // Some programs (or compiler paths) may incorrectly route string pointers through
+              // PrintInt. Be forgiving: if v looks like a valid Blitz string object pointer,
+              // print the decoded string instead of the raw address.
+              const n = Number(v) | 0;
+              try {
+                if (inst && inst.exports && inst.exports.memory instanceof WebAssembly.Memory) {
+                  const memory = inst.exports.memory;
+                  const buf = memory.buffer;
+                  if (n > 0 && (n + 8) <= buf.byteLength) {
+                    const view = new DataView(buf);
+                    const refc = view.getInt32(n + 0, true);
+                    const len = view.getInt32(n + 4, true);
+                    if (refc >= 0 && refc <= 1_000_000 && len >= 0 && len <= 1_000_000 && (n + 8 + len) <= buf.byteLength) {
+                      emit(decodeB3DString(n, memory));
+                      return;
+                    }
+                  }
+                }
+              } catch {}
+              emit(String(n));
+            };
             imports[ns].PrintFloat = (v) => emit(String(v));
             imports[ns].IntToString = intToString;
             imports[ns].FloatToString = floatToString;

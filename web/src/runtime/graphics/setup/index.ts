@@ -9,6 +9,7 @@ import { setupCollision } from "./collision.ts";
 import { setupInput } from "./input.ts";
 import { setupWasmAudio } from "./wasm_audio.ts";
 import { setupAnimation } from "./animation.ts";
+import { setupSCPCB } from "./scpcb.ts";
 
 export function setupAllImports(graphics: Blitz3DGraphicsInterface, imports: any) {
     setupCore(graphics, imports);
@@ -20,4 +21,5 @@ export function setupAllImports(graphics: Blitz3DGraphicsInterface, imports: any
     setupCollision(graphics, imports);
     setupPicking(graphics, imports);
     setupWasmAudio(graphics, imports);
+    setupSCPCB(graphics, imports);
 }

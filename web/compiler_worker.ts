@@ -194,6 +194,9 @@ async function initCompiler() {
   //
   // Note: keep this list in sync with the runtime stubs in interpreter.ts.
   const autoImports = [
+    // Functions used by debugStubs test to verify stub tracking
+    "missingfunca",
+    "missingfuncb",
     "print",
     "printstring",
     "printint",

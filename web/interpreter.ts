@@ -2069,6 +2069,21 @@ const exampleInfo: Record<string, ExampleInfo> = {
       "RMESH variants differ across SCPCB forks; this is a best-effort exploration loader.",
     ],
   },
+  entityBlend: {
+    title: "Entity Blend / Visibility",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
+  cameraSetup: {
+    title: "Camera Setup",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+  },
+  audioSmoke: {
+    title: "Audio Smoke Test",
+    prefersTab: "output",
+    defaultTimeoutMs: 0,
+  },
 };
 
 function renderExampleRequirements(exampleKey: string): void {
@@ -2973,18 +2988,38 @@ function makeRunnerWorker(): Worker {
 	        } catch (e) {
 	          const msg = e instanceof Error ? e.message : String(e);
 	          const stack = e instanceof Error ? e.stack : "";
-	          if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-	            debugStepping = false;
-	            debugPaused = false;
-	            debugStepOnce = false;
-	            debugStepFn = null;
-	            debugEntryFn = null;
-	            debugSeekActive = false;
-	            debugIgnoreBreakpoints = false;
-	            try { sendDebugState("ended"); } catch {}
-	            send({ type: "done" });
-	            return;
-	          }
+          if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+            debugStepping = false;
+            debugPaused = false;
+            debugStepOnce = false;
+            debugStepFn = null;
+            debugEntryFn = null;
+            debugSeekActive = false;
+            debugIgnoreBreakpoints = false;
+            try { sendDebugState("ended"); } catch {}
+            try {
+              const calledList = Array.from((stubReport?.called ?? new Map()).entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 50)
+                .map(([key, count]) => {
+                  const site = (stubReport?.firstSite && stubReport.firstSite.get) ? stubReport.firstSite.get(key) : null;
+                  return {
+                    key,
+                    count,
+                    fileId: site && typeof site.fileId === "number" ? (site.fileId | 0) : 0,
+                    line: site && typeof site.line === "number" ? (site.line | 0) : 0,
+                  };
+                });
+              send({
+                type: "stubs",
+                total: Number(stubReport?.total ?? 0) || 0,
+                shown: Array.isArray(stubReport?.shown) ? stubReport.shown : [],
+                called: calledList,
+              });
+            } catch {}
+            send({ type: "done" });
+            return;
+          }
 	          send({ type: "error", message: msg, stack });
 	          return;
 	        }
@@ -5086,11 +5121,12 @@ async function runWasmBytesOnMainThread(
         debugSteppingStepCount++;
       } catch (e) {
         const msg = errorMessage(e);
-        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-          printOutput("Program ended.", "success");
-          stopExecution();
-          return;
-        }
+      if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+        printOutput("Program ended.", "success");
+        try { renderRuntimeGaps(); } catch {}
+        stopExecution();
+        return { startedStepping: false };
+      }
         printOutput(`Execution error: ${msg}`, "error");
         const st = errorStack(e);
         if (showStacks && st) {
@@ -5164,6 +5200,7 @@ async function runWasmBytesOnMainThread(
       const msg = errorMessage(e);
       if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
         printOutput("Program ended.", "success");
+        try { renderRuntimeGaps(); } catch {}
         stopExecution();
         return { startedStepping: false };
       }
@@ -5171,6 +5208,7 @@ async function runWasmBytesOnMainThread(
       stopExecution();
       return { startedStepping: false };
     }
+    try { renderRuntimeGaps(); } catch {}
   }
 
   return { startedStepping: false };

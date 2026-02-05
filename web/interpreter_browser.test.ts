@@ -1510,7 +1510,7 @@ Deno.test("interpreter ui behavior", async () => {
             if (typeof n === "number" && Number.isFinite(n)) return n | 0;
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
-            const m = t.match(/Steps:\\s*(\\d+)/);
+            const m = t.match(/Steps:\s*(\d+)/);
             return m ? Number(m[1]) | 0 : -1;
           });
         };
@@ -1526,7 +1526,7 @@ Deno.test("interpreter ui behavior", async () => {
             }
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
-            const m = t.match(/Steps:\\s*(\\d+)/);
+            const m = t.match(/Steps:\s*(\d+)/);
             return Boolean(m && Number(m[1]) >= 2);
           },
           undefined,
@@ -1593,7 +1593,7 @@ Deno.test("interpreter ui behavior", async () => {
             const n = (typeof hn === "number" && Number.isFinite(hn)) ? (hn | 0) : -1;
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
-            const m = t.match(/Steps:\\s*(\\d+)/);
+            const m = t.match(/Steps:\s*(\d+)/);
             const domN = m ? Number(m[1]) | 0 : -1;
             const statusText =
               document.querySelector("#status-text")?.textContent?.trim() ?? "";
@@ -1624,7 +1624,7 @@ Deno.test("interpreter ui behavior", async () => {
             const n = (typeof hn === "number" && Number.isFinite(hn)) ? (hn | 0) : -1;
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
-            const m = t.match(/Steps:\\s*(\\d+)/);
+            const m = t.match(/Steps:\s*(\d+)/);
             const domN = m ? Number(m[1]) | 0 : -1;
             const next = n >= 0 ? n : domN;
             return Boolean(pauseBtn && !pauseBtn.disabled) &&
@@ -1693,7 +1693,7 @@ Deno.test("interpreter ui behavior", async () => {
           return await page.evaluate(() => {
             const t = document.querySelector("#stubs-summary")?.textContent ??
               "";
-            const m = t.match(/Called:\\s*(\\d+)/);
+            const m = t.match(/Called:\s*(\d+)/);
             return m ? Number(m[1]) | 0 : -1;
           });
         };

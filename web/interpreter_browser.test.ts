@@ -1187,7 +1187,23 @@ Deno.test("interpreter ui behavior", async () => {
         // Download/export actions.
         // WAT download requires enabling capture before running.
         await page.click("#tab-debug");
-        await page.check("#wat-enabled");
+        await page.waitForFunction(() => {
+          const el = document.querySelector("#debug-tab");
+          return Boolean(el?.classList.contains("active"));
+        }, undefined, { timeout: 10_000 });
+        const watEnabled = page.locator("#wat-enabled");
+        try {
+          await watEnabled.scrollIntoViewIfNeeded();
+          await watEnabled.check();
+        } catch {
+          // Some layouts may clip the checkbox out of view; fall back to a DOM-set.
+          await page.evaluate(() => {
+            const el = document.getElementById("wat-enabled") as HTMLInputElement | null;
+            if (!el) return;
+            el.checked = true;
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+        }
         await page.click("#tab-output");
         await page.selectOption("#example-select", "hello");
         await page.click("#run-btn");

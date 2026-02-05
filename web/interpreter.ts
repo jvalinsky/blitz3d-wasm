@@ -3188,6 +3188,19 @@ function makeRunnerWorker(): Worker {
           }
           if (!(imp.module in imports)) imports[imp.module] = {};
           if (imp.name in imports[imp.module]) continue;
+
+          // Case-insensitive fallback (e.g. WASM imports 'inttostring', runtime has 'IntToString')
+          let found = false;
+          const lower = imp.name.toLowerCase();
+          for (const k in imports[imp.module]) {
+            if (k.toLowerCase() === lower) {
+              imports[imp.module][imp.name] = imports[imp.module][k];
+              found = true;
+              break;
+            }
+          }
+          if (found) continue;
+
           const key = imp.module + "." + imp.name;
           total++;
           if (shown.length < stubbedLimit) shown.push(key);
@@ -3658,7 +3671,9 @@ function makeRunnerWorker(): Worker {
             const alloc = getStringAlloc();
             const memory = inst.exports.memory;
             if (typeof alloc !== "function") return 0;
-            return writeStringObj(alloc, memory, String(val | 0));
+            const ptr = writeStringObj(alloc, memory, String(val | 0));
+            // console.log("worker IntToString val=" + val + " ptr=" + ptr);
+            return ptr;
           };
 
           const floatToString = (val) => {
@@ -3666,7 +3681,7 @@ function makeRunnerWorker(): Worker {
             const alloc = getStringAlloc();
             const memory = inst.exports.memory;
             if (typeof alloc !== "function") return 0;
-            return writeStringObj(alloc, memory, String(val));
+            return writeStringObj(alloc, memory, String(val | 0));
           };
 
           for (const ns of ["env", "blitz3d"]) {
@@ -4922,6 +4937,39 @@ async function runWasmBytesOnMainThread(
   imports.env["__StringAlloc%"] = (len) => allocStringObjPtr(len);
   imports.blitz3d.__StringAlloc = imports.env.__StringAlloc;
   imports.blitz3d["__StringAlloc%"] = imports.env["__StringAlloc%"];
+
+  // Implement core.allocString for runtime functions (IntToString, SystemProperty, etc.)
+  core.allocString = (text: string) => {
+    // Note: This uses UTF-8 encoding, while Blitz3D is typically Latin-1.
+    // For ASCII this is identical. For others, Len() will reflect byte count.
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(text);
+    const len = bytes.length;
+    
+    const ptr = allocStringObjPtr(len);
+    if (!ptr || ptr === 0) return 0;
+    
+    const mem = core.memory;
+    if (!mem) return 0;
+    
+    try {
+      const view = new DataView(mem.buffer);
+      const byteView = new Uint8Array(mem.buffer);
+      
+      // Blitz3D String Object Layout:
+      // +0: GC/Ref header (unused here, set to 1 for safety or 0)
+      // +4: Length (int32)
+      // +8: Characters
+      view.setInt32(ptr, 1, true); // RefCount/Class?
+      view.setInt32(ptr + 4, len, true);
+      byteView.set(bytes, ptr + 8);
+      byteView[ptr + 8 + len] = 0; // Null terminator
+      return ptr;
+    } catch (e) {
+      console.error("allocString failed:", e);
+      return 0;
+    }
+  };
 
   if (core.setupCommonImports) core.setupCommonImports(imports);
   if (graphics.setupImports) graphics.setupImports(imports);

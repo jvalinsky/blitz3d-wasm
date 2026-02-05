@@ -82,6 +82,7 @@ const EXAMPLE_EXPECTATIONS: Record<string, string[]> = {
   b3dInspectRender: ["== B3D Inspect =="],
   xInspectRender: ["== X Inspect =="],
   rmeshInspectRender: ["== RMESH Inspect =="],
+  cafeteriaWalkthrough: ["Cafeteria loaded!"],
   entityBlend: ["blend=1 hide=0 show=1"],
   cameraSetup: ["Camera setup ok"],
   audioSmoke: ["audio init ok"],

@@ -70,4 +70,17 @@ export function setupInput(graphics: Blitz3DGraphicsInterface, imports: any) {
             graphics.inputManager.mouseY = y;
         }
     };
+
+    // Pointer visibility
+    imports.env.HidePointer = () => {
+        if (graphics.core.canvas) {
+            graphics.core.canvas.style.cursor = "none";
+        }
+    };
+
+    imports.env.ShowPointer = () => {
+        if (graphics.core.canvas) {
+            graphics.core.canvas.style.cursor = "default";
+        }
+    };
 }

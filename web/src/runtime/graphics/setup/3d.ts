@@ -1208,4 +1208,130 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       parent.add(entity);
     }
   };
+
+  // --- Entity Blend ---
+  imports.env.EntityBlend = (ent: number, blend: number) => {
+    const entity = graphics.entities[ent];
+    if (!entity) return;
+    const mode = blend | 0;
+    applyToRenderable(entity, (obj) => {
+      applyMaterial(obj, (mat) => {
+        try {
+          if (mode === 2) mat.blending = THREE.MultiplyBlending;
+          else if (mode === 3) mat.blending = THREE.AdditiveBlending;
+          else mat.blending = THREE.NormalBlending;
+          if (typeof mat.transparent === "boolean") {
+            if (mode === 2 || mode === 3) mat.transparent = true;
+          }
+          if (typeof mat.needsUpdate === "boolean") mat.needsUpdate = true;
+        } catch {}
+      });
+    });
+  };
+
+  // --- Hide / Show / Visible ---
+  imports.env.HideEntity = (ent: number) => {
+    const entity = graphics.entities[ent];
+    if (entity) entity.visible = false;
+  };
+
+  imports.env.ShowEntity = (ent: number) => {
+    const entity = graphics.entities[ent];
+    if (entity) entity.visible = true;
+  };
+
+  imports.env.EntityVisible = (ent: number) => {
+    const entity = graphics.entities[ent];
+    return entity ? (entity.visible ? 1 : 0) : 0;
+  };
+
+  // --- Fog ---
+  imports.env.FogMode = (mode: number) => {
+    if (!graphics.scene) return;
+    const m = mode | 0;
+    if (m === 0) {
+      graphics.scene.fog = null;
+    } else if (m === 2) {
+      // Exponential fog
+      graphics.scene.fog = new THREE.FogExp2(0x000000, 0.01);
+    } else {
+      // Linear fog (mode 1 or fallback)
+      graphics.scene.fog = new THREE.Fog(0x000000, 1, 100);
+    }
+  };
+
+  imports.env.FogColor = (r: number, g: number, b: number) => {
+    if (!graphics.scene?.fog) return;
+    (graphics.scene.fog as any).color.setRGB(
+      (r & 0xff) / 255,
+      (g & 0xff) / 255,
+      (b & 0xff) / 255,
+    );
+  };
+
+  imports.env.FogRange = (near: number, far: number) => {
+    const fog = graphics.scene?.fog;
+    if (fog && fog instanceof THREE.Fog) {
+      fog.near = near;
+      fog.far = far;
+    }
+  };
+
+  imports.env.FogDensity = (density: number) => {
+    const fog = graphics.scene?.fog;
+    if (fog && fog instanceof THREE.FogExp2) {
+      fog.density = density;
+    }
+  };
+
+  // --- Camera ---
+  imports.env.CameraRange = (cam: number, near: number, far: number) => {
+    const entity = graphics.entities[cam];
+    if (entity && entity instanceof THREE.PerspectiveCamera) {
+      entity.near = near;
+      entity.far = far;
+      entity.updateProjectionMatrix();
+    }
+  };
+
+  imports.env.CameraZoom = (cam: number, zoom: number) => {
+    const entity = graphics.entities[cam];
+    if (entity && entity instanceof THREE.PerspectiveCamera) {
+      entity.zoom = zoom;
+      entity.updateProjectionMatrix();
+    }
+  };
+
+  imports.env.CameraViewport = (
+    cam: number,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ) => {
+    // Store viewport info on the camera for the render loop to use.
+    const entity = graphics.entities[cam];
+    if (entity) {
+      entity.userData.viewport = { x, y, w, h };
+    }
+  };
+
+  imports.env.CameraClsColor = (
+    cam: number,
+    r: number,
+    g: number,
+    b: number,
+  ) => {
+    // Store clear color on the camera; the render loop should read this.
+    const entity = graphics.entities[cam];
+    if (entity) {
+      entity.userData.clsColor = { r: r & 0xff, g: g & 0xff, b: b & 0xff };
+    }
+    // Also update the renderer if available.
+    if (graphics.renderer) {
+      graphics.renderer.setClearColor(
+        new THREE.Color((r & 0xff) / 255, (g & 0xff) / 255, (b & 0xff) / 255),
+      );
+    }
+  };
 }

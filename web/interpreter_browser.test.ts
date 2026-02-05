@@ -1074,6 +1074,232 @@ Deno.test("interpreter ui behavior", async () => {
         }, undefined, { timeout: 10_000 });
       });
 
+      await step("stop during compilation", async () => {
+        // True stop-during-compilation behavior: Stop should cancel the in-flight compile
+        // and return the UI to Ready (no hung promises / disabled buttons).
+        await clearPanels(page);
+        await page.fill("#timeout-ms", "20000");
+
+        // Make this deterministic: ask the compiler worker to hold the result for a bit so
+        // the Stop button has a reliable window to cancel the in-flight compile.
+        await page.evaluate(() => {
+          (globalThis as any).__B3D_COMPILER_DEBUG_HOLD_MS = 1500;
+        });
+        try {
+          const parts: string[] = [
+            "; Generated: large source to make compilation non-trivial",
+            "Local x% = 0",
+          ];
+          for (let i = 0; i < 20000; i++) parts.push("x = x + 1");
+          parts.push("Print x");
+          await page.fill("#editor", parts.join("\n") + "\n");
+
+          await page.click("#run-btn");
+          await waitForRunStart(page, 10_000);
+
+          // Stop should become enabled while compilation is running, and cancellation should prevent
+          // "Loading compiled module..." from ever printing.
+          await page.waitForFunction(() => {
+            const stopBtn = document.querySelector<HTMLButtonElement>("#stop-btn");
+            const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+            return statusText.startsWith("Compiling") &&
+              Boolean(stopBtn && !stopBtn.disabled);
+          }, undefined, { timeout: 60_000 });
+          await page.click("#stop-btn");
+
+          await page.waitForFunction(() => {
+            const out = document.querySelector("#output")?.textContent ?? "";
+            return out.includes("Compilation canceled.");
+          }, undefined, { timeout: 60_000 });
+
+          // Must always return to Ready with controls enabled, and must not have started execution.
+          await page.waitForFunction(() => {
+            const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+            const runBtn = document.querySelector<HTMLButtonElement>("#run-btn");
+            const compileBtn = document.querySelector<HTMLButtonElement>("#compile-btn");
+            const stopBtn = document.querySelector<HTMLButtonElement>("#stop-btn");
+            const out = document.querySelector("#output")?.textContent ?? "";
+            return statusText === "Ready" &&
+              Boolean(runBtn && !runBtn.disabled) &&
+              Boolean(compileBtn && !compileBtn.disabled) &&
+              Boolean(stopBtn && stopBtn.disabled) &&
+              !out.includes("Loading compiled module...");
+          }, undefined, { timeout: 60_000 });
+        } finally {
+          await page.evaluate(() => {
+            (globalThis as any).__B3D_COMPILER_DEBUG_HOLD_MS = 0;
+          });
+        }
+      });
+
+      await step("bbdbg pause/step/continue", async () => {
+        // Smoke-test stepping controls: Pause -> Step -> Continue should update bbdbg steps/trace
+        // and status text should reflect pause/resume.
+        await clearPanels(page);
+        await page.fill("#timeout-ms", "2000");
+        await page.selectOption("#example-select", "rotatingCube");
+        await page.click("#run-btn");
+        await waitForRunStart(page, 10_000);
+
+        await page.click("#tab-debug");
+
+        const readSteps = async (): Promise<number> => {
+          return await page.evaluate(() => {
+            const t = document.querySelector("#bbdbg-summary")?.textContent ?? "";
+            const m = t.match(/Steps:\\s*(\\d+)/);
+            return m ? Number(m[1]) | 0 : -1;
+          });
+        };
+
+        // Wait for at least a couple steps to tick.
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#bbdbg-summary")?.textContent ?? "";
+          const m = t.match(/Steps:\\s*(\\d+)/);
+          return Boolean(m && Number(m[1]) >= 2);
+        }, undefined, { timeout: 60_000 });
+
+        // Pause should flip controls + status.
+        await page.waitForFunction(() => {
+          const btn = document.querySelector<HTMLButtonElement>("#bbdbg-pause-btn");
+          return Boolean(btn && !btn.disabled);
+        }, undefined, { timeout: 30_000 });
+        await page.click("#bbdbg-pause-btn");
+        await page.waitForFunction(() => {
+          const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+          const pauseBtn = document.querySelector<HTMLButtonElement>("#bbdbg-pause-btn");
+          const contBtn = document.querySelector<HTMLButtonElement>("#bbdbg-continue-btn");
+          const stepBtn = document.querySelector<HTMLButtonElement>("#bbdbg-step-btn");
+          return statusText.startsWith("Paused") &&
+            Boolean(pauseBtn && pauseBtn.disabled) &&
+            Boolean(contBtn && !contBtn.disabled) &&
+            Boolean(stepBtn && !stepBtn.disabled);
+        }, undefined, { timeout: 30_000 });
+
+        const pausedSteps = await readSteps();
+        // Single-step should increment steps while remaining paused.
+        await page.click("#bbdbg-step-btn");
+        await page.waitForFunction((prev: number) => {
+          const t = document.querySelector("#bbdbg-summary")?.textContent ?? "";
+          const m = t.match(/Steps:\\s*(\\d+)/);
+          const n = m ? Number(m[1]) | 0 : -1;
+          const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+          return statusText.startsWith("Paused") && n >= prev + 1;
+        }, pausedSteps, { timeout: 30_000 });
+
+        // Continue should resume stepping (steps keep increasing) and re-enable Pause.
+        const stepAfterSingle = await readSteps();
+        await page.click("#bbdbg-continue-btn");
+        await page.waitForFunction((prev: number) => {
+          const pauseBtn = document.querySelector<HTMLButtonElement>("#bbdbg-pause-btn");
+          const contBtn = document.querySelector<HTMLButtonElement>("#bbdbg-continue-btn");
+          const stepBtn = document.querySelector<HTMLButtonElement>("#bbdbg-step-btn");
+          const t = document.querySelector("#bbdbg-summary")?.textContent ?? "";
+          const m = t.match(/Steps:\\s*(\\d+)/);
+          const n = m ? Number(m[1]) | 0 : -1;
+          return Boolean(pauseBtn && !pauseBtn.disabled) &&
+            Boolean(contBtn && contBtn.disabled) &&
+            Boolean(stepBtn && stepBtn.disabled) &&
+            n >= prev + 1;
+        }, stepAfterSingle, { timeout: 60_000 });
+
+        await stopIfRunning(page, 30_000);
+      });
+
+      await step("vfs prefix upload correctness", async () => {
+        // Changing the VFS prefix should affect the paths registered in the VFS list,
+        // and programs should be able to read using the prefixed path.
+        await page.click("#vfs-clear-btn");
+        await page.fill("#vfs-prefix", "assets/sub/");
+        const fixtures = await createVfsFixtures();
+        const demoTxt = fixtures.find((f) => f.name === "demo.txt");
+        if (!demoTxt) throw new Error("[interpreter ui] demo.txt fixture missing");
+        await page.setInputFiles("#vfs-upload", [demoTxt]);
+
+        await page.waitForFunction(() => {
+          const list = document.querySelector("#vfs-list")?.textContent ?? "";
+          return list.includes("assets/sub/demo.txt");
+        }, undefined, { timeout: 15_000 });
+
+        await clearPanels(page);
+        await page.fill(
+          "#editor",
+          [
+            'Local f% = ReadFile("assets/sub/demo.txt")',
+            'If f = 0 Then Print "open failed": End',
+            "Print ReadLine(f)",
+            "Print ReadLine(f)",
+            "CloseFile f",
+          ].join("\n") + "\n",
+        );
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("line1") && out.includes("line2");
+        }, undefined, { timeout: 60_000 });
+        await stopIfRunning(page, 30_000);
+
+        // Restore fixtures and prefix for subsequent examples.
+        await uploadVfsFixtures(page);
+      });
+
+      await step("runtime gaps called changes + clear", async () => {
+        await page.click("#tab-debug");
+
+        const readCalledCount = async (): Promise<number> => {
+          return await page.evaluate(() => {
+            const t = document.querySelector("#stubs-summary")?.textContent ?? "";
+            const m = t.match(/Called:\\s*(\\d+)/);
+            return m ? Number(m[1]) | 0 : -1;
+          });
+        };
+
+        // Clear should reset everything to the empty state.
+        await page.click("#stubs-clear-btn");
+        await page.waitForFunction(() => {
+          const summary = document.querySelector("#stubs-summary")?.textContent ?? "";
+          const called = document.querySelector("#stubs-called")?.textContent ?? "";
+          return summary.includes("No stubbed imports yet.") && called.includes("No stubbed calls observed.");
+        }, undefined, { timeout: 15_000 });
+
+        // debugStubs intentionally calls missing imports -> Called should be > 0.
+        await page.selectOption("#example-select", "debugStubs");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const summary = document.querySelector("#stubs-summary")?.textContent ?? "";
+          return summary.includes("Stubbed imports:") && summary.includes("Called:");
+        }, undefined, { timeout: 60_000 });
+        const called1 = await readCalledCount();
+        if (called1 <= 0) {
+          throw new Error(`[interpreter ui] expected debugStubs called>0, got ${called1}`);
+        }
+
+        // A simple program should generally call 0 missing imports.
+        await page.selectOption("#example-select", "hello");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Hello from Blitz3D WASM!");
+        }, undefined, { timeout: 60_000 });
+        await page.click("#tab-debug");
+        await page.waitForFunction(() => {
+          const summary = document.querySelector("#stubs-summary")?.textContent ?? "";
+          return summary.includes("Stubbed imports:") && summary.includes("Called:");
+        }, undefined, { timeout: 30_000 });
+        const called2 = await readCalledCount();
+        if (called2 !== 0) {
+          throw new Error(`[interpreter ui] expected hello called==0, got ${called2}`);
+        }
+
+        // Clear again should return us to empty.
+        await page.click("#stubs-clear-btn");
+        await page.waitForFunction(() => {
+          const summary = document.querySelector("#stubs-summary")?.textContent ?? "";
+          return summary.includes("No stubbed imports yet.");
+        }, undefined, { timeout: 15_000 });
+
+        await stopIfRunning(page, 30_000);
+      });
+
       await step("watchdog timeout", async () => {
         // Watchdog timeout UX + recovery.
         // This timeout is used for both compilation and execution; keep it large enough
@@ -1219,6 +1445,18 @@ Deno.test("interpreter ui behavior", async () => {
           return Boolean(el?.classList.contains("active"));
         }, undefined, { timeout: 10_000 });
 
+        // WAT copy should be enabled once WAT exists; click should print a success/error message.
+        await page.waitForFunction(() => {
+          const code = document.querySelector("#wat-code")?.textContent ?? "";
+          const copyBtn = document.querySelector<HTMLButtonElement>("#wat-copy-btn");
+          return code.includes("(module") && Boolean(copyBtn && !copyBtn.disabled);
+        }, undefined, { timeout: 60_000 });
+        await page.click("#wat-copy-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("WAT copied to clipboard.") || out.includes("Copy failed:");
+        }, undefined, { timeout: 30_000 });
+
         const watDownloadBtn = page.locator("#wat-download-btn");
         await watDownloadBtn.scrollIntoViewIfNeeded();
         await page.waitForFunction(() => {
@@ -1237,6 +1475,20 @@ Deno.test("interpreter ui behavior", async () => {
         if (!watText.includes("(module")) {
           throw new Error("[interpreter ui] WAT download did not look like WAT");
         }
+
+        // Clear should wipe the preview and disable copy/download.
+        await page.click("#wat-clear-btn");
+        await page.waitForFunction(() => {
+          const summary = document.querySelector("#wat-summary")?.textContent ?? "";
+          const code = (document.querySelector("#wat-code")?.textContent ?? "").trim();
+          const copyBtn = document.querySelector<HTMLButtonElement>("#wat-copy-btn");
+          const dlBtn = document.querySelector<HTMLButtonElement>("#wat-download-btn");
+          return summary.includes("No WAT yet") &&
+            code === "" &&
+            Boolean(copyBtn && copyBtn.disabled) &&
+            Boolean(dlBtn && dlBtn.disabled);
+        }, undefined, { timeout: 15_000 });
+
         await stopIfRunning(page, 30_000);
       });
 

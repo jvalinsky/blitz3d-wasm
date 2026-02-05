@@ -22,6 +22,7 @@ try {
   if (!g.THREE) g.THREE = THREE;
 } catch {}
 
+import { Blitz3DAudio } from "./src/runtime/audio.ts";
 import { Blitz3DCore } from "./src/runtime/core.ts";
 import { Blitz3DFileIO } from "./src/runtime/fileio.ts";
 import { Blitz3DGraphics } from "./src/runtime/graphics/index.ts";
@@ -43,7 +44,15 @@ type OutputLineKind = "info" | "success" | "warning" | "error" | "output";
 
 type VfsRecord = { bytes: Uint8Array; mime: string };
 
-type CompileInFlight = { id: number; timeoutId: number } | null;
+type CompileInFlight =
+  | {
+    id: number;
+    timeoutId: number;
+    worker: Worker;
+    onMessage: (ev: MessageEvent<CompilerWorkerMessage>) => void;
+    reject: (reason?: unknown) => void;
+  }
+  | null;
 
 type ExampleInfo = {
   title: string;
@@ -78,6 +87,7 @@ type CompilerCompileMessage = {
   id: number;
   source: string;
   emitWat?: boolean;
+  debugHoldMs?: number;
 };
 type CompilerCompileResultMessage =
   | {
@@ -1840,6 +1850,37 @@ Function __Step%()
   RenderWorld
   Flip
 End Function`,
+
+  entityBlend: `; Entity Blend / Visibility Demo (stepped, no loops)
+Graphics3D 800, 600, 32, 2
+cam = CreateCamera()
+cube = CreateCube()
+EntityColor cube, 255, 0, 0
+EntityBlend cube, 1
+HideEntity cube
+v1 = EntityVisible(cube)
+ShowEntity cube
+v2 = EntityVisible(cube)
+Print "blend=1 hide=" + v1 + " show=" + v2
+RenderWorld
+Flip`,
+
+  cameraSetup: `; Camera Setup Demo (stepped, no loops)
+Graphics3D 800, 600, 32, 2
+cam = CreateCamera()
+CameraRange cam, 0.1, 500
+CameraZoom cam, 1.5
+CameraClsColor cam, 64, 0, 0
+cube = CreateCube()
+PositionEntity cube, 0, 0, 5
+Print "Camera setup ok"
+RenderWorld
+Flip`,
+
+  audioSmoke: `; Audio Smoke Test (stepped, no loops)
+Graphics3D 800, 600, 32, 2
+snd = LoadSound("nonexistent.wav")
+Print "audio init ok, snd=" + snd`,
 };
 
 const exampleInfo: Record<string, ExampleInfo> = {
@@ -2419,6 +2460,11 @@ let runnerSandboxInFlight:
   | null = null;
 
 function stopExecution() {
+  if (compileInFlight) {
+    cancelCompileInFlight(new DOMException("Compilation canceled.", "AbortError"), {
+      terminateWorker: true,
+    });
+  }
   mainThreadStopRequested = true;
   sharedStopRequested = true;
   stopMemoryAutoRefresh();
@@ -2487,15 +2533,47 @@ function stopRun() {
 }
 
 function stopCompile() {
-  if (compileInFlight?.timeoutId) {
-    clearTimeout(compileInFlight.timeoutId);
-  }
-  compileInFlight = null;
+  cancelCompileInFlight(new DOMException("Compilation canceled.", "AbortError"), {
+    terminateWorker: true,
+  });
   if (compilerWorker) {
     compilerWorker.terminate();
     compilerWorker = null;
   }
   compilerWorkerReady = false;
+}
+
+function isAbortError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  return String((err as { name?: unknown }).name ?? "") === "AbortError";
+}
+
+function cancelCompileInFlight(
+  reason: unknown,
+  { terminateWorker }: { terminateWorker: boolean },
+): void {
+  const inflight = compileInFlight;
+  if (!inflight) return;
+  compileInFlight = null;
+  try {
+    inflight.worker.removeEventListener(
+      "message",
+      inflight.onMessage as unknown as EventListener,
+    );
+  } catch {}
+  try {
+    clearTimeout(inflight.timeoutId);
+  } catch {}
+  try {
+    inflight.reject(reason);
+  } catch {}
+  if (terminateWorker && compilerWorker) {
+    try {
+      compilerWorker.terminate();
+    } catch {}
+    compilerWorker = null;
+    compilerWorkerReady = false;
+  }
 }
 
 function shouldAbortMainThreadRun() {
@@ -3791,6 +3869,10 @@ async function compileSource(source: string): Promise<CompileResult> {
   const id = compileReqId++;
   const timeoutMs = Math.max(250, Number(timeoutMsEl.value ?? "2000") || 2000);
   const emitWat = Boolean(watEnabledEl.checked);
+  const debugHoldMs = Math.max(
+    0,
+    Number((globalThis as any).__B3D_COMPILER_DEBUG_HOLD_MS ?? 0) || 0,
+  );
 
   return await new Promise<CompileResult>((resolve, reject) => {
     if (compileInFlight) {
@@ -3798,17 +3880,11 @@ async function compileSource(source: string): Promise<CompileResult> {
       return;
     }
 
-    const timeoutId = setTimeout(() => {
-      stopCompile();
-      reject(new Error(`Compilation timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-
-    compileInFlight = { id, timeoutId };
-
     const w = compilerWorker!;
     const onMessage = (ev: MessageEvent<CompilerWorkerMessage>) => {
       const msg = ev.data || ({} as CompilerWorkerMessage);
       if (msg.type !== "compile_result" || msg.id !== id) return;
+      if (!compileInFlight || compileInFlight.id !== id) return;
       w.removeEventListener("message", onMessage as EventListener);
       clearTimeout(timeoutId);
       compileInFlight = null;
@@ -3824,9 +3900,18 @@ async function compileSource(source: string): Promise<CompileResult> {
       resolve(result);
     };
 
+    const timeoutId = setTimeout(() => {
+      cancelCompileInFlight(
+        new Error(`Compilation timed out after ${timeoutMs}ms`),
+        { terminateWorker: true },
+      );
+    }, timeoutMs);
+
+    compileInFlight = { id, timeoutId, worker: w, onMessage, reject };
+
     w.addEventListener("message", onMessage as EventListener);
     w.postMessage(
-      { type: "compile", id, source, emitWat } satisfies CompilerCompileMessage,
+      { type: "compile", id, source, emitWat, debugHoldMs } satisfies CompilerCompileMessage,
     );
   });
 }
@@ -3860,6 +3945,7 @@ async function compileOnly(): Promise<void> {
   isCompiling = true;
   runBtnEl.disabled = true;
   compileBtnEl.disabled = true;
+  stopBtnEl.disabled = false;
   updateBbdbgButtons();
   setStatus("compiling", "Compiling...");
   printOutput("Compiling Blitz3D code...", "info");
@@ -3896,13 +3982,18 @@ async function compileOnly(): Promise<void> {
       setStatus("ready", "Ready");
     }
   } catch (error: unknown) {
-    printOutput(`Error: ${errorMessage(error)}`, "error");
-    console.error("Compile error:", error);
+    if (isAbortError(error)) {
+      printOutput("Compilation canceled.", "warning");
+    } else {
+      printOutput(`Error: ${errorMessage(error)}`, "error");
+      console.error("Compile error:", error);
+    }
     setStatus("ready", "Ready");
   } finally {
     isCompiling = false;
     runBtnEl.disabled = false;
     compileBtnEl.disabled = false;
+    stopBtnEl.disabled = true;
     updateBbdbgButtons();
   }
 }
@@ -3934,7 +4025,7 @@ async function runCode() {
   isCompiling = true;
   runBtnEl.disabled = true;
   compileBtnEl.disabled = true;
-  stopBtnEl.disabled = true;
+  stopBtnEl.disabled = false;
   runBtnEl.textContent = "Compiling...";
   setStatus("compiling", "Compiling...");
   clearOutput();
@@ -3983,14 +4074,19 @@ async function runCode() {
       printOutput(result.error || "Unknown error", "error");
     }
   } catch (error: unknown) {
-    printOutput(`Error: ${errorMessage(error)}`, "error");
-    console.error("Run code error:", error);
+    if (isAbortError(error)) {
+      printOutput("Compilation canceled.", "warning");
+    } else {
+      printOutput(`Error: ${errorMessage(error)}`, "error");
+      console.error("Run code error:", error);
+    }
   } finally {
     isCompiling = false;
     runBtnEl.disabled = false;
     runBtnEl.textContent = "Run";
     compileBtnEl.disabled = false;
     updateBbdbgButtons();
+    if (!isRunning) stopBtnEl.disabled = true;
     if (!isRunning) setStatus("ready", "Ready");
   }
 }
@@ -4276,6 +4372,7 @@ async function runWasmBytesOnMainThread(
   sharedCore = new Blitz3DCore();
   sharedCore.init("game-canvas");
   sharedGraphics = new Blitz3DGraphics(sharedCore);
+  sharedGraphics.audioSystem = new Blitz3DAudio(sharedCore);
   sharedFileIO = new Blitz3DFileIO(sharedCore);
   sharedFileIO.init("", null, null);
 

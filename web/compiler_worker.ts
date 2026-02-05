@@ -6,7 +6,7 @@
  * Protocol:
  * - main -> worker: `{ type: "init" }`
  * - worker -> main: `{ type: "ready" }` | `{ type: "error", message, stack? }`
- * - main -> worker: `{ type: "compile", id, source }`
+ * - main -> worker: `{ type: "compile", id, source, emitWat?, debugHoldMs? }`
  * - worker -> main: `{ type: "compile_result", id, ok, error?, stack?, result?, wasmBytes? }`
  */
 
@@ -16,6 +16,11 @@ type CompileMessage = {
   id: number;
   source: string;
   emitWat?: boolean;
+  /**
+   * Optional artificial delay (milliseconds) after compilation and before
+   * posting the result. Useful for deterministic "cancel compilation" UI tests.
+   */
+  debugHoldMs?: number;
 };
 type MainToWorker = InitMessage | CompileMessage;
 
@@ -356,6 +361,73 @@ async function initCompiler() {
     "camerarange",
     "camerazoom",
     "cameraviewport",
+    "createtexture",
+    "imagebuffer",
+    "texturebuffer",
+    "writepixelfast",
+    "readpixelfast",
+    "writepixel",
+    "readpixel",
+    "lockbuffer",
+    "unlockbuffer",
+    "loadsound",
+    "playsound",
+    "freesound",
+    "stopchannel",
+    "channelvolume",
+    "channelpitch",
+    "channelplaying",
+    "pausechannel",
+    "resumechannel",
+    "channelpan",
+    "copymesh",
+    "getiniint",
+    "and",
+    "or",
+    "graphicsbuffer",
+    "handle",
+    "colorred",
+    "colorgreen",
+    "colorblue",
+    "fontheight",
+    "fontwidth",
+    "graphicswidth",
+    "graphicsheight",
+    "initaafont",
+    "aafont",
+    "aasetfont",
+    "aatext",
+    "aastringwidth",
+    "aastringheight",
+    "aaspriteposition",
+    "aaspritescale",
+    "reloadaafont",
+    "loadsound_strict",
+    "playsound_strict",
+    "playsound2",
+    "freesound_strict",
+    "loadtempsound",
+    "updateworld",
+    "entitytype",
+    "entityradius",
+    "entitybox",
+    "collisions",
+    "clearcollisions",
+    "countchildren",
+    "getchild",
+    "findchild",
+    "nameentity",
+    "entityname",
+    "entitydistance",
+    "entityautofade",
+    "entityorder",
+    "moveentity",
+    "loadmesh",
+    "copypixel",
+    "copypixelfast",
+    "createsprite",
+    "scalesprite",
+    "spriteviewmode",
   ];
 
   const optionsJSON = JSON.stringify({
@@ -497,6 +569,8 @@ ctx.onmessage = async (ev: MessageEvent<MainToWorker>) => {
       const id = msg.id;
       const source = String(msg.source ?? "");
       const compiled = compileSource(source, { emitWat: Boolean(msg.emitWat) });
+      const debugHoldMs = Math.max(0, Number(msg.debugHoldMs ?? 0) || 0);
+      if (debugHoldMs > 0) await new Promise((r) => setTimeout(r, debugHoldMs));
       if (compiled.wasmBytes) {
         // Send a detached, exact-length ArrayBuffer (avoid TypedArray view quirks).
         const buf = compiled.wasmBytes.buffer.slice(

@@ -9,6 +9,7 @@
 /// <reference lib="dom" />
 
 import { Blitz3DFileIO } from "./fileio.ts";
+import { Blitz3DCore } from "./core.ts";
 import { EngineBridge } from "../engine/bridge.ts";
 
 function assert(condition: unknown, message = "assertion failed"): asserts condition {
@@ -550,4 +551,80 @@ Deno.test("Manifest Indexing - build index on load", async () => {
     }
 
     fileIO.dispose();
+});
+
+// --- GetINIInt Tests ---
+
+Deno.test("GetINIInt reads int from INI", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    // Register a fake INI file
+    const iniContent = new TextEncoder().encode("[graphics]\nwidth=1024\nheight=768\n");
+    core.registerFile("options.ini", iniContent);
+
+    // readString needs to return the correct string for each pointer
+    const strings: Record<number, string> = { 1: "options.ini", 2: "graphics", 3: "width" };
+    core.readString = (ptr: number) => strings[ptr] || "";
+
+    const result = imports.env.GetINIInt(1, 2, 3, 800);
+    assertEquals(result, 1024, "Should read 1024 from INI");
+});
+
+Deno.test("GetINIInt returns default on missing section", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    const iniContent = new TextEncoder().encode("[graphics]\nwidth=1024\n");
+    core.registerFile("options.ini", iniContent);
+
+    const strings: Record<number, string> = { 1: "options.ini", 2: "nonexistent", 3: "width" };
+    core.readString = (ptr: number) => strings[ptr] || "";
+
+    const result = imports.env.GetINIInt(1, 2, 3, 42);
+    assertEquals(result, 42, "Should return default for missing section");
+});
+
+Deno.test("GetINIInt returns default on missing key", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    const iniContent = new TextEncoder().encode("[graphics]\nwidth=1024\n");
+    core.registerFile("options.ini", iniContent);
+
+    const strings: Record<number, string> = { 1: "options.ini", 2: "graphics", 3: "missing" };
+    core.readString = (ptr: number) => strings[ptr] || "";
+
+    const result = imports.env.GetINIInt(1, 2, 3, 99);
+    assertEquals(result, 99, "Should return default for missing key");
+});
+
+Deno.test("GetINIInt returns default on missing file", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    const strings: Record<number, string> = { 1: "nonexistent.ini", 2: "graphics", 3: "width" };
+    core.readString = (ptr: number) => strings[ptr] || "";
+
+    const result = imports.env.GetINIInt(1, 2, 3, 800);
+    assertEquals(result, 800, "Should return default for missing file");
+});
+
+Deno.test("GetINIInt handles whitespace", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    const iniContent = new TextEncoder().encode("[graphics]\n  width = 42 \n");
+    core.registerFile("options.ini", iniContent);
+
+    const strings: Record<number, string> = { 1: "options.ini", 2: "graphics", 3: "width" };
+    core.readString = (ptr: number) => strings[ptr] || "";
+
+    const result = imports.env.GetINIInt(1, 2, 3, 0);
+    assertEquals(result, 42, "Should handle whitespace around key and value");
 });

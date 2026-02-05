@@ -74,7 +74,7 @@ async function initCompiler() {
   // In dev, fetch from the public root. In prod, the file is copied into dist/.
   const candidates = [
     "/blitz3d-compiler.wasm",
-    /* @vite-ignore */ new URL("../blitz3d-compiler.wasm", import.meta.url)
+    /* @vite-ignore */ new URL("./blitz3d-compiler.wasm", import.meta.url)
       .toString(),
   ];
   let bytes: ArrayBuffer | null = null;

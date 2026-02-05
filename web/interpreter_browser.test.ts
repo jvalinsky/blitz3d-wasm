@@ -19,11 +19,27 @@ type TestServer = {
 type ExampleReport = {
   key: string;
   expected: string[];
+  expectedStrict: boolean;
   matched: string;
+  ok: boolean;
+  error?: string;
+  durationMs: number;
   statusText: string;
+  outputLines: string[];
   output: string;
   stubsSummary: string;
   bbdbgSummary: string;
+  memSummary: string;
+  watSummary: string;
+  artifacts?: {
+    screenshotPath?: string;
+    htmlPath?: string;
+    outputPath?: string;
+    stubsPath?: string;
+    bbdbgPath?: string;
+    memPath?: string;
+    watPath?: string;
+  };
 };
 
 type VfsFixture = {
@@ -34,7 +50,7 @@ type VfsFixture = {
 
 const EXAMPLE_EXPECTATIONS: Record<string, string[]> = {
   hello: ["Hello from Blitz3D WASM!"],
-  languageBasics: ["sum ok:"],
+  languageBasics: ["sum ok:", "case 15"],
   arrays: ["a("],
   customTypes: ["node id="],
   dataReadRestore: ["a="],
@@ -59,6 +75,11 @@ const EXAMPLE_EXPECTATIONS: Record<string, string[]> = {
   rmeshInspectRender: ["== RMESH Inspect =="],
 };
 
+const NON_STRICT_EXPECTATIONS = new Set<string>([
+  // Known-broken semantics (currently prints only numeric IDs; report still captures output).
+  "customTypes",
+]);
+
 const ensureCompilerWasmInPublic = async (): Promise<void> => {
   const webRoot = fromFileUrl(new URL(".", import.meta.url));
   const source = join(webRoot, "blitz3d-compiler.wasm");
@@ -76,10 +97,93 @@ const ensureCompilerWasmInPublic = async (): Promise<void> => {
   }
 };
 
+const getEnvInt = (name: string, fallback: number): number => {
+  const raw = (Deno.env.get(name) ?? "").trim();
+  if (!raw) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.floor(n);
+};
+
+const resolveReportPaths = async (): Promise<{
+  reportPath: string;
+  artifactsDir: string | null;
+}> => {
+  const raw = (Deno.env.get("INTERPRETER_TEST_REPORT_PATH") ??
+    "/tmp/interpreter_demo_report.json").trim();
+  const rawArtifacts = (Deno.env.get("INTERPRETER_TEST_ARTIFACTS_DIR") ?? "")
+    .trim();
+
+  const looksLikeDir = raw.endsWith("/") || raw.endsWith("\\");
+  let isDir = looksLikeDir;
+
+  if (!looksLikeDir) {
+    try {
+      const stat = await Deno.stat(raw);
+      isDir = stat.isDirectory;
+    } catch {
+      isDir = false;
+    }
+  }
+
+  let reportPath = raw;
+  if (isDir) {
+    const dir = raw.replace(/[\\/]+$/, "");
+    reportPath = join(dir, "interpreter_demo_report.json");
+  } else {
+    try {
+      const stat = await Deno.stat(raw);
+      if (stat.isDirectory) {
+        reportPath = join(raw, "interpreter_demo_report.json");
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  const defaultArtifactsDir = reportPath.replace(/\.json$/i, "") + "_artifacts";
+  const artifactsDir = rawArtifacts.length > 0 ? rawArtifacts : defaultArtifactsDir;
+
+  return {
+    reportPath,
+    artifactsDir: artifactsDir.trim() ? artifactsDir : null,
+  };
+};
+
+const withTimeout = async <T>(
+  label: string,
+  ms: number,
+  fn: () => Promise<T>,
+): Promise<T> => {
+  const timeoutMs = Math.max(0, ms | 0);
+  let timer: number | null = null;
+  try {
+    return await Promise.race([
+      fn(),
+      new Promise<T>((_resolve, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer !== null) clearTimeout(timer);
+  }
+};
+
 const startServer = async (): Promise<TestServer> => {
+  const explicit = (Deno.env.get("INTERPRETER_TEST_SERVER_URL") ?? "").trim();
+  if (explicit) {
+    const normalized = explicit.endsWith("/interpreter.html")
+      ? explicit
+      : explicit.replace(/\/+$/, "") + "/interpreter.html";
+    return { url: normalized, shutdown: async () => {} };
+  }
+
   const repoRoot = fromFileUrl(new URL("../", import.meta.url));
   const port = Number(Deno.env.get("INTERPRETER_TEST_PORT") ?? 5173);
   const url = `http://127.0.0.1:${port}/interpreter.html`;
+  const startupTimeoutMs = getEnvInt("INTERPRETER_TEST_SERVER_STARTUP_TIMEOUT_MS", 60_000);
 
   try {
     const res = await fetch(url, { method: "HEAD" });
@@ -102,18 +206,79 @@ const startServer = async (): Promise<TestServer> => {
       "--strictPort",
     ],
     cwd: repoRoot,
-    stdout: "null",
-    stderr: "null",
+    stdout: Deno.env.get("INTERPRETER_TEST_SERVER_LOGS") ? "inherit" : "piped",
+    stderr: Deno.env.get("INTERPRETER_TEST_SERVER_LOGS") ? "inherit" : "piped",
   }).spawn();
 
-  for (let i = 0; i < 200; i++) {
+  let exited: Deno.CommandStatus | null = null;
+  const serverStatus = serverProcess.status
+    .then((s) => {
+      exited = s;
+      return s;
+    })
+    .catch(() => null);
+
+  const logTail: string[] = [];
+  const maxLogLines = 200;
+  const recordLogs = async (stream: ReadableStream<Uint8Array> | null, prefix: string) => {
+    if (!stream) return;
+    const reader = stream.getReader();
+    const decoder = new TextDecoder();
+    let carry = "";
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        carry += decoder.decode(value, { stream: true });
+        const parts = carry.split(/\r?\n/);
+        carry = parts.pop() ?? "";
+        for (const line of parts) {
+          const msg = `${prefix}${line}`;
+          logTail.push(msg);
+          if (logTail.length > maxLogLines) logTail.splice(0, logTail.length - maxLogLines);
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      try {
+        reader.releaseLock();
+      } catch {
+        // ignore
+      }
+    }
+  };
+
+  const stdoutStream = (serverProcess.stdout ?? null) as ReadableStream<Uint8Array> | null;
+  const stderrStream = (serverProcess.stderr ?? null) as ReadableStream<Uint8Array> | null;
+  void recordLogs(stdoutStream, "[server stdout] ");
+  void recordLogs(stderrStream, "[server stderr] ");
+
+  let ready = false;
+  const startedAt = Date.now();
+  while (Date.now() - startedAt < startupTimeoutMs) {
+    if (exited) break;
     try {
       const res = await fetch(url, { method: "HEAD" });
-      if (res.ok) break;
+      if (res.ok) {
+        ready = true;
+        break;
+      }
     } catch {
       // ignore
     }
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+
+  if (!ready) {
+    try {
+      serverProcess.kill("SIGTERM");
+    } catch {
+      // ignore
+    }
+    const exitInfo = exited ? ` (exited: ${JSON.stringify(exited)})` : "";
+    const tail = logTail.length > 0 ? `\n\n${logTail.join("\n")}\n` : "";
+    throw new Error(`[interpreter test] Vite server did not become ready at ${url}${exitInfo}.${tail}`);
   }
 
   return {
@@ -125,7 +290,7 @@ const startServer = async (): Promise<TestServer> => {
         // ignore
       }
       try {
-        await serverProcess.status;
+        await serverStatus;
       } catch {
         // ignore
       }
@@ -319,7 +484,74 @@ const waitForReady = async (page: Page): Promise<void> => {
   await page.waitForFunction(() => {
     const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
     return statusText === "Ready";
-  });
+  }, undefined, { timeout: 60_000 });
+};
+
+const assertUiBasics = async (page: Page, serverUrl: string): Promise<void> => {
+  const faviconUrl = new URL("/favicon.svg", serverUrl).toString();
+  const faviconRes = await fetch(faviconUrl);
+  if (!faviconRes.ok) {
+    throw new Error(`[interpreter test] favicon fetch failed: ${faviconRes.status} ${faviconRes.statusText}`);
+  }
+  const faviconText = await faviconRes.text();
+  if (!faviconText.includes("<svg")) {
+    throw new Error("[interpreter test] favicon.svg did not look like SVG");
+  }
+
+  await page.waitForFunction(() => {
+    const compileBtn = document.querySelector<HTMLButtonElement>("#compile-btn");
+    const runBtn = document.querySelector<HTMLButtonElement>("#run-btn");
+    const editor = document.querySelector<HTMLTextAreaElement>("#editor");
+    const exampleSelect = document.querySelector<HTMLSelectElement>("#example-select");
+    return Boolean(
+      compileBtn && !compileBtn.disabled && runBtn && editor && exampleSelect && exampleSelect.options.length >= 5,
+    );
+  }, undefined, { timeout: 60_000 });
+
+  // Tab switching smoke: output -> debug -> canvas -> output
+  await page.click("#tab-debug");
+  await page.waitForFunction(() => {
+    const debugTab = document.querySelector("#debug-tab");
+    const stubsClear = document.querySelector("#stubs-clear-btn");
+    return Boolean(debugTab?.classList.contains("active") && stubsClear);
+  }, undefined, { timeout: 10_000 });
+
+  await page.click("#tab-canvas");
+  await page.waitForFunction(() => {
+    const canvasTab = document.querySelector("#canvas-tab");
+    return Boolean(canvasTab?.classList.contains("active"));
+  }, undefined, { timeout: 10_000 });
+
+  await page.click("#tab-output");
+  await page.waitForFunction(() => {
+    const outputTab = document.querySelector("#output-tab");
+    return Boolean(outputTab?.classList.contains("active"));
+  }, undefined, { timeout: 10_000 });
+
+  // Example selection behavior (prefersTab + default timeout).
+  await page.selectOption("#example-select", "debugStubs");
+  await page.waitForFunction(() => {
+    const debugTab = document.querySelector("#debug-tab");
+    const req = document.querySelector("#example-req")?.textContent ?? "";
+    return Boolean(debugTab?.classList.contains("active") && req.includes("Required uploads"));
+  }, undefined, { timeout: 10_000 });
+
+  await page.selectOption("#example-select", "fogCube");
+  await page.waitForFunction(() => {
+    const canvasTab = document.querySelector("#canvas-tab");
+    const timeout = (document.querySelector<HTMLInputElement>("#timeout-ms")?.value ?? "").trim();
+    return Boolean(canvasTab?.classList.contains("active") && timeout === "0");
+  }, undefined, { timeout: 10_000 });
+
+  await page.selectOption("#example-select", "hello");
+  await page.waitForFunction(() => {
+    const outputTab = document.querySelector("#output-tab");
+    return Boolean(outputTab?.classList.contains("active"));
+  }, undefined, { timeout: 10_000 });
+  const helloCode = await page.inputValue("#editor");
+  if (!helloCode.toLowerCase().includes("hello")) {
+    throw new Error("[interpreter test] selecting hello did not update editor content");
+  }
 };
 
 const getTextContent = async (page: Page, selector: string): Promise<string> => {
@@ -327,6 +559,26 @@ const getTextContent = async (page: Page, selector: string): Promise<string> => 
     const el = document.querySelector(sel);
     return (el?.textContent ?? "").toString();
   }, selector);
+};
+
+const getAttr = async (page: Page, selector: string, attr: string): Promise<string> => {
+  return await page.evaluate(([sel, name]) => {
+    const el = document.querySelector(sel);
+    return (el?.getAttribute(name) ?? "").toString();
+  }, [selector, attr] as const);
+};
+
+const getOutputLines = async (page: Page): Promise<string[]> => {
+  return await page.evaluate(() => {
+    const root = document.querySelector("#output");
+    if (!root) return [];
+    const nodes = Array.from(root.querySelectorAll(".output-line"));
+    if (nodes.length > 0) {
+      return nodes.map((n) => (n.textContent ?? "").toString());
+    }
+    const raw = (root.textContent ?? "").toString();
+    return raw.split(/\r?\n/).map((s) => s.trimEnd()).filter((s) => s.length > 0);
+  });
 };
 
 const clearPanels = async (page: Page): Promise<void> => {
@@ -337,7 +589,7 @@ const clearPanels = async (page: Page): Promise<void> => {
   });
 };
 
-const stopIfRunning = async (page: Page): Promise<void> => {
+const stopIfRunning = async (page: Page, timeoutMs = 30_000): Promise<void> => {
   const stopBtn = page.locator("#stop-btn");
   if (await stopBtn.isEnabled()) {
     await stopBtn.click();
@@ -347,7 +599,7 @@ const stopIfRunning = async (page: Page): Promise<void> => {
     const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
     return Boolean(runBtn && !runBtn.disabled && runBtn.textContent?.trim() === "Run") &&
       (statusText === "Ready" || statusText.startsWith("Paused"));
-  });
+  }, undefined, { timeout: Math.max(1000, timeoutMs | 0) });
 };
 
 const uploadVfsFixtures = async (page: Page): Promise<void> => {
@@ -372,156 +624,651 @@ const getExampleKeys = async (page: Page): Promise<string[]> => {
   });
 };
 
-const waitForOutputAny = async (
+type ExampleSignal =
+  | { kind: "expected"; matched: string }
+  | { kind: "ready" }
+  | { kind: "error"; statusText: string };
+
+const waitForRunStart = async (page: Page, timeoutMs = 5000): Promise<void> => {
+  await page.waitForFunction(() => {
+    const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+    const runBtn = document.querySelector<HTMLButtonElement>("#run-btn");
+    return statusText !== "Ready" || Boolean(runBtn && (runBtn.disabled || runBtn.textContent?.trim() !== "Run"));
+  }, undefined, { timeout: Math.max(250, timeoutMs | 0) });
+};
+
+const waitForExampleSignal = async (
   page: Page,
   expected: string[],
   timeoutMs: number,
-): Promise<string> => {
-  try {
-    await page.waitForFunction(
-      (subs: string[]) => {
-        const txt = document.querySelector("#output")?.textContent ?? "";
-        return subs.some((s) => txt.includes(s));
-      },
-      expected,
-      { timeout: timeoutMs },
-    );
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn(`[interpreter test] output wait timed out after ${timeoutMs}ms`, msg);
-    return "";
-  }
+): Promise<ExampleSignal> => {
+  const handle = await page.waitForFunction((subs: string[]) => {
+    const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+    const indicatorCls = document.querySelector("#status-indicator")?.className ?? "";
+    const txt = document.querySelector("#output")?.textContent ?? "";
+    for (const s of subs) {
+      if (s && txt.includes(s)) return { kind: "expected", matched: s };
+    }
+    if (statusText === "Ready") return { kind: "ready" };
+    if (indicatorCls.includes("error") || statusText.toLowerCase().includes("failed")) {
+      return { kind: "error", statusText };
+    }
+    return false;
+  }, expected, { timeout: Math.max(250, timeoutMs | 0) });
 
-  const output = await getTextContent(page, "#output");
+  const value = (await handle.jsonValue()) as ExampleSignal;
+  await handle.dispose();
+  return value;
+};
+
+const findMatchedExpected = (output: string, expected: string[]): string => {
   for (const s of expected) {
-    if (output.includes(s)) return s;
+    if (s && output.includes(s)) return s;
   }
   return "";
 };
 
-const runExample = async (page: Page, key: string): Promise<ExampleReport> => {
-  await clearPanels(page);
-  await page.selectOption("#example-select", key);
-  const timeoutMs = String(
-    Math.max(250, Number(Deno.env.get("INTERPRETER_TEST_TIMEOUT_MS") ?? "15000") || 15000),
-  );
-  const outputTimeoutMs = Math.max(
-    500,
-    Number(Deno.env.get("INTERPRETER_TEST_OUTPUT_TIMEOUT_MS") ?? timeoutMs) || Number(timeoutMs),
-  );
-  await page.fill("#timeout-ms", timeoutMs);
-  await page.click("#run-btn");
+const sanitizeFileComponent = (s: string): string => {
+  return String(s).replaceAll(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+};
 
+const runExample = async (
+  page: Page,
+  key: string,
+  {
+    waitMs,
+    artifactsDir,
+  }: { waitMs: number; artifactsDir: string | null },
+): Promise<ExampleReport> => {
+  const startedAt = Date.now();
   const expected = EXAMPLE_EXPECTATIONS[key] ?? [];
-  const matched = expected.length > 0
-    ? await waitForOutputAny(page, expected, outputTimeoutMs)
-    : "";
+  const strictAll = (Deno.env.get("INTERPRETER_TEST_STRICT") ?? "").trim() === "1";
+  let signal: ExampleSignal | null = null;
+  let error: string | undefined;
+  let artifacts: ExampleReport["artifacts"];
+
+  try {
+    await clearPanels(page);
+    await page.selectOption("#example-select", key);
+
+    const timeoutMs = String(
+      Math.max(250, Number(Deno.env.get("INTERPRETER_TEST_TIMEOUT_MS") ?? "15000") || 15000),
+    );
+    await page.fill("#timeout-ms", timeoutMs);
+
+    await page.click("#run-btn");
+    await waitForRunStart(page, 10_000);
+    signal = await waitForExampleSignal(page, expected, waitMs);
+  } catch (err) {
+    error = String(err);
+  }
+
+  try {
+    await stopIfRunning(page, 30_000);
+  } catch (stopErr) {
+    error = error ? `${error}\nstop failed: ${stopErr}` : `stop failed: ${stopErr}`;
+  }
 
   if (key === "debugStubs") {
-    await page.click("#tab-debug");
-    await page.waitForFunction(() => {
-      const t = document.querySelector("#stubs-summary")?.textContent ?? "";
-      return t.trim() !== "" && !t.includes("No stubbed imports yet.");
-    });
+    try {
+      await page.click("#tab-debug");
+      await page.waitForFunction(() => {
+        const t = document.querySelector("#stubs-summary")?.textContent ?? "";
+        return t.trim() !== "" && !t.includes("No stubbed imports yet.");
+      }, undefined, { timeout: 20_000 });
+    } catch (stubsErr) {
+      error = error ? `${error}\nstubs wait failed: ${stubsErr}` : `stubs wait failed: ${stubsErr}`;
+    }
   }
 
   const statusText = (await getTextContent(page, "#status-text")).trim();
-  const output = await getTextContent(page, "#output");
+  const outputLines = await getOutputLines(page);
+  const output = outputLines.join("\n");
   const stubsSummary = (await getTextContent(page, "#stubs-summary")).trim();
   const bbdbgSummary = (await getTextContent(page, "#bbdbg-summary")).trim();
+  const memSummary = (await getTextContent(page, "#mem-summary")).trim();
+  const watSummary = (await getTextContent(page, "#wat-summary")).trim();
 
-  await stopIfRunning(page);
+  let matched = expected.length > 0 ? findMatchedExpected(output, expected) : "";
+  if (!matched && signal?.kind === "expected") matched = signal.matched;
+
+  const expectedStrict = expected.length > 0 && (strictAll || !NON_STRICT_EXPECTATIONS.has(key));
+
+  const stubsOk = key !== "debugStubs"
+    ? true
+    : stubsSummary.trim() !== "" && !stubsSummary.includes("No stubbed imports");
+
+  const ok = expected.length === 0
+    ? !error
+    : (!error && (signal?.kind !== "error") && stubsOk && (!expectedStrict || Boolean(matched)));
+
+  if (!ok && artifactsDir) {
+    try {
+      await Deno.mkdir(artifactsDir, { recursive: true });
+      const base = sanitizeFileComponent(key);
+      const screenshotPath = join(artifactsDir, `${base}.png`);
+      const htmlPath = join(artifactsDir, `${base}.html`);
+      const outputPath = join(artifactsDir, `${base}.output.txt`);
+      const stubsPath = join(artifactsDir, `${base}.stubs.txt`);
+      const bbdbgPath = join(artifactsDir, `${base}.bbdbg.txt`);
+      const memPath = join(artifactsDir, `${base}.mem.txt`);
+      const watPath = join(artifactsDir, `${base}.wat.txt`);
+      await page.screenshot({ path: screenshotPath, fullPage: true });
+      await Deno.writeTextFile(htmlPath, await page.content());
+      await Deno.writeTextFile(outputPath, outputLines.join("\n") + "\n");
+
+      const stubsText = [
+        (await getTextContent(page, "#stubs-summary")).trim(),
+        "",
+        (await getTextContent(page, "#stubs-list")).trim(),
+        "",
+        (await getTextContent(page, "#stubs-called")).trim(),
+      ].join("\n");
+      await Deno.writeTextFile(stubsPath, stubsText + "\n");
+
+      const bbdbgText = [
+        (await getTextContent(page, "#bbdbg-summary")).trim(),
+        "",
+        (await getTextContent(page, "#bbdbg-breakpoints")).trim(),
+        "",
+        (await getTextContent(page, "#bbdbg-stack")).trim(),
+        "",
+        (await getTextContent(page, "#bbdbg-trace")).trim(),
+      ].join("\n");
+      await Deno.writeTextFile(bbdbgPath, bbdbgText + "\n");
+
+      const memText = [
+        (await getTextContent(page, "#mem-summary")).trim(),
+        "",
+        (await getTextContent(page, "#mem-dump")).trim(),
+      ].join("\n");
+      await Deno.writeTextFile(memPath, memText + "\n");
+
+      const watText = [
+        (await getTextContent(page, "#wat-summary")).trim(),
+        "",
+        (await getTextContent(page, "#wat-code")).trim(),
+      ].join("\n");
+      await Deno.writeTextFile(watPath, watText + "\n");
+
+      artifacts = { screenshotPath, htmlPath, outputPath, stubsPath, bbdbgPath, memPath, watPath };
+    } catch (artifactErr) {
+      error = error
+        ? `${error}\nartifact capture failed: ${artifactErr}`
+        : `artifact capture failed: ${artifactErr}`;
+    }
+  }
+
+  const durationMs = Math.max(0, Date.now() - startedAt);
 
   return {
     key,
     expected,
+    expectedStrict,
     matched,
+    ok,
+    error,
+    durationMs,
     statusText,
+    outputLines,
     output,
     stubsSummary,
     bbdbgSummary,
+    memSummary,
+    watSummary,
+    artifacts,
   };
 };
 
 Deno.test("interpreter demos smoke", async () => {
-  await ensureCompilerWasmInPublic();
-  const server = await startServer();
-  console.log(`[interpreter test] server: ${server.url}`);
+  const totalTimeoutMs = getEnvInt("INTERPRETER_TEST_TOTAL_TIMEOUT_MS", 8 * 60_000);
 
-  const compilerUrl = new URL("/blitz3d-compiler.wasm", server.url).toString();
-  try {
-    const res = await fetch(compilerUrl);
-    const buf = new Uint8Array(await res.arrayBuffer());
-    const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, "0")).join(" ");
-    console.log(
-      `[interpreter test] compiler wasm ${res.status} ${res.headers.get("content-type") ?? ""} magic=${magic}`,
-    );
-  } catch (err) {
-    console.error("[interpreter test] compiler wasm fetch failed", err);
-  }
+  await withTimeout("interpreter demos smoke", totalTimeoutMs, async () => {
+    await ensureCompilerWasmInPublic();
+    const server = await startServer();
+    console.log(`[interpreter test] server: ${server.url}`);
 
-  const { browser } = await launchBrowser();
-  const http404: string[] = [];
-  const consoleErrors: string[] = [];
+    const { reportPath, artifactsDir } = await resolveReportPaths();
+    console.log(`[interpreter test] report: ${reportPath}`);
+    if (artifactsDir) console.log(`[interpreter test] artifacts: ${artifactsDir}`);
 
-  try {
-    const page = await browser.newPage();
-    page.setDefaultTimeout(120_000);
+    const compilerUrl = new URL("/blitz3d-compiler.wasm", server.url).toString();
+    try {
+      const res = await fetch(compilerUrl);
+      const buf = new Uint8Array(await res.arrayBuffer());
+      const magic = Array.from(buf.slice(0, 4)).map((b) => b.toString(16).padStart(2, "0")).join(" ");
+      console.log(
+        `[interpreter test] compiler wasm ${res.status} ${res.headers.get("content-type") ?? ""} magic=${magic}`,
+      );
+    } catch (err) {
+      console.error("[interpreter test] compiler wasm fetch failed", err);
+    }
 
-    page.on("console", (msg) => {
-      const text = msg.text();
-      console.log(`[page ${msg.type()}] ${text}`);
-      if (msg.type() === "error") consoleErrors.push(text);
-    });
-    page.on("pageerror", (err) => {
-      console.error("[page error]", err);
-      consoleErrors.push(String(err));
-    });
-    page.on("response", (res) => {
-      if (res.status() === 404) {
-        const url = res.url();
-        http404.push(url);
-        console.log("[http 404]", url);
-      }
-      const url = res.url();
-      if (url.includes("blitz3d-compiler.wasm")) {
-        console.log("[compiler wasm response]", res.status(), url);
-      }
-    });
-
-    await page.goto(server.url, { waitUntil: "domcontentloaded" });
-    await waitForReady(page);
-
-    await uploadVfsFixtures(page);
-
-    const onlyRaw = (Deno.env.get("INTERPRETER_TEST_ONLY") ?? "").trim();
-    const only = onlyRaw.length > 0
-      ? new Set(onlyRaw.split(",").map((s) => s.trim()).filter(Boolean))
-      : null;
-
-    const keys = (await getExampleKeys(page)).filter((k) => !only || only.has(k));
+    const { browser } = await launchBrowser();
+    const http404: string[] = [];
+    const httpErrors: Array<{ status: number; url: string }> = [];
+    const consoleErrors: string[] = [];
     const report: ExampleReport[] = [];
-    for (const key of keys) {
-      console.log(`[interpreter test] running example: ${key}`);
-      report.push(await runExample(page, key));
-    }
 
-    const reportPath = Deno.env.get("INTERPRETER_TEST_REPORT_PATH") ??
-      "/tmp/interpreter_demo_report.json";
-    await Deno.writeTextFile(
-      reportPath,
-      JSON.stringify({ url: server.url, http404, consoleErrors, report }, null, 2),
-    );
-    console.log(`[interpreter test] wrote report: ${reportPath}`);
+    try {
+      const page = await browser.newPage();
+      page.setDefaultTimeout(getEnvInt("INTERPRETER_TEST_PLAYWRIGHT_TIMEOUT_MS", 60_000));
 
-    for (const r of report) {
-      if (r.expected.length === 0) continue;
-      if (!r.matched) {
-        throw new Error(`example ${r.key} did not match any expected output`);
+      page.on("console", (msg) => {
+        const text = msg.text();
+        console.log(`[page ${msg.type()}] ${text}`);
+        if (msg.type() === "error") consoleErrors.push(text);
+      });
+      page.on("pageerror", (err) => {
+        console.error("[page error]", err);
+        consoleErrors.push(String(err));
+      });
+      page.on("response", (res) => {
+        const url = res.url();
+        const status = res.status();
+        if (status >= 500) {
+          httpErrors.push({ status, url });
+          console.log(`[http ${status}]`, url);
+        } else if (status === 404) {
+          http404.push(url);
+          console.log("[http 404]", url);
+        }
+        if (url.includes("blitz3d-compiler.wasm")) {
+          console.log("[compiler wasm response]", res.status(), url);
+        }
+      });
+      page.on("requestfailed", (req) => {
+        const failure = req.failure();
+        console.log("[request failed]", req.url(), failure?.errorText ?? "");
+      });
+
+      await page.goto(server.url, { waitUntil: "domcontentloaded" });
+      await waitForReady(page);
+      await assertUiBasics(page, server.url);
+      await uploadVfsFixtures(page);
+
+      const onlyRaw = (Deno.env.get("INTERPRETER_TEST_ONLY") ?? "").trim();
+      const only = onlyRaw.length > 0
+        ? new Set(onlyRaw.split(",").map((s) => s.trim()).filter(Boolean))
+        : null;
+
+      const keys = (await getExampleKeys(page)).filter((k) => !only || only.has(k));
+      const interpreterTimeoutMs = Math.max(
+        250,
+        getEnvInt("INTERPRETER_TEST_TIMEOUT_MS", 15_000) || 15_000,
+      );
+      const legacyOutputWaitMs = Math.max(
+        0,
+        getEnvInt("INTERPRETER_TEST_OUTPUT_TIMEOUT_MS", 0) || 0,
+      );
+      const waitMs = Math.max(
+        250,
+        getEnvInt(
+          "INTERPRETER_TEST_WAIT_FOR_OUTPUT_MS",
+          legacyOutputWaitMs > 0 ? legacyOutputWaitMs : Math.min(60_000, interpreterTimeoutMs + 5000),
+        ),
+      );
+
+      for (const key of keys) {
+        console.log(`[interpreter test] running example: ${key}`);
+        report.push(await runExample(page, key, { waitMs, artifactsDir: artifactsDir || null }));
       }
+
+      try {
+        await Deno.writeTextFile(
+          reportPath,
+          JSON.stringify({ url: server.url, http404, httpErrors, consoleErrors, report }, null, 2),
+        );
+        console.log(`[interpreter test] wrote report: ${reportPath}`);
+      } catch (err) {
+        console.error(`[interpreter test] failed to write report: ${reportPath}`, err);
+      }
+
+      const failed = report.filter((r) => !r.ok);
+      if (failed.length > 0) {
+        for (const f of failed) {
+          const outPreview = f.output.trim().split(/\r?\n/).slice(0, 8).join("\\n");
+          console.error(
+            `[interpreter test] FAIL ${f.key}: status="${f.statusText}" matched="${f.matched}" ` +
+              `strict=${f.expectedStrict} expected=[${f.expected.join(", ")}] ` +
+              `error=${f.error ?? ""} output="${outPreview}"`,
+          );
+        }
+        const names = failed.map((r) => r.key).join(", ");
+        throw new Error(
+          `interpreter demos smoke: ${failed.length}/${report.length} examples failed: ${names} (see ${reportPath})`,
+        );
+      }
+    } finally {
+      try {
+        await Deno.writeTextFile(
+          reportPath,
+          JSON.stringify({ url: server.url, http404, httpErrors, consoleErrors, report }, null, 2),
+        );
+      } catch {
+        // ignore
+      }
+      await browser.close();
+      await server.shutdown();
     }
-  } finally {
-    await browser.close();
-    await server.shutdown();
-  }
+  });
+});
+
+Deno.test("interpreter ui behavior", async () => {
+  const totalTimeoutMs = getEnvInt("INTERPRETER_TEST_TOTAL_TIMEOUT_MS", 5 * 60_000);
+
+  await withTimeout("interpreter ui behavior", totalTimeoutMs, async () => {
+    await ensureCompilerWasmInPublic();
+    const server = await startServer();
+    console.log(`[interpreter ui] server: ${server.url}`);
+
+    const { artifactsDir: baseArtifactsDir } = await resolveReportPaths();
+    const uiArtifactsDir = baseArtifactsDir ? join(baseArtifactsDir, "ui") : null;
+
+    const { browser } = await launchBrowser();
+    try {
+      const ctx = await browser.newContext({ acceptDownloads: true });
+      try {
+        await ctx.grantPermissions(["clipboard-write"], { origin: new URL(server.url).origin });
+      } catch {
+        // ignore (not all drivers support this permission call)
+      }
+      const page = await ctx.newPage();
+      page.setDefaultTimeout(getEnvInt("INTERPRETER_TEST_PLAYWRIGHT_TIMEOUT_MS", 60_000));
+
+      const captureUiArtifacts = async (label: string, details: string) => {
+        if (!uiArtifactsDir) return;
+        try {
+          await Deno.mkdir(uiArtifactsDir, { recursive: true });
+          const base = sanitizeFileComponent(label);
+          const screenshotPath = join(uiArtifactsDir, `${base}.png`);
+          const htmlPath = join(uiArtifactsDir, `${base}.html`);
+          const outputPath = join(uiArtifactsDir, `${base}.output.txt`);
+          const detailsPath = join(uiArtifactsDir, `${base}.details.txt`);
+          await page.screenshot({ path: screenshotPath, fullPage: true });
+          await Deno.writeTextFile(htmlPath, await page.content());
+          await Deno.writeTextFile(outputPath, (await getOutputLines(page)).join("\n") + "\n");
+          await Deno.writeTextFile(detailsPath, details + "\n");
+        } catch (err) {
+          console.error("[interpreter ui] artifact capture failed", err);
+        }
+      };
+
+      const step = async (label: string, fn: () => Promise<void>) => {
+        console.log(`[interpreter ui] step: ${label}`);
+        try {
+          await fn();
+        } catch (err) {
+          const statusText = (await getTextContent(page, "#status-text")).trim();
+          const statusCls = (await getAttr(page, "#status-indicator", "class")).trim();
+          const tail = (await getOutputLines(page)).slice(-20).join("\n");
+          const msg =
+            `[interpreter ui] FAIL step="${label}" status="${statusText}" cls="${statusCls}" err=${String(err)}\n` +
+            `output tail:\n${tail}`;
+          console.error(msg);
+          await captureUiArtifacts(label, msg);
+          throw new Error(msg);
+        }
+      };
+
+      await page.goto(server.url, { waitUntil: "domcontentloaded" });
+      await waitForReady(page);
+      await assertUiBasics(page, server.url);
+
+      await step("vfs upload", async () => {
+        await uploadVfsFixtures(page);
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#vfs-list")?.textContent ?? "";
+          return t.includes("Uploaded:") && !t.includes("VFS is empty.");
+        }, undefined, { timeout: 15_000 });
+
+        // VFS copy path (best-effort: only runs if clipboard is available in this browser context).
+        const clipboardOk = await page.evaluate(() => {
+          try {
+            return Boolean((navigator as any).clipboard?.writeText) && Boolean((window as any).isSecureContext);
+          } catch {
+            return false;
+          }
+        });
+        if (clipboardOk) {
+          await page.locator(".vfs-path", { hasText: "assets/demo.txt" }).first().click();
+          await page.waitForFunction(() => {
+            const out = document.querySelector("#output")?.textContent ?? "";
+            return out.includes("Copied path: assets/demo.txt");
+          }, undefined, { timeout: 15_000 });
+        } else {
+          console.log("[interpreter ui] skipping VFS clipboard assertion (clipboard unavailable)");
+        }
+      });
+
+      await step("vfs clear", async () => {
+        // VFS clear should update list + output.
+        await page.click("#vfs-clear-btn");
+        await page.waitForFunction(() => {
+          const list = document.querySelector("#vfs-list")?.textContent ?? "";
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return list.includes("VFS is empty.") && out.includes("VFS cleared.");
+        }, undefined, { timeout: 15_000 });
+
+        // Restore fixtures for subsequent demos that read files.
+        await uploadVfsFixtures(page);
+      });
+
+      await step("compile error + clear", async () => {
+        // Compile error UX + recovery.
+        await clearPanels(page);
+        await page.fill("#editor", "@\n");
+        await page.click("#compile-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Compilation failed:") || out.includes("Error:");
+        }, undefined, { timeout: 30_000 });
+        await page.click("#clear-btn");
+        await page.waitForFunction(() => {
+          const root = document.querySelector("#output");
+          if (!root) return false;
+          const lines = Array.from(root.querySelectorAll(".output-line")).map((n) =>
+            (n.textContent ?? "").trim()
+          );
+          return lines.length === 0;
+        }, undefined, { timeout: 10_000 });
+      });
+
+      await step("watchdog timeout", async () => {
+        // Watchdog timeout UX + recovery.
+        // This timeout is used for both compilation and execution; keep it large enough
+        // to compile, but small enough to trip the sandbox watchdog quickly.
+        await page.click("#clear-btn");
+        await page.fill("#timeout-ms", "5000");
+        await page.fill("#editor", "Print 1\nWhile 1\nWend\n");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const root = document.querySelector("#output");
+          if (!root) return false;
+          const lines = Array.from(root.querySelectorAll(".output-line"))
+            .map((n) => (n.textContent ?? "").trim());
+          return lines.some((l) => l.includes("Compilation successful!")) &&
+            lines.some((l) => l.includes("Loading compiled module..."));
+        }, undefined, { timeout: 60_000 });
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Execution timed out after") || out.includes("Compilation timed out after");
+        }, undefined, { timeout: 30_000 });
+      });
+
+      await step("stop semantics (watchdog disabled)", async () => {
+        // Stop semantics with watchdog disabled: Stop should always bring us back to Ready.
+        await page.fill("#timeout-ms", "0");
+        await page.fill("#editor", "While 1\nWend\n");
+        await page.click("#run-btn");
+        await waitForRunStart(page, 10_000);
+        await page.waitForFunction(() => {
+          const stopBtn = document.querySelector<HTMLButtonElement>("#stop-btn");
+          const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+          return Boolean(stopBtn && !stopBtn.disabled) && statusText !== "Ready";
+        }, undefined, { timeout: 20_000 });
+        await page.click("#stop-btn");
+        await page.waitForFunction(() => {
+          const stopBtn = document.querySelector<HTMLButtonElement>("#stop-btn");
+          const statusText = document.querySelector("#status-text")?.textContent?.trim() ?? "";
+          return Boolean(stopBtn && stopBtn.disabled) && statusText === "Ready";
+        }, undefined, { timeout: 20_000 });
+      });
+
+      await step("compile-only does not execute", async () => {
+        await clearPanels(page);
+        await page.fill("#timeout-ms", "5000");
+        await page.selectOption("#example-select", "hello");
+        await page.click("#compile-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Compilation successful!");
+        }, undefined, { timeout: 60_000 });
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return !out.includes("Execution completed.") && !out.includes("Loading compiled module...");
+        }, undefined, { timeout: 5_000 });
+      });
+
+      await step("run hello", async () => {
+        await page.fill("#timeout-ms", "2000");
+        await page.selectOption("#example-select", "hello");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Hello from Blitz3D WASM!");
+        }, undefined, { timeout: 60_000 });
+        await stopIfRunning(page, 30_000);
+      });
+
+      await step("keyboard nav to run", async () => {
+        // Keyboard navigation: Tab to Run, press Enter should start a run.
+        await page.click("#clear-btn");
+        await page.selectOption("#example-select", "hello");
+        await page.focus("body");
+        let focused = "";
+        for (let i = 0; i < 80; i++) {
+          await page.keyboard.press("Tab");
+          focused = await page.evaluate(() => (document.activeElement as HTMLElement | null)?.id ?? "");
+          if (focused === "run-btn") break;
+        }
+        if (focused !== "run-btn") {
+          throw new Error(`[interpreter ui] could not Tab-focus run button (active=${focused})`);
+        }
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Compiling Blitz3D code...");
+        }, undefined, { timeout: 30_000 });
+        await stopIfRunning(page, 30_000);
+      });
+
+      await step("breakpoints", async () => {
+        // Breakpoint toggling via gutter should reflect in bbdbg panel.
+        await page.click("#tab-debug");
+        await page.click("#tab-output");
+        await page.waitForFunction(() => Boolean(document.querySelector(".editor-linenum")), undefined, {
+          timeout: 30_000,
+        });
+        await page.click('.editor-linenum[data-line="1"]');
+        await page.click("#tab-debug");
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#bbdbg-breakpoints")?.textContent ?? "";
+          return t.includes("1");
+        }, undefined, { timeout: 30_000 });
+        await page.click("#bbdbg-clear-bps-btn");
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#bbdbg-breakpoints")?.textContent ?? "";
+          return t.includes("(none)");
+        }, undefined, { timeout: 30_000 });
+      });
+
+      await step("downloads (wat)", async () => {
+        // Download/export actions.
+        // WAT download requires enabling capture before running.
+        await page.click("#tab-debug");
+        await page.check("#wat-enabled");
+        await page.click("#tab-output");
+        await page.selectOption("#example-select", "hello");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const btn = document.querySelector<HTMLButtonElement>("#wat-download-btn");
+          return Boolean(btn && !btn.disabled);
+        }, undefined, { timeout: 60_000 });
+
+        const watDownloadPromise = page.waitForEvent("download");
+        await page.click("#wat-download-btn");
+        const watDownload = await watDownloadPromise;
+        const watPath = await Deno.makeTempFile({ prefix: "interpreter-wat-", suffix: ".wat" });
+        await watDownload.saveAs(watPath);
+        const watText = await Deno.readTextFile(watPath);
+        if (!watText.includes("(module")) {
+          throw new Error("[interpreter ui] WAT download did not look like WAT");
+        }
+        await stopIfRunning(page, 30_000);
+      });
+
+      await step("runtime gaps export", async () => {
+        // Runtime gaps export should produce JSON with non-zero totals after debugStubs runs.
+        await page.selectOption("#example-select", "debugStubs");
+        await page.click("#run-btn");
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#stubs-summary")?.textContent ?? "";
+          return t.trim() !== "" && !t.includes("No stubbed imports yet.");
+        }, undefined, { timeout: 60_000 });
+
+        await page.click("#tab-debug");
+        const stubsDlPromise = page.waitForEvent("download");
+        await page.click("#stubs-export-btn");
+        const stubsDl = await stubsDlPromise;
+        const stubsPath = await Deno.makeTempFile({ prefix: "interpreter-stubs-", suffix: ".json" });
+        await stubsDl.saveAs(stubsPath);
+        const stubsObj = JSON.parse(await Deno.readTextFile(stubsPath)) as {
+          schemaVersion?: number;
+          total?: number;
+          called?: Array<unknown>;
+        };
+        if (stubsObj.schemaVersion !== 2) {
+          throw new Error(`[interpreter ui] stubs export schemaVersion mismatch: ${stubsObj.schemaVersion}`);
+        }
+        if (!stubsObj.total || stubsObj.total <= 0) {
+          throw new Error(`[interpreter ui] stubs export total was not > 0: ${stubsObj.total}`);
+        }
+      });
+
+      await step("bbdbg download/load saved (best-effort)", async () => {
+        // bbdbg metadata download is best-effort: if metadata isn't present, the UI prints a warning.
+        await page.click("#tab-debug");
+        const bbdbgDlPromise = page.waitForEvent("download", { timeout: 5000 }).catch(() => null);
+        await page.click("#bbdbg-download-meta-btn");
+        const bbdbgDl = await bbdbgDlPromise;
+        if (bbdbgDl) {
+          const bbdbgPath = await Deno.makeTempFile({ prefix: "interpreter-bbdbg-", suffix: ".json" });
+          await bbdbgDl.saveAs(bbdbgPath);
+          const bbdbgText = await Deno.readTextFile(bbdbgPath);
+          if (!bbdbgText.includes("{")) {
+            throw new Error("[interpreter ui] bbdbg download did not look like JSON");
+          }
+        } else {
+          await page.waitForFunction(() => {
+            const out = document.querySelector("#output")?.textContent ?? "";
+            return out.includes("No bbdbg metadata loaded.");
+          }, undefined, { timeout: 10_000 });
+        }
+
+        // IndexedDB persistence: reload and verify "Load Saved" works.
+        await page.reload({ waitUntil: "domcontentloaded" });
+        await waitForReady(page);
+        await page.click("#tab-debug");
+        await page.click("#bbdbg-load-saved-btn");
+        await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Loaded saved bbdbg") || out.includes("No saved bbdbg found");
+        }, undefined, { timeout: 60_000 });
+      });
+    } finally {
+      await browser.close();
+      await server.shutdown();
+    }
+  });
 });

@@ -3040,6 +3040,40 @@ function makeRunnerWorker(): Worker {
             }
           };
 
+          // Some builds import '__StringAlloc' (or a mangled variant) instead of exporting it.
+          // Provide a fallback bump allocator that grows memory as needed. This is required for
+          // string concatenation and numeric-to-string helpers in the sandbox runner.
+          let bumpPtr = 0;
+          const allocStringObjPtr = (len) => {
+            const l = Math.max(0, Number(len) | 0);
+            const mem = (inst && inst.exports && inst.exports.memory) ? inst.exports.memory : envMem;
+            if (!mem) return 0;
+            const bytesNeeded = (8 + l + 1) >>> 0;
+            const align = 4;
+            const curBytes = mem.buffer.byteLength >>> 0;
+            if (!bumpPtr) bumpPtr = curBytes;
+            bumpPtr = (bumpPtr + (align - 1)) & ~(align - 1);
+            const needed = (bumpPtr + bytesNeeded) >>> 0;
+            if (needed > curBytes) {
+              try {
+                const delta = needed - curBytes;
+                const pages = Math.ceil(delta / 65536);
+                if (pages > 0) mem.grow(pages);
+              } catch {
+                return 0;
+              }
+            }
+            const ptr = bumpPtr | 0;
+            bumpPtr = (bumpPtr + bytesNeeded) >>> 0;
+            return ptr;
+          };
+
+          // Provide allocator imports under common names (the compiler may request any of these).
+          imports.env.__StringAlloc = (len) => allocStringObjPtr(len);
+          imports.env["__StringAlloc%"] = (len) => allocStringObjPtr(len);
+          imports.blitz3d.__StringAlloc = imports.env.__StringAlloc;
+          imports.blitz3d["__StringAlloc%"] = imports.env["__StringAlloc%"];
+
           const getStringAlloc = () => {
             const ex = inst?.exports;
             if (typeof ex?.__StringAlloc === "function") return ex.__StringAlloc;
@@ -3053,6 +3087,8 @@ function makeRunnerWorker(): Worker {
                 if (typeof v === "function") return v;
               }
             } catch {}
+            if (typeof imports.env.__StringAlloc === "function") return imports.env.__StringAlloc;
+            if (typeof imports.env["__StringAlloc%"] === "function") return imports.env["__StringAlloc%"];
             return null;
           };
 
@@ -3429,21 +3465,31 @@ async function runWasmBytesInSandbox(
   let timeoutReject: ((reason?: unknown) => void) | null = null;
   let resolvedForStepping = false;
 
-      if (timeoutMs > 0) {
-        runnerWatchdog = setTimeout(() => {
-          const msg =
-            `Execution timed out after ${timeoutMs}ms (worker terminated).`;
-          if (runnerWorker) runnerWorker.terminate();
-          runnerWorker = null;
-          runnerWatchdog = null;
-          stopBtnEl.disabled = true;
-          stopMemoryAutoRefresh();
-          renderMemoryPanel();
-          setStatus("error", `Timed out after ${timeoutMs}ms`);
-          printOutput(msg, "error");
-          if (typeof timeoutReject === "function") timeoutReject(new Error(msg));
-        }, timeoutMs);
-      }
+  const armWatchdog = () => {
+    if (timeoutMs <= 0) return;
+    if (runnerWatchdog !== null) return;
+    runnerWatchdog = setTimeout(() => {
+      const msg =
+        `Execution timed out after ${timeoutMs}ms (worker terminated).`;
+      if (runnerWorker) runnerWorker.terminate();
+      runnerWorker = null;
+      runnerWatchdog = null;
+      stopBtnEl.disabled = true;
+      stopMemoryAutoRefresh();
+      renderMemoryPanel();
+      setStatus("error", `Timed out after ${timeoutMs}ms`);
+      printOutput(msg, "error");
+      if (typeof timeoutReject === "function") timeoutReject(new Error(msg));
+    }, timeoutMs);
+  };
+
+  const disarmWatchdog = () => {
+    if (runnerWatchdog === null) return;
+    clearTimeout(runnerWatchdog);
+    runnerWatchdog = null;
+  };
+
+  armWatchdog();
 
   return await new Promise<{ startedStepping: boolean }>((resolve, reject) => {
     timeoutReject = reject;
@@ -3458,11 +3504,10 @@ async function runWasmBytesInSandbox(
         scheduleBbdbgRender();
         updateBbdbgButtons();
         const reason = String(msg.reason || "");
-        if (workerDebugSteppingActive && runnerWatchdog !== null) {
-          // Interactive stepping should not be killed by the overall watchdog.
-          clearTimeout(runnerWatchdog);
-          runnerWatchdog = null;
-        }
+        // If the worker is paused for interactive stepping, disable the watchdog.
+        // When it resumes, re-arm the watchdog from that point forward.
+        if (workerDebugSteppingActive && workerDebugPaused) disarmWatchdog();
+        else armWatchdog();
         if (workerDebugSteppingActive) {
           const fileId = typeof msg.fileId === "number" ? (msg.fileId | 0) : 0;
           const line = typeof msg.line === "number" ? (msg.line | 0) : 0;

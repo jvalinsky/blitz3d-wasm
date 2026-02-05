@@ -9,6 +9,9 @@
   },
   "nodeModulesDir": "auto",
   "tasks": {
+    "playwright:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright npx playwright install chromium",
+    "playwright:install:all": "PLAYWRIGHT_BROWSERS_PATH=.playwright npx playwright install",
+    "test:web:interpreter:vendor": "PLAYWRIGHT_BROWSERS_PATH=.playwright deno task test:web:interpreter",
     "compiler:build": "deno run -A Tools/build_web_compiler_wasm.ts",
     "engine:build": "swift build --product blitz3d-engine --swift-sdk swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1 --triple wasm32-unknown-wasip1 -Xlinker --export-all -Xlinker --no-entry -Xswiftc -enable-experimental-feature -Xswiftc Extern -c release && cp .build/wasm32-unknown-wasip1/release/blitz3d-engine.wasm dist/engine.wasm",
     "serve": "deno run -A Tools/serve_dir.ts --root . --port 8000",

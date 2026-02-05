@@ -16,6 +16,9 @@
 # Node modules (never commit)
 node_modules/
 
+# Playwright browser downloads (local)
+.playwright/
+
 # Debug/diagnostic sidecars (generated)
 Sources/Runtime/*.bbdbg.json
 Sources/Runtime/*.wasm.map

@@ -150,8 +150,11 @@ Run a quick browser automation check against `web/interpreter.html` using the Vi
 ### Setup (one-time)
 
 ```bash
-# Install Playwright browsers (default cache)
-npx playwright install
+# Recommended: vendor Chromium into repo-local .playwright/
+deno task playwright:install
+
+# Or install into the default Playwright cache
+npx playwright install chromium
 ```
 
 If downloads are blocked, use a system Chrome instead:
@@ -168,6 +171,9 @@ The test also auto-detects a Playwright headless shell under
 
 ```bash
 deno task test:web:interpreter
+
+# If you used `deno task playwright:install` above
+deno task test:web:interpreter:vendor
 ```
 
 ### Browser Overrides
@@ -190,12 +196,26 @@ export PLAYWRIGHT_FALLBACK_HEADED=1
 
 - The test starts `deno task web:dev` on port `5173` by default.
 - Override the port with `INTERPRETER_TEST_PORT=XXXX`.
+- If you already have a server running (recommended in sandboxed environments), set `INTERPRETER_TEST_SERVER_URL=http://127.0.0.1:5173` (or the full `.../interpreter.html`).
 - It uploads a small set of VFS fixtures (`badge1.jpg`, `demo.png`, `demo.txt`, plus sample `.b3d/.x/.rmesh`) and then cycles every example in the dropdown, clicking **Run** and asserting expected output.
+- It also runs a UI behavior test (tabs, VFS clear/copy, compile error UX, watchdog timeout recovery, Stop semantics with watchdog disabled, breakpoints, keyboard navigation smoke, IndexedDB persistence, and export/download buttons).
+  - `bbdbg` download/load-saved are best-effort: if no metadata is present, the test asserts the warning path instead.
 - It writes a JSON report to `/tmp/interpreter_demo_report.json` (override with `INTERPRETER_TEST_REPORT_PATH`).
+- If `INTERPRETER_TEST_REPORT_PATH` points to a directory, the test writes `interpreter_demo_report.json` inside that directory.
+- On failures, it captures screenshots + HTML into `/tmp/interpreter_demo_report_artifacts/` (override with `INTERPRETER_TEST_ARTIFACTS_DIR`).
+  - Example-level artifacts go in the artifacts root.
+  - UI-behavior artifacts go in `ui/` under the artifacts root.
 - For faster iteration, run a subset: `INTERPRETER_TEST_ONLY=hello,debugStubs deno task test:web:interpreter`.
 - Override per-run interpreter timeout (ms): `INTERPRETER_TEST_TIMEOUT_MS=15000`.
-- Override the per-example output wait (ms): `INTERPRETER_TEST_OUTPUT_TIMEOUT_MS=15000` (useful if a looping demo fails to print its expected banner).
-- If a demo runs forever but never emits its expected output, the test will now time out while waiting for output and report the example as failed; add/adjust its initial `Print` or narrow the test with `INTERPRETER_TEST_ONLY` to keep CI quick.
+- Enforce strict expected-output matching for all examples: `INTERPRETER_TEST_STRICT=1`.
+- Override Playwright wait timeouts:
+  - Per-example output/ready wait: `INTERPRETER_TEST_WAIT_FOR_OUTPUT_MS=20000` (legacy alias: `INTERPRETER_TEST_OUTPUT_TIMEOUT_MS`)
+  - Per-call Playwright timeout: `INTERPRETER_TEST_PLAYWRIGHT_TIMEOUT_MS=60000`
+  - Total test timeout: `INTERPRETER_TEST_TOTAL_TIMEOUT_MS=480000`
+- If debugging server issues, show Vite logs: `INTERPRETER_TEST_SERVER_LOGS=1`.
+- If server startup is slow, increase: `INTERPRETER_TEST_SERVER_STARTUP_TIMEOUT_MS=60000`.
+- If you see a Deno warning about ignored npm build scripts, ensure `nodeModulesDir` is enabled (repo root `deno.json` uses `"nodeModulesDir": "auto"`).
+- If a demo runs forever but never emits its expected output, the test will time out while waiting for output and report the example as failed; add/adjust its initial `Print` or narrow the test with `INTERPRETER_TEST_ONLY` to keep CI quick.
 
 ---
 

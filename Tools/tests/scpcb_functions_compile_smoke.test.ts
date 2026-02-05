@@ -314,3 +314,18 @@ SpriteViewMode s, 2
   validateWasm(wasm);
   assert(wasm.byteLength > 0);
 });
+
+Deno.test("DeltaPitch/DeltaYaw/Memory compile", async () => {
+  const { compile } = await getCompiler();
+  const wasm = compile(`
+Graphics3D 800, 600, 32, 2
+cam = CreateCamera()
+cube = CreateCube()
+PositionEntity cube, 10, 5, 10
+p# = DeltaPitch(cam, cube)
+y# = DeltaYaw(cam, cube)
+m = Memory()
+`);
+  validateWasm(wasm);
+  assert(wasm.byteLength > 0);
+});

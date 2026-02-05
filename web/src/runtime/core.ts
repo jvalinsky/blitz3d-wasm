@@ -1724,6 +1724,15 @@ export class Blitz3DCore {
 
       return id;
     };
+
+    // --- Memory ---
+    imports.env.Memory = () => {
+      const perfMem = (performance as any).memory;
+      if (perfMem) {
+        return perfMem.jsHeapSizeLimit - perfMem.usedJSHeapSize;
+      }
+      return 256 * 1024 * 1024; // 256MB fallback
+    };
   }
 
   shutdownAudio() {

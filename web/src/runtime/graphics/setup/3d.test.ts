@@ -249,3 +249,88 @@ Deno.test("CameraClsColor sets clear color", () => {
   assertEquals(cam.userData.clsColor.g, 0, "Green should be 0");
   assertEquals(cam.userData.clsColor.b, 0, "Blue should be 0");
 });
+
+Deno.test("DeltaYaw returns angle between entities", () => {
+  const graphics = createMockGraphics();
+  const imports: any = { env: {}, blitz3d: {} };
+  setup3D(graphics, imports);
+
+  const src = new THREE.Object3D();
+  const dst = new THREE.Object3D();
+  const srcId = graphics.nextEntityId++;
+  const dstId = graphics.nextEntityId++;
+  graphics.entities[srcId] = src;
+  graphics.entities[dstId] = dst;
+  if (graphics.scene) {
+    graphics.scene.add(src);
+    graphics.scene.add(dst);
+  }
+
+  src.position.set(0, 0, 0);
+  dst.position.set(10, 0, 0);
+
+  const yaw = imports.env.DeltaYaw(srcId, dstId);
+  assert(Math.abs(yaw - 90) < 0.01, `DeltaYaw should be ~90, got ${yaw}`);
+});
+
+Deno.test("DeltaYaw returns 0 for same position", () => {
+  const graphics = createMockGraphics();
+  const imports: any = { env: {}, blitz3d: {} };
+  setup3D(graphics, imports);
+
+  const src = new THREE.Object3D();
+  const dst = new THREE.Object3D();
+  const srcId = graphics.nextEntityId++;
+  const dstId = graphics.nextEntityId++;
+  graphics.entities[srcId] = src;
+  graphics.entities[dstId] = dst;
+
+  const yaw = imports.env.DeltaYaw(srcId, dstId);
+  assertEquals(yaw, 0, "DeltaYaw should be 0 for same position");
+});
+
+Deno.test("DeltaPitch returns angle between entities", () => {
+  const graphics = createMockGraphics();
+  const imports: any = { env: {}, blitz3d: {} };
+  setup3D(graphics, imports);
+
+  const src = new THREE.Object3D();
+  const dst = new THREE.Object3D();
+  const srcId = graphics.nextEntityId++;
+  const dstId = graphics.nextEntityId++;
+  graphics.entities[srcId] = src;
+  graphics.entities[dstId] = dst;
+  if (graphics.scene) {
+    graphics.scene.add(src);
+    graphics.scene.add(dst);
+  }
+
+  src.position.set(0, 0, 0);
+  dst.position.set(0, 10, 10);
+
+  const pitch = imports.env.DeltaPitch(srcId, dstId);
+  assert(Math.abs(pitch - (-45)) < 0.01, `DeltaPitch should be ~-45, got ${pitch}`);
+});
+
+Deno.test("DeltaPitch returns 0 for same height", () => {
+  const graphics = createMockGraphics();
+  const imports: any = { env: {}, blitz3d: {} };
+  setup3D(graphics, imports);
+
+  const src = new THREE.Object3D();
+  const dst = new THREE.Object3D();
+  const srcId = graphics.nextEntityId++;
+  const dstId = graphics.nextEntityId++;
+  graphics.entities[srcId] = src;
+  graphics.entities[dstId] = dst;
+  if (graphics.scene) {
+    graphics.scene.add(src);
+    graphics.scene.add(dst);
+  }
+
+  src.position.set(0, 0, 0);
+  dst.position.set(10, 0, 10);
+
+  const pitch = imports.env.DeltaPitch(srcId, dstId);
+  assertEquals(pitch, 0, "DeltaPitch should be 0 for same height");
+});

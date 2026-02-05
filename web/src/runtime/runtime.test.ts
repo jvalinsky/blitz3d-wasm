@@ -628,3 +628,12 @@ Deno.test("GetINIInt handles whitespace", () => {
     const result = imports.env.GetINIInt(1, 2, 3, 0);
     assertEquals(result, 42, "Should handle whitespace around key and value");
 });
+
+Deno.test("Memory() returns positive integer", () => {
+    const core = new Blitz3DCore();
+    const imports: any = { env: {}, blitz3d: {} };
+    core.setupCommonImports(imports);
+
+    const mem = imports.env.Memory();
+    assert(mem > 0, `Memory() should return positive value, got ${mem}`);
+});

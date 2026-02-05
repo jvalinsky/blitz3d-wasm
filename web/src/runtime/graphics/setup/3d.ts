@@ -1334,4 +1334,38 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       );
     }
   };
+
+  imports.env.DeltaPitch = (src: number, dst: number) => {
+    const srcEntity = graphics.entities[src];
+    const dstEntity = graphics.entities[dst];
+    if (!srcEntity || !dstEntity) return 0.0;
+
+    const srcPos = new THREE.Vector3();
+    const dstPos = new THREE.Vector3();
+    srcEntity.getWorldPosition(srcPos);
+    dstEntity.getWorldPosition(dstPos);
+
+    const dx = dstPos.x - srcPos.x;
+    const dy = dstPos.y - srcPos.y;
+    const dz = dstPos.z - srcPos.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    return -Math.atan2(dy, dist) * 180 / Math.PI;
+  };
+
+  imports.env.DeltaYaw = (src: number, dst: number) => {
+    const srcEntity = graphics.entities[src];
+    const dstEntity = graphics.entities[dst];
+    if (!srcEntity || !dstEntity) return 0.0;
+
+    const srcPos = new THREE.Vector3();
+    const dstPos = new THREE.Vector3();
+    srcEntity.getWorldPosition(srcPos);
+    dstEntity.getWorldPosition(dstPos);
+
+    const dx = dstPos.x - srcPos.x;
+    const dz = dstPos.z - srcPos.z;
+
+    return Math.atan2(dx, dz) * 180 / Math.PI;
+  };
 }

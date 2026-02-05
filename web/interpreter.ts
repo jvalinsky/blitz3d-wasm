@@ -1,5 +1,6 @@
 /**
  * Blitz3D Web Interpreter (browser demo).
+ * Build: 2026-02-05-cafeteria-demo
  *
  * This entrypoint powers `web/interpreter.html` and is bundled by Vite.
  *

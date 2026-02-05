@@ -2414,6 +2414,9 @@ function setupEventListeners() {
 // --- SAFE WASM RUNNER (Worker + watchdog) ---
 let runnerWorker: Worker | null = null;
 let runnerWatchdog: number | null = null;
+let runnerSandboxInFlight:
+  | ((v: { startedStepping: boolean; stopped?: boolean }) => void)
+  | null = null;
 
 function stopExecution() {
   mainThreadStopRequested = true;
@@ -2442,6 +2445,12 @@ function stopExecution() {
   if (runnerWorker) {
     runnerWorker.terminate();
     runnerWorker = null;
+  }
+  if (typeof runnerSandboxInFlight === "function") {
+    try {
+      runnerSandboxInFlight({ startedStepping: false, stopped: true });
+    } catch {}
+    runnerSandboxInFlight = null;
   }
   stopBtnEl.disabled = true;
   setStatus("ready", "Ready");
@@ -3464,6 +3473,10 @@ async function runWasmBytesInSandbox(
   applyMemoryAutoRefresh();
   let timeoutReject: ((reason?: unknown) => void) | null = null;
   let resolvedForStepping = false;
+  const clearInFlight = () => {
+    if (runnerSandboxInFlight) runnerSandboxInFlight = null;
+    timeoutReject = null;
+  };
 
   const armWatchdog = () => {
     if (timeoutMs <= 0) return;
@@ -3492,6 +3505,7 @@ async function runWasmBytesInSandbox(
   armWatchdog();
 
   return await new Promise<{ startedStepping: boolean }>((resolve, reject) => {
+    runnerSandboxInFlight = resolve;
     timeoutReject = reject;
     w.onmessage = (ev: MessageEvent<RunnerWorkerToMainMessage>) => {
       const msg = ev.data;
@@ -3522,6 +3536,7 @@ async function runWasmBytesInSandbox(
           }
           if (!resolvedForStepping) {
             resolvedForStepping = true;
+            clearInFlight();
             resolve({ startedStepping: true });
           }
         }
@@ -3658,17 +3673,20 @@ async function runWasmBytesInSandbox(
       }
       if (msg.type === "error") {
         printOutput(`Execution error: ${msg.message}`, "error");
+        clearInFlight();
         stopRun();
         reject(new Error(msg.message));
         return;
       }
       if (msg.type === "done") {
+        clearInFlight();
         stopRun();
         resolve({ startedStepping: false });
       }
     };
 
     w.onerror = (e) => {
+      clearInFlight();
       stopRun();
       reject(new Error((e as ErrorEvent).message));
     };
@@ -4162,6 +4180,11 @@ async function executeCompiledWASMBytes(
         maxLines: 2000,
         startPaused,
       });
+      if ((runResult as any)?.stopped) {
+        // Stop was requested while the sandbox worker was running; do not emit
+        // an "Execution completed" message (it did not complete normally).
+        return { startedStepping: false };
+      }
       if (runResult?.startedStepping) {
         printOutput(
           "Execution started (stepping in sandbox worker). Click Stop to end.",

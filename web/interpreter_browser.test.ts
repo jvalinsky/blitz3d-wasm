@@ -1208,13 +1208,29 @@ Deno.test("interpreter ui behavior", async () => {
         await page.selectOption("#example-select", "hello");
         await page.click("#run-btn");
         await page.waitForFunction(() => {
+          const out = document.querySelector("#output")?.textContent ?? "";
+          return out.includes("Compilation successful!");
+        }, undefined, { timeout: 60_000 });
+
+        // Download button lives on the Debug tab; switch back so Playwright can click it.
+        await page.click("#tab-debug");
+        await page.waitForFunction(() => {
+          const el = document.querySelector("#debug-tab");
+          return Boolean(el?.classList.contains("active"));
+        }, undefined, { timeout: 10_000 });
+
+        const watDownloadBtn = page.locator("#wat-download-btn");
+        await watDownloadBtn.scrollIntoViewIfNeeded();
+        await page.waitForFunction(() => {
           const btn = document.querySelector<HTMLButtonElement>("#wat-download-btn");
           return Boolean(btn && !btn.disabled);
         }, undefined, { timeout: 60_000 });
 
-        const watDownloadPromise = page.waitForEvent("download");
-        await page.click("#wat-download-btn");
-        const watDownload = await watDownloadPromise;
+        // Use Promise.all so we never leave a dangling waitForEvent promise on click failures.
+        const [watDownload] = await Promise.all([
+          page.waitForEvent("download", { timeout: 60_000 }),
+          watDownloadBtn.click(),
+        ]);
         const watPath = await Deno.makeTempFile({ prefix: "interpreter-wat-", suffix: ".wat" });
         await watDownload.saveAs(watPath);
         const watText = await Deno.readTextFile(watPath);

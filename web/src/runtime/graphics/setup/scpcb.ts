@@ -777,9 +777,6 @@ export function setupSCPCB(graphics: Blitz3DGraphicsInterface, imports: any) {
         return 0;
     };
 
-    console.log("[SCPCB Runtime] Initialized with 100+ game-specific functions");
-}
-
     // ============================================================
     // ADDITIONAL SCPCB FUNCTIONS (Batch 2)
     // ============================================================

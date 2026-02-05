@@ -826,7 +826,6 @@ async function initCompiler() {
     "textareatext",
     "textfieldtext",
   ];
-  ];
 
   const optionsJSON = JSON.stringify({
     optimize: true,

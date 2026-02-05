@@ -1913,6 +1913,112 @@ Function __Step%()
   Flip
 End Function`,
 
+  cafeteriaWalkthrough: `; Cafeteria Walkthrough - WASD Movement + Mouse Look
+; Loads the SCP checkpoint2/cafeteria room and lets you walk around
+
+Local path$ = "assets/checkpoint2_opt.rmesh"
+
+Graphics3D 1000, 700, 0, 2
+ClsColor 15, 15, 20
+AmbientLight 40, 40, 50
+
+; Camera setup
+Local cam% = CreateCamera()
+CameraRange cam, 0.1, 200
+
+; Starting position inside the cafeteria
+Local camX# = 0
+Local camY# = 1.7  ; Eye height
+Local camZ# = 0
+Local camYaw# = 0
+Local camPitch# = 0
+
+PositionEntity cam, camX, camY, camZ
+
+; Lighting
+Local light% = CreateLight()
+LightColor light, 255, 250, 240
+LightRange light, 20
+PositionEntity light, 0, 8, 0
+
+Local sun% = CreateLight(0)
+LightColor sun, 180, 190, 255
+PositionEntity sun, 10, 20, -10
+
+; Load the cafeteria room
+Print "Loading cafeteria..."
+Local room% = LoadMesh(path$, 0)
+If room = 0 Then
+  Print "Failed to load room. Upload checkpoint2_opt.rmesh to VFS."
+  End
+EndIf
+PositionEntity room, 0, 0, 0
+Print "Cafeteria loaded! Use WASD to move, mouse to look."
+
+; Movement constants
+Local moveSpeed# = 0.08
+Local mouseSens# = 0.2
+
+; Previous mouse position for delta calculation
+Global prevMouseX% = 0
+Global prevMouseY% = 0
+Global mouseCaptured% = 0
+
+Function __Step%()
+  ; Mouse look (simple - use mouse position delta)
+  Local mx% = MouseX()
+  Local my% = MouseY()
+  
+  If prevMouseX <> 0 Or prevMouseY <> 0 Then
+    Local dx% = mx - prevMouseX
+    Local dy% = my - prevMouseY
+    camYaw = camYaw + (dx * mouseSens)
+    camPitch = camPitch + (dy * mouseSens)
+    ; Clamp pitch to avoid flipping
+    If camPitch > 89 Then camPitch = 89
+    If camPitch < -89 Then camPitch = -89
+  EndIf
+  prevMouseX = mx
+  prevMouseY = my
+  
+  ; Apply rotation
+  RotateEntity cam, camPitch, camYaw, 0
+  
+  ; WASD Movement (relative to camera direction)
+  Local moveX# = 0
+  Local moveZ# = 0
+  
+  ; Convert yaw to radians for trig
+  Local yawRad# = camYaw * 3.14159 / 180
+  Local cosYaw# = Cos(yawRad)
+  Local sinYaw# = Sin(yawRad)
+  
+  If KeyDown(17) Then  ; W key
+    moveX = moveX + (sinYaw * moveSpeed)
+    moveZ = moveZ - (cosYaw * moveSpeed)
+  EndIf
+  If KeyDown(31) Then  ; S key
+    moveX = moveX - (sinYaw * moveSpeed)
+    moveZ = moveZ + (cosYaw * moveSpeed)
+  EndIf
+  If KeyDown(30) Then  ; A key
+    moveX = moveX - (cosYaw * moveSpeed)
+    moveZ = moveZ - (sinYaw * moveSpeed)
+  EndIf
+  If KeyDown(32) Then  ; D key
+    moveX = moveX + (cosYaw * moveSpeed)
+    moveZ = moveZ + (sinYaw * moveSpeed)
+  EndIf
+  
+  ; Apply movement
+  camX = camX + moveX
+  camZ = camZ + moveZ
+  PositionEntity cam, camX, camY, camZ
+  
+  RenderWorld
+  Flip
+End Function`,
+
   entityBlend: `; Entity Blend / Visibility Demo (stepped, no loops)
 Graphics3D 800, 600, 32, 2
 cam = CreateCamera()
@@ -2067,6 +2173,17 @@ const exampleInfo: Record<string, ExampleInfo> = {
     optional: ["Room textures + optional lightmaps, if referenced"],
     notes: [
       "RMESH variants differ across SCPCB forks; this is a best-effort exploration loader.",
+    ],
+  },
+  cafeteriaWalkthrough: {
+    title: "Cafeteria Walkthrough (WASD)",
+    prefersTab: "canvas",
+    defaultTimeoutMs: 0,
+    requires: ["assets/checkpoint2_opt.rmesh (SCPCB cafeteria room)"],
+    optional: ["Room textures and lightmaps if referenced by the rmesh"],
+    notes: [
+      "Walk around the SCP cafeteria using WASD keys and mouse look.",
+      "Click the canvas to capture mouse for look control.",
     ],
   },
   entityBlend: {

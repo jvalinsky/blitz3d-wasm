@@ -419,12 +419,7 @@ const bbdbgLocString = (fileId: number, line: number): string => {
 function pauseStepping(reason: string): void {
   if (!debugSteppingActive || debugSteppingPaused) return;
   debugSteppingPaused = true;
-  if (sharedStepRaf) {
-    try {
-      cancelAnimationFrame(sharedStepRaf);
-    } catch {}
-    sharedStepRaf = 0;
-  }
+  cancelSharedStepLoop();
   setStatus("paused", reason || "Paused");
   updateBbdbgButtons();
   scheduleBbdbgRender();
@@ -435,7 +430,9 @@ function resumeStepping(): void {
   debugSteppingPaused = false;
   setStatus("running", "Running (main thread)...");
   updateBbdbgButtons();
-  if (debugSteppingTick) sharedStepRaf = requestAnimationFrame(debugSteppingTick);
+  if (debugSteppingTick) {
+    scheduleSharedStepLoop(debugSteppingTick);
+  }
 }
 
 function stepOnce(): void {
@@ -444,7 +441,15 @@ function stepOnce(): void {
   debugSteppingPaused = false;
   setStatus("running", "Stepping...");
   updateBbdbgButtons();
-  if (debugSteppingTick) sharedStepRaf = requestAnimationFrame(debugSteppingTick);
+  if (!debugSteppingTick) return;
+  // Run the step immediately so single-stepping is responsive and deterministic
+  // (and doesn't rely on rAF firing in headless/background contexts).
+  try {
+    debugSteppingTick();
+    return;
+  } catch {}
+  // Fallback: if the tick throws for some reason, attempt to schedule it.
+  scheduleSharedStepLoop(debugSteppingTick);
 }
 
 function requestWorkerDebugPause(): void {
@@ -510,7 +515,9 @@ const renderBbdbgPanel = (): void => {
     ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
       lastLoc || "(none)"
     }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`
-    : `No debug metadata loaded. Last: ${lastLoc || "(none)"}. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`;
+    : `No debug metadata loaded. Last: ${
+      lastLoc || "(none)"
+    }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`;
 
   if (!bpCount) {
     bbdbgBreakpointsEl.textContent =
@@ -844,6 +851,20 @@ const buildRuntimeGapsPayload = () => {
   };
 };
 
+const installTestHooks = (): void => {
+  if (!exposeTestHooks) return;
+  (globalThis as any).__B3D_TEST_HOOKS__ = {
+    getRuntimeGaps: () => buildRuntimeGapsPayload(),
+    getState: () => ({
+      isCompiling,
+      isRunning,
+      debugSteppingActive,
+      debugSteppingPaused,
+      debugSteppingStepCount,
+    }),
+  };
+};
+
 const exportRuntimeGaps = (): void => {
   const json = JSON.stringify(buildRuntimeGapsPayload(), null, 2);
   const blob = new Blob([json], { type: "application/json" });
@@ -871,6 +892,7 @@ let sharedFileIO: Blitz3DFileIO | null = null;
 let sharedGraphics: Blitz3DGraphics | null = null;
 let sharedInstance: WebAssembly.Instance | null = null;
 let sharedStepRaf = 0;
+let sharedStepTimer: number | null = null;
 let sharedStopRequested = false;
 let isCompiling = false;
 let compilerWorker: Worker | null = null;
@@ -897,6 +919,42 @@ let runtimeGapsRenderQueued = false;
 
 const showStacks = new URLSearchParams(window.location.search)
   .has("stack");
+const exposeTestHooks = new URLSearchParams(window.location.search).has("test");
+
+const cancelSharedStepLoop = (): void => {
+  if (sharedStepRaf) {
+    try {
+      cancelAnimationFrame(sharedStepRaf);
+    } catch {}
+    sharedStepRaf = 0;
+  }
+  if (sharedStepTimer !== null) {
+    try {
+      clearTimeout(sharedStepTimer);
+    } catch {}
+    sharedStepTimer = null;
+  }
+};
+
+const scheduleSharedStepLoop = (fn: () => void): void => {
+  // Use rAF when available for smooth rendering, but also schedule a timeout
+  // fallback so stepping continues in headless/background contexts where rAF
+  // may be throttled or paused.
+  cancelSharedStepLoop();
+
+  const fire = () => {
+    // Ensure the other scheduling mechanism can’t also fire.
+    cancelSharedStepLoop();
+    fn();
+  };
+
+  try {
+    sharedStepRaf = requestAnimationFrame(fire);
+  } catch {
+    sharedStepRaf = 0;
+  }
+  sharedStepTimer = setTimeout(fire, 50) as unknown as number;
+};
 
 // --- DOM ELEMENTS ---
 const mustGetEl = <T extends HTMLElement>(id: string): T => {
@@ -1160,7 +1218,11 @@ function normalizeWasmBytes(input: ArrayBuffer | ArrayBufferView): ArrayBuffer {
   if (input instanceof ArrayBuffer) return input;
   if (ArrayBuffer.isView(input)) {
     // `input.buffer` may be a SharedArrayBuffer; ensure we return a real ArrayBuffer.
-    const view = new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+    const view = new Uint8Array(
+      input.buffer,
+      input.byteOffset,
+      input.byteLength,
+    );
     return view.slice().buffer;
   }
   throw new Error("Invalid WASM bytes (expected ArrayBuffer or TypedArray)");
@@ -2131,8 +2193,7 @@ function jumpToEditorLine(line: number): void {
 
 // --- WASM MEMORY VIEWER (main-thread runtime only) ---
 function getActiveMemory(): WebAssembly.Memory | null {
-  const mem: WebAssembly.Memory | undefined =
-    sharedCore?.memory ||
+  const mem: WebAssembly.Memory | undefined = sharedCore?.memory ||
     (sharedInstance ? (sharedInstance.exports as any)?.memory : undefined);
   return mem instanceof WebAssembly.Memory ? mem : null;
 }
@@ -2219,9 +2280,15 @@ function renderMemoryPanel(): void {
 
       const ageMs = Math.max(0, Date.now() - snap.updatedAtMs);
       const hints: string[] = [];
-      if (workerMemInfo?.heapBase) hints.push(`heap=0x${workerMemInfo.heapBase.toString(16)}`);
-      if (workerMemInfo?.dataEnd) hints.push(`data_end=0x${workerMemInfo.dataEnd.toString(16)}`);
-      if (workerMemInfo?.stackPtr) hints.push(`sp=0x${workerMemInfo.stackPtr.toString(16)}`);
+      if (workerMemInfo?.heapBase) {
+        hints.push(`heap=0x${workerMemInfo.heapBase.toString(16)}`);
+      }
+      if (workerMemInfo?.dataEnd) {
+        hints.push(`data_end=0x${workerMemInfo.dataEnd.toString(16)}`);
+      }
+      if (workerMemInfo?.stackPtr) {
+        hints.push(`sp=0x${workerMemInfo.stackPtr.toString(16)}`);
+      }
       const hintStr = hints.length ? `; ${hints.join(" ")}` : "";
 
       memSummaryEl.textContent =
@@ -2293,6 +2360,7 @@ function applyMemoryAutoRefresh(): void {
 // --- INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", async () => {
   installGlobalErrorHandlers();
+  installTestHooks();
   // Interpreter runs are stepped/cooperative; disable the graphics module's internal RAF loop
   // so Pause/Step actually freeze rendering and `RenderWorld()` can be the explicit draw hook.
   (globalThis as any).__BLITZ3D_NO_AUTO_RAF = true;
@@ -2461,9 +2529,12 @@ let runnerSandboxInFlight:
 
 function stopExecution() {
   if (compileInFlight) {
-    cancelCompileInFlight(new DOMException("Compilation canceled.", "AbortError"), {
-      terminateWorker: true,
-    });
+    cancelCompileInFlight(
+      new DOMException("Compilation canceled.", "AbortError"),
+      {
+        terminateWorker: true,
+      },
+    );
   }
   mainThreadStopRequested = true;
   sharedStopRequested = true;
@@ -2498,6 +2569,7 @@ function stopExecution() {
     } catch {}
     runnerSandboxInFlight = null;
   }
+  cancelSharedStepLoop();
   stopBtnEl.disabled = true;
   setStatus("ready", "Ready");
   renderMemoryPanel();
@@ -2507,12 +2579,7 @@ function disposeSharedRuntime() {
   sharedStopRequested = true;
   stopMemoryAutoRefresh();
   globalThis.__BLITZ3D_URL_RESOLVER = undefined;
-  if (sharedStepRaf) {
-    try {
-      cancelAnimationFrame(sharedStepRaf);
-    } catch {}
-    sharedStepRaf = 0;
-  }
+  cancelSharedStepLoop();
   try {
     sharedGraphics?.dispose?.();
   } catch {}
@@ -2533,9 +2600,12 @@ function stopRun() {
 }
 
 function stopCompile() {
-  cancelCompileInFlight(new DOMException("Compilation canceled.", "AbortError"), {
-    terminateWorker: true,
-  });
+  cancelCompileInFlight(
+    new DOMException("Compilation canceled.", "AbortError"),
+    {
+      terminateWorker: true,
+    },
+  );
   if (compilerWorker) {
     compilerWorker.terminate();
     compilerWorker = null;
@@ -2587,6 +2657,79 @@ function shouldAbortMainThreadRun() {
 function makeRunnerWorker(): Worker {
   const workerCode = `
       const entryPoints = ["main", "_start", "Main", "Main_", "__main"];
+      const normalizePath = (p) => {
+        let s = String(p || "").trim();
+        s = s.replace(/\\\\/g, "/");
+        s = s.replace(/\\/+/g, "/");
+        s = s.replace(/^\\.\\/+/, "");
+        s = s.replace(/^\\/+|\\/+$/g, "");
+        return s;
+      };
+      // Minimal VFS + file handles for sandbox programs (ReadFile/ReadLine/etc).
+      // Note: this is intentionally small; graphics programs run on the main thread.
+      const vfs = new Map(); // resolvedPath -> Uint8Array
+      const vfsByLower = new Map(); // lower -> resolvedPath
+      const openFiles = new Map(); // handle -> { data, pos }
+      let nextFileHandle = 1;
+
+      const registerVfs = (path, bytes) => {
+        const rp = normalizePath(path);
+        if (!rp) return;
+        const buf = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+        vfs.set(rp, buf);
+        vfsByLower.set(rp.toLowerCase(), rp);
+      };
+
+      const openFileCandidates = (filePath) => {
+        const rp = normalizePath(filePath);
+        const rpLower = rp.toLowerCase();
+        const out = [];
+        const seen = new Set();
+        const push = (p) => {
+          const r = normalizePath(p);
+          if (!r) return;
+          const k = r.toLowerCase();
+          if (seen.has(k)) return;
+          seen.add(k);
+          out.push(r);
+        };
+        push(rp);
+        if (!rpLower.startsWith("assets/")) push("assets/" + rp);
+        else push(rp.slice("assets/".length));
+        const leaf = rp.split("/").pop();
+        if (leaf && leaf !== rp) {
+          push(leaf);
+          push("assets/" + leaf);
+        }
+        return out;
+      };
+
+      const vfsLookup = (resolvedPath) => {
+        const key = vfsByLower.get(String(resolvedPath).toLowerCase()) || resolvedPath;
+        return vfs.get(key) || null;
+      };
+
+      const openFile = (filePath) => {
+        const candidates = openFileCandidates(filePath);
+        for (const c of candidates) {
+          const data = vfsLookup(c);
+          if (!data) continue;
+          const handle = nextFileHandle++ | 0;
+          openFiles.set(handle, { data, pos: 0 });
+          return handle | 0;
+        }
+        return 0;
+      };
+
+      const fileSizeByPath = (filePath) => {
+        const candidates = openFileCandidates(filePath);
+        for (const c of candidates) {
+          const data = vfsLookup(c);
+          if (data) return data.length | 0;
+        }
+        return 0;
+      };
+
       let bbdbgCurrentFileId = 0;
       let bbdbgCurrentLine = 0;
       /** @type {WebAssembly.Instance | null} */
@@ -3026,7 +3169,7 @@ function makeRunnerWorker(): Worker {
 	          return;
 	        }
 
-	        const { wasmBytes, maxLines, startPaused } = ev.data;
+	        const { wasmBytes, maxLines, startPaused, vfsFiles } = ev.data;
 	        let emitted = 0;
 	        debugStepping = false;
 	        debugPaused = false;
@@ -3044,6 +3187,20 @@ function makeRunnerWorker(): Worker {
 	        debugBreakpointLine = 0;
 
         try {
+          try {
+            vfs.clear();
+            vfsByLower.clear();
+            openFiles.clear();
+            nextFileHandle = 1;
+            const list = Array.isArray(vfsFiles) ? vfsFiles : [];
+            for (const it of list) {
+              const p = it && typeof it.path === "string" ? it.path : "";
+              const b = it && it.bytes ? it.bytes : null;
+              if (!p || !b) continue;
+              registerVfs(p, b);
+            }
+          } catch {}
+
           const module = await WebAssembly.compile(wasmBytes);
           try {
             const importsList = WebAssembly.Module.imports(module);
@@ -3368,6 +3525,61 @@ function makeRunnerWorker(): Worker {
             imports[ns].FloatToString = floatToString;
           }
 
+          // File I/O (sandbox): VFS-only, synchronous.
+          const End = () => {
+            const e = new Error("__BLITZ3D_END__");
+            e.__blitz3dEnd = true;
+            throw e;
+          };
+          const ReadFile = (pathPtr) => openFile(readStr(pathPtr | 0));
+          const OpenFile = ReadFile;
+          const CloseFile = (handle) => {
+            openFiles.delete(handle | 0);
+            return 0;
+          };
+          const Eof = (handle) => {
+            const f = openFiles.get(handle | 0);
+            if (!f) return 1;
+            return (f.pos | 0) >= (f.data.length | 0) ? 1 : 0;
+          };
+          const ReadLine = (handle) => {
+            const f = openFiles.get(handle | 0);
+            if (!f || !inst) return 0;
+            const data = f.data;
+            let pos = f.pos | 0;
+            if (pos < 0) pos = 0;
+            if (pos >= data.length) return allocStr("");
+            let end = pos;
+            while (end < data.length && data[end] !== 10 && data[end] !== 13) end++;
+            // Support CRLF / CR / LF.
+            let nextPos = end;
+            if (nextPos < data.length && data[nextPos] === 13) nextPos++;
+            if (nextPos < data.length && data[nextPos] === 10) nextPos++;
+            f.pos = nextPos;
+            const bytes = data.slice(pos, end);
+            const line = new TextDecoder().decode(bytes);
+            return allocStr(line);
+          };
+          const FileSize = (pathPtr) => fileSizeByPath(readStr(pathPtr | 0));
+          const FileType = (pathPtr) => {
+            const candidates = openFileCandidates(readStr(pathPtr | 0));
+            for (const c of candidates) {
+              const data = vfsLookup(c);
+              if (data) return 1;
+            }
+            return 0;
+          };
+          for (const ns of ["env", "blitz3d"]) {
+            imports[ns].End = End;
+            imports[ns].ReadFile = ReadFile;
+            imports[ns].OpenFile = OpenFile;
+            imports[ns].CloseFile = CloseFile;
+            imports[ns].Eof = Eof;
+            imports[ns].ReadLine = ReadLine;
+            imports[ns].FileSize = FileSize;
+            imports[ns].FileType = FileType;
+          }
+
           const stubReport = stubMissingImports(imports, module, {
             preferEnvForBlitz3d: true,
             caseInsensitive: true,
@@ -3448,7 +3660,18 @@ function makeRunnerWorker(): Worker {
           for (const name of entryPoints) {
             const fn = inst.exports[name];
             if (typeof fn === "function") {
-              fn();
+              try {
+                fn();
+              } catch (e) {
+                const msg = e instanceof Error ? e.message : String(e);
+                const stack = e instanceof Error ? e.stack : "";
+                if ((e && e.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+                  send({ type: "done" });
+                  return;
+                }
+                send({ type: "error", message: msg, stack });
+                return;
+              }
               ran = true;
               break;
             }
@@ -3603,9 +3826,14 @@ async function runWasmBytesInSandbox(
         if (workerDebugSteppingActive) {
           const fileId = typeof msg.fileId === "number" ? (msg.fileId | 0) : 0;
           const line = typeof msg.line === "number" ? (msg.line | 0) : 0;
-          const loc = (fileId > 0 && line > 0) ? bbdbgLocString(fileId, line) : "";
+          const loc = (fileId > 0 && line > 0)
+            ? bbdbgLocString(fileId, line)
+            : "";
           if (workerDebugPaused) {
-            setStatus("paused", reason || (loc ? `Paused at ${loc}` : "Paused"));
+            setStatus(
+              "paused",
+              reason || (loc ? `Paused at ${loc}` : "Paused"),
+            );
           } else {
             setStatus(
               "running",
@@ -3625,9 +3853,11 @@ async function runWasmBytesInSandbox(
           (msg.hasBbdbgEnter && msg.hasBbdbgLeave && msg.hasBbdbgStmt)
             ? "bbdbg hooks present"
             : (msg.bbdbgImports.length
-              ? `bbdbg imports present but incomplete (enter=${msg.hasBbdbgEnter ? "y" : "n"} leave=${
-                msg.hasBbdbgLeave ? "y" : "n"
-              } stmt=${msg.hasBbdbgStmt ? "y" : "n"})`
+              ? `bbdbg imports present but incomplete (enter=${
+                msg.hasBbdbgEnter ? "y" : "n"
+              } leave=${msg.hasBbdbgLeave ? "y" : "n"} stmt=${
+                msg.hasBbdbgStmt ? "y" : "n"
+              })`
               : "no bbdbg imports");
         printOutput(
           `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${
@@ -3641,9 +3871,15 @@ async function runWasmBytesInSandbox(
         workerMemInfo = {
           totalBytes: msg.totalBytes | 0,
           pages: msg.pages | 0,
-          heapBase: typeof msg.heapBase === "number" ? (msg.heapBase | 0) : undefined,
-          dataEnd: typeof msg.dataEnd === "number" ? (msg.dataEnd | 0) : undefined,
-          stackPtr: typeof msg.stackPtr === "number" ? (msg.stackPtr | 0) : undefined,
+          heapBase: typeof msg.heapBase === "number"
+            ? (msg.heapBase | 0)
+            : undefined,
+          dataEnd: typeof msg.dataEnd === "number"
+            ? (msg.dataEnd | 0)
+            : undefined,
+          stackPtr: typeof msg.stackPtr === "number"
+            ? (msg.stackPtr | 0)
+            : undefined,
           suggestOffset: typeof msg.suggestOffset === "number"
             ? (msg.suggestOffset | 0)
             : undefined,
@@ -3678,9 +3914,18 @@ async function runWasmBytesInSandbox(
 
           if (bbdbgLastFileId > 0 && bbdbgLastLine > 0) {
             const stackSnap = bbdbgStack.slice();
-            const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
-            if (!last || last.fileId !== bbdbgLastFileId || last.line !== bbdbgLastLine) {
-              bbdbgTrace.push({ fileId: bbdbgLastFileId, line: bbdbgLastLine, stack: stackSnap });
+            const last = bbdbgTrace.length
+              ? bbdbgTrace[bbdbgTrace.length - 1]!
+              : null;
+            if (
+              !last || last.fileId !== bbdbgLastFileId ||
+              last.line !== bbdbgLastLine
+            ) {
+              bbdbgTrace.push({
+                fileId: bbdbgLastFileId,
+                line: bbdbgLastLine,
+                stack: stackSnap,
+              });
               if (bbdbgTrace.length > 200) {
                 bbdbgTrace.splice(0, bbdbgTrace.length - 200);
               }
@@ -3771,9 +4016,33 @@ async function runWasmBytesInSandbox(
 
     const bytes = normalizeWasmBytes(wasmBytes);
     postRunnerWorkerBreakpoints();
+    const vfsFiles: { path: string; bytes: ArrayBuffer }[] = [];
+    const transfers: Transferable[] = [bytes];
+    // Only send small / text-like VFS files into the sandbox worker to avoid
+    // cloning large binary assets (graphics programs run on the main thread).
+    const allowExt = (p: string): boolean => {
+      const s = String(p || "").toLowerCase();
+      return s.endsWith(".txt") || s.endsWith(".ini") || s.endsWith(".cfg") ||
+        s.endsWith(".json") || s.endsWith(".csv") || s.endsWith(".log");
+    };
+    for (const [path, rec] of vfs.entries()) {
+      try {
+        if (!path) continue;
+        if (!allowExt(path) && (rec.bytes?.byteLength ?? 0) > 64 * 1024) continue;
+        const copy = new Uint8Array(rec.bytes.byteLength);
+        copy.set(rec.bytes);
+        vfsFiles.push({ path, bytes: copy.buffer });
+        transfers.push(copy.buffer);
+      } catch {}
+    }
     w.postMessage(
-      { wasmBytes: bytes, maxLines, startPaused: Boolean(startPaused) },
-      [bytes],
+      {
+        wasmBytes: bytes,
+        maxLines,
+        startPaused: Boolean(startPaused),
+        vfsFiles,
+      },
+      transfers,
     );
   });
 }
@@ -3911,7 +4180,13 @@ async function compileSource(source: string): Promise<CompileResult> {
 
     w.addEventListener("message", onMessage as EventListener);
     w.postMessage(
-      { type: "compile", id, source, emitWat, debugHoldMs } satisfies CompilerCompileMessage,
+      {
+        type: "compile",
+        id,
+        source,
+        emitWat,
+        debugHoldMs,
+      } satisfies CompilerCompileMessage,
     );
   });
 }
@@ -4093,7 +4368,10 @@ async function runCode() {
 
 async function restartExecution(): Promise<void> {
   if (!lastCompiled?.wasmBytes) {
-    printOutput("Restart requires a successful compile (no WASM bytes available).", "warning");
+    printOutput(
+      "Restart requires a successful compile (no WASM bytes available).",
+      "warning",
+    );
     return;
   }
   await restartAndSeek(0);
@@ -4101,7 +4379,10 @@ async function restartExecution(): Promise<void> {
 
 async function rewindExecution(): Promise<void> {
   if (!lastCompiled?.wasmBytes) {
-    printOutput("Rewind requires a successful compile (no WASM bytes available).", "warning");
+    printOutput(
+      "Rewind requires a successful compile (no WASM bytes available).",
+      "warning",
+    );
     return;
   }
   const current = debugSteppingActive
@@ -4136,7 +4417,10 @@ async function restartAndSeek(targetStep: number): Promise<void> {
     startPaused: true,
   });
   if (!runResult?.startedStepping) {
-    printOutput("Restart failed: program did not enter stepping mode.", "error");
+    printOutput(
+      "Restart failed: program did not enter stepping mode.",
+      "error",
+    );
     return;
   }
 
@@ -4150,7 +4434,9 @@ async function restartAndSeek(targetStep: number): Promise<void> {
 
   // Ensure we end paused.
   if (debugSteppingActive && !debugSteppingPaused) pauseStepping("Paused");
-  if (workerDebugSteppingActive && !workerDebugPaused) requestWorkerDebugPause();
+  if (workerDebugSteppingActive && !workerDebugPaused) {
+    requestWorkerDebugPause();
+  }
   scheduleBbdbgRender();
   updateBbdbgButtons();
 }
@@ -4201,7 +4487,11 @@ async function fastForwardMainThreadTo(targetStep: number): Promise<void> {
 async function seekWorkerTo(targetStep: number): Promise<void> {
   if (!runnerWorker || !workerDebugSteppingActive) return;
   const target = Math.max(0, targetStep | 0);
-  runnerWorker.postMessage({ type: "debug_seek", targetStep: target, pauseAfter: true });
+  runnerWorker.postMessage({
+    type: "debug_seek",
+    targetStep: target,
+    pauseAfter: true,
+  });
   // Pause will arrive via debug_state.
 }
 
@@ -4739,17 +5029,22 @@ async function runWasmBytesOnMainThread(
   }
 
   // Prefer stepping (non-blocking) if present.
-	  if (typeof step === "function") {
-	    mainThreadRunDeadline = 0;
-	    isRunning = true;
-	    debugSteppingActive = true;
-	    debugSteppingPaused = Boolean(startPaused);
-	    debugSteppingStepOnce = false;
-	    debugSteppingStepCount = 0;
-	    debugSteppingStepFn = step;
-	    bbdbgBreakpointHitThisStep = false;
-	    bbdbgBreakpointLastHit = null;
-	    updateBbdbgButtons();
+  if (typeof step === "function") {
+    mainThreadRunDeadline = 0;
+    isRunning = true;
+    debugSteppingActive = true;
+    debugSteppingPaused = Boolean(startPaused);
+    debugSteppingStepOnce = false;
+    debugSteppingStepCount = 0;
+    debugSteppingStepFn = step;
+    bbdbgBreakpointHitThisStep = false;
+    bbdbgBreakpointLastHit = null;
+    updateBbdbgButtons();
+
+    // Keep the bbdbg panel responsive while running on the main thread.
+    // Rendering on every step would be wasteful, so throttle to ~5Hz.
+    let lastBbdbgRenderAt = performance.now();
+    scheduleBbdbgRender();
 
     const tick = () => {
       if (mainThreadStopRequested || sharedStopRequested) {
@@ -4763,15 +5058,15 @@ async function runWasmBytesOnMainThread(
       }
       if (debugSteppingPaused) return;
 
-	      const started = performance.now();
-	      bbdbgBreakpointHitThisStep = false;
-	      try {
-	        step();
-	        debugSteppingStepCount++;
-	      } catch (e) {
-	        const msg = errorMessage(e);
-	        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-	          printOutput("Program ended.", "success");
+      const started = performance.now();
+      bbdbgBreakpointHitThisStep = false;
+      try {
+        step();
+        debugSteppingStepCount++;
+      } catch (e) {
+        const msg = errorMessage(e);
+        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+          printOutput("Program ended.", "success");
           stopExecution();
           return;
         }
@@ -4796,16 +5091,16 @@ async function runWasmBytesOnMainThread(
         );
         stopExecution();
         return;
-	      }
+      }
 
-	      if (
-	        debugSteppingStepOnce ||
-	        (bbdbgBreakpointHitThisStep && !debugSteppingIgnoreBreakpoints)
-	      ) {
-	        debugSteppingStepOnce = false;
-	        const loc = bbdbgBreakpointLastHit
-	          ? bbdbgLocString(
-	            bbdbgBreakpointLastHit.fileId,
+      if (
+        debugSteppingStepOnce ||
+        (bbdbgBreakpointHitThisStep && !debugSteppingIgnoreBreakpoints)
+      ) {
+        debugSteppingStepOnce = false;
+        const loc = bbdbgBreakpointLastHit
+          ? bbdbgLocString(
+            bbdbgBreakpointLastHit.fileId,
             bbdbgBreakpointLastHit.line,
           )
           : "";
@@ -4813,19 +5108,32 @@ async function runWasmBytesOnMainThread(
         return;
       }
 
-	      sharedStepRaf = requestAnimationFrame(tick);
-	    };
+      // Throttled debug panel refresh so Step count/trace stays live.
+      const now = performance.now();
+      if (now - lastBbdbgRenderAt >= 200) {
+        lastBbdbgRenderAt = now;
+        // Don’t rely solely on rAF for this: some headless/background contexts
+        // throttle it enough that the bbdbg panel never updates.
+        try {
+          renderBbdbgPanel();
+        } catch {
+          scheduleBbdbgRender();
+        }
+      }
 
-	    debugSteppingTick = tick;
-	    if (debugSteppingPaused) {
-	      setStatus("paused", "Paused");
-	      updateBbdbgButtons();
-	      scheduleBbdbgRender();
-	    } else {
-	      sharedStepRaf = requestAnimationFrame(tick);
-	    }
-	    return { startedStepping: true };
-	  }
+      scheduleSharedStepLoop(tick);
+    };
+
+    debugSteppingTick = tick;
+    if (debugSteppingPaused) {
+      setStatus("paused", "Paused");
+      updateBbdbgButtons();
+      scheduleBbdbgRender();
+    } else {
+      scheduleSharedStepLoop(tick);
+    }
+    return { startedStepping: true };
+  }
 
   // Fallback: run entrypoint directly (can freeze if user wrote a tight loop).
   if (typeof entry === "function") {
@@ -4966,18 +5274,18 @@ function createLegacyRuntimeImports_UNUSED(): Record<
     return false;
   };
 
-	  const vfsListDir = (path) => {
-	    const p = normalizeVfsPath(path);
-	    const prefix = p ? (p.endsWith("/") ? p : `${p}/`) : "";
-	    const out = new Set<string>();
-	    for (const k of vfs.keys()) {
-	      if (!k.startsWith(prefix)) continue;
-	      const rest = k.slice(prefix.length);
-	      const first = rest.split("/")[0];
-	      if (first) out.add(first);
-	    }
-	    return [...out].sort((a, b) => a.localeCompare(b));
-	  };
+  const vfsListDir = (path) => {
+    const p = normalizeVfsPath(path);
+    const prefix = p ? (p.endsWith("/") ? p : `${p}/`) : "";
+    const out = new Set<string>();
+    for (const k of vfs.keys()) {
+      if (!k.startsWith(prefix)) continue;
+      const rest = k.slice(prefix.length);
+      const first = rest.split("/")[0];
+      if (first) out.add(first);
+    }
+    return [...out].sort((a, b) => a.localeCompare(b));
+  };
 
   const readU8 = (h) => {
     const rec = fileHandles.get(h | 0);
@@ -5330,11 +5638,11 @@ function createLegacyRuntimeImports_UNUSED(): Record<
       keyHitSet.delete(c);
       return 1;
     },
-	    GetKey: () => {
-	      if (keyQueue.length === 0) return 0;
-	      const ch = keyQueue.shift();
-	      return (typeof ch === "number" ? ch : 0) | 0;
-	    },
+    GetKey: () => {
+      if (keyQueue.length === 0) return 0;
+      const ch = keyQueue.shift();
+      return (typeof ch === "number" ? ch : 0) | 0;
+    },
     MouseX: () => mouseX | 0,
     MouseY: () => mouseY | 0,
     MouseZ: () => mouseZ | 0,
@@ -5465,18 +5773,18 @@ function createLegacyRuntimeImports_UNUSED(): Record<
       threeScene.background = c;
       return 1;
     },
-	    CreateLight: (type = 1) => {
-	      if (!THREE || !threeScene) return 0;
-	      const t = type | 0;
-	      const light: any = (t === 2)
-	        ? new THREE.PointLight(0xffffff, 1.0, 0)
-	        : new THREE.DirectionalLight(0xffffff, 1.0);
-	      if (t !== 2) light.position.set(0, 1, 0);
-	      const id = nextEntityId++;
-	      entities.set(id, light);
-	      threeScene.add(light);
-	      return id;
-	    },
+    CreateLight: (type = 1) => {
+      if (!THREE || !threeScene) return 0;
+      const t = type | 0;
+      const light: any = (t === 2)
+        ? new THREE.PointLight(0xffffff, 1.0, 0)
+        : new THREE.DirectionalLight(0xffffff, 1.0);
+      if (t !== 2) light.position.set(0, 1, 0);
+      const id = nextEntityId++;
+      entities.set(id, light);
+      threeScene.add(light);
+      return id;
+    },
     AmbientLight: (r, g, b) => {
       if (!THREE || !threeScene) return 0;
       const c = new THREE.Color((r | 0) / 255, (g | 0) / 255, (b | 0) / 255);

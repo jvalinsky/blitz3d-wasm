@@ -333,11 +333,19 @@ public final class ExpressionGeneration {
                     instrs.append(contentsOf: leftResult.instrs)
                     if !typeHandling.isString(from: binop.left) {
                         if leftResult.type == .i32 {
-                            if let intToStrIdx = context.functionIndexMap["inttostring"] {
+                            var intToStrIdx = context.functionIndexMap["inttostring"] ?? -1
+                            if intToStrIdx == -1 {
+                                intToStrIdx = context.registerAutoImport(name: "IntToString", params: [.i32], results: [.i32])
+                            }
+                            if intToStrIdx >= 0 {
                                 instrs.append(.call(intToStrIdx))
                             }
                         } else if leftResult.type == .f32 {
-                            if let floatToStrIdx = context.functionIndexMap["floattostring"] {
+                            var floatToStrIdx = context.functionIndexMap["floattostring"] ?? -1
+                            if floatToStrIdx == -1 {
+                                floatToStrIdx = context.registerAutoImport(name: "FloatToString", params: [.f32], results: [.i32])
+                            }
+                            if floatToStrIdx >= 0 {
                                 instrs.append(.call(floatToStrIdx))
                             }
                         }
@@ -347,11 +355,19 @@ public final class ExpressionGeneration {
                     instrs.append(contentsOf: rightResult.instrs)
                     if !typeHandling.isString(from: binop.right) {
                         if rightResult.type == .i32 {
-                            if let intToStrIdx = context.functionIndexMap["inttostring"] {
+                            var intToStrIdx = context.functionIndexMap["inttostring"] ?? -1
+                            if intToStrIdx == -1 {
+                                intToStrIdx = context.registerAutoImport(name: "IntToString", params: [.i32], results: [.i32])
+                            }
+                            if intToStrIdx >= 0 {
                                 instrs.append(.call(intToStrIdx))
                             }
                         } else if rightResult.type == .f32 {
-                            if let floatToStrIdx = context.functionIndexMap["floattostring"] {
+                            var floatToStrIdx = context.functionIndexMap["floattostring"] ?? -1
+                            if floatToStrIdx == -1 {
+                                floatToStrIdx = context.registerAutoImport(name: "FloatToString", params: [.f32], results: [.i32])
+                            }
+                            if floatToStrIdx >= 0 {
                                 instrs.append(.call(floatToStrIdx))
                             }
                         }

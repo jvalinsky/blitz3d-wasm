@@ -60,7 +60,7 @@ type RuntimeGapsPayload = {
 const EXAMPLE_EXPECTATIONS: Record<string, string[]> = {
   hello: ["Hello from Blitz3D WASM!"],
   languageBasics: ["sum ok:", "case 15"],
-  arrays: ["a("], // TODO: Make strict ["a(0)=0"] once IntToString fix propagates
+  arrays: ["a(0)=0", "a(4)=16"],
   customTypes: ["node id="],
   dataReadRestore: ["a="],
   stringsMath: ["abs="],

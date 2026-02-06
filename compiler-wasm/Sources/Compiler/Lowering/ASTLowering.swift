@@ -858,13 +858,21 @@ public final class ASTLowering {
 
             // Check for string concatenation
             if binop.op == "+" && (isStringExpression(binop.left) || isStringExpression(binop.right)) {
-                // Ensure both are strings. If one is int/float, we might need conversion (Str$)
-                // For now assuming implicit or explicit conversion exists or user provides strings.
-                // Actually Blitz3D allows "Str" + 123.
-                
-                // TODO: Handle Int/Float to String conversion if needed. 
-                // Currently assuming strings.
-                
+                // Convert non-string operands to string
+                if !isStringExpression(binop.left) {
+                    if lhs.type == .f32 {
+                        lhs = .call(name: "FloatToString", args: [lhs], resultType: .i32)
+                    } else {
+                        lhs = .call(name: "IntToString", args: [lhs], resultType: .i32)
+                    }
+                }
+                if !isStringExpression(binop.right) {
+                    if rhs.type == .f32 {
+                        rhs = .call(name: "FloatToString", args: [rhs], resultType: .i32)
+                    } else {
+                        rhs = .call(name: "IntToString", args: [rhs], resultType: .i32)
+                    }
+                }
                 return .call(name: "StringConcat", args: [lhs, rhs], resultType: .i32)
             }
             

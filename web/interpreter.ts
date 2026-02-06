@@ -3671,9 +3671,7 @@ function makeRunnerWorker(): Worker {
             const alloc = getStringAlloc();
             const memory = inst.exports.memory;
             if (typeof alloc !== "function") return 0;
-            const ptr = writeStringObj(alloc, memory, String(val | 0));
-            // console.log("worker IntToString val=" + val + " ptr=" + ptr);
-            return ptr;
+            return writeStringObj(alloc, memory, String(val | 0));
           };
 
           const floatToString = (val) => {
@@ -3681,7 +3679,7 @@ function makeRunnerWorker(): Worker {
             const alloc = getStringAlloc();
             const memory = inst.exports.memory;
             if (typeof alloc !== "function") return 0;
-            return writeStringObj(alloc, memory, String(val | 0));
+            return writeStringObj(alloc, memory, String(Math.fround(val)));
           };
 
           for (const ns of ["env", "blitz3d"]) {

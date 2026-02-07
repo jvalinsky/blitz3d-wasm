@@ -111,14 +111,14 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (canvasWidth <= 0 || canvasHeight <= 0) {
       console.error(
         "CreateCamera: invalid canvas dimensions " + canvasWidth + "x" +
-          canvasHeight,
+        canvasHeight,
       );
       return 0;
     }
 
     console.log(
       "Creating PerspectiveCamera with aspect: " +
-        (canvasWidth / canvasHeight),
+      (canvasWidth / canvasHeight),
     );
     const cam = new THREE.PerspectiveCamera(
       75,
@@ -133,7 +133,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     console.log(
       "Camera position set to: " + cam.position.x + ", " + cam.position.y +
-        ", " + cam.position.z,
+      ", " + cam.position.z,
     );
 
     const id = graphics.nextEntityId++;
@@ -159,7 +159,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     console.log("CreateCamera completed, ID: " + id);
     console.log(
       "Active camera is now: " +
-        (graphics.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
+      (graphics.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
     );
 
     return id;
@@ -299,7 +299,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         graphics.scene.add(mesh);
         console.log(
           "Mesh added directly to scene at position: " +
-            mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
+          mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
         );
       }
     }
@@ -572,14 +572,14 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       for (const m of mat) {
         try {
           if (m) fn(m);
-        } catch {}
+        } catch { }
       }
       return;
     }
     if (mat) {
       try {
         fn(mat);
-      } catch {}
+      } catch { }
     }
   };
 
@@ -589,11 +589,63 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       entity.traverse((o: any) => {
         try {
           fn(o);
-        } catch {}
+        } catch { }
       });
       return;
     }
     fn(entity);
+  };
+
+  imports.env.EntityColor = (ent: number, r: number, g: number, b: number) => {
+    const entity = graphics.entities[ent];
+    if (graphics.core.entityTable) {
+      // Entity table logic (omitted for brevity in replacement, but kept safe via context)
+      // Actually, I must replicate the exact lines if I replace them.
+      // Wait, I am replacing lines 599-600.
+      // The previous context showed:
+      // 599:   imports.env.EntityColor = (ent: number, r: number, g: number, b: number) => {
+      // 600:     const entity = graphics.entities[ent];
+      // I will INSERT BEFORE this block.
+    }
+    // ...
+  };
+
+  // --- Batch 2 3D Stubs ---
+
+  // Brush System (Non-functional stubs for now)
+  imports.env.BrushColor = (brush: number, r: number, g: number, b: number) => { };
+  imports.env.BrushAlpha = (brush: number, a: number) => { };
+  imports.env.BrushShininess = (brush: number, s: number) => { };
+  imports.env.BrushTexture = (brush: number, tex: number, frame: number, index: number) => { };
+  imports.env.BrushFX = (brush: number, fx: number) => { };
+  imports.env.BrushBlend = (brush: number, blend: number) => { };
+  imports.env.FreeBrush = (brush: number) => { };
+  imports.env.LoadBrush = (path: number, flags: number) => 0;
+
+  // Mesh Geometry Manipulation
+  imports.env.AddMesh = (src: number, dest: number) => { };
+  imports.env.PositionMesh = (mesh: number, x: number, y: number, z: number) => { };
+  imports.env.RotateMesh = (mesh: number, x: number, y: number, z: number) => { };
+  imports.env.ScaleMesh = (mesh: number, x: number, y: number, z: number) => { };
+  imports.env.VertexCoords = (surf: number, index: number, x: number, y: number, z: number) => { };
+
+  // Surface Management
+  imports.env.ClearSurface = (surf: number, clearVerts: number, clearTris: number) => { };
+  imports.env.ClearWorld = (entities: number, brushes: number, textures: number) => { };
+  imports.env.TrisRendered = () => 0;
+
+  // Camera
+  imports.env.CameraClsMode = (cam: number, clsColor: number, clsZBuffer: number) => { };
+  imports.env.CameraProject = (cam: number, x: number, y: number, z: number) => { };
+
+  // Render State
+  imports.env.AntiAlias = (state: number) => { };
+  imports.env.WireFrame = (state: number) => { };
+  imports.env.DeltaRoll = (src: number, dest: number) => {
+    let delta = dest - src;
+    while (delta > 180) delta -= 360;
+    while (delta < -180) delta += 360;
+    return delta;
   };
 
   imports.env.EntityColor = (ent: number, r: number, g: number, b: number) => {
@@ -653,7 +705,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (!graphics.scene) {
       try {
         graphics.init3D();
-      } catch {}
+      } catch { }
     }
 
     const parent = parentId ? graphics.entities[parentId] : graphics.scene;
@@ -672,10 +724,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     try {
       if (child.parent) child.parent.remove(child);
-    } catch {}
+    } catch { }
     try {
       parent.add(child);
-    } catch {}
+    } catch { }
 
     if (keepGlobal && worldMatrix) {
       try {
@@ -689,7 +741,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         const local = new THREE.Matrix4().multiplyMatrices(inv, worldMatrix);
         local.decompose(child.position, child.quaternion, child.scale);
         child.updateMatrixWorld(true);
-      } catch {}
+      } catch { }
     }
 
     graphics.engineCall(
@@ -904,7 +956,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (entity) {
       try {
         graphics.disposeObject3D(entity);
-      } catch {}
+      } catch { }
       if (entity.parent) entity.parent.remove(entity);
       graphics.engineCall(
         ent,
@@ -930,7 +982,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       clone.traverse((child: any) => {
         if (child?.isMesh) graphics.ensureUniqueMaterial(child);
       });
-    } catch {}
+    } catch { }
 
     const id = graphics.nextEntityId++;
     graphics.entities[id] = clone;
@@ -952,15 +1004,41 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     const entity = graphics.entities[ent];
     const texture = graphics.textures[tex];
     if (entity && texture) {
-          entity.traverse((child: THREE.Object3D) => {
-            if ((child as THREE.Mesh).isMesh) {
-              graphics.ensureUniqueMaterial(child);
-              const mat = (child as THREE.Mesh).material as any;
-              if (Array.isArray(mat)) return;
-              mat.map = texture.texture;
-              mat.needsUpdate = true;
+      entity.traverse((child: THREE.Object3D) => {
+        if ((child as THREE.Mesh).isMesh) {
+          graphics.ensureUniqueMaterial(child);
+          const mat = (child as THREE.Mesh).material as any;
+          if (Array.isArray(mat)) return;
+
+          // Simple multi-texturing mapping for Three.js Standard/Basic materials
+          // Index 0 -> map (Diffuse)
+          // Index 1 -> lightMap (if blend=2) or bumpMap (if blend=4)
+          if (index === 0) {
+            mat.map = texture.texture;
+          } else if (index === 1) {
+            if (texture.blend === 2 || texture.blend === 5) {
+              // Multiply / Lightmap
+              mat.lightMap = texture.texture;
+              mat.lightMapIntensity = 1.0;
+              // Ensure uv2 exists for lightmap
+              const geom = (child as THREE.Mesh).geometry;
+              if (geom && !geom.attributes.uv2 && geom.attributes.uv) {
+                geom.setAttribute('uv2', geom.attributes.uv);
+              }
+            } else if (texture.blend === 4) {
+              // Dot3 -> Bump/Normal
+              mat.bumpMap = texture.texture;
+              mat.bumpScale = 1.0; // Default intensity
+            } else {
+              // Fallback: overwrite map? Or ignore?
+              // For safety in this demo, ignore other modes or map to map
+              // mat.map = texture.texture; 
             }
-          });
+          }
+
+          mat.needsUpdate = true;
+        }
+      });
     }
     graphics.engineCall(
       ent,
@@ -1083,8 +1161,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             const hook = (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR;
             if (typeof hook === "function") {
               hook(
-                `[LoadMesh] Failed to load ${rawPath}: ${
-                  (e as any)?.message ? String((e as any).message) : String(e)
+                `[LoadMesh] Failed to load ${rawPath}: ${(e as any)?.message ? String((e as any).message) : String(e)
                 }`,
               );
             }
@@ -1224,7 +1301,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             if (mode === 2 || mode === 3) mat.transparent = true;
           }
           if (typeof mat.needsUpdate === "boolean") mat.needsUpdate = true;
-        } catch {}
+        } catch { }
       });
     });
   };
@@ -1367,5 +1444,244 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     const dz = dstPos.z - srcPos.z;
 
     return Math.atan2(dx, dz) * 180 / Math.PI;
+  };
+
+  // --- Camera Fog Aliases ---
+  // Blitz3D has both global Fog* and per-CameraFog*.
+  // For now, map CameraFog* to global scene fog as we typically use one camera.
+  imports.env.CameraFogMode = (cam: number, mode: number) => {
+    imports.env.FogMode(mode);
+  };
+  imports.env.CameraFogColor = (cam: number, r: number, g: number, b: number) => {
+    imports.env.FogColor(r, g, b);
+  };
+  imports.env.CameraFogRange = (cam: number, near: number, far: number) => {
+    imports.env.FogRange(near, far);
+  };
+  imports.env.CameraFogDensity = (cam: number, density: number) => {
+    imports.env.CameraFogDensity = (cam: number, density: number) => {
+      imports.env.FogDensity(density);
+    };
+
+    // --- Brush System ---
+    imports.env.CreateBrush = (r: number, g: number, b: number) => {
+      const id = graphics.nextTextureId++; // Brushes share ID space? Or separate? 
+      // Types says brushes:Record<number, Blitz3DBrush>
+      // but in code usage often resources share ID space or have separate.
+      // Let's use a separate ID counter for brushes or just nextTextureId if simplest,
+      // but types says brushes uses number. Let's assume unique ID needed.
+      // graphics.nextEntityId? No. Let's introduce nextBrushId if not exists 
+      // or just allow nextTextureId (if they don't collision).
+      // Actually types says brushes: Record<number, Blitz3DBrush>.
+      // Let's rely on a new counter if helpful, but types doesn't have nextBrushId.
+      // reusing nextTextureId might be confusing but safe if separate maps.
+      // Let's assume separate maps. I'll use nextTextureId for now as "Resource ID".
+      // Wait, types.ts has nextImageId, nextTextureId, nextEntityId.
+      // I should add nextBrushId to types.ts or just overload one?
+      // Let's use nextTextureId for now as a "General Resource ID" or add a local one?
+      // Local variable closure is fine.
+      // Wait, graphics interface needs to persist it?
+      // I'll add nextBrushId to graphics instance (monkey patch) or just use Date.now() + random?
+      // Blitz3D expects small sequential ints.
+      // Let's use a local counter in this scope for now if simpler, or patch graphics.
+      // I'll use graphics.nextTextureId for uniqueness across resources if that's safer,
+      // or just (graphics as any).nextBrushId = (graphics as any).nextBrushId || 1.
+      const brushId = ((graphics as any).nextBrushId = ((graphics as any).nextBrushId || 1) + 1);
+
+      graphics.brushes[brushId] = {
+        color: [r, g, b, 1.0],
+        alpha: 1.0,
+        shininess: 0.0,
+        blendMode: 1, // Normal
+        fxMode: 0,
+        textures: []
+      };
+      return brushId;
+    };
+
+    imports.env.LoadBrush = (pathPtr: number, flags: number) => {
+      // LoadTexture + CreateBrush + BrushTexture
+      const path = graphics.core.readString(pathPtr);
+      const texId = imports.env.LoadTexture(pathPtr, flags);
+      const brushId = imports.env.CreateBrush(255, 255, 255);
+      if (texId) imports.env.BrushTexture(brushId, texId, 0, 0);
+      return brushId;
+    };
+
+    imports.env.FreeBrush = (brushId: number) => {
+      delete graphics.brushes[brushId];
+    };
+
+    imports.env.BrushColor = (brushId: number, r: number, g: number, b: number) => {
+      const brush = graphics.brushes[brushId];
+      if (brush) {
+        brush.color[0] = r;
+        brush.color[1] = g;
+        brush.color[2] = b;
+      }
+    };
+
+    imports.env.BrushAlpha = (brushId: number, a: number) => {
+      const brush = graphics.brushes[brushId];
+      if (brush) brush.alpha = a;
+    };
+
+    imports.env.BrushShininess = (brushId: number, s: number) => {
+      const brush = graphics.brushes[brushId];
+      if (brush) brush.shininess = s;
+    };
+
+    imports.env.BrushBlend = (brushId: number, blend: number) => {
+      const brush = graphics.brushes[brushId];
+      if (brush) brush.blendMode = blend;
+    };
+
+    imports.env.BrushFX = (brushId: number, fx: number) => {
+      const brush = graphics.brushes[brushId];
+      if (brush) brush.fxMode = fx;
+    };
+
+    imports.env.BrushTexture = (brushId: number, texId: number, frame: number, index: number) => {
+      const brush = graphics.brushes[brushId];
+      const tex = graphics.textures[texId];
+      if (brush && tex) {
+        brush.textures[index || 0] = tex;
+      }
+    };
+  };
+
+  // --- Paint System (Stubbed/Partial) ---
+  imports.env.PaintEntity = (ent: number, brushId: number) => {
+    // TODO: Apply brush props to all materials of entity
+    const brush = graphics.brushes[brushId];
+    if (brush && graphics.entities[ent]) {
+      // Basic implementation: direct helpers call 
+      // NOTE: we can call imports.env directly since we are inside setup3D
+      imports.env.EntityColor(ent, brush.color[0], brush.color[1], brush.color[2]);
+      imports.env.EntityAlpha(ent, brush.alpha);
+      imports.env.EntityFX(ent, brush.fxMode);
+      imports.env.EntityBlend(ent, brush.blendMode);
+
+      if (brush.textures[0]) {
+        // We need reverse lookup for texture ID to call EntityTexture? 
+        // Or just traverse and set directly?
+        // Traversing directly is safer and faster here.
+        const tex = brush.textures[0];
+        if (tex) {
+          const entity = graphics.entities[ent];
+          if (entity) {
+            const apply = (obj: any) => {
+              if (obj.isMesh) {
+                graphics.ensureUniqueMaterial(obj);
+                const mat = obj.material;
+                if (mat && !Array.isArray(mat)) {
+                  mat.map = tex.texture;
+                  mat.needsUpdate = true;
+                }
+              }
+            };
+            entity.traverse(apply);
+          }
+        }
+      }
+    }
+  };
+  imports.env.PaintMesh = imports.env.PaintEntity;
+  imports.env.PaintSurface = (surf: number, brushId: number) => {
+    // Surface handle is usually mesh handle if single surface
+    // Stub
+  };
+
+  // --- Geometry / Surface (Stubbed) ---
+  imports.env.CountSurfaces = (meshId: number) => 1; // Assume 1
+  imports.env.GetSurface = (meshId: number, index: number) => meshId; // Return mesh as surface
+
+  imports.env.VertexColor = (surf: number, vert: number, r: number, g: number, b: number, a: number) => {
+    // surf is treated as entity/mesh ID for now
+    const entity = graphics.entities[surf] as any;
+    if (entity && entity.geometry) {
+      const geom = entity.geometry as THREE.BufferGeometry;
+      const color = geom.attributes.color;
+      if (color) {
+        color.setXYZW(vert, (r | 0) / 255, (g | 0) / 255, (b | 0) / 255, a);
+        color.needsUpdate = true;
+      } else {
+        // Create color attribute? Maybe later. 
+        // Three.js doesn't easily allow adding attrs after creation unless init with them
+        // For now, assume geometry has colors if being painted
+        // Or lazily add?
+        // console.warn("VertexColor: no color attribute on geometry");
+      }
+    }
+  };
+
+  imports.env.VertexTexCoords = (surf: number, vert: number, u: number, v: number, set: number) => {
+    const entity = graphics.entities[surf] as any;
+    if (entity && entity.geometry) {
+      const geom = entity.geometry as THREE.BufferGeometry;
+      // set 0 = uv, set 1 = uv2
+      const attrName = (set === 1) ? 'uv2' : 'uv';
+      const attr = geom.attributes[attrName];
+      if (attr) {
+        attr.setXY(vert, u, v);
+        attr.needsUpdate = true;
+      } else {
+        // Lazy creation of uv2 if needed (for lightmaps)
+        if (set === 1 && geom.attributes.uv && !geom.attributes.uv2) {
+          geom.setAttribute('uv2', geom.attributes.uv.clone());
+          const newAttr = geom.attributes.uv2;
+          newAttr.setXY(vert, u, v);
+          newAttr.needsUpdate = true;
+        }
+      }
+    }
+  };
+  imports.env.UpdateNormals = (meshId: number) => {
+    const ent = graphics.entities[meshId] as any;
+    if (ent && ent.geometry) {
+      ent.geometry.computeVertexNormals();
+    }
+  };
+
+  // --- Entity Utils ---
+  imports.env.EntityShininess = (ent: number, s: number) => {
+    const entity = graphics.entities[ent];
+    if (entity) {
+      applyToRenderable(entity, (obj) => {
+        applyMaterial(obj, (mat) => {
+          // Map shininess 0..1 to roughness 1..0 or metalness?
+          // Blitz3D Shininess is specular power/intensity.
+          // For MeshStandardMaterial:
+          // roughness = 1.0 - shininess
+          // metalness? Typically 0 for non-metallic.
+          if (typeof mat.roughness === 'number') {
+            mat.roughness = 1.0 - Math.min(1.0, Math.max(0.0, s));
+            mat.needsUpdate = true;
+          } else if (typeof (mat as any).shininess === 'number') {
+            // Phong/Lambert
+            (mat as any).shininess = s * 100; // arbitrary scale
+            mat.needsUpdate = true;
+          }
+        });
+      });
+    }
+  };
+  imports.env.TranslateEntity = (ent: number, x: number, y: number, z: number) => {
+    imports.env.MoveEntity(ent, x, y, z);
+  };
+
+  imports.env.CameraProjMode = (cam: number, mode: number) => {
+    // 1=Persp, 2=Ortho
+    // Changing type requires replacing the Camera object, which breaks references.
+    // However, if we only support one main camera, we can swap it in graphics.camera,
+    // but the entity ID `cam` points to the old object.
+    // Better strategy: The camera entity should contain BOTH cameras and switch active one?
+    // Or just update the existing camera if possible (Three.js cameras are distinct classes).
+    // For now, if mode=2 (Ortho), warn or try to hack.
+    // Real implementation would require a container object for the "Camera Entity" that holds the actual ThreeJS camera.
+    // Given the scope, I will log a warning for Ortho mode as it's complex to hot-swap.
+    if (mode === 2) {
+      console.warn("CameraProjMode: Orthographic projection not fully supported yet.");
+    }
   };
 }

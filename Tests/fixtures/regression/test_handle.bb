@@ -13,6 +13,6 @@ Function Main()
     Dim tmp.Template(10)
     Local i% = 0
     
-    tmp[i] = New Template
-    If tmp[i] <> Null Then FreeTemplate(Handle(tmp[i]))
+    tmp(i) = New Template
+    If tmp(i) <> Null Then FreeTemplate(Handle(tmp(i)))
 End Function

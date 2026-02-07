@@ -5,6 +5,7 @@ export class InputManager {
     graphics: Blitz3DGraphics;
     _inputInstalled: boolean = false;
     _inputHandlers: InputHandlers | null = null;
+    _resumeAudioHandler: (() => void) | null = null;
 
     keysDown: Record<number, boolean> = {};
     keysHit: Record<number, number> = {};
@@ -196,13 +197,16 @@ export class InputManager {
         }
 
         // Resume Audio Context on interaction
-        const resumeAudio = () => {
+        this._resumeAudioHandler = () => {
             this.graphics.audioSystem?.resume?.();
-            window.removeEventListener("mousedown", resumeAudio);
-            window.removeEventListener("keydown", resumeAudio);
+            if (this._resumeAudioHandler) {
+                window.removeEventListener("mousedown", this._resumeAudioHandler);
+                window.removeEventListener("keydown", this._resumeAudioHandler);
+                this._resumeAudioHandler = null;
+            }
         };
-        window.addEventListener("mousedown", resumeAudio);
-        window.addEventListener("keydown", resumeAudio);
+        window.addEventListener("mousedown", this._resumeAudioHandler);
+        window.addEventListener("keydown", this._resumeAudioHandler);
 
         this._inputInstalled = true;
     }
@@ -223,7 +227,17 @@ export class InputManager {
             window.removeEventListener("mouseup", this._inputHandlers.mouseup);
         }
 
+        if (this._resumeAudioHandler) {
+            window.removeEventListener("mousedown", this._resumeAudioHandler);
+            window.removeEventListener("keydown", this._resumeAudioHandler);
+            this._resumeAudioHandler = null;
+        }
+
         this._inputInstalled = false;
         this._inputHandlers = null;
+    }
+
+    dispose() {
+        this.removeInputListeners();
     }
 }

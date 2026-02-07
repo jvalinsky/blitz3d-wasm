@@ -53,6 +53,10 @@ public final class ExpressionGeneration {
             if let global = context.variableManagement.globalInfo(for: id.name) {
                 return ([.globalGet(global.index)], global.type)
             }
+            // Check if it's a constant
+            if let constValue = context.constantValue(id.name) {
+                return ([.i32Const(Int32(constValue))], .i32)
+            }
             // Auto-declare implicit variable as global (Blitz3D behavior)
             CompilerLogger.debug("DEBUG_COMPILER: Auto-declaring implicit variable '\(id.name)' as global (read)")
             

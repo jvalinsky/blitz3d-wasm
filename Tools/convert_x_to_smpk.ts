@@ -8,6 +8,7 @@ import { resolveTextureName, buildCaseInsensitiveMap } from "./texture_utils.ts"
 type Args = {
   input: string;
   output: string;
+  textureFormat?: string;
 };
 
 const parseArgs = (): Args => {
@@ -16,7 +17,11 @@ const parseArgs = (): Args => {
   const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
   const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.x$/i, ".smpk");
   if (!output) throw new Error("missing -o output");
-  return { input, output };
+
+  const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
+  const textureFormat = fmtIdx >= 0 ? Deno.args[fmtIdx + 1] : undefined;
+
+  return { input, output, textureFormat };
 };
 
 const quatFromRowMajorMat4 = (m: Float32Array): [number, number, number, number] => {
@@ -181,7 +186,7 @@ const main = async () => {
     const m = mesh.materials[i];
     materials.push({
       name: m.name ?? `mat${i}`,
-      baseColorTexture: await resolveTextureName(inputDir, lowerNameToActual, m.texture),
+      baseColorTexture: await resolveTextureName(inputDir, lowerNameToActual, m.texture, args.textureFormat),
       alphaMode: (m.diffuse[3] ?? 1) < 1 ? "BLEND" : "OPAQUE",
     });
   }

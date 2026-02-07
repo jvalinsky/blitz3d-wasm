@@ -13,7 +13,11 @@ const parseArgs = (): Args => {
   const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
   const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.rmesh$/i, ".smpk");
   if (!output) throw new Error("missing -o output");
-  return { input, output };
+
+  const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
+  const textureFormat = fmtIdx >= 0 ? Deno.args[fmtIdx + 1] : undefined;
+
+  return { input, output, textureFormat };
 };
 
 const computeNormals = (positions: Float32Array, indices: Uint32Array): Float32Array => {
@@ -134,8 +138,8 @@ const main = async () => {
     const idxAcc = push(`INDICES_s${s}`, surf.indices, "u32", "SCALAR", surf.indices.length);
 
     // Materials: RMESH slot0 is LIGHTMAP, slot1 is DIFFUSE (SCPCB actual convention)
-    const tex0 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[0].name);
-    const tex1 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[1].name);
+    const tex0 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[0].name, args.textureFormat);
+    const tex1 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[1].name, args.textureFormat);
     const alphaMode = surf.textures[0].kind === 3 ? "BLEND" : "OPAQUE";
     const matIdx = materials.length;
     materials.push({

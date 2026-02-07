@@ -75,5 +75,34 @@ export function setupCore(graphics: Blitz3DGraphicsInterface, imports: any) {
         graphics.core.canvas ? graphics.core.canvas.height : 600;
     imports.env.WindowWidth = () => window.innerWidth;
     imports.env.WindowHeight = () => window.innerHeight;
-    imports.env.VWait = (n: number) => { }; // No-op
+    imports.env.VWait = (n: number) => {
+        // VWait is a no-op in the web runtime as we can't block the main thread.
+        // In a worker, we could Atomics.wait, but for now we just acknowledge it.
+        if (n > 1) {
+            // console.warn(`VWait(${n}) ignored (non-blocking runtime)`);
+        }
+    };
+    imports.env.Flip = (sync: number) => {
+        // Perform the actual render
+        if (graphics.renderer && graphics.scene && graphics.camera) {
+            graphics.renderer.render(graphics.scene, graphics.camera);
+        }
+
+        // Sampling log to verify it's running but not spam
+        if (Math.random() < 0.005) console.log("Flip called (sampled)");
+    };
+
+    // Math Utils
+    if (!imports.blitz3d) imports.blitz3d = {};
+    imports.blitz3d.AbsInt = (n: number) => Math.abs(n | 0);
+    imports.blitz3d.MinInt = (a: number, b: number) => Math.min(a | 0, b | 0);
+    imports.blitz3d.MaxInt = (a: number, b: number) => Math.max(a | 0, b | 0);
+
+    // Asset Stubs (not implemented yet)
+    imports.env.LoadAsset = (pathPtr: number) => {
+        console.warn("LoadAsset stub called");
+        return 0;
+    };
+    imports.env.GetAssetData = (asset: number) => 0;
+    imports.env.GetAssetSize = (asset: number) => 0;
 }

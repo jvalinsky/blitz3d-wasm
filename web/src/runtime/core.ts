@@ -7,6 +7,12 @@
  */
 import JSZip from "jszip";
 import { EntityTableView } from "../shared/entity_table.ts";
+import { registerWin32Stubs } from "./win32_stubs.ts";
+import { BlitzINI } from "./ini.ts";
+import { BlitzParticles } from "./particles.ts";
+import { BlitzZipApi } from "./zip.ts";
+import { BlitzLoopHandler } from "./loop_handler.ts";
+import { createVideoWasmExports, getVideoRuntime } from "./video.ts";
 
 /**
  * Shared state for a single Blitz3D runtime instance.
@@ -258,6 +264,17 @@ export class Blitz3DCore {
     // can call existing import-backed implementations (audio, etc.) without duplicating logic.
     this.imports = imports;
 
+    // --- Video (BlitzMovie) ---
+    const videoExports = createVideoWasmExports(getVideoRuntime(), (ptr) => this.readString(ptr));
+    Object.assign(imports.env, videoExports);
+
+    // Wire DrawMovie to VideoRuntime
+    imports.env.DrawMovie = (handle: number, x: number, y: number, w: number, h: number) => {
+      const vr = getVideoRuntime();
+      const ctx = this.ctx2d;
+      if (ctx) vr.drawToCanvas(handle, ctx, x, y, w, h);
+    };
+
     // Math utilities
     imports.env.WrapAngle = (angle: number) => {
       // Normalize angle to -180 to 180
@@ -324,6 +341,14 @@ export class Blitz3DCore {
       else if (prop === "appdir") result = "/";
       else return 0; // Better safe than empty string pointer if not matched
 
+      if (this.allocString) return this.allocString(result);
+      return 0;
+    };
+
+    imports.env.CommandLine = () => {
+      // Return command line args joined by space
+      // For web, we could return query params, but empty is safe default
+      const result = "";
       if (this.allocString) return this.allocString(result);
       return 0;
     };
@@ -438,6 +463,57 @@ export class Blitz3DCore {
       console.log(`[Blitz3D] String: ${str}`);
       return str.length;
     };
+
+    // --- Batch 2 Core Stubs ---
+    // Type conversions
+    if (!imports.blitz3d) imports.blitz3d = {};
+    imports.blitz3d.Int = (n: number) => n | 0;
+    imports.blitz3d.Float = (n: number) => n;
+    imports.blitz3d.String = (n: number) => {
+      if (this.allocString) return this.allocString(String(n));
+      return 0;
+    };
+    imports.blitz3d.ModFloat = (a: number, b: number) => a % b;
+
+    // String Management
+    imports.blitz3d.RSet = (strPtr: number, width: number) => {
+      const s = this.readString(strPtr);
+      const res = s.padStart(width, " ");
+      return this.allocString ? this.allocString(res) : 0;
+    };
+    imports.blitz3d.StoreString = (addr: number, strPtr: number) => {
+      // Manual memory management for string containers not fully supported in JS runtime
+      // but we stub it to prevent crashes.
+    };
+    imports.blitz3d.FreeString = (strPtr: number) => {
+      // JS runtime uses GC, but we can treat this as a no-op
+    };
+
+    // File System Stubs
+    imports.blitz3d.ReadDir = (pathPtr: number) => 1; // Basic valid handle
+    imports.blitz3d.MoreFiles = (dir: number) => 0;   // Immediate EOF
+    imports.blitz3d.NextFile = (dir: number) => {
+      return this.allocString ? this.allocString("") : 0;
+    };
+
+    // System/Graphics Drivers (Stubbed for Web)
+    imports.blitz3d.CountGfxDrivers = () => 1;
+    imports.blitz3d.GfxDriverName = (idx: number) => {
+      return this.allocString ? this.allocString(idx === 1 ? "WebGL" : "None") : 0;
+    };
+    imports.blitz3d.GlobalMemoryStatus = () => 0; // Unknown/Unlimited
+    imports.blitz3d.ActiveTextures = () => 0;
+
+    // API/OS Stubs
+    imports.blitz3d.API_GetFocus = () => document.hasFocus() ? 1 : 0;
+    imports.blitz3d.API_GetModuleFilename = (mod: number) => {
+      return this.allocString ? this.allocString("scpcb.wasm") : 0;
+    };
+    imports.blitz3d.ErrorLog = (msgPtr: number) => {
+      const msg = this.readString(msgPtr);
+      console.error(`[ErrorLog] ${msg}`);
+    };
+
 
     // SCPCB helpers (safe no-ops / basic stubs)
     imports.env.UpdateSoundOrigin = (..._args: any[]) => { };
@@ -1068,11 +1144,78 @@ export class Blitz3DCore {
       return view.getUint16(offset, true);
     };
 
-    imports.env.PokeShort = (id, offset, val) => {
+    imports.env.PokeShort = (id: number, offset: number, val: number) => {
       const bank = this.banks.get(id);
       if (!bank) return;
       const view = new DataView(bank.buffer);
       view.setUint16(offset, val, true);
+    };
+
+    // PeekString - Read null-terminated string from bank
+    imports.env.PeekString = (id: number, offset: number): number => {
+      const bank = this.banks.get(id);
+      if (!bank) return this.allocString?.("") ?? 0;
+
+      let end = offset;
+      while (end < bank.length && bank[end] !== 0) {
+        end++;
+      }
+
+      const bytes = bank.slice(offset, end);
+      const str = new TextDecoder("utf-8").decode(bytes);
+      return this.allocString?.(str) ?? 0;
+    };
+
+    // PokeString - Write null-terminated string to bank
+    imports.env.PokeString = (id: number, offset: number, strPtr: number) => {
+      const bank = this.banks.get(id);
+      if (!bank) return;
+
+      const str = this.readString(strPtr);
+      const bytes = new TextEncoder().encode(str);
+
+      // Copy string bytes
+      for (let i = 0; i < bytes.length && offset + i < bank.length; i++) {
+        bank[offset + i] = bytes[i];
+      }
+      // Null terminator
+      if (offset + bytes.length < bank.length) {
+        bank[offset + bytes.length] = 0;
+      }
+    };
+
+    // ReadBytes - Read from file handle into bank
+    imports.env.ReadBytes = (bankId: number, fileHandle: number, offset: number, count: number): number => {
+      const bank = this.banks.get(bankId);
+      if (!bank) return 0;
+
+      const fileIO = this.graphics?.fileIO ?? (this as any).fileIO;
+      if (!fileIO) return 0;
+
+      let bytesRead = 0;
+      for (let i = 0; i < count && offset + i < bank.length; i++) {
+        const byte = fileIO.readByte?.(fileHandle);
+        if (byte === undefined || byte < 0) break;
+        bank[offset + i] = byte;
+        bytesRead++;
+      }
+      return bytesRead;
+    };
+
+    // WriteBytes - Write from bank to file handle
+    imports.env.WriteBytes = (bankId: number, fileHandle: number, offset: number, count: number): number => {
+      const bank = this.banks.get(bankId);
+      if (!bank) return 0;
+
+      const fileIO = this.graphics?.fileIO ?? (this as any).fileIO;
+      if (!fileIO) return 0;
+
+      let bytesWritten = 0;
+      for (let i = 0; i < count && offset + i < bank.length; i++) {
+        fileIO.writeByte?.(fileHandle, bank[offset + i]);
+        bytesWritten++;
+      }
+      return bytesWritten;
     };
 
     // Audio System - FMOD-style bindings (delegates to Blitz3DAudio)
@@ -1267,122 +1410,20 @@ export class Blitz3DCore {
       return 0;
     };
 
-    // Zip/Archive support for assets.zip
-    this.zipArchives = new Map();
-    this.nextZipHandle = 1;
+    // Zip/Archive support via BlitzZipApi
+    const zipApi = new BlitzZipApi(
+      {
+        readString: (ptr) => this.readString(ptr),
+        memory: this.memory as any, // Will be populated by the time these run
+        banks: this.banks,
+        nextBankId: this.nextBankId,
+      },
+      this.fileIO || {}
+    );
+    zipApi.registerImports(imports);
 
-    this.loadZipArchive = async (path) => {
-      try {
-        // Try virtual file system first
-        if (this.fileSystem && this.fileSystem.has(path)) {
-          const file = this.fileSystem.get(path);
-          const zip = await JSZip.loadAsync(file.data);
-          const fileMap = new Map();
-
-          zip.forEach((relativePath, zipEntry) => {
-            if (!zipEntry.dir) {
-              fileMap.set(relativePath, zipEntry);
-            }
-          });
-
-          this.zipArchives.set(path, fileMap);
-          return fileMap.size;
-        }
-
-        // Try to fetch
-        const response = await fetch(path);
-        if (!response.ok) throw new Error("HTTP " + response.status);
-        const arrayBuffer = await response.arrayBuffer();
-        const zip = await JSZip.loadAsync(arrayBuffer);
-        const fileMap = new Map();
-
-        zip.forEach((relativePath, zipEntry) => {
-          if (!zipEntry.dir) {
-            fileMap.set(relativePath, zipEntry);
-          }
-        });
-
-        this.zipArchives.set(path, fileMap);
-        console.log("Loaded ZIP: " + path + " (" + fileMap.size + " files)");
-        return fileMap.size;
-      } catch (e) {
-        console.error("Failed to load ZIP " + path + ":", e);
-        return 0;
-      }
-    };
-
-    imports.env.ZlibWapi_Open = async (pathPtr) => {
-      const path = this.readString(pathPtr);
-      const handle = this.nextZipHandle++;
-
-      const fileCount = await this.loadZipArchive(path);
-      if (fileCount > 0) {
-        this.zipArchives.set(handle, {
-          path: path,
-          files: this.zipArchives.get(path),
-          isHandle: true,
-        });
-        // Transfer ownership from path-based to handle-based
-        this.zipArchives.delete(path);
-        return handle;
-      }
-      return 0;
-    };
-
-    imports.env.ZlibWapi_Close = (zip) => {
-      if (this.zipArchives.has(zip)) {
-        this.zipArchives.delete(zip);
-      }
-    };
-
-    imports.env.ZlibWapi_GetFileCount = (zip) => {
-      const archive = this.zipArchives.get(zip);
-      if (archive && archive.files) {
-        return archive.files.size;
-      }
-      return 0;
-    };
-
-    imports.env.ZlibWapi_GetFileName = (zip, index) => {
-      const archive = this.zipArchives.get(zip);
-      if (archive && archive.files) {
-        const entries = Array.from(archive.files.keys());
-        if (index >= 0 && index < entries.length) {
-          const filename = entries[index];
-          if (this.allocString) {
-            return this.allocString(filename as string);
-          }
-        }
-      }
-      return 0;
-    };
-
-    imports.env.ZlibWapi_ExtractFile = async (zip, index, destPtr) => {
-      const archive = this.zipArchives.get(zip);
-      if (archive && archive.files) {
-        const entries = Array.from(archive.files.keys());
-        if (index >= 0 && index < entries.length) {
-          const filename = entries[index];
-          const zipEntry = archive.files.get(filename);
-
-          if (zipEntry) {
-            try {
-              const data = await zipEntry.async("uint8array");
-              const destPath = this.readString(destPtr);
-
-              // Register in virtual file system
-              this.registerFile(destPath, data);
-
-              console.log("Extracted: " + filename + " -> " + destPath);
-              return 1;
-            } catch (e) {
-              console.error("Failed to extract " + filename + ":", e);
-            }
-          }
-        }
-      }
-      return 0;
-    };
+    // Keep reference
+    this.zipApi = zipApi;
 
     // Networking (TCP) for SCP:CB multiplayer
     this.tcpStreams = new Map();
@@ -1558,17 +1599,7 @@ export class Blitz3DCore {
       return 0;
     };
 
-    // --- ZlibWapi Stubs ---
-    imports.env.ZlibWapi_Open = (pathPtr, mode) => {
-      console.warn("ZlibWapi_Open stub");
-      return 1;
-    };
-    imports.env.ZlibWapi_Close = (handle) => { };
-    imports.env.ZlibWapi_ExtractFile = (handle, entryPtr, destPtr) => {
-      return 1;
-    };
-    imports.env.ZlibWapi_GetFileCount = (handle) => 0;
-    imports.env.ZlibWapi_GetFileName = (handle, index) => 0;
+
 
     // --- OpenAL Stubs ---
     // --- OpenAL Module ---
@@ -1649,52 +1680,16 @@ export class Blitz3DCore {
     imports.blitz3d.PokeFloat = imports.env.PokeFloat;
 
     // --- INI File Support ---
-    imports.env.GetINIInt = (
-      pathPtr: number,
-      sectionPtr: number,
-      keyPtr: number,
-      defaultValue: number,
-    ) => {
-      const path = this.readString(pathPtr);
-      const section = this.readString(sectionPtr);
-      const key = this.readString(keyPtr);
-
-      // Read file from virtual file system
-      let data: Uint8Array | undefined;
-      if (this.fileSystem && this.fileSystem.has(path)) {
-        data = this.fileSystem.get(path).data;
-      }
-      if (!data) return defaultValue;
-
-      // Parse simple INI format
-      try {
-        const text = new TextDecoder().decode(data);
-        const lines = text.split(/\r?\n/);
-        let inSection = false;
-        const targetSection = section.toLowerCase();
-        const targetKey = key.toLowerCase();
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-            const secName = trimmed.slice(1, -1).trim().toLowerCase();
-            inSection = secName === targetSection;
-            continue;
-          }
-          if (inSection && trimmed.includes("=")) {
-            const eqIdx = trimmed.indexOf("=");
-            const k = trimmed.slice(0, eqIdx).trim().toLowerCase();
-            const v = trimmed.slice(eqIdx + 1).trim();
-            if (k === targetKey) {
-              const parsed = parseInt(v, 10);
-              return Number.isFinite(parsed) ? parsed : defaultValue;
-            }
-          }
-        }
-      } catch {
-        // Parse error — return default
-      }
-      return defaultValue;
-    };
+    // INI support via BlitzINI
+    const ini = new BlitzINI(
+      {
+        readString: (ptr) => this.readString(ptr),
+        allocString: this.allocString,
+      },
+      this.fileIO || {}
+    );
+    ini.registerImports(imports);
+    this.ini = ini;
 
     // --- CopyMesh ---
     imports.env.CopyMesh = (meshId: number, parent: number) => {
@@ -1711,7 +1706,7 @@ export class Blitz3DCore {
             graphics.ensureUniqueMaterial(child);
           }
         });
-      } catch {}
+      } catch { }
 
       const id = graphics.nextEntityId++;
       graphics.entities[id] = clone;
@@ -1733,6 +1728,18 @@ export class Blitz3DCore {
       }
       return 256 * 1024 * 1024; // 256MB fallback
     };
+
+    // --- Windows API Stubs (for SCPCB compatibility) ---
+    // Provides no-op/web-equivalent implementations of user32.dll functions
+    registerWin32Stubs(imports, {
+      canvas: this.canvas,
+      readString: (ptr: number) => this.readString(ptr),
+    });
+
+    // --- Blocking Loop Handler (for SCPCB compatibility) ---
+    // Provides synthetic input injection to bypass blocking WaitKey/GetKey loops
+    const loopHandler = new BlitzLoopHandler({ graphics: this.graphics as any });
+    loopHandler.registerImports(imports);
   }
 
   shutdownAudio() {

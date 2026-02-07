@@ -53,4 +53,33 @@ export function setupWasmAudio(graphics: Blitz3DGraphicsInterface, imports: any)
     imports.env.js_ChannelPan = (chanId: number, pan: number) => graphics.audioSystem?.setChannelPan?.(chanId, pan);
 
     imports.env.js_ChannelPlaying = (chanId: number) => graphics.audioSystem?.isChannelPlaying?.(chanId) ? 1 : 0;
+
+    // Legacy Aliases
+    imports.env.LoadSound = (pathPtr: number, flags: number) => imports.env.js_LoadSound(pathPtr, flags);
+    imports.env.FreeSound = (soundId: number) => imports.env.js_FreeSound(soundId);
+    imports.env.PlaySound = (soundId: number) => imports.env.js_PlaySound(soundId, 1, 0, 1, 0); // Default args for basic PlaySound
+    imports.env.LoopSound = (soundId: number) => {
+        // LoopSound(sound) sets the loop flag for subsequent plays? Or modifies the sound?
+        // Blitz3D LoopSound just sets a flag on the sound resource.
+        graphics.audioSystem?.loopSound?.(soundId, true);
+    };
+    imports.env.SoundPitch = (soundId: number, pitch: number) => graphics.audioSystem?.setSoundPitch?.(soundId, pitch);
+    imports.env.SoundVolume = (soundId: number, vol: number) => graphics.audioSystem?.setSoundVolume?.(soundId, vol);
+    imports.env.SoundPan = (soundId: number, pan: number) => graphics.audioSystem?.setSoundPan?.(soundId, pan);
+
+    imports.env.StopChannel = (chanId: number) => imports.env.js_StopChannel(chanId);
+    imports.env.PauseChannel = (chanId: number) => imports.env.js_PauseChannel(chanId);
+    imports.env.ResumeChannel = (chanId: number) => imports.env.js_ResumeChannel(chanId);
+    imports.env.ChannelPitch = (chanId: number, pitch: number) => imports.env.js_ChannelPitch(chanId, pitch);
+    imports.env.ChannelVolume = (chanId: number, vol: number) => imports.env.js_ChannelVolume(chanId, vol);
+    imports.env.ChannelPan = (chanId: number, pan: number) => imports.env.js_ChannelPan(chanId, pan);
+    imports.env.ChannelPlaying = (chanId: number) => imports.env.js_ChannelPlaying(chanId);
+    imports.env.PlayMusic = (pathPtr: number) => {
+        // Stream API
+        if (!graphics.audioSystem) return 0;
+        const path = graphics.core.readString(pathPtr);
+        const streamId = graphics.audioSystem.openStream(path, 1); // 1=loop?
+        return graphics.audioSystem.playStream(streamId, 1, 0, 1, true);
+    };
 }
+

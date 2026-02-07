@@ -1,6 +1,6 @@
 import { installHeadlessEnv } from "./headless.ts";
 import { Blitz3DCore } from "../../web/src/runtime/core.ts";
-import { Blitz3DGraphics } from "../../web/src/runtime/graphics.ts";
+import { Blitz3DGraphics } from "../../web/src/runtime/graphics/index.ts";
 import { Blitz3DFileIO } from "../../web/src/runtime/fileio.ts";
 
 type LeakcheckOptions = {

@@ -140,6 +140,7 @@ public struct Preprocessor {
         // Main.bb can be very large (hundreds of thousands of lines once includes are expanded).
         let (lines, origins) = try processFileWithMapLines(path: url.path, onIncludeFile: onIncludeFile)
         let src = lines.isEmpty ? "" : (lines.joined(separator: "\n") + "\n")
+
         var map: [Int: (file: String, line: Int)] = [:]
         map.reserveCapacity(origins.count)
         for (i, origin) in origins.enumerated() {

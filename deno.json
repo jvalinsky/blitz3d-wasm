@@ -1,6 +1,8 @@
 {
   "imports": {
     "jszip": "npm:jszip@3.10.1",
+    "pako": "npm:pako@2.1.0",
+    "pako-es": "npm:pako@2.1.0",
     "three": "npm:three@0.182.0",
     "std/": "https://deno.land/std@0.224.0/"
   },

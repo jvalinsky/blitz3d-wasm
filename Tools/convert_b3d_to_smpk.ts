@@ -11,6 +11,7 @@ type Args = {
   input: string;
   output: string;
   clipName: string;
+  textureFormat?: string;
 };
 
 const parseArgs = (): Args => {
@@ -21,7 +22,11 @@ const parseArgs = (): Args => {
   if (!output) throw new Error("missing -o output");
   const clipIdx = Deno.args.findIndex((a) => a === "--clip");
   const clipName = clipIdx >= 0 ? (Deno.args[clipIdx + 1] ?? "default") : "default";
-  return { input, output, clipName };
+
+  const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
+  const textureFormat = fmtIdx >= 0 ? Deno.args[fmtIdx + 1] : undefined;
+
+  return { input, output, clipName, textureFormat };
 };
 
 const quatWxyzToXyzw = (w: number, x: number, y: number, z: number): [number, number, number, number] => [x, y, z, w];
@@ -340,6 +345,11 @@ const main = async () => {
       const lastSlash = Math.max(texName.lastIndexOf('/'), texName.lastIndexOf('\\'));
       if (lastSlash >= 0) {
         texName = texName.substring(lastSlash + 1);
+      }
+
+      // Apply format override if available
+      if (args.textureFormat === "ktx2") {
+        return texName.replace(/\.(bmp|png|jpg|jpeg|tga)$/i, ".ktx2");
       }
       return texName;
     };

@@ -171,7 +171,9 @@ func collectIncludes(from file: String, to files: inout [String], processed: ino
                 let parts = trimmed.split(separator: "\"", maxSplits: 2)
                 if parts.count >= 2 {
                     let includePath = String(parts[1])
-                    let fullIncludePath = (rootDir as NSString).appendingPathComponent(includePath)
+                    // Resolve relative to current file's directory, not original root
+                    let currentFileDir = (file as NSString).deletingLastPathComponent
+                    let fullIncludePath = (currentFileDir as NSString).appendingPathComponent(includePath)
                     try collectIncludes(from: fullIncludePath, to: &files, processed: &processed, rootDir: rootDir, onFile: onFile)
                 }
             }

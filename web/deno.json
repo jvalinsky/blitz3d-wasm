@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "setup": "deno eval --node-modules-dir \"import 'npm:vite@7.3.1'; import 'npm:three@0.182.0'; import 'npm:jszip@3.10.1';\"",
+    "setup": "deno eval --node-modules-dir \"import 'npm:vite@7.3.1'; import 'npm:three@0.182.0'; import 'npm:jszip@3.10.1'; import 'npm:pako@2.1.0';\"",
     "dev": "deno task setup && deno run -A --node-modules-dir npm:vite@7.3.1",
     "build": "deno task setup && deno run -A --node-modules-dir build.ts",
     "preview": "deno task setup && deno run -A --node-modules-dir npm:vite@7.3.1 preview",

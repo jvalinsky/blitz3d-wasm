@@ -3,6 +3,8 @@
  * Handles file reading, virtual file system, and asset bundling.
  */
 
+import { getSaveSystem } from "./save_system.ts";
+
 type AssetManifestEntry = {
   path: string;
   url?: string;
@@ -163,6 +165,40 @@ export class Blitz3DFileIO {
   }
 
   /**
+   * Load saved games from IndexedDB into VFS.
+   * Call this during initialization to restore previous saves.
+   */
+  async loadSavesFromIndexedDB(): Promise<number> {
+    try {
+      const saveSystem = getSaveSystem();
+      await saveSystem.init();
+
+      const saves = await saveSystem.listSaves();
+      let loaded = 0;
+
+      for (const meta of saves) {
+        const data = await saveSystem.loadSave(meta.id);
+        if (data) {
+          // Register save file in VFS at expected path
+          const savePath = `Saves/${meta.id}/save.txt`;
+          this.registerFile(savePath, data);
+          loaded++;
+          console.log(`[FileIO] Restored save from IndexedDB: ${savePath} (${data.byteLength} bytes)`);
+        }
+      }
+
+      if (loaded > 0) {
+        console.log(`[FileIO] Loaded ${loaded} saves from IndexedDB`);
+      }
+
+      return loaded;
+    } catch (e) {
+      console.warn("[FileIO] Failed to load saves from IndexedDB:", e);
+      return 0;
+    }
+  }
+
+  /**
    * Load an asset bundle from a JSON or binary file
    * @param {string} bundlePath - Path to the asset bundle
    */
@@ -312,7 +348,7 @@ export class Blitz3DFileIO {
         if (!entry) return;
         try {
           (globalThis as { __SCPCB_INIT_FILE?: string }).__SCPCB_INIT_FILE = entry.path;
-        } catch {}
+        } catch { }
         await this.fetchAndRegister(entry);
         completed += 1;
         if (options.onProgress) {
@@ -324,7 +360,7 @@ export class Blitz3DFileIO {
             total,
             file: entry.path,
           };
-        } catch {}
+        } catch { }
         // Yield to event loop to keep UI responsive
         await new Promise((r) => setTimeout(r, 0));
       }
@@ -390,9 +426,9 @@ export class Blitz3DFileIO {
       const totalHint = (typeof entry.size === "number" && entry.size > 0)
         ? entry.size
         : (() => {
-            const contentLength = response.headers.get("Content-Length");
-            return contentLength ? Number(contentLength) : null;
-          })();
+          const contentLength = response.headers.get("Content-Length");
+          return contentLength ? Number(contentLength) : null;
+        })();
 
       if ((totalHint ?? 0) > 0 && (totalHint as number) <= 1024 * 1024) {
         try {
@@ -401,7 +437,7 @@ export class Blitz3DFileIO {
             loaded: 0,
             total: totalHint,
           };
-        } catch {}
+        } catch { }
 
         const buffer = new Uint8Array(await response.arrayBuffer());
         try {
@@ -410,7 +446,7 @@ export class Blitz3DFileIO {
             loaded: buffer.byteLength,
             total: totalHint,
           };
-        } catch {}
+        } catch { }
         if (onProgress) onProgress(buffer.byteLength, totalHint, resolvedPath);
         this.registerFile(resolvedPath, buffer);
         await new Promise((r) => setTimeout(r, 0));
@@ -443,7 +479,7 @@ export class Blitz3DFileIO {
               loaded,
               total,
             };
-          } catch {}
+          } catch { }
           const now = performance.now();
           if (loaded - lastYieldLoaded >= 256 * 1024 || now - lastYield >= 16) {
             lastYield = now;
@@ -641,6 +677,17 @@ export class Blitz3DFileIO {
       if (file.mode === "w") {
         const bytes = new Uint8Array(file.out ?? []);
         this.registerFile(file.path, bytes);
+
+        // Persist save files to IndexedDB
+        const saveSystem = getSaveSystem();
+        if (saveSystem.isSavePath(file.path)) {
+          const slotId = saveSystem.getSlotFromPath(file.path);
+          if (slotId) {
+            saveSystem.writeSave(slotId, bytes).catch((e) => {
+              console.error(`[FileIO] Failed to persist save ${slotId}:`, e);
+            });
+          }
+        }
       }
       console.log(`Closed file handle: ${handle} (${file.path})`);
     }
@@ -795,7 +842,7 @@ export class Blitz3DFileIO {
     return view.getFloat32(0, true);
   }
 
-  
+
 
   /**
    * Read a single line from a file (up to `\n` or `\r\n`).
@@ -849,11 +896,11 @@ export class Blitz3DFileIO {
     console.error("Cannot allocate string: allocString not available");
     return 0;
   }
-/**
-   * Read a null-terminated string from a file
-   * @param {number} handle - File handle
-   * @returns {number} Pointer to string in WASM memory (0 on failure)
-   */
+  /**
+     * Read a null-terminated string from a file
+     * @param {number} handle - File handle
+     * @returns {number} Pointer to string in WASM memory (0 on failure)
+     */
   readString(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
@@ -1324,14 +1371,14 @@ export class Blitz3DFileIO {
     const clearCache = options.clearCache ?? true;
     try {
       this.openFiles?.clear?.();
-    } catch {}
+    } catch { }
     try {
       this.pendingLoads?.clear?.();
-    } catch {}
+    } catch { }
     if (clearCache) {
       try {
         this.fileSystem?.clear?.();
-      } catch {}
+      } catch { }
       this.assetBundle = null;
       this.assetManifest = null;
     }

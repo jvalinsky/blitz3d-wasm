@@ -23,6 +23,7 @@ export const resolveTextureName = async (
     dir: string,
     lowerNameToActual: Map<string, string>,
     rawName: string,
+    destinationFormat?: string,
 ): Promise<string> => {
     const raw = (rawName ?? "").split("\0", 1)[0]!.trim();
     const cleaned = raw.replace(/[\u0000-\u001f\u007f]/g, "");
@@ -31,6 +32,12 @@ export const resolveTextureName = async (
     if (!base) return "";
 
     const candidates: string[] = [base];
+
+    if (destinationFormat === "ktx2") {
+        // If KTX2 is requested, it takes precedence.
+        candidates.unshift(base.replace(/\.(bmp|png|jpg|jpeg|tga)$/i, ".ktx2"));
+    }
+
     // SCPCB assets sometimes ship as PNG while formats reference BMP.
     // Also support JPG/TGA -> PNG if we do that in future.
     if (base.toLowerCase().endsWith(".bmp")) {

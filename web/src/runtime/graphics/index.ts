@@ -4,9 +4,11 @@
  * WebGL/Three.js integration for 3D rendering
  */
 import * as THREE from "three";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 import { Blitz3DMesh, Blitz3DSurface } from "../mesh.ts";
 import { decodeSmpk, SMPKLoader } from "../smpk.ts";
 import { Blitz3DAnimation } from "../animation.ts";
+import { BlitzParticles } from "../particles.ts"; // Import Particles
 import { XLoader } from "../xloader.ts";
 import { Blitz3DAudio } from "../audio.ts";
 import { drainCmds } from "../../shared/command_buffer.ts";
@@ -30,6 +32,7 @@ import {
 
 import { InputManager } from "./input.ts";
 import { setupAllImports } from "./setup/index.ts";
+import { FrustumCullingManager } from "../frustum_culling.ts";
 
 /**
  * Blitz3D graphics runtime for the web.
@@ -60,6 +63,7 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     // New native WebGL2 scene manager (Three.js-free)
     nativeManager: SceneManager | null = null;
     inputManager: InputManager | null = null;
+    frustumCulling: FrustumCullingManager | null = null;
 
     // Three.js
     renderer: THREE.WebGLRenderer | null = null;
@@ -70,6 +74,10 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
     animationSystem: AnimationSystem | null = null;
     animMixers: Set<THREE.AnimationMixer> = new Set();
     smpkLoader: SMPKLoader | null = null;
+    ktx2Loader: KTX2Loader | null = null;
+
+    // Particles
+    particles: BlitzParticles | null = null;
 
     // State
     _stopped: boolean = false;
@@ -109,6 +117,8 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         this.currentFont = "sans-serif";
         this.currentFontSize = 16;
         this.animationSystem = new this.Blitz3DAnimation(this as any, core) as unknown as AnimationSystem;
+        this.particles = new BlitzParticles(core); // Initialize Particles
+
         // Ensure input is available for KeyDown/MouseX/etc (interpreter path).
         this.inputManager = new InputManager(this as any);
         // ...
@@ -224,6 +234,15 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         this.scene = new THREE.Scene();
         console.log("THREE.Scene created");
 
+        // Initialize particles with scene
+        if (this.particles) {
+            this.particles.setScene(this.scene);
+        }
+
+        // Initialize frustum culling manager for performance
+        this.frustumCulling = new FrustumCullingManager();
+        console.log("Frustum culling initialized");
+
         const createMockRenderer = () => {
             // Minimal mock renderer for environments without WebGL (e.g. Deno headless tooling).
             this.renderer = {
@@ -239,6 +258,8 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
                 setPixelRatio: () => { },
                 capabilities: { getMaxAnisotropy: () => 1 },
                 domElement: this.core.canvas,
+                dispose: () => { },
+                forceContextLoss: () => { },
             } as any;
         };
 
@@ -313,6 +334,14 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
             }
         }
 
+        // Initialize KTX2 Loader
+        if (this.renderer) {
+            this.ktx2Loader = new KTX2Loader();
+            this.ktx2Loader.setTranscoderPath("assets/basis/");
+            this.ktx2Loader.detectSupport(this.renderer);
+            console.log("KTX2Loader initialized");
+        }
+
         // Expose THREE for debugging
         (window as any).THREE = THREE;
 
@@ -368,6 +397,19 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
 
         if (this.renderer && this.scene && this.camera) {
             this.updateSurfaces();
+
+            // Apply frustum culling for performance
+            if (this.frustumCulling) {
+                // Reset visibility to original state before culling
+                this.frustumCulling.resetVisibility(this.entities);
+                // Update visibility based on frustum
+                this.frustumCulling.updateVisibility(
+                    this.entities,
+                    this.camera,
+                    true // enable culling
+                );
+            }
+
             this.renderer.render(this.scene, this.camera);
             this.audioSystem?.updateListener(this.camera);
         }
@@ -923,6 +965,10 @@ export class Blitz3DGraphics implements Blitz3DGraphicsInterface {
         if (this._rafHandle) {
             cancelAnimationFrame(this._rafHandle);
             this._rafHandle = null;
+        }
+
+        if (this.inputManager) {
+            this.inputManager.dispose();
         }
 
         if (this.renderer) {

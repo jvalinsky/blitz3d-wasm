@@ -63,6 +63,7 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
             loaded: false,
             loading: new Promise<void>((resolve) => {
                 img.onload = () => {
+                    console.log(`[Image] Loaded: ${path} (${img.width}x${img.height})`);
                     graphics.images[id].width = img.width;
                     graphics.images[id].height = img.height;
                     graphics.images[id].loaded = true;
@@ -183,6 +184,49 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
     imports.env.TextureHeight = (texId: number) => {
         const tex = graphics.textures[texId] as any;
         return tex?.height ?? 0;
+    };
+
+    imports.env.TextureBlend = (texId: number, blend: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.type === "texture") {
+            tex.blend = blend;
+        }
+    };
+
+    imports.env.TextureCoords = (texId: number, coords: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.type === "texture") {
+            tex.coords = coords;
+        }
+    };
+
+    imports.env.ScaleTexture = (texId: number, u: number, v: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.type === "texture" && tex.texture) {
+            tex.texture.repeat.set(u, v);
+            // Three.js doesn't wrap by default unless WrapS/WrapT are set.
+            // Blitz3D expects wrapping for tiled textures.
+            if (u !== 1 || v !== 1) {
+                tex.texture.wrapS = THREE.RepeatWrapping;
+                tex.texture.wrapT = THREE.RepeatWrapping;
+                tex.texture.needsUpdate = true;
+            }
+        }
+    };
+
+    imports.env.PositionTexture = (texId: number, u: number, v: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.type === "texture" && tex.texture) {
+            tex.texture.offset.set(u, v);
+        }
+    };
+
+    imports.env.RotateTexture = (texId: number, angle: number) => {
+        const tex = graphics.textures[texId];
+        if (tex && tex.type === "texture" && tex.texture) {
+            tex.texture.center.set(0.5, 0.5);
+            tex.texture.rotation = angle * Math.PI / 180; // Degrees to Radians
+        }
     };
 
     const drawImageTransformed = (ctx: CanvasRenderingContext2D, img: Blitz3DImage, x: number, y: number, drawFn: (dx: number, dy: number) => void) => {
@@ -568,4 +612,33 @@ export function setupImage(graphics: Blitz3DGraphicsInterface, imports: any) {
             ctx.putImageData(imageData, 0, 0);
         }
     };
+
+    // --- Batch 2 Image Stubs ---
+    if (!imports.blitz3d) imports.blitz3d = {};
+
+    imports.blitz3d.LoadAnimImage = (path: number, w: number, h: number, first: number, count: number) => {
+        // Fallback to LoadImage for now (single frame) or 0
+        return imports.env.LoadImage(path);
+    };
+    imports.blitz3d.GrabImage = (img: number, x: number, y: number) => { };
+    imports.blitz3d.TileBlock = (img: number, x: number, y: number, frame: number) => {
+        imports.env.TileImage(img, x, y, frame);
+    };
+
+    imports.blitz3d.TFormImage = (img: number) => 0;
+    imports.blitz3d.TFormFilter = (enabled: number) => { };
+    imports.blitz3d.TextureFilter = (tex: number, flags: number) => { };
+
+    // Collisions (Image-based 2D) - Stubs returning 0 (no collision)
+    imports.blitz3d.ImageRectOverlap = (img: number, x: number, y: number, rx: number, ry: number, rw: number, rh: number) => 0;
+    imports.blitz3d.ImageRectCollide = (img: number, x: number, y: number, rx: number, ry: number, rw: number, rh: number) => 0;
+    imports.blitz3d.RectsOverlap = (x1: number, y1: number, w1: number, h1: number, x2: number, y2: number, w2: number, h2: number) => 0;
+    imports.blitz3d.ImagesOverlap = (img1: number, x1: number, y1: number, img2: number, x2: number, y2: number) => 0;
+    imports.blitz3d.ImagesCollide = (img1: number, x1: number, y1: number, img2: number, x2: number, y2: number) => 0;
+
+    imports.blitz3d.CopyRect = (sx: number, sy: number, w: number, h: number, dx: number, dy: number, srcBuf: number, destBuf: number) => {
+        // Basic stub using CopyPixel loop if needed, or console warning
+        // console.warn("CopyRect stub"); 
+    };
 }
+

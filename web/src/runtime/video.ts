@@ -34,7 +34,7 @@ export class VideoRuntime {
       video.src = path;
       video.style.display = 'none'; // Hidden by default
       video.preload = 'metadata';
-      
+
       // Auto-remove on error
       video.onerror = () => {
         console.error(`[VideoRuntime] Failed to load: ${path}`);
@@ -205,6 +205,20 @@ export class VideoRuntime {
   }
 
   /**
+   * Draw video frame to canvas
+   */
+  drawToCanvas(handle: number, ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+    const movie = this.movies.get(handle);
+    if (!movie || movie.video.paused) return;
+
+    try {
+      ctx.drawImage(movie.video, x, y, w, h);
+    } catch (e) {
+      // ignore rendering errors
+    }
+  }
+
+  /**
    * Cleanup all movies
    */
   cleanup() {
@@ -231,13 +245,12 @@ export function getVideoRuntime(container?: HTMLElement): VideoRuntime {
  * WASM-compatible exports
  * These match the signatures in PlatformStubs.swift
  */
-export function createVideoWasmExports(runtime?: VideoRuntime) {
+export function createVideoWasmExports(runtime: VideoRuntime | undefined, readString: (ptr: number) => string) {
   const vr = runtime || getVideoRuntime();
 
   return {
     BlitzMovie_Open: (pathPtr: number): number => {
-      // TODO: Read string from WASM linear memory at pathPtr
-      const path = "unknown.avi"; // Placeholder
+      const path = readString(pathPtr);
       return vr.openMovie(path);
     },
 

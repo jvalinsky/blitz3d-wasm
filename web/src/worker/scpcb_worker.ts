@@ -1,6 +1,7 @@
 import { normalizePath, openFileCandidates } from "../shared/path_alias.ts";
 import { VideoRuntime } from "../runtime/video.ts";
 import { stubMissingImports } from "../shared/wasm_imports.ts";
+import { initCmdBuf } from "../shared/command_buffer.ts";
 
 type BbdbgFileInfo = { id: number; path: string };
 type BbdbgFunctionInfo = {
@@ -1131,6 +1132,32 @@ const instantiate = async (wasmUrl: string) => {
   stringAlloc = (instance.exports as any).__StringAlloc
     ? ((instance.exports as any).__StringAlloc as any)
     : null;
+
+  // Track B: Allocate Command Buffer if possible
+  if (stringAlloc && memory) {
+    try {
+      const cmdbBytes = 256 * 1024;
+      const cmdbObj = (stringAlloc as Function)(cmdbBytes) | 0;
+      if (cmdbObj) {
+        // StringAlloc returns pointer to payload (after 8 byte header: refCount, len).
+        // But in Blitz3D strings, the payload is at offset 8.
+        // Wait, __StringAlloc(size) returns pointer to the *object start*?
+        // Let's check `allocString` in main.ts.
+        // `const ptr = (instance.exports.__StringAlloc as Function)(str.length);`
+        // `view.setInt32(ptr + 4, str.length, true);`
+        // So ptr is the start of the allocation.
+        // The payload starts at ptr + 8.
+        const base = (cmdbObj + 8) >>> 0;
+        initCmdBuf(memory.buffer, base, cmdbBytes);
+        setExportedGlobal("__CmdBufPtr", base);
+        setExportedGlobal("__CmdBufBytes", cmdbBytes);
+        postLog(`[CMDB] allocated ptr=${base} bytes=${cmdbBytes}`);
+      }
+    } catch (e) {
+      postLog(`[CMDB] allocation failed: ${e}`);
+    }
+  }
+
   // Best-effort: load bbdbg metadata after instantiate (does not affect instantiation).
   await loadBbdbgMetadata(wasmUrl);
   try {

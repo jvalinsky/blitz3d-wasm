@@ -10,6 +10,8 @@ export interface WasmMemoryExports {
     memory: WebAssembly.Memory;
     malloc: (size: number) => number;
     free: (ptr: number) => void;
+    wasm_malloc: (size: number) => number;
+    wasm_free: (ptr: number) => void;
 }
 
 /**
@@ -204,5 +206,12 @@ export interface Blitz3DEngineImports {
         js_ChannelPitch: (channel: number, pitch: number) => void;
         js_ChannelVolume: (channel: number, volume: number) => void;
         js_ChannelPan: (channel: number, pan: number) => void;
+        js_PauseChannel: (channel: number) => void;
+        js_ResumeChannel: (channel: number) => void;
+        js_EmitSound: (sound: number, entityId: number) => number;
+        js_ChannelPosition: (channel: number, x: number, y: number, z: number) => void;
+        js_PlayMusic: (pathPtr: number) => number;
+        js_StopMusic: () => void;
+        js_MusicVolume: (volume: number) => void;
     };
 }

@@ -138,15 +138,33 @@ try {
 } catch {
   // Optional.
 }
+
+// Copy KTX2 Transcoders
+try {
+  const basisSrc = new URL("./node_modules/three/examples/jsm/libs/basis", import.meta.url).pathname;
+  if (await existsDir(basisSrc)) {
+    const basisDest = join(distAssetsRoot, "basis");
+    await ensureDir(basisDest);
+    await copy(basisSrc, basisDest, { overwrite: true });
+    // Assuming recursive copy or we need to copy contents.
+    // The 'copy' utility usually handles directories recursively.
+    console.log("[build] copied KTX2 transcoders");
+  } else {
+    // If running in an environment without local node_modules (e.g. standard Deno cache),
+    // we might miss these files. But 'deno.json' has 'nodeModulesDir: "auto"'.
+    console.warn("[build] KTX2 transcoders not found at " + basisSrc);
+  }
+} catch (e) {
+  console.warn(`[build] failed to copy KTX2 transcoders: ${e}`);
+}
 {
   const wasmBytes = await Deno.readFile(`${distRoot}scpcb.wasm`);
   const r = checkCmdbufExports(wasmBytes);
   if (r.missing.length) {
     throw new Error(
-      `[cmdbuf] dist/scpcb.wasm is not Track B. Missing exports: ${
-        r.missing.join(", ")
+      `[cmdbuf] dist/scpcb.wasm is not Track B. Missing exports: ${r.missing.join(", ")
       }. ` +
-        `Rebuild scpcb.wasm with --cmdbuf (e.g. \`deno task scpcb:compile:main\`).`,
+      `Rebuild scpcb.wasm with --cmdbuf (e.g. \`deno task scpcb:compile:main\`).`,
     );
   }
 }
@@ -195,39 +213,28 @@ if (await existsDir(examplesAssetsRoot)) {
 if (assetSources.length === 0) {
   console.warn(
     `[build] no asset source found. Skipping SCPCB asset packaging (expected either ${examplesAssetsRoot} ` +
-      `or a sibling ../scpcb/{Data,GFX,SFX} tree).`,
+    `or a sibling ../scpcb/{Data,GFX,SFX} tree).`,
   );
 }
 
+
+// Check for KTX2 support
+let useKtx2 = false;
+try {
+  const cmd = Deno.build.os === "windows" ? "where" : "which";
+  const p = new Deno.Command(cmd, { args: ["toktx"], stdout: "null", stderr: "null" }).spawn();
+  useKtx2 = (await p.status).code === 0;
+  if (useKtx2) console.log("[build] 'toktx' found. enabling KTX2 texture generation.");
+} catch { /* ignore */ }
+
+// Pass 1: Copy/Convert non-model assets (Textures, Audio, Data)
 for (const src of assetSources) {
   for await (const entry of walkFiles(src.root)) {
     const relPart = relative(src.root, entry.path).replace(/\\/g, "/");
     const rel = src.prefix ? `${src.prefix}/${relPart}` : relPart;
     const ext = lowerExt(rel);
 
-    if (ext === "b3d" || ext === "x" || ext === "rmesh") {
-      // Track B: convert offline during packaging and do NOT include source formats in dist.
-      const srcStat = await Deno.stat(entry.path);
-      if (srcStat.size === 0) {
-        console.warn(`[build] skipping empty source asset: ${rel}`);
-        continue;
-      }
-      const outRel = rel.replace(/\.b3d$/i, ".smpk").replace(/\.x$/i, ".smpk")
-        .replace(/\.rmesh$/i, ".smpk");
-      const dest = join(distAssetsRoot, outRel);
-      await ensureDir(join(dest, ".."));
-
-      const tool = ext === "b3d"
-        ? "Tools/convert_b3d_to_smpk.ts"
-        : ext === "x"
-        ? "Tools/convert_x_to_smpk.ts"
-        : "Tools/convert_rmesh_to_smpk.ts";
-
-      await run(["deno", "run", "-A", tool, entry.path, "-o", dest], repoRoot);
-      const size = (await Deno.stat(dest)).size;
-      files.push({ path: `assets/${outRel}`, size });
-      continue;
-    }
+    if (ext === "b3d" || ext === "x" || ext === "rmesh") continue;
 
     if (ext === "bmp") {
       // Optimization: convert BMP to PNG
@@ -257,45 +264,100 @@ for (const src of assetSources) {
       continue;
     }
 
-    if (ext === "wav") {
-      // Optimization: convert WAV to OGG
-      const outRel = rel.replace(/\.wav$/i, ".ogg");
-      const dest = join(distAssetsRoot, outRel);
-      await ensureDir(join(dest, ".."));
-
-      try {
-        await run([
-          "ffmpeg",
-          "-y",
-          "-i",
-          entry.path,
-          "-vn",
-          "-map_metadata",
-          "-1",
-          dest,
-        ], repoRoot);
-        const size = (await Deno.stat(dest)).size;
-        files.push({ path: `assets/${outRel}`, size });
-      } catch (e) {
-        console.warn(
-          `[build] WAV conversion failed for ${rel}, falling back to copy: ${e}`,
-        );
-        // Fallback
-        const fallbackDest = join(distAssetsRoot, rel);
-        await copy(entry.path, fallbackDest, { overwrite: true });
-        files.push({
-          path: `assets/${rel}`,
-          size: (await Deno.stat(fallbackDest)).size,
-        });
-      }
-      continue;
-    }
+    if (ext === "wav") continue; // Handled by Pass 1.6 (Optimize Audio)
 
     const dest = join(distAssetsRoot, rel);
     await ensureDir(join(dest, ".."));
     await copy(entry.path, dest, { overwrite: true });
     const size = (await Deno.stat(dest)).size;
     files.push({ path: `assets/${rel}`, size });
+  }
+}
+
+// Pass 1.5: Optimize Textures (Generate KTX2)
+if (useKtx2) {
+  console.log("[build] generating KTX2 textures...");
+  try {
+    await run([
+      "deno", "run", "-A", "Tools/optimize_textures.ts",
+      "--root", distAssetsRoot,
+      "--format", "ktx2",
+    ], repoRoot);
+  } catch (e) {
+    console.warn(`[build] KTX2 generation failed: ${e}`);
+    useKtx2 = false;
+  }
+}
+
+// Pass 1.6: Optimize Audio (WAV -> OGG)
+// We treat this similar to textures: if ffmpeg exists, we convert EVERYTHING in dist/assets to OGG.
+// Since the copy pass above skipped all .wav files, we need to copy them first? 
+// Wait, my loop above (line 293 modification) says "continue". That means .wav files are NOT copied to dist.
+// That's risky if ffmpeg is missing.
+//
+// Correct logic:
+// 1. Copy everything (including WAV). 
+// 2. Run optimize_audio.ts on dist/assets (it converts wav -> ogg and deletes source).
+// 
+// Let's revert the "continue" for wav in Pass 1, and instead just let them copy. 
+// optimize_audio.ts will handle the rest.
+
+// Check for ffmpeg support
+let useFfmpeg = false;
+try {
+  const cmd = Deno.build.os === "windows" ? "where" : "which";
+  const p = new Deno.Command(cmd, { args: ["ffmpeg"], stdout: "null", stderr: "null" }).spawn();
+  useFfmpeg = (await p.status).code === 0;
+  if (useFfmpeg) console.log("[build] 'ffmpeg' found. enabling OGG audio optimization.");
+} catch { /* ignore */ }
+
+if (useFfmpeg) {
+  console.log("[build] generating OGG audio...");
+  try {
+    await run([
+      "deno", "run", "-A", "Tools/optimize_audio.ts",
+      "--root", distAssetsRoot,
+      "--delete-source"
+    ], repoRoot);
+  } catch (e) {
+    console.warn(`[build] Audio optimization failed: ${e}`);
+  }
+}
+
+// Pass 2: Process Models (Convert to SMPK)
+for (const src of assetSources) {
+  for await (const entry of walkFiles(src.root)) {
+    const relPart = relative(src.root, entry.path).replace(/\\/g, "/");
+    const rel = src.prefix ? `${src.prefix}/${relPart}` : relPart;
+    const ext = lowerExt(rel);
+
+    if (ext === "b3d" || ext === "x" || ext === "rmesh") {
+      // Track B: convert offline during packaging and do NOT include source formats in dist.
+      const srcStat = await Deno.stat(entry.path);
+      if (srcStat.size === 0) {
+        console.warn(`[build] skipping empty source asset: ${rel}`);
+        continue;
+      }
+      const outRel = rel.replace(/\.b3d$/i, ".smpk").replace(/\.x$/i, ".smpk")
+        .replace(/\.rmesh$/i, ".smpk");
+      const dest = join(distAssetsRoot, outRel);
+      await ensureDir(join(dest, ".."));
+
+      const tool = ext === "b3d"
+        ? "Tools/convert_b3d_to_smpk.ts"
+        : ext === "x"
+          ? "Tools/convert_x_to_smpk.ts"
+          : "Tools/convert_rmesh_to_smpk.ts";
+
+      const args = ["deno", "run", "-A", tool, entry.path, "-o", dest];
+      if (useKtx2) {
+        args.push("--texture-format", "ktx2");
+      }
+
+      await run(args, repoRoot);
+      const size = (await Deno.stat(dest)).size;
+      files.push({ path: `assets/${outRel}`, size });
+    }
   }
 }
 

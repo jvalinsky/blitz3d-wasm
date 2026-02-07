@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>SCPCB Video Playback Demo</title>
     <style>
@@ -10,6 +11,7 @@
             font-family: 'Courier New', monospace;
             overflow: hidden;
         }
+
         .container {
             display: flex;
             flex-direction: column;
@@ -19,11 +21,13 @@
             padding: 20px;
             box-sizing: border-box;
         }
+
         h1 {
             text-align: center;
             text-shadow: 0 0 10px #0f0;
             margin-bottom: 30px;
         }
+
         .video-container {
             position: relative;
             background: #111;
@@ -32,11 +36,13 @@
             border-radius: 8px;
             overflow: hidden;
         }
+
         video {
             display: block;
             max-width: 100%;
             max-height: 70vh;
         }
+
         .controls {
             margin-top: 20px;
             display: flex;
@@ -44,6 +50,7 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+
         button {
             padding: 12px 24px;
             background: #001100;
@@ -55,13 +62,16 @@
             font-size: 14px;
             transition: all 0.2s;
         }
+
         button:hover {
             background: #003300;
             box-shadow: 0 0 10px #0f0;
         }
+
         button:active {
             transform: scale(0.95);
         }
+
         .status {
             margin-top: 20px;
             padding: 15px;
@@ -71,6 +81,7 @@
             min-width: 400px;
             text-align: center;
         }
+
         .api-log {
             margin-top: 20px;
             padding: 15px;
@@ -83,35 +94,39 @@
             font-size: 12px;
             text-align: left;
         }
+
         .api-log div {
             margin: 3px 0;
             padding: 3px;
             border-bottom: 1px solid #003300;
         }
+
         .api-call {
             color: #0f0;
         }
+
         .api-return {
             color: #0a0;
             margin-left: 20px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>🎬 SCP: Containment Breach - Video Playback System</h1>
-        
+
         <div class="video-container">
             <video id="videoPlayer" controls></video>
         </div>
-        
+
         <div class="controls">
             <button onclick="loadVideo('startup_TSS')">Load TSS Intro</button>
             <button onclick="loadVideo('startup_Undertow')">Load Undertow Intro</button>
             <button onclick="testWasmAPI()">Test WASM API</button>
             <button onclick="clearLog()">Clear Log</button>
         </div>
-        
+
         <div class="controls" style="margin-top: 10px; border-top: 1px solid #0f0; padding-top: 15px;">
             <button onclick="wasmPlay()">▶️ Play</button>
             <button onclick="wasmPause()">⏸️ Pause</button>
@@ -120,11 +135,11 @@
             <button onclick="wasmSeekForward()">⏩ +5s</button>
             <button onclick="wasmGetInfo()">ℹ️ Get Info</button>
         </div>
-        
+
         <div class="status" id="status">
             Ready - Select a video to play
         </div>
-        
+
         <div class="api-log" id="apiLog">
             <div style="color: #0a0; text-align: center; font-weight: bold;">
                 WASM Video API Call Log
@@ -136,18 +151,18 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const status = document.getElementById('status');
         const apiLog = document.getElementById('apiLog');
-        
+
         // Movie handle tracking
         let movieHandles = new Map();
         let nextHandle = 1;
         let currentMovieHandle = null; // Track currently loaded movie
-        
+
         // WASM API Implementation
         const WasmVideoAPI = {
             BlitzMovie_Open(path) {
                 const pathStr = readWasmString(path); // Simulated for demo
                 logAPI(`BlitzMovie_Open("${pathStr}")`);
-                
+
                 const handle = nextHandle++;
                 movieHandles.set(handle, {
                     path: pathStr,
@@ -155,18 +170,18 @@
                     height: 480,
                     playing: false
                 });
-                
+
                 logAPI(`  → returned handle ${handle}`, true);
                 return handle;
             },
-            
+
             BlitzMovie_Close(movie) {
                 logAPI(`BlitzMovie_Close(${movie})`);
                 movieHandles.delete(movie);
                 logAPI(`  → success`, true);
                 return 1;
             },
-            
+
             BlitzMovie_GetWidth(movie) {
                 logAPI(`BlitzMovie_GetWidth(${movie})`);
                 const m = movieHandles.get(movie);
@@ -174,7 +189,7 @@
                 logAPI(`  → ${width}`, true);
                 return width;
             },
-            
+
             BlitzMovie_GetHeight(movie) {
                 logAPI(`BlitzMovie_GetHeight(${movie})`);
                 const m = movieHandles.get(movie);
@@ -182,7 +197,7 @@
                 logAPI(`  → ${height}`, true);
                 return height;
             },
-            
+
             BlitzMovie_Play(movie) {
                 logAPI(`BlitzMovie_Play(${movie})`);
                 const m = movieHandles.get(movie);
@@ -195,7 +210,7 @@
                 logAPI(`  → failed (invalid handle)`, true);
                 return 0;
             },
-            
+
             BlitzMovie_Stop(movie) {
                 logAPI(`BlitzMovie_Stop(${movie})`);
                 const m = movieHandles.get(movie);
@@ -208,13 +223,13 @@
                 logAPI(`  → failed (invalid handle)`, true);
                 return 0;
             },
-            
+
             BlitzMovie_OpenDecodeToImage(movie, image) {
                 logAPI(`BlitzMovie_OpenDecodeToImage(${movie}, ${image})`);
                 logAPI(`  → decode mode enabled`, true);
                 return 1;
             },
-            
+
             BlitzMovie_Pause(movie) {
                 logAPI(`BlitzMovie_Pause(${movie})`);
                 const m = movieHandles.get(movie);
@@ -227,21 +242,21 @@
                 logAPI(`  → failed (invalid handle)`, true);
                 return 0;
             },
-            
+
             BlitzMovie_GetCurrentTime(movie) {
                 logAPI(`BlitzMovie_GetCurrentTime(${movie})`);
                 const time = videoPlayer.currentTime;
                 logAPI(`  → ${time.toFixed(2)}s`, true);
                 return time;
             },
-            
+
             BlitzMovie_GetDuration(movie) {
                 logAPI(`BlitzMovie_GetDuration(${movie})`);
                 const duration = videoPlayer.duration || 0;
                 logAPI(`  → ${duration.toFixed(2)}s`, true);
                 return duration;
             },
-            
+
             BlitzMovie_Seek(movie, timeSeconds) {
                 logAPI(`BlitzMovie_Seek(${movie}, ${timeSeconds})`);
                 const m = movieHandles.get(movie);
@@ -253,7 +268,7 @@
                 logAPI(`  → failed (invalid handle)`, true);
                 return 0;
             },
-            
+
             BlitzMovie_IsPlaying(movie) {
                 logAPI(`BlitzMovie_IsPlaying(${movie})`);
                 const playing = !videoPlayer.paused;
@@ -261,13 +276,13 @@
                 return playing ? 1 : 0;
             }
         };
-        
+
         // Helper: Read string from WASM memory (simulated)
         function readWasmString(ptr) {
             // In real implementation, would read from WASM linear memory
-            return "simulated_path.avi";
+            return typeof ptr === 'string' ? ptr : "simulated_path.avi";
         }
-        
+
         // Log API calls
         function logAPI(message, isReturn = false) {
             const div = document.createElement('div');
@@ -276,86 +291,86 @@
             apiLog.appendChild(div);
             apiLog.scrollTop = apiLog.scrollHeight;
         }
-        
+
         function clearLog() {
             apiLog.innerHTML = '<div style="color: #0a0; text-align: center; font-weight: bold;">WASM Video API Call Log</div>';
         }
-        
+
         // Load video file
         function loadVideo(name) {
-            const path = `./dist/assets/${name}.mp4`;
+            const path = `/assets/videos/${name}.mp4`;
             status.textContent = `Loading: ${name}.mp4...`;
-            
+
             // Stop current playback and reset
             videoPlayer.pause();
             videoPlayer.currentTime = 0;
-            
+
             videoPlayer.src = path;
             videoPlayer.load();
-            
+
             videoPlayer.onloadedmetadata = () => {
                 const width = videoPlayer.videoWidth;
                 const height = videoPlayer.videoHeight;
                 const duration = videoPlayer.duration.toFixed(2);
-                
+
                 status.textContent = `Loaded: ${name}.mp4 (${width}×${height}, ${duration}s)`;
-                
+
                 // Simulate WASM API calls
                 logAPI(`=== Loading ${name}.mp4 ===`);
                 const handle = WasmVideoAPI.BlitzMovie_Open(path);
                 currentMovieHandle = handle; // Track for playback controls
-                
+
                 WasmVideoAPI.BlitzMovie_GetWidth(handle);
                 WasmVideoAPI.BlitzMovie_GetHeight(handle);
-                
+
                 // Update handle with real dimensions
                 if (movieHandles.has(handle)) {
                     movieHandles.get(handle).width = width;
                     movieHandles.get(handle).height = height;
                 }
             };
-            
+
             videoPlayer.onerror = (e) => {
                 status.textContent = `Error loading ${name}.mp4 - ${e.message || 'File not found'}`;
             };
         }
-        
+
         // Test WASM API
         function testWasmAPI() {
             clearLog();
             logAPI('=== WASM Video API Test ===');
-            
+
             const handle1 = WasmVideoAPI.BlitzMovie_Open('test1.avi');
             const handle2 = WasmVideoAPI.BlitzMovie_Open('test2.avi');
-            
+
             WasmVideoAPI.BlitzMovie_GetWidth(handle1);
             WasmVideoAPI.BlitzMovie_GetHeight(handle1);
-            
+
             WasmVideoAPI.BlitzMovie_Play(handle1);
             WasmVideoAPI.BlitzMovie_Stop(handle1);
-            
+
             WasmVideoAPI.BlitzMovie_OpenDecodeToImage(handle1, 12345);
-            
+
             WasmVideoAPI.BlitzMovie_Close(handle1);
             WasmVideoAPI.BlitzMovie_Close(handle2);
-            
+
             logAPI('=== Test Complete ===');
             status.textContent = 'API test complete - check log';
         }
-        
+
         // Video event handlers
         videoPlayer.onplay = () => {
             status.textContent = 'Playing...';
         };
-        
+
         videoPlayer.onpause = () => {
             status.textContent = 'Paused';
         };
-        
+
         videoPlayer.onended = () => {
             status.textContent = 'Playback complete';
         };
-        
+
         // Playback control functions using WASM API
         function wasmPlay() {
             if (!currentMovieHandle) {
@@ -364,7 +379,7 @@
             }
             WasmVideoAPI.BlitzMovie_Play(currentMovieHandle);
         }
-        
+
         function wasmPause() {
             if (!currentMovieHandle) {
                 status.textContent = 'No video loaded - load a video first!';
@@ -372,7 +387,7 @@
             }
             WasmVideoAPI.BlitzMovie_Pause(currentMovieHandle);
         }
-        
+
         function wasmStop() {
             if (!currentMovieHandle) {
                 status.textContent = 'No video loaded - load a video first!';
@@ -380,7 +395,7 @@
             }
             WasmVideoAPI.BlitzMovie_Stop(currentMovieHandle);
         }
-        
+
         function wasmSeekBack() {
             if (!currentMovieHandle) {
                 status.textContent = 'No video loaded - load a video first!';
@@ -390,7 +405,7 @@
             const newTime = Math.max(0, currentTime - 5);
             WasmVideoAPI.BlitzMovie_Seek(currentMovieHandle, newTime);
         }
-        
+
         function wasmSeekForward() {
             if (!currentMovieHandle) {
                 status.textContent = 'No video loaded - load a video first!';
@@ -401,23 +416,23 @@
             const newTime = Math.min(duration, currentTime + 5);
             WasmVideoAPI.BlitzMovie_Seek(currentMovieHandle, newTime);
         }
-        
+
         function wasmGetInfo() {
             if (!currentMovieHandle) {
                 status.textContent = 'No video loaded - load a video first!';
                 return;
             }
-            
+
             logAPI('=== Movie Info Query ===');
             const width = WasmVideoAPI.BlitzMovie_GetWidth(currentMovieHandle);
             const height = WasmVideoAPI.BlitzMovie_GetHeight(currentMovieHandle);
             const currentTime = WasmVideoAPI.BlitzMovie_GetCurrentTime(currentMovieHandle);
             const duration = WasmVideoAPI.BlitzMovie_GetDuration(currentMovieHandle);
             const playing = WasmVideoAPI.BlitzMovie_IsPlaying(currentMovieHandle);
-            
+
             status.textContent = `Info: ${width}×${height}, ${currentTime.toFixed(1)}s/${duration.toFixed(1)}s, ${playing ? 'Playing' : 'Stopped'}`;
         }
-        
+
         // Auto-load first video on startup
         window.addEventListener('load', () => {
             setTimeout(() => {
@@ -426,4 +441,5 @@
         });
     </script>
 </body>
+
 </html>

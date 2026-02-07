@@ -143,6 +143,8 @@ export interface Blitz3DTexture {
     width: number;
     height: number;
     flags: number;
+    blend?: number;
+    coords?: number;
 }
 
 export interface Blitz3DBrush {
@@ -151,7 +153,7 @@ export interface Blitz3DBrush {
     shininess: number;
     blendMode: number;
     fxMode: number;
-    texture?: Blitz3DTexture;
+    textures: (Blitz3DTexture | undefined)[];
 }
 
 export interface Blitz3DEntity extends THREE.Object3D {
@@ -206,6 +208,7 @@ export interface Blitz3DGraphicsInterface {
     audioSystem: AudioSystem | null;
     wasmManager: WasmEntityManager | null;
     inputManager: InputManagerLike | null;
+    particles?: any; // BlitzParticles
 
     entities: Record<number, THREE.Object3D>;
     textures: Record<number, Blitz3DTexture>;

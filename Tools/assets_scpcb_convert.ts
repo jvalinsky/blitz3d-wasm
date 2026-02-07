@@ -16,6 +16,7 @@ type Args = {
   deleteSource: boolean;
   rewriteManifest: boolean;
   validateManifest: boolean;
+  textureFormat?: string;
 };
 
 const parseArgs = (): Args => {
@@ -24,7 +25,11 @@ const parseArgs = (): Args => {
   const deleteSource = Deno.args.includes("--delete-source");
   const rewriteManifest = !Deno.args.includes("--no-rewrite-manifest");
   const validateManifest = !Deno.args.includes("--no-validate-manifest");
-  return { root, deleteSource, rewriteManifest, validateManifest };
+
+  const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
+  const textureFormat = fmtIdx >= 0 ? Deno.args[fmtIdx + 1] : undefined;
+
+  return { root, deleteSource, rewriteManifest, validateManifest, textureFormat };
 };
 
 const walk = async function* (dir: string): AsyncGenerator<string> {
@@ -70,6 +75,7 @@ const main = async () => {
   // Optimize textures first
   const texArgs = ["deno", "run", "-A", "Tools/optimize_textures.ts", "--root", args.root];
   if (args.deleteSource) texArgs.push("--delete-source");
+  if (args.textureFormat) texArgs.push("--format", args.textureFormat);
   await run(texArgs);
 
   // Optimize audio
@@ -81,14 +87,18 @@ const main = async () => {
 
   for (const p of b3dFiles) {
     const out = p.replace(/\.b3d$/i, ".smpk");
-    await run(["deno", "run", "-A", "Tools/convert_b3d_to_smpk.ts", p, "-o", out]);
+    const cmd = ["deno", "run", "-A", "Tools/convert_b3d_to_smpk.ts", p, "-o", out];
+    if (args.textureFormat) cmd.push("--texture-format", args.textureFormat);
+    await run(cmd);
     converted++;
     if (args.deleteSource) await Deno.remove(p);
   }
 
   for (const p of xFiles) {
     const out = p.replace(/\.x$/i, ".smpk");
-    await run(["deno", "run", "-A", "Tools/convert_x_to_smpk.ts", p, "-o", out]);
+    const cmd = ["deno", "run", "-A", "Tools/convert_x_to_smpk.ts", p, "-o", out];
+    if (args.textureFormat) cmd.push("--texture-format", args.textureFormat);
+    await run(cmd);
     converted++;
     if (args.deleteSource) await Deno.remove(p);
   }
@@ -100,7 +110,9 @@ const main = async () => {
       console.warn(`[assets] skipping empty rmesh: ${p}`);
       continue;
     }
-    await run(["deno", "run", "-A", "Tools/convert_rmesh_to_smpk.ts", p, "-o", out]);
+    const cmd = ["deno", "run", "-A", "Tools/convert_rmesh_to_smpk.ts", p, "-o", out];
+    if (args.textureFormat) cmd.push("--texture-format", args.textureFormat);
+    await run(cmd);
     converted++;
     if (args.deleteSource) await Deno.remove(p);
   }

@@ -21,7 +21,7 @@ import "./src/runtime/globals.ts";
 try {
   const g = globalThis as typeof globalThis & { THREE?: typeof THREE };
   if (!g.THREE) g.THREE = THREE;
-} catch {}
+} catch { }
 
 import { Blitz3DAudio } from "./src/runtime/audio.ts";
 import { Blitz3DCore } from "./src/runtime/core.ts";
@@ -448,7 +448,7 @@ function stepOnce(): void {
   try {
     debugSteppingTick();
     return;
-  } catch {}
+  } catch { }
   // Fallback: if the tick throws for some reason, attempt to schedule it.
   scheduleSharedStepLoop(debugSteppingTick);
 }
@@ -498,26 +498,23 @@ const renderBbdbgPanel = (): void => {
       ? " Debug: paused (main thread)."
       : " Debug: running (main thread).")
     : workerDebugSteppingActive
-    ? (workerDebugPaused
-      ? " Debug: paused (sandbox worker)."
-      : " Debug: running (sandbox worker).")
-    : " Debug: idle (Pause/Step require a program that exports __Step%()).";
+      ? (workerDebugPaused
+        ? " Debug: paused (sandbox worker)."
+        : " Debug: running (sandbox worker).")
+      : " Debug: idle (Pause/Step require a program that exports __Step%()).";
   const steps = debugSteppingActive
     ? debugSteppingStepCount
     : (workerDebugSteppingActive ? workerDebugStepCount : 0);
 
   const saved = bbdbgSavedWasmSha256
-    ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${
-      bbdbgSavedAtMs ? ` @${new Date(bbdbgSavedAtMs).toLocaleTimeString()}` : ""
+    ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${bbdbgSavedAtMs ? ` @${new Date(bbdbgSavedAtMs).toLocaleTimeString()}` : ""
     }.`
     : "";
 
   bbdbgSummaryEl.textContent = hasMeta
-    ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
-      lastLoc || "(none)"
+    ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${lastLoc || "(none)"
     }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`
-    : `No debug metadata loaded. Last: ${
-      lastLoc || "(none)"
+    : `No debug metadata loaded. Last: ${lastLoc || "(none)"
     }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`;
 
   if (!bpCount) {
@@ -553,9 +550,8 @@ const renderBbdbgPanel = (): void => {
     bbdbgTraceEl.classList.add("empty");
   } else {
     bbdbgTraceEl.classList.remove("empty");
-    bbdbgTraceEl.textContent = `Trace (last ${
-      Math.min(30, bbdbgTrace.length)
-    }):\n${traceLines.join("\n")}`;
+    bbdbgTraceEl.textContent = `Trace (last ${Math.min(30, bbdbgTrace.length)
+      }):\n${traceLines.join("\n")}`;
   }
 
   setEditorExecLine(bbdbgEnabled ? bbdbgLastLine : 0);
@@ -711,8 +707,7 @@ async function loadSavedBbdbgMetadata(): Promise<void> {
     bbdbgSavedAtMs = Number(rec.createdAtMs || 0) || null;
     setBbdbgMetadata(obj);
     printOutput(
-      `Loaded saved bbdbg (${
-        bbdbgSavedWasmSha256?.slice(0, 12) ?? "unknown"
+      `Loaded saved bbdbg (${bbdbgSavedWasmSha256?.slice(0, 12) ?? "unknown"
       }).`,
       "success",
     );
@@ -926,13 +921,13 @@ const cancelSharedStepLoop = (): void => {
   if (sharedStepRaf) {
     try {
       cancelAnimationFrame(sharedStepRaf);
-    } catch {}
+    } catch { }
     sharedStepRaf = 0;
   }
   if (sharedStepTimer !== null) {
     try {
       clearTimeout(sharedStepTimer);
-    } catch {}
+    } catch { }
     sharedStepTimer = null;
   }
 };
@@ -1230,985 +1225,68 @@ function normalizeWasmBytes(input: ArrayBuffer | ArrayBufferView): ArrayBuffer {
 }
 
 // --- EXAMPLES ---
-const examples: Record<string, string> = {
-  hello: `Print "Hello from Blitz3D WASM!"
-Print "This code is compiled and runs in your browser."`,
+// --- EXAMPLES (Dynamic Loading) ---
+type ExampleIndexEntry = ExampleInfo & { file: string };
+type ExampleIndex = Record<string, ExampleIndexEntry>;
+
+let exampleIndex: ExampleIndex = {};
+const exampleCache = new Map<string, string>(); // file -> source
+
+async function loadExampleIndex() {
+  try {
+    const res = await fetch("examples/index.json");
+    if (!res.ok) throw new Error(`Failed to load index: ${res.status}`);
+    exampleIndex = await res.json();
+    populateExampleSelect();
+
+    // Auto-load "hello" if present
+    if (exampleIndex["hello"]) {
+      exampleSelectEl.value = "hello";
+      exampleSelectEl.dispatchEvent(new Event("change"));
+    }
+  } catch (e) {
+    printOutput(`Error loading examples: ${errorMessage(e)}`, "error");
+    // Fallback?
+    exampleSelectEl.innerHTML = '<option value="">(Failed to load examples)</option>';
+  }
+}
+
+function populateExampleSelect() {
+  exampleSelectEl.innerHTML = '<option value="">-- Examples --</option>';
+  for (const [key, info] of Object.entries(exampleIndex)) {
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = info.title;
+    exampleSelectEl.appendChild(opt);
+  }
+}
+
+async function loadExampleSource(key: string): Promise<string | null> {
+  const info = exampleIndex[key];
+  if (!info || !info.file) return null;
+
+  if (exampleCache.has(info.file)) {
+    return exampleCache.get(info.file)!;
+  }
+
+  try {
+    const res = await fetch(`examples/${info.file}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const code = await res.text();
+    exampleCache.set(info.file, code);
+    return code;
+  } catch (e) {
+    printOutput(`Failed to load example source: ${errorMessage(e)}`, "error");
+    return null;
+  }
+}
 
-  languageBasics: `; Language Basics (prints only)
-Local sum = 0
-For i = 1 To 5
-  sum = sum + i
-Next
-
-If sum = 15 Then
-  Print "sum ok: " + sum
-Else
-  Print "sum wrong: " + sum
-EndIf
-
-Select sum
-Case 14
-  Print "case 14"
-Case 15
-  Print "case 15"
-Default
-  Print "default"
-End Select`,
-
-  arrays: `; Arrays + loops (prints only)
-Dim a%(4)
-For i = 0 To 4
-  a(i) = i * i
-Next
-
-For i = 0 To 4
-  Print "a(" + i + ")=" + a(i)
-Next`,
-
-  customTypes: `; Custom types + For Each (prints only)
-Type Node
-  Field id%
-End Type
-
-For i = 1 To 3
-  Local n.Node = New Node
-  n\\id = i
-Next
-
-For n.Node = Each Node
-  Print "node id=" + n\\id
-Next`,
-
-  dataReadRestore: `; Data/Read/Restore (prints only)
-Local a, b
-Local s1$, s2$
-
-Read a, b
-Read s1, s2
-Print "a=" + a
-Print "b=" + b
-Print "s1=" + s1
-Print "s2=" + s2
-
-Restore
-Read a
-Print "restored a=" + a
-
-Data 10, 20
-Data "hello", "world"`,
-
-  stringsMath: `; Strings + math/random (prints only)
-Print "abs=" + Abs(-3)
-Print "min=" + Min(2, 5)
-Print "max=" + Max(2, 5)
-SeedRnd 123
-Print "rnd=" + Rnd(1.0)
-Print "rand=" + Rand(1, 3)
-
-Local s$ = "AbCd"
-Print "len=" + Len(s)
-Print "left=" + Left(s, 2)
-Print "right=" + Right(s, 2)
-Print "mid=" + Mid(s, 2, 2)
-Print "lower=" + Lower(s)
-Print "upper=" + Upper(s)
-Print "trim=" + Trim("  hi  ")
-Print "replace=" + Replace("a-b-a", "-", "+")
-Print "instr=" + Instr("abcd", "bc")
-Print "chr=" + Chr(65)
-Print "asc=" + Asc("Z")`,
-
-  debugCallStack: `; Debug: Call Stack + Trace (prints only)
-;
-; This example is meant to exercise bbdbg function enter/leave and statement trace.
-; It also allocates many strings (useful for the WASM Memory panel).
-
-Global g_i% = 1
-Global g_total% = 0
-Global g_inited% = 0
-
-Function Init%()
-  SeedRnd 123
-  g_i = 1
-  g_total = 0
-  g_inited = 1
-End Function
-
-Function Add%(a%, b%)
-  Return a + b
-End Function
-
-Function MakeMsg$(i%)
-  Local s$ = "i=" + i
-  s$ = s$ + " sum=" + Add(i, i * 2)
-  s$ = s$ + " rnd=" + Rand(1, 9)
-  Return s$
-End Function
-
-Function __Step%()
-  If g_inited = 0 Then Init()
-  If g_i <= 25 Then
-    g_total = g_total + g_i
-    Print MakeMsg(g_i)
-    g_i = g_i + 1
-    Return 0
-  EndIf
-  Print "total=" + g_total
-  End
-End Function`,
-
-  debugStubs: `; Debug: Runtime Gaps (prints only)
-;
-; Intentionally call unknown functions so they become stubbed imports.
-; When bbdbg stmt hooks are enabled, the stubs panel should attribute call sites.
-
-Print "About to call missing imports..."
-MissingFuncA 123
-MissingFuncB "hello"
-Print "If you see this, the stubs returned 0 and execution continued."`,
-
-  memoryArray: `; Debug: Memory (Array Fill) (prints only)
-;
-; Fills a large integer array so the heap contains non-zero data beyond strings.
-; (Avoids edge-case operators that may not be supported in all builds.)
-
-; Oversize by 1 to avoid ambiguity in Dim semantics (0..n vs 0..n-1).
-Dim a%(2048)
-Local i%
-For i = 0 To 2047
-  a(i) = i * 37 + i * 2 + 123
-Next
-
-Print "a(0)=" + a(0)
-Print "a(1)=" + a(1)
-Print "a(1024)=" + a(1024)
-Print "a(2047)=" + a(2047)
-
-; Also allocate some strings to create readable patterns in memory dumps.
-Local s$ = ""
-Local idx% = 1
-For i = 1 To 120
-  s$ = s$ + Chr(64 + idx)
-  idx% = idx% + 1
-  If idx% > 26 Then idx% = 1
-Next
-Print "slen=" + Len(s$)`,
-
-  graphics: `; 3D Cube Demo (one-shot render)
-Graphics3D 800, 600, 32, 2
-
-; Create camera + cube and render one frame.
-cam = CreateCamera()
-cube = CreateCube()
-PositionEntity cube, 0, 0, 0
-
-RenderWorld
-Flip
-
-Print "Cube created successfully!"
-Print "Rendered one frame to the canvas."`,
-
-  rotatingCube: `; Rotating Cube Demo (stepped, no loops)
-;
-; This demo avoids blocking loops by exporting a Step function that the
-; interpreter calls once per animation frame.
-;
-; Click Stop to end.
-Global cube
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-
-cam = CreateCamera()
-cube = CreateCube()
-EntityColor cube, 30, 144, 255 ; blue faces
-PositionEntity cube, 0, 0, 0
-
-Print "Rotating cube demo running (stepped)."
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity cube, 0, 1, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  rotatingCubeEdges: `; Rotating Cube (Blue + Edges) Demo (stepped, no loops)
-;
-; Builds a blue cube and a slightly scaled wireframe copy for black edges.
-; Click Stop to end.
-Global cube
-Global edges
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-
-cam = CreateCamera()
-cube = CreateCube()
-EntityColor cube, 30, 144, 255 ; blue faces
-PositionEntity cube, 0, 0, 0
-
-edges = CopyEntity(cube)
-EntityColor edges, 0, 0, 0 ; black edges
-EntityFX edges, 1          ; wireframe (runtime-defined)
-ScaleEntity edges, 1.02, 1.02, 1.02
-EntityParent edges, cube
-
-Print "Rotating cube (blue + edges) running (stepped)."
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity cube, 0, 1, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  rotatingCubeColor: `; Rotating Cube + Color Cycle Demo (stepped, no loops)
-;
-; Tints the cube over time using EntityColor.
-; Click Stop to end.
-Global cube
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-
-cam = CreateCamera()
-cube = CreateCube()
-PositionEntity cube, 0, 0, 0
-
-Print "Rotating cube + color cycle demo running (stepped)."
-Print "Click Stop to end."
-
-Function __Step%()
-  Local t# = MilliSecs() / 1000.0
-  Local r = Abs(Sin(t * 1.2)) * 255.0
-  Local g = Abs(Sin(t * 0.9 + 1.0)) * 255.0
-  Local b = Abs(Sin(t * 0.7 + 2.0)) * 255.0
-  EntityColor cube, r, g, b
-
-  TurnEntity cube, 0, 1, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  hud2D: `; 2D HUD Demo (one-shot)
-Graphics 800, 600, 0
-ClsColor 0, 0, 0
-Cls
-
-Color 30, 144, 255
-Rect 10, 10, 260, 120, True
-Color 0, 0, 0
-Rect 10, 10, 260, 120, False
-
-Color 255, 255, 255
-Text 20, 20, "HUD text", False
-Line 20, 50, 240, 50
-Oval 20, 60, 80, 40, False
-
-Print "Drew HUD overlay. Switch to 3D Canvas tab."`,
-
-  inputHud: `; Input HUD Demo (stepped, no loops)
-;
-; Shows mouse position and last key press in the HUD.
-Global lastKey%
-Global lastKeyName$
-Global t0
-
-Graphics 800, 600, 0
-ClsColor 0, 0, 0
-Cls
-Color 255, 255, 255
-Print "Move the mouse and press keys. Click Stop to end."
-
-Function __Step%()
-  Local k% = GetKey()
-  If k <> 0 Then
-    lastKey = k
-    lastKeyName = Chr(k)
-  EndIf
-
-  ; clear HUD
-  Cls
-  Color 255, 255, 255
-  Text 16, 16, "MouseX=" + MouseX() + " MouseY=" + MouseY(), False
-  Text 16, 36, "LastKey=" + lastKey + " '" + lastKeyName + "'", False
-  Text 16, 56, "KeyDown(32/space)=" + KeyDown(32), False
-End Function`,
-
-  image2D: `; 2D Image Demo (stepped, no loops)
-;
-; Note: LoadImage is async in the browser. This demo draws once the image is ready.
-Global img
-Global drawn%
-
-Graphics 800, 600, 0
-ClsColor 0, 0, 0
-Cls
-Color 255, 255, 255
-Text 16, 16, "Loading assets/badge1.jpg ... (upload via VFS)", False
-
-img = LoadImage("assets/badge1.jpg")
-If img = 0 Then
-  Print "LoadImage failed (returned 0)."
-Else
-  MidHandle img
-  Print "Image requested. Waiting for decode..."
-EndIf
-
-Function __Step%()
-  If drawn = 0 Then
-    Cls
-    If img <> 0 And ImageLoaded(img) <> 0 Then
-      DrawImage img, 400, 300
-      drawn = 1
-      Color 255, 255, 255
-      Text 16, 16, "Drew image. Switch to 3D Canvas tab.", False
-      Print "Drew image."
-    Else
-      Color 255, 255, 255
-      Text 16, 16, "Waiting for image decode...", False
-    EndIf
-  EndIf
-End Function`,
-
-  imageDebug: `; Image Debug Demo (stepped, no loops)
-;
-; Use this to verify PNG/JPG decoding from the VFS.
-; Upload an image to VFS as assets/demo.png or assets/demo.jpg.
-Global img
-Global shown%
-
-Graphics 800, 600, 0
-ClsColor 0, 0, 0
-Cls
-Color 255, 255, 255
-Text 16, 16, "Upload assets/demo.png (or .jpg) in VFS, then Run.", False
-
-img = LoadImage("assets/demo.png")
-If img = 0 Then
-  Print "LoadImage failed (returned 0)."
-Else
-  Print "Requested image load: assets/demo.png"
-EndIf
-
-Function __Step%()
-  If shown <> 0 Then Return
-
-  If img <> 0 And ImageLoaded(img) <> 0 Then
-    Local w = ImageWidth(img)
-    Local h = ImageHeight(img)
-    MidHandle img
-    Cls
-    DrawImage img, 400, 300
-    Color 0, 255, 0
-    Rect 400 - (w/2), 300 - (h/2), w, h, False
-    Color 255, 255, 255
-    Text 16, 16, "Loaded: " + w + "x" + h, False
-    Print "Loaded image: " + w + "x" + h
-    shown = 1
-  Else
-    Color 255, 255, 255
-    Text 16, 36, "Waiting for decode...", False
-  EndIf
-End Function`,
-
-  textureCube: `; Textured Cube Demo (stepped, no loops)
-Global cube
-Global tex
-Global loaded%
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-cam = CreateCamera()
-cube = CreateCube()
-EntityColor cube, 255, 255, 255 ; ensure texture isn't tinted dark
-PositionEntity cube, 0, 0, 0
-
-tex = LoadTexture("assets/badge1.jpg")
-Print "Loading texture..."
-Print "Click Stop to end."
-
-Function __Step%()
-  If loaded = 0 And TextureLoaded(tex) <> 0 Then
-    EntityTexture cube, tex
-    loaded = 1
-  EndIf
-
-  ; subtle tint shift (still visible through the texture)
-  Local t# = MilliSecs() / 1000.0
-  Local tint = 200.0 + Abs(Sin(t * 0.6)) * 55.0
-  EntityColor cube, tint, tint, 255
-
-  TurnEntity cube, 0, 1, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  vfsFileIO: `; VFS File I/O Demo (read lines)
-;
-; Upload a text file to VFS as: assets/demo.txt
-; Then run this script to read it back, 1 line per frame (no blocking loops).
-Global f
-Global done%
-Global started%
-
-Print "Upload assets/demo.txt in the VFS panel first."
-Print "Reading one line per frame..."
-
-Function __Step%()
-  If done <> 0 Then Return
-
-  If started = 0 Then
-    f = ReadFile("assets/demo.txt")
-    If f = 0 Then
-      Print "ReadFile failed (returned 0). Check the VFS list for assets/demo.txt."
-      done = 1
-      Return
-    EndIf
-    started = 1
-    Return
-  EndIf
-
-  If Eof(f) <> 0 Then
-    CloseFile f
-    Print "Done."
-    done = 1
-    Return
-  EndIf
-
-  Print ReadLine(f)
-End Function`,
-
-  fogCube: `; Fog Demo (stepped, no loops)
-Global cube
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-FogColor 26, 26, 42
-FogMode 1
-FogRange 2, 12
-
-cam = CreateCamera()
-cube = CreateCube()
-EntityColor cube, 30, 144, 255
-PositionEntity cube, 0, 0, 0
-
-Print "Fog demo running (stepped)."
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity cube, 0, 1, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  proceduralMesh: `; Procedural Mesh Demo (stepped, no loops)
-;
-; Builds a single triangle using CreateMesh/CreateSurface/AddVertex/AddTriangle.
-; Then rotates it in __Step%().
-Global m
-
-Graphics3D 800, 600, 32, 2
-ClsColor 26, 26, 42
-
-cam = CreateCamera()
-
-m = CreateMesh()
-Local s = CreateSurface(m)
-
-v0 = AddVertex(s, -1, -1, 0, 0, 0)
-v1 = AddVertex(s,  1, -1, 0, 1, 0)
-v2 = AddVertex(s,  0,  1, 0, 0.5, 1)
-AddTriangle s, v0, v1, v2
-UpdateNormals m
-
-EntityColor m, 30, 144, 255
-PositionEntity m, 0, 0, 0
-
-Print "Procedural mesh demo running (stepped)."
-Print "Click Stop to end."
-
-	Function __Step%()
-	  TurnEntity m, 0, 1, 0
-	  RenderWorld
-	  Flip
-	End Function`,
-
-  b3dInspectRender: `; B3D inspect + render (upload a .b3d file to VFS first)
-; Suggested path: assets/173_2.b3d (SCPCB) or assets/model.b3d
-; Optional textures can also be uploaded (same folder). If your model references
-; textures by basename only, upload them into the same VFS folder.
-
-Local path$ = "assets/173_2.b3d"
-
-Print "== B3D Inspect =="
-Print "Path: " + path$
-Print "FileType:"
-Print FileType(path$)
-
-; Peek 4-byte signature: should be "BB3D"
-Local h% = ReadFile(path$)
-If h = 0 Then
-  Print "Failed to open file. Upload it to VFS as " + path$
-  End
-EndIf
-
-Local b0% = ReadByte(h)
-Local b1% = ReadByte(h)
-Local b2% = ReadByte(h)
-Local b3% = ReadByte(h)
-CloseFile h
-
-Print "Sig: " + Chr(b0) + Chr(b1) + Chr(b2) + Chr(b3)
-
-Graphics3D 800, 600, 0, 2
-ClsColor 10, 10, 14
-AmbientLight 60, 60, 70
-
-Local cam% = CreateCamera()
-PositionEntity cam, 0, 1.3, -3
-
-Local light% = CreateLight()
-LightColor light, 255, 255, 255
-LightRange light, 25
-PositionEntity light, 2, 4, -2
-
-; Fill light (directional)
-Local sun% = CreateLight(0)
-LightColor sun, 220, 220, 255
-PositionEntity sun, 0, 10, -10
-
-Local m% = LoadMesh(path$, 0)
-PositionEntity m, 0, 0, 0
-
-Print "Loaded entity id: " + m
-Print "If you only see a placeholder, the loader couldn't parse the file."
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity m, 0, 0.7, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  xInspectRender: `; DirectX .x inspect + render (text format)
-; Suggested path: assets/cup.x (SCPCB) or assets/model.x
-
-Local path$ = "assets/cup.x"
-
-Print "== X Inspect =="
-Print "Path: " + path$
-Print "FileType:"
-Print FileType(path$)
-
-Local h% = ReadFile(path$)
-If h = 0 Then
-  Print "Failed to open file. Upload it to VFS as " + path$
-  End
-EndIf
-
-; Read first 12 bytes for header "xof 0303txt"
-Local hdr$ = ""
-For i = 1 To 12
-  hdr$ = hdr$ + Chr(ReadByte(h))
-Next
-CloseFile h
-
-Print "Header: " + hdr$
-
-Graphics3D 800, 600, 0, 2
-ClsColor 10, 10, 14
-AmbientLight 60, 60, 70
-
-Local cam% = CreateCamera()
-PositionEntity cam, 0, 1.3, -3
-
-Local light% = CreateLight()
-LightColor light, 255, 255, 255
-LightRange light, 25
-PositionEntity light, 2, 4, -2
-
-; Fill light (directional)
-Local sun% = CreateLight(0)
-LightColor sun, 220, 220, 255
-PositionEntity sun, 0, 10, -10
-
-Local m% = LoadMesh(path$, 0)
-PositionEntity m, 0, 0, 0
-
-Print "Loaded entity id: " + m
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity m, 0, 0.7, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  rmeshInspectRender: `; RMESH inspect + render (SCPCB room mesh)
-; Suggested path: assets/checkpoint2_opt.rmesh (SCPCB) or assets/room.rmesh
-; If you upload using SCPCB's original paths, use the same in LoadMesh (e.g. "GFX/map/room1.rmesh").
-
-Local path$ = "assets/checkpoint2_opt.rmesh"
-
-Print "== RMESH Inspect =="
-Print "Path: " + path$
-Print "FileType:"
-Print FileType(path$)
-
-; RMESH begins with an i32 length, then the header string ("RoomMesh" or "RoomMesh.HasTriggerBox")
-Function ReadI32LE%(h%)
-  Local b0% = ReadByte(h)
-  Local b1% = ReadByte(h)
-  Local b2% = ReadByte(h)
-  Local b3% = ReadByte(h)
-  Return (b0) Or (b1 Shl 8) Or (b2 Shl 16) Or (b3 Shl 24)
-End Function
-
-Function ReadLenString$(h%)
-  Local n% = ReadI32LE(h)
-  If n < 0 Or n > 1048576 Then Return "<bad_len:" + n + ">"
-  Local s$ = ""
-  For i = 1 To n
-    s$ = s$ + Chr(ReadByte(h))
-  Next
-  Return s$
-End Function
-
-Local h% = ReadFile(path$)
-If h = 0 Then
-  Print "Failed to open file. Upload it to VFS as " + path$
-  End
-EndIf
-Local header$ = ReadLenString(h)
-CloseFile h
-Print "Header: " + header$
-
-Graphics3D 1000, 700, 0, 2
-ClsColor 10, 10, 14
-AmbientLight 60, 60, 70
-
-Local cam% = CreateCamera()
-PositionEntity cam, 0, 1.6, -4
-
-Local light% = CreateLight()
-LightColor light, 255, 255, 255
-LightRange light, 35
-PositionEntity light, 2, 5, -2
-
-; Fill light (directional)
-Local sun% = CreateLight(0)
-LightColor sun, 220, 220, 255
-PositionEntity sun, 0, 12, -10
-
-Local room% = LoadMesh(path$, 0)
-PositionEntity room, 0, 0, 0
-
-Print "Loaded entity id: " + room
-Print "Click Stop to end."
-
-Function __Step%()
-  TurnEntity room, 0, 0.2, 0
-  RenderWorld
-  Flip
-End Function`,
-
-  cafeteriaWalkthrough: `; Cafeteria Walkthrough - WASD Movement + Mouse Look
-; Loads the SCP checkpoint2/cafeteria room and lets you walk around
-
-Local path$ = "assets/checkpoint2_opt.rmesh"
-
-Graphics3D 1000, 700, 0, 2
-ClsColor 15, 15, 20
-AmbientLight 40, 40, 50
-
-; Camera setup
-Local cam% = CreateCamera()
-CameraRange cam, 0.1, 200
-
-; Starting position inside the cafeteria
-Local camX# = 0
-Local camY# = 1.7  ; Eye height
-Local camZ# = 0
-Local camYaw# = 0
-Local camPitch# = 0
-
-PositionEntity cam, camX, camY, camZ
-
-; Lighting
-Local light% = CreateLight()
-LightColor light, 255, 250, 240
-LightRange light, 20
-PositionEntity light, 0, 8, 0
-
-Local sun% = CreateLight(0)
-LightColor sun, 180, 190, 255
-PositionEntity sun, 10, 20, -10
-
-; Load the cafeteria room
-Print "Loading cafeteria..."
-Local room% = LoadMesh(path$, 0)
-If room = 0 Then
-  Print "Failed to load room. Upload checkpoint2_opt.rmesh to VFS."
-  End
-EndIf
-PositionEntity room, 0, 0, 0
-Print "Cafeteria loaded! Use WASD to move, mouse to look."
-
-; Movement constants
-Local moveSpeed# = 0.08
-Local mouseSens# = 0.2
-
-; Previous mouse position for delta calculation
-Global prevMouseX% = 0
-Global prevMouseY% = 0
-Global mouseCaptured% = 0
-
-Function __Step%()
-  ; Mouse look (simple - use mouse position delta)
-  Local mx% = MouseX()
-  Local my% = MouseY()
-  
-  If prevMouseX <> 0 Or prevMouseY <> 0 Then
-    Local dx% = mx - prevMouseX
-    Local dy% = my - prevMouseY
-    camYaw = camYaw + (dx * mouseSens)
-    camPitch = camPitch + (dy * mouseSens)
-    ; Clamp pitch to avoid flipping
-    If camPitch > 89 Then camPitch = 89
-    If camPitch < -89 Then camPitch = -89
-  EndIf
-  prevMouseX = mx
-  prevMouseY = my
-  
-  ; Apply rotation
-  RotateEntity cam, camPitch, camYaw, 0
-  
-  ; WASD Movement (relative to camera direction)
-  Local moveX# = 0
-  Local moveZ# = 0
-  
-  ; Convert yaw to radians for trig
-  Local yawRad# = camYaw * 3.14159 / 180
-  Local cosYaw# = Cos(yawRad)
-  Local sinYaw# = Sin(yawRad)
-  
-  If KeyDown(17) Then  ; W key
-    moveX = moveX + (sinYaw * moveSpeed)
-    moveZ = moveZ - (cosYaw * moveSpeed)
-  EndIf
-  If KeyDown(31) Then  ; S key
-    moveX = moveX - (sinYaw * moveSpeed)
-    moveZ = moveZ + (cosYaw * moveSpeed)
-  EndIf
-  If KeyDown(30) Then  ; A key
-    moveX = moveX - (cosYaw * moveSpeed)
-    moveZ = moveZ - (sinYaw * moveSpeed)
-  EndIf
-  If KeyDown(32) Then  ; D key
-    moveX = moveX + (cosYaw * moveSpeed)
-    moveZ = moveZ + (sinYaw * moveSpeed)
-  EndIf
-  
-  ; Apply movement
-  camX = camX + moveX
-  camZ = camZ + moveZ
-  PositionEntity cam, camX, camY, camZ
-  
-  RenderWorld
-  Flip
-End Function`,
-
-  entityBlend: `; Entity Blend / Visibility Demo (stepped, no loops)
-Graphics3D 800, 600, 32, 2
-cam = CreateCamera()
-cube = CreateCube()
-EntityColor cube, 255, 0, 0
-EntityBlend cube, 1
-HideEntity cube
-v1 = EntityVisible(cube)
-ShowEntity cube
-v2 = EntityVisible(cube)
-Print "blend=1 hide=" + v1 + " show=" + v2
-RenderWorld
-Flip`,
-
-  cameraSetup: `; Camera Setup Demo (stepped, no loops)
-Graphics3D 800, 600, 32, 2
-cam = CreateCamera()
-CameraRange cam, 0.1, 500
-CameraZoom cam, 1.5
-CameraClsColor cam, 64, 0, 0
-cube = CreateCube()
-PositionEntity cube, 0, 0, 5
-Print "Camera setup ok"
-RenderWorld
-Flip`,
-
-  audioSmoke: `; Audio Smoke Test (stepped, no loops)
-Graphics3D 800, 600, 32, 2
-snd = LoadSound("nonexistent.wav")
-Print "audio init ok, snd=" + snd`,
-};
-
-const exampleInfo: Record<string, ExampleInfo> = {
-  hello: { title: "Hello World", prefersTab: "output" },
-  languageBasics: { title: "Language Basics", prefersTab: "output" },
-  arrays: { title: "Arrays", prefersTab: "output" },
-  customTypes: { title: "Custom Types + For Each", prefersTab: "output" },
-  dataReadRestore: { title: "Data/Read/Restore", prefersTab: "output" },
-  stringsMath: { title: "Strings + Math", prefersTab: "output" },
-  debugCallStack: {
-    title: "Debug: Call Stack",
-    prefersTab: "debug",
-    notes: [
-      "Watch the Debug (bbdbg) panel update with a stack + recent trace.",
-      "The WASM Memory panel should also show changing heap contents.",
-    ],
-  },
-  debugStubs: {
-    title: "Debug: Runtime Gaps",
-    prefersTab: "debug",
-    notes: [
-      "This intentionally calls unknown functions to generate stubbed imports.",
-      "If bbdbg stmt hooks are present, the stubs panel should capture call sites.",
-    ],
-  },
-  memoryArray: {
-    title: "Debug: Memory (Array Fill)",
-    prefersTab: "debug",
-    notes: [
-      "This fills a large integer array so memory dumps show non-zero data.",
-      "Try the WASM Memory panel with Auto enabled while it runs.",
-    ],
-  },
-  graphics: {
-    title: "Graphics Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  rotatingCube: {
-    title: "Rotating Cube Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  rotatingCubeEdges: {
-    title: "Rotating Cube (Blue + Edges)",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  rotatingCubeColor: {
-    title: "Rotating Cube + Color Cycle",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  hud2D: { title: "2D HUD Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
-  inputHud: {
-    title: "Input HUD Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  image2D: {
-    title: "2D Image Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/badge1.jpg"],
-    notes: ["Upload a JPG/PNG into the VFS as the required path."],
-  },
-  imageDebug: {
-    title: "Image Debug (PNG/JPG)",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/demo.png (or assets/demo.jpg)"],
-    notes: [
-      "This demo is useful to confirm decoding + alpha in the VFS pipeline.",
-    ],
-  },
-  textureCube: {
-    title: "Textured Cube Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/badge1.jpg"],
-    notes: ["Upload a JPG/PNG into the VFS as the required path."],
-  },
-  vfsFileIO: {
-    title: "VFS File I/O Demo",
-    prefersTab: "output",
-    defaultTimeoutMs: 0,
-    requires: ["assets/demo.txt"],
-    notes: ["Uses ReadFile/ReadLine to show Blitz-style file IO over the VFS."],
-  },
-  fogCube: { title: "Fog Demo", prefersTab: "canvas", defaultTimeoutMs: 0 },
-  proceduralMesh: {
-    title: "Procedural Mesh Demo",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  b3dInspectRender: {
-    title: "B3D: Inspect + Render",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/173_2.b3d (or assets/model.b3d)"],
-    optional: ["Any referenced textures (same folder or basename-matched)"],
-    notes: [
-      "If the model references Windows paths, upload the texture by basename (e.g. guard_diffuse.jpg).",
-      "The interpreter tries to pick a sensible diffuse texture stage, but multi-texture materials may still look off.",
-    ],
-  },
-  xInspectRender: {
-    title: "X: Inspect + Render",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/cup.x (or assets/model.x)"],
-    optional: ["Any referenced textures (same folder or basename-matched)"],
-    notes: [
-      "Only text .x is supported in the interpreter path (header like xof 0303txt).",
-    ],
-  },
-  rmeshInspectRender: {
-    title: "RMESH: Inspect + Render",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/checkpoint2_opt.rmesh (or assets/room.rmesh)"],
-    optional: ["Room textures + optional lightmaps, if referenced"],
-    notes: [
-      "RMESH variants differ across SCPCB forks; this is a best-effort exploration loader.",
-    ],
-  },
-  cafeteriaWalkthrough: {
-    title: "Cafeteria Walkthrough (WASD)",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-    requires: ["assets/checkpoint2_opt.rmesh (SCPCB cafeteria room)"],
-    optional: ["Room textures and lightmaps if referenced by the rmesh"],
-    notes: [
-      "Walk around the SCP cafeteria using WASD keys and mouse look.",
-      "Click the canvas to capture mouse for look control.",
-    ],
-  },
-  entityBlend: {
-    title: "Entity Blend / Visibility",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  cameraSetup: {
-    title: "Camera Setup",
-    prefersTab: "canvas",
-    defaultTimeoutMs: 0,
-  },
-  audioSmoke: {
-    title: "Audio Smoke Test",
-    prefersTab: "output",
-    defaultTimeoutMs: 0,
-  },
-};
 
 function renderExampleRequirements(exampleKey: string): void {
-  const info = exampleInfo[exampleKey];
+  const info = exampleIndex[exampleKey];
   if (!info) {
     exampleReqEl.innerHTML =
-      `<strong>Example requirements</strong>: select an example to see required VFS paths.`;
+      `< strong > Example requirements </strong>: select an example to see required VFS paths.`;
     return;
   }
 
@@ -2404,8 +1482,7 @@ function renderMemoryPanel(): void {
         memOffsetEl.value = `0x${workerMemInfo.heapBase.toString(16)}`;
         requestWorkerMemorySnapshot(true);
         memSummaryEl.textContent =
-          `worker: @0x0 was all zeros; jumping to heap @0x${
-            workerMemInfo.heapBase.toString(16)
+          `worker: @0x0 was all zeros; jumping to heap @0x${workerMemInfo.heapBase.toString(16)
           }`;
         memDumpEl.textContent = "";
         return;
@@ -2506,9 +1583,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       // ignore
     }
   };
-  editorEl.value = examples.hello;
+  editorEl.value = `Print "Loading examples..."`;
   enableEditorEnhancements();
-  renderExampleRequirements("hello");
+  // renderExampleRequirements("hello"); // Deferred until index loads
   runBtnEl.disabled = true;
   printOutput(`Three.js v${THREE.REVISION} loaded.`, "success");
   printOutput("Using shared SCPCB runtime for graphics.", "info");
@@ -2614,23 +1691,36 @@ function setupEventListeners() {
     });
   }
 
-  exampleSelectEl.addEventListener("change", (e) => {
+  exampleSelectEl.addEventListener("change", async (e) => {
     const target = e.target as HTMLSelectElement | null;
     const example = target?.value ?? "";
-    if (example && examples[example]) {
-      editorEl.value = examples[example];
-      scheduleEditorDecorRender();
-      renderExampleRequirements(example);
+    const info = exampleIndex[example];
 
-      const info = exampleInfo[example];
-      if (info?.prefersTab) showTab(info.prefersTab);
-      if (typeof info?.defaultTimeoutMs === "number") {
-        timeoutMsEl.value = String(
-          Math.max(0, Math.floor(info.defaultTimeoutMs)),
-        );
+    if (example && info) {
+      statusIndicatorEl.className = "status-indicator busy";
+      statusTextEl.textContent = "Loading example...";
+
+      const code = await loadExampleSource(example);
+      if (code !== null) {
+        editorEl.value = code;
+        scheduleEditorDecorRender();
+        renderExampleRequirements(example);
+
+        if (info.prefersTab) showTab(info.prefersTab);
+        if (typeof info.defaultTimeoutMs === "number") {
+          timeoutMsEl.value = String(
+            Math.max(0, Math.floor(info.defaultTimeoutMs)),
+          );
+        }
       }
+
+      statusIndicatorEl.className = "status-indicator";
+      statusTextEl.textContent = "Ready";
     }
   });
+
+  // Start loading examples
+  loadExampleIndex();
 
   vfsClearBtnEl.addEventListener("click", () => {
     vfsClear();
@@ -2699,7 +1789,7 @@ function stopExecution() {
   if (typeof runnerSandboxInFlight === "function") {
     try {
       runnerSandboxInFlight({ startedStepping: false, stopped: true });
-    } catch {}
+    } catch { }
     runnerSandboxInFlight = null;
   }
   cancelSharedStepLoop();
@@ -2715,13 +1805,13 @@ function disposeSharedRuntime() {
   cancelSharedStepLoop();
   try {
     sharedGraphics?.dispose?.();
-  } catch {}
+  } catch { }
   try {
     sharedFileIO?.dispose?.({ clearCache: false });
-  } catch {}
+  } catch { }
   try {
     sharedCore?.dispose?.();
-  } catch {}
+  } catch { }
   sharedGraphics = null;
   sharedFileIO = null;
   sharedCore = null;
@@ -2763,17 +1853,17 @@ function cancelCompileInFlight(
       "message",
       inflight.onMessage as unknown as EventListener,
     );
-  } catch {}
+  } catch { }
   try {
     clearTimeout(inflight.timeoutId);
-  } catch {}
+  } catch { }
   try {
     inflight.reject(reason);
-  } catch {}
+  } catch { }
   if (terminateWorker && compilerWorker) {
     try {
       compilerWorker.terminate();
-    } catch {}
+    } catch { }
     compilerWorker = null;
     compilerWorkerReady = false;
   }
@@ -3169,60 +2259,33 @@ function makeRunnerWorker(): Worker {
 	        if ((debugStepCount % 50) === 0) {
 	          try { sendDebugState(""); } catch {}
 	        }
-
-	        debugLooping = true;
+          debugLooping = true;
 	        setTimeout(tick, 0);
 	      };
 
       const stubMissingImports = (imports, module) => {
-        const stubbedLimit = 200;
-        const shown = [];
-        let total = 0;
-        const called = new Map();
-        const firstSite = new Map();
-
+        const shown = []; let total = 0;
+        const called = new Map(); const firstSite = new Map();
         for (const imp of WebAssembly.Module.imports(module)) {
-          if (imp.module === "blitz3d" && imports.env && (imp.name in imports.env)) {
-            if (!("blitz3d" in imports)) imports.blitz3d = {};
-            if (!(imp.name in imports.blitz3d)) imports.blitz3d[imp.name] = imports.env[imp.name];
-          }
-          if (!(imp.module in imports)) imports[imp.module] = {};
-          if (imp.name in imports[imp.module]) continue;
-
-          // Case-insensitive fallback (e.g. WASM imports 'inttostring', runtime has 'IntToString')
-          let found = false;
-          const lower = imp.name.toLowerCase();
-          for (const k in imports[imp.module]) {
-            if (k.toLowerCase() === lower) {
-              imports[imp.module][imp.name] = imports[imp.module][k];
-              found = true;
-              break;
+            if (!imports[imp.module]) imports[imp.module] = {};
+            if (imports[imp.module][imp.name]) continue;
+            let found = false;
+            for (const k in imports[imp.module]) {
+                if (k.toLowerCase() === imp.name.toLowerCase()) {
+                    imports[imp.module][imp.name] = imports[imp.module][k];
+                    found = true; break;
+                }
             }
-          }
-          if (found) continue;
-
-          const key = imp.module + "." + imp.name;
-          total++;
-          if (shown.length < stubbedLimit) shown.push(key);
-
-          if (imp.kind === "function") {
-            imports[imp.module][imp.name] = (..._args) => {
-              called.set(key, (called.get(key) || 0) + 1);
-              if (!firstSite.has(key)) {
-                firstSite.set(key, { fileId: bbdbgCurrentFileId | 0, line: bbdbgCurrentLine | 0 });
-              }
-              try { maybeSendMemAuto(); } catch {}
-              return 0;
-            };
-          }
-          else if (imp.kind === "global") imports[imp.module][imp.name] = 0;
-          else if (imp.kind === "table") {
-            imports[imp.module][imp.name] = new WebAssembly.Table({ initial: 0, element: "anyfunc" });
-          } else if (imp.kind === "memory") {
-            if (!imports[imp.module].memory) imports[imp.module].memory = imports.env.memory;
-          }
+            if (found) continue;
+            total++;
+            if (shown.length < 50) shown.push(imp.module + "." + imp.name);
+            if (imp.kind === 'function') imports[imp.module][imp.name] = () => 0;
+            else if (imp.kind === 'global') imports[imp.module][imp.name] = 0;
+            else if (imp.kind === 'table') imports[imp.module][imp.name] = new WebAssembly.Table({initial:0, element:'anyfunc'});
+            else if (imp.kind === 'memory') {
+                 if (!imports[imp.module].memory) imports[imp.module].memory = imports.env.memory || new WebAssembly.Memory({initial:1});
+            }
         }
-
         return { total, shown, called, firstSite };
       };
 
@@ -4040,15 +3103,12 @@ async function runWasmBytesInSandbox(
           (msg.hasBbdbgEnter && msg.hasBbdbgLeave && msg.hasBbdbgStmt)
             ? "bbdbg hooks present"
             : (msg.bbdbgImports.length
-              ? `bbdbg imports present but incomplete (enter=${
-                msg.hasBbdbgEnter ? "y" : "n"
-              } leave=${msg.hasBbdbgLeave ? "y" : "n"} stmt=${
-                msg.hasBbdbgStmt ? "y" : "n"
+              ? `bbdbg imports present but incomplete (enter=${msg.hasBbdbgEnter ? "y" : "n"
+              } leave=${msg.hasBbdbgLeave ? "y" : "n"} stmt=${msg.hasBbdbgStmt ? "y" : "n"
               })`
               : "no bbdbg imports");
         printOutput(
-          `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${
-            msg.importsMemory ? "y" : "n"
+          `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${msg.importsMemory ? "y" : "n"
           } export=${msg.exportsMemory ? "y" : "n"}`,
           msg.bbdbgImports.length ? "info" : "warning",
         );
@@ -4119,7 +3179,7 @@ async function runWasmBytesInSandbox(
             }
           }
           scheduleBbdbgRender();
-        } catch {}
+        } catch { }
         return;
       }
       if (msg.type === "mem") {
@@ -4160,8 +3220,7 @@ async function runWasmBytesInSandbox(
         }
         if (called.length) {
           printOutput(
-            `[stubs] called: ${
-              called.map((c) => `${c.key}×${c.count}`).join(", ")
+            `[stubs] called: ${called.map((c) => `${c.key}×${c.count}`).join(", ")
             }`,
             "warning",
           );
@@ -4220,7 +3279,7 @@ async function runWasmBytesInSandbox(
         copy.set(rec.bytes);
         vfsFiles.push({ path, bytes: copy.buffer });
         transfers.push(copy.buffer);
-      } catch {}
+      } catch { }
     }
     w.postMessage(
       {
@@ -4694,7 +3753,7 @@ async function executeCompiledWASM(wasmBase64: string): Promise<void> {
     if (showStacks && st) {
       try {
         printOutput(String(st), "error");
-      } catch {}
+      } catch { }
     }
     console.error("Execution error:", error);
   }
@@ -4872,9 +3931,9 @@ async function runWasmBytesOnMainThread(
       origRegister(p, data);
       try {
         vfsPut(p, data, guessMime(p));
-      } catch {}
+      } catch { }
     };
-  } catch {}
+  } catch { }
 
   // Mirror interpreter VFS into the shared runtime VFS.
   // (This enables LoadImage/LoadTexture/ReadFile for uploaded assets.)
@@ -4943,17 +4002,17 @@ async function runWasmBytesOnMainThread(
     const encoder = new TextEncoder();
     const bytes = encoder.encode(text);
     const len = bytes.length;
-    
+
     const ptr = allocStringObjPtr(len);
     if (!ptr || ptr === 0) return 0;
-    
+
     const mem = core.memory;
     if (!mem) return 0;
-    
+
     try {
       const view = new DataView(mem.buffer);
       const byteView = new Uint8Array(mem.buffer);
-      
+
       // Blitz3D String Object Layout:
       // +0: GC/Ref header (unused here, set to 1 for safety or 0)
       // +4: Length (int32)
@@ -5044,7 +4103,7 @@ async function runWasmBytesOnMainThread(
     try {
       const fn = core.allocString;
       if (typeof fn === "function") return fn(String(text));
-    } catch {}
+    } catch { }
     return 0;
   };
   const intToString = (val: number) => allocB3DString(String(val | 0));
@@ -5108,6 +4167,10 @@ async function runWasmBytesOnMainThread(
   const calledMissing = new Map<string, number>();
   let calledNotices = 0;
   const calledNoticeLimit = 10;
+
+  printOutput("ANTIGRAVITY CHECK: Graphics3D present? " + (!!(imports.env && imports.env.Graphics3D)), "info");
+  printOutput("ANTIGRAVITY CHECK: env keys (first 20): " + Object.keys(imports.env || {}).slice(0, 20).join(", "), "info");
+
 
   stubMissingImports(imports, module, {
     preferEnvForBlitz3d: true,
@@ -5192,7 +4255,7 @@ async function runWasmBytesOnMainThread(
         const v = ex[k];
         if (typeof v === "function") return v;
       }
-    } catch {}
+    } catch { }
     return null;
   })();
   const alloc = (typeof stringAllocExport === "function")
@@ -5214,7 +4277,7 @@ async function runWasmBytesOnMainThread(
   }
   try {
     fileIO.setMemory(core.memory);
-  } catch {}
+  } catch { }
 
   const exports = (instance.exports || {}) as Record<string, any>;
 
@@ -5241,7 +4304,7 @@ async function runWasmBytesOnMainThread(
       if (showStacks && st) {
         try {
           printOutput(String(st), "error");
-        } catch {}
+        } catch { }
       }
       stopExecution();
       return { startedStepping: false };
@@ -5285,18 +4348,18 @@ async function runWasmBytesOnMainThread(
         debugSteppingStepCount++;
       } catch (e) {
         const msg = errorMessage(e);
-      if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
-        printOutput("Program ended.", "success");
-        try { renderRuntimeGaps(); } catch {}
-        stopExecution();
-        return { startedStepping: false };
-      }
+        if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
+          printOutput("Program ended.", "success");
+          try { renderRuntimeGaps(); } catch { }
+          stopExecution();
+          return { startedStepping: false };
+        }
         printOutput(`Execution error: ${msg}`, "error");
         const st = errorStack(e);
         if (showStacks && st) {
           try {
             printOutput(String(st), "error");
-          } catch {}
+          } catch { }
         }
         stopExecution();
         return;
@@ -5305,8 +4368,7 @@ async function runWasmBytesOnMainThread(
       const elapsed = performance.now() - started;
       if (timeoutMs > 0 && elapsed > timeoutMs) {
         printOutput(
-          `Step exceeded budget (${
-            Math.round(elapsed)
+          `Step exceeded budget (${Math.round(elapsed)
           }ms > ${timeoutMs}ms). Stopping.`,
           "error",
         );
@@ -5364,7 +4426,7 @@ async function runWasmBytesOnMainThread(
       const msg = errorMessage(e);
       if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
         printOutput("Program ended.", "success");
-        try { renderRuntimeGaps(); } catch {}
+        try { renderRuntimeGaps(); } catch { }
         stopExecution();
         return { startedStepping: false };
       }
@@ -5372,7 +4434,7 @@ async function runWasmBytesOnMainThread(
       stopExecution();
       return { startedStepping: false };
     }
-    try { renderRuntimeGaps(); } catch {}
+    try { renderRuntimeGaps(); } catch { }
   }
 
   return { startedStepping: false };
@@ -5430,7 +4492,7 @@ function createLegacyRuntimeImports_UNUSED(): Record<
   let nextSurfaceId = 1;
   const meshSurfaces = new Map<number, any>();
   const dirtySurfaceIds = new Set<number>();
-  const ensureSurfaceGeometry = (_surfaceId: number): void => {};
+  const ensureSurfaceGeometry = (_surfaceId: number): void => { };
   const textureHandles = new Map<number, any>();
   let nextTextureHandle = 1;
   const brushHandles = new Map<number, any>();
@@ -5439,14 +4501,14 @@ function createLegacyRuntimeImports_UNUSED(): Record<
   let threeScene: any = null;
   let threeCamera: any = null;
   let cameraViewport: any = null;
-  const applyCameraViewport = (): void => {};
-  const resizeThreeToContainer = (): void => {};
+  const applyCameraViewport = (): void => { };
+  const resizeThreeToContainer = (): void => { };
   let fogMode = 0;
   let fogColor = 0;
   let fogNear = 0;
   let fogFar = 0;
   let fogDensity = 0;
-  const updateFog = (): void => {};
+  const updateFog = (): void => { };
   let ambientLight: any = null;
 
   const decodeB3DStringObj = (ptr) => {

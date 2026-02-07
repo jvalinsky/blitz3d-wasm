@@ -16,8 +16,8 @@ Function Main()
     Dim e.Template(10)
     Local i% = 0
     
-    e[i] = New Template
-    e[i]\tex = 1
+    e(i) = New Template
+    e(i)\tex = 1
     
-    If e[i]\tex Then SetEmitter(owner, Handle(e[i]), fixed)
+    If e(i)\tex Then SetEmitter(owner, Handle(e(i)), fixed)
 End Function

@@ -4,6 +4,7 @@ import { Blitz3DCore } from "./runtime/core.ts";
 import { Blitz3DAudio } from "./runtime/audio.ts";
 import { Blitz3DGraphics } from "./runtime/graphics/index.ts";
 import { Blitz3DFileIO } from "./runtime/fileio.ts";
+import { initDebugOverlay, DebugOverlay } from "./runtime/debug_overlay.ts";
 import { initCmdBuf } from "./shared/command_buffer.ts";
 import { assertCmdBufAbi } from "./shared/cmdbuf_abi.ts";
 import { EntityTableView } from "./shared/entity_table.ts";
@@ -33,6 +34,7 @@ const BOOT_ASSET_GROUP = "boot";
 const LOADER_BUILD_ID = "2026-01-29.1";
 
 let currentRuntime: { dispose: () => void } | null = null;
+let currentDebugOverlay: DebugOverlay | null = null;
 let unloadHookInstalled = false;
 let currentHudCancel: (() => void) | null = null;
 let currentWorker: Worker | null = null;
@@ -87,38 +89,38 @@ type WorkerBbdbgSnapshot = {
 type WorkerBbdbgState = {
   required: boolean;
   meta:
-    | null
-    | {
-      ok: boolean;
-      url: string;
-      fileCount?: number;
-      functionCount?: number;
-      typeCount?: number;
-      versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
-      error?: string;
-      files?: Array<{ id: number; path: string }>;
-      functions?: Array<{
-        id: number;
+  | null
+  | {
+    ok: boolean;
+    url: string;
+    fileCount?: number;
+    functionCount?: number;
+    typeCount?: number;
+    versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
+    error?: string;
+    files?: Array<{ id: number; path: string }>;
+    functions?: Array<{
+      id: number;
+      name: string;
+      signature: string;
+      fileId: number;
+      startLine: number;
+      endLine: number;
+    }>;
+    types?: Array<{
+      id: number;
+      name: string;
+      instanceSizeBytes: number;
+      fields: Array<{
         name: string;
-        signature: string;
-        fileId: number;
-        startLine: number;
-        endLine: number;
+        offsetBytes: number;
+        wasmType: string;
+        declaredType: string;
+        customTypeName?: string | null;
+        dimensions?: number[] | null;
       }>;
-      types?: Array<{
-        id: number;
-        name: string;
-        instanceSizeBytes: number;
-        fields: Array<{
-          name: string;
-          offsetBytes: number;
-          wasmType: string;
-          declaredType: string;
-          customTypeName?: string | null;
-          dimensions?: number[] | null;
-        }>;
-      }>;
-    };
+    }>;
+  };
   config: { enabled: boolean; traceMax: number } | null;
   lastSnapshot: WorkerBbdbgSnapshot | null;
 };
@@ -128,6 +130,7 @@ const getUrlFlags = () => {
   return {
     debug: params.has("debug"),
     debugHud: params.get("debughud") === "1" || params.has("debughud"),
+    debugOverlay: params.get("debugoverlay") === "1" || params.has("debugoverlay"),
     worker: params.get("worker") === "1" || params.has("worker"),
     // Worker UX controls:
     // - `?allowmain=1`: show buttons that call `Main()` (can hang forever).
@@ -146,6 +149,20 @@ const getUrlFlags = () => {
     noAssets: params.get("noassets") === "1" || params.has("noassets"),
     noAudio: params.get("noaudio") === "1" || params.has("noaudio"),
     fps: Number(params.get("fps") ?? "0") || 0,
+    // Launcher params - validate to prevent crashes from invalid values like width=0 or height=undefined
+    width: (() => {
+      const raw = params.get("width");
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    })(),
+    height: (() => {
+      const raw = params.get("height");
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    })(),
+    quality: params.get("quality"), // low, medium, high
+    vsync: params.get("vsync") === "1",
+    fullscreen: params.get("fullscreen") === "1",
   };
 };
 
@@ -638,6 +655,88 @@ const ensureScpcbScaleGlobals = (core: Blitz3DCore, instance: WebAssembly.Instan
   const ms = getGlobalNumber(instance, "MenuScale");
   if ((!Number.isFinite(ms) || ms === 0) && ch) {
     setMutableGlobal(instance, "MenuScale", ch / 1024.0);
+  }
+};
+
+const syncOptionsFromLocalStorage = (core: Blitz3DCore) => {
+  const flags = (window as any).__BLITZ3D_FLAGS;
+  // We need to construct options.ini content based on flags
+  // defaults based on web/public/options.ini
+  const content = `[options]
+width = ${flags.width || 1280}
+height = ${flags.height || 720}
+fullscreen = ${flags.fullscreen ? "true" : "false"}
+borderless windowed = false
+gfx driver = 2
+audio driver = 0
+brightness = 50
+screengamma = 1.0
+show FPS = 0
+framelimit = 0
+vsync = ${flags.vsync ? "1" : "0"}
+mouse sensitivity = 0.0
+invert mouse y = 0
+mouse smoothing = 1.0
+camera fog near = 0.5
+camera fog far = 6.0
+fog r = 0
+fog g = 0
+fog b = 0
+map size = 18
+achievement popup enabled = 1
+bump mapping enabled = 1
+anisotropy = 0
+antialias = 1
+HUD enabled = 1
+intro enabled = 1
+room lights enabled = 1
+texture details = ${flags.quality === "low" ? "1" : flags.quality === "high" ? "3" : "2"}
+16bit = false
+antialiased text = 0
+particle amount = ${flags.quality === "low" ? "0" : "2"}
+enable vram = 0
+check for updates = true
+play startup video = true
+
+[audio]
+music volume = 0.5
+sound volume = 1.0
+enable user tracks = 1
+user track setting = 1
+sfx release = 1
+
+[binds]
+Right key = 32
+Left key = 30
+Up key = 17
+Down key = 31
+Blink key = 57
+Sprint key = 42
+Inventory key = 15
+Crouch key = 29
+Save key = 63
+Console key = 61
+
+[launcher]
+launcher width = 640
+launcher height = 480
+launcher enabled = 0
+[console]
+enabled = 0
+auto opening = 0
+
+[map creator]
+resolution select = 1
+width=1024
+height=768
+`;
+
+  // Write to VFS
+  // We can write to fileIO if initialized
+  if (core.fileIO) {
+    const data = new TextEncoder().encode(content);
+    core.fileIO.writeFile("options.ini", data);
+    console.log("[Main] Synced options.ini from URL params");
   }
 };
 
@@ -1405,6 +1504,18 @@ async function init() {
     console.warn("Graphics init3D skipped (nogl/safe)");
   }
 
+  // Initialize debug overlay if requested
+  if (flags.debugOverlay || flags.debugHud) {
+    currentDebugOverlay = initDebugOverlay(graphics, core, fileIO, true);
+    console.log("Debug overlay initialized (F3 to toggle)");
+  }
+
+  // Restore saved games from IndexedDB
+  // We do this async but start it early so it has a chance to finish before the game checks for saves.
+  fileIO.loadSavesFromIndexedDB().then((count) => {
+    if (count > 0) console.log(`[Main] Restored ${count} saves from IndexedDB`);
+  });
+
   try {
     updateLoader(loader, {
       section: "wasm",
@@ -1513,6 +1624,37 @@ async function init() {
     updateLoader(loader, { section: "wasm", text: "Imports...", progress: 1 });
     boot.setPhase("INSTANTIATE_WASM", "imports");
     const imports = setupImports(core, graphics, fileIO, flags);
+    console.log("DEBUG: imports.env keys:", Object.keys(imports.env).filter(k => k.includes("Graph")));
+    console.log("DEBUG: imports.env.Graphics3D type:", typeof imports.env.Graphics3D);
+
+
+    // CRITICAL FIX: Fallback injection if setupCore failed
+    if (!imports.env.Graphics3D) {
+      console.warn("⚠️ FAILSAFE: Injecting missing Graphics3D stub in main.ts");
+      imports.env.Graphics3D = (w: number, h: number, d: number, m: number) => {
+        console.log(`[Main] Graphics3D(${w}, ${h}, ${d}, ${m})`);
+        graphics.init3D();
+        if (graphics.renderer) graphics.renderer.setSize(w, h);
+        if (core.canvas) { core.canvas.width = w; core.canvas.height = h; }
+      };
+    }
+    if (!imports.env.Cls) {
+      imports.env.Cls = () => {
+        const gl = core.gl;
+        if (gl) gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      };
+    }
+    if (!imports.env.Flip) {
+      imports.env.Flip = (_v: number) => {
+        // Handled by requestAnimationFrame loop
+      };
+    }
+    // 2D Stubs
+    if (!imports.env.Rect) imports.env.Rect = () => { };
+    if (!imports.env.Color) imports.env.Color = () => { };
+    if (!imports.env.ClsColor) imports.env.ClsColor = () => { };
+    if (!imports.env.Text) imports.env.Text = () => { };
+    if (!imports.env.LoadImage) imports.env.LoadImage = () => 0;
 
     const { module, instance } = await instantiateWasm(
       buffer as ArrayBuffer,
@@ -3084,6 +3226,9 @@ async function init() {
       return;
     }
 
+    // Sync options found in URL params to options.ini
+    syncOptionsFromLocalStorage(core);
+
     // Safe mode: never run WASM entrypoints. Useful when the browser freezes too early to inspect.
     if (flags.safe) {
       updateLoader(loader, {
@@ -3125,6 +3270,61 @@ async function init() {
 
     // If tick=manual, don't start the RAF update loop.
     const cancelUpdate = flags.tickManual ? () => { } : startUpdateLoop(core);
+
+    // Override initGameWorld to call WASM StartNewGame
+    (window as any).initGameWorld = async (seed: string, difficulty: number) => {
+      console.log("[Main] initGameWorld: Calling WASM StartNewGame", { seed, difficulty });
+
+      // Find StartNewGame export
+      // Find InitNewGame export (Non-blocking init)
+      const initNewGame = instance.exports.InitNewGame as CallableFunction;
+      const startNewGame = instance.exports.StartNewGame as CallableFunction;
+
+      if (typeof initNewGame === "function") {
+        try {
+          console.log("[Main] initGameWorld: Calling WASM InitNewGame (safe)", { seed, difficulty });
+          // Seed string needs to be allocated
+          const seedPtr = core.writeString(seed || "test");
+          // Call WASM
+          initNewGame(seedPtr, difficulty || 0);
+          console.log("[Main] InitNewGame returned");
+
+          // Start manual update loop since we skipped Main()
+          console.log("[Main] Starting manual update loop...");
+          // We rely on the core.update loop which is already running (startUpdateLoop)
+          // But we need to make sure it calls something?
+          // core.update calls instance.exports.UpdateGame if present. 
+          // If not, we might not get updates.
+          // Let's try to find a ticker.
+          const syncGame = instance.exports.SyncGame as CallableFunction;
+          if (syncGame) {
+            console.log("[Main] Hooking SyncGame into update loop");
+            // Inject a custom updater
+            (core as any).customUpdate = () => {
+              syncGame();
+            };
+          }
+        } catch (e) {
+          console.error("[Main] InitNewGame error:", e);
+        }
+      } else if (typeof startNewGame === "function") {
+        // Fallback to blocking start
+        console.warn("[Main] InitNewGame not found, calling StartNewGame (LOCK WARNING)");
+        const seedPtr = core.writeString(seed || "test");
+        startNewGame(seedPtr, difficulty || 0);
+      }
+
+      else {
+        console.warn("[Main] StartNewGame export not found! Available:", Object.keys(instance.exports).filter(k => !k.startsWith('_')));
+
+        // If no StartNewGame, maybe UpdateGame handles it if we set globals?
+        // Fallback: Just ensure loop is running (it is).
+        console.log("[Main] Relying on UpdateGame loop.");
+      }
+
+      // Remove loader
+      if (loader && loader.overlay) loader.overlay.style.display = 'none';
+    };
 
     // Optional FPS limiter for render loop: `?fps=10` (or disable entirely with `?nogl=1`)
     const cancelRender = flags.noGL ? () => { } : flags.fps > 0
@@ -3174,6 +3374,11 @@ async function init() {
         } catch { }
         try {
           uninstallOnscreen();
+        } catch { }
+        // Clean up debug overlay
+        try {
+          currentDebugOverlay?.dispose();
+          currentDebugOverlay = null;
         } catch { }
       },
     };

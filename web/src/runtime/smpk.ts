@@ -260,6 +260,7 @@ export class SMPKLoader {
 
     // Materials
     const loader = new THREE.TextureLoader();
+    const ktx2Loader = this.graphics.ktx2Loader;
     const materials = (json.materials ?? []).map((m) => {
       // Determine alpha mode from blendMode if not explicitly set
       let alphaMode = m.alphaMode;
@@ -289,7 +290,10 @@ export class SMPKLoader {
       const loadTex = (url: string | undefined, prop: keyof THREE.MeshStandardMaterial, uScale = 1, vScale = 1) => {
         if (!url) return;
         const resolved = resolveAssetUrl(url);
-        loader.load(resolved, (t: THREE.Texture) => {
+        const isKtx2 = url.toLowerCase().endsWith(".ktx2") || url.toLowerCase().endsWith(".ktx");
+        const usedLoader = (isKtx2 && ktx2Loader) ? ktx2Loader : loader;
+
+        usedLoader.load(resolved, (t: THREE.Texture) => {
           (mat[prop] as THREE.Texture | undefined) = t;
           t.colorSpace = THREE.SRGBColorSpace;
           t.wrapS = THREE.RepeatWrapping;

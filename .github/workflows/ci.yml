@@ -9,6 +9,7 @@ on:
 env:
   # Cache version to invalidate cache when needed
   CACHE_VERSION: v1
+  SWIFT_VERSION: '6.0.3'
 
 jobs:
   # Swift Tests - Multiple platforms for comprehensive coverage
@@ -19,11 +20,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         # Use different Swift versions if needed
-        swift-version: [5.9, 5.10]
-        exclude:
-          # Exclude some combinations to reduce CI load if needed
-          - os: ubuntu-latest
-            swift-version: 5.10
+        swift-version: [6.0.3]
 
     steps:
     - name: Checkout repository
@@ -84,6 +81,11 @@ jobs:
       with:
         deno-version: v2.x
 
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+
     - name: Cache Deno dependencies
       uses: actions/cache@v4
       with:
@@ -105,7 +107,9 @@ jobs:
       run: deno lint
 
     - name: Run Deno type checking
-      run: deno check **/*.ts
+      run: |
+        shopt -s globstar nullglob
+        deno check **/*.ts
 
     - name: Run Deno unit tests
       run: deno task test:deno
@@ -136,7 +140,7 @@ jobs:
         # Build the compiler if not already built
         swift build -c release
         # Compile test BB file for leak testing
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o test-particles.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o test-particles.wasm
 
     - name: Run SCPCB leak test (if WASM available)
       if: github.event_name == 'push' || github.event_name == 'pull_request'
@@ -203,6 +207,14 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Setup Swift
+      uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+
+    - name: Install wabt
+      run: sudo apt-get update && sudo apt-get install -y wabt
+
     - name: Cache Node dependencies
       uses: actions/cache@v4
       with:
@@ -221,7 +233,7 @@ jobs:
 
     - name: Compile test WASM for browser
       run: |
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o browser-test.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o browser-test.wasm
         wasm-validate browser-test.wasm
 
     - name: Run browser-based tests
@@ -347,6 +359,16 @@ jobs:
 
     - name: Setup Swift
       uses: swift-actions/setup-swift@v2
+      with:
+        swift-version: ${{ env.SWIFT_VERSION }}
+
+    - name: Install wabt (Linux)
+      if: runner.os == 'Linux'
+      run: sudo apt-get update && sudo apt-get install -y wabt
+
+    - name: Install wabt (macOS)
+      if: runner.os == 'macOS'
+      run: brew install wabt
 
     - name: Cache dependencies
       uses: actions/cache@v4
@@ -371,7 +393,7 @@ jobs:
     - name: Validate WASM output
       run: |
         # Test that compiler produces valid WASM
-        .build/debug/blitz3d-wasm Sources/Runtime/thin/particles.bb -o integration-test.wasm
+        .build/release/blitz3d-wasm Sources/Runtime/thin/particles.bb -o integration-test.wasm
         wasm-validate integration-test.wasm
         
         # Check that WASM can be instantiated

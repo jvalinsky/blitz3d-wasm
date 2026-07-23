@@ -42,7 +42,7 @@ The shipped `scpcb.wasm` exports many SCPCB functions but **neither `Main`, `Upd
 
 ### A-M1 — Boot to menu without freezing
 
-- [ ] Replace launcher/"press any key"/wait-loops with single-step state checks in the wrapper (guarded, not deleted — desktop path untouched)
+- [x] Replace launcher/"press any key"/wait-loops with single-step state checks in the wrapper (guarded, not deleted — desktop path untouched) (2026-07-23)
 - [ ] Blitz2D parity audit: enumerate the menu/HUD call paths (font load/select, `Text` + width/height, `LoadImage`/`MaskImage`/`DrawImage`/`ScaleImage`/`HandleImage`, `Rect`/`Line`/`Plot`/`Color`/`Cls`/`ClsColor`, non-blocking `Flip`) and close gaps in `setup/2d.ts`
 - [ ] 2D canvas layered over the 3D canvas; menu captures input, gameplay pointer-locks
 - [ ] Acceptance: preload boot+menu → `Web_InitOnce` → `Web_EnterMenu` → 300 frames of `Web_Tick(dt)`; menu visible and interactive; no hangs; memleak tooling clean

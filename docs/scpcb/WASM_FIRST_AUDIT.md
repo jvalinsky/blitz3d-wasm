@@ -1,16 +1,23 @@
 # SCPCB WASM-First Audit (Jan 29, 2026)
 
-Goal: keep SCPCB logic + parsing in BB→WASM, and shrink the JS side to a thin “device driver” (GPU upload/draw, input events, audio decode/playback, async fetch + persistence).
+Goal: keep SCPCB logic + parsing in BB→WASM, and shrink the JS side to a thin
+“device driver” (GPU upload/draw, input events, audio decode/playback, async
+fetch + persistence).
 
 This doc captures:
 
-- where SCPCB is still relying on Blitz3D engine loaders at runtime (`LoadMesh/LoadAnimMesh` of `.b3d`/`.x`)
-- what the RMESH format’s “material byte” means (as written by SCPCB’s own converter)
-- a concrete packed-mesh schema to let BB/WASM parse RMESH and hand a single buffer to JS for GPU upload
+- where SCPCB is still relying on Blitz3D engine loaders at runtime
+  (`LoadMesh/LoadAnimMesh` of `.b3d`/`.x`)
+- what the RMESH format’s “material byte” means (as written by SCPCB’s own
+  converter)
+- a concrete packed-mesh schema to let BB/WASM parse RMESH and hand a single
+  buffer to JS for GPU upload
 
 ## 1) Inventory: remaining `.b3d` / `.x` runtime loads
 
-SCPCB contains a full in-BB RMESH loader (`LoadRMesh`) in `../scpcb/MapSystem.bb:336`, but it still loads many assets via Blitz3D’s `LoadMesh/LoadAnimMesh`, including `.b3d` and `.x`.
+SCPCB contains a full in-BB RMESH loader (`LoadRMesh`) in
+`../scpcb/MapSystem.bb:336`, but it still loads many assets via Blitz3D’s
+`LoadMesh/LoadAnimMesh`, including `.b3d` and `.x`.
 
 Run the audit:
 
@@ -21,7 +28,8 @@ deno run -A Tools/scpcb_audit.ts
 If your goal is “WASM-first parsing”, the high-level direction is:
 
 - **prefer `.rmesh` everywhere at runtime**
-- convert `.b3d` and `.x` offline into `.rmesh` (or another WASM-parseable format)
+- convert `.b3d` and `.x` offline into `.rmesh` (or another WASM-parseable
+  format)
 
 Practical hotspots to convert first:
 
@@ -29,14 +37,17 @@ Practical hotspots to convert first:
 - `../scpcb/Items.bb:217`+ (many item templates reference `.x`/`.b3d`)
 - `../scpcb/NPCs.bb` (NPC models are mostly `.b3d`)
 
-Even after converting constants, note there are **dynamic callsites** like `LoadMesh(modelpath$)` (e.g. `../scpcb/Main.bb:11780`) where the runtime can still request arbitrary mesh formats. Those need either:
+Even after converting constants, note there are **dynamic callsites** like
+`LoadMesh(modelpath$)` (e.g. `../scpcb/Main.bb:11780`) where the runtime can
+still request arbitrary mesh formats. Those need either:
 
 - a hard policy: only allow `.rmesh`, or
 - a JS/WASM loader for whatever formats remain.
 
 ## 2) RMESH “material byte” semantics (from SCPCB itself)
 
-RMESH is written by SCPCB’s converter (`SaveRoomMesh`) and loaded by `LoadRMesh`.
+RMESH is written by SCPCB’s converter (`SaveRoomMesh`) and loaded by
+`LoadRMesh`.
 
 ### 2.1 Writer: `isAlpha(tex)` in `../scpcb/Converter.bb:96`
 
@@ -47,7 +58,8 @@ RMESH is written by SCPCB’s converter (`SaveRoomMesh`) and loaded by `LoadRMes
 - `2`: “lightmap” texture (detected by name containing `_lm`)
 - `3`: texture has per-pixel alpha (PNG/TGA/TPIC scan finds alpha < 255)
 
-This value is serialized into RMESH by `SaveRoomMesh()` in `../scpcb/Converter.bb:123` at:
+This value is serialized into RMESH by `SaveRoomMesh()` in
+`../scpcb/Converter.bb:123` at:
 
 - `WriteByte(f, isAlpha(tex))` for brush slot 0
 - `WriteByte(f, isAlpha(tex))` for brush slot 1
@@ -58,7 +70,8 @@ This value is serialized into RMESH by `SaveRoomMesh()` in `../scpcb/Converter.b
 
 - loads texture paths and stores two texture handles per surface
 - marks the surface as “alpha” if **any** texture slot has byte `3`
-- treats filenames containing `_lm` as lightmaps (also independently checked by substring)
+- treats filenames containing `_lm` as lightmaps (also independently checked by
+  substring)
 
 So, if you preserve RMESH parsing in WASM, you only need a small material model:
 
@@ -66,18 +79,21 @@ So, if you preserve RMESH parsing in WASM, you only need a small material model:
 - `lightmapPath` (optional)
 - `isTransparent` (any slot has byte `3`)
 
-You can ignore a lot of Blitz3D brush/texture slot complexity in the web port as long as visuals remain acceptable.
+You can ignore a lot of Blitz3D brush/texture slot complexity in the web port as
+long as visuals remain acceptable.
 
 ## 3) Packed RMESH → GPU schema (single buffer, WASM-produced)
 
-The point of this schema is: **BB/WASM parses RMESH and emits one packed buffer**.
-JS has *one* import to upload it to GPU and return an opaque mesh handle.
+The point of this schema is: **BB/WASM parses RMESH and emits one packed
+buffer**. JS has _one_ import to upload it to GPU and return an opaque mesh
+handle.
 
 ### 3.1 WASM export shape
 
 Add/keep a BB-visible function like:
 
-- `Web_LoadRMeshPacked%(path$)` → returns a pointer (i32) to a packed buffer in WASM memory
+- `Web_LoadRMeshPacked%(path$)` → returns a pointer (i32) to a packed buffer in
+  WASM memory
 
 This function:
 
@@ -93,11 +109,13 @@ JS import:
 
 Optional:
 
-- `Gfx_FreePacked(ptr: number)` (if you don’t want to keep it forever in WASM memory)
+- `Gfx_FreePacked(ptr: number)` (if you don’t want to keep it forever in WASM
+  memory)
 
 ### 3.2 Binary layout (little-endian)
 
-All offsets are byte offsets from `basePtr` (the pointer returned by `Web_LoadRMeshPacked`).
+All offsets are byte offsets from `basePtr` (the pointer returned by
+`Web_LoadRMeshPacked`).
 
 Header (`PackedMeshHeader`, 64 bytes):
 
@@ -155,7 +173,8 @@ Collision meshes (`PackedCollisionMesh`, repeated):
 
 Point entities (enough to preserve gameplay logic without JS):
 
-- `u32 kind` enum: screen/waypoint/light/spotlight/soundemitter/playerstart/model
+- `u32 kind` enum:
+  screen/waypoint/light/spotlight/soundemitter/playerstart/model
 - `f32 x,y,z`
 - `f32 a,b,c` (meaning depends on kind; e.g. angles or extra data)
 - `u32 str0Off` (e.g. image path / model path)
@@ -170,14 +189,20 @@ Trigger boxes:
 
 ### 3.3 Why this schema works for SCPCB
 
-- RMESH already contains per-surface textures + UV0/UV1 + vertex color + triangles.
-- SCPCB uses `_lm` naming and “alpha present” detection; both become `materialFlags`.
-- JS no longer needs to implement `CreateSurface/AddVertex/AddTriangle` semantics; it just uploads buffers.
+- RMESH already contains per-surface textures + UV0/UV1 + vertex color +
+  triangles.
+- SCPCB uses `_lm` naming and “alpha present” detection; both become
+  `materialFlags`.
+- JS no longer needs to implement `CreateSurface/AddVertex/AddTriangle`
+  semantics; it just uploads buffers.
 
 ## 4) Next steps (milestones)
 
-1. Add `Web_LoadRMeshPacked` (BB) for one test room and implement `Gfx_CreateMeshFromPacked` (JS).
-2. Convert a few `.x` door/button meshes to `.rmesh` offline and remove runtime `.x` loads.
-3. Gate runtime mesh loading: refuse `.b3d/.x` paths in web build; only allow `.rmesh`.
-4. Iterate: items → props → NPCs, until `.b3d/.x` references are eliminated or moved to an offline pipeline.
-
+1. Add `Web_LoadRMeshPacked` (BB) for one test room and implement
+   `Gfx_CreateMeshFromPacked` (JS).
+2. Convert a few `.x` door/button meshes to `.rmesh` offline and remove runtime
+   `.x` loads.
+3. Gate runtime mesh loading: refuse `.b3d/.x` paths in web build; only allow
+   `.rmesh`.
+4. Iterate: items → props → NPCs, until `.b3d/.x` references are eliminated or
+   moved to an offline pipeline.

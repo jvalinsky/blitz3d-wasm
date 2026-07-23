@@ -1,142 +1,169 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Blitz3D WASM - Data Test</title>
     <style>
-        body { 
-            margin: 0; 
-            background: #1a1a2e; 
-            color: #00ff88; 
-            font-family: monospace;
-            padding: 20px;
-        }
-        canvas { 
-            display: block; 
-            margin: 20px auto;
-            border: 2px solid #00ff88;
-        }
-        h1 { color: #00ff88; text-align: center; }
-        #console { 
-            background: #0f0f23; 
-            padding: 15px;
-            margin: 20px auto;
-            max-width: 800px;
-            border-radius: 8px;
-            min-height: 150px;
-        }
-        .log-entry {
-            padding: 5px 10px;
-            border-bottom: 1px solid #333;
-        }
-        .log-entry:nth-child(odd) { background: #16213e; }
-        #instructions {
-            text-align: center;
-            padding: 10px;
-            background: #16213e;
-            margin: 10px auto;
-            max-width: 800px;
-            border-radius: 8px;
-        }
-        #status {
-            text-align: center;
-            padding: 10px;
-            margin: 10px auto;
-            max-width: 800px;
-            border-radius: 8px;
-            font-weight: bold;
-        }
-        .status-loading { background: #ffaa00; color: #1a1a2e; }
-        .status-success { background: #00ff88; color: #1a1a2e; }
-        .status-error { background: #ff4444; color: white; }
+      body {
+        margin: 0;
+        background: #1a1a2e;
+        color: #00ff88;
+        font-family: monospace;
+        padding: 20px;
+      }
+      canvas {
+        display: block;
+        margin: 20px auto;
+        border: 2px solid #00ff88;
+      }
+      h1 {
+        color: #00ff88;
+        text-align: center;
+      }
+      #console {
+        background: #0f0f23;
+        padding: 15px;
+        margin: 20px auto;
+        max-width: 800px;
+        border-radius: 8px;
+        min-height: 150px;
+      }
+      .log-entry {
+        padding: 5px 10px;
+        border-bottom: 1px solid #333;
+      }
+      .log-entry:nth-child(odd) {
+        background: #16213e;
+      }
+      #instructions {
+        text-align: center;
+        padding: 10px;
+        background: #16213e;
+        margin: 10px auto;
+        max-width: 800px;
+        border-radius: 8px;
+      }
+      #status {
+        text-align: center;
+        padding: 10px;
+        margin: 10px auto;
+        max-width: 800px;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+      .status-loading {
+        background: #ffaa00;
+        color: #1a1a2e;
+      }
+      .status-success {
+        background: #00ff88;
+        color: #1a1a2e;
+      }
+      .status-error {
+        background: #ff4444;
+        color: white;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Blitz3D WASM Data Test</h1>
-    
+
     <div id="instructions">
-        <p>Open browser console (Cmd+Option+J on Mac, Ctrl+Shift+J on Windows/Linux)</p>
-        <p>Expected output: "Hello from WASM!", 42, 3.14159</p>
+      <p>
+        Open browser console (Cmd+Option+J on Mac, Ctrl+Shift+J on
+        Windows/Linux)
+      </p>
+      <p>Expected output: "Hello from WASM!", 42, 3.14159</p>
     </div>
-    
+
     <div id="status" class="status-loading">Loading WASM module...</div>
-    
+
     <canvas id="gameCanvas" width="640" height="480"></canvas>
-    
+
     <div id="console"></div>
 
     <script src="Sources/Runtime/runtime.js"></script>
     <script>
-        // Capture console output
-        const consoleDiv = document.getElementById('console');
-        const statusDiv = document.getElementById('status');
-        const originalLog = console.log;
-        const originalWarn = console.warn;
-        const originalError = console.error;
-        
-        function addLogEntry(type, args) {
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            
-            const timestamp = new Date().toLocaleTimeString();
-            const message = args.map(arg => {
-                if (typeof arg === 'object') {
-                    return JSON.stringify(arg, null, 2);
-                }
-                return String(arg);
-            }).join(' ');
-            
-            entry.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
-            
-            if (type === 'error') entry.style.color = '#ff4444';
-            else if (type === 'warn') entry.style.color = '#ffaa00';
-            else entry.style.color = '#00ff88';
-            
-            consoleDiv.appendChild(entry);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+      // Capture console output
+      const consoleDiv = document.getElementById("console");
+      const statusDiv = document.getElementById("status");
+      const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
+
+      function addLogEntry(type, args) {
+        const entry = document.createElement("div");
+        entry.className = "log-entry";
+
+        const timestamp = new Date().toLocaleTimeString();
+        const message = args.map((arg) => {
+          if (typeof arg === "object") {
+            return JSON.stringify(arg, null, 2);
+          }
+          return String(arg);
+        }).join(" ");
+
+        entry.textContent =
+          `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+
+        if (type === "error") entry.style.color = "#ff4444";
+        else if (type === "warn") entry.style.color = "#ffaa00";
+        else entry.style.color = "#00ff88";
+
+        consoleDiv.appendChild(entry);
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+      }
+
+      console.log = function (...args) {
+        originalLog.apply(console, args);
+        addLogEntry("log", args);
+      };
+
+      console.warn = function (...args) {
+        originalWarn.apply(console, args);
+        addLogEntry("warn", args);
+      };
+
+      console.error = function (...args) {
+        originalError.apply(console, args);
+        addLogEntry("error", args);
+      };
+
+      async function runTest() {
+        console.log("Starting Blitz3D WASM test...");
+
+        try {
+          console.log(
+            "Loading WASM module from test_data_print.wasm...",
+          );
+          const module = await Blitz3D.load(
+            "test_data_print.wasm",
+            "gameCanvas",
+          );
+
+          console.log("WASM module loaded successfully!");
+          console.log(
+            "Module exports:",
+            Object.keys(module.instance.exports),
+          );
+
+          // Check if Main function exists and was called
+          if (module.instance.exports.Main) {
+            statusDiv.textContent =
+              "WASM loaded! Check console for output.";
+            statusDiv.className = "status-success";
+          } else {
+            statusDiv.textContent =
+              "Warning: Main function not found in exports";
+            statusDiv.className = "status-error";
+          }
+        } catch (err) {
+          console.error("Failed to load WASM:", err);
+          statusDiv.textContent = "Error loading WASM: " + err.message;
+          statusDiv.className = "status-error";
         }
-        
-        console.log = function(...args) {
-            originalLog.apply(console, args);
-            addLogEntry('log', args);
-        };
-        
-        console.warn = function(...args) {
-            originalWarn.apply(console, args);
-            addLogEntry('warn', args);
-        };
-        
-        console.error = function(...args) {
-            originalError.apply(console, args);
-            addLogEntry('error', args);
-        };
-        
-        async function runTest() {
-            console.log("Starting Blitz3D WASM test...");
-            
-            try {
-                console.log("Loading WASM module from test_data_print.wasm...");
-                const module = await Blitz3D.load('test_data_print.wasm', 'gameCanvas');
-                
-                console.log("WASM module loaded successfully!");
-                console.log("Module exports:", Object.keys(module.instance.exports));
-                
-                // Check if Main function exists and was called
-                if (module.instance.exports.Main) {
-                    statusDiv.textContent = "WASM loaded! Check console for output.";
-                    statusDiv.className = "status-success";
-                } else {
-                    statusDiv.textContent = "Warning: Main function not found in exports";
-                    statusDiv.className = "status-error";
-                }
-                
-            } catch (err) {
-                console.error("Failed to load WASM:", err);
-                statusDiv.textContent = "Error loading WASM: " + err.message;
-                statusDiv.className = "status-error";
-            }
-        }
-        
-        runTest();
+      }
+
+      runTest();
     </script>
-</body>
+  </body>
 </html>

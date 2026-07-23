@@ -1,153 +1,177 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Blitz3D WASM - Graphics Demo (Fast)</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
     <style>
-        body {
-            margin: 0;
-            background: #1a1a2e;
-            color: #0f0;
-            font-family: monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        #canvas { border: 1px solid #333; background: #000; }
-        #log {
-            width: 800px; height: 120px;
-            background: #0a0a1a; border: 1px solid #333;
-            padding: 10px; overflow-y: auto; white-space: pre;
-            margin-top: 10px; font-size: 11px;
-        }
-        h1 { color: #4af; margin: 10px; font-size: 18px; }
-        #stats { color: #4af; margin: 10px; font-size: 14px; }
+      body {
+        margin: 0;
+        background: #1a1a2e;
+        color: #0f0;
+        font-family: monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      #canvas {
+        border: 1px solid #333;
+        background: #000;
+      }
+      #log {
+        width: 800px;
+        height: 120px;
+        background: #0a0a1a;
+        border: 1px solid #333;
+        padding: 10px;
+        overflow-y: auto;
+        white-space: pre;
+        margin-top: 10px;
+        font-size: 11px;
+      }
+      h1 {
+        color: #4af;
+        margin: 10px;
+        font-size: 18px;
+      }
+      #stats {
+        color: #4af;
+        margin: 10px;
+        font-size: 14px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Blitz3D WASM - 3D Graphics Demo (60fps)</h1>
     <div id="stats">Loading...</div>
     <canvas id="canvas" width="800" height="600"></canvas>
     <div id="log"></div>
-    
+
     <script src="runtime.js"></script>
     <script>
-    const logDiv = document.getElementById('log');
-    const statsDiv = document.getElementById('stats');
-    console.log = (...args) => {
-        logDiv.innerHTML += args.join(' ') + '\n';
+      const logDiv = document.getElementById("log");
+      const statsDiv = document.getElementById("stats");
+      console.log = (...args) => {
+        logDiv.innerHTML += args.join(" ") + "\n";
         logDiv.scrollTop = logDiv.scrollHeight;
-    };
-    
-    async function init() {
-        console.log('Blitz3D Graphics Demo (Non-blocking)');
-        console.log('=====================================');
-        console.log('Scene setup via JS, animation at 60fps');
-        console.log('');
-        
-        const canvas = document.getElementById('canvas');
+      };
+
+      async function init() {
+        console.log("Blitz3D Graphics Demo (Non-blocking)");
+        console.log("=====================================");
+        console.log("Scene setup via JS, animation at 60fps");
+        console.log("");
+
+        const canvas = document.getElementById("canvas");
         const runtime = new Blitz3DThinRuntime(canvas);
         const imports = runtime.getImports();
-        
+
         // Load WASM just to have access to math functions if needed
         try {
-            const response = await fetch('GraphicsDemo.wasm');
-            const bytes = await response.arrayBuffer();
-            const { instance } = await WebAssembly.instantiate(bytes, imports);
-            runtime.memory = instance.exports.memory;
-            console.log('WASM loaded (using runtime functions)');
-        } catch(e) {
-            console.log('WASM load skipped: ' + e.message);
+          const response = await fetch("GraphicsDemo.wasm");
+          const bytes = await response.arrayBuffer();
+          const { instance } = await WebAssembly.instantiate(
+            bytes,
+            imports,
+          );
+          runtime.memory = instance.exports.memory;
+          console.log("WASM loaded (using runtime functions)");
+        } catch (e) {
+          console.log("WASM load skipped: " + e.message);
         }
-        
+
         // Setup scene using runtime imports directly (fast!)
         const env = imports.env;
-        
+
         // Camera
         const camera = env.CreateCamera(0);
         env.PositionEntity(camera, 0, 4, -10);
         runtime.activeCamera.lookAt(0, 1, 0);
-        
+
         // Ground
         const ground = env.CreatePlane(0);
         env.PositionEntity(ground, 0, 0, 0);
         env.ScaleEntity(ground, 10, 1, 10);
         const gEnt = runtime.entities.get(ground);
         if (gEnt) gEnt.material.color.setHex(0x334455);
-        
+
         // Cube (red)
         const cube = env.CreateCube(0);
         env.PositionEntity(cube, 0, 1.5, 0);
         const cubeEnt = runtime.entities.get(cube);
         if (cubeEnt) cubeEnt.material.color.setHex(0xff4444);
-        
+
         // Spheres (orbiting)
         const spheres = [];
         const colors = [0x44ff44, 0x4444ff, 0xffff44];
         for (let i = 0; i < 3; i++) {
-            const s = env.CreateSphere(16, 0);
-            env.ScaleEntity(s, 0.6, 0.6, 0.6);
-            const sEnt = runtime.entities.get(s);
-            if (sEnt) sEnt.material.color.setHex(colors[i]);
-            spheres.push({id: s, offset: i * (Math.PI * 2 / 3)});
+          const s = env.CreateSphere(16, 0);
+          env.ScaleEntity(s, 0.6, 0.6, 0.6);
+          const sEnt = runtime.entities.get(s);
+          if (sEnt) sEnt.material.color.setHex(colors[i]);
+          spheres.push({ id: s, offset: i * (Math.PI * 2 / 3) });
         }
-        
+
         // Lights
         const dirLight = new THREE.DirectionalLight(0xffffff, 1);
         dirLight.position.set(5, 10, -5);
         runtime.scene.add(dirLight);
         runtime.scene.add(new THREE.AmbientLight(0x404060, 0.5));
-        
+
         // Grid
         const grid = new THREE.GridHelper(20, 20, 0x445566, 0x334455);
         grid.position.y = 0.01;
         runtime.scene.add(grid);
-        
-        console.log('Scene created: camera, ground, cube, 3 spheres, lights');
-        console.log('');
-        
+
+        console.log(
+          "Scene created: camera, ground, cube, 3 spheres, lights",
+        );
+        console.log("");
+
         // Animation loop - runs at 60fps
         let frame = 0;
         let angle = 0;
         const startTime = performance.now();
-        
+
         function animate() {
-            angle += 0.02;
-            
-            // Rotate cube
-            const cubeObj = runtime.entities.get(cube);
-            if (cubeObj && cubeObj.obj) {
-                cubeObj.obj.rotation.x += 0.01;
-                cubeObj.obj.rotation.y += 0.02;
-            }
-            
-            // Orbit spheres
-            spheres.forEach((s, i) => {
-                const a = angle + s.offset;
-                const x = Math.cos(a) * 4;
-                const z = Math.sin(a) * 4;
-                const y = 1.5 + Math.sin(angle * 2 + s.offset) * 0.5;
-                env.PositionEntity(s.id, x, y, z);
-            });
-            
-            runtime.render();
-            
-            frame++;
-            if (frame % 60 === 0) {
-                const elapsed = (performance.now() - startTime) / 1000;
-                const fps = (frame / elapsed).toFixed(1);
-                statsDiv.textContent = `Entities: ${runtime.entities.size} | Frame: ${frame} | FPS: ${fps}`;
-            }
-            
-            requestAnimationFrame(animate);
+          angle += 0.02;
+
+          // Rotate cube
+          const cubeObj = runtime.entities.get(cube);
+          if (cubeObj && cubeObj.obj) {
+            cubeObj.obj.rotation.x += 0.01;
+            cubeObj.obj.rotation.y += 0.02;
+          }
+
+          // Orbit spheres
+          spheres.forEach((s, i) => {
+            const a = angle + s.offset;
+            const x = Math.cos(a) * 4;
+            const z = Math.sin(a) * 4;
+            const y = 1.5 + Math.sin(angle * 2 + s.offset) * 0.5;
+            env.PositionEntity(s.id, x, y, z);
+          });
+
+          runtime.render();
+
+          frame++;
+          if (frame % 60 === 0) {
+            const elapsed = (performance.now() - startTime) / 1000;
+            const fps = (frame / elapsed).toFixed(1);
+            statsDiv.textContent =
+              `Entities: ${runtime.entities.size} | Frame: ${frame} | FPS: ${fps}`;
+          }
+
+          requestAnimationFrame(animate);
         }
-        
+
         animate();
-        console.log('Animation started at 60fps');
-    }
-    
-    init();
+        console.log("Animation started at 60fps");
+      }
+
+      init();
     </script>
-</body>
+  </body>
 </html>

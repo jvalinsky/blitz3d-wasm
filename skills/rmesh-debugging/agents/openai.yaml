@@ -2,4 +2,3 @@ interface:
   display_name: "RMESH Debugging"
   short_description: "Debug RMESH parsing and conversion"
   default_prompt: "Use $rmesh-debugging to triage this .rmesh issue: confirm structure and SCPCB slot/UV conventions, identify why materials/lightmaps look wrong, and list exact conversion + validation commands to confirm the fix."
-

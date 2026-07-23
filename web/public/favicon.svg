@@ -15,7 +15,15 @@
   </text>
 
   <rect x="18" y="34" width="64" height="46" fill="#ffffff" />
-  <rect x="18" y="34" width="64" height="46" fill="none" stroke="#808080" stroke-width="1" />
+  <rect
+    x="18"
+    y="34"
+    width="64"
+    height="46"
+    fill="none"
+    stroke="#808080"
+    stroke-width="1"
+  />
 
   <text
     x="50"

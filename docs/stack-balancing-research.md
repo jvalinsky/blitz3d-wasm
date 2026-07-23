@@ -1,6 +1,7 @@
 # Stack Balancing Research: Comprehensive Algorithm Documentation
 
 ## Table of Contents
+
 1. [Option A: WASM Spec 3-Stack Validator](#option-a-wasm-spec-3-stack-validator)
 2. [Option B: SSA-Based Stackification](#option-b-ssa-based-stackification)
 3. [Option C: Koopman's Intra-Block Scheduler](#option-c-koopmans-intra-block-scheduler)
@@ -13,9 +14,13 @@
 
 ## Background
 
-The WebAssembly specification defines a validation algorithm in [Appendix A](https://webassembly.github.io/spec/core/appendix/algorithm.html) that verifies type safety and stack balance. This algorithm is what every WASM runtime uses to validate modules before execution.
+The WebAssembly specification defines a validation algorithm in
+[Appendix A](https://webassembly.github.io/spec/core/appendix/algorithm.html)
+that verifies type safety and stack balance. This algorithm is what every WASM
+runtime uses to validate modules before execution.
 
-The key insight: **if you track types during code generation the same way the validator does, you can detect imbalances immediately and fix them**.
+The key insight: **if you track types during code generation the same way the
+validator does, you can detect imbalances immediately and fix them**.
 
 ## The Three Stacks
 
@@ -32,7 +37,9 @@ enum StackValueType {
 }
 ```
 
-**Purpose**: Know exactly what types are on the stack at any point. When you push `i32.const 5`, the validator pushes `.i32` to vals. When you execute `i32.add`, it pops two `.i32` and pushes one `.i32`.
+**Purpose**: Know exactly what types are on the stack at any point. When you
+push `i32.const 5`, the validator pushes `.i32` to vals. When you execute
+`i32.add`, it pops two `.i32` and pushes one `.i32`.
 
 ### 2. Control Stack (`ctrls`)
 
@@ -51,7 +58,8 @@ struct ControlFrame {
 }
 ```
 
-**Purpose**: Know the "floor" of the stack (can't pop below valHeight), and know what types must remain when the block ends.
+**Purpose**: Know the "floor" of the stack (can't pop below valHeight), and know
+what types must remain when the block ends.
 
 ### 3. Initialization Stack (`inits`)
 
@@ -61,7 +69,8 @@ Tracks which **local variables have been assigned**.
 inits: Set<Int>  // Indices of initialized locals
 ```
 
-**Purpose**: Catch use-before-initialization errors. In WASM 2.0+ with non-defaultable types, this prevents reading garbage values.
+**Purpose**: Catch use-before-initialization errors. In WASM 2.0+ with
+non-defaultable types, this prevents reading garbage values.
 
 ## Core Operations
 
@@ -180,11 +189,14 @@ func unreachable() {
 }
 ```
 
-**Why this matters**: After a `br` or `return`, any following code is dead. The stack becomes "polymorphic" - it can pretend to have any types needed. This prevents spurious errors in dead code.
+**Why this matters**: After a `br` or `return`, any following code is dead. The
+stack becomes "polymorphic" - it can pretend to have any types needed. This
+prevents spurious errors in dead code.
 
 ## Instruction Validation
 
 ### Constants
+
 ```swift
 case .i32Const(_): pushVal(.i32)
 case .i64Const(_): pushVal(.i64)
@@ -193,6 +205,7 @@ case .f64Const(_): pushVal(.f64)
 ```
 
 ### Binary Operations
+
 ```swift
 // i32.add: [i32 i32] -> [i32]
 case .i32Add, .i32Sub, .i32Mul, .i32DivS, .i32DivU:
@@ -208,6 +221,7 @@ case .f32Add, .f32Sub, .f32Mul, .f32Div:
 ```
 
 ### Comparisons
+
 ```swift
 // i32.eq: [i32 i32] -> [i32]  (returns 0 or 1)
 case .i32Eq, .i32Ne, .i32LtS, .i32GtS, .i32LeS, .i32GeS:
@@ -223,6 +237,7 @@ case .f32Lt, .f32Gt, .f32Le, .f32Ge:
 ```
 
 ### Conversions
+
 ```swift
 // i32.trunc_f32_s: [f32] -> [i32]
 case .i32TruncF32S:
@@ -236,6 +251,7 @@ case .f32ConvertI32S:
 ```
 
 ### Locals
+
 ```swift
 // local.get $idx: [] -> [type_of_local]
 case .localGet(let idx):
@@ -257,6 +273,7 @@ case .localTee(let idx):
 ```
 
 ### Memory Operations
+
 ```swift
 // i32.load: [i32] -> [i32]  (address -> value)
 case .i32Load:
@@ -355,9 +372,12 @@ case .call(let funcIdx):
 
 ### Where to Hook In
 
-1. **ExpressionGeneration.generateWithInfo()**: After generating instructions, validate them
-2. **StatementGeneration.generateStatement()**: At block boundaries, check balance
-3. **FunctionGeneration.generateFunction()**: Reset validator at start, check at end
+1. **ExpressionGeneration.generateWithInfo()**: After generating instructions,
+   validate them
+2. **StatementGeneration.generateStatement()**: At block boundaries, check
+   balance
+3. **FunctionGeneration.generateFunction()**: Reset validator at start, check at
+   end
 
 ### Auto-Fix: Inserting Drops
 
@@ -427,9 +447,14 @@ func balanceIfBranches(thenInstrs: inout [WASMInstruction],
 
 ## Background
 
-Static Single Assignment (SSA) form is the dominant IR in modern compilers. Each variable is assigned exactly once, making dataflow analysis trivial. Production WASM compilers (LLVM, Binaryen, Waffle) use SSA internally.
+Static Single Assignment (SSA) form is the dominant IR in modern compilers. Each
+variable is assigned exactly once, making dataflow analysis trivial. Production
+WASM compilers (LLVM, Binaryen, Waffle) use SSA internally.
 
-The insight from ["WebAssembly Is Not a Stack Machine"](https://news.ycombinator.com/item?id=33093897): WASM's locals are mutable, defeating SSA benefits. The solution is to use SSA internally and only emit locals for values that truly need them.
+The insight from
+["WebAssembly Is Not a Stack Machine"](https://news.ycombinator.com/item?id=33093897):
+WASM's locals are mutable, defeating SSA benefits. The solution is to use SSA
+internally and only emit locals for values that truly need them.
 
 ## SSA IR Design
 
@@ -501,12 +526,14 @@ enum SSATerminator {
 ### Block Parameters vs Phi Nodes
 
 Traditional SSA uses phi nodes at merge points:
+
 ```
 BB2:
   %x = phi [%a, BB0], [%b, BB1]
 ```
 
 Block parameters are equivalent but cleaner:
+
 ```
 BB2(%x):
   use %x
@@ -628,6 +655,7 @@ func emitStructured(_ block: BlockID, ...) -> [WASMInstruction] {
 Decide which values go on the stack vs into locals.
 
 **Rule**: A value can be "stackified" (computed directly onto the stack) IFF:
+
 1. It's used exactly once
 2. Its use is the next instruction
 
@@ -656,7 +684,8 @@ struct Treeifier {
 }
 ```
 
-**Tree Building** (from [Evan Wallace's algorithm](https://gist.github.com/evanw/58a8a5b8b4a1da32fcdcfbf9da87c82a)):
+**Tree Building** (from
+[Evan Wallace's algorithm](https://gist.github.com/evanw/58a8a5b8b4a1da32fcdcfbf9da87c82a)):
 
 ```swift
 /// Tree representation for stackified code
@@ -777,9 +806,13 @@ func emitWASM(_ tree: Tree) -> [WASMInstruction] {
 ## Why SSA Guarantees Balance
 
 With SSA + treeification:
-- Every value is either on the stack (single-use, immediately consumed) or in a local
-- Block boundaries automatically balance because structured control flow + blockparams handle merge points
-- No possibility of "leftover" values - everything is explicitly consumed or stored
+
+- Every value is either on the stack (single-use, immediately consumed) or in a
+  local
+- Block boundaries automatically balance because structured control flow +
+  blockparams handle merge points
+- No possibility of "leftover" values - everything is explicitly consumed or
+  stored
 
 ---
 
@@ -787,13 +820,18 @@ With SSA + treeification:
 
 ## Background
 
-Philip Koopman's 1994 paper ["A Preliminary Exploration of Optimized Stack Code Generation"](https://users.ece.cmu.edu/~koopman/stack_compiler/stack_co.html) addresses a different problem: reducing redundant local variable loads within basic blocks.
+Philip Koopman's 1994 paper
+["A Preliminary Exploration of Optimized Stack Code Generation"](https://users.ece.cmu.edu/~koopman/stack_compiler/stack_co.html)
+addresses a different problem: reducing redundant local variable loads within
+basic blocks.
 
-**Key distinction**: This algorithm assumes code is already correct and balanced. It optimizes; it doesn't fix.
+**Key distinction**: This algorithm assumes code is already correct and
+balanced. It optimizes; it doesn't fix.
 
 ## The Problem It Solves
 
 Consider this code:
+
 ```
 a = x + 1
 b = a + x   ; x is loaded again, redundantly
@@ -801,6 +839,7 @@ c = b + x   ; x is loaded AGAIN
 ```
 
 Naive compilation:
+
 ```
 local.get $x     ; load x
 i32.const 1
@@ -818,7 +857,8 @@ i32.add
 local.set $c
 ```
 
-With stack scheduling, x could stay on the stack between uses, eliminating 2 loads.
+With stack scheduling, x could stay on the stack between uses, eliminating 2
+loads.
 
 ## Algorithm Details
 
@@ -945,7 +985,9 @@ func schedule(_ block: inout [Instruction], pairs: [UseReusePair]) {
 
 ### Key Limitation: Cross-Block Values
 
-From Koopman: "Generalized stack scheduling is a bit more difficult than register scheduling because stack depth must be uniform and consistent when control passes through branch targets."
+From Koopman: "Generalized stack scheduling is a bit more difficult than
+register scheduling because stack depth must be uniform and consistent when
+control passes through branch targets."
 
 **The algorithm REQUIRES the stack to be empty at block boundaries.**
 
@@ -962,6 +1004,7 @@ assert(stackDepth == 0, "Stack must be empty at branch")
 ## Why This Doesn't Fix Stack Imbalance
 
 The Blitz3D compiler's problem is generating code where:
+
 ```
 if (cond) then
     call SomeFunction()  ; leaves i32 on stack
@@ -970,6 +1013,7 @@ end if
 ```
 
 Koopman's algorithm:
+
 1. Assumes input is already balanced
 2. Never inserts drops
 3. Only optimizes within blocks
@@ -980,26 +1024,28 @@ It's an **optimization**, not a **correctness fix**.
 ## When It Would Be Useful
 
 After fixing balance with Option A, this could reduce code size by:
+
 - Eliminating redundant local loads
 - Using DUP instead of second load
 - Better stack utilization within blocks
 
-Koopman reported "91% to 100% of redundant local variable accesses were eliminated" - but only the redundant ones, not all loads.
+Koopman reported "91% to 100% of redundant local variable accesses were
+eliminated" - but only the redundant ones, not all loads.
 
 ---
 
 # Comparison Matrix
 
-| Aspect | Option A (Validator) | Option B (SSA) | Option C (Scheduler) |
-|--------|---------------------|----------------|---------------------|
-| **Solves balance problem** | Yes | Yes | No |
-| **Implementation effort** | 8-12 hours | 20-40 hours | 6-8 hours |
-| **Existing code** | 80% done | 0% done | 0% done |
-| **Complexity** | Medium | High | Low |
-| **Spec compliance** | Exact | Derived | N/A |
-| **Optimization potential** | Low | High | Medium |
-| **Risk** | Low | High | N/A |
-| **Prerequisites** | None | Major refactor | Balanced code |
+| Aspect                     | Option A (Validator) | Option B (SSA) | Option C (Scheduler) |
+| -------------------------- | -------------------- | -------------- | -------------------- |
+| **Solves balance problem** | Yes                  | Yes            | No                   |
+| **Implementation effort**  | 8-12 hours           | 20-40 hours    | 6-8 hours            |
+| **Existing code**          | 80% done             | 0% done        | 0% done              |
+| **Complexity**             | Medium               | High           | Low                  |
+| **Spec compliance**        | Exact                | Derived        | N/A                  |
+| **Optimization potential** | Low                  | High           | Medium               |
+| **Risk**                   | Low                  | High           | N/A                  |
+| **Prerequisites**          | None                 | Major refactor | Balanced code        |
 
 ---
 
@@ -1008,12 +1054,14 @@ Koopman reported "91% to 100% of redundant local variable accesses were eliminat
 ## Primary: Option A (Validator-Based)
 
 **Rationale**:
+
 1. `StackValidator.swift` already implements the core algorithm
 2. Directly addresses the stack imbalance problem
 3. Can be integrated incrementally
 4. Guaranteed to produce spec-compliant output
 
 **Next Steps**:
+
 1. Add validator property to `StatementGeneration`
 2. Call `validateInstruction()` as instructions are emitted
 3. At `popCtrl()`, insert `.drop` for excess values
@@ -1021,19 +1069,28 @@ Koopman reported "91% to 100% of redundant local variable accesses were eliminat
 
 ## Future: Consider Option B
 
-If the compiler needs significant optimization or the codebase grows, an SSA IR would be cleaner. But it's a major architectural change not justified for fixing ~10 failing files.
+If the compiler needs significant optimization or the codebase grows, an SSA IR
+would be cleaner. But it's a major architectural change not justified for fixing
+~10 failing files.
 
 ## Skip: Option C
 
-Koopman's algorithm solves a different problem (optimization, not correctness) and requires already-balanced code as input.
+Koopman's algorithm solves a different problem (optimization, not correctness)
+and requires already-balanced code as input.
 
 ---
 
 # Sources
 
-- [WebAssembly Validation Algorithm](https://webassembly.github.io/spec/core/appendix/algorithm.html) - Official WASM spec
-- [Binaryen Stack IR](https://github.com/WebAssembly/binaryen/blob/main/src/wasm-stack.h) - Production implementation
-- [Waffle SSA Framework](https://github.com/bytecodealliance/waffle) - Bytecode Alliance SSA IR
-- [Stackify Algorithm Gist](https://gist.github.com/evanw/58a8a5b8b4a1da32fcdcfbf9da87c82a) - Evan Wallace's implementation
-- [Koopman Stack Scheduling](https://users.ece.cmu.edu/~koopman/stack_compiler/stack_co.html) - Original 1994 paper
-- [HN: WASM Is Not a Stack Machine](https://news.ycombinator.com/item?id=33093897) - Discussion of WASM's true nature
+- [WebAssembly Validation Algorithm](https://webassembly.github.io/spec/core/appendix/algorithm.html) -
+  Official WASM spec
+- [Binaryen Stack IR](https://github.com/WebAssembly/binaryen/blob/main/src/wasm-stack.h) -
+  Production implementation
+- [Waffle SSA Framework](https://github.com/bytecodealliance/waffle) - Bytecode
+  Alliance SSA IR
+- [Stackify Algorithm Gist](https://gist.github.com/evanw/58a8a5b8b4a1da32fcdcfbf9da87c82a) -
+  Evan Wallace's implementation
+- [Koopman Stack Scheduling](https://users.ece.cmu.edu/~koopman/stack_compiler/stack_co.html) -
+  Original 1994 paper
+- [HN: WASM Is Not a Stack Machine](https://news.ycombinator.com/item?id=33093897) -
+  Discussion of WASM's true nature

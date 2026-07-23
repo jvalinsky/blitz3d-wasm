@@ -216,7 +216,10 @@ const startServer = async (): Promise<TestServer> => {
     const normalized = explicit.endsWith("/interpreter.html")
       ? explicit
       : explicit.replace(/\/+$/, "") + "/interpreter.html";
-    return { url: withQueryParam(normalized, "test", "1"), shutdown: async () => {} };
+    return {
+      url: withQueryParam(normalized, "test", "1"),
+      shutdown: async () => {},
+    };
   }
 
   const repoRoot = fromFileUrl(new URL("../", import.meta.url));
@@ -1591,7 +1594,9 @@ Deno.test("interpreter ui behavior", async () => {
             const hooks = (globalThis as any).__B3D_TEST_HOOKS__;
             const st = hooks?.getState?.();
             const hn = st?.debugSteppingStepCount;
-            const n = (typeof hn === "number" && Number.isFinite(hn)) ? (hn | 0) : -1;
+            const n = (typeof hn === "number" && Number.isFinite(hn))
+              ? (hn | 0)
+              : -1;
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
             const m = t.match(/Steps:\s*(\d+)/);
@@ -1622,7 +1627,9 @@ Deno.test("interpreter ui behavior", async () => {
             const hooks = (globalThis as any).__B3D_TEST_HOOKS__;
             const st = hooks?.getState?.();
             const hn = st?.debugSteppingStepCount;
-            const n = (typeof hn === "number" && Number.isFinite(hn)) ? (hn | 0) : -1;
+            const n = (typeof hn === "number" && Number.isFinite(hn))
+              ? (hn | 0)
+              : -1;
             const t = document.querySelector("#bbdbg-summary")?.textContent ??
               "";
             const m = t.match(/Steps:\s*(\d+)/);

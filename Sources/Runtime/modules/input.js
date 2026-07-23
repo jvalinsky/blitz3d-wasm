@@ -4,155 +4,162 @@
  */
 
 class Blitz3DInput {
-    constructor(core, graphics) {
-        this.core = core;
-        this.graphics = graphics;
-        this.keys = {};
-        this.keyHits = {};
-        this.mouseX = 0;
-        this.mouseY = 0;
-        this.mouseZ = 0;
-        this.mouseXSpeed = 0;
-        this.mouseYSpeed = 0;
-        this.mouseButtons = {};
-        this.mouseButtonHits = {};
-        this.pointerLocked = false;
-        this.consoleLine = 0;
-        this.wantPointerLock = false;
-    }
+  constructor(core, graphics) {
+    this.core = core;
+    this.graphics = graphics;
+    this.keys = {};
+    this.keyHits = {};
+    this.mouseX = 0;
+    this.mouseY = 0;
+    this.mouseZ = 0;
+    this.mouseXSpeed = 0;
+    this.mouseYSpeed = 0;
+    this.mouseButtons = {};
+    this.mouseButtonHits = {};
+    this.pointerLocked = false;
+    this.consoleLine = 0;
+    this.wantPointerLock = false;
+  }
 
-    setupImports(imports) {
-        imports.env.KeyDown = (key) => this.keys[key] ? 1 : 0;
-        imports.env.KeyHit = (key) => this.keyHits[key] ? 1 : 0;
-        imports.env.MouseX = () => this.mouseX;
-        imports.env.MouseY = () => this.mouseY;
-        imports.env.MouseZ = () => this.mouseZ;
-        imports.env.MouseXSpeed = () => this.mouseXSpeed;
-        imports.env.MouseYSpeed = () => this.mouseYSpeed;
-        imports.env.MouseDown = (button) => this.mouseButtons[button + 1] ? 1 : 0;
-        imports.env.MouseHit = (button) => this.mouseButtonHits[button + 1] ? 1 : 0;
-        imports.env.MoveMouse = (x, y) => { /* Hardware cursor move not possible in browser */ };
-        imports.env.HidePointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'none'; };
-        imports.env.ShowPointer = () => { if (this.core.canvas) this.core.canvas.style.cursor = 'default'; };
-        imports.env.KeyName = (key) => {
-            const name = this.keyNameForCode(key);
-            if (this.core && this.core.allocString) {
-                return this.core.allocString(name);
-            }
-            return 0;
+  setupImports(imports) {
+    imports.env.KeyDown = (key) => this.keys[key] ? 1 : 0;
+    imports.env.KeyHit = (key) => this.keyHits[key] ? 1 : 0;
+    imports.env.MouseX = () => this.mouseX;
+    imports.env.MouseY = () => this.mouseY;
+    imports.env.MouseZ = () => this.mouseZ;
+    imports.env.MouseXSpeed = () => this.mouseXSpeed;
+    imports.env.MouseYSpeed = () => this.mouseYSpeed;
+    imports.env.MouseDown = (button) => this.mouseButtons[button + 1] ? 1 : 0;
+    imports.env.MouseHit = (button) => this.mouseButtonHits[button + 1] ? 1 : 0;
+    imports.env.MoveMouse = (
+      x,
+      y,
+    ) => {/* Hardware cursor move not possible in browser */};
+    imports.env.HidePointer = () => {
+      if (this.core.canvas) this.core.canvas.style.cursor = "none";
+    };
+    imports.env.ShowPointer = () => {
+      if (this.core.canvas) this.core.canvas.style.cursor = "default";
+    };
+    imports.env.KeyName = (key) => {
+      const name = this.keyNameForCode(key);
+      if (this.core && this.core.allocString) {
+        return this.core.allocString(name);
+      }
+      return 0;
+    };
+
+    imports.env.WaitKey = () => {
+      return new Promise((resolve) => {
+        const handler = (e) => {
+          this.keys[e.keyCode] = true;
+          window.removeEventListener("keydown", handler);
+          resolve(e.keyCode);
         };
+        window.addEventListener("keydown", handler);
+      });
+    };
 
-        imports.env.WaitKey = () => {
-            return new Promise((resolve) => {
-                const handler = (e) => {
-                    this.keys[e.keyCode] = true;
-                    window.removeEventListener('keydown', handler);
-                    resolve(e.keyCode);
-                };
-                window.addEventListener('keydown', handler);
-            });
-        };
+    imports.env.EnablePointerLock = (enable) => {
+      this.wantPointerLock = enable === 1;
+      if (this.wantPointerLock && !this.pointerLocked && this.core.canvas) {
+        this.core.canvas.requestPointerLock();
+      }
+    };
+  }
 
-        imports.env.EnablePointerLock = (enable) => {
-            this.wantPointerLock = enable === 1;
-            if (this.wantPointerLock && !this.pointerLocked && this.core.canvas) {
-                this.core.canvas.requestPointerLock();
-            }
-        };
+  setupEventListeners() {
+    window.addEventListener("keydown", (e) => {
+      this.keys[e.keyCode] = true;
+      this.keyHits[e.keyCode] = true;
+    });
+
+    window.addEventListener("keyup", (e) => {
+      this.keys[e.keyCode] = false;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (this.core.canvas) {
+        const rect = this.core.canvas.getBoundingClientRect();
+        this.mouseX = e.clientX - rect.left;
+        this.mouseY = e.clientY - rect.top;
+        this.mouseXSpeed += e.movementX;
+        this.mouseYSpeed += e.movementY;
+      }
+    });
+
+    window.addEventListener("mousedown", (e) => {
+      this.mouseButtons[e.button + 1] = true;
+      this.mouseButtonHits[e.button + 1] = true;
+
+      if (this.wantPointerLock && !this.pointerLocked && this.core.canvas) {
+        this.core.canvas.requestPointerLock();
+      }
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      this.mouseButtons[e.button + 1] = false;
+    });
+
+    window.addEventListener("wheel", (e) => {
+      this.mouseZ += e.deltaY;
+    });
+
+    document.addEventListener("pointerlockchange", () => {
+      this.pointerLocked = document.pointerLockElement === this.core.canvas;
+    });
+  }
+
+  update() {
+    this.keyHits = {};
+    this.mouseButtonHits = {};
+    this.mouseXSpeed = 0;
+    this.mouseYSpeed = 0;
+  }
+
+  keyNameForCode(key) {
+    const specials = {
+      8: "Backspace",
+      9: "Tab",
+      13: "Enter",
+      16: "Shift",
+      17: "Ctrl",
+      18: "Alt",
+      19: "Pause",
+      20: "CapsLock",
+      27: "Escape",
+      32: "Space",
+      33: "PageUp",
+      34: "PageDown",
+      35: "End",
+      36: "Home",
+      37: "Left",
+      38: "Up",
+      39: "Right",
+      40: "Down",
+      45: "Insert",
+      46: "Delete",
+    };
+
+    if (specials[key]) return specials[key];
+
+    if (key >= 65 && key <= 90) {
+      return String.fromCharCode(key);
     }
-
-    setupEventListeners() {
-        window.addEventListener('keydown', (e) => {
-            this.keys[e.keyCode] = true;
-            this.keyHits[e.keyCode] = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            this.keys[e.keyCode] = false;
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (this.core.canvas) {
-                const rect = this.core.canvas.getBoundingClientRect();
-                this.mouseX = e.clientX - rect.left;
-                this.mouseY = e.clientY - rect.top;
-                this.mouseXSpeed += e.movementX;
-                this.mouseYSpeed += e.movementY;
-            }
-        });
-
-        window.addEventListener('mousedown', (e) => {
-            this.mouseButtons[e.button + 1] = true;
-            this.mouseButtonHits[e.button + 1] = true;
-
-            if (this.wantPointerLock && !this.pointerLocked && this.core.canvas) {
-                this.core.canvas.requestPointerLock();
-            }
-        });
-
-        window.addEventListener('mouseup', (e) => {
-            this.mouseButtons[e.button + 1] = false;
-        });
-
-        window.addEventListener('wheel', (e) => {
-            this.mouseZ += e.deltaY;
-        });
-
-        document.addEventListener('pointerlockchange', () => {
-            this.pointerLocked = (document.pointerLockElement === this.core.canvas);
-        });
+    if (key >= 48 && key <= 57) {
+      return String.fromCharCode(key);
     }
-
-    update() {
-        this.keyHits = {};
-        this.mouseButtonHits = {};
-        this.mouseXSpeed = 0;
-        this.mouseYSpeed = 0;
+    if (key >= 96 && key <= 105) {
+      return `Num${key - 96}`;
     }
-
-    keyNameForCode(key) {
-        const specials = {
-            8: 'Backspace',
-            9: 'Tab',
-            13: 'Enter',
-            16: 'Shift',
-            17: 'Ctrl',
-            18: 'Alt',
-            19: 'Pause',
-            20: 'CapsLock',
-            27: 'Escape',
-            32: 'Space',
-            33: 'PageUp',
-            34: 'PageDown',
-            35: 'End',
-            36: 'Home',
-            37: 'Left',
-            38: 'Up',
-            39: 'Right',
-            40: 'Down',
-            45: 'Insert',
-            46: 'Delete'
-        };
-
-        if (specials[key]) return specials[key];
-
-        if (key >= 65 && key <= 90) {
-            return String.fromCharCode(key);
-        }
-        if (key >= 48 && key <= 57) {
-            return String.fromCharCode(key);
-        }
-        if (key >= 96 && key <= 105) {
-            return `Num${key - 96}`;
-        }
-        if (key >= 112 && key <= 123) {
-            return `F${key - 111}`;
-        }
-        return `Key${key}`;
+    if (key >= 112 && key <= 123) {
+      return `F${key - 111}`;
     }
+    return `Key${key}`;
+  }
 }
 
-if (typeof window !== 'undefined') {
-    window.Blitz3DInput = Blitz3DInput;
+if (typeof window !== "undefined") {
+  window.Blitz3DInput = Blitz3DInput;
 }
 module.exports = Blitz3DInput;

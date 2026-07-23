@@ -44,4 +44,3 @@ if (import.meta.main) {
     console.log(`${fmt(e.size).padStart(10)}  ${e.rel}`);
   }
 }
-

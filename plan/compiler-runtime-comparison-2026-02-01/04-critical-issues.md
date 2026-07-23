@@ -1,13 +1,14 @@
 # Critical Issues Blocking SCPCB
 
-**Date**: February 1, 2026  
+**Date**: February 1, 2026\
 **Status**: Analysis Complete
 
 ---
 
 ## Overview
 
-Five **critical blockers** prevent SCPCB from running in the browser. These must be addressed before any meaningful gameplay is possible.
+Five **critical blockers** prevent SCPCB from running in the browser. These must
+be addressed before any meaningful gameplay is possible.
 
 ---
 
@@ -106,10 +107,11 @@ void Parser::parseInclude() {
 
 ### Implementation Plan
 
-**Effort**: Medium (2-3 days)  
+**Effort**: Medium (2-3 days)\
 **Priority**: P0 - Must implement immediately
 
 **Steps**:
+
 1. Add file loading support (Swift's `FileManager` or custom)
 2. Maintain `included` set to prevent duplicates
 3. Implement recursive parsing
@@ -118,6 +120,7 @@ void Parser::parseInclude() {
 6. Test with SCPCB's 23 includes
 
 **Files to Modify**:
+
 - `Sources/Compiler/Parser/Parser.swift` (main implementation)
 - Add `FileLoader.swift` helper class (optional)
 
@@ -162,8 +165,11 @@ img = LoadImage("GFX\menu\back.jpg")
 ### What's Needed
 
 **File Format Support**:
-- B3D (Blitz3D native format) - ✅ Parser exists in `Sources/Blitz3DEngine/Parsers/B3DParser.swift`
-- RMESH (SCPCB custom format) - ✅ Parser exists in `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
+
+- B3D (Blitz3D native format) - ✅ Parser exists in
+  `Sources/Blitz3DEngine/Parsers/B3DParser.swift`
+- RMESH (SCPCB custom format) - ✅ Parser exists in
+  `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
 - X (DirectX format) - ❌ Need parser
 - MD2 (Quake format) - ❌ Need parser
 - Images (JPG, PNG, BMP) - ❌ Need decoder
@@ -198,32 +204,37 @@ public func LoadTexture(filename: Int32, flags: Int32) -> Int32 {
 ```
 
 **Challenges**:
+
 - File I/O in WASM (need virtual filesystem)
 - Image decoding (use stb_image library or browser APIs)
 - Mesh parsing (B3D parser exists, need X and MD2)
 
 ### Implementation Plan
 
-**Effort**: High (2-3 weeks)  
+**Effort**: High (2-3 weeks)\
 **Priority**: P0 - Cannot display game without this
 
 **Phase 1: Virtual Filesystem** (3 days)
+
 - Integrate with TypeScript runtime VFS
 - File loading from ZIP archives
 - Path resolution
 
 **Phase 2: LoadMesh** (1 week)
+
 - B3D format (use existing parser)
 - RMESH format (use existing parser)
 - X format (new parser or use library)
 - MD2 format (for animated NPCs)
 
 **Phase 3: LoadTexture/LoadImage** (3-5 days)
+
 - Image decoding (stb_image or browser Image API)
 - Texture creation and upload
 - Format support (JPG, PNG, BMP, TGA)
 
 **Files to Create/Modify**:
+
 - `Sources/Blitz3DEngine/Exports.swift` - Add LoadMesh/LoadTexture/LoadImage
 - `Sources/Blitz3DEngine/Loaders/` - New directory for loaders
 - `Sources/Blitz3DEngine/Parsers/XParser.swift` - X format
@@ -289,26 +300,29 @@ Browser Environment:
 Two-tier approach:
 
 **Tier 1: Read-Only VFS** (for assets)
+
 ```typescript
 // TypeScript runtime manages VFS
 class VirtualFileSystem {
-    loadZip(url: string): Promise<void>
-    readFile(path: string): Uint8Array
-    fileExists(path: string): boolean
-    listDir(path: string): string[]
+  loadZip(url: string): Promise<void>;
+  readFile(path: string): Uint8Array;
+  fileExists(path: string): boolean;
+  listDir(path: string): string[];
 }
 ```
 
 **Tier 2: Read-Write Storage** (for saves)
+
 ```typescript
 class PersistentStorage {
-    // IndexedDB for save files
-    saveFile(path: string, data: Uint8Array): Promise<void>
-    loadFile(path: string): Promise<Uint8Array>
+  // IndexedDB for save files
+  saveFile(path: string, data: Uint8Array): Promise<void>;
+  loadFile(path: string): Promise<Uint8Array>;
 }
 ```
 
 **Swift Engine Integration**:
+
 ```swift
 @_cdecl("ReadFile")
 public func ReadFile(filename: Int32) -> Int32 {
@@ -331,27 +345,31 @@ public func WriteFile(filename: Int32) -> Int32 {
 
 ### Implementation Plan
 
-**Effort**: High (2-3 weeks)  
+**Effort**: High (2-3 weeks)\
 **Priority**: P0 - Cannot load config or save games
 
 **Phase 1: TypeScript VFS** (1 week)
+
 - Virtual filesystem with ZIP support
 - Path resolution and normalization
 - Directory traversal
 - Integration with existing asset loading
 
 **Phase 2: Swift File I/O API** (3-5 days)
+
 - OpenFile, ReadFile, WriteFile
 - ReadByte, ReadInt, ReadFloat, ReadString
 - CloseFile, FilePos, SeekFile
 - FileType, FileSize
 
 **Phase 3: Persistent Storage** (3-5 days)
+
 - IndexedDB integration for saves
 - Save/load game data
 - Config file persistence
 
 **Files to Create/Modify**:
+
 - `web/src/runtime/filesystem.ts` - VFS implementation
 - `Sources/Blitz3DEngine/FileIO/` - New directory
 - `Sources/Blitz3DEngine/FileIO/FileExports.swift` - File functions
@@ -414,6 +432,7 @@ f32.cos        ; Cosine (via imported function)
 **Implementation Strategy**:
 
 **Option A: WASM Imports** (Recommended)
+
 ```swift
 // Declare as imports in generated WASM
 (import "env" "sin" (func $sin (param f32) (result f32)))
@@ -426,6 +445,7 @@ export function sin(x: number): number {
 ```
 
 **Option B: Swift Functions**
+
 ```swift
 @_cdecl("Sin")
 public func Sin(angle: Float) -> Float {
@@ -439,6 +459,7 @@ public func Cos(angle: Float) -> Float {
 ```
 
 **Option C: Direct WASM Instructions** (Best Performance)
+
 ```swift
 // In CodeGen, emit WASM instructions directly
 func generateSin(_ value: WASMValue) -> WASMInstruction {
@@ -448,39 +469,43 @@ func generateSin(_ value: WASMValue) -> WASMInstruction {
 
 ### Implementation Plan
 
-**Effort**: Low-Medium (2-5 days)  
+**Effort**: Low-Medium (2-5 days)\
 **Priority**: P0 - Needed immediately
 
 **Approach**: Use Option A (WASM imports) initially, optimize later
 
 **Phase 1: TypeScript Math Library** (1 day)
+
 ```typescript
 export const mathLib = {
-    sin: (x: number) => Math.sin(x),
-    cos: (x: number) => Math.cos(x),
-    tan: (x: number) => Math.tan(x),
-    sqrt: (x: number) => Math.sqrt(x),
-    abs: (x: number) => Math.abs(x),
-    floor: (x: number) => Math.floor(x),
-    ceil: (x: number) => Math.ceil(x),
-    asin: (x: number) => Math.asin(x),
-    acos: (x: number) => Math.acos(x),
-    atan: (x: number) => Math.atan(x),
-    atan2: (y: number, x: number) => Math.atan2(y, x),
-    // ... 29 total functions
+  sin: (x: number) => Math.sin(x),
+  cos: (x: number) => Math.cos(x),
+  tan: (x: number) => Math.tan(x),
+  sqrt: (x: number) => Math.sqrt(x),
+  abs: (x: number) => Math.abs(x),
+  floor: (x: number) => Math.floor(x),
+  ceil: (x: number) => Math.ceil(x),
+  asin: (x: number) => Math.asin(x),
+  acos: (x: number) => Math.acos(x),
+  atan: (x: number) => Math.atan(x),
+  atan2: (y: number, x: number) => Math.atan2(y, x),
+  // ... 29 total functions
 };
 ```
 
 **Phase 2: Compiler Import Generation** (1 day)
+
 - Generate WASM import declarations
 - Type conversion (f32/i32)
 
 **Phase 3: Testing** (1-2 days)
+
 - Unit tests for each function
 - Accuracy validation
 - Performance benchmarks
 
 **Files to Create/Modify**:
+
 - `web/src/runtime/math.ts` - Math library
 - `Sources/Compiler/CodeGen/FunctionGeneration.swift` - Import generation
 - No Swift engine code needed (all in TypeScript)
@@ -530,49 +555,57 @@ EndIf
 **Implementation Strategy**:
 
 **Option A: TypeScript Runtime** (Recommended)
+
 ```typescript
 export const stringLib = {
-    len: (s: string) => s.length,
-    mid: (s: string, start: number, count: number) => s.substring(start - 1, start + count - 1),
-    left: (s: string, count: number) => s.substring(0, count),
-    right: (s: string, count: number) => s.substring(s.length - count),
-    replace: (s: string, find: string, replace: string) => s.replace(find, replace),
-    instr: (s: string, find: string) => s.indexOf(find) + 1,  // 1-indexed
-    upper: (s: string) => s.toUpperCase(),
-    lower: (s: string) => s.toLowerCase(),
-    trim: (s: string) => s.trim(),
-    chr: (code: number) => String.fromCharCode(code),
-    asc: (s: string) => s.charCodeAt(0),
-    // ... 28 total functions
+  len: (s: string) => s.length,
+  mid: (s: string, start: number, count: number) =>
+    s.substring(start - 1, start + count - 1),
+  left: (s: string, count: number) => s.substring(0, count),
+  right: (s: string, count: number) => s.substring(s.length - count),
+  replace: (s: string, find: string, replace: string) =>
+    s.replace(find, replace),
+  instr: (s: string, find: string) => s.indexOf(find) + 1, // 1-indexed
+  upper: (s: string) => s.toUpperCase(),
+  lower: (s: string) => s.toLowerCase(),
+  trim: (s: string) => s.trim(),
+  chr: (code: number) => String.fromCharCode(code),
+  asc: (s: string) => s.charCodeAt(0),
+  // ... 28 total functions
 };
 ```
 
 **Challenges**:
+
 - Strings are pointers in WASM
 - Need memory management for string creation
 - 1-based indexing (Blitz3D) vs 0-based (JS/WASM)
 
 ### Implementation Plan
 
-**Effort**: Medium (1-2 weeks)  
+**Effort**: Medium (1-2 weeks)\
 **Priority**: P0 - Needed for config parsing
 
 **Phase 1: String Memory Model** (2-3 days)
+
 - String storage in WASM linear memory
 - Reference counting or GC
 - Conversion between WASM pointer and JS string
 
 **Phase 2: Basic Operations** (3-5 days)
+
 - Len, Mid, Left, Right
 - Chr, Asc
 - Upper, Lower, Trim
 
 **Phase 3: Advanced Operations** (3-5 days)
+
 - Replace, Instr
 - String, Hex, Bin
 - LSet, RSet
 
 **Files to Create/Modify**:
+
 - `web/src/runtime/string.ts` - String library
 - `Sources/Compiler/CodeGen/` - String handling
 - Memory management for strings
@@ -581,17 +614,18 @@ export const stringLib = {
 
 ## Summary of Critical Issues
 
-| Issue | Location | Effort | Priority | Blocker? |
-|-------|----------|--------|----------|----------|
-| 1. Include Files | Compiler | Medium (2-3 days) | P0 | YES |
-| 2. Asset Loading | Engine | High (2-3 weeks) | P0 | YES |
-| 3. File I/O | Engine | High (2-3 weeks) | P0 | YES |
-| 4. Math Library | Runtime | Low (2-5 days) | P0 | YES |
-| 5. String Operations | Runtime | Medium (1-2 weeks) | P0 | YES |
+| Issue                | Location | Effort             | Priority | Blocker? |
+| -------------------- | -------- | ------------------ | -------- | -------- |
+| 1. Include Files     | Compiler | Medium (2-3 days)  | P0       | YES      |
+| 2. Asset Loading     | Engine   | High (2-3 weeks)   | P0       | YES      |
+| 3. File I/O          | Engine   | High (2-3 weeks)   | P0       | YES      |
+| 4. Math Library      | Runtime  | Low (2-5 days)     | P0       | YES      |
+| 5. String Operations | Runtime  | Medium (1-2 weeks) | P0       | YES      |
 
 **Total Estimated Effort**: 7-11 weeks (parallel work can reduce this)
 
 **Critical Path**:
+
 1. Include files (blocks compilation)
 2. Math + Strings (blocks basic logic)
 3. File I/O (blocks config/saves)

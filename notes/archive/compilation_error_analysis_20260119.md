@@ -1,20 +1,17 @@
 # Blitz3D-WASM SCPCB Compilation Error Analysis
 
-**Generated:** 2026-01-19 20:30:00 EST
-**Test Run:** 2026-01-19 20:07:18 EST
-**Files Tested:** 34
-**Passed:** 10 (29.4%)
-**Failed:** 24
+**Generated:** 2026-01-19 20:30:00 EST **Test Run:** 2026-01-19 20:07:18 EST
+**Files Tested:** 34 **Passed:** 10 (29.4%) **Failed:** 24
 
 ---
 
 ## Summary of Errors
 
-| Category | Count |
-|----------|-------|
-| TYPE_CONVERSION | 1220 |
-| LOCAL_VAR_RANGE | 528 |
-| UNKNOWN_ERROR | 1 |
+| Category        | Count |
+| --------------- | ----- |
+| TYPE_CONVERSION | 1220  |
+| LOCAL_VAR_RANGE | 528   |
+| UNKNOWN_ERROR   | 1     |
 
 ---
 
@@ -26,9 +23,12 @@
 
 #### A. Stack Imbalance in If/Else Branches
 
-**Symptom:** `type mismatch at end of 'if true' branch, expected [] but got [i32]`
+**Symptom:**
+`type mismatch at end of 'if true' branch, expected [] but got [i32]`
 
-**Root Cause:** Function calls used as statements leave return values on the stack, but `.drop` is only added when the function is found in `functionDefinitions`.
+**Root Cause:** Function calls used as statements leave return values on the
+stack, but `.drop` is only added when the function is found in
+`functionDefinitions`.
 
 **Reference:** `Sources/Compiler/CodeGen/StatementGeneration.swift:252`
 
@@ -38,9 +38,11 @@ if let def = def, !def.results.isEmpty {
 }
 ```
 
-**Problem:** Many runtime functions aren't registered in `functionDefinitions`, so their return values aren't dropped.
+**Problem:** Many runtime functions aren't registered in `functionDefinitions`,
+so their return values aren't dropped.
 
 **Evidence from test:**
+
 ```
 error: type mismatch at end of `if true` branch, expected [] but got [i32]
 error: type mismatch at end of `if true` branch, expected [] but got [i32, i32, i32]
@@ -49,9 +51,11 @@ error: type mismatch in call, expected [i32, f32, f32, f32, i32] but got [... i3
 
 #### B. Type Mismatches in Operations
 
-**Symptom:** `type mismatch in f32.div, expected [f32, f32] but got [... f32, i32]`
+**Symptom:**
+`type mismatch in f32.div, expected [f32, f32] but got [... f32, i32]`
 
-**Root Cause:** The `commonType()` function uses `max()` on WASMType enum, but the enum's comparison order is incorrect for type promotion.
+**Root Cause:** The `commonType()` function uses `max()` on WASMType enum, but
+the enum's comparison order is incorrect for type promotion.
 
 **Reference:** `Sources/Compiler/CodeGen/TypeHandling.swift:179`
 
@@ -70,9 +74,11 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 }
 ```
 
-**Problem:** `i32` > `f32` in this ordering, so mixing int and float doesn't promote to float correctly.
+**Problem:** `i32` > `f32` in this ordering, so mixing int and float doesn't
+promote to float correctly.
 
-**Fix Required:** Change `commonType()` to properly handle i32/f32 promotion, or fix the type order.
+**Fix Required:** Change `commonType()` to properly handle i32/f32 promotion, or
+fix the type order.
 
 ---
 
@@ -86,15 +92,18 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 2. Doesn't reuse local slots within functions
 3. `local.get/set` indices exceed declared locals
 
-**Investigation Required:** Check `VariableManagement` code for local slot tracking.
+**Investigation Required:** Check `VariableManagement` code for local slot
+tracking.
 
-**Reference:** Likely in `Sources/Compiler/CodeGen/VariableManagement.swift` or similar.
+**Reference:** Likely in `Sources/Compiler/CodeGen/VariableManagement.swift` or
+similar.
 
 ---
 
 ## Affected Files
 
 ### Failed Files (24):
+
 - Dreamfilter.bb
 - UpdateEvents.bb
 - CPU_Details.bb
@@ -122,6 +131,7 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 - Achievements.bb
 
 ### Passed Files (10):
+
 - FMod.bb
 - Skybox.bb
 - Difficulty.bb
@@ -140,7 +150,8 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 
 **Location:** `Sources/Compiler/CodeGen/StatementGeneration.swift:212-260`
 
-**Change:** Always drop function call results when used as statements, not just when `def` exists.
+**Change:** Always drop function call results when used as statements, not just
+when `def` exists.
 
 ```swift
 case .functionCall(let call):
@@ -193,16 +204,18 @@ public func commonType(_ type1: WASMType, _ type2: WASMType) -> WASMType {
 
 **Location:** `Sources/Compiler/CodeGen/VariableManagement.swift` (hypothetical)
 
-**Investigation:** Trace local variable allocation to find where slot reuse fails.
+**Investigation:** Trace local variable allocation to find where slot reuse
+fails.
 
 ---
 
 ## Test Reports
 
-**Text Report:** `compile_test_report_20260119_200718.txt` (1.0 MB)
-**JSON Report:** `compile_errors_20260119_200718.json`
+**Text Report:** `compile_test_report_20260119_200718.txt` (1.0 MB) **JSON
+Report:** `compile_errors_20260119_200718.json`
 
 Run tests with:
+
 ```bash
 cd /Users/jack/Software/scp_port/blitz3d-wasm
 ./test_scpcb_compilation.sh
@@ -212,12 +225,12 @@ cd /Users/jack/Software/scp_port/blitz3d-wasm
 
 ## Related Files
 
-| File | Purpose |
-|------|---------|
-| `Sources/Compiler/CodeGen/CodeGenerator.swift` | Main code generator |
-| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression -> WASM |
-| `Sources/Compiler/CodeGen/StatementGeneration.swift` | Statement -> WASM (line 212) |
-| `Sources/Compiler/CodeGen/TypeHandling.swift` | Type system (line 179) |
-| `Sources/Compiler/CodeGen/WASM.swift` | WASMType enum (line 22) |
-| `Sources/Compiler/Parser/Parser.swift` | Parsing statements |
-| `test_scpcb_compilation.sh` | Test runner script |
+| File                                                  | Purpose                      |
+| ----------------------------------------------------- | ---------------------------- |
+| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | Main code generator          |
+| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression -> WASM           |
+| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | Statement -> WASM (line 212) |
+| `Sources/Compiler/CodeGen/TypeHandling.swift`         | Type system (line 179)       |
+| `Sources/Compiler/CodeGen/WASM.swift`                 | WASMType enum (line 22)      |
+| `Sources/Compiler/Parser/Parser.swift`                | Parsing statements           |
+| `test_scpcb_compilation.sh`                           | Test runner script           |

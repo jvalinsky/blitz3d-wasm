@@ -26,7 +26,11 @@ export class SceneManager {
   private inputBankId = 0;
   private inputKeysPtr = 0;
 
-  constructor(bridge: EngineBridge, canvas: HTMLCanvasElement, shaderSources: ShaderSources) {
+  constructor(
+    bridge: EngineBridge,
+    canvas: HTMLCanvasElement,
+    shaderSources: ShaderSources,
+  ) {
     this.bridge = bridge;
     this.canvas = canvas;
 
@@ -34,7 +38,11 @@ export class SceneManager {
     this.glRenderer = new Renderer(canvas);
     this.glRenderer.initShaders(shaderSources);
     this.resources = new GPUResources(this.glRenderer.gl);
-    this.sceneRenderer = new SceneRenderer(bridge, this.glRenderer, this.resources);
+    this.sceneRenderer = new SceneRenderer(
+      bridge,
+      this.glRenderer,
+      this.resources,
+    );
 
     // Initialize scratch buffers for bridge data readback
     bridge.initScratchBuffers();
@@ -153,7 +161,15 @@ export class SceneManager {
     camId: number,
     screenX: number,
     screenY: number,
-  ): { id: number; x: number; y: number; z: number; nx: number; ny: number; nz: number } | null {
+  ): {
+    id: number;
+    x: number;
+    y: number;
+    z: number;
+    nx: number;
+    ny: number;
+    nz: number;
+  } | null {
     const bridge = this.bridge;
 
     // NDC coordinates
@@ -171,8 +187,10 @@ export class SceneManager {
     const fovRad = (camParams.fov * Math.PI) / 180;
     const f = 1.0 / Math.tan(fovRad / 2);
     const nf = 1.0 / (camParams.near - camParams.far);
-    proj[0] = f / aspect; proj[5] = f;
-    proj[10] = (camParams.far + camParams.near) * nf; proj[11] = -1;
+    proj[0] = f / aspect;
+    proj[5] = f;
+    proj[10] = (camParams.far + camParams.near) * nf;
+    proj[11] = -1;
     proj[14] = 2 * camParams.far * camParams.near * nf;
 
     // Build view matrix (inverse of camera world matrix)
@@ -237,7 +255,8 @@ export class SceneManager {
     const b06 = a20 * a31 - a21 * a30, b07 = a20 * a32 - a22 * a30;
     const b08 = a20 * a33 - a23 * a30, b09 = a21 * a32 - a22 * a31;
     const b10 = a21 * a33 - a23 * a31, b11 = a22 * a33 - a23 * a32;
-    let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+    let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 +
+      b05 * b06;
     if (Math.abs(det) < 1e-10) return false;
     det = 1.0 / det;
     out[0] = (a11 * b11 - a12 * b10 + a13 * b09) * det;
@@ -263,8 +282,7 @@ export class SceneManager {
     const out = new Float32Array(16);
     for (let c = 0; c < 4; c++) {
       for (let r = 0; r < 4; r++) {
-        out[c * 4 + r] =
-          a[0 * 4 + r] * b[c * 4 + 0] +
+        out[c * 4 + r] = a[0 * 4 + r] * b[c * 4 + 0] +
           a[1 * 4 + r] * b[c * 4 + 1] +
           a[2 * 4 + r] * b[c * 4 + 2] +
           a[3 * 4 + r] * b[c * 4 + 3];
@@ -273,7 +291,12 @@ export class SceneManager {
     return out;
   }
 
-  private transformPoint(m: Float32Array, x: number, y: number, z: number): [number, number, number] {
+  private transformPoint(
+    m: Float32Array,
+    x: number,
+    y: number,
+    z: number,
+  ): [number, number, number] {
     const w = m[3] * x + m[7] * y + m[11] * z + m[15];
     return [
       (m[0] * x + m[4] * y + m[8] * z + m[12]) / w,

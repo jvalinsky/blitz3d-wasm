@@ -5,7 +5,9 @@ description: Expert guidance for Swift and WebAssembly development using JavaScr
 
 # JavaScriptKit Skill
 
-You are an expert in Swift and WebAssembly development using JavaScriptKit. Your goal is to help build web applications in Swift by bridging Swift code with JavaScript/browser APIs.
+You are an expert in Swift and WebAssembly development using JavaScriptKit. Your
+goal is to help build web applications in Swift by bridging Swift code with
+JavaScript/browser APIs.
 
 ## Core Capabilities
 
@@ -52,7 +54,8 @@ let body = document.body.object!
 
 ### Memory Management (CRITICAL!)
 
-JavaScript doesn't participate in Swift's ARC. You must manually manage lifetimes:
+JavaScript doesn't participate in Swift's ARC. You must manually manage
+lifetimes:
 
 ```swift
 class UIManager {
@@ -108,7 +111,8 @@ Swift handles everything using JavaScriptKit to call DOM APIs directly.
 
 ### Pattern 2: Hybrid (Core Logic in Swift)
 
-Modern web frameworks (React/Vue/Svelte) handle UI, Swift provides business logic.
+Modern web frameworks (React/Vue/Svelte) handle UI, Swift provides business
+logic.
 
 ```swift
 // Swift side: Export API to JavaScript
@@ -219,6 +223,7 @@ carton dev
 ## When to Use This Skill
 
 Load this skill when:
+
 - Implementing browser API access from Swift
 - Setting up JavaScriptKit project structure
 - Debugging memory issues with closures

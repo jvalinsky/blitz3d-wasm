@@ -2,19 +2,23 @@
 
 ## Overview
 
-This repository uses a comprehensive GitHub Actions CI/CD pipeline designed specifically for the Blitz3D-WASM project, which involves both Swift (compiler) and Deno (runtime/testing) components.
+This repository uses a comprehensive GitHub Actions CI/CD pipeline designed
+specifically for the Blitz3D-WASM project, which involves both Swift (compiler)
+and Deno (runtime/testing) components.
 
 ## Pipeline Structure
 
 ### Main CI Pipeline (`.github/workflows/ci.yml`)
 
 **Triggers:**
+
 - Push to `main` or `develop` branches
 - Pull requests targeting `main` or `develop`
 
 **Jobs Overview:**
 
 #### 1. Swift Tests (`swift-tests`)
+
 - **Platforms:** Ubuntu and macOS
 - **Swift Versions:** 5.9, 5.10 (matrix strategy)
 - **Steps:**
@@ -25,6 +29,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Generate and upload coverage reports to Codecov
 
 #### 2. Deno/TypeScript Tests (`deno-tests`)
+
 - **Platform:** Ubuntu latest
 - **Steps:**
   - Setup Deno using `denoland/setup-deno@v2`
@@ -41,6 +46,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
     - WASM-specific leak tests (if WASM available)
 
 #### 3. Web Build Tests (`web-build-tests`)
+
 - **Purpose:** Test the web frontend build process
 - **Steps:**
   - Setup Deno
@@ -48,9 +54,14 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Run build validation tests (`deno task test:web:build`)
   - Upload build artifacts for later use
 
-**Note (2026-02-02):** `web/deno.json` now pins Vite and ensures `three` is prefetched via `deno task web:setup`. If you still hit a “cannot resolve `three`” error, rerun `deno task web:setup` (or wipe `web/node_modules/` and rerun). Offline/restricted environments can still serve `web/public/*.html` demos without the Vite pipeline. See `docs/GETTING_STARTED.md`.
+**Note (2026-02-02):** `web/deno.json` now pins Vite and ensures `three` is
+prefetched via `deno task web:setup`. If you still hit a “cannot resolve
+`three`” error, rerun `deno task web:setup` (or wipe `web/node_modules/` and
+rerun). Offline/restricted environments can still serve `web/public/*.html`
+demos without the Vite pipeline. See `docs/GETTING_STARTED.md`.
 
 #### 4. Browser WASM Tests (`browser-tests`)
+
 - **Purpose:** Test WASM compilation and browser execution
 - **Steps:**
   - Setup Node.js for Puppeteer (headless browser testing)
@@ -60,6 +71,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Archive test results and screenshots
 
 #### 5. Security Scan (`security-scan`)
+
 - **Purpose:** Security vulnerability detection
 - **Steps:**
   - Run Trivy vulnerability scanner
@@ -67,6 +79,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Check for hardcoded secrets using TruffleHog
 
 #### 6. Performance Regression Tests (`performance-tests`)
+
 - **Purpose:** Detect performance regressions on main branch
 - **Triggers:** Only on pushes to main branch
 - **Steps:**
@@ -75,6 +88,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Store performance metrics for trend analysis
 
 #### 7. Cross-Platform Integration Tests (`integration-tests`)
+
 - **Platforms:** Ubuntu and macOS
 - **Purpose:** Comprehensive integration testing across platforms
 - **Steps:**
@@ -83,6 +97,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Cross-platform compatibility verification
 
 #### 8. Test Summary (`test-summary`)
+
 - **Purpose:** Consolidate all test results
 - **Steps:**
   - Download all job artifacts
@@ -92,12 +107,14 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
 ### Nightly Pipeline (`.github/workflows/nightly-tests.yml`)
 
 **Triggers:**
+
 - Scheduled: Daily at 2 AM UTC
 - Manual: Via workflow dispatch
 
 **Jobs:**
 
 #### 1. Extended Performance Benchmarks
+
 - **Purpose:** Deep performance analysis with extended test cycles
 - **Tests:**
   - Extended memory leak tests (10 cycles, higher thresholds)
@@ -105,11 +122,13 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - SCPCB churn tests (5000 steps, comprehensive monitoring)
 
 #### 2. Cross-Platform Compatibility
+
 - **Platforms:** Ubuntu, macOS, Windows
 - **Purpose:** Ensure compatibility across all major platforms
 - **Tests:** Full Deno test suite + Swift where available
 
 #### 3. Security Monitoring
+
 - **Purpose:** Ongoing security vigilance
 - **Tests:**
   - Dependency security audits
@@ -117,6 +136,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
   - Secret scanning in recent commits
 
 #### 4. Performance Regression Detection
+
 - **Purpose:** Automated performance regression detection
 - **Method:**
   - Compare current performance with historical baselines
@@ -126,6 +146,7 @@ This repository uses a comprehensive GitHub Actions CI/CD pipeline designed spec
 ## Caching Strategy
 
 ### Swift Build Cache
+
 ```yaml
 path: |
   .build
@@ -134,6 +155,7 @@ key: ${{ runner.os }}-swift-${{ matrix.swift-version }}-${{ env.CACHE_VERSION }}
 ```
 
 ### Deno Dependencies Cache
+
 ```yaml
 path: |
   ~/.cache/deno
@@ -144,6 +166,7 @@ key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', '
 ## Security Considerations
 
 ### Permissions
+
 - All Deno commands use minimal required permissions:
   - `--allow-read`: For file access
   - `--allow-write=/tmp`: For temporary test files
@@ -151,6 +174,7 @@ key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', '
   - `--allow-net`: For network operations (security scanning)
 
 ### Dependency Security
+
 - Regular vulnerability scanning using Trivy
 - CodeQL static analysis for security vulnerabilities
 - Secret detection using TruffleHog
@@ -159,15 +183,18 @@ key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', '
 ## Performance Optimizations
 
 ### Parallel Execution
+
 - Independent jobs run in parallel to reduce total CI time
 - Matrix strategies for testing multiple configurations simultaneously
 
 ### Intelligent Caching
+
 - Multi-level caching (Deno, Swift, npm)
 - Cache invalidation based on content hashes
 - Optimized cache keys for better hit rates
 
 ### Resource Optimization
+
 - Minimal Docker images for faster startup
 - Selective artifact uploads to reduce storage
 - Conditional job execution based on event types
@@ -175,16 +202,19 @@ key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', '
 ## Monitoring and Alerting
 
 ### Test Results
+
 - Real-time GitHub UI integration with job status badges
 - Comprehensive test summaries with pass/fail indicators
 - Coverage reports integrated with Codecov
 
 ### Performance Monitoring
+
 - Automated regression detection with configurable thresholds
 - Historical performance data retention
 - Trend analysis through artifact storage
 
 ### Security Monitoring
+
 - Continuous vulnerability scanning
 - Automated security report generation
 - Integration with GitHub's native security features
@@ -194,34 +224,46 @@ key: ${{ runner.os }}-deno-${{ env.CACHE_VERSION }}-${{ hashFiles('deno.lock', '
 Based on industry standards and research:
 
 ### GitHub Actions Best Practices
-- Following [GitHub Actions documentation](https://docs.github.com/actions) patterns
+
+- Following [GitHub Actions documentation](https://docs.github.com/actions)
+  patterns
 - Using official and community-vetted actions
 - Implementing proper artifact management
 
 ### Swift Package Testing
-- Following [Swift Package Manager](https://github.com/swiftlang/swift-package-manager) guidelines
+
+- Following
+  [Swift Package Manager](https://github.com/swiftlang/swift-package-manager)
+  guidelines
 - Multi-platform testing as recommended by Swift community
 - Code coverage generation following Swift testing standards
 
 ### Deno Testing Standards
-- Following [Deno CI documentation](https://docs.deno.com/runtime/reference/continuous_integration/)
+
+- Following
+  [Deno CI documentation](https://docs.deno.com/runtime/reference/continuous_integration/)
 - Proper permission management for security
 - Comprehensive testing approach as outlined in Deno best practices
 
 ### WebAssembly Testing
-- Following [WebAssembly specification](https://www.w3.org/TR/wasm-core-1/) guidelines
+
+- Following [WebAssembly specification](https://www.w3.org/TR/wasm-core-1/)
+  guidelines
 - Browser compatibility testing
 - Memory management validation
 
 ## Configuration Files
 
 ### CI-Specific Import Map
+
 `.github/ci-import-map.json` provides CI-specific dependency resolution:
+
 - Pinned versions for consistency
 - CI-optimized import paths
 - Reduced network dependencies
 
 ### Environment Variables
+
 - `CACHE_VERSION`: Cache invalidation control
 - Platform-specific versions for consistency
 - Security-related configurations
@@ -253,16 +295,21 @@ Based on industry standards and research:
 ## Future Enhancements
 
 ### Planned Improvements
+
 - ARM64 testing for Apple Silicon compatibility
 - Container-based testing for reproducible environments
 - Advanced performance profiling with detailed metrics
 - Automated performance report generation
 
 ### Monitoring Expansion
+
 - Real-time performance dashboards
 - Automated alerting for regressions
 - Integration with external monitoring services
 
 ---
 
-This CI/CD pipeline represents a comprehensive approach to maintaining code quality, security, and performance for a complex mixed-language (Swift/Deno) WebAssembly project. It follows industry best practices and adapts them to the specific needs of the Blitz3D-WASM compilation system.
+This CI/CD pipeline represents a comprehensive approach to maintaining code
+quality, security, and performance for a complex mixed-language (Swift/Deno)
+WebAssembly project. It follows industry best practices and adapts them to the
+specific needs of the Blitz3D-WASM compilation system.

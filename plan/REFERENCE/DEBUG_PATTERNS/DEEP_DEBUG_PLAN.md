@@ -1,7 +1,7 @@
 # Deep Debugging Plan: Update.bb Type Mismatch
 
-**Goal**: Fix 4 errors where f32 values are stored into i32 globals  
-**Estimated Time**: 2-3 hours  
+**Goal**: Fix 4 errors where f32 values are stored into i32 globals\
+**Estimated Time**: 2-3 hours\
 **Approach**: Systematic instrumentation and binary search
 
 ---
@@ -13,6 +13,7 @@
 **File**: `Sources/Compiler/CodeGen/StatementGeneration.swift`
 
 #### A. Assignment Entry Point (Line ~140)
+
 ```swift
 case .assignment(let assign):
     guard let expressionGenerator = expressionGenerator else { break }
@@ -34,6 +35,7 @@ case .assignment(let assign):
 ```
 
 #### B. getTargetType() (Line ~1031)
+
 ```swift
 private func getTargetType(from expr: ExpressionNode) -> WASMType {
     print("DEBUG_TARGET_TYPE: Analyzing \(expr)")
@@ -69,6 +71,7 @@ private func getTargetType(from expr: ExpressionNode) -> WASMType {
 ```
 
 #### C. Auto-Declaration (Line ~164)
+
 ```swift
 } else {
     print("DEBUG_AUTO_DECLARE: Variable '\(id.name)' not found")
@@ -89,6 +92,7 @@ private func getTargetType(from expr: ExpressionNode) -> WASMType {
 **File**: `Sources/Compiler/CodeGen/ExpressionGeneration.swift`
 
 #### D. generateFunctionCall() (Line ~670)
+
 ```swift
 private func generateFunctionCall(_ call: FunctionCallNode) -> (instrs: [WASMInstruction], type: WASMType) {
     print("DEBUG_FUNC_CALL: \(call.name) with \(call.arguments.count) args")
@@ -114,6 +118,7 @@ private func generateFunctionCall(_ call: FunctionCallNode) -> (instrs: [WASMIns
 ```
 
 #### E. generateWithInfo() Binary Ops (Line ~280)
+
 ```swift
 private func generateBinaryOp(_ binop: BinaryOpNode) -> (instrs: [WASMInstruction], type: WASMType) {
     print("DEBUG_BINOP: \(binop.op)")
@@ -131,6 +136,7 @@ private func generateBinaryOp(_ binop: BinaryOpNode) -> (instrs: [WASMInstructio
 ```
 
 ### 1.2: Rebuild
+
 ```bash
 cd blitz3d-wasm
 swift build
@@ -141,12 +147,14 @@ swift build
 ## Phase 2: Collect Diagnostic Data (15 min)
 
 ### 2.1: Compile Update.bb with Full Logging
+
 ```bash
 cd blitz3d-wasm
 .build/arm64-apple-macosx/debug/blitz3d-wasm ../scpcb/Update.bb -o /tmp/update_debug.wasm 2>&1 | tee /tmp/update_debug.log
 ```
 
 ### 2.2: Extract Error Context
+
 ```bash
 # Find all DEBUG_ASSIGN lines
 grep "DEBUG_ASSIGN" /tmp/update_debug.log > /tmp/assignments.log
@@ -162,6 +170,7 @@ grep "DEBUG_ASSIGN_CONVERT" /tmp/update_debug.log > /tmp/conversions.log
 ```
 
 ### 2.3: Correlate with WASM Errors
+
 ```bash
 # Get the global indices that are failing
 wasm-validate /tmp/update_debug.wasm 2>&1 | tee /tmp/wasm_errors.log
@@ -176,9 +185,11 @@ wasm-objdump -x /tmp/update_debug.wasm | grep "global\[" > /tmp/globals.log
 
 ### 3.1: Find Which Globals Are Failing
 
-From wasm-validate output, we know there are 4 errors. We need to identify which global indices.
+From wasm-validate output, we know there are 4 errors. We need to identify which
+global indices.
 
 **Script**: Create `Tools/find_bad_globals.py`
+
 ```python
 import subprocess
 import re
@@ -210,6 +221,7 @@ for offset in offsets:
 ```
 
 Run:
+
 ```bash
 cd blitz3d-wasm
 python3 Tools/find_bad_globals.py > /tmp/bad_globals.txt
@@ -218,6 +230,7 @@ python3 Tools/find_bad_globals.py > /tmp/bad_globals.txt
 ### 3.2: Match Globals to Variables
 
 **Script**: Create `Tools/match_globals.py`
+
 ```python
 import re
 
@@ -247,6 +260,7 @@ for line in declarations:
 ```
 
 Run:
+
 ```bash
 python3 Tools/match_globals.py
 ```
@@ -254,6 +268,7 @@ python3 Tools/match_globals.py
 ### 3.3: Find the Assignment in Source
 
 Once we know which variable(s), grep Update.bb:
+
 ```bash
 # Example: if variable is "y"
 grep -n "^[^;]*y[^a-zA-Z].*=" /Users/jack/Software/scp_port/scpcb/Update.bb
@@ -262,12 +277,14 @@ grep -n "^[^;]*y[^a-zA-Z].*=" /Users/jack/Software/scp_port/scpcb/Update.bb
 ### 3.4: Trace the Assignment in Log
 
 Search for the specific assignment in the debug log:
+
 ```bash
 # Example: if assignment is "y = GetLineAmount2(...)"
 grep -A 20 "DEBUG_ASSIGN_START.*y.*=" /tmp/update_debug.log
 ```
 
 This should show:
+
 - What type the expression returned
 - What type the target was
 - Whether a conversion happened
@@ -282,6 +299,7 @@ This should show:
 Based on the failing assignment, create a minimal reproduction:
 
 **File**: `/tmp/minimal_repro.bb`
+
 ```blitz3d
 ; Exact pattern from Update.bb that fails
 Global y%  ; or whatever the variable is
@@ -294,6 +312,7 @@ End Function
 ```
 
 ### 4.2: Test Minimal Case
+
 ```bash
 cd blitz3d-wasm
 .build/arm64-apple-macosx/debug/blitz3d-wasm /tmp/minimal_repro.bb -o /tmp/minimal.wasm 2>&1 | tee /tmp/minimal.log
@@ -301,12 +320,15 @@ wasm-validate /tmp/minimal.wasm
 ```
 
 **Expected outcomes**:
+
 - ✓ **If it reproduces**: We have isolated the bug!
-- ✗ **If it works**: The bug requires more context (multiple assignments, specific state)
+- ✗ **If it works**: The bug requires more context (multiple assignments,
+  specific state)
 
 ### 4.3: Binary Search
 
-If minimal case works, gradually add back context from Update.bb until it breaks:
+If minimal case works, gradually add back context from Update.bb until it
+breaks:
 
 ```bash
 # Add globals one by one
@@ -315,6 +337,7 @@ If minimal case works, gradually add back context from Update.bb until it breaks
 ```
 
 Use git to track each iteration:
+
 ```bash
 git add /tmp/minimal_repro.bb
 git commit -m "Minimal repro iteration N: [description]"
@@ -325,6 +348,7 @@ git commit -m "Minimal repro iteration N: [description]"
 ## Phase 5: Analyze the Root Cause (30 min)
 
 At this point, we should have:
+
 1. **Exact variable name(s)** causing the issue
 2. **Exact assignment(s)** that fail
 3. **Debug trace** showing type flow
@@ -333,6 +357,7 @@ At this point, we should have:
 ### 5.1: Hypothesize Based on Evidence
 
 **Pattern Analysis**:
+
 - Is the RHS a function call? Which function?
 - Is it a binary operation?
 - Is it a complex expression?
@@ -341,6 +366,7 @@ At this point, we should have:
 **Common Bug Patterns**:
 
 #### Pattern A: Expression Type Inference Wrong
+
 ```
 RHS expression incorrectly inferred as f32
 → getTargetType() sees undeclared variable, defaults to i32
@@ -352,6 +378,7 @@ RHS expression incorrectly inferred as f32
 **Fix**: Check expression type inference in ExpressionGeneration.
 
 #### Pattern B: getTargetType() Returns Wrong Type
+
 ```
 Variable should be f32 (has # suffix in source)
 → Parser loses suffix information
@@ -364,6 +391,7 @@ Variable should be f32 (has # suffix in source)
 **Fix**: Verify suffix preservation through AST.
 
 #### Pattern C: Convert() Function Bug
+
 ```
 Need to convert i32→f32
 → convert() called with (from: i32, to: f32)
@@ -374,6 +402,7 @@ Need to convert i32→f32
 **Fix**: Review convert() implementation.
 
 #### Pattern D: Auto-Declaration Timing
+
 ```
 First use of variable is in complex expression
 → Expression evaluated first (generates f32)
@@ -397,6 +426,7 @@ assert(valueResult.type == targetType ||
 ### 5.3: Examine AST
 
 Add AST dumping:
+
 ```swift
 // In Parser or CodeGenerator
 func dumpAST(_ node: Any, indent: Int = 0) {
@@ -415,6 +445,7 @@ Call before generating code for the problematic function.
 Based on root cause, implement the fix. Common fixes:
 
 ### Fix A: Correct Expression Type Inference
+
 ```swift
 // In ExpressionGeneration.swift
 // Ensure Int() function returns i32, not f32
@@ -423,6 +454,7 @@ case "int":
 ```
 
 ### Fix B: Preserve Type Suffix
+
 ```swift
 // Verify in Parser.swift that type suffix is captured
 // Verify in AST.swift that IdentifierNode stores it
@@ -430,6 +462,7 @@ case "int":
 ```
 
 ### Fix C: Fix convert() Function
+
 ```swift
 // In StatementGeneration.swift
 private func convert(from source: WASMType, to target: WASMType) -> [WASMInstruction] {
@@ -449,6 +482,7 @@ private func convert(from source: WASMType, to target: WASMType) -> [WASMInstruc
 ```
 
 ### Fix D: Auto-Declare Earlier
+
 ```swift
 // Move auto-declaration before RHS evaluation
 case .assignment(let assign):
@@ -470,6 +504,7 @@ case .assignment(let assign):
 ## Phase 7: Verify Fix (15 min)
 
 ### 7.1: Test Minimal Reproduction
+
 ```bash
 cd blitz3d-wasm
 swift build
@@ -479,6 +514,7 @@ wasm-validate /tmp/test.wasm
 ```
 
 ### 7.2: Test Update.bb
+
 ```bash
 .build/arm64-apple-macosx/debug/blitz3d-wasm ../scpcb/Update.bb -o /tmp/update.wasm
 wasm-validate /tmp/update.wasm
@@ -486,13 +522,16 @@ wasm-validate /tmp/update.wasm
 ```
 
 ### 7.3: Test All Files
+
 ```bash
 ./test_scpcb_fast_detailed.sh
 # Should: 26/36 passing → 27/36 passing ✓
 ```
 
 ### 7.4: Verify No Regressions
+
 Check that passing files still pass:
+
 ```bash
 for file in BlitzAL.bb Difficulty.bb Dreamfilter.bb; do
     echo "Testing $file..."
@@ -508,29 +547,36 @@ done
 ### 8.1: Document the Fix
 
 **File**: `UPDATE_BUG_FIX.md`
+
 ```markdown
 # Update.bb Bug Fix
 
 ## Root Cause
+
 [Describe what was wrong]
 
 ## The Fix
+
 [Show the code change]
 
 ## Why It Happened
+
 [Explain the logic error]
 
 ## How to Prevent
+
 [Suggestions for preventing similar bugs]
 ```
 
 ### 8.2: Remove Debug Logging
 
 Either:
+
 - A) Remove all DEBUG prints
 - B) Put behind a flag: `if debugLogging { print(...) }`
 
 ### 8.3: Commit
+
 ```bash
 git add -A
 git commit -m "fix: Update.bb type mismatch (4 errors → 0)
@@ -557,6 +603,7 @@ Co-Authored-By: Letta <noreply@letta.com>"
 ### Useful Scripts
 
 **1. Compare WASM outputs**:
+
 ```bash
 # Generate WAT for before/after
 wasm2wat /tmp/update_before.wasm > /tmp/before.wat
@@ -565,11 +612,13 @@ diff /tmp/before.wat /tmp/after.wat
 ```
 
 **2. Find specific instruction patterns**:
+
 ```bash
 wasm-objdump -d file.wasm | grep -B5 -A5 "f32.convert_i32_s.*global.set"
 ```
 
 **3. Extract function by name**:
+
 ```bash
 wasm-objdump -d file.wasm | sed -n '/func.*<OpenRemoteFile>/,/^$/p'
 ```
@@ -577,6 +626,7 @@ wasm-objdump -d file.wasm | sed -n '/func.*<OpenRemoteFile>/,/^$/p'
 ### Debugging Checklist
 
 Before diving in:
+
 - [ ] Can reproduce error consistently
 - [ ] Have clean git state
 - [ ] Have logging infrastructure ready
@@ -584,12 +634,14 @@ Before diving in:
 - [ ] Have test case prepared
 
 During debugging:
+
 - [ ] Collect data before theorizing
 - [ ] Test hypotheses with minimal cases
 - [ ] Document findings as you go
 - [ ] Take breaks if stuck >1 hour
 
 After fixing:
+
 - [ ] Verify fix with original case
 - [ ] Test for regressions
 - [ ] Document root cause
@@ -599,16 +651,16 @@ After fixing:
 
 ## Estimated Timeline
 
-| Phase | Task | Time | Running Total |
-|-------|------|------|---------------|
-| 1 | Instrument compiler | 30 min | 0:30 |
-| 2 | Collect diagnostic data | 15 min | 0:45 |
-| 3 | Identify bad assignment | 30 min | 1:15 |
-| 4 | Reproduce minimally | 30 min | 1:45 |
-| 5 | Analyze root cause | 30 min | 2:15 |
-| 6 | Implement fix | 30 min | 2:45 |
-| 7 | Verify fix | 15 min | 3:00 |
-| 8 | Document & commit | 15 min | 3:15 |
+| Phase | Task                    | Time   | Running Total |
+| ----- | ----------------------- | ------ | ------------- |
+| 1     | Instrument compiler     | 30 min | 0:30          |
+| 2     | Collect diagnostic data | 15 min | 0:45          |
+| 3     | Identify bad assignment | 30 min | 1:15          |
+| 4     | Reproduce minimally     | 30 min | 1:45          |
+| 5     | Analyze root cause      | 30 min | 2:15          |
+| 6     | Implement fix           | 30 min | 2:45          |
+| 7     | Verify fix              | 15 min | 3:00          |
+| 8     | Document & commit       | 15 min | 3:15          |
 
 **Total**: 3 hours 15 minutes
 

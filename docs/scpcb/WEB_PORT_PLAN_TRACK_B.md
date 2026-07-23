@@ -1,15 +1,21 @@
 # SCPCB Web Port Plan (Track B: WASM-First, Offline Assets)
 
-Goal: best performance + maintainability with a **thin JS runtime** and **most gameplay logic in WASM**.
-We **do not ship `.b3d` or `.x`** in the web build; those get converted offline into a web-native packed format.
+Goal: best performance + maintainability with a **thin JS runtime** and **most
+gameplay logic in WASM**. We **do not ship `.b3d` or `.x`** in the web build;
+those get converted offline into a web-native packed format.
 
 ## Guiding Principles
 
-- **WASM owns the game**: simulation, AI, state, type system, and most file parsing that’s gameplay-facing.
-- **JS owns the browser**: WebGL/WebGPU/Audio/Input/File fetch, plus a small “driver” loop.
-- **Minimize the JS↔WASM boundary**: prefer *batch* calls, shared memory, and stable ABI over per-entity calls.
-- **Offline conversion beats runtime parsing** for large/complex assets (models, animations, textures).
-- **Version everything**: runtime ABI + packed asset formats must be explicitly versioned and validated in tests.
+- **WASM owns the game**: simulation, AI, state, type system, and most file
+  parsing that’s gameplay-facing.
+- **JS owns the browser**: WebGL/WebGPU/Audio/Input/File fetch, plus a small
+  “driver” loop.
+- **Minimize the JS↔WASM boundary**: prefer _batch_ calls, shared memory, and
+  stable ABI over per-entity calls.
+- **Offline conversion beats runtime parsing** for large/complex assets (models,
+  animations, textures).
+- **Version everything**: runtime ABI + packed asset formats must be explicitly
+  versioned and validated in tests.
 
 ## Asset Strategy (No `.b3d` / `.x` on the Web)
 
@@ -17,45 +23,56 @@ We **do not ship `.b3d` or `.x`** in the web build; those get converted offline 
 
 - **`.rmesh`**: room/world static geometry (SCPCB has BB code to read/write it).
 - **`.b3d`**: Blitz3D model format (often animated / skinned; NPCs, items).
-- **`.x`**: DirectX text meshes (static or skinned depending on exporter; many props).
+- **`.x`**: DirectX text meshes (static or skinned depending on exporter; many
+  props).
 
 ### Where parsing happens in native Blitz3D
 
-SCPCB’s BB code typically just calls `LoadMesh/LoadAnimMesh` etc; the actual `.b3d/.x` parsing is done inside the **engine** (Blitz3D / blitz3d-ng), not in BB scripts.
+SCPCB’s BB code typically just calls `LoadMesh/LoadAnimMesh` etc; the actual
+`.b3d/.x` parsing is done inside the **engine** (Blitz3D / blitz3d-ng), not in
+BB scripts.
 
 ### Web approach (Track B)
 
-1. **Offline convert `.b3d` + `.x` → `.smpk`** (single packed file: JSON metadata + BIN buffers).
+1. **Offline convert `.b3d` + `.x` → `.smpk`** (single packed file: JSON
+   metadata + BIN buffers).
 2. **Runtime refuses `.b3d/.x`** and loads `.smpk` instead.
-3. Optional follow-up: **offline convert `.rmesh` → `.smpk`** for faster loads + unified pipeline.
+3. Optional follow-up: **offline convert `.rmesh` → `.smpk`** for faster loads +
+   unified pipeline.
 
 Repository tooling already in place:
 
 - `Tools/convert_b3d_to_smpk.ts`
 - `Tools/convert_x_to_smpk.ts`
-- `Tools/assets_scpcb_convert.ts` (batch conversion + optional `--delete-source`)
-- Runtime mapping: `.b3d/.x` → `.smpk` in `web/src/runtime/graphics.ts` and `web/src/runtime/animation.ts`
+- `Tools/assets_scpcb_convert.ts` (batch conversion + optional
+  `--delete-source`)
+- Runtime mapping: `.b3d/.x` → `.smpk` in `web/src/runtime/graphics.ts` and
+  `web/src/runtime/animation.ts`
 
 Recommended deploy rule:
 
-- Convert in CI, then package **only** `.smpk` (+ textures/audio/ini) into `dist/`.
-- If you keep sources in-repo for iteration, use `--delete-source` only on the deploy artifact, not on your working tree.
+- Convert in CI, then package **only** `.smpk` (+ textures/audio/ini) into
+  `dist/`.
+- If you keep sources in-repo for iteration, use `--delete-source` only on the
+  deploy artifact, not on your working tree.
 
 ## Compiler Responsibilities (Swift BB→WASM)
 
 **Do not make the compiler an asset converter.**
 
-Keep the Swift compiler focused on correctness and performance of generated WASM.
-Instead:
+Keep the Swift compiler focused on correctness and performance of generated
+WASM. Instead:
 
-- Add a *build hint* mode (optional): emit a JSON “asset dependency report” from BB sources:
+- Add a _build hint_ mode (optional): emit a JSON “asset dependency report” from
+  BB sources:
   - string literals with `.b3d/.x/.rmesh/.png/.ogg/...`
   - dynamic path sites that need manual review
 - The Deno pipeline consumes that report to decide what to convert/preload.
 
 Why:
 
-- Asset conversion is IO-heavy, format-heavy, and evolves independently from codegen.
+- Asset conversion is IO-heavy, format-heavy, and evolves independently from
+  codegen.
 - You want reproducible tool outputs and fast incremental conversion.
 - It keeps the compiler simpler and avoids “implicit build magic”.
 
@@ -70,7 +87,8 @@ Why:
   - build meshes/skins/anims from `.smpk`
 
 - **WASM**:
-  - decides what to load, when to spawn entities, and which animation/state to play
+  - decides what to load, when to spawn entities, and which animation/state to
+    play
   - can stay synchronous by using a preloaded in-memory file system (VFS)
 
 ### Reduce boundary overhead (critical for perf)
@@ -78,15 +96,16 @@ Why:
 - Prefer a **command buffer**:
   - WASM writes compact draw/update commands into shared linear memory
   - JS reads and executes once per frame
-- Prefer *IDs/handles*:
+- Prefer _IDs/handles_:
   - WASM stores integer handles; JS maps handles → real objects
-  - define explicit lifetime + disposal paths (your memleak tooling is already set up)
+  - define explicit lifetime + disposal paths (your memleak tooling is already
+    set up)
 
 ### “Blocking loop” hardening
 
 SCPCB contains blocking loops (launcher UI, “press any key”, etc.). Web must:
 
-- keep default boot path *paused* or step-driven
+- keep default boot path _paused_ or step-driven
 - gate `Main()` behind explicit query flags
 - make initialization resumable (event-driven) over time
 
@@ -120,7 +139,8 @@ Best practices:
 
 ### Integration (browser)
 
-Keep your existing browser integration tests, but add one “asset contract” check:
+Keep your existing browser integration tests, but add one “asset contract”
+check:
 
 - Assert that the deploy manifest contains **no `.b3d` / `.x`** paths.
 
@@ -138,8 +158,10 @@ Keep your existing browser integration tests, but add one “asset contract” c
 
 ## Follow-ups (Next High-Value Work)
 
-- Add an `.rmesh → .smpk` offline converter (and then stop shipping `.rmesh` too).
+- Add an `.rmesh → .smpk` offline converter (and then stop shipping `.rmesh`
+  too).
 - Texture pipeline: convert to `ktx2`/Basis (GPU-native) and update loader.
-- Command-buffer ABI to collapse many runtime imports into a few per-frame calls.
-- Extend `.x` support if you encounter binary `.xof` or additional template blocks.
-
+- Command-buffer ABI to collapse many runtime imports into a few per-frame
+  calls.
+- Extend `.x` support if you encounter binary `.xof` or additional template
+  blocks.

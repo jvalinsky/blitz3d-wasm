@@ -3,7 +3,8 @@
 ## ✅ Completed
 
 1. **Fixed Type Signatures** - Graphics functions now use f32 for coordinates
-2. **Created Three.js Runtime** - `threejs-runtime.js` with full Blitz3D graphics API
+2. **Created Three.js Runtime** - `threejs-runtime.js` with full Blitz3D
+   graphics API
 3. **Added Module Import** - Runtime imported in demo-live.html
 
 ## 🔧 Remaining Work
@@ -11,14 +12,16 @@
 ### 1. Add Canvas Tab to UI
 
 In demo-live.html, find the tabs section and add:
+
 ```html
 <div class="tab" onclick="switchTab('canvas')">3D View</div>
 ```
 
 And add the canvas content area:
+
 ```html
-<div id="canvas-output" class="tab-content" style="background: #000;">
-    <canvas id="renderCanvas" style="width: 100%; height: 100%;"></canvas>
+<div id="canvas-output" class="tab-content" style="background: #000">
+  <canvas id="renderCanvas" style="width: 100%; height: 100%"></canvas>
 </div>
 ```
 
@@ -44,34 +47,37 @@ b3d_flip: () => graphicsRuntime.flip(),
 ### 3. Initialize Graphics Runtime
 
 Before the runtime imports, add:
+
 ```javascript
-const canvas = document.getElementById('renderCanvas');
+const canvas = document.getElementById("renderCanvas");
 if (!graphicsRuntime) {
-    graphicsRuntime = new window.Blitz3DGraphicsRuntime(canvas);
+  graphicsRuntime = new window.Blitz3DGraphicsRuntime(canvas);
 }
 ```
 
 ### 4. Handle Animation Loop
 
 For While True loops, detect and use animation frame:
+
 ```javascript
 // After WASM instantiation
-if (compiledSource.includes('While True')) {
-    // Auto-switch to canvas tab
-    switchTab('canvas');
-    
-    // Start animation loop that calls main repeatedly
-    graphicsRuntime.startAnimationLoop(() => {
-        if (wasmInstance.instance.exports.main) {
-            wasmInstance.instance.exports.main();
-        }
-    });
+if (compiledSource.includes("While True")) {
+  // Auto-switch to canvas tab
+  switchTab("canvas");
+
+  // Start animation loop that calls main repeatedly
+  graphicsRuntime.startAnimationLoop(() => {
+    if (wasmInstance.instance.exports.main) {
+      wasmInstance.instance.exports.main();
+    }
+  });
 }
 ```
 
 ## 🎯 Testing
 
 Once integrated, test with:
+
 ```blitz3d
 Graphics3D 800, 600
 cube = CreateCube()

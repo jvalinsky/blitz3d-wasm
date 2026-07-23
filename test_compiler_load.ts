@@ -1,5 +1,5 @@
 // Test loading the Blitz3D compiler WASM
-const bytes = await Deno.readFile('web/blitz3d-compiler.wasm');
+const bytes = await Deno.readFile("web/blitz3d-compiler.wasm");
 
 let wasmMemory: WebAssembly.Memory | null = null;
 
@@ -7,7 +7,7 @@ const errno = {
   success: 0,
   badf: 8,
   noent: 44,
-  nosys: 52
+  nosys: 52,
 };
 
 const wasiImports = {
@@ -44,21 +44,21 @@ const wasiImports = {
   poll_oneoff: () => errno.success,
   proc_exit: (code: number) => console.log(`Exit code: ${code}`),
   random_get: () => errno.success,
-  sched_yield: () => errno.success
+  sched_yield: () => errno.success,
 };
 
 try {
   const wasm = await WebAssembly.instantiate(bytes, {
     env: {},
-    wasi_snapshot_preview1: wasiImports
+    wasi_snapshot_preview1: wasiImports,
   });
-  
+
   wasmMemory = wasm.instance.exports.memory as WebAssembly.Memory;
-  
-  console.log('SUCCESS: Compiler WASM loaded!');
-  console.log('Exports:', Object.keys(wasm.instance.exports));
-  console.log('Memory:', wasmMemory ? 'available' : 'not available');
+
+  console.log("SUCCESS: Compiler WASM loaded!");
+  console.log("Exports:", Object.keys(wasm.instance.exports));
+  console.log("Memory:", wasmMemory ? "available" : "not available");
 } catch (error) {
-  console.error('FAILED to load compiler WASM:');
+  console.error("FAILED to load compiler WASM:");
   console.error(error);
 }

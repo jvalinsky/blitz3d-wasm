@@ -1,17 +1,21 @@
 # Stack Balancing Implementation Plan
 
-**Status**: Infrastructure complete (Phase 1), Integration present but disabled (Phase 2), Optimization pending (Phase 3)
-**Current Pass Rate**: 8/36 files (22%) in fast test
-**Goal**: Implement proper stack validation + Koopman optimization
+**Status**: Infrastructure complete (Phase 1), Integration present but disabled
+(Phase 2), Optimization pending (Phase 3) **Current Pass Rate**: 8/36 files
+(22%) in fast test **Goal**: Implement proper stack validation + Koopman
+optimization
 
 ---
 
 ## Phase 1: Fix Instance Validator Integration (3-4 hours)
 
 ### Problem
-Currently creating fresh `StackValidator()` instances for if/else branches, which loses:
+
+Currently creating fresh `StackValidator()` instances for if/else branches,
+which loses:
+
 - Local type information
-- Global type information  
+- Global type information
 - Initialization state
 - Function context
 
@@ -49,7 +53,8 @@ statementGenerator?.initializeFunctionLocals(allLocals)
 
 **File**: `Sources/Compiler/CodeGen/StatementGeneration.swift`
 
-Find where local variables are registered (search for `registerLocal`). When a local is registered, also call:
+Find where local variables are registered (search for `registerLocal`). When a
+local is registered, also call:
 
 ```swift
 registerLocalType(localIndex, type: localType)
@@ -59,7 +64,8 @@ registerLocalType(localIndex, type: localType)
 
 **File**: `Sources/Compiler/CodeGen/StatementGeneration.swift` (line ~1280)
 
-**REMOVE** the `validateInstructions()` method entirely - we're using static methods instead.
+**REMOVE** the `validateInstructions()` method entirely - we're using static
+methods instead.
 
 ---
 
@@ -68,6 +74,7 @@ registerLocalType(localIndex, type: localType)
 ### Current Status
 
 The static methods already work:
+
 - `StackValidator.balanceBranches()` - balances if/else ✓
 - `StackValidator.balanceToTarget()` - balances loops ✓
 - `StackValidator.calculateStackDelta()` - tracks stack effect ✓
@@ -79,6 +86,7 @@ The static methods already work:
 Ensure these are called (already in place):
 
 **If/Else** (line ~342):
+
 ```swift
 if enableStackValidation {
     let (thenDrops, elseDrops) = StackValidator.balanceBranches(
@@ -92,6 +100,7 @@ if enableStackValidation {
 ```
 
 **Loops** (line ~390, ~500, ~530, ~550):
+
 ```swift
 if enableStackValidation {
     StackValidator.balanceToTarget(&bodyInstrs, targetDelta: 0, 
@@ -102,11 +111,13 @@ if enableStackValidation {
 ### Test
 
 Enable validation:
+
 ```swift
 private var enableStackValidation: Bool = true
 ```
 
 Build and run fast test:
+
 ```bash
 cd blitz3d-wasm
 swift build
@@ -121,14 +132,17 @@ swift build
 
 ### Background
 
-From your research docs, Koopman's algorithm optimizes **within basic blocks** by:
+From your research docs, Koopman's algorithm optimizes **within basic blocks**
+by:
+
 1. Finding variables used multiple times
 2. Keeping them on stack instead of reloading
 3. Using DUP/OVER/SWAP instead of local.get
 
 ### When to Apply
 
-**ONLY after Phase 1+2 are working!** This is an optimization, not a correctness fix.
+**ONLY after Phase 1+2 are working!** This is an optimization, not a correctness
+fix.
 
 ### Implementation
 
@@ -172,6 +186,7 @@ func findUseReusePairs(_ instructions: [WASMInstruction]) -> [UseReusePair] {
 #### Step 3.2: Apply Scheduling
 
 Only works if:
+
 - Stack depth at use point ≤ 3
 - Stack depth at reuse point ≤ 2
 - No control flow between use/reuse
@@ -209,6 +224,7 @@ func selectCopyOperation(depth: Int) -> WASMInstruction {
 #### Step 3.3: Measure Impact
 
 Before enabling, run benchmark:
+
 ```bash
 cd blitz3d-wasm
 swift build -c release
@@ -230,18 +246,21 @@ grep "local.get" after.txt | wc -l
 ## Success Criteria
 
 ### Phase 1 Complete When:
+
 - [x] All function locals registered with validator
 - [x] Type information flows through validation
 - [x] No "used before initialization" errors (Blitz3D defaults to 0)
 - [x] Compile with no errors
 
 ### Phase 2 Complete When:
+
 - ✅ Pass rate maintains 22% or improves
 - ✅ Static balance methods correctly insert drops
 - ✅ If/else branches balanced
 - ✅ Loop bodies balanced
 
 ### Phase 3 Complete When:
+
 - ✅ Use-reuse pairs identified correctly
 - ✅ DUP/OVER inserted for nearby reuses
 - ✅ 10-20% reduction in local.get count
@@ -256,6 +275,7 @@ grep "local.get" after.txt | wc -l
 **File**: `Sources/Compiler/CodeGen/StackValidator.swift`
 
 Set at top of `calculateStackDelta`:
+
 ```swift
 let verbose = true  // Set to true for debugging
 if verbose {
@@ -266,6 +286,7 @@ if verbose {
 ### Check Stack Delta
 
 Add after each balance call:
+
 ```swift
 let (delta, _) = StackValidator.calculateStackDelta(bodyInstrs, 
     localTypes: localTypeCache, globalTypes: globalTypeCache)
@@ -284,12 +305,12 @@ wasm-validate /tmp/test.wasm
 
 ## Timeline Estimate
 
-| Phase | Description | Time | Risk |
-|-------|-------------|------|------|
-| **Phase 1** | Fix instance validator | 3-4h | Low |
-| **Phase 2** | Verify static methods | 1h | Very Low |
-| **Phase 3** | Koopman optimization | 6-8h | Medium |
-| **Total** | End-to-end | **10-13h** | Low |
+| Phase       | Description            | Time       | Risk     |
+| ----------- | ---------------------- | ---------- | -------- |
+| **Phase 1** | Fix instance validator | 3-4h       | Low      |
+| **Phase 2** | Verify static methods  | 1h         | Very Low |
+| **Phase 3** | Koopman optimization   | 6-8h       | Medium   |
+| **Total**   | End-to-end             | **10-13h** | Low      |
 
 ---
 
@@ -327,10 +348,12 @@ wasm-validate /tmp/test.wasm
 
 ## Reference
 
-- Your docs: `docs/stack-balancing-research.md` (29KB, complete algorithm pseudocode)
+- Your docs: `docs/stack-balancing-research.md` (29KB, complete algorithm
+  pseudocode)
 - WASM spec: https://webassembly.github.io/spec/core/appendix/algorithm.html
 - Koopman paper: https://users.ece.cmu.edu/~koopman/stack_compiler/stack_co.html
 
 ---
 
-**Ready to implement!** Start with Phase 1, verify with Phase 2, optimize with Phase 3.
+**Ready to implement!** Start with Phase 1, verify with Phase 2, optimize with
+Phase 3.

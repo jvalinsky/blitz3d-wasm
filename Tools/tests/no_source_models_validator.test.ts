@@ -2,15 +2,24 @@ import { validateNoSourceModels } from "../validate_no_source_models.ts";
 import { assert } from "./assert.ts";
 
 const tmpDir = async (name: string) => {
-  const dir = await Deno.makeTempDir({ dir: "/tmp", prefix: `blitz3d-wasm-${name}-` });
+  const dir = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: `blitz3d-wasm-${name}-`,
+  });
   return dir.replace(/\/+$/g, "");
 };
 
 Deno.test("validateNoSourceModels passes clean output", async () => {
   const root = await tmpDir("clean");
   await Deno.writeTextFile(`${root}/a.smpk`, "ok");
-  await Deno.writeTextFile(`${root}/scpcb_manifest.json`, JSON.stringify({ files: [{ path: "a.smpk" }] }));
-  await validateNoSourceModels({ rootDir: root, manifestPath: `${root}/scpcb_manifest.json` });
+  await Deno.writeTextFile(
+    `${root}/scpcb_manifest.json`,
+    JSON.stringify({ files: [{ path: "a.smpk" }] }),
+  );
+  await validateNoSourceModels({
+    rootDir: root,
+    manifestPath: `${root}/scpcb_manifest.json`,
+  });
 });
 
 Deno.test("validateNoSourceModels fails on leaked .b3d/.x files", async () => {
@@ -27,10 +36,16 @@ Deno.test("validateNoSourceModels fails on leaked .b3d/.x files", async () => {
 
 Deno.test("validateNoSourceModels fails on leaked .b3d/.x in manifest", async () => {
   const root = await tmpDir("leak-manifest");
-  await Deno.writeTextFile(`${root}/scpcb_manifest.json`, JSON.stringify({ files: [{ path: "GFX/npcs/duck.b3d" }] }));
+  await Deno.writeTextFile(
+    `${root}/scpcb_manifest.json`,
+    JSON.stringify({ files: [{ path: "GFX/npcs/duck.b3d" }] }),
+  );
   let threw = false;
   try {
-    await validateNoSourceModels({ rootDir: root, manifestPath: `${root}/scpcb_manifest.json` });
+    await validateNoSourceModels({
+      rootDir: root,
+      manifestPath: `${root}/scpcb_manifest.json`,
+    });
   } catch {
     threw = true;
   }

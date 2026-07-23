@@ -1,16 +1,21 @@
 # Blitz3D-to-WebAssembly Compiler Analysis
 
-**Generated:** January 2026
-**Repository:** Blitz3D-to-WASM Compiler Infrastructure
-**Purpose:** Comprehensive analysis of Blitz3D-to-WebAssembly compiler and SCPB compilation status
+**Generated:** January 2026 **Repository:** Blitz3D-to-WASM Compiler
+Infrastructure **Purpose:** Comprehensive analysis of Blitz3D-to-WebAssembly
+compiler and SCPB compilation status
 
 ---
 
 ## Repository Overview
 
-This repository contains a **complete Blitz3D-to-WebAssembly compiler** written in Swift, designed to compile BlitzBasic code (including SCP: Containment Breach) to WebAssembly for browser execution. The compiler includes a JavaScript runtime with Three.js integration for 3D graphics.
+This repository contains a **complete Blitz3D-to-WebAssembly compiler** written
+in Swift, designed to compile BlitzBasic code (including SCP: Containment
+Breach) to WebAssembly for browser execution. The compiler includes a JavaScript
+runtime with Three.js integration for 3D graphics.
 
-**Important Note:** This repository does NOT contain the SCP: Containment Breach game source code. It contains:
+**Important Note:** This repository does NOT contain the SCP: Containment Breach
+game source code. It contains:
+
 - A Swift-based Blitz3D compiler
 - JavaScript runtime modules
 - Test files and examples
@@ -18,47 +23,61 @@ This repository contains a **complete Blitz3D-to-WebAssembly compiler** written 
 
 ### Components
 
-| Component | Language | Lines | Purpose |
-|-----------|----------|-------|---------|
-| Compiler | Swift | ~6,241 | Lexer → Parser → AST → CodeGen → WASM |
-| Runtime | JavaScript | ~3,000+ | Browser runtime with Three.js integration |
-| Test Files | BlitzBasic | ~1,000+ | Compilation test cases and simple examples |
-| Documentation | Markdown | ~10,000+ | Analysis and documentation of systems |
+| Component     | Language   | Lines    | Purpose                                    |
+| ------------- | ---------- | -------- | ------------------------------------------ |
+| Compiler      | Swift      | ~6,241   | Lexer → Parser → AST → CodeGen → WASM      |
+| Runtime       | JavaScript | ~3,000+  | Browser runtime with Three.js integration  |
+| Test Files    | BlitzBasic | ~1,000+  | Compilation test cases and simple examples |
+| Documentation | Markdown   | ~10,000+ | Analysis and documentation of systems      |
 
 ---
 
 ## Documentation Structure
 
 ### Compiler Architecture Analysis
-**[01_codebase_structure.md](01_codebase_structure.md)** - Compiler architecture and components
+
+**[01_codebase_structure.md](01_codebase_structure.md)** - Compiler architecture
+and components
+
 - Blitz3D-to-WASM compiler design (Swift implementation)
 - JavaScript runtime with Three.js integration
 - Compilation pipeline: Lexer → Parser → AST → CodeGen → WASM
 - Test infrastructure and development workflow
 
 ### SCP:CB Compilation Status
-**[02_scpcb_integration.md](02_scpcb_integration.md)** - Real SCPB NPC system analysis
+
+**[02_scpcb_integration.md](02_scpcb_integration.md)** - Real SCPB NPC system
+analysis
+
 - Actual Type NPCs definition from temp_npcs.bb (35+ fields)
 - Real NPC creation and update functions (numeric state machines)
 - Compilation gaps preventing full SCPB support
 - Successfully compiling vs. failing code patterns
 
 ### Compilation Gaps & Fixes
-**[04_compilation_gaps.md](04_compilation_gaps.md)** - Missing BlitzBasic features
+
+**[04_compilation_gaps.md](04_compilation_gaps.md)** - Missing BlitzBasic
+features
+
 - Handle array support issues (`Field Path.WayPoints[20]`)
 - Object reference problems (`waypoint\Connected[i]`)
 - Complex Select statement handling
 - Implementation roadmap for full SCPB compilation
 
 ### Runtime Architecture
+
 **[05_runtime_modules.md](05_runtime_modules.md)** - JavaScript runtime system
+
 - Three.js integration for 3D graphics
 - Blitz3D API compatibility layer
 - Module loading and browser API usage
 - Performance optimizations and limitations
 
 ### Testing Infrastructure
-**[06_testing_infrastructure.md](06_testing_infrastructure.md)** - Test system and validation
+
+**[06_testing_infrastructure.md](06_testing_infrastructure.md)** - Test system
+and validation
+
 - Integration tests against SCPB code
 - Compilation validation approaches
 - Runtime testing methodologies
@@ -70,42 +89,43 @@ This repository contains a **complete Blitz3D-to-WebAssembly compiler** written 
 
 ### BlitzBasic Feature Support
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Basic syntax | ✅ Complete | Variables, functions, loops, conditionals |
-| Types | ✅ Complete | Custom types, fields, arrays |
-| Graphics | ✅ Complete | 3D rendering via Three.js |
-| Input | ✅ Complete | Keyboard, mouse, pointer lock |
-| Audio | ✅ Complete | Web Audio API integration |
-| File I/O | ✅ Complete | Virtual filesystem, INI parsing |
-| Arrays | ⚠️ Partial | Basic arrays work, some edge cases |
-| Handles/Objects | ❌ Missing | Field arrays, object references |
-| Advanced syntax | ❌ Missing | Select statements, complex expressions |
+| Feature         | Status      | Notes                                     |
+| --------------- | ----------- | ----------------------------------------- |
+| Basic syntax    | ✅ Complete | Variables, functions, loops, conditionals |
+| Types           | ✅ Complete | Custom types, fields, arrays              |
+| Graphics        | ✅ Complete | 3D rendering via Three.js                 |
+| Input           | ✅ Complete | Keyboard, mouse, pointer lock             |
+| Audio           | ✅ Complete | Web Audio API integration                 |
+| File I/O        | ✅ Complete | Virtual filesystem, INI parsing           |
+| Arrays          | ⚠️ Partial  | Basic arrays work, some edge cases        |
+| Handles/Objects | ❌ Missing  | Field arrays, object references           |
+| Advanced syntax | ❌ Missing  | Select statements, complex expressions    |
 
 ### SCP:CB Compilation Results
 
-| Component | Files Tested | Success Rate | Notes |
-|-----------|--------------|--------------|-------|
-| Core Systems | 5/5 | 100% | Main.bb, Update.bb compile successfully |
-| NPC System | 1/1 | 90% | temp_npcs.bb mostly works, some handle issues |
-| Graphics | 3/3 | 95% | Rendering works, some texture issues |
-| Audio | 2/2 | 85% | Basic audio works, streaming issues |
-| UI/Menu | 1/1 | 50% | Menu systems have compilation gaps |
-| Total | 34 files tested | ~75% | Major progress, some systems need fixes |
+| Component    | Files Tested    | Success Rate | Notes                                         |
+| ------------ | --------------- | ------------ | --------------------------------------------- |
+| Core Systems | 5/5             | 100%         | Main.bb, Update.bb compile successfully       |
+| NPC System   | 1/1             | 90%          | temp_npcs.bb mostly works, some handle issues |
+| Graphics     | 3/3             | 95%          | Rendering works, some texture issues          |
+| Audio        | 2/2             | 85%          | Basic audio works, streaming issues           |
+| UI/Menu      | 1/1             | 50%          | Menu systems have compilation gaps            |
+| Total        | 34 files tested | ~75%         | Major progress, some systems need fixes       |
 
 ### Runtime Compatibility
 
-| Feature | Browser Support | Performance |
-|---------|----------------|-------------|
-| WebAssembly | All modern browsers | Excellent |
+| Feature     | Browser Support     | Performance            |
+| ----------- | ------------------- | ---------------------- |
+| WebAssembly | All modern browsers | Excellent              |
 | Three.js 3D | All modern browsers | Good (60+ FPS typical) |
-| Web Audio | All modern browsers | Good |
-| File API | Modern browsers | Good |
-| IndexedDB | Modern browsers | Good for saves |
+| Web Audio   | All modern browsers | Good                   |
+| File API    | Modern browsers     | Good                   |
+| IndexedDB   | Modern browsers     | Good for saves         |
 
 ### Key Compiler Functions
 
 #### Swift Compiler Pipeline
+
 - `Lexer.tokenize()` - Convert source to tokens
 - `Parser.parse()` - Build AST from tokens
 - `AST.optimize()` - Optimize syntax tree
@@ -113,12 +133,14 @@ This repository contains a **complete Blitz3D-to-WebAssembly compiler** written 
 - `Compiler.compile()` - Complete compilation pipeline
 
 #### Runtime API (JavaScript)
+
 - `Blitz3D.Graphics3D()` - Initialize 3D rendering
 - `Blitz3D.CreateMesh()` - Create 3D geometry
 - `Blitz3D.LoadSound()` - Load audio resources
 - `Blitz3D.KeyDown()` - Handle input
 
 #### Testing Functions
+
 - `runIntegrationTests()` - Execute test suite
 - `validateCompilation()` - Check output validity
 - `benchmarkPerformance()` - Measure compilation speed
@@ -128,21 +150,25 @@ This repository contains a **complete Blitz3D-to-WebAssembly compiler** written 
 
 ## Available Skills
 
-The following skills are available in `.opencode/skills/` for compiler development:
+The following skills are available in `.opencode/skills/` for compiler
+development:
 
 ### Compiler Development
+
 - `compiler-debugging` - Debug compilation issues and WASM output
 - `language-feature-implementation` - Add missing BlitzBasic features
 - `optimization-patterns` - Improve compilation performance
 - `type-system-enhancement` - Extend type inference capabilities
 
 ### Runtime Development
+
 - `runtime-module-creation` - Build new JavaScript runtime modules
 - `threejs-integration` - Enhance 3D graphics integration
 - `api-compatibility` - Maintain Blitz3D API compatibility
 - `performance-optimization` - Optimize runtime performance
 
 ### Testing & Validation
+
 - `compilation-testing` - Test compilation of BlitzBasic code
 - `runtime-testing` - Validate runtime behavior
 - `integration-testing` - Test complete compilation pipeline
@@ -153,6 +179,7 @@ The following skills are available in `.opencode/skills/` for compiler developme
 ## Repository File Structure
 
 ### Compiler Source (Sources/Compiler/)
+
 ```
 Sources/Compiler/
 ├── Lexer/                 # Tokenization (4 files)
@@ -175,6 +202,7 @@ Sources/Compiler/
 ```
 
 ### Runtime Modules (Sources/Runtime/)
+
 ```
 Sources/Runtime/
 ├── core/                  # Core Blitz3D API (4 files)
@@ -200,6 +228,7 @@ Sources/Runtime/
 ```
 
 ### Test Infrastructure (Tests/)
+
 ```
 Tests/
 ├── IntegrationTests/      # End-to-end tests (8 files)
@@ -220,6 +249,7 @@ Tests/
 ```
 
 ### SCPB Test Fragments
+
 ```
 temp_npcs.bb              # ~1000 lines of actual SCPB NPC code
                           # Successfully extracted and compilable
@@ -227,7 +257,10 @@ temp_npcs.bb              # ~1000 lines of actual SCPB NPC code
 ```
 
 ### External SCPB Source (Not Included)
-**Note:** SCP: Containment Breach source code (~52K lines across 35 .bb files) must be obtained separately from the original repository for full compilation testing.
+
+**Note:** SCP: Containment Breach source code (~52K lines across 35 .bb files)
+must be obtained separately from the original repository for full compilation
+testing.
 
 ---
 
@@ -258,12 +291,14 @@ swift run blitz3d-wasm temp_npcs.bb -o temp_npcs.wasm
 ## Current Status & Next Steps
 
 ### ✅ Completed
+
 - Full Blitz3D-to-WASM compiler implementation
 - JavaScript runtime with Three.js integration
 - Successful compilation of ~75% of SCPB codebase
 - NPC system extraction and validation
 
 ### 🔄 In Progress
+
 - Handle/object reference implementation
 - Field array support
 - Advanced syntax compilation
@@ -296,4 +331,4 @@ swift run blitz3d-wasm temp_npcs.bb -o temp_npcs.wasm
 
 ---
 
-*End of Master Index*
+_End of Master Index_

@@ -4,7 +4,10 @@
  */
 
 import * as THREE from "three";
-import type { Blitz3DGraphicsInterface, GraphicsCore } from "./graphics/types.ts";
+import type {
+  Blitz3DGraphicsInterface,
+  GraphicsCore,
+} from "./graphics/types.ts";
 import type { Blitz3DFileIO } from "./fileio.ts";
 
 type B3DTexture = {
@@ -62,7 +65,10 @@ export class B3DLoader {
 
   private _sourceFilePath: string | null;
 
-  constructor(graphics: Blitz3DGraphicsInterface, core: GraphicsCore & { fileIO: Blitz3DFileIO }) {
+  constructor(
+    graphics: Blitz3DGraphicsInterface,
+    core: GraphicsCore & { fileIO: Blitz3DFileIO },
+  ) {
     this.graphics = graphics;
     this.core = core;
     this.fileIO = core.fileIO;
@@ -105,7 +111,9 @@ export class B3DLoader {
 
       // Try WASM parser first if available
       const engineExports = (typeof window !== "undefined")
-        ? ((window as any).Blitz3D?.engineExports as Record<string, unknown> | undefined)
+        ? ((window as any).Blitz3D?.engineExports as
+          | Record<string, unknown>
+          | undefined)
         : undefined;
       if (engineExports && typeof engineExports["ParseB3D"] === "function") {
         return await this.loadWithWasm(data, parentId);
@@ -120,7 +128,9 @@ export class B3DLoader {
       this.log(`[B3DLoader] Created entity: ${entityId}`);
       return entityId;
     } catch (error: any) {
-      const msg = `[B3DLoader] Error loading ${filePath}: ${error?.message ?? String(error)}`;
+      const msg = `[B3DLoader] Error loading ${filePath}: ${
+        error?.message ?? String(error)
+      }`;
       console.error(msg);
       try {
         const hook = (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR;
@@ -191,7 +201,9 @@ export class B3DLoader {
     brush: B3DBrush,
     b3dData: B3DParsedData,
   ): { diffuse?: B3DTexture; normal?: B3DTexture } {
-    const ids = (brush.textureIds ?? []).filter((id) => Number.isFinite(id) && id >= 0);
+    const ids = (brush.textureIds ?? []).filter((id) =>
+      Number.isFinite(id) && id >= 0
+    );
     const textures = ids
       .map((id) => b3dData.textures[id])
       .filter((t): t is B3DTexture => !!t && typeof t.name === "string");
@@ -204,11 +216,14 @@ export class B3DLoader {
 
       const isNormal = /(^|[_\-.])(normal|nrm|norm|_n)([_\-.]|$)/i.test(base) ||
         /normalmap/i.test(base);
-      const isSpec = /(^|[_\-.])(spec|spc|gloss|rough|metal)([_\-.]|$)/i.test(base);
-      const isLight = /(^|[_\-.])(light|lm|lightmap)([_\-.]|$)/i.test(base);
-      const isDiffuse = /(^|[_\-.])(diffuse|albedo|basecolor|color|col|diff)([_\-.]|$)/i.test(
+      const isSpec = /(^|[_\-.])(spec|spc|gloss|rough|metal)([_\-.]|$)/i.test(
         base,
       );
+      const isLight = /(^|[_\-.])(light|lm|lightmap)([_\-.]|$)/i.test(base);
+      const isDiffuse =
+        /(^|[_\-.])(diffuse|albedo|basecolor|color|col|diff)([_\-.]|$)/i.test(
+          base,
+        );
 
       // Higher is better for "diffuse map" selection.
       let score = 10;
@@ -263,21 +278,32 @@ export class B3DLoader {
     texture.flipY = false;
     if (opts.srgb) {
       // Three r152+ uses `colorSpace` instead of `encoding`.
-      (texture as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
+      (texture as unknown as { colorSpace?: string }).colorSpace =
+        THREE.SRGBColorSpace;
     }
     return texture;
   }
 
   async loadWithWasm(data: Uint8Array, parentId: number) {
     if (typeof window === "undefined") return this.createPlaceholder(parentId);
-    const engine = (window as any).Blitz3D?.engineExports as Record<string, unknown> | undefined;
+    const engine = (window as any).Blitz3D?.engineExports as
+      | Record<string, unknown>
+      | undefined;
     if (!engine) return this.createPlaceholder(parentId);
 
     // 1. Create a bank in WASM memory for the file data
-    const CreateBank = engine["CreateBank"] as ((n: number) => number) | undefined;
-    const GetBankPtr = engine["GetBankPtr"] as ((bankId: number) => number) | undefined;
-    const ParseB3D = engine["ParseB3D"] as ((bankId: number) => number) | undefined;
-    const FreeBank = engine["FreeBank"] as ((bankId: number) => void) | undefined;
+    const CreateBank = engine["CreateBank"] as
+      | ((n: number) => number)
+      | undefined;
+    const GetBankPtr = engine["GetBankPtr"] as
+      | ((bankId: number) => number)
+      | undefined;
+    const ParseB3D = engine["ParseB3D"] as
+      | ((bankId: number) => number)
+      | undefined;
+    const FreeBank = engine["FreeBank"] as
+      | ((bankId: number) => void)
+      | undefined;
     const memory = engine["memory"] as WebAssembly.Memory | undefined;
     if (!CreateBank || !GetBankPtr || !ParseB3D || !FreeBank || !memory) {
       return this.createPlaceholder(parentId);
@@ -308,16 +334,21 @@ export class B3DLoader {
     meshId: number,
     parentId: number,
   ) {
-    const GetMeshSurfaceCount =
-      engine["GetMeshSurfaceCount"] as ((meshId: number) => number) | undefined;
-    const GetSurfaceVertexCount =
-      engine["GetSurfaceVertexCount"] as ((meshId: number, surfIndex: number) => number) | undefined;
-    const GetSurfaceIndexCount =
-      engine["GetSurfaceIndexCount"] as ((meshId: number, surfIndex: number) => number) | undefined;
-    const GetSurfaceVerticesPtr =
-      engine["GetSurfaceVerticesPtr"] as ((meshId: number, surfIndex: number) => number) | undefined;
-    const GetSurfaceIndicesPtr =
-      engine["GetSurfaceIndicesPtr"] as ((meshId: number, surfIndex: number) => number) | undefined;
+    const GetMeshSurfaceCount = engine["GetMeshSurfaceCount"] as
+      | ((meshId: number) => number)
+      | undefined;
+    const GetSurfaceVertexCount = engine["GetSurfaceVertexCount"] as
+      | ((meshId: number, surfIndex: number) => number)
+      | undefined;
+    const GetSurfaceIndexCount = engine["GetSurfaceIndexCount"] as
+      | ((meshId: number, surfIndex: number) => number)
+      | undefined;
+    const GetSurfaceVerticesPtr = engine["GetSurfaceVerticesPtr"] as
+      | ((meshId: number, surfIndex: number) => number)
+      | undefined;
+    const GetSurfaceIndicesPtr = engine["GetSurfaceIndicesPtr"] as
+      | ((meshId: number, surfIndex: number) => number)
+      | undefined;
     const memory = engine["memory"] as WebAssembly.Memory | undefined;
     if (
       !GetMeshSurfaceCount || !GetSurfaceVertexCount || !GetSurfaceIndexCount ||
@@ -399,7 +430,9 @@ export class B3DLoader {
       : this.fileIO.fileSize(filePath);
 
     const buffer = new Uint8Array(Math.max(0, size | 0));
-    for (let i = 0; i < buffer.length; i++) buffer[i] = this.fileIO.readByte(handle);
+    for (let i = 0; i < buffer.length; i++) {
+      buffer[i] = this.fileIO.readByte(handle);
+    }
     return buffer;
   }
 
@@ -987,7 +1020,11 @@ export class B3DLoader {
       frames.push(frame);
       if (flags & 1) {
         if (this.offset + 12 > endOffset) break;
-        positions.push(this.readFloat32(), this.readFloat32(), this.readFloat32());
+        positions.push(
+          this.readFloat32(),
+          this.readFloat32(),
+          this.readFloat32(),
+        );
       }
       if (flags & 2) {
         if (this.offset + 12 > endOffset) break;
@@ -1075,7 +1112,11 @@ export class B3DLoader {
     return rootId;
   }
 
-  async createMesh(meshData: B3DMeshData, b3dData: B3DParsedData, meshIndex: number) {
+  async createMesh(
+    meshData: B3DMeshData,
+    b3dData: B3DParsedData,
+    meshIndex: number,
+  ) {
     if (!meshData.positions || meshData.positions.length === 0) {
       this.log(`[B3DLoader] Skipping empty mesh ${meshIndex}`);
       return null;

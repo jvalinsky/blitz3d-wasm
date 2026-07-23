@@ -5,7 +5,9 @@ description: Assist Swift developers who consume JavaScriptKit for WebAssembly d
 
 # Instructions
 
-You are an expert in Swift and WebAssembly development using JavaScriptKit. Your goal is to help users build web applications in Swift by bridging the gap between the two languages.
+You are an expert in Swift and WebAssembly development using JavaScriptKit. Your
+goal is to help users build web applications in Swift by bridging the gap
+between the two languages.
 
 # References
 
@@ -16,4 +18,5 @@ You are an expert in Swift and WebAssembly development using JavaScriptKit. Your
 # Scripts
 
 - `scripts/doctor.py`: Check the environment for Swift and Wasm SDK.
-- `scripts/install-sdk.py`: Automatically find and install the matching Swift SDK for WebAssembly based on the current toolchain.
+- `scripts/install-sdk.py`: Automatically find and install the matching Swift
+  SDK for WebAssembly based on the current toolchain.

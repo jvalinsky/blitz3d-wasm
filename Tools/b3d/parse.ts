@@ -126,7 +126,9 @@ class Reader {
   readZString(): string {
     const start = this.off;
     while (this.off < this.u8.byteLength && this.u8[this.off] !== 0) this.off++;
-    if (this.off >= this.u8.byteLength) throw new Error("B3D unterminated string");
+    if (this.off >= this.u8.byteLength) {
+      throw new Error("B3D unterminated string");
+    }
     const bytes = this.u8.subarray(start, this.off);
     this.off++; // NUL
     return new TextDecoder("latin1").decode(bytes);
@@ -134,7 +136,12 @@ class Reader {
 }
 
 const fourccToString = (v: number) =>
-  String.fromCharCode((v >>> 24) & 0xff, (v >>> 16) & 0xff, (v >>> 8) & 0xff, v & 0xff);
+  String.fromCharCode(
+    (v >>> 24) & 0xff,
+    (v >>> 16) & 0xff,
+    (v >>> 8) & 0xff,
+    v & 0xff,
+  );
 
 const clamp01 = (x: number) => x < 0 ? 0 : x > 1 ? 1 : x;
 
@@ -168,7 +175,12 @@ const withChunk = <T>(r: Reader, chunk: Chunk, fn: () => T): T => {
 export const parseB3D = (bytes: Uint8Array): B3DFile => {
   const r = new Reader(bytes);
 
-  const magic = String.fromCharCode(r.readU8(), r.readU8(), r.readU8(), r.readU8());
+  const magic = String.fromCharCode(
+    r.readU8(),
+    r.readU8(),
+    r.readU8(),
+    r.readU8(),
+  );
   if (magic !== "BB3D") throw new Error(`Invalid B3D magic ${magic}`);
 
   // Some files contain a size field after magic; blitz3d-ng doesn't rely on it.
@@ -188,7 +200,9 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
   let root: B3DNode | null = null;
   let animLenFrames = 0;
   let animFps = 60;
-  const sequences: Array<{ name: string; firstFrame: number; lastFrame: number }> = [];
+  const sequences: Array<
+    { name: string; firstFrame: number; lastFrame: number }
+  > = [];
 
   while (r.off + 8 <= bytes.byteLength) {
     const chunk = beginChunk(r);
@@ -204,7 +218,14 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
             const sclU = r.readF32LE();
             const sclV = r.readF32LE();
             const rot = r.readF32LE();
-            textures.push({ name, flags, blend, pos: [posU, posV], scale: [sclU, sclV], rot });
+            textures.push({
+              name,
+              flags,
+              blend,
+              pos: [posU, posV],
+              scale: [sclU, sclV],
+              rot,
+            });
           }
         });
         break;
@@ -213,7 +234,12 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
           const numTexs = r.readI32LE();
           while (r.off < chunk.end) {
             const name = r.readZString();
-            const col = [r.readF32LE(), r.readF32LE(), r.readF32LE(), r.readF32LE()] as const;
+            const col = [
+              r.readF32LE(),
+              r.readF32LE(),
+              r.readF32LE(),
+              r.readF32LE(),
+            ] as const;
             const shininess = r.readF32LE();
             const blend = r.readI32LE();
             const fx = r.readI32LE();
@@ -242,7 +268,11 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
         });
         break;
       case "NODE":
-        root = withChunk(r, chunk, () => readNode(r, chunk.end, () => ({ textures, brushes })));
+        root = withChunk(
+          r,
+          chunk,
+          () => readNode(r, chunk.end, () => ({ textures, brushes })),
+        );
         break;
       default:
         // skip
@@ -269,7 +299,14 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
   // (these are updated in readNode)
   // Keep defaults otherwise.
 
-  const out: B3DFile = { version, textures, brushes, root, animLenFrames, animFps };
+  const out: B3DFile = {
+    version,
+    textures,
+    brushes,
+    root,
+    animLenFrames,
+    animFps,
+  };
   if (sequences.length) out.sequences = sequences;
   return out;
 
@@ -357,7 +394,9 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
             texCoordSize = r.readI32LE();
             while (r.off < ch.end) {
               positions.push(r.readF32LE(), r.readF32LE(), r.readF32LE());
-              if (vertexFlags & 1) normals.push(r.readF32LE(), r.readF32LE(), r.readF32LE());
+              if (vertexFlags & 1) {
+                normals.push(r.readF32LE(), r.readF32LE(), r.readF32LE());
+              }
               if (vertexFlags & 2) {
                 const [rr, gg, bb, aa] = readColorF32(r);
                 colors.push(
@@ -429,7 +468,9 @@ export const parseB3D = (bytes: Uint8Array): B3DFile => {
       frames.push(frame);
       if (flags & 1) pos.push(r.readF32LE(), r.readF32LE(), r.readF32LE());
       if (flags & 2) scl.push(r.readF32LE(), r.readF32LE(), r.readF32LE());
-      if (flags & 4) rot.push(r.readF32LE(), r.readF32LE(), r.readF32LE(), r.readF32LE());
+      if (flags & 4) {
+        rot.push(r.readF32LE(), r.readF32LE(), r.readF32LE(), r.readF32LE());
+      }
     }
     const out: B3DKeys = { flags, frames };
     if (pos.length) out.positions = new Float32Array(pos);

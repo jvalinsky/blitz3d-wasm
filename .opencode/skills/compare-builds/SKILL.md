@@ -7,7 +7,8 @@ description: Use before and after making compiler changes to compare WASM output
 
 ## Overview
 
-Compare two WASM compilation outputs to understand the impact of compiler changes, validate fixes, and detect regressions.
+Compare two WASM compilation outputs to understand the impact of compiler
+changes, validate fixes, and detect regressions.
 
 ## When to Use
 
@@ -20,6 +21,7 @@ Compare two WASM compilation outputs to understand the impact of compiler change
 ## Pre-conditions
 
 Two WASM files to compare:
+
 - `before.wasm`: Original/broken version
 - `after.wasm`: Modified/fixed version
 
@@ -50,47 +52,54 @@ Optional: The BB source files for additional context
 ## Comparison Metrics
 
 ### Size Metrics
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Total instructions | N | N | ±N |
-| Average function size | N | N | ±N |
-| Largest function | N | N | ±N |
+
+| Metric                | Before | After | Change |
+| --------------------- | ------ | ----- | ------ |
+| Total instructions    | N      | N     | ±N     |
+| Average function size | N      | N     | ±N     |
+| Largest function      | N      | N     | ±N     |
 
 ### Stack Metrics
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Max stack depth | N | N | ±N |
-| Functions with issues | N | N | ±N |
-| Stack errors | N | N | ±N |
+
+| Metric                | Before | After | Change |
+| --------------------- | ------ | ----- | ------ |
+| Max stack depth       | N      | N     | ±N     |
+| Functions with issues | N      | N     | ±N     |
+| Stack errors          | N      | N     | ±N     |
 
 ### Quality Metrics
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| Type errors | N | N | ±N |
-| Control flow errors | N | N | ±N |
-| Warnings | N | N | ±N |
+
+| Metric              | Before | After | Change |
+| ------------------- | ------ | ----- | ------ |
+| Type errors         | N      | N     | ±N     |
+| Control flow errors | N      | N     | ±N     |
+| Warnings            | N      | N     | ±N     |
 
 ## Interpretation Guide
 
 ### Positive Changes (Good)
+
 - Errors decreased
 - Stack usage reduced
 - Function sizes more uniform
 - Instruction count stable or reduced
 
 ### Negative Changes (Warning)
+
 - Errors increased
 - Stack usage grew
 - Function sizes became more variable
 - Instruction count grew significantly
 
 ### Neutral Changes
+
 - No significant metric changes
 - May indicate no impact or balanced changes
 
 ## Example Comparison
 
 **Before fix:**
+
 ```
 summary: { totalFunctions: 4, totalInstructions: 66, stackValid: true, typeValid: false }
 stackBalance: { valid: false, errors: [...] }
@@ -98,6 +107,7 @@ metrics: { maxStackObserved: 1 }
 ```
 
 **After fix:**
+
 ```
 summary: { totalFunctions: 4, totalInstructions: 62, stackValid: true, typeValid: true }
 stackBalance: { valid: true, errors: [] }
@@ -105,6 +115,7 @@ metrics: { maxStackObserved: 0 }
 ```
 
 **Comparison:**
+
 ```
 ✓ Type errors: 2 → 0 (FIXED)
 ✓ Instructions: 66 → 62 (-4% improvement)
@@ -116,6 +127,7 @@ VERDICT: Fix successful
 ## Output Format
 
 The comparison returns:
+
 - **summary**: Side-by-side metric comparison
 - **changes**: Detailed delta analysis
 - **improvements**: List of fixes that worked
@@ -125,16 +137,17 @@ The comparison returns:
 
 ## Verdict Categories
 
-| Verdict | Meaning |
-|---------|---------|
-| **success** | All metrics improved or stable, no regressions |
-| **partial** | Some improvements, some regressions |
-| **failure** | More regressions than improvements |
-| **no_change** | No significant difference |
+| Verdict       | Meaning                                        |
+| ------------- | ---------------------------------------------- |
+| **success**   | All metrics improved or stable, no regressions |
+| **partial**   | Some improvements, some regressions            |
+| **failure**   | More regressions than improvements             |
+| **no_change** | No significant difference                      |
 
 ## Common Comparison Scenarios
 
 ### Validating a Fix
+
 1. Compile before fix → save as before.wasm
 2. Apply fix
 3. Compile after fix → save as after.wasm
@@ -142,12 +155,14 @@ The comparison returns:
 5. Verify "success" verdict
 
 ### Checking for Regressions
+
 1. Before modifying compiler, save current output
 2. Make changes
 3. Compare old vs new
 4. If "failure" or "partial", review regressions
 
 ### Optimizing Code Generation
+
 1. Run baseline compilation
 2. Apply optimization
 3. Compare to verify:

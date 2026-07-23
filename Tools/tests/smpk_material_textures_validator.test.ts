@@ -16,7 +16,10 @@ const run = async (cmd: string[], cwd?: string) => {
 };
 
 Deno.test("validate_smpk_material_textures passes when textures exist", async () => {
-  const root = await Deno.makeTempDir({ dir: "/tmp", prefix: "smpk-textures-ok-" });
+  const root = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: "smpk-textures-ok-",
+  });
   const dist = `${root}/dist`;
   await Deno.mkdir(`${dist}/assets`, { recursive: true });
 
@@ -30,20 +33,33 @@ Deno.test("validate_smpk_material_textures passes when textures exist", async ()
       accessors: [],
       meshes: [],
       nodes: [],
-      materials: [{ name: "m0", baseColorTexture: "metal.jpg", lightmapTexture: "" }],
+      materials: [{
+        name: "m0",
+        baseColorTexture: "metal.jpg",
+        lightmapTexture: "",
+      }],
     },
     bin: new Uint8Array(),
   });
   await Deno.writeFile(`${dist}/assets/test.smpk`, smpk);
 
-  const r = await run(["deno", "run", "-A", "Tools/validate_smpk_material_textures.ts", dist]);
+  const r = await run([
+    "deno",
+    "run",
+    "-A",
+    "Tools/validate_smpk_material_textures.ts",
+    dist,
+  ]);
   if (r.code !== 0) {
     throw new Error(`expected pass, got ${r.code}\n${r.stdout}\n${r.stderr}`);
   }
 });
 
 Deno.test("validate_smpk_material_textures fails when textures are missing", async () => {
-  const root = await Deno.makeTempDir({ dir: "/tmp", prefix: "smpk-textures-fail-" });
+  const root = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: "smpk-textures-fail-",
+  });
   const dist = `${root}/dist`;
   await Deno.mkdir(`${dist}/assets`, { recursive: true });
 
@@ -53,13 +69,23 @@ Deno.test("validate_smpk_material_textures fails when textures are missing", asy
       accessors: [],
       meshes: [],
       nodes: [],
-      materials: [{ name: "m0", baseColorTexture: "missing.png", lightmapTexture: "" }],
+      materials: [{
+        name: "m0",
+        baseColorTexture: "missing.png",
+        lightmapTexture: "",
+      }],
     },
     bin: new Uint8Array(),
   });
   await Deno.writeFile(`${dist}/assets/test.smpk`, smpk);
 
-  const r = await run(["deno", "run", "-A", "Tools/validate_smpk_material_textures.ts", dist]);
+  const r = await run([
+    "deno",
+    "run",
+    "-A",
+    "Tools/validate_smpk_material_textures.ts",
+    dist,
+  ]);
   if (r.code === 0) {
     throw new Error(`expected failure, got 0\n${r.stdout}\n${r.stderr}`);
   }

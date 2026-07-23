@@ -39,7 +39,9 @@ const usage = () => {
 const parseArgs = (): GateOptions => {
   const opts: GateOptions = {
     root: new URL("../../scpcb/", import.meta.url).pathname,
-    baselinePath: new URL("../docs/scpcb/scpcb_audit_baseline.json", import.meta.url).pathname,
+    baselinePath:
+      new URL("../docs/scpcb/scpcb_audit_baseline.json", import.meta.url)
+        .pathname,
     requireRoot: false,
     allowDynamic: false,
   };
@@ -47,8 +49,9 @@ const parseArgs = (): GateOptions => {
   for (let i = 0; i < Deno.args.length; i++) {
     const a = Deno.args[i]!;
     if (a === "--root") opts.root = Deno.args[++i] ?? opts.root;
-    else if (a === "--baseline") opts.baselinePath = Deno.args[++i] ?? opts.baselinePath;
-    else if (a === "--require-root") opts.requireRoot = true;
+    else if (a === "--baseline") {
+      opts.baselinePath = Deno.args[++i] ?? opts.baselinePath;
+    } else if (a === "--require-root") opts.requireRoot = true;
     else if (a === "--allow-dynamic") opts.allowDynamic = true;
     else if (a === "-h" || a === "--help") {
       usage();
@@ -110,7 +113,9 @@ const main = async () => {
   }
 
   const baselineAssets = Array.isArray(baseline?.assets) ? baseline.assets : [];
-  const baselineDynamics = Array.isArray(baseline?.dynamicCalls) ? baseline.dynamicCalls : [];
+  const baselineDynamics = Array.isArray(baseline?.dynamicCalls)
+    ? baseline.dynamicCalls
+    : [];
 
   const baselineUniq = uniqSorted(
     baselineAssets.map((h: any) => String(h?.asset ?? "")).filter(Boolean),
@@ -141,7 +146,9 @@ const main = async () => {
   if (newLiterals.length) {
     console.error("\nNew source-model literals (first 50):");
     for (const s of newLiterals.slice(0, 50)) console.error(`- ${s}`);
-    if (newLiterals.length > 50) console.error(`- … ${newLiterals.length - 50} more`);
+    if (newLiterals.length > 50) {
+      console.error(`- … ${newLiterals.length - 50} more`);
+    }
   }
 
   if (hasDynamic && !opts.allowDynamic) {
@@ -149,7 +156,9 @@ const main = async () => {
     for (const h of cur.dynamicCalls.slice(0, 30)) {
       console.error(`- ${h.file}:${h.line} ${h.fn}(${h.arg})`);
     }
-    if (cur.dynamicCalls.length > 30) console.error(`- … ${cur.dynamicCalls.length - 30} more`);
+    if (cur.dynamicCalls.length > 30) {
+      console.error(`- … ${cur.dynamicCalls.length - 30} more`);
+    }
   }
 
   Deno.exit(1);

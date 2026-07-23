@@ -2,4 +2,3 @@ interface:
   display_name: "Asset Format Triage"
   short_description: "Debug B3D/X/RMESH parsing and conversion"
   default_prompt: "Use $asset-format-triage to debug this .b3d/.x/.rmesh issue by picking the right parser/converter, identifying likely format-specific pitfalls, and listing the exact commands to validate the fix."
-

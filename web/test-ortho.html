@@ -1,95 +1,123 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Orthographic Test</title>
     <style>
-        body { margin: 0; background: #1a1a1a; }
-        canvas { border: 2px solid #4CAF50; display: block; margin: 20px auto; }
+      body {
+        margin: 0;
+        background: #1a1a1a;
+      }
+      canvas {
+        border: 2px solid #4caf50;
+        display: block;
+        margin: 20px auto;
+      }
     </style>
-</head>
-<body>
-    <h1 style="color: #fff; text-align: center;">Orthographic Projection Test</h1>
+  </head>
+  <body>
+    <h1 style="color: #fff; text-align: center">
+      Orthographic Projection Test
+    </h1>
     <canvas id="c" width="800" height="600"></canvas>
-    <div id="log" style="color: #4CAF50; font-family: monospace; padding: 20px;"></div>
-    
+    <div id="log" style="color: #4caf50; font-family: monospace; padding: 20px">
+    </div>
+
     <script>
-        const canvas = document.getElementById('c');
-        const log = document.getElementById('log');
-        
-        function print(msg) {
-            console.log(msg);
-            log.innerHTML += msg + '<br>';
-        }
-        
-        const gl = canvas.getContext('webgl2');
-        print('✅ WebGL 2 OK');
-        
-        const vs = `#version 300 es
+      const canvas = document.getElementById("c");
+      const log = document.getElementById("log");
+
+      function print(msg) {
+        console.log(msg);
+        log.innerHTML += msg + "<br>";
+      }
+
+      const gl = canvas.getContext("webgl2");
+      print("✅ WebGL 2 OK");
+
+      const vs = `#version 300 es
             uniform mat4 u_mvp;
             in vec3 pos;
             void main() {
                 gl_Position = u_mvp * vec4(pos, 1.0);
             }
         `;
-        
-        const fs = `#version 300 es
+
+      const fs = `#version 300 es
             precision mediump float;
             out vec4 color;
             void main() {
                 color = vec4(1.0, 0.0, 0.0, 1.0);
             }
         `;
-        
-        const vShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vShader, vs);
-        gl.compileShader(vShader);
-        
-        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fShader, fs);
-        gl.compileShader(fShader);
-        
-        const prog = gl.createProgram();
-        gl.attachShader(prog, vShader);
-        gl.attachShader(prog, fShader);
-        gl.linkProgram(prog);
-        gl.useProgram(prog);
-        print('✅ Shaders OK');
-        
-        // Triangle at origin
-        const verts = new Float32Array([
-            0.0,  0.5, 0.0,
-           -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0
-        ]);
-        
-        const vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-        
-        const posLoc = gl.getAttribLocation(prog, 'pos');
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
-        
-        // Simple orthographic matrix (maps -1 to 1 in all axes)
-        // This should show the triangle exactly like the minimal test
-        const ortho = new Float32Array([
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        ]);
-        
-        print('Ortho matrix (identity):');
-        print(ortho.join(', '));
-        
-        const mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
-        gl.uniformMatrix4fv(mvpLoc, false, ortho);
-        
-        gl.clearColor(0.2, 0.3, 0.4, 1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
-        
-        print('✅ Draw OK - RED TRIANGLE SHOULD BE VISIBLE');
+
+      const vShader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vShader, vs);
+      gl.compileShader(vShader);
+
+      const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fShader, fs);
+      gl.compileShader(fShader);
+
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vShader);
+      gl.attachShader(prog, fShader);
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+      print("✅ Shaders OK");
+
+      // Triangle at origin
+      const verts = new Float32Array([
+        0.0,
+        0.5,
+        0.0,
+        -0.5,
+        -0.5,
+        0.0,
+        0.5,
+        -0.5,
+        0.0,
+      ]);
+
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+      const posLoc = gl.getAttribLocation(prog, "pos");
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+
+      // Simple orthographic matrix (maps -1 to 1 in all axes)
+      // This should show the triangle exactly like the minimal test
+      const ortho = new Float32Array([
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+      ]);
+
+      print("Ortho matrix (identity):");
+      print(ortho.join(", "));
+
+      const mvpLoc = gl.getUniformLocation(prog, "u_mvp");
+      gl.uniformMatrix4fv(mvpLoc, false, ortho);
+
+      gl.clearColor(0.2, 0.3, 0.4, 1.0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+      print("✅ Draw OK - RED TRIANGLE SHOULD BE VISIBLE");
     </script>
-</body>
+  </body>
 </html>

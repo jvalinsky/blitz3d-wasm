@@ -21,28 +21,27 @@ End Function
 result% = Add(5, 10)
 Print result
 `;
-console.log('=== Blitz3D TypeScript Compiler Test ===\n');
+console.log("=== Blitz3D TypeScript Compiler Test ===\n");
 // Lexer test
-console.log('1. LEXER TEST');
-console.log('Input:', testProgram);
+console.log("1. LEXER TEST");
+console.log("Input:", testProgram);
 const lexer = new lexer_1.Lexer(testProgram);
 const tokens = lexer.tokenize();
-console.log('Tokens:', tokens.length);
-console.log('');
+console.log("Tokens:", tokens.length);
+console.log("");
 // Parser test
-console.log('2. PARSER TEST');
+console.log("2. PARSER TEST");
 const parser = new parser_1.Parser(testProgram);
 try {
-    const ast = parser.parse();
-    console.log('AST:', JSON.stringify(ast, null, 2));
-    console.log('');
-    // Code generator test
-    console.log('3. CODE GENERATION TEST');
-    const codegen = new codegen_1.CodeGenerator();
-    const wat = codegen.generate(ast);
-    console.log('WebAssembly Text Format:\n');
-    console.log(wat);
-}
-catch (e) {
-    console.error('Error:', e);
+  const ast = parser.parse();
+  console.log("AST:", JSON.stringify(ast, null, 2));
+  console.log("");
+  // Code generator test
+  console.log("3. CODE GENERATION TEST");
+  const codegen = new codegen_1.CodeGenerator();
+  const wat = codegen.generate(ast);
+  console.log("WebAssembly Text Format:\n");
+  console.log(wat);
+} catch (e) {
+  console.error("Error:", e);
 }

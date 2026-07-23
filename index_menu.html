@@ -1,74 +1,84 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Blitz3D WASM - Main Menu Test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    ></script>
     <script src="Sources/Runtime/runtime.js"></script>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: monospace;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: monospace;
+      }
 
-        canvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
+      canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
 
-        #log {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-        }
+      #log {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        pointer-events: none;
+      }
     </style>
-</head>
+  </head>
 
-<body>
-    <div id="log">Main Menu Test: Mouse Interaction<br>Wait for "WASM Loaded"...</div>
+  <body>
+    <div id="log">
+      Main Menu Test: Mouse Interaction<br>Wait for "WASM Loaded"...
+    </div>
     <canvas id="canvas"></canvas>
     <script>
-        const log = document.getElementById('log');
-        const originalLog = console.log;
-        console.log = function (...args) {
-            originalLog(...args);
-            const msg = args.join(' ');
-            const line = document.createElement('div');
-            line.textContent = msg;
-            log.appendChild(line);
-            if (log.childNodes.length > 20) log.removeChild(log.firstChild);
-        };
+      const log = document.getElementById("log");
+      const originalLog = console.log;
+      console.log = function (...args) {
+        originalLog(...args);
+        const msg = args.join(" ");
+        const line = document.createElement("div");
+        line.textContent = msg;
+        log.appendChild(line);
+        if (log.childNodes.length > 20) log.removeChild(log.firstChild);
+      };
 
-        // Listen for WASM loaded event for better test integration
-        window.addEventListener('Blitz3DLoaded', function(event) {
-            console.log(`WASM loaded in ${event.detail.loadTime.toFixed(2)}ms`);
-        });
+      // Listen for WASM loaded event for better test integration
+      window.addEventListener("Blitz3DLoaded", function (event) {
+        console.log(
+          `WASM loaded in ${event.detail.loadTime.toFixed(2)}ms`,
+        );
+      });
 
-        async function start() {
-            try {
-                Blitz3D.init('canvas');
-                
-                // Enhanced loading with progress reporting
-                console.log("Starting WASM load...");
-                const loadStart = performance.now();
-                
-                await Blitz3D.load('Tests/IntegrationTests/MainMenu_Test.wasm');
-                
-                const loadTime = performance.now() - loadStart;
-                console.log(`WASM load completed in ${loadTime.toFixed(2)}ms`);
-                console.log("WASM Loaded.");
-            } catch (e) {
-                console.error("Failed to load WASM:", e);
-            }
+      async function start() {
+        try {
+          Blitz3D.init("canvas");
+
+          // Enhanced loading with progress reporting
+          console.log("Starting WASM load...");
+          const loadStart = performance.now();
+
+          await Blitz3D.load(
+            "Tests/IntegrationTests/MainMenu_Test.wasm",
+          );
+
+          const loadTime = performance.now() - loadStart;
+          console.log(
+            `WASM load completed in ${loadTime.toFixed(2)}ms`,
+          );
+          console.log("WASM Loaded.");
+        } catch (e) {
+          console.error("Failed to load WASM:", e);
         }
-        start();
+      }
+      start();
     </script>
-</body>
-
+  </body>
 </html>

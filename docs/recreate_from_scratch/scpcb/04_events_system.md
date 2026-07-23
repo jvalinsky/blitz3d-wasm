@@ -1,6 +1,7 @@
 # Events System (Room-Assigned Scripts)
 
 Primary sources:
+
 - `~/Software/scpcb/Main.bb` (defines `Type Events`, creates/initializes events)
 - `~/Software/scpcb/UpdateEvents.bb` (`UpdateEvents()` implementation)
 
@@ -43,7 +44,8 @@ Each case is “bespoke logic” for that scenario, frequently interacting with:
 - global state (`PlayerRoom`, difficulty, timers, etc.)
 
 Porting implication:
-- Events are a major source of “blocking loop” risk (some cases contain tight loops).
-- Events drive content and progression; once the compiler can build `UpdateEvents.bb`
-  successfully, you’re close to a playable port.
 
+- Events are a major source of “blocking loop” risk (some cases contain tight
+  loops).
+- Events drive content and progression; once the compiler can build
+  `UpdateEvents.bb` successfully, you’re close to a playable port.

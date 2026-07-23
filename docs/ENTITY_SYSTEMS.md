@@ -1,16 +1,24 @@
 # Entity Systems Documentation
 
 ## Overview
-Entity systems manage all living and interactive objects in the SCP: Containment Breach game world. These systems handle NPC behavior, SCP entity mechanics, and human character interactions, creating the intelligent and dangerous world that defines the survival horror experience.
+
+Entity systems manage all living and interactive objects in the SCP: Containment
+Breach game world. These systems handle NPC behavior, SCP entity mechanics, and
+human character interactions, creating the intelligent and dangerous world that
+defines the survival horror experience.
 
 ## NPC AI System
 
 ### Purpose
-The NPC AI system provides intelligent behavior for non-player characters, enabling complex interactions, pathfinding, and state-based decision making that creates realistic facility personnel and security responses.
+
+The NPC AI system provides intelligent behavior for non-player characters,
+enabling complex interactions, pathfinding, and state-based decision making that
+creates realistic facility personnel and security responses.
 
 ### Architecture
 
 #### NPC State Machine
+
 ```blitzbasic
 Type NPCs
     Field obj%                  ; Primary 3D entity
@@ -52,6 +60,7 @@ End Type
 ```
 
 #### State Machine States
+
 ```blitzbasic
 ; Universal NPC states
 Const STATE_IDLE% = 0           ; Idle/standing
@@ -74,6 +83,7 @@ Const SCIENTIST_PANIC% = 13     ; Scientist panic state
 ### Core AI Functions
 
 #### UpdateNPCs Function
+
 ```blitzbasic
 Function UpdateNPCs()
     For n.NPCs = Each NPCs
@@ -100,6 +110,7 @@ End Function
 ```
 
 #### Pathfinding Integration
+
 ```blitzbasic
 Function UpdateNPCPath(n.NPCs)
     ; Update pathfinding status
@@ -147,6 +158,7 @@ End Function
 ```
 
 #### Detection Systems
+
 ```blitzbasic
 Function UpdateNPCDetection(n.NPCs)
     ; Line of sight check
@@ -178,19 +190,25 @@ End Function
 ```
 
 ### Integration Points
+
 - **[Waypoint System](WAYPOINT_SYSTEM.md)**: Provides pathfinding navigation
-- **[Physics System](CORE_SYSTEMS.md#physics-system)**: Handles collision detection
+- **[Physics System](CORE_SYSTEMS.md#physics-system)**: Handles collision
+  detection
 - **[Audio System](CORE_SYSTEMS.md#audio-system)**: Manages NPC sound effects
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Persists NPC states
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Persists NPC
+  states
 
 ---
 
 ## SCP Entity System
 
 ### Purpose
-SCP entity systems implement the unique behaviors and mechanics of each SCP, creating the terrifying and unpredictable threats that define the SCP universe.
+
+SCP entity systems implement the unique behaviors and mechanics of each SCP,
+creating the terrifying and unpredictable threats that define the SCP universe.
 
 ### SCP-173 (The Sculpture)
+
 ```blitzbasic
 Function UpdateSCP173(n.NPCs)
     Select n\State
@@ -216,6 +234,7 @@ End Function
 ```
 
 ### SCP-106 (The Old Man)
+
 ```blitzbasic
 Function UpdateSCP106(n.NPCs)
     Select n\State
@@ -244,6 +263,7 @@ End Function
 ```
 
 ### SCP-096 (The Shy Guy)
+
 ```blitzbasic
 Function UpdateSCP096(n.NPCs)
     Select n\State
@@ -276,6 +296,7 @@ End Function
 ```
 
 ### SCP-049 (The Plague Doctor)
+
 ```blitzbasic
 Function UpdateSCP049(n.NPCs)
     Select n\State
@@ -313,6 +334,7 @@ End Function
 ```
 
 ### SCP-939 (With Many Voices)
+
 ```blitzbasic
 Function UpdateSCP939(n.NPCs)
     ; Pack coordination
@@ -352,9 +374,13 @@ End Function
 ## Human NPC System
 
 ### Purpose
-Human NPCs provide realistic facility personnel behavior, from security guards to scientists, creating a living facility environment that reacts to containment breaches.
+
+Human NPCs provide realistic facility personnel behavior, from security guards
+to scientists, creating a living facility environment that reacts to containment
+breaches.
 
 ### Guard NPCs
+
 ```blitzbasic
 Function UpdateGuard(n.NPCs)
     Select n\State
@@ -393,6 +419,7 @@ End Function
 ```
 
 ### MTF (Mobile Task Force) Units
+
 ```blitzbasic
 Type MTFUnit
     Field Leader.NPCs           ; Squad leader reference
@@ -446,6 +473,7 @@ End Function
 ```
 
 ### Scientist NPCs
+
 ```blitzbasic
 Function UpdateScientist(n.NPCs)
     Select n\State
@@ -478,6 +506,7 @@ End Function
 ```
 
 ### D-Class Personnel
+
 ```blitzbasic
 Function UpdateDClass(n.NPCs)
     Select n\State
@@ -513,6 +542,7 @@ End Function
 ## Entity System Integration
 
 ### Shared Update Loop
+
 ```blitzbasic
 Function UpdateAllEntities()
     ; Update player systems
@@ -534,6 +564,7 @@ End Function
 ```
 
 ### State Persistence
+
 ```blitzbasic
 Function SaveEntityStates()
     For n.NPCs = Each NPCs
@@ -566,12 +597,14 @@ End Function
 ```
 
 ### Performance Considerations
+
 - **Entity Culling**: Only update entities near player
 - **State Caching**: Cache frequently accessed entity states
 - **Pathfinding Optimization**: Use pre-calculated paths for common routes
 - **LOD System**: Reduce AI complexity for distant entities
 
 ### AI Balancing
+
 - **Detection Ranges**: Balance awareness without making AI too perceptive
 - **Pathfinding Frequency**: Recalculate paths only when necessary
 - **State Transitions**: Smooth transitions between AI states
@@ -579,4 +612,6 @@ End Function
 
 ---
 
-*Entity systems create the intelligent and dangerous world of SCP: Containment Breach, from the terrifying unpredictability of SCP entities to the realistic behaviors of facility personnel.*
+_Entity systems create the intelligent and dangerous world of SCP: Containment
+Breach, from the terrifying unpredictability of SCP entities to the realistic
+behaviors of facility personnel._

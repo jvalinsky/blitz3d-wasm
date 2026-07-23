@@ -1,37 +1,37 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Blitz3D WASM Bank Test</title>
-</head>
+  </head>
 
-<body>
+  <body>
     <canvas id="gameCanvas" width="640" height="480"></canvas>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    ></script>
     <script src="runtime.js"></script>
     <script>
-        // Override logging to display on screen for verification
-        const originalLog = console.log;
-        const logDiv = document.createElement('div');
-        logDiv.style.fontFamily = 'monospace';
-        logDiv.style.whiteSpace = 'pre';
-        document.body.appendChild(logDiv);
+      // Override logging to display on screen for verification
+      const originalLog = console.log;
+      const logDiv = document.createElement("div");
+      logDiv.style.fontFamily = "monospace";
+      logDiv.style.whiteSpace = "pre";
+      document.body.appendChild(logDiv);
 
-        console.log = function (...args) {
-            originalLog.apply(console, args);
-            logDiv.innerText += args.join(' ') + '\n';
-        };
+      console.log = function (...args) {
+        originalLog.apply(console, args);
+        logDiv.innerText += args.join(" ") + "\n";
+      };
 
-        (async function () {
-            try {
-                await Blitz3D.load('test_banks.wasm', 'gameCanvas');
-            } catch (e) {
-                console.error(e);
-                logDiv.innerText += 'Error: ' + e;
-                console.error(e.toString());
-            }
-        })();
+      (async function () {
+        try {
+          await Blitz3D.load("test_banks.wasm", "gameCanvas");
+        } catch (e) {
+          console.error(e);
+          logDiv.innerText += "Error: " + e;
+          console.error(e.toString());
+        }
+      })();
     </script>
-</body>
-
+  </body>
 </html>

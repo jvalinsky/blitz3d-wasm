@@ -5,4 +5,6 @@
 **Children**: None
 
 **Notes**:
-- For analyzer/inspection documentation, see `docs/WASM_ANALYZER.md` and `docs/DOCS_CATALOG.md`.
+
+- For analyzer/inspection documentation, see `docs/WASM_ANALYZER.md` and
+  `docs/DOCS_CATALOG.md`.

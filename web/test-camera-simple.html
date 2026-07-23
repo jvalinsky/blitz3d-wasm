@@ -1,144 +1,166 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Simple Camera Test</title>
     <style>
-        body { margin: 0; background: #1a1a1a; color: #fff; font-family: monospace; }
-        canvas { border: 2px solid #4CAF50; display: block; margin: 20px auto; cursor: grab; }
-        canvas:active { cursor: grabbing; }
-        #info { text-align: center; padding: 20px; }
+      body {
+        margin: 0;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: monospace;
+      }
+      canvas {
+        border: 2px solid #4caf50;
+        display: block;
+        margin: 20px auto;
+        cursor: grab;
+      }
+      canvas:active {
+        cursor: grabbing;
+      }
+      #info {
+        text-align: center;
+        padding: 20px;
+      }
     </style>
-</head>
-<body>
-    <h1 style="text-align: center;">🎥 Simple Camera - Drag to Rotate</h1>
+  </head>
+  <body>
+    <h1 style="text-align: center">🎥 Simple Camera - Drag to Rotate</h1>
     <div id="info">
-        <div>FPS: <span id="fps">-</span></div>
-        <div>Position: <span id="pos">-</span></div>
+      <div>FPS: <span id="fps">-</span></div>
+      <div>Position: <span id="pos">-</span></div>
     </div>
     <canvas id="c" width="800" height="600"></canvas>
-    <div id="log" style="color: #4CAF50; padding: 20px;"></div>
-    
+    <div id="log" style="color: #4caf50; padding: 20px"></div>
+
     <script type="module">
-        import { SimpleCamera } from './dist/test-graphics-bundle.js';
-        
-        const canvas = document.getElementById('c');
-        const log = document.getElementById('log');
-        
-        function print(msg) {
-            console.log(msg);
-            log.innerHTML += msg + '<br>';
-        }
-        
-        const gl = canvas.getContext('webgl2');
-        print('✅ WebGL 2');
-        
-        const vs = `#version 300 es
+      import { SimpleCamera } from "./dist/test-graphics-bundle.js";
+
+      const canvas = document.getElementById("c");
+      const log = document.getElementById("log");
+
+      function print(msg) {
+        console.log(msg);
+        log.innerHTML += msg + "<br>";
+      }
+
+      const gl = canvas.getContext("webgl2");
+      print("✅ WebGL 2");
+
+      const vs = `#version 300 es
             uniform mat4 u_mvp;
             in vec3 pos;
             void main() {
                 gl_Position = u_mvp * vec4(pos, 1.0);
             }
         `;
-        
-        const fs = `#version 300 es
+
+      const fs = `#version 300 es
             precision mediump float;
             out vec4 color;
             void main() {
                 color = vec4(1.0, 0.0, 0.0, 1.0);
             }
         `;
-        
-        const vShader = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vShader, vs);
-        gl.compileShader(vShader);
-        
-        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fShader, fs);
-        gl.compileShader(fShader);
-        
-        const prog = gl.createProgram();
-        gl.attachShader(prog, vShader);
-        gl.attachShader(prog, fShader);
-        gl.linkProgram(prog);
-        gl.useProgram(prog);
-        print('✅ Shaders');
-        
-        const verts = new Float32Array([
-            0.0,  0.5, 0.0,
-           -0.5, -0.5, 0.0,
-            0.5, -0.5, 0.0
-        ]);
-        
-        const vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-        
-        const posLoc = gl.getAttribLocation(prog, 'pos');
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
-        
-        const mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
-        
-        // Create camera
-        const camera = new SimpleCamera();
-        camera.position = [0, 0, 3];
-        camera.target = [0, 0, 0];
-        camera.aspect = canvas.width / canvas.height;
-        print('✅ Camera ready');
-        
-        // Mouse controls
-        let isDragging = false;
-        let lastX = 0, lastY = 0;
-        
-        canvas.addEventListener('mousedown', (e) => {
-            isDragging = true;
-            lastX = e.clientX;
-            lastY = e.clientY;
-        });
-        
-        canvas.addEventListener('mousemove', (e) => {
-            if (isDragging) {
-                const dx = e.clientX - lastX;
-                const dy = e.clientY - lastY;
-                camera.rotateAroundTarget(dx, dy);
-                lastX = e.clientX;
-                lastY = e.clientY;
-            }
-        });
-        
-        canvas.addEventListener('mouseup', () => isDragging = false);
-        canvas.addEventListener('mouseleave', () => isDragging = false);
-        
-        // Render loop
-        let frames = 0;
-        let lastTime = performance.now();
-        
-        function render() {
-            frames++;
-            const now = performance.now();
-            if (now - lastTime >= 1000) {
-                document.getElementById('fps').textContent = frames;
-                frames = 0;
-                lastTime = now;
-            }
-            
-            const pos = camera.position;
-            document.getElementById('pos').textContent = 
-                `(${pos[0].toFixed(2)}, ${pos[1].toFixed(2)}, ${pos[2].toFixed(2)})`;
-            
-            const mvp = camera.getMVP();
-            
-            gl.clearColor(0.2, 0.3, 0.4, 1.0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            
-            gl.uniformMatrix4fv(mvpLoc, false, mvp);
-            gl.drawArrays(gl.TRIANGLES, 0, 3);
-            
-            requestAnimationFrame(render);
+
+      const vShader = gl.createShader(gl.VERTEX_SHADER);
+      gl.shaderSource(vShader, vs);
+      gl.compileShader(vShader);
+
+      const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+      gl.shaderSource(fShader, fs);
+      gl.compileShader(fShader);
+
+      const prog = gl.createProgram();
+      gl.attachShader(prog, vShader);
+      gl.attachShader(prog, fShader);
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
+      print("✅ Shaders");
+
+      const verts = new Float32Array([
+        0.0,
+        0.5,
+        0.0,
+        -0.5,
+        -0.5,
+        0.0,
+        0.5,
+        -0.5,
+        0.0,
+      ]);
+
+      const vbo = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+      const posLoc = gl.getAttribLocation(prog, "pos");
+      gl.enableVertexAttribArray(posLoc);
+      gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
+
+      const mvpLoc = gl.getUniformLocation(prog, "u_mvp");
+
+      // Create camera
+      const camera = new SimpleCamera();
+      camera.position = [0, 0, 3];
+      camera.target = [0, 0, 0];
+      camera.aspect = canvas.width / canvas.height;
+      print("✅ Camera ready");
+
+      // Mouse controls
+      let isDragging = false;
+      let lastX = 0, lastY = 0;
+
+      canvas.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        if (isDragging) {
+          const dx = e.clientX - lastX;
+          const dy = e.clientY - lastY;
+          camera.rotateAroundTarget(dx, dy);
+          lastX = e.clientX;
+          lastY = e.clientY;
         }
-        
-        print('🎬 Starting...');
-        render();
+      });
+
+      canvas.addEventListener("mouseup", () => isDragging = false);
+      canvas.addEventListener("mouseleave", () => isDragging = false);
+
+      // Render loop
+      let frames = 0;
+      let lastTime = performance.now();
+
+      function render() {
+        frames++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          document.getElementById("fps").textContent = frames;
+          frames = 0;
+          lastTime = now;
+        }
+
+        const pos = camera.position;
+        document.getElementById("pos").textContent = `(${
+          pos[0].toFixed(2)
+        }, ${pos[1].toFixed(2)}, ${pos[2].toFixed(2)})`;
+
+        const mvp = camera.getMVP();
+
+        gl.clearColor(0.2, 0.3, 0.4, 1.0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+
+        gl.uniformMatrix4fv(mvpLoc, false, mvp);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+        requestAnimationFrame(render);
+      }
+
+      print("🎬 Starting...");
+      render();
     </script>
-</body>
+  </body>
 </html>

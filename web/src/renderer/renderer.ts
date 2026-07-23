@@ -64,7 +64,11 @@ export class Renderer {
     this.compileProgram("2d", sources.twoDVert, sources.twoDFrag);
   }
 
-  compileProgram(name: string, vertSrc: string, fragSrc: string): CompiledProgram {
+  compileProgram(
+    name: string,
+    vertSrc: string,
+    fragSrc: string,
+  ): CompiledProgram {
     const gl = this.gl;
 
     const vs = this.compileShader(gl.VERTEX_SHADER, vertSrc);
@@ -89,7 +93,10 @@ export class Renderer {
 
     // Cache all active uniforms
     const uniforms = new Map<string, WebGLUniformLocation>();
-    const uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS) as number;
+    const uniformCount = gl.getProgramParameter(
+      program,
+      gl.ACTIVE_UNIFORMS,
+    ) as number;
     for (let i = 0; i < uniformCount; i++) {
       const info = gl.getActiveUniform(program, i);
       if (!info) continue;
@@ -115,7 +122,10 @@ export class Renderer {
 
     // Cache all active attributes
     const attribs = new Map<string, number>();
-    const attribCount = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES) as number;
+    const attribCount = gl.getProgramParameter(
+      program,
+      gl.ACTIVE_ATTRIBUTES,
+    ) as number;
     for (let i = 0; i < attribCount; i++) {
       const info = gl.getActiveAttrib(program, i);
       if (!info) continue;
@@ -177,7 +187,10 @@ export class Renderer {
   // Uniform helpers
   // ------------------------------------------------------------------
 
-  getUniformLocation(programName: string, uniformName: string): WebGLUniformLocation | null {
+  getUniformLocation(
+    programName: string,
+    uniformName: string,
+  ): WebGLUniformLocation | null {
     const p = this.programs.get(programName);
     if (!p) return null;
     return p.uniforms.get(uniformName) ?? null;

@@ -4,7 +4,8 @@
 
 **The compiler generates WASM that calls imported runtime functions.**
 
-The compiler does NOT implement Blitz3D's runtime - it generates code that calls it.
+The compiler does NOT implement Blitz3D's runtime - it generates code that calls
+it.
 
 ```
 BB Source Code
@@ -34,15 +35,15 @@ BB Source Code
 
 These become WASM instructions:
 
-| BB Construct | WASM Output |
-|--------------|-------------|
-| `Local x% = 5` | `i32.const 5`, `local.set` |
-| `x = x + 1` | `local.get`, `i32.const 1`, `i32.add`, `local.set` |
-| `If x > 0 Then` | `local.get`, `i32.const 0`, `i32.gt_s`, `if` |
-| `For i = 0 To 10` | Loop with `br_if` |
-| `While x < 100` | `block`, `loop`, `br_if` |
-| `x# * y#` | `f32.mul` |
-| `a And b` | `i32.and` |
+| BB Construct      | WASM Output                                        |
+| ----------------- | -------------------------------------------------- |
+| `Local x% = 5`    | `i32.const 5`, `local.set`                         |
+| `x = x + 1`       | `local.get`, `i32.const 1`, `i32.add`, `local.set` |
+| `If x > 0 Then`   | `local.get`, `i32.const 0`, `i32.gt_s`, `if`       |
+| `For i = 0 To 10` | Loop with `br_if`                                  |
+| `While x < 100`   | `block`, `loop`, `br_if`                           |
+| `x# * y#`         | `f32.mul`                                          |
+| `a And b`         | `i32.and`                                          |
 
 ### 2. Type System (in WASM memory)
 
@@ -59,6 +60,7 @@ p\x = 10.0
 ```
 
 Compiler generates:
+
 - **Memory layout**: prev(4) + next(4) + typeID(4) + fields...
 - **New**: Allocate from heap or free list, link into type's linked list
 - **Delete**: Unlink from list, add to free list
@@ -74,6 +76,7 @@ End Function
 ```
 
 Compiler generates:
+
 - WASM function with typed parameters
 - `call` instruction for `Sqr` (imported from runtime)
 - Return value on stack
@@ -86,6 +89,7 @@ scores(5) = 42
 ```
 
 Compiler generates:
+
 - Reserve memory region at compile time
 - Index calculation: `base + index * element_size`
 - Bounds checking (optional)
@@ -93,11 +97,13 @@ Compiler generates:
 ### 5. Strings (in WASM memory)
 
 Strings are length-prefixed in memory:
+
 ```
 [length: i32][char0][char1]...[charN]
 ```
 
 String operations use compiler-generated helpers:
+
 - `__StringAlloc(len)` - allocate string
 - `__StringConcat(a, b)` - concatenate
 - Runtime imports for complex ops (Instr, Replace, etc.)
@@ -107,6 +113,7 @@ String operations use compiler-generated helpers:
 These are **runtime imports** - the compiler just generates `call` instructions:
 
 ### Graphics (imported from JS runtime)
+
 ```
 CreateSprite, CreateMesh, CreateCamera, CreateLight
 PositionEntity, RotateEntity, ScaleEntity
@@ -116,17 +123,20 @@ RenderWorld, UpdateWorld
 ```
 
 ### Audio (imported from JS runtime)
+
 ```
 LoadSound, PlaySound, FreeSound
 Load3DSound, EmitSound
 ```
 
 ### Input (imported from JS runtime)
+
 ```
 KeyDown, KeyHit, MouseX, MouseY, MouseDown
 ```
 
 ### File I/O (imported from JS runtime)
+
 ```
 ReadFile, WriteFile, OpenFile, CloseFile
 ReadInt, WriteInt, ReadFloat, WriteFloat
@@ -135,6 +145,7 @@ ReadInt, WriteInt, ReadFloat, WriteFloat
 ## Import Strategy
 
 ### Option A: Import Everything (Current)
+
 ```wasm
 (import "env" "CreateSprite" (func ...))
 (import "env" "PositionEntity" (func ...))
@@ -143,13 +154,15 @@ ReadInt, WriteInt, ReadFloat, WriteFloat
 ... 400+ imports
 ```
 
-Pros: Simple compiler, matches original Blitz3D
-Cons: Large import section, unused imports
+Pros: Simple compiler, matches original Blitz3D Cons: Large import section,
+unused imports
 
 ### Option B: Selective Imports (Future optimization)
+
 Only import functions actually used in the source code.
 
 ### Option C: Hybrid
+
 - Math functions (Sin, Cos, Sqr) → WASM native
 - Graphics/Audio → Imported
 
@@ -212,6 +225,7 @@ Offset  Size  Field
 ```
 
 Example for `Type Player { Field x#, y#, health% }`:
+
 ```
 Offset  Size  Field
 ──────  ────  ─────
@@ -228,6 +242,7 @@ Total: 24 bytes
 ## Global State
 
 The compiler maintains globals for each Type:
+
 ```
 Global 0: String table pointer
 Global 1: Type1 first pointer
@@ -241,12 +256,15 @@ Global N: Heap pointer (for allocation)
 ## What Needs Fixing/Improving
 
 ### Current Issues
-1. **Function shadowing**: User function `Distance` conflicts with runtime import
+
+1. **Function shadowing**: User function `Distance` conflicts with runtime
+   import
 2. **Goto/Gosub**: Not fully implemented (needs Relooper)
 3. **Select/Case**: May have edge cases
 4. **Data/Read**: Partially implemented
 
 ### Optimizations (Future)
+
 1. **Dead code elimination**: Don't import unused runtime functions
 2. **Inline small functions**: Avoid call overhead
 3. **Constant folding**: Evaluate `1 + 2` at compile time

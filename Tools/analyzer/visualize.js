@@ -1,6 +1,6 @@
 /**
  * WASM Output Visualization
- * 
+ *
  * Generates visual representations of WASM module analysis:
  * - Control flow graphs
  * - Stack depth charts
@@ -9,13 +9,13 @@
  * - Error heatmaps
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { WASMAnalyzer } from './core.js';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { WASMAnalyzer } from "./core.js";
 
 export class WASMVisualizer {
   constructor(analysis) {
     this.analysis = analysis;
-    this.outputDir = './visualization';
+    this.outputDir = "./visualization";
   }
 
   ensureOutputDir() {
@@ -39,7 +39,7 @@ export class WASMVisualizer {
       const instr = instructions[i];
       currentBlock.instructions.push(instr.name);
 
-      if (instr.name === 'block' || instr.name === 'loop') {
+      if (instr.name === "block" || instr.name === "loop") {
         if (currentBlock.instructions.length > 0) {
           nodes.push({ ...currentBlock, id: blockId++ });
         }
@@ -47,12 +47,12 @@ export class WASMVisualizer {
           id: blockId++,
           instructions: [],
           x,
-          y: y + height + vGap
+          y: y + height + vGap,
         };
         y += height + vGap;
       }
 
-      if (instr.name === 'end') {
+      if (instr.name === "end") {
         if (currentBlock.instructions.length > 0) {
           nodes.push({ ...currentBlock, id: blockId++ });
         }
@@ -60,16 +60,16 @@ export class WASMVisualizer {
           id: blockId++,
           instructions: [],
           x,
-          y: y + height + vGap
+          y: y + height + vGap,
         };
         y += height + vGap;
       }
 
-      if (instr.name === 'br' || instr.name === 'br_if') {
+      if (instr.name === "br" || instr.name === "br_if") {
         edges.push({
           from: currentBlock.id,
           to: instr.depth,
-          type: instr.name === 'br' ? 'unconditional' : 'conditional'
+          type: instr.name === "br" ? "unconditional" : "conditional",
         });
       }
     }
@@ -92,46 +92,52 @@ export class WASMVisualizer {
       </marker>
     </defs>`;
 
-    nodes.forEach(node => {
-      const instrText = node.instructions.slice(0, 3).join(', ') + 
-        (node.instructions.length > 3 ? '...' : '');
+    nodes.forEach((node) => {
+      const instrText = node.instructions.slice(0, 3).join(", ") +
+        (node.instructions.length > 3 ? "..." : "");
       svg += `<g transform="translate(${node.x + 100}, ${node.y})">
         <rect width="${width}" height="${height}" fill="#f5f5f5" stroke="#333" rx="4"/>
-        <text x="${width/2}" y="${height/2}" text-anchor="middle" dy="0.3em" font-size="11">
+        <text x="${width / 2}" y="${
+        height / 2
+      }" text-anchor="middle" dy="0.3em" font-size="11">
           Block ${node.id}
         </text>
-        <text x="${width/2}" y="${height/2 + 14}" text-anchor="middle" dy="0.3em" font-size="9" fill="#666">
+        <text x="${width / 2}" y="${
+        height / 2 + 14
+      }" text-anchor="middle" dy="0.3em" font-size="9" fill="#666">
           ${instrText}
         </text>
       </g>`;
     });
 
-    edges.forEach(edge => {
-      const fromNode = nodes.find(n => n.id === edge.from);
-      const toNode = nodes.find(n => n.id === edge.to);
+    edges.forEach((edge) => {
+      const fromNode = nodes.find((n) => n.id === edge.from);
+      const toNode = nodes.find((n) => n.id === edge.to);
       if (fromNode && toNode) {
-        const stroke = edge.type === 'unconditional' ? '#e74c3c' : '#3498db';
+        const stroke = edge.type === "unconditional" ? "#e74c3c" : "#3498db";
         const midY = (fromNode.y + toNode.y) / 2;
-        svg += `<line x1="${fromNode.x + width}" y1="${fromNode.y + height/2}" 
-          x2="${toNode.x}" y2="${toNode.y + height/2}" 
+        svg += `<line x1="${fromNode.x + width}" y1="${
+          fromNode.y + height / 2
+        }" 
+          x2="${toNode.x}" y2="${toNode.y + height / 2}" 
           stroke="${stroke}" stroke-width="2" marker-end="url(#arrowhead)"/>`;
       }
     });
 
-    svg += '</svg>';
+    svg += "</svg>";
     return svg;
   }
 
   generateStackDepthChart() {
     const stackDepths = this.analysis.metrics?.stackDepths || [];
-    
+
     const data = stackDepths.map((d, i) => ({
       x: `Func ${i}`,
-      y: d.max || 0
+      y: d.max || 0,
     }));
 
-    const maxVal = Math.max(...data.map(d => d.y), 10);
-    
+    const maxVal = Math.max(...data.map((d) => d.y), 10);
+
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">`;
     svg += `<style>
       .bar { fill: #3498db; }
@@ -151,21 +157,32 @@ export class WASMVisualizer {
       const x = margin.left + i * (barWidth + 2);
       const y = margin.top + chartHeight - barHeight;
 
-      svg += `<rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}"/>`;
-      svg += `<text class="axis" x="${x + barWidth/2}" y="${margin.top + chartHeight + 15}" 
-        text-anchor="end" transform="rotate(-45, ${x + barWidth/2}, ${margin.top + chartHeight + 15})">
+      svg +=
+        `<rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}"/>`;
+      svg += `<text class="axis" x="${x + barWidth / 2}" y="${
+        margin.top + chartHeight + 15
+      }" 
+        text-anchor="end" transform="rotate(-45, ${x + barWidth / 2}, ${
+        margin.top + chartHeight + 15
+      })">
         ${d.x}
       </text>`;
-      svg += `<text class="axis" x="${x + barWidth/2}" y="${y - 5}" text-anchor="middle">${d.y}</text>`;
+      svg += `<text class="axis" x="${x + barWidth / 2}" y="${
+        y - 5
+      }" text-anchor="middle">${d.y}</text>`;
     });
 
-    svg += `<text class="label" x="${width/2 + margin.left}" y="20" text-anchor="middle">
+    svg += `<text class="label" x="${
+      width / 2 + margin.left
+    }" y="20" text-anchor="middle">
       Maximum Stack Depth per Function
     </text>`;
-    svg += `<text class="label" x="15" y="${height/2 + margin.top}" transform="rotate(-90, 15, ${height/2 + margin.top})" 
+    svg += `<text class="label" x="15" y="${
+      height / 2 + margin.top
+    }" transform="rotate(-90, 15, ${height / 2 + margin.top})" 
       text-anchor="middle">Stack Depth</text>`;
 
-    svg += '</svg>';
+    svg += "</svg>";
     return svg;
   }
 
@@ -194,28 +211,36 @@ export class WASMVisualizer {
       const barWidth = (count / maxVal) * width;
 
       svg += `<g>
-        <text class="bar-label" x="${margin.left - 5}" y="${y + 12}" text-anchor="end">${instr}</text>
-        <rect class="bar" x="${x}" y="${y + 2}" width="${barWidth}" height="${chartHeight / sorted.length - 4}"/>
-        <text class="count-label" x="${x + barWidth + 5}" y="${y + 14}">${count}</text>
+        <text class="bar-label" x="${margin.left - 5}" y="${
+        y + 12
+      }" text-anchor="end">${instr}</text>
+        <rect class="bar" x="${x}" y="${y + 2}" width="${barWidth}" height="${
+        chartHeight / sorted.length - 4
+      }"/>
+        <text class="count-label" x="${x + barWidth + 5}" y="${
+        y + 14
+      }">${count}</text>
       </g>`;
     });
 
-    svg += `<text x="${width/2 + margin.left}" y="20" text-anchor="middle" font-weight="bold">
+    svg += `<text x="${
+      width / 2 + margin.left
+    }" y="20" text-anchor="middle" font-weight="bold">
       Top 15 Instructions by Frequency
     </text>`;
-    svg += '</svg>';
+    svg += "</svg>";
     return svg;
   }
 
   generateFunctionSizeChart() {
     const sizes = this.analysis.metrics?.functionSizes || [];
-    
+
     const data = sizes.map((size, i) => ({
       func: `Func ${i}`,
-      size
+      size,
     })).sort((a, b) => b.size - a.size);
 
-    const maxVal = Math.max(...data.map(d => d.size), 1);
+    const maxVal = Math.max(...data.map((d) => d.size), 1);
     const chartHeight = 300;
     const margin = { top: 40, right: 20, bottom: 60, left: 50 };
     const width = 800 - margin.left - margin.right;
@@ -234,38 +259,53 @@ export class WASMVisualizer {
       const x = margin.left + i * (barWidth + 2);
       const y = margin.top + chartHeight - barHeight;
 
-      svg += `<rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}"/>`;
-      svg += `<text class="axis" x="${x + barWidth/2}" y="${margin.top + chartHeight + 15}" 
-        text-anchor="end" transform="rotate(-45, ${x + barWidth/2}, ${margin.top + chartHeight + 15})">
+      svg +=
+        `<rect class="bar" x="${x}" y="${y}" width="${barWidth}" height="${barHeight}"/>`;
+      svg += `<text class="axis" x="${x + barWidth / 2}" y="${
+        margin.top + chartHeight + 15
+      }" 
+        text-anchor="end" transform="rotate(-45, ${x + barWidth / 2}, ${
+        margin.top + chartHeight + 15
+      })">
         ${d.func}
       </text>`;
-      svg += `<text class="axis" x="${x + barWidth/2}" y="${y - 3}" text-anchor="middle" font-size="8">
+      svg += `<text class="axis" x="${x + barWidth / 2}" y="${
+        y - 3
+      }" text-anchor="middle" font-size="8">
         ${d.size}
       </text>`;
     });
 
-    svg += `<text x="${width/2 + margin.left}" y="20" text-anchor="middle" font-weight="bold">
+    svg += `<text x="${
+      width / 2 + margin.left
+    }" y="20" text-anchor="middle" font-weight="bold">
       Function Size Distribution (Top 20)
     </text>`;
-    svg += '</svg>';
+    svg += "</svg>";
     return svg;
   }
 
   generateErrorHeatmap() {
     const errors = this.analysis.stackBalance?.errors || [];
-    
+
     // Group errors by function and type
     const errorMap = {};
-    errors.forEach(err => {
+    errors.forEach((err) => {
       const match = err.match(/at instruction (\d+)/);
       const idx = match ? parseInt(match[1]) : 0;
-      const type = err.includes('Type') ? 'type' : 
-                   err.includes('Stack') ? 'stack' : 'other';
+      const type = err.includes("Type")
+        ? "type"
+        : err.includes("Stack")
+        ? "stack"
+        : "other";
       errorMap[idx] = (errorMap[idx] || 0) + 1;
     });
 
-    const entries = Object.entries(errorMap).map(([idx, count]) => ({ idx: parseInt(idx), count }));
-    const maxCount = Math.max(...entries.map(e => e.count), 1);
+    const entries = Object.entries(errorMap).map(([idx, count]) => ({
+      idx: parseInt(idx),
+      count,
+    }));
+    const maxCount = Math.max(...entries.map((e) => e.count), 1);
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 100">`;
     svg += `<style>
@@ -276,14 +316,20 @@ export class WASMVisualizer {
     entries.forEach((e, i) => {
       const x = i * 15;
       const intensity = e.count / maxCount;
-      const color = `rgb(${255}, ${255 - intensity * 200}, ${255 - intensity * 200})`;
-      
-      svg += `<rect class="cell" x="${x}" y="10" width="14" height="40" fill="${color}"/>`;
-      svg += `<text class="label" x="${x + 7}" y="65" text-anchor="middle">${e.idx}</text>`;
+      const color = `rgb(${255}, ${255 - intensity * 200}, ${
+        255 - intensity * 200
+      })`;
+
+      svg +=
+        `<rect class="cell" x="${x}" y="10" width="14" height="40" fill="${color}"/>`;
+      svg += `<text class="label" x="${
+        x + 7
+      }" y="65" text-anchor="middle">${e.idx}</text>`;
     });
 
-    svg += `<text x="300" y="85" text-anchor="middle" font-size="12">Error Distribution by Instruction Index</text>`;
-    svg += '</svg>';
+    svg +=
+      `<text x="300" y="85" text-anchor="middle" font-size="12">Error Distribution by Instruction Index</text>`;
+    svg += "</svg>";
     return svg;
   }
 
@@ -291,8 +337,10 @@ export class WASMVisualizer {
     const summary = this.analysis.summary || {};
     const metrics = this.analysis.metrics || {};
 
-    const passColor = summary.stackValid && summary.typeValid && summary.controlFlowValid 
-      ? '#27ae60' : '#e74c3c';
+    const passColor =
+      summary.stackValid && summary.typeValid && summary.controlFlowValid
+        ? "#27ae60"
+        : "#e74c3c";
 
     let html = `<!DOCTYPE html>
 <html>
@@ -336,11 +384,11 @@ export class WASMVisualizer {
           <p>Instructions</p>
         </div>
         <div class="status-card">
-          <h2>${summary.stackValid ? '✓' : '✗'}</h2>
+          <h2>${summary.stackValid ? "✓" : "✗"}</h2>
           <p>Stack Valid</p>
         </div>
         <div class="status-card">
-          <h2>${summary.typeValid ? '✓' : '✗'}</h2>
+          <h2>${summary.typeValid ? "✓" : "✗"}</h2>
           <p>Types Valid</p>
         </div>
       </div>
@@ -356,10 +404,11 @@ export class WASMVisualizer {
         <div class="metric">
           <span>Average Stack Depth</span>
           <span class="metric-value">${
-            metrics.stackDepths?.length 
-              ? (metrics.stackDepths.reduce((sum, d) => sum + (d.max || 0), 0) / metrics.stackDepths.length).toFixed(1)
-              : 0
-          }</span>
+      metrics.stackDepths?.length
+        ? (metrics.stackDepths.reduce((sum, d) => sum + (d.max || 0), 0) /
+          metrics.stackDepths.length).toFixed(1)
+        : 0
+    }</span>
         </div>
       </div>
 
@@ -368,20 +417,25 @@ export class WASMVisualizer {
         <div class="metric">
           <span>Average Function Size</span>
           <span class="metric-value">${
-            metrics.functionSizes?.length
-              ? Math.round(metrics.functionSizes.reduce((a, b) => a + b, 0) / metrics.functionSizes.length)
-              : 0
-          } instructions</span>
+      metrics.functionSizes?.length
+        ? Math.round(
+          metrics.functionSizes.reduce((a, b) => a + b, 0) /
+            metrics.functionSizes.length,
+        )
+        : 0
+    } instructions</span>
         </div>
         <div class="metric">
           <span>Largest Function</span>
-          <span class="metric-value">${Math.max(...metrics.functionSizes, 0)} instructions</span>
+          <span class="metric-value">${
+      Math.max(...metrics.functionSizes, 0)
+    } instructions</span>
         </div>
         <div class="metric">
           <span>Total Locals</span>
           <span class="metric-value">${
-            metrics.localCounts?.reduce((a, b) => a + b, 0) || 0
-          }</span>
+      metrics.localCounts?.reduce((a, b) => a + b, 0) || 0
+    }</span>
         </div>
       </div>
 
@@ -390,23 +444,25 @@ export class WASMVisualizer {
         <div class="metric">
           <span>Branch Instructions</span>
           <span class="metric-value">${
-            metrics.branchCounts?.reduce((sum, c) => sum + c.branches, 0) || 0
-          }</span>
+      metrics.branchCounts?.reduce((sum, c) => sum + c.branches, 0) || 0
+    }</span>
         </div>
         <div class="metric">
           <span>Function Calls</span>
           <span class="metric-value">${
-            metrics.callCounts?.reduce((sum, c) => sum + c.calls, 0) || 0
-          }</span>
+      metrics.callCounts?.reduce((sum, c) => sum + c.calls, 0) || 0
+    }</span>
         </div>
       </div>
 
       <div class="card">
         <h3>Errors & Warnings</h3>
         <div class="error-list">
-          ${(this.analysis.errors || []).slice(0, 20).map(e => 
-            `<div class="error">${e}</div>`
-          ).join('')}
+          ${
+      (this.analysis.errors || []).slice(0, 20).map((e) =>
+        `<div class="error">${e}</div>`
+      ).join("")
+    }
         </div>
       </div>
     </div>
@@ -438,7 +494,10 @@ export class WASMVisualizer {
     writeFileSync(`${this.outputDir}/errors.svg`, errorHeatmap);
 
     // Generate JSON report
-    writeFileSync(`${this.outputDir}/analysis.json`, JSON.stringify(this.analysis, null, 2));
+    writeFileSync(
+      `${this.outputDir}/analysis.json`,
+      JSON.stringify(this.analysis, null, 2),
+    );
 
     return {
       dashboard: `${this.outputDir}/dashboard.html`,
@@ -446,7 +505,7 @@ export class WASMVisualizer {
       instrChart: `${this.outputDir}/instructions.svg`,
       sizeChart: `${this.outputDir}/function-sizes.svg`,
       errorHeatmap: `${this.outputDir}/errors.svg`,
-      jsonReport: `${this.outputDir}/analysis.json`
+      jsonReport: `${this.outputDir}/analysis.json`,
     };
   }
 }

@@ -35,7 +35,7 @@ class SaveSystem {
         const request = store.getAllKeys();
         request.onsuccess = () => {
           const keys = request.result as string[];
-          resolve(keys.map(id => ({ id, timestamp: Date.now() })));
+          resolve(keys.map((id) => ({ id, timestamp: Date.now() })));
         };
         request.onerror = () => resolve([]);
       } catch (e) {
@@ -77,7 +77,8 @@ class SaveSystem {
   }
 
   isSavePath(path: string): boolean {
-    return path.toLowerCase().startsWith("saves/") && path.toLowerCase().endsWith("/save.txt");
+    return path.toLowerCase().startsWith("saves/") &&
+      path.toLowerCase().endsWith("/save.txt");
   }
 
   getSlotFromPath(path: string): string | null {

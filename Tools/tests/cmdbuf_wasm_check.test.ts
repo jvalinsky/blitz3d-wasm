@@ -21,4 +21,3 @@ Deno.test("checkCmdbufExports passes when required exports exist", () => {
   const r = checkCmdbufExports(wasmBytes);
   assert(r.missing.length === 0, "must not report missing exports");
 });
-

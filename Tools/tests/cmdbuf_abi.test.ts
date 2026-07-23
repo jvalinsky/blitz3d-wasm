@@ -10,7 +10,10 @@ Deno.test("assertCmdBufAbi accepts matching ABI version", () => {
   const exports: WebAssembly.Exports = {
     __CmdBufPtr: new WebAssembly.Global({ value: "i32", mutable: true }, 0),
     __CmdBufBytes: new WebAssembly.Global({ value: "i32", mutable: true }, 0),
-    __CmdBufAbiVersion: new WebAssembly.Global({ value: "i32", mutable: false }, CMDB_VERSION),
+    __CmdBufAbiVersion: new WebAssembly.Global(
+      { value: "i32", mutable: false },
+      CMDB_VERSION,
+    ),
   };
   assertCmdBufAbi(exports);
 });
@@ -24,7 +27,10 @@ Deno.test("assertCmdBufAbi throws if ABI export missing", () => {
     assertCmdBufAbi(exports);
   } catch (e) {
     threw = true;
-    assert(String(e).includes("__CmdBufAbiVersion"), "error must mention __CmdBufAbiVersion");
+    assert(
+      String(e).includes("__CmdBufAbiVersion"),
+      "error must mention __CmdBufAbiVersion",
+    );
   }
   assert(threw, "must throw");
 });
@@ -32,7 +38,10 @@ Deno.test("assertCmdBufAbi throws if ABI export missing", () => {
 Deno.test("assertCmdBufAbi throws on mismatch", () => {
   const exports: WebAssembly.Exports = {
     __CmdBufPtr: new WebAssembly.Global({ value: "i32", mutable: true }, 0),
-    __CmdBufAbiVersion: new WebAssembly.Global({ value: "i32", mutable: false }, (CMDB_VERSION + 1) | 0),
+    __CmdBufAbiVersion: new WebAssembly.Global(
+      { value: "i32", mutable: false },
+      (CMDB_VERSION + 1) | 0,
+    ),
   };
   let threw = false;
   try {
@@ -43,4 +52,3 @@ Deno.test("assertCmdBufAbi throws on mismatch", () => {
   }
   assert(threw, "must throw");
 });
-

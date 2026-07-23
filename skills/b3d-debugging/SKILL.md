@@ -16,7 +16,8 @@ description: Debug Blitz3D `.b3d` model issues in Blitz3D-WASM and the SCPCB ass
 1. Does the file parse at all?
    - Parser: `Tools/b3d/parse.ts`
 2. Are textures referenced with weird paths?
-   - Common in SCPCB: embedded `D:\\...` absolute paths → you must normalize to basenames + on-disk casing during conversion.
+   - Common in SCPCB: embedded `D:\\...` absolute paths → you must normalize to
+     basenames + on-disk casing during conversion.
 3. Is there actually a skeleton?
    - Expect many `NODE`s with `BONE` + `KEYS` for NPCs.
 4. Are animation globals sane?
@@ -36,6 +37,6 @@ description: Debug Blitz3D `.b3d` model issues in Blitz3D-WASM and the SCPCB ass
 - Animation playback: `web/src/runtime/animation.ts`
 
 If the mesh loads but anim pose is wrong, treat it as:
+
 - bone hierarchy traversal/binding, or
 - frame→seconds mapping (fps).
-

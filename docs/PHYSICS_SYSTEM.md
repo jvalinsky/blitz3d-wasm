@@ -2,21 +2,30 @@
 
 ## Overview
 
-SCP: Containment Breach (SCP:CB) uses Blitz3D's built-in collision system, which implements a specific "Ellipsoid-Space Sliding" algorithm. This system is robust for player movement (sliding along walls, walking up stairs) but simple compared to modern rigid-body physics engines (like Bullet or PhysX).
+SCP: Containment Breach (SCP:CB) uses Blitz3D's built-in collision system, which
+implements a specific "Ellipsoid-Space Sliding" algorithm. This system is robust
+for player movement (sliding along walls, walking up stairs) but simple compared
+to modern rigid-body physics engines (like Bullet or PhysX).
 
-This document details the algorithm and how we replicate it in the Swift/WASM runtime.
+This document details the algorithm and how we replicate it in the Swift/WASM
+runtime.
 
 ## Core Concepts
 
 ### 1. The Ellipsoid Collider
-Instead of a capsule or cylinder, Blitz3D represents the player as an **Ellipsoid** defined by a radius vector $(R_x, R_y, R_z)$.
 
-*   **Player:** Typically Radius $(0.15, 0.3, 0.15)$ (approx).
-*   **Transformation:** To simplify math, the entire world is scaled by $(1/R_x, 1/R_y, 1/R_z)$ so the player becomes a **Unit Sphere** $(r=1)$. This is "Ellipsoid Space".
+Instead of a capsule or cylinder, Blitz3D represents the player as an
+**Ellipsoid** defined by a radius vector $(R_x, R_y, R_z)$.
+
+- **Player:** Typically Radius $(0.15, 0.3, 0.15)$ (approx).
+- **Transformation:** To simplify math, the entire world is scaled by
+  $(1/R_x, 1/R_y, 1/R_z)$ so the player becomes a **Unit Sphere** $(r=1)$. This
+  is "Ellipsoid Space".
 
 ### 2. Collision Response: "Sliding"
 
-When the player hits a wall, they don't stop; they "slide" along it. This allows smooth movement through corridors without getting stuck on geometry seams.
+When the player hits a wall, they don't stop; they "slide" along it. This allows
+smooth movement through corridors without getting stuck on geometry seams.
 
 ```mermaid
 sequenceDiagram
@@ -35,14 +44,15 @@ sequenceDiagram
 
 SCP:CB defines specific collision layers (integers) to manage interactions.
 
-| Type ID | Constant | Usage | Method | Response |
-| :--- | :--- | :--- | :--- | :--- |
-| 1 | `HIT_MAP` | Walls, Floors, Ceilings | Polygon | Slide |
-| 2 | `HIT_PLAYER` | The Player | Ellipsoid | Slide |
-| 3 | `HIT_ITEM` | Inventory Items | Box/Sphere | Stop |
-| 4 | `HIT_APACHE` | (Legacy/Unused) | - | - |
+| Type ID | Constant     | Usage                   | Method     | Response |
+| :------ | :----------- | :---------------------- | :--------- | :------- |
+| 1       | `HIT_MAP`    | Walls, Floors, Ceilings | Polygon    | Slide    |
+| 2       | `HIT_PLAYER` | The Player              | Ellipsoid  | Slide    |
+| 3       | `HIT_ITEM`   | Inventory Items         | Box/Sphere | Stop     |
+| 4       | `HIT_APACHE` | (Legacy/Unused)         | -          | -        |
 
 **Setup Code (Blitz3D):**
+
 ```blitzbasic
 Collisions HIT_PLAYER, HIT_MAP, 2, 2  ; Sphere-to-Poly, Slide
 Collisions HIT_PLAYER, HIT_ITEM, 2, 1 ; Sphere-to-Poly, Stop
@@ -72,23 +82,33 @@ flowchart TD
 ```
 
 ### 1. Detection
-*   Convert Triangle to "Ellipsoid Space" (Scale vertices).
-*   Check intersection between Unit Sphere (at origin relative to sweep) and Triangle.
-*   **Sweep Test:** We don't just check static overlap; we check the *swept volume* of the sphere moving along the velocity vector to prevent tunneling (bullet-through-paper).
+
+- Convert Triangle to "Ellipsoid Space" (Scale vertices).
+- Check intersection between Unit Sphere (at origin relative to sweep) and
+  Triangle.
+- **Sweep Test:** We don't just check static overlap; we check the _swept
+  volume_ of the sphere moving along the velocity vector to prevent tunneling
+  (bullet-through-paper).
 
 ### 2. Response (The "Slide")
+
 Given a collision normal $\hat{n}$ and velocity $\vec{v}$:
 
 $$
 \vec{v}_{new} = \vec{v} - (\vec{v} \cdot \hat{n}) \hat{n}
 $$
 
-This removes the component of velocity moving *into* the wall, keeping the component *parallel* to it.
+This removes the component of velocity moving _into_ the wall, keeping the
+component _parallel_ to it.
 
 ### 3. Gravity Handling
-Gravity is just a constant downward force added to velocity every frame. The sliding algorithm naturally handles slopes:
-*   **Flat floor:** Normal is $(0, 1, 0)$. Gravity $(-y)$ is perpendicular. Sliding vector is zero (stops falling).
-*   **Slope:** Normal is angled. Gravity component slides player down the slope.
+
+Gravity is just a constant downward force added to velocity every frame. The
+sliding algorithm naturally handles slopes:
+
+- **Flat floor:** Normal is $(0, 1, 0)$. Gravity $(-y)$ is perpendicular.
+  Sliding vector is zero (stops falling).
+- **Slope:** Normal is angled. Gravity component slides player down the slope.
 
 ## Implementation in Swift
 
@@ -109,6 +129,7 @@ struct CollisionPacket {
 ```
 
 ### Recursion Loop
+
 ```swift
 func collideAndSlide(position: Vec3, velocity: Vec3, radius: Vec3) -> Vec3 {
     // 1. Convert to e-space
@@ -137,6 +158,10 @@ func collideAndSlide(position: Vec3, velocity: Vec3, radius: Vec3) -> Vec3 {
 ```
 
 ## Differences from Modern Physics (e.g., Box2D/Bullet)
-*   **No Rotation:** The player collider does not rotate (it's axis-aligned).
-*   **No Momentum/Mass:** Movement is purely kinematic. Velocity is set directly, not by applying forces (F=ma).
-*   **Mesh-Based:** Collides directly with raw triangle meshes (RMESH), not simplified convex hulls. This makes it expensive but accurate for complex level geometry.
+
+- **No Rotation:** The player collider does not rotate (it's axis-aligned).
+- **No Momentum/Mass:** Movement is purely kinematic. Velocity is set directly,
+  not by applying forces (F=ma).
+- **Mesh-Based:** Collides directly with raw triangle meshes (RMESH), not
+  simplified convex hulls. This makes it expensive but accurate for complex
+  level geometry.

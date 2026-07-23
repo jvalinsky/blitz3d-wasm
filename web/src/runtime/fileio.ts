@@ -183,7 +183,9 @@ export class Blitz3DFileIO {
           const savePath = `Saves/${meta.id}/save.txt`;
           this.registerFile(savePath, data);
           loaded++;
-          console.log(`[FileIO] Restored save from IndexedDB: ${savePath} (${data.byteLength} bytes)`);
+          console.log(
+            `[FileIO] Restored save from IndexedDB: ${savePath} (${data.byteLength} bytes)`,
+          );
         }
       }
 
@@ -213,7 +215,11 @@ export class Blitz3DFileIO {
       );
       return true;
     } catch (error: unknown) {
-      console.error(`Failed to load asset bundle: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `Failed to load asset bundle: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       return false;
     }
   }
@@ -231,7 +237,11 @@ export class Blitz3DFileIO {
       console.log(`Asset manifest loaded: ${data.files?.length ?? 0} files`);
       return true;
     } catch (error: unknown) {
-      console.error(`Failed to load asset manifest: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(
+        `Failed to load asset manifest: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
       return false;
     }
   }
@@ -263,7 +273,9 @@ export class Blitz3DFileIO {
           : null);
     }
     if (this.assetManifest?.files) {
-      return this.assetManifest.files.find((file) => file.path === resolvedPath) ??
+      return this.assetManifest.files.find((file) =>
+        file.path === resolvedPath
+      ) ??
         null;
     }
     return null;
@@ -275,7 +287,8 @@ export class Blitz3DFileIO {
     const count = (this._missingCounts.get(resolvedPath) ?? 0) + 1;
     this._missingCounts.set(resolvedPath, count);
 
-    (globalThis as { __SCPCB_LAST_FILE_REQ?: string }).__SCPCB_LAST_FILE_REQ = resolvedPath;
+    (globalThis as { __SCPCB_LAST_FILE_REQ?: string }).__SCPCB_LAST_FILE_REQ =
+      resolvedPath;
 
     if (count === 1 || now - prev > 500) {
       this._missingLastLogMs.set(resolvedPath, now);
@@ -306,7 +319,10 @@ export class Blitz3DFileIO {
     if (this.fileSystem.has(resolvedPath)) return;
     if (this.pendingLoads.has(resolvedPath)) return;
     this.fetchAndRegister(entry).catch((error) => {
-      this._dispatchErrorEvent(error instanceof Error ? error : new Error(String(error)), resolvedPath);
+      this._dispatchErrorEvent(
+        error instanceof Error ? error : new Error(String(error)),
+        resolvedPath,
+      );
     });
   }
 
@@ -347,20 +363,27 @@ export class Blitz3DFileIO {
         const entry = queue.shift();
         if (!entry) return;
         try {
-          (globalThis as { __SCPCB_INIT_FILE?: string }).__SCPCB_INIT_FILE = entry.path;
-        } catch { }
+          (globalThis as { __SCPCB_INIT_FILE?: string }).__SCPCB_INIT_FILE =
+            entry.path;
+        } catch {}
         await this.fetchAndRegister(entry);
         completed += 1;
         if (options.onProgress) {
           options.onProgress(completed, total, entry.path);
         }
         try {
-          (globalThis as { __SCPCB_ASSET_PRELOAD?: { loaded: number; total: number; file: string } }).__SCPCB_ASSET_PRELOAD = {
+          (globalThis as {
+            __SCPCB_ASSET_PRELOAD?: {
+              loaded: number;
+              total: number;
+              file: string;
+            };
+          }).__SCPCB_ASSET_PRELOAD = {
             loaded: completed,
             total,
             file: entry.path,
           };
-        } catch { }
+        } catch {}
         // Yield to event loop to keep UI responsive
         await new Promise((r) => setTimeout(r, 0));
       }
@@ -383,7 +406,9 @@ export class Blitz3DFileIO {
         if (!response.ok) {
           if (response.status >= 500 && attempt < maxRetries - 1) {
             const delay = baseDelay * Math.pow(2, attempt);
-            console.warn(`[FileIO] Server error ${response.status}, retrying in ${delay}ms...`);
+            console.warn(
+              `[FileIO] Server error ${response.status}, retrying in ${delay}ms...`,
+            );
             await new Promise((r) => setTimeout(r, delay));
             continue;
           }
@@ -396,7 +421,11 @@ export class Blitz3DFileIO {
 
         if (attempt < maxRetries - 1) {
           const delay = baseDelay * Math.pow(2, attempt);
-          console.warn(`[FileIO] Fetch failed (attempt ${attempt + 1}/${maxRetries}), retrying in ${delay}ms...`);
+          console.warn(
+            `[FileIO] Fetch failed (attempt ${
+              attempt + 1
+            }/${maxRetries}), retrying in ${delay}ms...`,
+          );
           await new Promise((r) => setTimeout(r, delay));
         }
       }
@@ -432,21 +461,33 @@ export class Blitz3DFileIO {
 
       if ((totalHint ?? 0) > 0 && (totalHint as number) <= 1024 * 1024) {
         try {
-          (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
+          (globalThis as {
+            __SCPCB_FETCH_STATUS?: {
+              file: string;
+              loaded: number;
+              total: number | null;
+            };
+          }).__SCPCB_FETCH_STATUS = {
             file: resolvedPath,
             loaded: 0,
             total: totalHint,
           };
-        } catch { }
+        } catch {}
 
         const buffer = new Uint8Array(await response.arrayBuffer());
         try {
-          (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
+          (globalThis as {
+            __SCPCB_FETCH_STATUS?: {
+              file: string;
+              loaded: number;
+              total: number | null;
+            };
+          }).__SCPCB_FETCH_STATUS = {
             file: resolvedPath,
             loaded: buffer.byteLength,
             total: totalHint,
           };
-        } catch { }
+        } catch {}
         if (onProgress) onProgress(buffer.byteLength, totalHint, resolvedPath);
         this.registerFile(resolvedPath, buffer);
         await new Promise((r) => setTimeout(r, 0));
@@ -474,12 +515,18 @@ export class Blitz3DFileIO {
           loaded += value.length;
           if (onProgress) onProgress(loaded, total, resolvedPath);
           try {
-            (globalThis as { __SCPCB_FETCH_STATUS?: { file: string; loaded: number; total: number | null } }).__SCPCB_FETCH_STATUS = {
+            (globalThis as {
+              __SCPCB_FETCH_STATUS?: {
+                file: string;
+                loaded: number;
+                total: number | null;
+              };
+            }).__SCPCB_FETCH_STATUS = {
               file: resolvedPath,
               loaded,
               total,
             };
-          } catch { }
+          } catch {}
           const now = performance.now();
           if (loaded - lastYieldLoaded >= 256 * 1024 || now - lastYield >= 16) {
             lastYield = now;
@@ -602,12 +649,18 @@ export class Blitz3DFileIO {
     const candidates = this._openFileCandidates(filePath);
 
     for (const resolvedPath of candidates) {
-      const vfsKey = this._fileSystemByLower.get(resolvedPath.toLowerCase()) ?? resolvedPath;
+      const vfsKey = this._fileSystemByLower.get(resolvedPath.toLowerCase()) ??
+        resolvedPath;
       if (this.fileSystem.has(vfsKey)) {
         const file = this.fileSystem.get(vfsKey)!;
         file.position = 0;
         const handle = this.nextFileHandle++;
-        this.openFiles.set(handle, { ...file, path: vfsKey, eof: false, mode: "r" });
+        this.openFiles.set(handle, {
+          ...file,
+          path: vfsKey,
+          eof: false,
+          mode: "r",
+        });
         console.log(`Opened file from VFS: ${vfsKey} (handle: ${handle})`);
         return handle;
       }
@@ -635,13 +688,18 @@ export class Blitz3DFileIO {
 
       const entry = this._getManifestEntry(resolvedPath);
       if (entry) {
-        this._logMissing(resolvedPath, "ReadFile: asset not preloaded, queuing async fetch");
+        this._logMissing(
+          resolvedPath,
+          "ReadFile: asset not preloaded, queuing async fetch",
+        );
         this._queueAsyncFetch(entry, resolvedPath);
         return 0;
       }
     }
 
-    console.warn(`File not found: ${candidates[0] ?? this.resolvePath(filePath)}`);
+    console.warn(
+      `File not found: ${candidates[0] ?? this.resolvePath(filePath)}`,
+    );
     return 0;
   }
 
@@ -842,8 +900,6 @@ export class Blitz3DFileIO {
     return view.getFloat32(0, true);
   }
 
-
-
   /**
    * Read a single line from a file (up to `\n` or `\r\n`).
    * @param {number} handle - File handle
@@ -897,10 +953,10 @@ export class Blitz3DFileIO {
     return 0;
   }
   /**
-     * Read a null-terminated string from a file
-     * @param {number} handle - File handle
-     * @returns {number} Pointer to string in WASM memory (0 on failure)
-     */
+   * Read a null-terminated string from a file
+   * @param {number} handle - File handle
+   * @returns {number} Pointer to string in WASM memory (0 on failure)
+   */
   readString(handle: number): number {
     const file = this.openFiles.get(handle);
     if (!file) return 0;
@@ -1023,7 +1079,10 @@ export class Blitz3DFileIO {
 
     const entry = this._getManifestEntry(resolvedPath);
     if (entry) {
-      this._logMissing(resolvedPath, "FileSize: asset not preloaded, queuing async fetch");
+      this._logMissing(
+        resolvedPath,
+        "FileSize: asset not preloaded, queuing async fetch",
+      );
       this._queueAsyncFetch(entry, resolvedPath);
       return entry.size ?? 0;
     }
@@ -1045,7 +1104,10 @@ export class Blitz3DFileIO {
 
     const entry = this._getManifestEntry(resolvedPath);
     if (entry) {
-      this._logMissing(resolvedPath, "FileType: asset not preloaded, queuing async fetch");
+      this._logMissing(
+        resolvedPath,
+        "FileType: asset not preloaded, queuing async fetch",
+      );
       this._queueAsyncFetch(entry, resolvedPath);
       return 0;
     }
@@ -1109,7 +1171,10 @@ export class Blitz3DFileIO {
 
   writeShort(handle: number, value: number): number {
     const v = value | 0;
-    return this._writeBytes(handle, new Uint8Array([v & 0xFF, (v >> 8) & 0xFF]));
+    return this._writeBytes(
+      handle,
+      new Uint8Array([v & 0xFF, (v >> 8) & 0xFF]),
+    );
   }
 
   writeInt(handle: number, value: number): number {
@@ -1371,14 +1436,14 @@ export class Blitz3DFileIO {
     const clearCache = options.clearCache ?? true;
     try {
       this.openFiles?.clear?.();
-    } catch { }
+    } catch {}
     try {
       this.pendingLoads?.clear?.();
-    } catch { }
+    } catch {}
     if (clearCache) {
       try {
         this.fileSystem?.clear?.();
-      } catch { }
+      } catch {}
       this.assetBundle = null;
       this.assetManifest = null;
     }

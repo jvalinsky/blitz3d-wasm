@@ -33,18 +33,21 @@ START: 49/52 files passing (94.2%)
 ## Quick Decision Guide
 
 ### Choose PRAGMATIC if:
+
 - ✅ You need results fast
 - ✅ Minor source changes are acceptable
 - ✅ You can refine later
 - ✅ You want lowest risk
 
 ### Choose CONSERVATIVE if:
+
 - ✅ You want to minimize all changes
 - ✅ Documentation is acceptable
 - ✅ Source changes are OK
 - ✅ Parser fix can wait
 
 ### Choose AGGRESSIVE if:
+
 - ✅ You want production-perfect code
 - ✅ You have time for thorough work
 - ✅ No source changes allowed
@@ -53,6 +56,7 @@ START: 49/52 files passing (94.2%)
 ## Implementation Order
 
 ### PRAGMATIC Path (Recommended)
+
 ```
 Day 1 Morning:
   ├─ 1. Apply window3d.bb workaround (30 min)
@@ -72,6 +76,7 @@ DONE: 100% compilation achieved ✅
 ```
 
 ### AGGRESSIVE Path (Complete)
+
 ```
 Day 1:
   ├─ 1. Add Token.hasLeadingWhitespace (1 hr)
@@ -94,6 +99,7 @@ DONE: Perfect solution ✅
 ## Risk Assessment by Approach
 
 ### PRAGMATIC
+
 ```
 Risk Level: 🟢 LOW
 ├─ Source changes: Isolated to 1 file, 18 lines
@@ -102,6 +108,7 @@ Risk Level: 🟢 LOW
 ```
 
 ### CONSERVATIVE
+
 ```
 Risk Level: 🟢 VERY LOW
 ├─ Source changes: Minimal
@@ -110,6 +117,7 @@ Risk Level: 🟢 VERY LOW
 ```
 
 ### AGGRESSIVE
+
 ```
 Risk Level: 🟡 MEDIUM
 ├─ Source changes: None
@@ -119,15 +127,16 @@ Risk Level: 🟡 MEDIUM
 
 ## Success Probability
 
-| Approach | Phase 1 | Phase 3 | Overall |
-|----------|---------|---------|---------|
-| Pragmatic | 95% | 90% | 85%+ |
-| Conservative | 99% | 90% | 90%+ |
-| Aggressive | 85% | 90% | 75%+ |
+| Approach     | Phase 1 | Phase 3 | Overall |
+| ------------ | ------- | ------- | ------- |
+| Pragmatic    | 95%     | 90%     | 85%+    |
+| Conservative | 99%     | 90%     | 90%+    |
+| Aggressive   | 85%     | 90%     | 75%+    |
 
 ## Rollback Plan
 
 If things go wrong:
+
 ```
 ├─ Pragmatic: Revert source changes (5 min)
 ├─ Conservative: Revert source changes (5 min)
@@ -152,8 +161,10 @@ Long-term maintenance project  → AGGRESSIVE
 ## Bottom Line
 
 **Default Choice**: PRAGMATIC
+
 - 6-8 hours to 100%
 - Low risk
 - Can always improve later with Phase 2
 
-**When to override**: Only if zero source changes is a hard requirement (→ AGGRESSIVE)
+**When to override**: Only if zero source changes is a hard requirement (→
+AGGRESSIVE)

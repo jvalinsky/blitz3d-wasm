@@ -2,27 +2,36 @@
 
 ## Overview
 
-This document provides a comprehensive analysis of the SCPB (SCP - Containment Breach) inventory system as referenced in the blitz3d-wasm repository. Based on the codebase analysis, the inventory system is documented as part of the original SCPB game architecture but the actual Items.bb source file is not included in the current compiler infrastructure repository.
+This document provides a comprehensive analysis of the SCPB (SCP - Containment
+Breach) inventory system as referenced in the blitz3d-wasm repository. Based on
+the codebase analysis, the inventory system is documented as part of the
+original SCPB game architecture but the actual Items.bb source file is not
+included in the current compiler infrastructure repository.
 
 ## Key Findings
 
 ### Items.bb File Status
 
-| Attribute | Value |
-|-----------|-------|
-| File Name | Items.bb |
-| Status | NOT PRESENT in current repository |
-| Referenced In | 01_codebase_structure.md as core game system |
-| Expected Location | Sources/ or root directory |
-| Original Purpose | Drag-drop inventory and item combination |
+| Attribute         | Value                                        |
+| ----------------- | -------------------------------------------- |
+| File Name         | Items.bb                                     |
+| Status            | NOT PRESENT in current repository            |
+| Referenced In     | 01_codebase_structure.md as core game system |
+| Expected Location | Sources/ or root directory                   |
+| Original Purpose  | Drag-drop inventory and item combination     |
 
-The Items.bb file is referenced in the existing codebase documentation as a core game system responsible for inventory management, but the file itself is not included in the current repository. This repository contains the **Blitz3D-to-WASM compiler infrastructure** rather than the full SCPB game source code.
+The Items.bb file is referenced in the existing codebase documentation as a core
+game system responsible for inventory management, but the file itself is not
+included in the current repository. This repository contains the
+**Blitz3D-to-WASM compiler infrastructure** rather than the full SCPB game
+source code.
 
 ## Inventory System Architecture
 
 ### Expected Type Definition
 
-Based on standard SCPB inventory patterns and BlitzBasic type conventions, the Items type definition would likely follow this structure:
+Based on standard SCPB inventory patterns and BlitzBasic type conventions, the
+Items type definition would likely follow this structure:
 
 ```blitzbasic
 ; Expected Type Items Definition
@@ -63,9 +72,11 @@ Const ITEM_COMBINED = 8
 
 ### Core Functions (Expected Signatures)
 
-Based on SCPB game design patterns, the following functions would be expected in the inventory system:
+Based on SCPB game design patterns, the following functions would be expected in
+the inventory system:
 
 #### AddItem Function
+
 ```blitzbasic
 ; Function AddItem(itemID%, room%)
 ; Adds an item to the game world or player inventory
@@ -76,6 +87,7 @@ Based on SCPB game design patterns, the following functions would be expected in
 ```
 
 #### RemoveItem Function
+
 ```blitzbasic
 ; Function RemoveItem(item.Items)
 ; Removes an item from the game world
@@ -85,6 +97,7 @@ Based on SCPB game design patterns, the following functions would be expected in
 ```
 
 #### UseItem Function
+
 ```blitzbasic
 ; Function UseItem(item.Items)
 ; Uses an item from inventory
@@ -117,7 +130,8 @@ Based on SCPB game design patterns, the following functions would be expected in
 
 ### Combination Table Pattern
 
-SCPB features a unique item combination mechanic where certain items can be combined to create new items:
+SCPB features a unique item combination mechanic where certain items can be
+combined to create new items:
 
 ```blitzbasic
 ; Combination Table Structure
@@ -150,15 +164,16 @@ End Function
 
 ### Keycard Levels
 
-The SCPB keycard system provides access control to different areas of the facility:
+The SCPB keycard system provides access control to different areas of the
+facility:
 
-| Level | Color | Access Areas | Typical Locations |
-|-------|-------|--------------|-------------------|
-| 0 | White | General containment | Reception, hallways |
-| 1 | Green | Research labs | SCP-173 chamber, offices |
-| 2 | Blue | Security areas | Armory, surveillance |
-| 3 | Red | Restricted zones | SCP-106 entrance, SCP-049 cell |
-| 4 | Black | Admin/MtF areas | O5 office, helipad |
+| Level | Color | Access Areas        | Typical Locations              |
+| ----- | ----- | ------------------- | ------------------------------ |
+| 0     | White | General containment | Reception, hallways            |
+| 1     | Green | Research labs       | SCP-173 chamber, offices       |
+| 2     | Blue  | Security areas      | Armory, surveillance           |
+| 3     | Red   | Restricted zones    | SCP-106 entrance, SCP-049 cell |
+| 4     | Black | Admin/MtF areas     | O5 office, helipad             |
 
 ### Keycard Implementation
 
@@ -197,13 +212,14 @@ End Function
 
 ### Equipment Slots
 
-SCPB features an equipment system allowing players to carry and use various items:
+SCPB features an equipment system allowing players to carry and use various
+items:
 
-| Slot | Item Type | Max Quantity | Example Items |
-|------|-----------|--------------|---------------|
-| 0-8 | General | 9 total | Keycards, documents, tools |
-| 9 | Flashlight | 1 | Working flashlight, dead flashlight |
-| 10 | Radio | 1 | Radio with batteries, radio without batteries |
+| Slot | Item Type  | Max Quantity | Example Items                                 |
+| ---- | ---------- | ------------ | --------------------------------------------- |
+| 0-8  | General    | 9 total      | Keycards, documents, tools                    |
+| 9    | Flashlight | 1            | Working flashlight, dead flashlight           |
+| 10   | Radio      | 1            | Radio with batteries, radio without batteries |
 
 ### Equipping Mechanics
 
@@ -353,20 +369,23 @@ End Function
 
 ### Current Repository Status
 
-The SCPB inventory system (Items.bb) is **not implemented** in the current blitz3d-wasm repository. This repository contains the **Blitz3D-to-WASM compiler infrastructure** that would be used to compile the original SCPB game source code, including the inventory system, to WebAssembly.
+The SCPB inventory system (Items.bb) is **not implemented** in the current
+blitz3d-wasm repository. This repository contains the **Blitz3D-to-WASM compiler
+infrastructure** that would be used to compile the original SCPB game source
+code, including the inventory system, to WebAssembly.
 
 ### System Components
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Items Type | Not Found | Expected in Items.bb |
-| AddItem Function | Not Found | Core inventory function |
+| Component           | Status    | Notes                   |
+| ------------------- | --------- | ----------------------- |
+| Items Type          | Not Found | Expected in Items.bb    |
+| AddItem Function    | Not Found | Core inventory function |
 | RemoveItem Function | Not Found | Core inventory function |
-| UseItem Function | Not Found | Core inventory function |
-| Combination System | Not Found | Unique SCPB feature |
-| Keycard System | Not Found | Access control mechanic |
-| Equipment System | Not Found | Player equipment slots |
-| Inventory UI | Not Found | Drag-drop interface |
+| UseItem Function    | Not Found | Core inventory function |
+| Combination System  | Not Found | Unique SCPB feature     |
+| Keycard System      | Not Found | Access control mechanic |
+| Equipment System    | Not Found | Player equipment slots  |
+| Inventory UI        | Not Found | Drag-drop interface     |
 
 ### Future Implementation
 
@@ -386,6 +405,5 @@ To fully implement the SCPB inventory system in the WASM target:
 
 ---
 
-**Document Status**: Analysis Complete
-**Last Updated**: January 2026
+**Document Status**: Analysis Complete **Last Updated**: January 2026
 **Author**: blitz3d-wasm Analysis

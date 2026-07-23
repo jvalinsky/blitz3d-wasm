@@ -1,16 +1,23 @@
 # UI/HUD Systems Documentation
 
 ## Overview
-UI/HUD systems manage all user interface elements in SCP: Containment Breach, from the main menu to the in-game heads-up display. These systems provide critical information to players while maintaining the game's immersive horror atmosphere.
+
+UI/HUD systems manage all user interface elements in SCP: Containment Breach,
+from the main menu to the in-game heads-up display. These systems provide
+critical information to players while maintaining the game's immersive horror
+atmosphere.
 
 ## Main Menu System
 
 ### Purpose
-The main menu system handles game startup, options configuration, and navigation between different game modes.
+
+The main menu system handles game startup, options configuration, and navigation
+between different game modes.
 
 ### Architecture
 
 #### Menu State Management
+
 ```blitzbasic
 Type MenuState
     Field CurrentScreen%        ; Current menu screen
@@ -30,6 +37,7 @@ Const MENU_CREDITS% = 5        ; Credits screen
 ### Core Functions
 
 #### Menu Rendering
+
 ```blitzbasic
 Function DrawMainMenu()
     ; Draw background
@@ -61,6 +69,7 @@ End Function
 ```
 
 #### Menu Interaction
+
 ```blitzbasic
 Function UpdateMainMenu()
     ; Mouse interaction
@@ -98,6 +107,7 @@ End Function
 ```
 
 #### Options Menu
+
 ```blitzbasic
 Function DrawOptionsMenu()
     ; Graphics options
@@ -126,20 +136,25 @@ End Function
 ```
 
 ### Integration Points
+
 - **[Input System](CORE_SYSTEMS.md#input-system)**: Handles menu navigation
 - **[Audio System](CORE_SYSTEMS.md#audio-system)**: Menu sound effects
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Settings persistence
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Settings
+  persistence
 
 ---
 
 ## In-Game HUD
 
 ### Purpose
-The in-game HUD provides essential player information while maintaining immersion in the horror environment.
+
+The in-game HUD provides essential player information while maintaining
+immersion in the horror environment.
 
 ### HUD Elements
 
 #### Status Bars
+
 ```blitzbasic
 Type HUDBar
     Field x%, y%               ; Position
@@ -208,6 +223,7 @@ End Function
 ```
 
 #### Blink Timer
+
 ```blitzbasic
 Global BlinkTimerDisplay.HUDTimer = CreateHUDTimer(50, 50, "BLINK")
 
@@ -258,6 +274,7 @@ End Function
 ```
 
 #### Crosshair
+
 ```blitzbasic
 Function DrawCrosshair()
     centerX% = GraphicsWidth() / 2
@@ -274,6 +291,7 @@ End Function
 ```
 
 ### Notifications and Messages
+
 ```blitzbasic
 Type HUDMessage
     Field text$                ; Message text
@@ -357,11 +375,14 @@ End Function
 ## Inventory UI
 
 ### Purpose
-The inventory UI provides visual management of the player's collected items, enabling drag-drop operations and item combination.
+
+The inventory UI provides visual management of the player's collected items,
+enabling drag-drop operations and item combination.
 
 ### Architecture
 
 #### Inventory Grid
+
 ```blitzbasic
 Type InventoryUI
     Field x%, y%               ; UI position
@@ -392,6 +413,7 @@ End Function
 ### Core Functions
 
 #### Inventory Rendering
+
 ```blitzbasic
 Function DrawInventoryUI()
     ; Draw inventory background
@@ -469,6 +491,7 @@ End Function
 ```
 
 #### Inventory Interaction
+
 ```blitzbasic
 Function UpdateInventoryUI()
     mouseX% = MouseX()
@@ -546,6 +569,7 @@ End Function
 ```
 
 ### Item Combination Interface
+
 ```blitzbasic
 Function DrawItemCombination()
     If InventoryUI\selectedSlot >= 0 Then
@@ -571,6 +595,7 @@ End Function
 ```
 
 ### Integration Points
+
 - **[Inventory System](GAME_MECHANICS.md#inventory-system)**: Manages item data
 - **[Input System](CORE_SYSTEMS.md#input-system)**: Handles mouse interaction
 - **[Rendering System](CORE_SYSTEMS.md#rendering-system)**: Draws UI elements
@@ -580,6 +605,7 @@ End Function
 ## UI System Integration
 
 ### Main UI Update Loop
+
 ```blitzbasic
 Function UpdateUI()
     ; Update HUD elements
@@ -609,6 +635,7 @@ End Function
 ```
 
 ### UI State Management
+
 ```blitzbasic
 Global InventoryOpen% = False
 
@@ -626,12 +653,14 @@ End Function
 ```
 
 ### Performance Considerations
+
 - **UI Culling**: Only draw visible UI elements
 - **Font Caching**: Cache rendered text
 - **Texture Atlasing**: Combine UI textures
 - **Update Batching**: Group UI updates
 
 ### Accessibility Considerations
+
 - **Color Blind Support**: Multiple color schemes
 - **Font Scaling**: Adjustable text sizes
 - **High Contrast**: Enhanced visibility options
@@ -639,4 +668,6 @@ End Function
 
 ---
 
-*UI/HUD systems provide the critical interface between player and game world, delivering essential information while preserving the immersive horror atmosphere of SCP: Containment Breach.*
+_UI/HUD systems provide the critical interface between player and game world,
+delivering essential information while preserving the immersive horror
+atmosphere of SCP: Containment Breach._

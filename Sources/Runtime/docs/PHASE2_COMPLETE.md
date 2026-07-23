@@ -1,7 +1,9 @@
 # Phase 2 Complete: RMesh Parser Implementation
 
 ## Summary
-Successfully implemented SCPCB RMesh parser for browser-based rendering using Blitz3D-WASM with Three.js.
+
+Successfully implemented SCPCB RMesh parser for browser-based rendering using
+Blitz3D-WASM with Three.js.
 
 ## Implementation Status
 
@@ -80,6 +82,7 @@ Sources/Runtime/
 ## Key Features
 
 ### RMesh Format Support
+
 ```
 Header: "RoomMesh" or "RoomMesh.HasTriggerBox"
 ├── Drawn Meshes (opaque + alpha)
@@ -92,6 +95,7 @@ Header: "RoomMesh" or "RoomMesh.HasTriggerBox"
 ```
 
 ### Supported Entity Types
+
 - `screen` - Screen textures
 - `waypoint` - Navigation waypoints
 - `light` - Point lights
@@ -101,23 +105,25 @@ Header: "RoomMesh" or "RoomMesh.HasTriggerBox"
 - `model` - Static models
 
 ### Coordinate Conversion
+
 ```javascript
 // Blitz3D (left-handed): +Z toward viewer
 // Three.js (right-handed): +Z away from viewer
-positions.push(x, y, -z);  // Negate Z
+positions.push(x, y, -z); // Negate Z
 ```
 
 ### Usage Example
+
 ```javascript
 // Initialize
 const room = new Blitz3DRoom(graphics, core);
 
 // Load room
-const entityId = await room.loadRoom('GFX/map/room1.rmesh');
+const entityId = await room.loadRoom("GFX/map/room1.rmesh");
 
 // Get entities
-const lights = room.findEntitiesByType('light');
-const waypoints = room.findEntitiesByType('waypoint');
+const lights = room.findEntitiesByType("light");
+const waypoints = room.findEntitiesByType("waypoint");
 
 // Debug toggles
 room.toggleCollisionMeshes(true);
@@ -134,14 +140,17 @@ room.toggleTriggerBoxes(true);
 ## Integration Points
 
 ### With Phase 1 File I/O
+
 - Uses FileIO for binary reading
 - Uses AssetManager for textures
 
 ### With Blitz3D-WASM
+
 - LoadMesh calls RMesh parser for `.rmesh` files
 - WASM imports for room control
 
 ### With Three.js
+
 - Converts to BufferGeometry
 - Creates Mesh with Phong materials
 - Uses standard Three.js scene graph
@@ -149,6 +158,7 @@ room.toggleTriggerBoxes(true);
 ## Next Steps (Phase 3)
 
 Phase 2 provides foundation for:
+
 1. **Texture Loading System** - Complete texture pipeline
 2. **Animation Support** - B3D animation parsing
 3. **Advanced Materials** - PBR, lightmaps
@@ -158,6 +168,7 @@ Phase 2 provides foundation for:
 ## Verification
 
 Run all tests:
+
 ```bash
 cd Sources/Runtime
 node tools/test_fileio.js   # Phase 1 tests

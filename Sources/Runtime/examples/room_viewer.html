@@ -1,645 +1,721 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SCPCB Room Viewer - Blitz3D-WASM</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: #1a1a2e;
+        color: #eee;
+        overflow: hidden;
+      }
+
+      #container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      header {
+        background: #16213e;
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #0f3460;
+      }
+
+      header h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
+
+      #controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      button {
+        background: #0f3460;
+        color: #eee;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #1a4a7a;
+      }
+
+      button.active {
+        background: #e94560;
+      }
+
+      #canvas-container {
+        flex: 1;
+        position: relative;
+      }
+
+      #renderCanvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        display: none;
+      }
+
+      #loading.active {
+        display: block;
+      }
+
+      #loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #0f3460;
+        border-top-color: #e94560;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 15px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
-            color: #eee;
-            overflow: hidden;
-        }
-        
-        #container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-        
-        header {
-            background: #16213e;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #0f3460;
-        }
-        
-        header h1 {
-            font-size: 18px;
-            font-weight: 500;
-        }
-        
-        #controls {
-            display: flex;
-            gap: 10px;
-        }
-        
-        button {
-            background: #0f3460;
-            color: #eee;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background 0.2s;
-        }
-        
-        button:hover {
-            background: #1a4a7a;
-        }
-        
-        button.active {
-            background: #e94560;
-        }
-        
-        #canvas-container {
-            flex: 1;
-            position: relative;
-        }
-        
-        #renderCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            display: none;
-        }
-        
-        #loading.active {
-            display: block;
-        }
-        
-        #loading .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #0f3460;
-            border-top-color: #e94560;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        #info {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(22, 33, 62, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 13px;
-            max-width: 300px;
-        }
-        
-        #info h3 {
-            margin-bottom: 10px;
-            color: #e94560;
-        }
-        
-        #info p {
-            margin: 5px 0;
-            color: #aaa;
-        }
-        
-        #info .value {
-            color: #eee;
-        }
-        
-        #room-selector {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(22, 33, 62, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-        }
-        
-        #room-selector select {
-            background: #0f3460;
-            color: #eee;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 13px;
-            min-width: 200px;
-        }
-        
-        #debug-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(22, 33, 62, 0.9);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 12px;
-        }
-        
-        #debug-panel label {
-            display: block;
-            margin: 8px 0;
-            cursor: pointer;
-        }
-        
-        #debug-panel input[type="checkbox"] {
-            margin-right: 8px;
-        }
+      }
+
+      #info {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        background: rgba(22, 33, 62, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 13px;
+        max-width: 300px;
+      }
+
+      #info h3 {
+        margin-bottom: 10px;
+        color: #e94560;
+      }
+
+      #info p {
+        margin: 5px 0;
+        color: #aaa;
+      }
+
+      #info .value {
+        color: #eee;
+      }
+
+      #room-selector {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(22, 33, 62, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+      }
+
+      #room-selector select {
+        background: #0f3460;
+        color: #eee;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 13px;
+        min-width: 200px;
+      }
+
+      #debug-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(22, 33, 62, 0.9);
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+
+      #debug-panel label {
+        display: block;
+        margin: 8px 0;
+        cursor: pointer;
+      }
+
+      #debug-panel input[type="checkbox"] {
+        margin-right: 8px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="container">
-        <header>
-            <h1>SCPCB Room Viewer - Blitz3D-WASM</h1>
-            <div id="controls">
-                <button id="btn-reload">Reload Room</button>
-                <button id="btn-debug">Debug Mode</button>
-            </div>
-        </header>
-        
-        <div id="canvas-container">
-            <canvas id="renderCanvas"></canvas>
-            
-            <div id="loading">
-                <div class="spinner"></div>
-                <p>Loading room...</p>
-            </div>
-            
-            <div id="info">
-                <h3>Room Info</h3>
-                <p>Room: <span class="value" id="info-room">-</span></p>
-                <p>Entities: <span class="value" id="info-entities">-</span></p>
-                <p>Lights: <span class="value" id="info-lights">-</span></p>
-                <p>FPS: <span class="value" id="info-fps">-</span></p>
-            </div>
-            
-            <div id="room-selector">
-                <select id="room-select">
-                    <option value="">Select a room...</option>
-                </select>
-            </div>
-            
-            <div id="debug-panel">
-                <label>
-                    <input type="checkbox" id="debug-collision"> Show Collision
-                </label>
-                <label>
-                    <input type="checkbox" id="debug-trigger"> Show Triggers
-                </label>
-                <label>
-                    <input type="checkbox" id="debug-wireframe"> Wireframe
-                </label>
-                <label>
-                    <input type="checkbox" id="debug-lights"> Show Lights
-                </label>
-            </div>
+      <header>
+        <h1>SCPCB Room Viewer - Blitz3D-WASM</h1>
+        <div id="controls">
+          <button id="btn-reload">Reload Room</button>
+          <button id="btn-debug">Debug Mode</button>
         </div>
+      </header>
+
+      <div id="canvas-container">
+        <canvas id="renderCanvas"></canvas>
+
+        <div id="loading">
+          <div class="spinner"></div>
+          <p>Loading room...</p>
+        </div>
+
+        <div id="info">
+          <h3>Room Info</h3>
+          <p>Room: <span class="value" id="info-room">-</span></p>
+          <p>Entities: <span class="value" id="info-entities">-</span></p>
+          <p>Lights: <span class="value" id="info-lights">-</span></p>
+          <p>FPS: <span class="value" id="info-fps">-</span></p>
+        </div>
+
+        <div id="room-selector">
+          <select id="room-select">
+            <option value="">Select a room...</option>
+          </select>
+        </div>
+
+        <div id="debug-panel">
+          <label>
+            <input type="checkbox" id="debug-collision"> Show Collision
+          </label>
+          <label>
+            <input type="checkbox" id="debug-trigger"> Show Triggers
+          </label>
+          <label>
+            <input type="checkbox" id="debug-wireframe"> Wireframe
+          </label>
+          <label>
+            <input type="checkbox" id="debug-lights"> Show Lights
+          </label>
+        </div>
+      </div>
     </div>
-    
+
     <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
-    
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"
+    ></script>
+
     <!-- OrbitControls -->
     <script>
-        // Simple OrbitControls implementation
-        THREE.OrbitControls = function(camera, domElement) {
-            this.camera = camera;
-            this.domElement = domElement;
-            this.target = new THREE.Vector3();
-            
-            this.enableDamping = false;
-            this.dampingFactor = 0.05;
-            this.enableZoom = true;
-            this.enableRotate = true;
-            this.enablePan = true;
-            
-            this.minDistance = 0;
-            this.maxDistance = Infinity;
-            
-            let spherical = new THREE.Spherical();
-            let sphericalDelta = new THREE.Spherical();
-            let scale = 1;
-            
-            const rotateStart = new THREE.Vector2();
-            const rotateEnd = new THREE.Vector2();
-            const rotateDelta = new THREE.Vector2();
-            
-            const panStart = new THREE.Vector2();
-            const panEnd = new THREE.Vector2();
-            const panDelta = new THREE.Vector2();
-            
-            this.update = () => {
-                const offset = new THREE.Vector3();
-                const quat = new THREE.Quaternion().setFromUnitVectors(
-                    camera.up, new THREE.Vector3(0, 1, 0)
-                );
-                const quatInverse = quat.clone().invert();
-                
-                const position = this.camera.position;
-                offset.copy(position).sub(this.target);
-                offset.applyQuaternion(quat);
-                spherical.setFromVector3(offset);
-                
-                if (this.enableDamping) {
-                    spherical.theta += sphericalDelta.theta * this.dampingFactor;
-                    spherical.phi += sphericalDelta.phi * this.dampingFactor;
-                } else {
-                    spherical.theta += sphericalDelta.theta;
-                    spherical.phi += sphericalDelta.phi;
-                }
-                
-                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
-                spherical.radius *= scale;
-                spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, spherical.radius));
-                
-                this.target.addScaledVector(panDelta);
-                
-                offset.setFromSpherical(spherical);
-                offset.applyQuaternion(quatInverse);
-                position.copy(this.target).add(offset);
-                this.camera.lookAt(this.target);
-                
-                if (this.enableDamping) {
-                    sphericalDelta.theta *= (1 - this.dampingFactor);
-                    sphericalDelta.phi *= (1 - this.dampingFactor);
-                    panDelta.multiplyScalar(1 - this.dampingFactor);
-                } else {
-                    sphericalDelta.set(0, 0, 0);
-                    panDelta.set(0, 0, 0);
-                }
-                
-                scale = 1;
-            };
-            
-            const onMouseDown = (event) => {
-                if (event.button === 0) {
-                    rotateStart.set(event.clientX, event.clientY);
-                } else if (event.button === 2) {
-                    panStart.set(event.clientX, event.clientY);
-                }
-            };
-            
-            const onMouseMove = (event) => {
-                if (event.button === 0) {
-                    rotateEnd.set(event.clientX, event.clientY);
-                    rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.005);
-                    sphericalDelta.theta -= rotateDelta.x;
-                    sphericalDelta.phi -= rotateDelta.y;
-                    rotateStart.copy(rotateEnd);
-                } else if (event.button === 2) {
-                    panEnd.set(event.clientX, event.clientY);
-                    panDelta.subVectors(panEnd, panStart).multiplyScalar(0.05);
-                    panDelta.applyQuaternion(this.camera.quaternion.clone().invert());
-                    panStart.copy(panEnd);
-                }
-            };
-            
-            const onMouseWheel = (event) => {
-                if (event.deltaY > 0) {
-                    scale *= 0.95;
-                } else {
-                    scale *= 1.05;
-                }
-            };
-            
-            domElement.addEventListener('mousedown', onMouseDown);
-            domElement.addEventListener('mousemove', onMouseMove);
-            domElement.addEventListener('mouseup', () => {});
-            domElement.addEventListener('wheel', onMouseWheel);
-            domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+      // Simple OrbitControls implementation
+      THREE.OrbitControls = function (camera, domElement) {
+        this.camera = camera;
+        this.domElement = domElement;
+        this.target = new THREE.Vector3();
+
+        this.enableDamping = false;
+        this.dampingFactor = 0.05;
+        this.enableZoom = true;
+        this.enableRotate = true;
+        this.enablePan = true;
+
+        this.minDistance = 0;
+        this.maxDistance = Infinity;
+
+        let spherical = new THREE.Spherical();
+        let sphericalDelta = new THREE.Spherical();
+        let scale = 1;
+
+        const rotateStart = new THREE.Vector2();
+        const rotateEnd = new THREE.Vector2();
+        const rotateDelta = new THREE.Vector2();
+
+        const panStart = new THREE.Vector2();
+        const panEnd = new THREE.Vector2();
+        const panDelta = new THREE.Vector2();
+
+        this.update = () => {
+          const offset = new THREE.Vector3();
+          const quat = new THREE.Quaternion().setFromUnitVectors(
+            camera.up,
+            new THREE.Vector3(0, 1, 0),
+          );
+          const quatInverse = quat.clone().invert();
+
+          const position = this.camera.position;
+          offset.copy(position).sub(this.target);
+          offset.applyQuaternion(quat);
+          spherical.setFromVector3(offset);
+
+          if (this.enableDamping) {
+            spherical.theta += sphericalDelta.theta *
+              this.dampingFactor;
+            spherical.phi += sphericalDelta.phi * this.dampingFactor;
+          } else {
+            spherical.theta += sphericalDelta.theta;
+            spherical.phi += sphericalDelta.phi;
+          }
+
+          spherical.phi = Math.max(
+            0.1,
+            Math.min(Math.PI - 0.1, spherical.phi),
+          );
+          spherical.radius *= scale;
+          spherical.radius = Math.max(
+            this.minDistance,
+            Math.min(this.maxDistance, spherical.radius),
+          );
+
+          this.target.addScaledVector(panDelta);
+
+          offset.setFromSpherical(spherical);
+          offset.applyQuaternion(quatInverse);
+          position.copy(this.target).add(offset);
+          this.camera.lookAt(this.target);
+
+          if (this.enableDamping) {
+            sphericalDelta.theta *= 1 - this.dampingFactor;
+            sphericalDelta.phi *= 1 - this.dampingFactor;
+            panDelta.multiplyScalar(1 - this.dampingFactor);
+          } else {
+            sphericalDelta.set(0, 0, 0);
+            panDelta.set(0, 0, 0);
+          }
+
+          scale = 1;
         };
+
+        const onMouseDown = (event) => {
+          if (event.button === 0) {
+            rotateStart.set(event.clientX, event.clientY);
+          } else if (event.button === 2) {
+            panStart.set(event.clientX, event.clientY);
+          }
+        };
+
+        const onMouseMove = (event) => {
+          if (event.button === 0) {
+            rotateEnd.set(event.clientX, event.clientY);
+            rotateDelta.subVectors(rotateEnd, rotateStart)
+              .multiplyScalar(0.005);
+            sphericalDelta.theta -= rotateDelta.x;
+            sphericalDelta.phi -= rotateDelta.y;
+            rotateStart.copy(rotateEnd);
+          } else if (event.button === 2) {
+            panEnd.set(event.clientX, event.clientY);
+            panDelta.subVectors(panEnd, panStart).multiplyScalar(0.05);
+            panDelta.applyQuaternion(
+              this.camera.quaternion.clone().invert(),
+            );
+            panStart.copy(panEnd);
+          }
+        };
+
+        const onMouseWheel = (event) => {
+          if (event.deltaY > 0) {
+            scale *= 0.95;
+          } else {
+            scale *= 1.05;
+          }
+        };
+
+        domElement.addEventListener("mousedown", onMouseDown);
+        domElement.addEventListener("mousemove", onMouseMove);
+        domElement.addEventListener("mouseup", () => {});
+        domElement.addEventListener("wheel", onMouseWheel);
+        domElement.addEventListener(
+          "contextmenu",
+          (e) => e.preventDefault(),
+        );
+      };
     </script>
-    
+
     <!-- Room Viewer Application -->
     <script>
-        class RoomViewer {
-            constructor() {
-                this.scene = null;
-                this.camera = null;
-                this.renderer = null;
-                this.controls = null;
-                this.currentRoom = null;
-                this.roomModule = null;
-                this.clock = new THREE.Clock();
-                this.frameCount = 0;
-                this.lastFpsUpdate = 0;
-                
-                this.init();
-            }
-            
-            init() {
-                // Setup canvas
-                const canvas = document.getElementById('renderCanvas');
-                const container = document.getElementById('canvas-container');
-                
-                // Scene
-                this.scene = new THREE.Scene();
-                this.scene.background = new THREE.Color(0x1a1a2e);
-                
-                // Camera
-                this.camera = new THREE.PerspectiveCamera(
-                    60,
-                    container.clientWidth / container.clientHeight,
-                    0.1,
-                    1000
-                );
-                this.camera.position.set(5, 5, 5);
-                
-                // Renderer
-                this.renderer = new THREE.WebGLRenderer({
-                    canvas,
-                    antialias: true
-                });
-                this.renderer.setSize(container.clientWidth, container.clientHeight);
-                this.renderer.setPixelRatio(window.devicePixelRatio);
-                
-                // Controls
-                this.controls = new THREE.OrbitControls(this.camera, canvas);
-                this.controls.target.set(0, 0, 0);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-                
-                // Lighting
-                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
-                this.scene.add(ambientLight);
-                
-                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-                directionalLight.position.set(10, 20, 10);
-                this.scene.add(directionalLight);
-                
-                // Grid helper
-                const gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
-                this.scene.add(gridHelper);
-                
-                // Setup event listeners
-                this.setupEventListeners();
-                
-                // Start render loop
-                this.animate();
-                
-                // Load available rooms
-                this.loadRoomList();
-            }
-            
-            setupEventListeners() {
-                // Resize handler
-                window.addEventListener('resize', () => this.onResize());
-                
-                // Debug toggles
-                document.getElementById('debug-collision').addEventListener('change', (e) => {
-                    this.toggleCollisionMeshes(e.target.checked);
-                });
-                
-                document.getElementById('debug-trigger').addEventListener('change', (e) => {
-                    this.toggleTriggerBoxes(e.target.checked);
-                });
-                
-                document.getElementById('debug-wireframe').addEventListener('change', (e) => {
-                    this.toggleWireframe(e.target.checked);
-                });
-                
-                document.getElementById('debug-lights').addEventListener('change', (e) => {
-                    this.toggleLightHelpers(e.target.checked);
-                });
-                
-                // Room selector
-                document.getElementById('room-select').addEventListener('change', (e) => {
-                    if (e.target.value) {
-                        this.loadRoom(e.target.value);
-                    }
-                });
-                
-                // Reload button
-                document.getElementById('btn-reload').addEventListener('click', () => {
-                    if (this.currentRoom) {
-                        this.loadRoom(this.currentRoom);
-                    }
-                });
-                
-                // Debug button
-                document.getElementById('btn-debug').addEventListener('click', (e) => {
-                    e.target.classList.toggle('active');
-                    this.toggleDebugMode(e.target.classList.contains('active'));
-                });
-            }
-            
-            async loadRoomList() {
-                // In a real implementation, this would fetch from a server or asset bundle
-                const rooms = [
-                    { path: 'room1.rmesh', name: 'Test Room 1' },
-                    { path: 'room2.rmesh', name: 'Test Room 2' }
-                ];
-                
-                const select = document.getElementById('room-select');
-                rooms.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.path;
-                    option.textContent = room.name;
-                    select.appendChild(option);
-                });
-            }
-            
-            async loadRoom(roomPath) {
-                this.showLoading(true);
-                this.currentRoom = roomPath;
-                
-                document.getElementById('info-room').textContent = roomPath;
-                
-                try {
-                    // Simulate loading - in real implementation, use the room module
-                    await this.simulateLoad(roomPath);
-                    
-                    this.updateInfo({ entities: 10, lights: 5 });
-                    
-                } catch (error) {
-                    console.error('Failed to load room:', error);
-                    alert('Failed to load room: ' + error.message);
-                }
-                
-                this.showLoading(false);
-            }
-            
-            async simulateLoad(roomPath) {
-                // Simulated loading delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Clear previous room
-                this.clearCurrentRoom();
-                
-                // Create placeholder geometry based on room name
-                this.createPlaceholderRoom(roomPath);
-            }
-            
-            createPlaceholderRoom(roomPath) {
-                // Create a simple placeholder room
-                const group = new THREE.Group();
-                group.name = 'roomGroup';
-                
-                // Floor
-                const floorGeo = new THREE.PlaneGeometry(20, 20);
-                const floorMat = new THREE.MeshPhongMaterial({ 
-                    color: 0x333344,
-                    side: THREE.DoubleSide 
-                });
-                const floor = new THREE.Mesh(floorGeo, floorMat);
-                floor.rotation.x = -Math.PI / 2;
-                group.add(floor);
-                
-                // Walls
-                const wallMat = new THREE.MeshPhongMaterial({ color: 0x444455 });
-                
-                // Back wall
-                const backWall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
-                backWall.position.set(0, 5, -10);
-                group.add(backWall);
-                
-                // Left wall
-                const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
-                leftWall.position.set(-10, 5, 0);
-                leftWall.rotation.y = Math.PI / 2;
-                group.add(leftWall);
-                
-                // Right wall
-                const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(20, 10), wallMat);
-                rightWall.position.set(10, 5, 0);
-                rightWall.rotation.y = -Math.PI / 2;
-                group.add(rightWall);
-                
-                // Add some random boxes to simulate environment
-                for (let i = 0; i < 5; i++) {
-                    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
-                    const boxMat = new THREE.MeshPhongMaterial({ color: Math.random() * 0xffffff });
-                    const box = new THREE.Mesh(boxGeo, boxMat);
-                    box.position.set(
-                        (Math.random() - 0.5) * 15,
-                        0.5,
-                        (Math.random() - 0.5) * 15
-                    );
-                    group.add(box);
-                }
-                
-                this.scene.add(group);
-                
-                // Adjust camera
-                this.camera.position.set(5, 8, 15);
-                this.controls.target.set(0, 2, 0);
-                this.controls.update();
-            }
-            
-            clearCurrentRoom() {
-                const oldGroup = this.scene.getObjectByName('roomGroup');
-                if (oldGroup) {
-                    oldGroup.traverse((child) => {
-                        if (child.isMesh) {
-                            child.geometry.dispose();
-                            if (Array.isArray(child.material)) {
-                                child.material.forEach(m => m.dispose());
-                            } else {
-                                child.material.dispose();
-                            }
-                        }
-                    });
-                    this.scene.remove(oldGroup);
-                }
-            }
-            
-            toggleCollisionMeshes(visible) {
-                // Placeholder for collision mesh toggling
-                console.log('Collision meshes:', visible ? 'shown' : 'hidden');
-            }
-            
-            toggleTriggerBoxes(visible) {
-                // Placeholder for trigger box toggling
-                console.log('Trigger boxes:', visible ? 'shown' : 'hidden');
-            }
-            
-            toggleWireframe(enabled) {
-                this.scene.traverse((child) => {
-                    if (child.isMesh && child.material) {
-                        child.material.wireframe = enabled;
-                    }
-                });
-            }
-            
-            toggleLightHelpers(visible) {
-                // Placeholder for light helper toggling
-                console.log('Light helpers:', visible ? 'shown' : 'hidden');
-            }
-            
-            toggleDebugMode(enabled) {
-                if (this.roomModule && this.roomModule.rmeshParser) {
-                    this.roomModule.rmeshParser.setDebugMode(enabled);
-                }
-            }
-            
-            updateInfo(data) {
-                if (data.entities !== undefined) {
-                    document.getElementById('info-entities').textContent = data.entities;
-                }
-                if (data.lights !== undefined) {
-                    document.getElementById('info-lights').textContent = data.lights;
-                }
-            }
-            
-            showLoading(show) {
-                const loading = document.getElementById('loading');
-                if (show) {
-                    loading.classList.add('active');
-                } else {
-                    loading.classList.remove('active');
-                }
-            }
-            
-            onResize() {
-                const container = document.getElementById('canvas-container');
-                this.camera.aspect = container.clientWidth / container.clientHeight;
-                this.camera.updateProjectionMatrix();
-                this.renderer.setSize(container.clientWidth, container.clientHeight);
-            }
-            
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                
-                // Update controls
-                this.controls.update();
-                
-                // Render
-                this.renderer.render(this.scene, this.camera);
-                
-                // FPS counter
-                this.frameCount++;
-                const now = performance.now();
-                if (now - this.lastFpsUpdate > 1000) {
-                    const fps = Math.round(this.frameCount * 1000 / (now - this.lastFpsUpdate));
-                    document.getElementById('info-fps').textContent = fps;
-                    this.frameCount = 0;
-                    this.lastFpsUpdate = now;
-                }
-            }
+      class RoomViewer {
+        constructor() {
+          this.scene = null;
+          this.camera = null;
+          this.renderer = null;
+          this.controls = null;
+          this.currentRoom = null;
+          this.roomModule = null;
+          this.clock = new THREE.Clock();
+          this.frameCount = 0;
+          this.lastFpsUpdate = 0;
+
+          this.init();
         }
-        
-        // Initialize viewer when DOM is ready
-        document.addEventListener('DOMContentLoaded', () => {
-            new RoomViewer();
-        });
+
+        init() {
+          // Setup canvas
+          const canvas = document.getElementById("renderCanvas");
+          const container = document.getElementById("canvas-container");
+
+          // Scene
+          this.scene = new THREE.Scene();
+          this.scene.background = new THREE.Color(0x1a1a2e);
+
+          // Camera
+          this.camera = new THREE.PerspectiveCamera(
+            60,
+            container.clientWidth / container.clientHeight,
+            0.1,
+            1000,
+          );
+          this.camera.position.set(5, 5, 5);
+
+          // Renderer
+          this.renderer = new THREE.WebGLRenderer({
+            canvas,
+            antialias: true,
+          });
+          this.renderer.setSize(
+            container.clientWidth,
+            container.clientHeight,
+          );
+          this.renderer.setPixelRatio(window.devicePixelRatio);
+
+          // Controls
+          this.controls = new THREE.OrbitControls(this.camera, canvas);
+          this.controls.target.set(0, 0, 0);
+          this.controls.enableDamping = true;
+          this.controls.dampingFactor = 0.05;
+
+          // Lighting
+          const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+          this.scene.add(ambientLight);
+
+          const directionalLight = new THREE.DirectionalLight(
+            0xffffff,
+            0.8,
+          );
+          directionalLight.position.set(10, 20, 10);
+          this.scene.add(directionalLight);
+
+          // Grid helper
+          const gridHelper = new THREE.GridHelper(
+            20,
+            20,
+            0x444444,
+            0x222222,
+          );
+          this.scene.add(gridHelper);
+
+          // Setup event listeners
+          this.setupEventListeners();
+
+          // Start render loop
+          this.animate();
+
+          // Load available rooms
+          this.loadRoomList();
+        }
+
+        setupEventListeners() {
+          // Resize handler
+          window.addEventListener("resize", () => this.onResize());
+
+          // Debug toggles
+          document.getElementById("debug-collision").addEventListener(
+            "change",
+            (e) => {
+              this.toggleCollisionMeshes(e.target.checked);
+            },
+          );
+
+          document.getElementById("debug-trigger").addEventListener(
+            "change",
+            (e) => {
+              this.toggleTriggerBoxes(e.target.checked);
+            },
+          );
+
+          document.getElementById("debug-wireframe").addEventListener(
+            "change",
+            (e) => {
+              this.toggleWireframe(e.target.checked);
+            },
+          );
+
+          document.getElementById("debug-lights").addEventListener(
+            "change",
+            (e) => {
+              this.toggleLightHelpers(e.target.checked);
+            },
+          );
+
+          // Room selector
+          document.getElementById("room-select").addEventListener(
+            "change",
+            (e) => {
+              if (e.target.value) {
+                this.loadRoom(e.target.value);
+              }
+            },
+          );
+
+          // Reload button
+          document.getElementById("btn-reload").addEventListener(
+            "click",
+            () => {
+              if (this.currentRoom) {
+                this.loadRoom(this.currentRoom);
+              }
+            },
+          );
+
+          // Debug button
+          document.getElementById("btn-debug").addEventListener(
+            "click",
+            (e) => {
+              e.target.classList.toggle("active");
+              this.toggleDebugMode(
+                e.target.classList.contains("active"),
+              );
+            },
+          );
+        }
+
+        async loadRoomList() {
+          // In a real implementation, this would fetch from a server or asset bundle
+          const rooms = [
+            { path: "room1.rmesh", name: "Test Room 1" },
+            { path: "room2.rmesh", name: "Test Room 2" },
+          ];
+
+          const select = document.getElementById("room-select");
+          rooms.forEach((room) => {
+            const option = document.createElement("option");
+            option.value = room.path;
+            option.textContent = room.name;
+            select.appendChild(option);
+          });
+        }
+
+        async loadRoom(roomPath) {
+          this.showLoading(true);
+          this.currentRoom = roomPath;
+
+          document.getElementById("info-room").textContent = roomPath;
+
+          try {
+            // Simulate loading - in real implementation, use the room module
+            await this.simulateLoad(roomPath);
+
+            this.updateInfo({ entities: 10, lights: 5 });
+          } catch (error) {
+            console.error("Failed to load room:", error);
+            alert("Failed to load room: " + error.message);
+          }
+
+          this.showLoading(false);
+        }
+
+        async simulateLoad(roomPath) {
+          // Simulated loading delay
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Clear previous room
+          this.clearCurrentRoom();
+
+          // Create placeholder geometry based on room name
+          this.createPlaceholderRoom(roomPath);
+        }
+
+        createPlaceholderRoom(roomPath) {
+          // Create a simple placeholder room
+          const group = new THREE.Group();
+          group.name = "roomGroup";
+
+          // Floor
+          const floorGeo = new THREE.PlaneGeometry(20, 20);
+          const floorMat = new THREE.MeshPhongMaterial({
+            color: 0x333344,
+            side: THREE.DoubleSide,
+          });
+          const floor = new THREE.Mesh(floorGeo, floorMat);
+          floor.rotation.x = -Math.PI / 2;
+          group.add(floor);
+
+          // Walls
+          const wallMat = new THREE.MeshPhongMaterial({
+            color: 0x444455,
+          });
+
+          // Back wall
+          const backWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 10),
+            wallMat,
+          );
+          backWall.position.set(0, 5, -10);
+          group.add(backWall);
+
+          // Left wall
+          const leftWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 10),
+            wallMat,
+          );
+          leftWall.position.set(-10, 5, 0);
+          leftWall.rotation.y = Math.PI / 2;
+          group.add(leftWall);
+
+          // Right wall
+          const rightWall = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 10),
+            wallMat,
+          );
+          rightWall.position.set(10, 5, 0);
+          rightWall.rotation.y = -Math.PI / 2;
+          group.add(rightWall);
+
+          // Add some random boxes to simulate environment
+          for (let i = 0; i < 5; i++) {
+            const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+            const boxMat = new THREE.MeshPhongMaterial({
+              color: Math.random() * 0xffffff,
+            });
+            const box = new THREE.Mesh(boxGeo, boxMat);
+            box.position.set(
+              (Math.random() - 0.5) * 15,
+              0.5,
+              (Math.random() - 0.5) * 15,
+            );
+            group.add(box);
+          }
+
+          this.scene.add(group);
+
+          // Adjust camera
+          this.camera.position.set(5, 8, 15);
+          this.controls.target.set(0, 2, 0);
+          this.controls.update();
+        }
+
+        clearCurrentRoom() {
+          const oldGroup = this.scene.getObjectByName("roomGroup");
+          if (oldGroup) {
+            oldGroup.traverse((child) => {
+              if (child.isMesh) {
+                child.geometry.dispose();
+                if (Array.isArray(child.material)) {
+                  child.material.forEach((m) => m.dispose());
+                } else {
+                  child.material.dispose();
+                }
+              }
+            });
+            this.scene.remove(oldGroup);
+          }
+        }
+
+        toggleCollisionMeshes(visible) {
+          // Placeholder for collision mesh toggling
+          console.log(
+            "Collision meshes:",
+            visible ? "shown" : "hidden",
+          );
+        }
+
+        toggleTriggerBoxes(visible) {
+          // Placeholder for trigger box toggling
+          console.log("Trigger boxes:", visible ? "shown" : "hidden");
+        }
+
+        toggleWireframe(enabled) {
+          this.scene.traverse((child) => {
+            if (child.isMesh && child.material) {
+              child.material.wireframe = enabled;
+            }
+          });
+        }
+
+        toggleLightHelpers(visible) {
+          // Placeholder for light helper toggling
+          console.log("Light helpers:", visible ? "shown" : "hidden");
+        }
+
+        toggleDebugMode(enabled) {
+          if (this.roomModule && this.roomModule.rmeshParser) {
+            this.roomModule.rmeshParser.setDebugMode(enabled);
+          }
+        }
+
+        updateInfo(data) {
+          if (data.entities !== undefined) {
+            document.getElementById("info-entities").textContent =
+              data.entities;
+          }
+          if (data.lights !== undefined) {
+            document.getElementById("info-lights").textContent =
+              data.lights;
+          }
+        }
+
+        showLoading(show) {
+          const loading = document.getElementById("loading");
+          if (show) {
+            loading.classList.add("active");
+          } else {
+            loading.classList.remove("active");
+          }
+        }
+
+        onResize() {
+          const container = document.getElementById("canvas-container");
+          this.camera.aspect = container.clientWidth /
+            container.clientHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(
+            container.clientWidth,
+            container.clientHeight,
+          );
+        }
+
+        animate() {
+          requestAnimationFrame(() => this.animate());
+
+          // Update controls
+          this.controls.update();
+
+          // Render
+          this.renderer.render(this.scene, this.camera);
+
+          // FPS counter
+          this.frameCount++;
+          const now = performance.now();
+          if (now - this.lastFpsUpdate > 1000) {
+            const fps = Math.round(
+              this.frameCount * 1000 / (now - this.lastFpsUpdate),
+            );
+            document.getElementById("info-fps").textContent = fps;
+            this.frameCount = 0;
+            this.lastFpsUpdate = now;
+          }
+        }
+      }
+
+      // Initialize viewer when DOM is ready
+      document.addEventListener("DOMContentLoaded", () => {
+        new RoomViewer();
+      });
     </script>
-</body>
+  </body>
 </html>

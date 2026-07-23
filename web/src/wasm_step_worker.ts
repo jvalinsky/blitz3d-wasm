@@ -11,12 +11,15 @@ type StepResponse =
   | { ok: false; exportName: string; ms: number; error: string };
 
 const isEndError = (e: unknown) => {
-  return (e as any)?.__blitz3dEnd === true || (e as any)?.message === "__BLITZ3D_END__";
+  return (e as any)?.__blitz3dEnd === true ||
+    (e as any)?.message === "__BLITZ3D_END__";
 };
 
 const safeErrorString = (e: unknown) => {
   try {
-    if (e instanceof Error) return `${e.name}: ${e.message}\n${e.stack ?? ""}`.trim();
+    if (e instanceof Error) {
+      return `${e.name}: ${e.message}\n${e.stack ?? ""}`.trim();
+    }
     return String(e);
   } catch {
     return "unknown error";
@@ -84,6 +87,11 @@ self.onmessage = async (ev: MessageEvent<StepRequest>) => {
     respond({ ok: true, exportName: req.exportName, ms });
   } catch (e) {
     const ms = performance.now() - t0;
-    respond({ ok: false, exportName: req.exportName, ms, error: safeErrorString(e) });
+    respond({
+      ok: false,
+      exportName: req.exportName,
+      ms,
+      error: safeErrorString(e),
+    });
   }
 };

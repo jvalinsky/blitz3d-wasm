@@ -1,49 +1,48 @@
 <!DOCTYPE html>
 <html>
+  <head>
+    <meta charset="utf-8">
+    <title>Blitz3D WebGL2 Renderer - Triangle Test</title>
+    <style>
+      body {
+        margin: 0;
+        background: #1a1a2e;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        font-family: monospace;
+        color: #eee;
+      }
 
-<head>
-  <meta charset="utf-8">
-  <title>Blitz3D WebGL2 Renderer - Triangle Test</title>
-  <style>
-    body {
-      margin: 0;
-      background: #1a1a2e;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: monospace;
-      color: #eee;
-    }
+      canvas {
+        border: 1px solid #333;
+      }
 
-    canvas {
-      border: 1px solid #333;
-    }
+      #status {
+        margin-top: 12px;
+        font-size: 14px;
+      }
 
-    #status {
-      margin-top: 12px;
-      font-size: 14px;
-    }
+      .pass {
+        color: #0f0;
+      }
 
-    .pass {
-      color: #0f0;
-    }
+      .fail {
+        color: #f44;
+      }
+    </style>
+  </head>
 
-    .fail {
-      color: #f44;
-    }
-  </style>
-</head>
+  <body>
+    <canvas id="c" width="800" height="600"></canvas>
+    <div id="status">Initializing...</div>
+    <script type="module">
+      // Phase 0 validation: render a colored triangle with no Three.js
 
-<body>
-  <canvas id="c" width="800" height="600"></canvas>
-  <div id="status">Initializing...</div>
-  <script type="module">
-    // Phase 0 validation: render a colored triangle with no Three.js
-
-    // ---- Inline shader sources (same as the .vert/.frag files) ----
-    const STANDARD_VERT = `#version 300 es
+      // ---- Inline shader sources (same as the .vert/.frag files) ----
+      const STANDARD_VERT = `#version 300 es
 precision highp float;
 
 layout(location = 0) in vec3 a_position;
@@ -111,7 +110,7 @@ void main() {
     }
 }`;
 
-    const STANDARD_FRAG = `#version 300 es
+      const STANDARD_FRAG = `#version 300 es
 precision highp float;
 
 #define LIGHT_DIRECTIONAL 1
@@ -238,204 +237,312 @@ void main() {
     fragColor = vec4(litColor, baseColor.a);
 }`;
 
-    // ---- Minimal identity / perspective matrix helpers ----
-    function mat4Identity() {
-      return new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-    }
+      // ---- Minimal identity / perspective matrix helpers ----
+      function mat4Identity() {
+        return new Float32Array([
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          1,
+        ]);
+      }
 
-    function mat4Perspective(fovY, aspect, near, far) {
-      const f = 1.0 / Math.tan(fovY / 2);
-      const nf = 1 / (near - far);
-      return new Float32Array([
-        f / aspect, 0, 0, 0,
-        0, f, 0, 0,
-        0, 0, (far + near) * nf, -1,
-        0, 0, 2 * far * near * nf, 0,
-      ]);
-    }
+      function mat4Perspective(fovY, aspect, near, far) {
+        const f = 1.0 / Math.tan(fovY / 2);
+        const nf = 1 / (near - far);
+        return new Float32Array([
+          f / aspect,
+          0,
+          0,
+          0,
+          0,
+          f,
+          0,
+          0,
+          0,
+          0,
+          (far + near) * nf,
+          -1,
+          0,
+          0,
+          2 * far * near * nf,
+          0,
+        ]);
+      }
 
-    function mat4LookAt(eye, center, up) {
-      const zx = eye[0] - center[0], zy = eye[1] - center[1], zz = eye[2] - center[2];
-      let len = Math.hypot(zx, zy, zz);
-      const iz = 1 / len;
-      const fz = [zx * iz, zy * iz, zz * iz];
-      const rx = up[1] * fz[2] - up[2] * fz[1];
-      const ry = up[2] * fz[0] - up[0] * fz[2];
-      const rz = up[0] * fz[1] - up[1] * fz[0];
-      len = Math.hypot(rx, ry, rz);
-      const ir = 1 / len;
-      const fr = [rx * ir, ry * ir, rz * ir];
-      const ux = fz[1] * fr[2] - fz[2] * fr[1];
-      const uy = fz[2] * fr[0] - fz[0] * fr[2];
-      const uz = fz[0] * fr[1] - fz[1] * fr[0];
-      return new Float32Array([
-        fr[0], ux, fz[0], 0,
-        fr[1], uy, fz[1], 0,
-        fr[2], uz, fz[2], 0,
-        -(fr[0] * eye[0] + fr[1] * eye[1] + fr[2] * eye[2]),
-        -(ux * eye[0] + uy * eye[1] + uz * eye[2]),
-        -(fz[0] * eye[0] + fz[1] * eye[1] + fz[2] * eye[2]),
-        1,
-      ]);
-    }
+      function mat4LookAt(eye, center, up) {
+        const zx = eye[0] - center[0],
+          zy = eye[1] - center[1],
+          zz = eye[2] - center[2];
+        let len = Math.hypot(zx, zy, zz);
+        const iz = 1 / len;
+        const fz = [zx * iz, zy * iz, zz * iz];
+        const rx = up[1] * fz[2] - up[2] * fz[1];
+        const ry = up[2] * fz[0] - up[0] * fz[2];
+        const rz = up[0] * fz[1] - up[1] * fz[0];
+        len = Math.hypot(rx, ry, rz);
+        const ir = 1 / len;
+        const fr = [rx * ir, ry * ir, rz * ir];
+        const ux = fz[1] * fr[2] - fz[2] * fr[1];
+        const uy = fz[2] * fr[0] - fz[0] * fr[2];
+        const uz = fz[0] * fr[1] - fz[1] * fr[0];
+        return new Float32Array([
+          fr[0],
+          ux,
+          fz[0],
+          0,
+          fr[1],
+          uy,
+          fz[1],
+          0,
+          fr[2],
+          uz,
+          fz[2],
+          0,
+          -(fr[0] * eye[0] + fr[1] * eye[1] + fr[2] * eye[2]),
+          -(ux * eye[0] + uy * eye[1] + uz * eye[2]),
+          -(fz[0] * eye[0] + fz[1] * eye[1] + fz[2] * eye[2]),
+          1,
+        ]);
+      }
 
-    function mat3NormalFromMat4(m) {
-      // Upper-left 3x3 of model matrix (for identity model, this is identity)
-      return new Float32Array([
-        m[0], m[1], m[2],
-        m[4], m[5], m[6],
-        m[8], m[9], m[10],
-      ]);
-    }
+      function mat3NormalFromMat4(m) {
+        // Upper-left 3x3 of model matrix (for identity model, this is identity)
+        return new Float32Array([
+          m[0],
+          m[1],
+          m[2],
+          m[4],
+          m[5],
+          m[6],
+          m[8],
+          m[9],
+          m[10],
+        ]);
+      }
 
-    // ---- Main ----
-    const status = document.getElementById('status');
-    const canvas = document.getElementById('c');
-    try {
-      const gl = canvas.getContext('webgl2', { alpha: false, antialias: true, depth: true });
-      if (!gl) throw new Error('WebGL2 not supported');
+      // ---- Main ----
+      const status = document.getElementById("status");
+      const canvas = document.getElementById("c");
+      try {
+        const gl = canvas.getContext("webgl2", {
+          alpha: false,
+          antialias: true,
+          depth: true,
+        });
+        if (!gl) throw new Error("WebGL2 not supported");
 
-      // Compile shaders
-      function compileShader(type, src) {
-        const s = gl.createShader(type);
-        gl.shaderSource(s, src);
-        gl.compileShader(s);
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-          throw new Error(gl.getShaderInfoLog(s));
+        // Compile shaders
+        function compileShader(type, src) {
+          const s = gl.createShader(type);
+          gl.shaderSource(s, src);
+          gl.compileShader(s);
+          if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(s));
+          }
+          return s;
         }
-        return s;
+
+        const vs = compileShader(gl.VERTEX_SHADER, STANDARD_VERT);
+        const fs = compileShader(gl.FRAGMENT_SHADER, STANDARD_FRAG);
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs);
+        gl.attachShader(prog, fs);
+        gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+          throw new Error(gl.getProgramInfoLog(prog));
+        }
+        gl.useProgram(prog);
+
+        // Get uniform locations
+        const uModel = gl.getUniformLocation(prog, "u_modelMatrix");
+        const uView = gl.getUniformLocation(prog, "u_viewMatrix");
+        const uProj = gl.getUniformLocation(prog, "u_projMatrix");
+        const uNormal = gl.getUniformLocation(prog, "u_normalMatrix");
+        const uBrushColor = gl.getUniformLocation(prog, "u_brushColor");
+        const uEntityFX = gl.getUniformLocation(prog, "u_entityFX");
+        const uAmbient = gl.getUniformLocation(prog, "u_ambientColor");
+        const uLightCount = gl.getUniformLocation(prog, "u_lightCount");
+        const uCameraPos = gl.getUniformLocation(prog, "u_cameraPos");
+        const uHasTex0 = gl.getUniformLocation(prog, "u_hasTexture0");
+        const uHasTex1 = gl.getUniformLocation(prog, "u_hasTexture1");
+        const uFogMode = gl.getUniformLocation(prog, "u_fog_mode");
+        const uSkinning = gl.getUniformLocation(prog, "u_useSkinning");
+        const uShininess = gl.getUniformLocation(
+          prog,
+          "u_brushShininess",
+        );
+
+        // Triangle vertex data: position(3) + normal(3) + uv(2) + uv1(2) + color(4) = 14 floats
+        // Using vertex colors (FX bit 2 = vertexcolor)
+        const verts = new Float32Array([
+          // Vertex 0 (top, red)
+          0.0,
+          0.8,
+          0.0,
+          0,
+          0,
+          1,
+          0.5,
+          1.0,
+          0,
+          0,
+          1,
+          0,
+          0,
+          1,
+          // Vertex 1 (bottom-left, green)
+          -0.8,
+          -0.6,
+          0.0,
+          0,
+          0,
+          1,
+          0.0,
+          0.0,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          // Vertex 2 (bottom-right, blue)
+          0.8,
+          -0.6,
+          0.0,
+          0,
+          0,
+          1,
+          1.0,
+          0.0,
+          0,
+          0,
+          0,
+          0,
+          1,
+          1,
+        ]);
+
+        const indices = new Uint16Array([0, 1, 2]);
+
+        // Create VAO
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+
+        // Vertex buffer
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+
+        const STRIDE = 14 * 4; // 56 bytes
+
+        // location 0: position
+        gl.enableVertexAttribArray(0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, STRIDE, 0);
+        // location 1: normal
+        gl.enableVertexAttribArray(1);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, STRIDE, 12);
+        // location 2: uv0
+        gl.enableVertexAttribArray(2);
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, STRIDE, 24);
+        // location 3: uv1
+        gl.enableVertexAttribArray(3);
+        gl.vertexAttribPointer(3, 2, gl.FLOAT, false, STRIDE, 32);
+        // location 4: color
+        gl.enableVertexAttribArray(4);
+        gl.vertexAttribPointer(4, 4, gl.FLOAT, false, STRIDE, 40);
+        // location 5: boneWeights (disabled)
+        gl.disableVertexAttribArray(5);
+        gl.vertexAttrib4f(5, 1, 0, 0, 0);
+        // location 6: boneIndices (disabled)
+        gl.disableVertexAttribArray(6);
+        gl.vertexAttribI4ui(6, 0, 0, 0, 0);
+
+        // Index buffer
+        const ibo = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+        gl.bindVertexArray(null);
+
+        // Set uniforms
+        const model = mat4Identity();
+        const view = mat4LookAt([0, 0, 3], [0, 0, 0], [0, 1, 0]);
+        const proj = mat4Perspective(
+          Math.PI / 4,
+          canvas.width / canvas.height,
+          0.1,
+          100,
+        );
+        const normalMat = mat3NormalFromMat4(model);
+
+        gl.uniformMatrix4fv(uModel, false, model);
+        gl.uniformMatrix4fv(uView, false, view);
+        gl.uniformMatrix4fv(uProj, false, proj);
+        gl.uniformMatrix3fv(uNormal, false, normalMat);
+
+        gl.uniform4f(uBrushColor, 1, 1, 1, 1);
+        gl.uniform1i(uEntityFX, 2); // vertex colors
+        gl.uniform3f(uAmbient, 1, 1, 1); // fullbright ambient so vertex colors show
+        gl.uniform1i(uLightCount, 0);
+        gl.uniform3f(uCameraPos, 0, 0, 3);
+        gl.uniform1i(uHasTex0, 0);
+        gl.uniform1i(uHasTex1, 0);
+        gl.uniform1i(uFogMode, 0);
+        gl.uniform1i(uSkinning, 0);
+        gl.uniform1f(uShininess, 0);
+
+        // Render
+        gl.enable(gl.DEPTH_TEST);
+        gl.disable(gl.CULL_FACE); // Triangle is single-sided, disable cull for test
+        gl.clearColor(0.1, 0.1, 0.15, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+
+        gl.bindVertexArray(vao);
+        gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0);
+        gl.bindVertexArray(null);
+
+        // Validate: read back a pixel from the center of the triangle
+        const px = new Uint8Array(4);
+        gl.readPixels(
+          canvas.width / 2,
+          canvas.height / 2,
+          1,
+          1,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          px,
+        );
+
+        const hasColor = px[0] > 10 || px[1] > 10 || px[2] > 10;
+        if (hasColor) {
+          status.innerHTML =
+            '<span class="pass">PASS: Triangle rendered successfully.</span> ' +
+            `Center pixel: rgba(${px[0]}, ${px[1]}, ${px[2]}, ${
+              px[3]
+            })`;
+        } else {
+          status.innerHTML =
+            '<span class="fail">FAIL: No color detected at center pixel.</span>';
+        }
+      } catch (e) {
+        status.innerHTML =
+          `<span class="fail">ERROR: ${e.message}</span>`;
+        console.error(e);
       }
-
-      const vs = compileShader(gl.VERTEX_SHADER, STANDARD_VERT);
-      const fs = compileShader(gl.FRAGMENT_SHADER, STANDARD_FRAG);
-      const prog = gl.createProgram();
-      gl.attachShader(prog, vs);
-      gl.attachShader(prog, fs);
-      gl.linkProgram(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-        throw new Error(gl.getProgramInfoLog(prog));
-      }
-      gl.useProgram(prog);
-
-      // Get uniform locations
-      const uModel = gl.getUniformLocation(prog, 'u_modelMatrix');
-      const uView = gl.getUniformLocation(prog, 'u_viewMatrix');
-      const uProj = gl.getUniformLocation(prog, 'u_projMatrix');
-      const uNormal = gl.getUniformLocation(prog, 'u_normalMatrix');
-      const uBrushColor = gl.getUniformLocation(prog, 'u_brushColor');
-      const uEntityFX = gl.getUniformLocation(prog, 'u_entityFX');
-      const uAmbient = gl.getUniformLocation(prog, 'u_ambientColor');
-      const uLightCount = gl.getUniformLocation(prog, 'u_lightCount');
-      const uCameraPos = gl.getUniformLocation(prog, 'u_cameraPos');
-      const uHasTex0 = gl.getUniformLocation(prog, 'u_hasTexture0');
-      const uHasTex1 = gl.getUniformLocation(prog, 'u_hasTexture1');
-      const uFogMode = gl.getUniformLocation(prog, 'u_fog_mode');
-      const uSkinning = gl.getUniformLocation(prog, 'u_useSkinning');
-      const uShininess = gl.getUniformLocation(prog, 'u_brushShininess');
-
-      // Triangle vertex data: position(3) + normal(3) + uv(2) + uv1(2) + color(4) = 14 floats
-      // Using vertex colors (FX bit 2 = vertexcolor)
-      const verts = new Float32Array([
-        // Vertex 0 (top, red)
-        0.0, 0.8, 0.0, 0, 0, 1, 0.5, 1.0, 0, 0, 1, 0, 0, 1,
-        // Vertex 1 (bottom-left, green)
-        -0.8, -0.6, 0.0, 0, 0, 1, 0.0, 0.0, 0, 0, 0, 1, 0, 1,
-        // Vertex 2 (bottom-right, blue)
-        0.8, -0.6, 0.0, 0, 0, 1, 1.0, 0.0, 0, 0, 0, 0, 1, 1,
-      ]);
-
-      const indices = new Uint16Array([0, 1, 2]);
-
-      // Create VAO
-      const vao = gl.createVertexArray();
-      gl.bindVertexArray(vao);
-
-      // Vertex buffer
-      const vbo = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
-      gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-
-      const STRIDE = 14 * 4; // 56 bytes
-
-      // location 0: position
-      gl.enableVertexAttribArray(0);
-      gl.vertexAttribPointer(0, 3, gl.FLOAT, false, STRIDE, 0);
-      // location 1: normal
-      gl.enableVertexAttribArray(1);
-      gl.vertexAttribPointer(1, 3, gl.FLOAT, false, STRIDE, 12);
-      // location 2: uv0
-      gl.enableVertexAttribArray(2);
-      gl.vertexAttribPointer(2, 2, gl.FLOAT, false, STRIDE, 24);
-      // location 3: uv1
-      gl.enableVertexAttribArray(3);
-      gl.vertexAttribPointer(3, 2, gl.FLOAT, false, STRIDE, 32);
-      // location 4: color
-      gl.enableVertexAttribArray(4);
-      gl.vertexAttribPointer(4, 4, gl.FLOAT, false, STRIDE, 40);
-      // location 5: boneWeights (disabled)
-      gl.disableVertexAttribArray(5);
-      gl.vertexAttrib4f(5, 1, 0, 0, 0);
-      // location 6: boneIndices (disabled)
-      gl.disableVertexAttribArray(6);
-      gl.vertexAttribI4ui(6, 0, 0, 0, 0);
-
-      // Index buffer
-      const ibo = gl.createBuffer();
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-
-      gl.bindVertexArray(null);
-
-      // Set uniforms
-      const model = mat4Identity();
-      const view = mat4LookAt([0, 0, 3], [0, 0, 0], [0, 1, 0]);
-      const proj = mat4Perspective(Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
-      const normalMat = mat3NormalFromMat4(model);
-
-      gl.uniformMatrix4fv(uModel, false, model);
-      gl.uniformMatrix4fv(uView, false, view);
-      gl.uniformMatrix4fv(uProj, false, proj);
-      gl.uniformMatrix3fv(uNormal, false, normalMat);
-
-      gl.uniform4f(uBrushColor, 1, 1, 1, 1);
-      gl.uniform1i(uEntityFX, 2); // vertex colors
-      gl.uniform3f(uAmbient, 1, 1, 1); // fullbright ambient so vertex colors show
-      gl.uniform1i(uLightCount, 0);
-      gl.uniform3f(uCameraPos, 0, 0, 3);
-      gl.uniform1i(uHasTex0, 0);
-      gl.uniform1i(uHasTex1, 0);
-      gl.uniform1i(uFogMode, 0);
-      gl.uniform1i(uSkinning, 0);
-      gl.uniform1f(uShininess, 0);
-
-      // Render
-      gl.enable(gl.DEPTH_TEST);
-      gl.disable(gl.CULL_FACE); // Triangle is single-sided, disable cull for test
-      gl.clearColor(0.1, 0.1, 0.15, 1);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-
-      gl.bindVertexArray(vao);
-      gl.drawElements(gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, 0);
-      gl.bindVertexArray(null);
-
-      // Validate: read back a pixel from the center of the triangle
-      const px = new Uint8Array(4);
-      gl.readPixels(canvas.width / 2, canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
-
-      const hasColor = px[0] > 10 || px[1] > 10 || px[2] > 10;
-      if (hasColor) {
-        status.innerHTML = '<span class="pass">PASS: Triangle rendered successfully.</span> ' +
-          `Center pixel: rgba(${px[0]}, ${px[1]}, ${px[2]}, ${px[3]})`;
-      } else {
-        status.innerHTML = '<span class="fail">FAIL: No color detected at center pixel.</span>';
-      }
-
-    } catch (e) {
-      status.innerHTML = `<span class="fail">ERROR: ${e.message}</span>`;
-      console.error(e);
-    }
-  </script>
-</body>
-
+    </script>
+  </body>
 </html>

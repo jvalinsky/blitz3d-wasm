@@ -1,6 +1,7 @@
 # Swift WebAssembly Setup on Linux
 
-This guide covers how to set up Swift to compile to WebAssembly on Linux (Ubuntu 24.04).
+This guide covers how to set up Swift to compile to WebAssembly on Linux (Ubuntu
+24.04).
 
 ## Prerequisites
 
@@ -10,7 +11,9 @@ This guide covers how to set up Swift to compile to WebAssembly on Linux (Ubuntu
 
 ## Overview
 
-Swift 6.2+ has native WebAssembly support through the WASI (WebAssembly System Interface) target. This allows Swift code to compile to portable WebAssembly binaries that can run in WASI-compatible runtimes.
+Swift 6.2+ has native WebAssembly support through the WASI (WebAssembly System
+Interface) target. This allows Swift code to compile to portable WebAssembly
+binaries that can run in WASI-compatible runtimes.
 
 ## Installation Steps
 
@@ -175,6 +178,7 @@ Person: Alice, 30 years old
 **Cause:** Missing WASI standard library link
 
 **Solution:**
+
 ```bash
 sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle/6.2-RELEASE-wasm32-unknown-wasip1/wasm32-unknown-wasip1/swift.xctoolchain/usr/lib/swift/wasi /opt/swift/usr/lib/swift/wasi
 ```
@@ -184,6 +188,7 @@ sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifact
 **Cause:** Version mismatch between Swift compiler and WASM SDK
 
 **Solution:** Ensure you have Swift 6.2+ installed:
+
 ```bash
 swift --version  # Should show 6.2 or higher
 ```
@@ -193,6 +198,7 @@ swift --version  # Should show 6.2 or higher
 **Cause:** Missing WASI sysroot link
 
 **Solution:**
+
 ```bash
 sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle/6.2-RELEASE-wasm32-unknown-wasip1/wasm32-unknown-wasip1/WASI.sdk /opt/swift/usr/share/wasi-sysroot
 ```
@@ -200,6 +206,7 @@ sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifact
 ### Disk Space Issues
 
 Swift and the WASM SDK require significant disk space:
+
 - Swift 6.2: ~950MB
 - WASM SDK: ~100MB
 - Build artifacts: varies by project
@@ -208,14 +215,15 @@ Ensure you have at least 2GB free space.
 
 ## Version Compatibility
 
-| Swift Version | WASM SDK Version | Status |
-|--------------|------------------|--------|
-| 6.2+         | 6.2+            | ✅ Recommended |
-| 6.1          | 6.1             | ⚠️ Limited support |
-| 6.0          | 6.0             | ⚠️ Experimental |
-| < 6.0        | N/A             | ❌ Not supported |
+| Swift Version | WASM SDK Version | Status             |
+| ------------- | ---------------- | ------------------ |
+| 6.2+          | 6.2+             | ✅ Recommended     |
+| 6.1           | 6.1              | ⚠️ Limited support |
+| 6.0           | 6.0              | ⚠️ Experimental    |
+| < 6.0         | N/A              | ❌ Not supported   |
 
-**Important:** Always match your Swift compiler version with the WASM SDK version to avoid compatibility issues.
+**Important:** Always match your Swift compiler version with the WASM SDK
+version to avoid compatibility issues.
 
 ## Advanced Usage
 
@@ -230,6 +238,7 @@ swift build --swift-sdk wasm32-unknown-wasip1 -c release
 ```
 
 Release builds are significantly smaller and faster:
+
 - Debug build: ~7MB
 - Release build: ~2-3MB (with optimization)
 
@@ -255,14 +264,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install Swift
         run: |
           wget https://download.swift.org/swift-6.2-release/ubuntu2404/swift-6.2-RELEASE/swift-6.2-RELEASE-ubuntu24.04.tar.gz
           tar xzf swift-6.2-RELEASE-ubuntu24.04.tar.gz
           sudo mv swift-6.2-RELEASE-ubuntu24.04 /opt/swift
           echo "/opt/swift/usr/bin" >> $GITHUB_PATH
-      
+
       - name: Install WASM SDK
         run: |
           wget https://github.com/swiftwasm/swift/releases/download/swift-wasm-6.2-RELEASE/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle.zip
@@ -272,10 +281,10 @@ jobs:
           swift sdk install /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle/
           sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle/6.2-RELEASE-wasm32-unknown-wasip1/wasm32-unknown-wasip1/WASI.sdk /opt/swift/usr/share/wasi-sysroot
           sudo ln -s /opt/swift-sdks/swift-wasm-6.2-RELEASE-wasm32-unknown-wasip1.artifactbundle/6.2-RELEASE-wasm32-unknown-wasip1/wasm32-unknown-wasip1/swift.xctoolchain/usr/lib/swift/wasi /opt/swift/usr/lib/swift/wasi
-      
+
       - name: Build
         run: swift build --swift-sdk wasm32-unknown-wasip1 -c release
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -298,11 +307,13 @@ jobs:
 
 ## Conclusion
 
-Swift WebAssembly compilation works excellently on Linux with Swift 6.2+. The key requirements are:
+Swift WebAssembly compilation works excellently on Linux with Swift 6.2+. The
+key requirements are:
 
 1. ✅ Swift 6.2+ compiler installed
 2. ✅ Matching SwiftWasm SDK version
 3. ✅ Proper symbolic links for WASI support
 4. ✅ WASI runtime for local testing
 
-Once set up, you can use the full power of Swift to build portable WebAssembly applications.
+Once set up, you can use the full power of Swift to build portable WebAssembly
+applications.

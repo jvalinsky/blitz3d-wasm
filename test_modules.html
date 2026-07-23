@@ -1,25 +1,38 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="UTF-8">
     <title>Module Test - Fresh</title>
     <style>
-        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
-        .ok { color: #4ec9b0; }
-        .fail { color: #f48771; }
+      body {
+        font-family: monospace;
+        padding: 20px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+      }
+      .ok {
+        color: #4ec9b0;
+      }
+      .fail {
+        color: #f48771;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Module Loading Test (Fresh)</h1>
     <div id="output"></div>
 
     <!-- Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    ></script>
+
     <!-- Browser compat -->
     <script src="Sources/Runtime/browser_compat.js"></script>
-    
+
     <!-- Modules in order -->
     <script src="Sources/Runtime/modules/core.js"></script>
     <script src="Sources/Runtime/modules/graphics.js"></script>
@@ -31,49 +44,61 @@
     <script src="Sources/Runtime/modules/runtime.js"></script>
 
     <script>
-        const output = document.getElementById('output');
-        
-        function log(msg, isOk = true) {
-            const span = document.createElement('div');
-            span.className = isOk ? 'ok' : 'fail';
-            span.textContent = msg;
-            output.appendChild(span);
-        }
-        
-        window.addEventListener('load', () => {
-            log('=== Module Loading Test (Fresh) ===');
-            log('');
-            
-            const checks = [
-                ['THREE', typeof THREE !== 'undefined'],
-                ['JSZip', typeof JSZip !== 'undefined'],
-                ['Blitz3DCore', typeof window.Blitz3DCore !== 'undefined'],
-                ['Blitz3DGraphics', typeof window.Blitz3DGraphics !== 'undefined'],
-                ['Blitz3DMesh', typeof window.Blitz3DMesh !== 'undefined'],
-                ['Blitz3DPhysics', typeof window.Blitz3DPhysics !== 'undefined'],
-                ['Blitz3DInput', typeof window.Blitz3DInput !== 'undefined'],
-                ['Blitz3DAudio', typeof window.Blitz3DAudio !== 'undefined'],
-                ['VirtualFileSystem', typeof window.VirtualFileSystem !== 'undefined'],
-                ['Blitz3D', typeof window.Blitz3D !== 'undefined']
-            ];
-            
-            checks.forEach(([name, ok]) => {
-                log(`${name}: ${ok ? '✓' : '✗'}`, ok);
-            });
-            
-            log('');
-            
-            if (typeof window.Blitz3D !== 'undefined') {
-                log('SUCCESS! All modules loaded.', true);
-                log('');
-                log('Blitz3D object has these properties:', true);
-                Object.keys(Blitz3D).forEach(key => {
-                    log(`  ${key}: ${typeof Blitz3D[key]}`, true);
-                });
-            } else {
-                log('FAILED: Blitz3D not loaded. Check console for errors.', false);
-            }
+      const output = document.getElementById("output");
+
+      function log(msg, isOk = true) {
+        const span = document.createElement("div");
+        span.className = isOk ? "ok" : "fail";
+        span.textContent = msg;
+        output.appendChild(span);
+      }
+
+      window.addEventListener("load", () => {
+        log("=== Module Loading Test (Fresh) ===");
+        log("");
+
+        const checks = [
+          ["THREE", typeof THREE !== "undefined"],
+          ["JSZip", typeof JSZip !== "undefined"],
+          ["Blitz3DCore", typeof window.Blitz3DCore !== "undefined"],
+          [
+            "Blitz3DGraphics",
+            typeof window.Blitz3DGraphics !== "undefined",
+          ],
+          ["Blitz3DMesh", typeof window.Blitz3DMesh !== "undefined"],
+          [
+            "Blitz3DPhysics",
+            typeof window.Blitz3DPhysics !== "undefined",
+          ],
+          ["Blitz3DInput", typeof window.Blitz3DInput !== "undefined"],
+          ["Blitz3DAudio", typeof window.Blitz3DAudio !== "undefined"],
+          [
+            "VirtualFileSystem",
+            typeof window.VirtualFileSystem !== "undefined",
+          ],
+          ["Blitz3D", typeof window.Blitz3D !== "undefined"],
+        ];
+
+        checks.forEach(([name, ok]) => {
+          log(`${name}: ${ok ? "✓" : "✗"}`, ok);
         });
+
+        log("");
+
+        if (typeof window.Blitz3D !== "undefined") {
+          log("SUCCESS! All modules loaded.", true);
+          log("");
+          log("Blitz3D object has these properties:", true);
+          Object.keys(Blitz3D).forEach((key) => {
+            log(`  ${key}: ${typeof Blitz3D[key]}`, true);
+          });
+        } else {
+          log(
+            "FAILED: Blitz3D not loaded. Check console for errors.",
+            false,
+          );
+        }
+      });
     </script>
-</body>
+  </body>
 </html>

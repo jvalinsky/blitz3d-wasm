@@ -1,6 +1,7 @@
 # BridgeJS Project Setup
 
-Complete guide to setting up a Swift project with BridgeJS for WebAssembly development.
+Complete guide to setting up a Swift project with BridgeJS for WebAssembly
+development.
 
 ## Prerequisites
 
@@ -10,7 +11,8 @@ Complete guide to setting up a Swift project with BridgeJS for WebAssembly devel
 
 ## 1. Install Swift Toolchain
 
-The recommended way to install Swift is using [`swiftly`](https://www.swift.org/install/):
+The recommended way to install Swift is using
+[`swiftly`](https://www.swift.org/install/):
 
 ```bash
 # Install swiftly (follow instructions for your platform)
@@ -28,11 +30,13 @@ which swiftc
 swiftc --version
 ```
 
-If `which swiftc` shows `/usr/bin/swiftc` or a path inside `Xcode.app`, you need to install and select an OSS toolchain.
+If `which swiftc` shows `/usr/bin/swiftc` or a path inside `Xcode.app`, you need
+to install and select an OSS toolchain.
 
 ## 2. Install Swift SDK for WebAssembly
 
-Find the matching SDK on the [Swift download page](https://www.swift.org/download/) and install:
+Find the matching SDK on the
+[Swift download page](https://www.swift.org/download/) and install:
 
 ```bash
 # Example for Swift 6.2.3
@@ -45,7 +49,8 @@ Verify installation:
 swift sdk list
 ```
 
-Note the **Swift SDK ID** (e.g., `swift-6.2.3-RELEASE_wasm`). Set it as an environment variable:
+Note the **Swift SDK ID** (e.g., `swift-6.2.3-RELEASE_wasm`). Set it as an
+environment variable:
 
 ```bash
 export SWIFT_SDK_ID="swift-6.2.3-RELEASE_wasm"
@@ -133,7 +138,8 @@ swift package plugin bridge-js --target MyApp
 This creates `Sources/MyApp/Generated/` with:
 
 - `BridgeJS.swift` - Generated Swift glue code
-- `BridgeJS.Macros.swift` - Macro-annotated declarations for TypeScript imports (if using `bridge-js.d.ts`)
+- `BridgeJS.Macros.swift` - Macro-annotated declarations for TypeScript imports
+  (if using `bridge-js.d.ts`)
 - `JavaScript/BridgeJS.json` - Unified skeleton for JS runtime
 
 Commit generated files:
@@ -204,25 +210,25 @@ Create `index.html` in project root:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="utf-8">
     <title>MyApp</title>
     <script type="module">
-        import { init } from "./.build/plugins/PackageToJS/outputs/Package/index.js";
+      import { init } from "./.build/plugins/PackageToJS/outputs/Package/index.js";
 
-        const { exports } = await init({});
+      const { exports } = await init({});
 
-        // Use your Swift exports
-        console.log(exports.greet("World"));
+      // Use your Swift exports
+      console.log(exports.greet("World"));
 
-        const counter = new exports.Counter();
-        counter.increment();
-        console.log(counter.getValue());
+      const counter = new exports.Counter();
+      counter.increment();
+      console.log(counter.getValue());
     </script>
-</head>
-<body>
+  </head>
+  <body>
     <h1>MyApp</h1>
-</body>
+  </body>
 </html>
 ```
 

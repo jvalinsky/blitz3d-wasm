@@ -66,7 +66,12 @@ const compileWithWebCompiler = async (source: string) => {
       view.setUint32(env_buf_size, 0, true);
       return errno.success;
     },
-    fd_write: (fd: number, iovs: number, iovs_len: number, nwritten: number) => {
+    fd_write: (
+      fd: number,
+      iovs: number,
+      iovs_len: number,
+      nwritten: number,
+    ) => {
       if (!wasmMemoryRef) return errno.success;
       if (fd === 1 || fd === 2) {
         const view = new DataView(wasmMemoryRef.buffer);
@@ -205,10 +210,14 @@ const compileWithWebCompiler = async (source: string) => {
   const resultPtr = view.getUint32(resultPtrPtr, true);
   const resultLen = view.getUint32(resultLenPtr, true);
   if (!resultPtr || !resultLen) {
-    throw new Error(`compile_blitz3d returned empty result (ptr=${resultPtr}, len=${resultLen})`);
+    throw new Error(
+      `compile_blitz3d returned empty result (ptr=${resultPtr}, len=${resultLen})`,
+    );
   }
 
-  const resultText = td.decode(new Uint8Array(exports.memory.buffer, resultPtr, resultLen));
+  const resultText = td.decode(
+    new Uint8Array(exports.memory.buffer, resultPtr, resultLen),
+  );
   const result = JSON.parse(resultText) as
     | { success: true; wasm: string; size: number }
     | { success: false; error: string };
@@ -226,7 +235,9 @@ const validateWasm = async (wasm: Uint8Array) => {
   copy.set(wasm);
   const buf = copy.buffer;
 
-  if (!WebAssembly.validate(buf)) throw new Error("WebAssembly.validate failed");
+  if (!WebAssembly.validate(buf)) {
+    throw new Error("WebAssembly.validate failed");
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const _mod = new WebAssembly.Module(buf);

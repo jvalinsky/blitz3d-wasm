@@ -15,25 +15,28 @@ AUDIT regularly -> Check for missing connections
 
 ### Behavioral Triggers - MUST LOG WHEN:
 
-| Trigger | Log Type | Example |
-|---------|----------|---------|
-| User asks for a new feature | `goal` **with -p** | "Add dark mode" |
-| Choosing between approaches | `decision` | "Choose state management" |
-| About to write/edit code | `action` | "Implementing Redux store" |
-| Something worked or failed | `outcome` | "Redux integration successful" |
-| Notice something interesting | `observation` | "Existing code uses hooks" |
+| Trigger                      | Log Type           | Example                        |
+| ---------------------------- | ------------------ | ------------------------------ |
+| User asks for a new feature  | `goal` **with -p** | "Add dark mode"                |
+| Choosing between approaches  | `decision`         | "Choose state management"      |
+| About to write/edit code     | `action`           | "Implementing Redux store"     |
+| Something worked or failed   | `outcome`          | "Redux integration successful" |
+| Notice something interesting | `observation`      | "Existing code uses hooks"     |
 
 ### CRITICAL: Capture VERBATIM User Prompts
 
-**Prompts must be the EXACT user message, not a summary.** When a user request triggers new work, capture their full message word-for-word.
+**Prompts must be the EXACT user message, not a summary.** When a user request
+triggers new work, capture their full message word-for-word.
 
 **BAD - summaries are useless for context recovery:**
+
 ```bash
 # DON'T DO THIS - this is a summary, not a prompt
 deciduous add goal "Add auth" -p "User asked: add login to the app"
 ```
 
 **GOOD - verbatim prompts enable full context recovery:**
+
 ```bash
 # Use --prompt-stdin for multi-line prompts
 deciduous add goal "Add auth" -c 90 --prompt-stdin << 'EOF'
@@ -49,11 +52,13 @@ EOF
 ```
 
 **When to capture prompts:**
+
 - Root `goal` nodes: YES - the FULL original request
 - Major direction changes: YES - when user redirects the work
 - Routine downstream nodes: NO - they inherit context via edges
 
 **Updating prompts on existing nodes:**
+
 ```bash
 deciduous prompt <node_id> "full verbatim prompt here"
 cat prompt.txt | deciduous prompt <node_id>  # Multi-line from stdin
@@ -65,13 +70,13 @@ Prompts are viewable in the TUI detail panel (`deciduous tui`) and web viewer.
 
 **The graph's value is in its CONNECTIONS, not just nodes.**
 
-| When you create... | IMMEDIATELY link to... |
-|-------------------|------------------------|
-| `outcome` | The action/goal it resolves |
-| `action` | The goal/decision that spawned it |
-| `option` | Its parent decision |
-| `observation` | Related goal/action |
-| `revisit` | The decision/outcome being reconsidered |
+| When you create... | IMMEDIATELY link to...                  |
+| ------------------ | --------------------------------------- |
+| `outcome`          | The action/goal it resolves             |
+| `action`           | The goal/decision that spawned it       |
+| `option`           | Its parent decision                     |
+| `observation`      | Related goal/action                     |
+| `revisit`          | The decision/outcome being reconsidered |
 
 **Root `goal` nodes are the ONLY valid orphans.**
 
@@ -107,7 +112,8 @@ deciduous add action "Implemented auth" -c 90 --commit HEAD
 deciduous link <goal_id> <action_id> -r "Implementation"
 ```
 
-The `--commit HEAD` flag captures the commit hash and links it to the node. The web viewer will show commit messages, authors, and dates.
+The `--commit HEAD` flag captures the commit hash and links it to the node. The
+web viewer will show commit messages, authors, and dates.
 
 ### Git History & Deployment
 
@@ -121,6 +127,7 @@ deciduous sync
 ```
 
 To deploy to GitHub Pages:
+
 1. `deciduous sync` to export
 2. Push to GitHub
 3. Settings > Pages > Deploy from branch > /docs folder
@@ -129,7 +136,9 @@ Your graph will be live at `https://<user>.github.io/<repo>/`
 
 ### Branch-Based Grouping
 
-Nodes are auto-tagged with the current git branch. Configure in `.deciduous/config.toml`:
+Nodes are auto-tagged with the current git branch. Configure in
+`.deciduous/config.toml`:
+
 ```toml
 [branch]
 main_branches = ["main", "master"]

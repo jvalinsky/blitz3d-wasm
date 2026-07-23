@@ -114,7 +114,8 @@ blitz3d-wasm/
 ### Prerequisites
 
 - Swift 6.0+ (`swift --version`)
-  - For WebAssembly compilation support, see [docs/SWIFT_WASM_SETUP.md](docs/SWIFT_WASM_SETUP.md)
+  - For WebAssembly compilation support, see
+    [docs/SWIFT_WASM_SETUP.md](docs/SWIFT_WASM_SETUP.md)
 - Deno (for web development and testing)
 - wabt (for wasm-validate)
 
@@ -155,9 +156,11 @@ wasm-validate output.wasm
 
 ### Rebuild Web Compiler WASM (`web/blitz3d-compiler.wasm`)
 
-The web interpreter/IDE uses the WASI-built compiler at `web/blitz3d-compiler.wasm`.
+The web interpreter/IDE uses the WASI-built compiler at
+`web/blitz3d-compiler.wasm`.
 
-Build it from `compiler-wasm/` using the Swift WASM SDK that matches your host Swift toolchain:
+Build it from `compiler-wasm/` using the Swift WASM SDK that matches your host
+Swift toolchain:
 
 ```bash
 # Pick an SDK that matches your installed Swift patch version (see: swift sdk list)
@@ -171,26 +174,37 @@ cp compiler-wasm/.build/wasm32-unknown-wasip1/release/blitz3d-compiler.wasm \
   web/blitz3d-compiler.wasm
 ```
 
-If you see an error like “module compiled with Swift 6.2 cannot be imported by the Swift 6.2.3 compiler”, use an SDK built for Swift 6.2.3 (e.g. `swift-6.2.3-RELEASE_wasm`) instead of `6.2-RELEASE-wasm32-unknown-wasip1`.
+If you see an error like “module compiled with Swift 6.2 cannot be imported by
+the Swift 6.2.3 compiler”, use an SDK built for Swift 6.2.3 (e.g.
+`swift-6.2.3-RELEASE_wasm`) instead of `6.2-RELEASE-wasm32-unknown-wasip1`.
 
 ### Web Interpreter Debugging (bbdbg)
 
-`web/interpreter.html` includes a **Debug (bbdbg)** panel. When the web compiler is built with `debugInfo: true`, it returns a `bbdbg` JSON object alongside the compiled WASM. The interpreter:
+`web/interpreter.html` includes a **Debug (bbdbg)** panel. When the web compiler
+is built with `debugInfo: true`, it returns a `bbdbg` JSON object alongside the
+compiled WASM. The interpreter:
 
-- Hooks `bbdbg.__bbdbg_enter/leave/stmt` imports to track a live call stack and recent statement trace.
-- Saves the latest `bbdbg` metadata to **IndexedDB** (keyed by `sha256(wasmBytes)`) so it persists across reloads.
-- Exposes buttons to **Download bbdbg** (`program.bbdbg.json`) and **Load Saved** (from IndexedDB).
+- Hooks `bbdbg.__bbdbg_enter/leave/stmt` imports to track a live call stack and
+  recent statement trace.
+- Saves the latest `bbdbg` metadata to **IndexedDB** (keyed by
+  `sha256(wasmBytes)`) so it persists across reloads.
+- Exposes buttons to **Download bbdbg** (`program.bbdbg.json`) and **Load
+  Saved** (from IndexedDB).
 
 ### Swift Tests (No XCTest)
 
-`swift test` runs the Swift Testing-based suites (no Xcode/XCTest needed), including:
+`swift test` runs the Swift Testing-based suites (no Xcode/XCTest needed),
+including:
 
 - `Tests/Blitz3DEngineTests/`
 - `Tests/Blitz3DCompilerTests/`
 - `Tests/CompilerTests/` (migrated from XCTest)
 - `Tests/IntegrationTests/` (migrated from XCTest)
 
-If SwiftPM sandboxing causes issues in this environment, use `swift test --disable-sandbox` and set caches to a writable location (e.g. `CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache` and `SWIFTPM_CACHE_PATH=/tmp/swiftpm-cache`).
+If SwiftPM sandboxing causes issues in this environment, use
+`swift test --disable-sandbox` and set caches to a writable location (e.g.
+`CLANG_MODULE_CACHE_PATH=/tmp/clang-module-cache` and
+`SWIFTPM_CACHE_PATH=/tmp/swiftpm-cache`).
 
 ### Run Thin Demo (Minimal Particle Demo)
 
@@ -202,7 +216,8 @@ python3 -m http.server 8000
 
 ### Run NPC Demo (SCPCB Models)
 
-The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models with skeletal animation:
+The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models
+with skeletal animation:
 
 1. Build to `dist/`:
    ```bash
@@ -213,6 +228,7 @@ The NPC demo (`web/public/npc_smpk_demo.html`) showcases SCPCB character models 
    - Local: `http://localhost:8000/npc_smpk_demo.html`
 
 Features:
+
 - Load SCPCB NPC models (SCP-173, SCP-049, Guard, Class-D, etc.)
 - Skeletal animation playback with Three.js AnimationMixer
 - Animation controls: play/pause, speed adjustment (0.25x-2.0x), frame scrubbing
@@ -242,13 +258,26 @@ and step through initialization safely:
 - Default is **paused** (no auto-run). Click buttons in the overlay to:
   - run init (safe; does not call `Main()` by default) and
   - step `UpdateGame()` manually.
-- SCPCB uses `options.ini` very early (for `GraphicWidth/RealGraphicWidth/...`); ensure it is in the manifest `boot` group (`web/public/scpcb_manifest.json`) so it is available before running init/steps.
-- SCPCB's built-in launcher is a blocking UI loop; it's disabled by default in `web/public/options.ini` and the loader also forces `LauncherEnabled=0` unless you opt in with `?launcher=1`.
-- SCPCB `Main()` often contains a blocking loop; the loader will only call it if you opt in with `?init=main` (init once) or `?run=main` (run forever; will freeze the tab).
-- SCPCB init contains a tight "press any key" loop; when opting into `?init=main`, the loader primes a synthetic key/mouse hit so init can complete without freezing.
-- For debugging init hangs, the web build includes SCPCB `DebugLog` markers like `WEBINIT: ...` (compiled into `web/public/scpcb.wasm`).
-- SCPCB init expects synchronous file IO; the web port preloads `facility_assets` before calling `Main()` when using `?init=main` to avoid hangs from async-on-demand fetches.
-- Current SCPCB web build short-circuits `Main()` early (`WEBINIT: short-circuit...`) to avoid blocking the tab while we refactor init into resumable steps.
+- SCPCB uses `options.ini` very early (for `GraphicWidth/RealGraphicWidth/...`);
+  ensure it is in the manifest `boot` group (`web/public/scpcb_manifest.json`)
+  so it is available before running init/steps.
+- SCPCB's built-in launcher is a blocking UI loop; it's disabled by default in
+  `web/public/options.ini` and the loader also forces `LauncherEnabled=0` unless
+  you opt in with `?launcher=1`.
+- SCPCB `Main()` often contains a blocking loop; the loader will only call it if
+  you opt in with `?init=main` (init once) or `?run=main` (run forever; will
+  freeze the tab).
+- SCPCB init contains a tight "press any key" loop; when opting into
+  `?init=main`, the loader primes a synthetic key/mouse hit so init can complete
+  without freezing.
+- For debugging init hangs, the web build includes SCPCB `DebugLog` markers like
+  `WEBINIT: ...` (compiled into `web/public/scpcb.wasm`).
+- SCPCB init expects synchronous file IO; the web port preloads
+  `facility_assets` before calling `Main()` when using `?init=main` to avoid
+  hangs from async-on-demand fetches.
+- Current SCPCB web build short-circuits `Main()` early
+  (`WEBINIT: short-circuit...`) to avoid blocking the tab while we refactor init
+  into resumable steps.
 - `?auto=1` enables auto-run (starts ticking `UpdateGame()` via RAF).
 - `?tick=manual` disables the update RAF loop; use the **Step UpdateGame**
   button.
@@ -321,18 +350,18 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 
 ## Key Files
 
-| File                                                  | Purpose                       |
-| ----------------------------------------------------- | ----------------------------- |
-| `Sources/Compiler/Parser/Parser.swift`                | Main parser (~2.2K lines)     |
-| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | WASM generation               |
-| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | Statement codegen             |
-| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression codegen            |
-| `web/src/main.ts`                                     | SCPCB loader (~2K lines)      |
-| `web/src/runtime/core.ts`                             | Core runtime (~2K lines)      |
-| `web/src/runtime/graphics.ts`                         | Three.js integration (~3.7K)  |
-| `web/src/worker/scpcb_worker.ts`                      | Worker harness (~935 lines)   |
-| `Sources/Runtime/thin/runtime.js`                     | Minimal demo runtime          |
-| `Sources/Runtime/thin/particles.bb`                   | Working demo source           |
+| File                                                  | Purpose                      |
+| ----------------------------------------------------- | ---------------------------- |
+| `Sources/Compiler/Parser/Parser.swift`                | Main parser (~2.2K lines)    |
+| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | WASM generation              |
+| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | Statement codegen            |
+| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | Expression codegen           |
+| `web/src/main.ts`                                     | SCPCB loader (~2K lines)     |
+| `web/src/runtime/core.ts`                             | Core runtime (~2K lines)     |
+| `web/src/runtime/graphics.ts`                         | Three.js integration (~3.7K) |
+| `web/src/worker/scpcb_worker.ts`                      | Worker harness (~935 lines)  |
+| `Sources/Runtime/thin/runtime.js`                     | Minimal demo runtime         |
+| `Sources/Runtime/thin/particles.bb`                   | Working demo source          |
 
 ## Recent Achievements (Jan 2026)
 
@@ -358,22 +387,24 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 XMLHttpRequest is deprecated and being removed from browsers.
 
 **Impact**:
-- `?init=main` mode now requires ALL init-required files to be in the 'init'
-  or 'facility_assets' asset groups (as defined in scpcb_manifest.json)
+
+- `?init=main` mode now requires ALL init-required files to be in the 'init' or
+  'facility_assets' asset groups (as defined in scpcb_manifest.json)
 - Files not in preload groups will cause SCPCB init to hang or return 0
 
 **Migration**:
+
 1. Ensure your manifest includes all files SCPCB reads during init
 2. Add missing files to the 'init' asset group
 3. Test with `?init=main` before deploying
 
-**Alternative**: For partial initialization without preloading all assets,
-use the non-blocking mode (default, no `?init=main`) with lazy loading.
+**Alternative**: For partial initialization without preloading all assets, use
+the non-blocking mode (default, no `?init=main`) with lazy loading.
 
 ### AudioContext Lazy Initialization
 
-**What changed**: AudioContext is no longer created in the constructor. It
-is now lazily initialized on first user interaction (click/keydown/touch).
+**What changed**: AudioContext is no longer created in the constructor. It is
+now lazily initialized on first user interaction (click/keydown/touch).
 
 **Impact**: Audio won't play until the user interacts with the page.
 
@@ -390,17 +421,17 @@ particle demo after updates.
 
 ### Completed Fixes
 
-| Issue | File | Status |
-|-------|------|--------|
-| Memory leak in FreeEntity | `Sources/Runtime/thin/runtime.js` | Fixed |
-| AudioContext autoplay | `Sources/Runtime/thin/runtime.js` | Fixed |
-| Sync XHR deprecated | `web/src/runtime/fileio.ts` | Removed |
-| Three.js outdated | `Sources/Runtime/thin/test.html` | Updated to r170 |
-| Duplicate functions | `web/src/runtime/graphics.ts` | Removed |
-| Debug logging | `web/src/runtime/fileio.ts` | Fixed |
-| TextDecoder caching | `Sources/Runtime/thin/runtime.js` | Fixed |
-| Animation iteration | `Sources/Runtime/thin/runtime.js` | Optimized |
-| Path validation | `web/src/runtime/fileio.ts` | Added |
+| Issue                     | File                              | Status          |
+| ------------------------- | --------------------------------- | --------------- |
+| Memory leak in FreeEntity | `Sources/Runtime/thin/runtime.js` | Fixed           |
+| AudioContext autoplay     | `Sources/Runtime/thin/runtime.js` | Fixed           |
+| Sync XHR deprecated       | `web/src/runtime/fileio.ts`       | Removed         |
+| Three.js outdated         | `Sources/Runtime/thin/test.html`  | Updated to r170 |
+| Duplicate functions       | `web/src/runtime/graphics.ts`     | Removed         |
+| Debug logging             | `web/src/runtime/fileio.ts`       | Fixed           |
+| TextDecoder caching       | `Sources/Runtime/thin/runtime.js` | Fixed           |
+| Animation iteration       | `Sources/Runtime/thin/runtime.js` | Optimized       |
+| Path validation           | `web/src/runtime/fileio.ts`       | Added           |
 
 ### New Features
 
@@ -412,6 +443,7 @@ particle demo after updates.
 ### Test Coverage
 
 Run tests with:
+
 ```bash
 deno test --allow-read --allow-net web/src/runtime/runtime.test.ts
 ```

@@ -1,12 +1,12 @@
 # Getting Started with Blitz3D-to-WebAssembly
 
-**Audience:** Compiler Developers
-**Time to Complete:** 30 minutes
+**Audience:** Compiler Developers **Time to Complete:** 30 minutes
 **Prerequisites:** Swift 5.5+, Deno 1.40+, modern web browser
 
 ## Quick Setup
 
 ### 1. Clone and Build
+
 ```bash
 # Clone the repository
 git clone https://github.com/your-repo/blitz3d-wasm.git
@@ -20,6 +20,7 @@ swift run blitz3d-wasm --help
 ```
 
 ### 2. Run Basic Test
+
 ```bash
 # Compile a simple BlitzBasic program
 echo 'Print "Hello, WebAssembly!"' > hello.bb
@@ -30,6 +31,7 @@ ls -la hello.w*
 ```
 
 ### 3. Run Tests
+
 ```bash
 # Run compiler unit tests
 swift test
@@ -82,12 +84,14 @@ node run_tests.js
 ### Development Tools
 
 #### Essential Tools
+
 - **Xcode** or **VS Code** with Swift extension
 - **WebAssembly Binary Toolkit** (`wasm2wat`, `wasm-validate`)
 - **Deno** for runtime testing
 - **Chrome DevTools** for browser debugging
 
 #### Recommended VS Code Extensions
+
 - Swift Language Support
 - WebAssembly Tools
 - GitLens (for change tracking)
@@ -137,15 +141,15 @@ Sources/
 
 ### Current Compatibility Status
 
-| System | Compatibility | Notes |
-|--------|---------------|-------|
-| **Core Rendering** | ✅ 100% | Graphics3D, CreateMesh, etc. |
-| **Basic NPCs** | ✅ 90% | Simple AI patterns work |
-| **Physics** | ✅ 95% | Collision detection works |
-| **Audio** | ✅ 85% | Basic playback works |
-| **Pathfinding** | ⚠️ 50% | Handle arrays block full implementation |
-| **Save/Load** | ⚠️ 70% | Complex data structures fail |
-| **Advanced AI** | ❌ 25% | Object references needed |
+| System             | Compatibility | Notes                                   |
+| ------------------ | ------------- | --------------------------------------- |
+| **Core Rendering** | ✅ 100%       | Graphics3D, CreateMesh, etc.            |
+| **Basic NPCs**     | ✅ 90%        | Simple AI patterns work                 |
+| **Physics**        | ✅ 95%        | Collision detection works               |
+| **Audio**          | ✅ 85%        | Basic playback works                    |
+| **Pathfinding**    | ⚠️ 50%        | Handle arrays block full implementation |
+| **Save/Load**      | ⚠️ 70%        | Complex data structures fail            |
+| **Advanced AI**    | ❌ 25%        | Object references needed                |
 
 ### Testing with SCPB Code
 
@@ -220,9 +224,9 @@ open http://localhost:8000/index.html
 ```javascript
 // Example: Adding new graphics function
 // In Sources/Runtime/modules/graphics.js
-Blitz3D.Graphics3D.prototype.newFunction = function(param) {
-    // Implementation using Three.js
-    this.scene.add(new THREE.Object3D());
+Blitz3D.Graphics3D.prototype.newFunction = function (param) {
+  // Implementation using Three.js
+  this.scene.add(new THREE.Object3D());
 };
 ```
 
@@ -231,20 +235,24 @@ Blitz3D.Graphics3D.prototype.newFunction = function(param) {
 ### Common Issues
 
 **"Command not found: swift"**
+
 - Install Swift toolchain from swift.org
 - Ensure PATH includes Swift binaries
 
 **"WebAssembly validation error"**
+
 - Check for stack corruption in code generation
 - Verify type consistency in expressions
 - Review function signatures
 
 **"Runtime error in browser"**
+
 - Check JavaScript console for errors
 - Verify Three.js compatibility
 - Test with simpler BlitzBasic code first
 
 **"SCPB compilation fails"**
+
 - Check for handle arrays: `Field items[10]`
 - Look for complex object access: `obj\field[index]`
 - Review Select statements with many cases
@@ -266,4 +274,5 @@ Blitz3D.Graphics3D.prototype.newFunction = function(param) {
 
 ---
 
-**🎯 Ready to start developing? Run `swift test` to ensure everything is working, then try compiling your first BlitzBasic program!**
+**🎯 Ready to start developing? Run `swift test` to ensure everything is
+working, then try compiling your first BlitzBasic program!**

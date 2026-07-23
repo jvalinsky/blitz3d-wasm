@@ -58,12 +58,16 @@ function parseWorkerAutoImports(source: string): Set<string> {
   const marker = "const autoImports = [";
   const idx = source.indexOf(marker);
   if (idx === -1) {
-    throw new Error("Failed to find `const autoImports = [` in web/compiler_worker.ts");
+    throw new Error(
+      "Failed to find `const autoImports = [` in web/compiler_worker.ts",
+    );
   }
   const slice = source.slice(idx + marker.length);
   const end = slice.indexOf("];");
   if (end === -1) {
-    throw new Error("Failed to find end of autoImports list in web/compiler_worker.ts");
+    throw new Error(
+      "Failed to find end of autoImports list in web/compiler_worker.ts",
+    );
   }
   const body = slice.slice(0, end);
   const keys = new Set<string>();

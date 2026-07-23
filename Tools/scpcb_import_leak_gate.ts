@@ -55,10 +55,12 @@ const parseArgs = (): Options => {
   for (let i = 0; i < Deno.args.length; i++) {
     const a = Deno.args[i]!;
     if (a === "--wasm") opts.wasmPath = Deno.args[++i] ?? opts.wasmPath;
-    else if (a === "--scpcb-root") opts.scpcbRoot = Deno.args[++i] ?? opts.scpcbRoot;
-    else if (a === "--require-root") opts.requireRoot = true;
-    else if (a === "--max-print") opts.maxPrint = Number(Deno.args[++i] ?? opts.maxPrint);
-    else if (a === "-h" || a === "--help") {
+    else if (a === "--scpcb-root") {
+      opts.scpcbRoot = Deno.args[++i] ?? opts.scpcbRoot;
+    } else if (a === "--require-root") opts.requireRoot = true;
+    else if (a === "--max-print") {
+      opts.maxPrint = Number(Deno.args[++i] ?? opts.maxPrint);
+    } else if (a === "-h" || a === "--help") {
       usage();
       Deno.exit(0);
     } else {
@@ -100,7 +102,9 @@ async function* walkBbFiles(dir: string): AsyncGenerator<string> {
   }
 }
 
-const parseFunctionNamesFromScpcb = async (root: string): Promise<Set<string>> => {
+const parseFunctionNamesFromScpcb = async (
+  root: string,
+): Promise<Set<string>> => {
   const out = new Set<string>();
 
   // `Function Name%(...)` / `Function Name#(...)` / `Function Name$(...)` / `Function Name.Type(...)`
@@ -173,4 +177,3 @@ const main = async () => {
 };
 
 if (import.meta.main) await main();
-

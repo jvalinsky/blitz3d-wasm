@@ -21,7 +21,7 @@ import "./src/runtime/globals.ts";
 try {
   const g = globalThis as typeof globalThis & { THREE?: typeof THREE };
   if (!g.THREE) g.THREE = THREE;
-} catch { }
+} catch {}
 
 import { Blitz3DAudio } from "./src/runtime/audio.ts";
 import { Blitz3DCore } from "./src/runtime/core.ts";
@@ -448,7 +448,7 @@ function stepOnce(): void {
   try {
     debugSteppingTick();
     return;
-  } catch { }
+  } catch {}
   // Fallback: if the tick throws for some reason, attempt to schedule it.
   scheduleSharedStepLoop(debugSteppingTick);
 }
@@ -498,23 +498,26 @@ const renderBbdbgPanel = (): void => {
       ? " Debug: paused (main thread)."
       : " Debug: running (main thread).")
     : workerDebugSteppingActive
-      ? (workerDebugPaused
-        ? " Debug: paused (sandbox worker)."
-        : " Debug: running (sandbox worker).")
-      : " Debug: idle (Pause/Step require a program that exports __Step%()).";
+    ? (workerDebugPaused
+      ? " Debug: paused (sandbox worker)."
+      : " Debug: running (sandbox worker).")
+    : " Debug: idle (Pause/Step require a program that exports __Step%()).";
   const steps = debugSteppingActive
     ? debugSteppingStepCount
     : (workerDebugSteppingActive ? workerDebugStepCount : 0);
 
   const saved = bbdbgSavedWasmSha256
-    ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${bbdbgSavedAtMs ? ` @${new Date(bbdbgSavedAtMs).toLocaleTimeString()}` : ""
+    ? ` Saved: ${bbdbgSavedWasmSha256.slice(0, 12)}${
+      bbdbgSavedAtMs ? ` @${new Date(bbdbgSavedAtMs).toLocaleTimeString()}` : ""
     }.`
     : "";
 
   bbdbgSummaryEl.textContent = hasMeta
-    ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${lastLoc || "(none)"
+    ? `Metadata loaded: files=${fileCount}, functions=${funcCount}. Last: ${
+      lastLoc || "(none)"
     }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`
-    : `No debug metadata loaded. Last: ${lastLoc || "(none)"
+    : `No debug metadata loaded. Last: ${
+      lastLoc || "(none)"
     }. Steps: ${steps}. Breakpoints: ${bpCount}.${mode}${saved}`;
 
   if (!bpCount) {
@@ -550,8 +553,9 @@ const renderBbdbgPanel = (): void => {
     bbdbgTraceEl.classList.add("empty");
   } else {
     bbdbgTraceEl.classList.remove("empty");
-    bbdbgTraceEl.textContent = `Trace (last ${Math.min(30, bbdbgTrace.length)
-      }):\n${traceLines.join("\n")}`;
+    bbdbgTraceEl.textContent = `Trace (last ${
+      Math.min(30, bbdbgTrace.length)
+    }):\n${traceLines.join("\n")}`;
   }
 
   setEditorExecLine(bbdbgEnabled ? bbdbgLastLine : 0);
@@ -707,7 +711,8 @@ async function loadSavedBbdbgMetadata(): Promise<void> {
     bbdbgSavedAtMs = Number(rec.createdAtMs || 0) || null;
     setBbdbgMetadata(obj);
     printOutput(
-      `Loaded saved bbdbg (${bbdbgSavedWasmSha256?.slice(0, 12) ?? "unknown"
+      `Loaded saved bbdbg (${
+        bbdbgSavedWasmSha256?.slice(0, 12) ?? "unknown"
       }).`,
       "success",
     );
@@ -921,13 +926,13 @@ const cancelSharedStepLoop = (): void => {
   if (sharedStepRaf) {
     try {
       cancelAnimationFrame(sharedStepRaf);
-    } catch { }
+    } catch {}
     sharedStepRaf = 0;
   }
   if (sharedStepTimer !== null) {
     try {
       clearTimeout(sharedStepTimer);
-    } catch { }
+    } catch {}
     sharedStepTimer = null;
   }
 };
@@ -1247,7 +1252,8 @@ async function loadExampleIndex() {
   } catch (e) {
     printOutput(`Error loading examples: ${errorMessage(e)}`, "error");
     // Fallback?
-    exampleSelectEl.innerHTML = '<option value="">(Failed to load examples)</option>';
+    exampleSelectEl.innerHTML =
+      '<option value="">(Failed to load examples)</option>';
   }
 }
 
@@ -1280,7 +1286,6 @@ async function loadExampleSource(key: string): Promise<string | null> {
     return null;
   }
 }
-
 
 function renderExampleRequirements(exampleKey: string): void {
   const info = exampleIndex[exampleKey];
@@ -1482,7 +1487,8 @@ function renderMemoryPanel(): void {
         memOffsetEl.value = `0x${workerMemInfo.heapBase.toString(16)}`;
         requestWorkerMemorySnapshot(true);
         memSummaryEl.textContent =
-          `worker: @0x0 was all zeros; jumping to heap @0x${workerMemInfo.heapBase.toString(16)
+          `worker: @0x0 was all zeros; jumping to heap @0x${
+            workerMemInfo.heapBase.toString(16)
           }`;
         memDumpEl.textContent = "";
         return;
@@ -1789,7 +1795,7 @@ function stopExecution() {
   if (typeof runnerSandboxInFlight === "function") {
     try {
       runnerSandboxInFlight({ startedStepping: false, stopped: true });
-    } catch { }
+    } catch {}
     runnerSandboxInFlight = null;
   }
   cancelSharedStepLoop();
@@ -1805,13 +1811,13 @@ function disposeSharedRuntime() {
   cancelSharedStepLoop();
   try {
     sharedGraphics?.dispose?.();
-  } catch { }
+  } catch {}
   try {
     sharedFileIO?.dispose?.({ clearCache: false });
-  } catch { }
+  } catch {}
   try {
     sharedCore?.dispose?.();
-  } catch { }
+  } catch {}
   sharedGraphics = null;
   sharedFileIO = null;
   sharedCore = null;
@@ -1853,17 +1859,17 @@ function cancelCompileInFlight(
       "message",
       inflight.onMessage as unknown as EventListener,
     );
-  } catch { }
+  } catch {}
   try {
     clearTimeout(inflight.timeoutId);
-  } catch { }
+  } catch {}
   try {
     inflight.reject(reason);
-  } catch { }
+  } catch {}
   if (terminateWorker && compilerWorker) {
     try {
       compilerWorker.terminate();
-    } catch { }
+    } catch {}
     compilerWorker = null;
     compilerWorkerReady = false;
   }
@@ -3103,12 +3109,15 @@ async function runWasmBytesInSandbox(
           (msg.hasBbdbgEnter && msg.hasBbdbgLeave && msg.hasBbdbgStmt)
             ? "bbdbg hooks present"
             : (msg.bbdbgImports.length
-              ? `bbdbg imports present but incomplete (enter=${msg.hasBbdbgEnter ? "y" : "n"
-              } leave=${msg.hasBbdbgLeave ? "y" : "n"} stmt=${msg.hasBbdbgStmt ? "y" : "n"
+              ? `bbdbg imports present but incomplete (enter=${
+                msg.hasBbdbgEnter ? "y" : "n"
+              } leave=${msg.hasBbdbgLeave ? "y" : "n"} stmt=${
+                msg.hasBbdbgStmt ? "y" : "n"
               })`
               : "no bbdbg imports");
         printOutput(
-          `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${msg.importsMemory ? "y" : "n"
+          `[wasm] imports=${msg.importsTotal} (${hooks}); memory: import=${
+            msg.importsMemory ? "y" : "n"
           } export=${msg.exportsMemory ? "y" : "n"}`,
           msg.bbdbgImports.length ? "info" : "warning",
         );
@@ -3179,7 +3188,7 @@ async function runWasmBytesInSandbox(
             }
           }
           scheduleBbdbgRender();
-        } catch { }
+        } catch {}
         return;
       }
       if (msg.type === "mem") {
@@ -3220,7 +3229,8 @@ async function runWasmBytesInSandbox(
         }
         if (called.length) {
           printOutput(
-            `[stubs] called: ${called.map((c) => `${c.key}×${c.count}`).join(", ")
+            `[stubs] called: ${
+              called.map((c) => `${c.key}×${c.count}`).join(", ")
             }`,
             "warning",
           );
@@ -3274,12 +3284,14 @@ async function runWasmBytesInSandbox(
     for (const [path, rec] of vfs.entries()) {
       try {
         if (!path) continue;
-        if (!allowExt(path) && (rec.bytes?.byteLength ?? 0) > 64 * 1024) continue;
+        if (!allowExt(path) && (rec.bytes?.byteLength ?? 0) > 64 * 1024) {
+          continue;
+        }
         const copy = new Uint8Array(rec.bytes.byteLength);
         copy.set(rec.bytes);
         vfsFiles.push({ path, bytes: copy.buffer });
         transfers.push(copy.buffer);
-      } catch { }
+      } catch {}
     }
     w.postMessage(
       {
@@ -3753,7 +3765,7 @@ async function executeCompiledWASM(wasmBase64: string): Promise<void> {
     if (showStacks && st) {
       try {
         printOutput(String(st), "error");
-      } catch { }
+      } catch {}
     }
     console.error("Execution error:", error);
   }
@@ -3931,9 +3943,9 @@ async function runWasmBytesOnMainThread(
       origRegister(p, data);
       try {
         vfsPut(p, data, guessMime(p));
-      } catch { }
+      } catch {}
     };
-  } catch { }
+  } catch {}
 
   // Mirror interpreter VFS into the shared runtime VFS.
   // (This enables LoadImage/LoadTexture/ReadFile for uploaded assets.)
@@ -4103,7 +4115,7 @@ async function runWasmBytesOnMainThread(
     try {
       const fn = core.allocString;
       if (typeof fn === "function") return fn(String(text));
-    } catch { }
+    } catch {}
     return 0;
   };
   const intToString = (val: number) => allocB3DString(String(val | 0));
@@ -4168,9 +4180,16 @@ async function runWasmBytesOnMainThread(
   let calledNotices = 0;
   const calledNoticeLimit = 10;
 
-  printOutput("ANTIGRAVITY CHECK: Graphics3D present? " + (!!(imports.env && imports.env.Graphics3D)), "info");
-  printOutput("ANTIGRAVITY CHECK: env keys (first 20): " + Object.keys(imports.env || {}).slice(0, 20).join(", "), "info");
-
+  printOutput(
+    "ANTIGRAVITY CHECK: Graphics3D present? " +
+      (!!(imports.env && imports.env.Graphics3D)),
+    "info",
+  );
+  printOutput(
+    "ANTIGRAVITY CHECK: env keys (first 20): " +
+      Object.keys(imports.env || {}).slice(0, 20).join(", "),
+    "info",
+  );
 
   stubMissingImports(imports, module, {
     preferEnvForBlitz3d: true,
@@ -4255,7 +4274,7 @@ async function runWasmBytesOnMainThread(
         const v = ex[k];
         if (typeof v === "function") return v;
       }
-    } catch { }
+    } catch {}
     return null;
   })();
   const alloc = (typeof stringAllocExport === "function")
@@ -4277,7 +4296,7 @@ async function runWasmBytesOnMainThread(
   }
   try {
     fileIO.setMemory(core.memory);
-  } catch { }
+  } catch {}
 
   const exports = (instance.exports || {}) as Record<string, any>;
 
@@ -4304,7 +4323,7 @@ async function runWasmBytesOnMainThread(
       if (showStacks && st) {
         try {
           printOutput(String(st), "error");
-        } catch { }
+        } catch {}
       }
       stopExecution();
       return { startedStepping: false };
@@ -4350,7 +4369,9 @@ async function runWasmBytesOnMainThread(
         const msg = errorMessage(e);
         if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
           printOutput("Program ended.", "success");
-          try { renderRuntimeGaps(); } catch { }
+          try {
+            renderRuntimeGaps();
+          } catch {}
           stopExecution();
           return { startedStepping: false };
         }
@@ -4359,7 +4380,7 @@ async function runWasmBytesOnMainThread(
         if (showStacks && st) {
           try {
             printOutput(String(st), "error");
-          } catch { }
+          } catch {}
         }
         stopExecution();
         return;
@@ -4368,7 +4389,8 @@ async function runWasmBytesOnMainThread(
       const elapsed = performance.now() - started;
       if (timeoutMs > 0 && elapsed > timeoutMs) {
         printOutput(
-          `Step exceeded budget (${Math.round(elapsed)
+          `Step exceeded budget (${
+            Math.round(elapsed)
           }ms > ${timeoutMs}ms). Stopping.`,
           "error",
         );
@@ -4426,7 +4448,9 @@ async function runWasmBytesOnMainThread(
       const msg = errorMessage(e);
       if (((e as any)?.__blitz3dEnd) || msg === "__BLITZ3D_END__") {
         printOutput("Program ended.", "success");
-        try { renderRuntimeGaps(); } catch { }
+        try {
+          renderRuntimeGaps();
+        } catch {}
         stopExecution();
         return { startedStepping: false };
       }
@@ -4434,7 +4458,9 @@ async function runWasmBytesOnMainThread(
       stopExecution();
       return { startedStepping: false };
     }
-    try { renderRuntimeGaps(); } catch { }
+    try {
+      renderRuntimeGaps();
+    } catch {}
   }
 
   return { startedStepping: false };
@@ -4492,7 +4518,7 @@ function createLegacyRuntimeImports_UNUSED(): Record<
   let nextSurfaceId = 1;
   const meshSurfaces = new Map<number, any>();
   const dirtySurfaceIds = new Set<number>();
-  const ensureSurfaceGeometry = (_surfaceId: number): void => { };
+  const ensureSurfaceGeometry = (_surfaceId: number): void => {};
   const textureHandles = new Map<number, any>();
   let nextTextureHandle = 1;
   const brushHandles = new Map<number, any>();
@@ -4501,14 +4527,14 @@ function createLegacyRuntimeImports_UNUSED(): Record<
   let threeScene: any = null;
   let threeCamera: any = null;
   let cameraViewport: any = null;
-  const applyCameraViewport = (): void => { };
-  const resizeThreeToContainer = (): void => { };
+  const applyCameraViewport = (): void => {};
+  const resizeThreeToContainer = (): void => {};
   let fogMode = 0;
   let fogColor = 0;
   let fogNear = 0;
   let fogFar = 0;
   let fogDensity = 0;
-  const updateFog = (): void => { };
+  const updateFog = (): void => {};
   let ambientLight: any = null;
 
   const decodeB3DStringObj = (ptr) => {

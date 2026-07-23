@@ -6,7 +6,8 @@ to understand the game’s architecture.
 ## Top-Level Entrypoint
 
 - `~/Software/scpcb/Main.bb`
-  - Owns startup checks, config loads, include chain, global state, and the main loop.
+  - Owns startup checks, config loads, include chain, global state, and the main
+    loop.
   - Defines core Types like `Doors` and `Events` (and includes others).
 
 ## Include Chain (Main.bb)
@@ -50,9 +51,11 @@ SCPCB assumes a specific directory structure:
   - `~/Software/scpcb/Data/NPCs.ini`
   - `~/Software/scpcb/Data/events.ini` (used by some init flows)
 - Graphics:
-  - `~/Software/scpcb/GFX/...` (textures, meshes, room meshes, decals, UI assets)
+  - `~/Software/scpcb/GFX/...` (textures, meshes, room meshes, decals, UI
+    assets)
 - Audio:
-  - `~/Software/scpcb/SFX/...` (ambient, voices, door sounds, radio tracks, etc.)
+  - `~/Software/scpcb/SFX/...` (ambient, voices, door sounds, radio tracks,
+    etc.)
   - `~/Software/scpcb/SFX/Radio/UserTracks/` (user-provided music files)
 
 ## “Non-Game” Tools Included in the Tree
@@ -60,5 +63,5 @@ SCPCB assumes a specific directory structure:
 These exist but are not on the core gameplay path:
 
 - `~/Software/scpcb/Map Creator/` (map editor code)
-- `~/Software/scpcb/Converter.bb`, `LightMapPNG.bb`, `RMesh_Model_Viewer.bb` (tools)
-
+- `~/Software/scpcb/Converter.bb`, `LightMapPNG.bb`, `RMesh_Model_Viewer.bb`
+  (tools)

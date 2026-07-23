@@ -2,4 +2,3 @@ interface:
   display_name: "SCPCB Windows Deps"
   short_description: "Remove/feature-gate SCPCB DLL/Win32 code"
   default_prompt: "Use $scpcb-windows-deps-triage to locate the Win32/DLL dependency causing this issue and propose a web-safe removal or feature gate with a minimal patch plan."
-

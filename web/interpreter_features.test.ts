@@ -18,13 +18,18 @@ function assertEquals<T>(actual: T, expected: T, msg?: string) {
   if (Object.is(actual, expected)) return;
   throw new Error(
     msg ??
-      `assertEquals failed\nactual: ${String(actual)}\nexpected: ${String(expected)}`,
+      `assertEquals failed\nactual: ${String(actual)}\nexpected: ${
+        String(expected)
+      }`,
   );
 }
 
 Deno.test("Interpreter syntax highlighting - basic tokens", () => {
   const html = highlightBlitzBasicLine('Print "Hello" ; comment');
-  assert(html.includes('class="tok builtin"'), "should classify Print as builtin");
+  assert(
+    html.includes('class="tok builtin"'),
+    "should classify Print as builtin",
+  );
   assert(
     html.includes('class="tok string">&quot;Hello&quot;'),
     "should highlight string literal",
@@ -43,10 +48,22 @@ Deno.test("Interpreter syntax highlighting - REM block handling + lineCount", ()
   const lines = html.split("\n");
   assertEquals(lines.length, 4);
   assert(lines[0]!.includes('class="tok comment"'), "rem should be comment");
-  assert(lines[1]!.includes('class="tok comment"'), "rem body should be comment");
-  assert(lines[2]!.includes('class="tok comment"'), "end rem should be comment");
-  assert(lines[3]!.includes('class="tok builtin"'), "Print should be highlighted");
-  assert(lines[3]!.includes('class="tok number"'), "number literal should be highlighted");
+  assert(
+    lines[1]!.includes('class="tok comment"'),
+    "rem body should be comment",
+  );
+  assert(
+    lines[2]!.includes('class="tok comment"'),
+    "end rem should be comment",
+  );
+  assert(
+    lines[3]!.includes('class="tok builtin"'),
+    "Print should be highlighted",
+  );
+  assert(
+    lines[3]!.includes('class="tok number"'),
+    "number literal should be highlighted",
+  );
 });
 
 Deno.test("Interpreter memory helpers - parseByteOffset", () => {
@@ -72,7 +89,9 @@ Deno.test("Interpreter memory helpers - formatHexDump includes base offset + asc
 });
 
 Deno.test("Interpreter demos - debug examples avoid non-suffixed string vars", async () => {
-  const text = await Deno.readTextFile(new URL("./interpreter.ts", import.meta.url));
+  const text = await Deno.readTextFile(
+    new URL("./interpreter.ts", import.meta.url),
+  );
 
   const extract = (key: string): string => {
     const re = new RegExp(key + ":\\s*`([\\s\\S]*?)`,", "m");

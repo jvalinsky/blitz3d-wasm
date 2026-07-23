@@ -15,4 +15,3 @@ if (r.missing.length) {
   Deno.exit(1);
 }
 console.log(`[cmdbuf] ok: ${r.present.join(", ")}`);
-

@@ -1,35 +1,37 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Simple Test</title>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Simple Compiler Test</h1>
     <pre id="output"></pre>
-    
+
     <script src="dist/compiler.bundle.js"></script>
     <script>
-        const output = document.getElementById('output');
-        
-        try {
-            output.textContent = 'Loading...\n';
-            
-            // Check if bundle loaded
-            output.textContent += 'Blitz3DCompiler exists: ' + (typeof Blitz3DCompiler !== 'undefined') + '\n';
-            output.textContent += 'Keys: ' + Object.keys(Blitz3DCompiler).join(', ') + '\n\n';
-            
-            // Test lexer only
-            output.textContent += 'Testing lexer...\n';
-            const lexer = new Blitz3DCompiler.Lexer('x% = 10');
-            output.textContent += 'Lexer created\n';
-            
-            const tokens = lexer.tokenize();
-            output.textContent += 'Tokens: ' + tokens.length + '\n';
-            output.textContent += JSON.stringify(tokens, null, 2);
-            
-        } catch (error) {
-            output.textContent += '\nERROR: ' + error.message + '\n' + error.stack;
-        }
+      const output = document.getElementById("output");
+
+      try {
+        output.textContent = "Loading...\n";
+
+        // Check if bundle loaded
+        output.textContent += "Blitz3DCompiler exists: " +
+          (typeof Blitz3DCompiler !== "undefined") + "\n";
+        output.textContent += "Keys: " +
+          Object.keys(Blitz3DCompiler).join(", ") + "\n\n";
+
+        // Test lexer only
+        output.textContent += "Testing lexer...\n";
+        const lexer = new Blitz3DCompiler.Lexer("x% = 10");
+        output.textContent += "Lexer created\n";
+
+        const tokens = lexer.tokenize();
+        output.textContent += "Tokens: " + tokens.length + "\n";
+        output.textContent += JSON.stringify(tokens, null, 2);
+      } catch (error) {
+        output.textContent += "\nERROR: " + error.message + "\n" +
+          error.stack;
+      }
     </script>
-</body>
+  </body>
 </html>

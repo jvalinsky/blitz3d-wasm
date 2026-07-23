@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document outlines the architecture of the asset pipeline, focusing on how RMesh assets are loaded, parsed, and represented in the Swift-based Blitz3D Runtime.
+This document outlines the architecture of the asset pipeline, focusing on how
+RMesh assets are loaded, parsed, and represented in the Swift-based Blitz3D
+Runtime.
 
 ```mermaid
 graph TB
@@ -43,7 +45,8 @@ graph TB
 
 ## Mesh Data Structure
 
-The `Mesh` class is the core geometry container. It mimics the Blitz3D structure but is optimized for WebGL data transfer.
+The `Mesh` class is the core geometry container. It mimics the Blitz3D structure
+but is optimized for WebGL data transfer.
 
 ```mermaid
 classDiagram
@@ -83,7 +86,8 @@ classDiagram
 
 ## RMesh Parsing Flow
 
-The parsing process converts the compact, game-specific RMesh format into the runtime's standard `Mesh` format.
+The parsing process converts the compact, game-specific RMesh format into the
+runtime's standard `Mesh` format.
 
 ```mermaid
 sequenceDiagram
@@ -116,13 +120,15 @@ sequenceDiagram
 
 ## Asset Pipeline: File to GPU
 
-1.  **File Loading:** The file is fetched (via fetch API or embedded FS) into WASM Linear Memory.
-2.  **Parsing:** `RMeshParser` reads the raw bytes and populates `Surface` vertex buffers directly in WASM memory.
-3.  **Rendering Sync:**
-    *   JS Runtime queries the WASM memory address of the Vertex Buffer.
-    *   JS creates a `Float32Array` view on that WASM memory.
-    *   JS calls `gl.bufferData` to upload it to the GPU.
-    *   *Result:* Zero-copy from Parse to Upload (view only).
+1. **File Loading:** The file is fetched (via fetch API or embedded FS) into
+   WASM Linear Memory.
+2. **Parsing:** `RMeshParser` reads the raw bytes and populates `Surface` vertex
+   buffers directly in WASM memory.
+3. **Rendering Sync:**
+   - JS Runtime queries the WASM memory address of the Vertex Buffer.
+   - JS creates a `Float32Array` view on that WASM memory.
+   - JS calls `gl.bufferData` to upload it to the GPU.
+   - _Result:_ Zero-copy from Parse to Upload (view only).
 
 ## Collision Integration
 

@@ -1,8 +1,16 @@
-import { writeFileSync, existsSync, readFileSync, mkdirSync, readDirSync } from "node:fs";
-import { join, basename } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  readDirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { basename, join } from "node:path";
 
 export class LLMTestGenerator {
-  constructor(outputDir = "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/Generated") {
+  constructor(
+    outputDir = "/Users/jack/Software/scp_port/blitz3d-wasm/Tests/Generated",
+  ) {
     this.outputDir = outputDir;
     this.testDir = "/Users/jack/Software/scp_port/blitz3d-wasm/Tests";
     this.ensureOutputDir();
@@ -76,7 +84,8 @@ End Function
 `,
     };
 
-    const template = templates[errorDetails.pattern] || templates.if_branch_mismatch;
+    const template = templates[errorDetails.pattern] ||
+      templates.if_branch_mismatch;
 
     return this.writeTest(testName, template, errorDetails);
   }
@@ -128,7 +137,8 @@ End Function
 `,
     };
 
-    const template = templates[errorDetails.pattern] || templates.argument_order;
+    const template = templates[errorDetails.pattern] ||
+      templates.argument_order;
 
     return this.writeTest(testName, template, errorDetails);
   }
@@ -199,7 +209,9 @@ Function TestGenerated()
 End Function
 `;
 
-    return this.writeTest(testName, testContent, { originalPath: originalFilePath });
+    return this.writeTest(testName, testContent, {
+      originalPath: originalFilePath,
+    });
   }
 
   generateComparisonTest(beforeWasm, afterWasm, description) {
@@ -218,7 +230,10 @@ Function TestPlaceholder()
 End Function
 `;
 
-    return this.writeTest(testName, content, { before: beforeWasm, after: afterWasm });
+    return this.writeTest(testName, content, {
+      before: beforeWasm,
+      after: afterWasm,
+    });
   }
 
   writeTest(name, content, metadata = {}) {

@@ -60,88 +60,90 @@ function validateWASM(filePath) {
   if (!valid) {
     console.log("  ○ Skipping section parsing (module is invalid)");
   } else {
-  let pos = 8;
-  const sections = [];
-  while (pos < buf.length) {
-    // Read section id
-    const id = buf[pos++];
-    if (id > 11) {
-      console.log(`  ✗ Invalid section id ${id} at byte offset ${pos - 1}`);
-      failed++;
-      break;
+    let pos = 8;
+    const sections = [];
+    while (pos < buf.length) {
+      // Read section id
+      const id = buf[pos++];
+      if (id > 11) {
+        console.log(`  ✗ Invalid section id ${id} at byte offset ${pos - 1}`);
+        failed++;
+        break;
+      }
+
+      // Read payload size (varuint32)
+      let size = 0, shift = 0, byte;
+      do {
+        byte = buf[pos++];
+        size |= (byte & 0x7f) << shift;
+        shift += 7;
+      } while (byte & 0x80);
+
+      if (pos + size > buf.length) {
+        console.log(
+          `  ✗ Section ${id} overruns file: payload=${size} pos=${pos} len=${buf.length}`,
+        );
+        failed++;
+        break;
+      }
+
+      sections.push({ id, size });
+      pos += size;
     }
 
-    // Read payload size (varuint32)
-    let size = 0, shift = 0, byte;
-    do {
-      byte = buf[pos++];
-      size |= (byte & 0x7f) << shift;
-      shift += 7;
-    } while (byte & 0x80);
+    const foundIds = sections.map((s) => s.id).sort((a, b) => a - b);
 
-    if (pos + size > buf.length) {
+    console.log(`  Found sections: ${sections.map((s) => s.id).join(", ")}`);
+
+    // Minimal sanity checks (different compilers may omit many sections).
+    const requiredSections = [1, 3, 10]; // Type, Function, Code
+    const hasDataSection = foundIds.includes(11);
+
+    const allPresent = requiredSections.every((id) => foundIds.includes(id));
+    if (allPresent) {
       console.log(
-        `  ✗ Section ${id} overruns file: payload=${size} pos=${pos} len=${buf.length}`,
+        `  ✓ Required sections present (${requiredSections.join(", ")})`,
+      );
+      console.log(
+        `  ${hasDataSection ? "✓" : "○"} Data section: ${
+          hasDataSection
+            ? "present"
+            : "not present (no Data statements in source)"
+        }`,
+      );
+      passed++;
+    } else {
+      console.log(
+        `  ✗ Missing sections. Expected: ${requiredSections.join(", ")}`,
       );
       failed++;
-      break;
     }
 
-    sections.push({ id, size });
-    pos += size;
-  }
+    // Test 5: Section order
+    console.log("\nTest 6: Section order");
+    const sectionOrder = sections.map((s) => s.id);
+    // Custom sections (id=0) can appear anywhere; ignore them for ordering checks.
+    const nonCustomOrder = sectionOrder.filter((id) => id !== 0);
+    const isOrdered = nonCustomOrder.length >= 2 &&
+      nonCustomOrder.every((id, i) => i === 0 || id > nonCustomOrder[i - 1]);
+    if (isOrdered) {
+      console.log(`  ✓ Sections in valid order`);
+      passed++;
+    } else {
+      console.log(`  ✗ Sections out of order: ${sectionOrder.join(", ")}`);
+      failed++;
+    }
 
-  const foundIds = sections.map((s) => s.id).sort((a, b) => a - b);
-
-  console.log(`  Found sections: ${sections.map((s) => s.id).join(", ")}`);
-
-  // Minimal sanity checks (different compilers may omit many sections).
-  const requiredSections = [1, 3, 10]; // Type, Function, Code
-  const hasDataSection = foundIds.includes(11);
-
-  const allPresent = requiredSections.every((id) => foundIds.includes(id));
-  if (allPresent) {
-    console.log(`  ✓ Required sections present (${requiredSections.join(", ")})`);
-    console.log(
-      `  ${hasDataSection ? "✓" : "○"} Data section: ${
-        hasDataSection
-          ? "present"
-          : "not present (no Data statements in source)"
-      }`,
-    );
-    passed++;
-  } else {
-    console.log(
-      `  ✗ Missing sections. Expected: ${requiredSections.join(", ")}`,
-    );
-    failed++;
-  }
-
-  // Test 5: Section order
-  console.log("\nTest 6: Section order");
-  const sectionOrder = sections.map((s) => s.id);
-  // Custom sections (id=0) can appear anywhere; ignore them for ordering checks.
-  const nonCustomOrder = sectionOrder.filter((id) => id !== 0);
-  const isOrdered = nonCustomOrder.length >= 2 &&
-    nonCustomOrder.every((id, i) => i === 0 || id > nonCustomOrder[i - 1]);
-  if (isOrdered) {
-    console.log(`  ✓ Sections in valid order`);
-    passed++;
-  } else {
-    console.log(`  ✗ Sections out of order: ${sectionOrder.join(", ")}`);
-    failed++;
-  }
-
-  // Test 6: Code section has functions
-  console.log("\nTest 7: Code section has functions");
-  const codeSection = sections.find((s) => s.id === 10);
-  if (codeSection && codeSection.size > 0) {
-    console.log(`  ✓ Code section size: ${codeSection.size} bytes`);
-    passed++;
-  } else {
-    console.log(`  ✗ No code section or empty`);
-    failed++;
-  }
+    // Test 6: Code section has functions
+    console.log("\nTest 7: Code section has functions");
+    const codeSection = sections.find((s) => s.id === 10);
+    if (codeSection && codeSection.size > 0) {
+      console.log(`  ✓ Code section size: ${codeSection.size} bytes`);
+      passed++;
+    } else {
+      console.log(`  ✗ No code section or empty`);
+      failed++;
+    }
   }
 
   // Summary

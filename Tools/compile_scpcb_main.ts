@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run -A
 
-import { join, basename } from "node:path";
+import { basename, join } from "node:path";
 import { checkCmdbufExports } from "./cmdbuf_wasm_check.ts";
 import { REQUIRED_WEB_EXPORTS } from "./web_export_contract.ts";
 
@@ -180,7 +180,12 @@ const addExportAliases = (
 ) => {
   const parsed = parseExportSection(bytes);
   if (!parsed) {
-    return { bytes, added: 0, skipped: aliases.map((a) => a.name), missing: [] as string[] };
+    return {
+      bytes,
+      added: 0,
+      skipped: aliases.map((a) => a.name),
+      missing: [] as string[],
+    };
   }
   const { sectionStart, sectionEnd } = parsed;
   const exports = [...parsed.exports];
@@ -562,7 +567,9 @@ const main = async () => {
       );
       if (opts.wrapperBb) {
         throw new Error(
-          `wrapper build missing required Web_* exports: ${missingWeb.join(", ")}`,
+          `wrapper build missing required Web_* exports: ${
+            missingWeb.join(", ")
+          }`,
         );
       }
     } else {

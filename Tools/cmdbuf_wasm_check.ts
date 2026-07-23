@@ -9,7 +9,9 @@ export type CmdbufCheckResult = {
   present: string[];
 };
 
-export const checkCmdbufExports = (wasmBytes: Uint8Array): CmdbufCheckResult => {
+export const checkCmdbufExports = (
+  wasmBytes: Uint8Array,
+): CmdbufCheckResult => {
   const mod = new WebAssembly.Module(wasmBytes as unknown as BufferSource);
   const exported = new Set(WebAssembly.Module.exports(mod).map((e) => e.name));
   const missing: string[] = [];

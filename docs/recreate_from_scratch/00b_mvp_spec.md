@@ -1,12 +1,14 @@
 # MVP Rebuild Spec (Short)
 
-This is the minimum shippable “from scratch” rebuild that proves the architecture.
+This is the minimum shippable “from scratch” rebuild that proves the
+architecture.
 
 ## MVP Goal
 
 Run a tiny Blitz3D BASIC program compiled to WASM in the browser such that:
 
-- WASM executes game logic (a simple update loop exposed as a **single-tick** export).
+- WASM executes game logic (a simple update loop exposed as a **single-tick**
+  export).
 - TS/JS provides only browser bindings (minimal graphics + logging).
 - The page cannot freeze by default (Worker + watchdog).
 
@@ -32,7 +34,8 @@ Run a tiny Blitz3D BASIC program compiled to WASM in the browser such that:
 
 - Minimal imports:
   - `DebugLog`/`PrintString` equivalent
-  - `CreateSprite` (or `CreateMesh`) + `PositionEntity` + `EntityAlpha` (minimal)
+  - `CreateSprite` (or `CreateMesh`) + `PositionEntity` + `EntityAlpha`
+    (minimal)
   - `Flip`/render function (or “render every RAF” on JS side)
 - Deterministic dispose path (no leaking RAF/listeners/resources).
 
@@ -46,13 +49,16 @@ Run a tiny Blitz3D BASIC program compiled to WASM in the browser such that:
 ## MVP “Done When” Checklist
 
 - ✅ `wasm-validate` passes on the MVP module.
-- ✅ Running the demo for 2 minutes does not grow JS heap unboundedly in headless leakcheck.
-- ✅ A deliberate infinite loop export is terminated by the watchdog (no-freeze gate).
+- ✅ Running the demo for 2 minutes does not grow JS heap unboundedly in
+  headless leakcheck.
+- ✅ A deliberate infinite loop export is terminated by the watchdog (no-freeze
+  gate).
 
 ## Code-First Starting Points (In This Repo)
 
 - Compiler anchors: `docs/recreate_from_scratch/02_compiler_code_anchors.md`
 - Runtime anchors: `docs/recreate_from_scratch/03_runtime_code_anchors.md`
-- Loader/worker anchors: `docs/recreate_from_scratch/04_loader_worker_code_anchors.md`
-- Acceptance tests and commands: `docs/recreate_from_scratch/06_testing_tooling_and_ci.md`
-
+- Loader/worker anchors:
+  `docs/recreate_from_scratch/04_loader_worker_code_anchors.md`
+- Acceptance tests and commands:
+  `docs/recreate_from_scratch/06_testing_tooling_and_ci.md`

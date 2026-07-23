@@ -1,493 +1,539 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SCP: Containment Breach (Web Edition)</title>
     <style>
-        /* ==================== Base / Loader CSS ==================== */
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: 'Courier New', monospace;
-            /* Unified font */
-            user-select: none;
-        }
+      /* ==================== Base / Loader CSS ==================== */
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: "Courier New", monospace;
+        /* Unified font */
+        user-select: none;
+      }
 
-        #game-container {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            /* Flex to center canvas if needed */
-            align-items: center;
-            justify-content: center;
-            z-index: 1;
-            /* Lowest layer */
-        }
+      #game-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        /* Flex to center canvas if needed */
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        /* Lowest layer */
+      }
 
-        canvas {
-            display: block;
-            /* Hidden manually if needed, but main.ts handles this */
-        }
+      canvas {
+        display: block;
+        /* Hidden manually if needed, but main.ts handles this */
+      }
 
-        /* Loading Overlay (Managed by main.ts) */
-        #loading {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            background: #000;
-            /* Solid back for loading */
-            color: #0f0;
-            z-index: 100;
-            /* Above game, below menu */
-            font-family: 'Courier New', monospace;
-        }
+      /* Loading Overlay (Managed by main.ts) */
+      #loading {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        background: #000;
+        /* Solid back for loading */
+        color: #0f0;
+        z-index: 100;
+        /* Above game, below menu */
+        font-family: "Courier New", monospace;
+      }
 
-        #loading-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px #0f0;
-        }
+      #loading-title {
+        font-size: 24px;
+        margin-bottom: 20px;
+        text-shadow: 0 0 10px #0f0;
+      }
 
-        .loading-row {
-            width: 400px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-            color: #0f0;
-            margin: 5px 0;
-        }
+      .loading-row {
+        width: 400px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        color: #0f0;
+        margin: 5px 0;
+      }
 
-        .loading-label {
-            width: 80px;
-            text-align: right;
-        }
+      .loading-label {
+        width: 80px;
+        text-align: right;
+      }
 
-        .loading-track {
-            flex: 1;
-            height: 10px;
-            background: rgba(0, 255, 0, 0.2);
-            border: 1px solid #0f0;
-        }
+      .loading-track {
+        flex: 1;
+        height: 10px;
+        background: rgba(0, 255, 0, 0.2);
+        border: 1px solid #0f0;
+      }
 
-        .loading-track>span {
-            display: block;
-            height: 100%;
-            background: #0f0;
-            transition: width 0.2s ease-out;
-            box-shadow: 0 0 10px #0f0;
-        }
+      .loading-track > span {
+        display: block;
+        height: 100%;
+        background: #0f0;
+        transition: width 0.2s ease-out;
+        box-shadow: 0 0 10px #0f0;
+      }
 
-        .loading-text {
-            width: 80px;
-            text-align: left;
-            margin-left: 10px;
-            font-size: 12px;
-        }
+      .loading-text {
+        width: 80px;
+        text-align: left;
+        margin-left: 10px;
+        font-size: 12px;
+      }
 
-        #loading-detail {
-            margin-top: 15px;
-            font-size: 12px;
-            color: #0a0;
-            height: 1.2em;
-        }
+      #loading-detail {
+        margin-top: 15px;
+        font-size: 12px;
+        color: #0a0;
+        height: 1.2em;
+      }
 
-        #diagnostics {
-            position: absolute;
-            bottom: 16px;
-            left: 16px;
-            font-size: 12px;
-            color: #0f0;
-            pointer-events: none;
-            z-index: 2000;
-            /* Top most for debug */
-        }
+      #diagnostics {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        font-size: 12px;
+        color: #0f0;
+        pointer-events: none;
+        z-index: 2000;
+        /* Top most for debug */
+      }
 
-        /* ==================== Main Menu CSS ==================== */
-        #menuContainer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            z-index: 500;
-            /* Above loader */
-            display: none;
-            /* Shown via JS */
-        }
+      /* ==================== Main Menu CSS ==================== */
+      #menuContainer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        z-index: 500;
+        /* Above loader */
+        display: none;
+        /* Shown via JS */
+      }
 
-        #menuBackground {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.6;
-        }
+      #menuBackground {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0.6;
+      }
 
-        #scp173 {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            width: auto;
-            height: 40%;
-            opacity: 0;
-            transition: opacity 0.1s;
-        }
+      #scp173 {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: auto;
+        height: 40%;
+        opacity: 0;
+        transition: opacity 0.1s;
+      }
 
-        #scp173.visible {
-            opacity: 1;
-        }
+      #scp173.visible {
+        opacity: 1;
+      }
 
-        #scpLogo {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: auto;
-            height: 80px;
-        }
+      #scpLogo {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        height: 80px;
+      }
 
-        .creepyText {
-            position: absolute;
-            color: #333;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            opacity: 0;
-            transition: opacity 0.1s;
-            pointer-events: none;
-            z-index: 505;
-        }
+      .creepyText {
+        position: absolute;
+        color: #333;
+        font-size: 24px;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.1s;
+        pointer-events: none;
+        z-index: 505;
+      }
 
-        .creepyText.visible {
-            opacity: 1;
-        }
+      .creepyText.visible {
+        opacity: 1;
+      }
 
-        #menuButtons {
-            position: absolute;
-            left: 159px;
-            top: 200px;
-            /* Adjusted up */
-            width: 400px;
-            z-index: 510;
-        }
+      #menuButtons {
+        position: absolute;
+        left: 159px;
+        top: 200px;
+        /* Adjusted up */
+        width: 400px;
+        z-index: 510;
+      }
 
-        .menuButton {
-            width: 100%;
-            height: 60px;
-            margin-bottom: 20px;
-            background: linear-gradient(to right, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6));
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            color: #fff;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 3px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-transform: uppercase;
-        }
+      .menuButton {
+        width: 100%;
+        height: 60px;
+        margin-bottom: 20px;
+        background: linear-gradient(
+          to right,
+          rgba(0, 0, 0, 0.3),
+          rgba(0, 0, 0, 0.6)
+        );
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        color: #fff;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-transform: uppercase;
+      }
 
-        .menuButton:hover {
-            background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.3));
-            border-color: rgba(255, 255, 255, 0.6);
-            transform: scale(1.05);
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-        }
+      .menuButton:hover {
+        background: linear-gradient(
+          to right,
+          rgba(255, 255, 255, 0.2),
+          rgba(255, 255, 255, 0.3)
+        );
+        border-color: rgba(255, 255, 255, 0.6);
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+      }
 
-        .menuButton:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
+      .menuButton:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
 
-        #statusText {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #0f0;
-            font-size: 14px;
-            text-align: center;
-            z-index: 520;
-            text-shadow: 0 0 10px #0f0;
-        }
+      #statusText {
+        position: absolute;
+        bottom: 120px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #0f0;
+        font-size: 14px;
+        text-align: center;
+        z-index: 520;
+        text-shadow: 0 0 10px #0f0;
+      }
 
-        /* ==================== Video Overlay CSS ==================== */
-        #videoOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            /* Above Menu */
-        }
+      /* ==================== Video Overlay CSS ==================== */
+      #videoOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        /* Above Menu */
+      }
 
-        #videoOverlay video {
-            max-width: 100%;
-            max-height: 100%;
-        }
+      #videoOverlay video {
+        max-width: 100%;
+        max-height: 100%;
+      }
 
-        .skipButton {
-            position: absolute;
-            bottom: 30px;
-            padding: 10px 30px;
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            border: 1px solid #fff;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            transition: 0.2s;
-        }
+      .skipButton {
+        position: absolute;
+        bottom: 30px;
+        padding: 10px 30px;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        border: 1px solid #fff;
+        font-family: "Courier New", monospace;
+        cursor: pointer;
+        transition: 0.2s;
+      }
 
-        .skipButton:hover {
-            background: rgba(50, 50, 50, 0.8);
-        }
+      .skipButton:hover {
+        background: rgba(50, 50, 50, 0.8);
+      }
 
-        /* ==================== Start Screen CSS ==================== */
-        #startScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-        }
+      /* ==================== Start Screen CSS ==================== */
+      #startScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+      }
 
-        #startButton {
-            padding: 20px 60px;
-            font-size: 24px;
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-            border: 2px solid #fff;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
+      #startButton {
+        padding: 20px 60px;
+        font-size: 24px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        border: 2px solid #fff;
+        font-family: "Courier New", monospace;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
 
-        #startButton:hover {
-            background: rgba(255, 255, 255, 0.3);
-            text-shadow: 0 0 15px #fff;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
+      #startButton:hover {
+        background: rgba(255, 255, 255, 0.3);
+        text-shadow: 0 0 15px #fff;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      }
 
-        #customCursor {
-            position: fixed;
-            width: 20px;
-            height: 20px;
-            background: rgba(255, 255, 255, 0.8);
-            border: 2px solid #000;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            mix-blend-mode: difference;
-        }
+      #customCursor {
+        position: fixed;
+        width: 20px;
+        height: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 2px solid #000;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 9999;
+        transform: translate(-50%, -50%);
+        mix-blend-mode: difference;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <!-- 1. Game Container (lowest z-index) -->
     <div id="game-container">
-        <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
-        <div id="loading">
-            <div id="loading-title">INITIALIZING ENGINE...</div>
-            <div class="loading-row">
-                <div class="loading-label">System</div>
-                <div class="loading-track"><span id="loading-bar-wasm" style="width: 0%"></span></div>
-                <div class="loading-text" id="loading-text-wasm">...</div>
-            </div>
-            <div class="loading-row">
-                <div class="loading-label">Assets</div>
-                <div class="loading-track"><span id="loading-bar-assets" style="width: 0%"></span></div>
-                <div class="loading-text" id="loading-text-assets">...</div>
-            </div>
-            <div id="loading-detail"></div>
+      <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+      <div id="loading">
+        <div id="loading-title">INITIALIZING ENGINE...</div>
+        <div class="loading-row">
+          <div class="loading-label">System</div>
+          <div class="loading-track">
+            <span id="loading-bar-wasm" style="width: 0%"></span>
+          </div>
+          <div class="loading-text" id="loading-text-wasm">...</div>
         </div>
-        <div id="diagnostics"></div>
+        <div class="loading-row">
+          <div class="loading-label">Assets</div>
+          <div class="loading-track">
+            <span id="loading-bar-assets" style="width: 0%"></span>
+          </div>
+          <div class="loading-text" id="loading-text-assets">...</div>
+        </div>
+        <div id="loading-detail"></div>
+      </div>
+      <div id="diagnostics"></div>
     </div>
 
     <!-- 2. Main Menu -->
     <div id="menuContainer">
-        <img id="menuBackground" src="./dist/assets/back.jpg" alt="Background">
-        <img id="scp173" src="./dist/assets/173back.jpg" alt="SCP-173">
-        <img id="scpLogo" src="./dist/assets/scptext.jpg" alt="Logo">
+      <img id="menuBackground" src="./dist/assets/back.jpg" alt="Background">
+      <img id="scp173" src="./dist/assets/173back.jpg" alt="SCP-173">
+      <img id="scpLogo" src="./dist/assets/scptext.jpg" alt="Logo">
 
-        <div class="creepyText" id="creepyText"></div>
+      <div class="creepyText" id="creepyText"></div>
 
-        <div id="menuButtons">
-            <button class="menuButton" id="btnNewGame" onclick="btnNewGame_Click()">NEW GAME</button>
-            <button class="menuButton" onclick="alert('Load Game not implemented yet')">LOAD GAME</button>
-            <button class="menuButton" onclick="alert('Options synced from Launcher')">OPTIONS</button>
-            <button class="menuButton" onclick="window.close()">QUIT</button>
-        </div>
+      <div id="menuButtons">
+        <button class="menuButton" id="btnNewGame" onclick="btnNewGame_Click()">
+          NEW GAME
+        </button>
+        <button
+          class="menuButton"
+          onclick="alert('Load Game not implemented yet')"
+        >
+          LOAD GAME
+        </button>
+        <button
+          class="menuButton"
+          onclick="alert('Options synced from Launcher')"
+        >
+          OPTIONS
+        </button>
+        <button class="menuButton" onclick="window.close()">QUIT</button>
+      </div>
 
-        <div id="statusText">Initializing Engine...</div>
+      <div id="statusText">Initializing Engine...</div>
     </div>
 
     <!-- 3. Video Overlay -->
     <div id="videoOverlay">
-        <video id="introVideo"></video>
-        <button class="skipButton" onclick="skipVideo()">Skip Intro</button>
+      <video id="introVideo"></video>
+      <button class="skipButton" onclick="skipVideo()">Skip Intro</button>
     </div>
 
     <!-- 4. Start Screen (Click to Start) -->
     <div id="startScreen">
-        <h1 style="color:#fff; text-shadow:0 0 20px #fff; margin-bottom:40px;">SCP: Containment Breach</h1>
-        <button id="startButton">CLICK TO START</button>
-        <p style="color:#666; margin-top:20px; font-size:12px;">Web Edition 1.0</p>
+      <h1 style="color: #fff; text-shadow: 0 0 20px #fff; margin-bottom: 40px">
+        SCP: Containment Breach
+      </h1>
+      <button id="startButton">CLICK TO START</button>
+      <p style="color: #666; margin-top: 20px; font-size: 12px">
+        Web Edition 1.0
+      </p>
     </div>
 
     <div id="customCursor"></div>
 
     <!-- Logic Script -->
     <script>
-        // --- UI State Management ---
-        const ui = {
-            start: document.getElementById('startScreen'),
-            menu: document.getElementById('menuContainer'),
-            video: document.getElementById('videoOverlay'),
-            loader: document.getElementById('loading'),
-            btnNewGame: document.getElementById('btnNewGame'),
-            status: document.getElementById('statusText')
-        };
+      // --- UI State Management ---
+      const ui = {
+        start: document.getElementById("startScreen"),
+        menu: document.getElementById("menuContainer"),
+        video: document.getElementById("videoOverlay"),
+        loader: document.getElementById("loading"),
+        btnNewGame: document.getElementById("btnNewGame"),
+        status: document.getElementById("statusText"),
+      };
 
-        let engineReady = false;
+      let engineReady = false;
 
-        // --- Custom Cursor ---
-        const cursor = document.getElementById('customCursor');
-        document.addEventListener('mousemove', (e) => {
-            cursor.style.left = e.clientX + 'px';
-            cursor.style.top = e.clientY + 'px';
-        });
+      // --- Custom Cursor ---
+      const cursor = document.getElementById("customCursor");
+      document.addEventListener("mousemove", (e) => {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+      });
 
-        // --- SCP-173 FX ---
-        const scp173 = document.getElementById('scp173');
-        function updateBlink() {
-            if (Math.random() < 0.0033) {
-                // Blink params
-                setTimeout(() => scp173.classList.add('visible'), 0);
-                setTimeout(() => scp173.classList.remove('visible'), 200 + Math.random() * 300);
-            }
-            requestAnimationFrame(updateBlink);
+      // --- SCP-173 FX ---
+      const scp173 = document.getElementById("scp173");
+      function updateBlink() {
+        if (Math.random() < 0.0033) {
+          // Blink params
+          setTimeout(() => scp173.classList.add("visible"), 0);
+          setTimeout(
+            () => scp173.classList.remove("visible"),
+            200 + Math.random() * 300,
+          );
         }
         requestAnimationFrame(updateBlink);
+      }
+      requestAnimationFrame(updateBlink);
 
-        // --- Creepy Text FX ---
-        const creepyTextEl = document.getElementById('creepyText');
-        const creepyMessages = ["DON'T BLINK", "Secure. Contain. Protect.", "9341", "It controls the doors"];
-        function updateCreepyText() {
-            if (Math.random() < 0.01) {
-                creepyTextEl.classList.add('visible');
-                creepyTextEl.textContent = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
-                creepyTextEl.style.left = (Math.random() * window.innerWidth * 0.8) + 'px';
-                creepyTextEl.style.top = (Math.random() * window.innerHeight * 0.8) + 'px';
-                setTimeout(() => creepyTextEl.classList.remove('visible'), 500);
-            }
-            setTimeout(updateCreepyText, 1000);
+      // --- Creepy Text FX ---
+      const creepyTextEl = document.getElementById("creepyText");
+      const creepyMessages = [
+        "DON'T BLINK",
+        "Secure. Contain. Protect.",
+        "9341",
+        "It controls the doors",
+      ];
+      function updateCreepyText() {
+        if (Math.random() < 0.01) {
+          creepyTextEl.classList.add("visible");
+          creepyTextEl.textContent = creepyMessages[
+            Math.floor(Math.random() * creepyMessages.length)
+          ];
+          creepyTextEl.style.left =
+            (Math.random() * window.innerWidth * 0.8) + "px";
+          creepyTextEl.style.top =
+            (Math.random() * window.innerHeight * 0.8) + "px";
+          setTimeout(
+            () => creepyTextEl.classList.remove("visible"),
+            500,
+          );
         }
-        updateCreepyText();
+        setTimeout(updateCreepyText, 1000);
+      }
+      updateCreepyText();
 
-        // --- Video Logic ---
-        const introVideo = document.getElementById('introVideo');
-        const introFiles = ['/assets/videos/startup_TSS.mp4', '/assets/videos/startup_Undertow.mp4'];
-        let videoIdx = 0;
+      // --- Video Logic ---
+      const introVideo = document.getElementById("introVideo");
+      const introFiles = [
+        "/assets/videos/startup_TSS.mp4",
+        "/assets/videos/startup_Undertow.mp4",
+      ];
+      let videoIdx = 0;
 
-        function playIntros() {
-            videoIdx = 0;
-            playNextVideo();
+      function playIntros() {
+        videoIdx = 0;
+        playNextVideo();
+      }
+
+      function playNextVideo() {
+        if (videoIdx >= introFiles.length) {
+          finishIntros();
+          return;
         }
-
-        function playNextVideo() {
-            if (videoIdx >= introFiles.length) {
-                finishIntros();
-                return;
-            }
-            ui.video.style.display = 'flex';
-            introVideo.src = introFiles[videoIdx];
-            introVideo.play().catch(e => {
-                console.error("Video play failed:", e);
-                videoIdx++;
-                playNextVideo(); // Skip if fail
-            });
-            introVideo.onended = () => {
-                videoIdx++;
-                playNextVideo();
-            };
-        }
-
-        function skipVideo() {
-            introVideo.pause();
-            finishIntros();
-        }
-
-        function finishIntros() {
-            ui.video.style.display = 'none';
-            playGame();
-        }
-
-        // --- Game Start Logic ---
-        function btnNewGame_Click() {
-            ui.menu.style.display = 'none';
-            // Check if intro enabled (mock setting)
-            playIntros();
-        }
-
-        function playGame() {
-            // Reveal Canvas (Main.ts should be rendering now)
-            // Call WASM StartNewGame via window.initGameWorld override
-            if (window.initGameWorld) {
-                window.initGameWorld("test", 1);
-            } else {
-                alert("Engine not ready! Please wait.");
-                ui.menu.style.display = 'block';
-            }
-        }
-
-        // --- Initialization ---
-        document.getElementById('startButton').addEventListener('click', () => {
-            ui.start.style.display = 'none';
-            ui.menu.style.display = 'block';
-            // Start polling for engine
-            checkEngine();
+        ui.video.style.display = "flex";
+        introVideo.src = introFiles[videoIdx];
+        introVideo.play().catch((e) => {
+          console.error("Video play failed:", e);
+          videoIdx++;
+          playNextVideo(); // Skip if fail
         });
+        introVideo.onended = () => {
+          videoIdx++;
+          playNextVideo();
+        };
+      }
 
-        function checkEngine() {
-            if (window.initGameWorld) {
-                engineReady = true;
-                ui.status.textContent = "Engine Ready. v1.0";
-                ui.btnNewGame.disabled = false;
-                // Note: Loader might still be visible underneath, managed by main.ts
-            } else {
-                ui.btnNewGame.disabled = true;
-                setTimeout(checkEngine, 500);
-            }
+      function skipVideo() {
+        introVideo.pause();
+        finishIntros();
+      }
+
+      function finishIntros() {
+        ui.video.style.display = "none";
+        playGame();
+      }
+
+      // --- Game Start Logic ---
+      function btnNewGame_Click() {
+        ui.menu.style.display = "none";
+        // Check if intro enabled (mock setting)
+        playIntros();
+      }
+
+      function playGame() {
+        // Reveal Canvas (Main.ts should be rendering now)
+        // Call WASM StartNewGame via window.initGameWorld override
+        if (window.initGameWorld) {
+          window.initGameWorld("test", 1);
+        } else {
+          alert("Engine not ready! Please wait.");
+          ui.menu.style.display = "block";
         }
+      }
 
+      // --- Initialization ---
+      document.getElementById("startButton").addEventListener(
+        "click",
+        () => {
+          ui.start.style.display = "none";
+          ui.menu.style.display = "block";
+          // Start polling for engine
+          checkEngine();
+        },
+      );
+
+      function checkEngine() {
+        if (window.initGameWorld) {
+          engineReady = true;
+          ui.status.textContent = "Engine Ready. v1.0";
+          ui.btnNewGame.disabled = false;
+          // Note: Loader might still be visible underneath, managed by main.ts
+        } else {
+          ui.btnNewGame.disabled = true;
+          setTimeout(checkEngine, 500);
+        }
+      }
     </script>
 
     <!-- WASM Entry Point - Loads Engine -->
     <script type="module" src="/src/main.ts"></script>
-</body>
-
+  </body>
 </html>

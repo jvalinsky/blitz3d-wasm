@@ -1,10 +1,14 @@
 # Compiler Optimizations
 
-This document describes the optimization passes implemented in the Blitz3D to WebAssembly compiler.
+This document describes the optimization passes implemented in the Blitz3D to
+WebAssembly compiler.
 
 ## Overview
 
-The compiler implements several optimization passes that run on the Intermediate Representation (IR) before WebAssembly code generation. These optimizations improve runtime performance and reduce binary size while maintaining semantic correctness.
+The compiler implements several optimization passes that run on the Intermediate
+Representation (IR) before WebAssembly code generation. These optimizations
+improve runtime performance and reduce binary size while maintaining semantic
+correctness.
 
 ## Optimization Passes
 
@@ -12,11 +16,13 @@ The compiler implements several optimization passes that run on the Intermediate
 
 **Location**: `Sources/Compiler/IR/Passes/ConstantFolding.swift`
 
-**Purpose**: Evaluate compile-time constant expressions to reduce runtime computation.
+**Purpose**: Evaluate compile-time constant expressions to reduce runtime
+computation.
 
 **What it does**:
 
 #### Constant Propagation
+
 Evaluates operations on constant operands at compile time:
 
 ```blitz3d
@@ -34,15 +40,18 @@ z = x + y  ; Still needs runtime evaluation since x,y are variables
 #### Supported Operations
 
 **Integer Operations**:
+
 - Arithmetic: `+`, `-`, `*`, `/`, `Mod`
 - Bitwise: `And`, `Or`, `Xor`, `Shl`, `Shr`
 - Comparisons: `=`, `<>`, `<`, `<=`, `>`, `>=`
 
 **Float Operations**:
+
 - Arithmetic: `+`, `-`, `*`, `/`, `Pow`
 - Comparisons: `=`, `<>`, `<`, `<=`, `>`, `>=`
 
 **Type Conversions**:
+
 - Int to Float
 - Float to Int
 - Identity conversions (no-op elimination)
@@ -82,6 +91,7 @@ Wend
 #### Algebraic Simplifications
 
 **Identity Operations**:
+
 ```blitz3d
 x + 0  =>  x
 x - 0  =>  x  
@@ -90,12 +100,14 @@ x / 1  =>  x
 ```
 
 **Zero Propagation**:
+
 ```blitz3d
 x * 0  =>  0
 0 * x  =>  0
 ```
 
 **Power-of-Two Optimizations**:
+
 ```blitz3d
 x * 2    =>  x Shl 1
 x * 4    =>  x Shl 2
@@ -109,11 +121,13 @@ x / 8    =>  x Shr 3
 ```
 
 **Benefits**:
+
 - Shift operations are typically faster than multiplication/division
 - Reduces instruction count
 - May enable further optimizations
 
 **Limitations**:
+
 - Division-to-shift only applied for known power-of-two divisors
 - Signed division requires additional care (not yet implemented)
 
@@ -121,15 +135,18 @@ x / 8    =>  x Shr 3
 
 **Location**: `Sources/Compiler/IR/Passes/Relooper.swift`
 
-**Purpose**: Convert arbitrary control flow (with gotos) into structured WebAssembly control flow.
+**Purpose**: Convert arbitrary control flow (with gotos) into structured
+WebAssembly control flow.
 
 **What it does**:
+
 - Analyzes control flow graph
 - Identifies structured regions (blocks, loops, etc.)
 - Generates WebAssembly `block`, `loop`, and `br` instructions
 - Handles complex goto patterns
 
-**Algorithm**: Based on the Relooper algorithm by Alon Zakai (Emscripten project)
+**Algorithm**: Based on the Relooper algorithm by Alon Zakai (Emscripten
+project)
 
 ## Optimization Pipeline
 
@@ -198,12 +215,12 @@ Code Generation -> WASM
 1. **Tail Call Optimization**
    - Convert tail recursion to loops
    - Reduce stack usage
-   - *Blocked by*: WASM tail call support
+   - _Blocked by_: WASM tail call support
 
 2. **SIMD Optimization**
    - Vectorize array operations
    - Use WASM SIMD instructions
-   - *Blocked by*: WASM SIMD support maturity
+   - _Blocked by_: WASM SIMD support maturity
 
 3. **Branch Prediction Hints**
    - Reorder branches for better prediction
@@ -214,16 +231,19 @@ Code Generation -> WASM
 ### Constant Folding
 
 **Benefits**:
+
 - Reduces runtime computation
 - Smaller binary size (fewer instructions)
 - Enables other optimizations
 
 **Typical Improvements**:
+
 - 5-15% reduction in instruction count for math-heavy code
 - 2-5% reduction in binary size
 - Negligible compilation time overhead
 
 **Example**: Particle system with fixed constants
+
 ```blitz3d
 ; Without optimization: 45 instructions
 ; With optimization: 38 instructions (-15%)
@@ -240,14 +260,17 @@ Next
 ### Strength Reduction
 
 **Benefits**:
+
 - Faster execution (shifts vs multiply/divide)
 - Smaller binary (fewer instruction variants)
 
 **Typical Improvements**:
+
 - 10-30% faster for power-of-2 arithmetic
 - 1-3% binary size reduction
 
 **Example**: Array indexing
+
 ```blitz3d
 ; Without: uses imul instruction
 offset = index * 4
@@ -258,7 +281,8 @@ offset = index Shl 2
 
 ## Configuration
 
-**Current Status**: Optimizations are not yet integrated into the main compilation pipeline.
+**Current Status**: Optimizations are not yet integrated into the main
+compilation pipeline.
 
 **Planned Integration**: Will add compiler flags:
 
@@ -291,12 +315,17 @@ Optimizations must preserve program semantics:
 
 ## References
 
-- **Relooper**: [Emscripten Relooper Algorithm](https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf)
-- **Constant Folding**: Dragon Book (Compilers: Principles, Techniques, and Tools)
-- **WebAssembly Optimization**: [WASM Optimization Best Practices](https://webassembly.org/docs/best-practices/)
+- **Relooper**:
+  [Emscripten Relooper Algorithm](https://github.com/emscripten-core/emscripten/blob/main/docs/paper.pdf)
+- **Constant Folding**: Dragon Book (Compilers: Principles, Techniques, and
+  Tools)
+- **WebAssembly Optimization**:
+  [WASM Optimization Best Practices](https://webassembly.org/docs/best-practices/)
 
 ## Related Documentation
 
 - [COMPILER_DESIGN.md](COMPILER_DESIGN.md) - Overall compiler architecture
-- [STACK_BALANCE_HEURISTICS.md](STACK_BALANCE_HEURISTICS.md) - WASM stack management
-- [COMPILER_STATUS_ANALYSIS.md](COMPILER_STATUS_ANALYSIS.md) - Current implementation status
+- [STACK_BALANCE_HEURISTICS.md](STACK_BALANCE_HEURISTICS.md) - WASM stack
+  management
+- [COMPILER_STATUS_ANALYSIS.md](COMPILER_STATUS_ANALYSIS.md) - Current
+  implementation status

@@ -18,8 +18,10 @@ description: Debug Web Worker behavior in Blitz3D-WASM’s web frontend (message
 ## Common failure modes → fixes
 
 - **Worker never reaches “ready”**:
-  - Add/confirm status posts (see `postStatus` / `maybePostStatus` in `web/src/worker/scpcb_worker.ts`).
-  - Ensure the main thread listens for `{ type: "status" }` and logs transitions.
+  - Add/confirm status posts (see `postStatus` / `maybePostStatus` in
+    `web/src/worker/scpcb_worker.ts`).
+  - Ensure the main thread listens for `{ type: "status" }` and logs
+    transitions.
 
 - **“DataCloneError” / structured clone issues**:
   - Only send plain objects, numbers, strings, `ArrayBuffer`/typed arrays.
@@ -27,8 +29,10 @@ description: Debug Web Worker behavior in Blitz3D-WASM’s web frontend (message
     - `worker.postMessage({ wasmBytes }, [wasmBytes.buffer])`
 
 - **Silent worker exception**:
-  - Add a worker-side `self.addEventListener("error", ...)` and forward via `postMessage({type:"log"/"error"})`.
-  - Add a main-thread `worker.onerror` handler and surface the message prominently.
+  - Add a worker-side `self.addEventListener("error", ...)` and forward via
+    `postMessage({type:"log"/"error"})`.
+  - Add a main-thread `worker.onerror` handler and surface the message
+    prominently.
 
 - **Asset preload mismatch**:
   - Verify manifest URL/basePath and the selected preload group.
@@ -38,7 +42,8 @@ description: Debug Web Worker behavior in Blitz3D-WASM’s web frontend (message
 
 1. Keep message types as discriminated unions (`cmd: "init" | "call" | ...`).
 2. Version any breaking protocol changes (even a simple `version: 1` field).
-3. Validate message payloads at the boundary (cheap `typeof` checks) so failures are early and readable.
+3. Validate message payloads at the boundary (cheap `typeof` checks) so failures
+   are early and readable.
 
 ## Debugging workflow
 
@@ -48,4 +53,3 @@ description: Debug Web Worker behavior in Blitz3D-WASM’s web frontend (message
    - last requested file path,
    - last debug log line (if available).
 3. Only then step into WASM execution paths.
-

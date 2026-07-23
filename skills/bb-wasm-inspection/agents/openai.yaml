@@ -2,4 +2,3 @@ interface:
   display_name: "BB→WASM Inspection"
   short_description: "Sanity-check BB-generated wasm output"
   default_prompt: "Use $bb-wasm-inspection to sanity-check this compiled .wasm (validate, import/export surface, bbdbg/map metadata, and runtime import coverage) and recommend the next debugging step."
-

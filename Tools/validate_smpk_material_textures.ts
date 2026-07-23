@@ -5,7 +5,15 @@ type MissingTextureRef = {
   smpkRelPath: string;
   materialIndex: number;
   materialName: string;
-  field: "baseColorTexture" | "detailTexture" | "detailTexture2" | "detailTexture3" | "cubeTexture" | "normalTexture" | "emissiveTexture" | "lightmapTexture";
+  field:
+    | "baseColorTexture"
+    | "detailTexture"
+    | "detailTexture2"
+    | "detailTexture3"
+    | "cubeTexture"
+    | "normalTexture"
+    | "emissiveTexture"
+    | "lightmapTexture";
   texture: string;
 };
 
@@ -72,14 +80,16 @@ const main = async () => {
   let textureRefCount = 0;
 
   const smpkRootNorm = smpkRoot.replace(/\/+$/, "");
-  if (!(await fileExists(smpkRootNorm)) && !(await (async () => {
-    try {
-      const st = await Deno.stat(smpkRootNorm);
-      return st.isDirectory;
-    } catch {
-      return false;
-    }
-  })())) {
+  if (
+    !(await fileExists(smpkRootNorm)) && !(await (async () => {
+      try {
+        const st = await Deno.stat(smpkRootNorm);
+        return st.isDirectory;
+      } catch {
+        return false;
+      }
+    })())
+  ) {
     console.error(`[smpk-textures] missing smpk root dir: ${smpkRootNorm}`);
     Deno.exit(2);
   }
@@ -98,7 +108,20 @@ const main = async () => {
     for (let i = 0; i < mats.length; i++) {
       const mat = mats[i]!;
       const matName = mat.name ?? `material_${i}`;
-      const refs: Array<{ field: "baseColorTexture" | "detailTexture" | "detailTexture2" | "detailTexture3" | "cubeTexture" | "normalTexture" | "emissiveTexture" | "lightmapTexture"; tex: string | undefined }> = [
+      const refs: Array<
+        {
+          field:
+            | "baseColorTexture"
+            | "detailTexture"
+            | "detailTexture2"
+            | "detailTexture3"
+            | "cubeTexture"
+            | "normalTexture"
+            | "emissiveTexture"
+            | "lightmapTexture";
+          tex: string | undefined;
+        }
+      > = [
         { field: "baseColorTexture", tex: mat.baseColorTexture },
         { field: "detailTexture", tex: mat.detailTexture },
         { field: "detailTexture2", tex: mat.detailTexture2 },
@@ -162,4 +185,3 @@ const main = async () => {
 if (import.meta.main) {
   await main();
 }
-

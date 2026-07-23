@@ -8,7 +8,8 @@ argument-hint: <goal title>
 
 **USE THIS BEFORE STARTING ANY IMPLEMENTATION.**
 
-This skill creates the required deciduous nodes BEFORE you write any code. The Edit/Write hooks will BLOCK you if you don't have a recent node.
+This skill creates the required deciduous nodes BEFORE you write any code. The
+Edit/Write hooks will BLOCK you if you don't have a recent node.
 
 ## Step 1: Create the Goal Node
 
@@ -26,6 +27,7 @@ EOF
 ## Step 2: Announce the Goal ID
 
 After creating the goal, tell the user:
+
 - The goal ID that was created
 - What you're about to implement
 - That you'll create action nodes as you work

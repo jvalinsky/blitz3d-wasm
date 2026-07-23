@@ -1,16 +1,24 @@
 # Event/Trigger Systems Documentation
 
 ## Overview
-Event and trigger systems manage the dynamic storytelling and interactive elements of SCP: Containment Breach. These systems handle SCP containment breaches, environmental changes, and player-triggered events that create the game's tense, unpredictable atmosphere.
+
+Event and trigger systems manage the dynamic storytelling and interactive
+elements of SCP: Containment Breach. These systems handle SCP containment
+breaches, environmental changes, and player-triggered events that create the
+game's tense, unpredictable atmosphere.
 
 ## Event System
 
 ### Purpose
-The event system manages game events that drive narrative progression, create tension, and respond to player actions, making each playthrough unique and unpredictable.
+
+The event system manages game events that drive narrative progression, create
+tension, and respond to player actions, making each playthrough unique and
+unpredictable.
 
 ### Architecture
 
 #### Event Data Structure
+
 ```blitzbasic
 Type GameEvent
     Field EventID%             ; Unique event identifier
@@ -50,6 +58,7 @@ Const EVENT_EMERGENCY% = 6       ; Emergency situation
 ### Core Functions
 
 #### Event Management
+
 ```blitzbasic
 Global ActiveEvents.GameEvent[50]  ; Currently active events
 Global PendingEvents.GameEvent[100] ; Events waiting to trigger
@@ -101,6 +110,7 @@ End Function
 ```
 
 #### Event Triggering
+
 ```blitzbasic
 Function TriggerEvent(event.GameEvent)
     ; Check trigger conditions
@@ -174,6 +184,7 @@ End Function
 ```
 
 #### Event Completion
+
 ```blitzbasic
 Function CompleteEvent(event.GameEvent)
     ; Execute completion effects
@@ -217,6 +228,7 @@ End Function
 ### Specific Event Types
 
 #### SCP Breach Events
+
 ```blitzbasic
 Function CheckSCPBreachConditions(event.GameEvent)
     ; Check containment status
@@ -257,6 +269,7 @@ End Function
 ```
 
 #### Security Alert Events
+
 ```blitzbasic
 Function CheckSecurityConditions(event.GameEvent)
     ; Check for security triggers
@@ -285,6 +298,7 @@ End Function
 ```
 
 #### Environmental Events
+
 ```blitzbasic
 Function CheckEnvironmentalConditions(event.GameEvent)
     ; Check environmental triggers
@@ -329,11 +343,14 @@ End Function
 ## Trigger System
 
 ### Purpose
-The trigger system manages environmental triggers that respond to player actions and create interactive elements throughout the facility.
+
+The trigger system manages environmental triggers that respond to player actions
+and create interactive elements throughout the facility.
 
 ### Architecture
 
 #### Trigger Data Structure
+
 ```blitzbasic
 Type Trigger
     Field TriggerID%           ; Unique trigger identifier
@@ -371,6 +388,7 @@ Const TRIGGER_SEQUENCE% = 5   ; Multi-step sequence
 ### Core Functions
 
 #### Trigger Management
+
 ```blitzbasic
 Global ActiveTriggers.Trigger[100]  ; Active triggers in current area
 
@@ -417,6 +435,7 @@ End Function
 ```
 
 #### Position Triggers
+
 ```blitzbasic
 Function CheckPositionTrigger(trigger.Trigger)
     ; Check if player is within trigger bounds
@@ -449,6 +468,7 @@ End Function
 ```
 
 #### Item Triggers
+
 ```blitzbasic
 Function CheckItemTrigger(trigger.Trigger)
     ; Check if player has required item
@@ -479,6 +499,7 @@ End Function
 ```
 
 #### Security Triggers
+
 ```blitzbasic
 Function CheckSecurityTrigger(trigger.Trigger)
     ; Check keycard access
@@ -524,6 +545,7 @@ End Function
 ### Trigger Effects
 
 #### Door Control
+
 ```blitzbasic
 Function ExecuteDoorEffect(params$)
     ; Parse parameters: "DOOR:room_id,door_id,ACTION"
@@ -550,6 +572,7 @@ End Function
 ```
 
 #### Environmental Effects
+
 ```blitzbasic
 Function ExecuteEnvironmentEffect(params$)
     ; Parse parameters: "ENV:room_id,EFFECT_TYPE,intensity"
@@ -576,6 +599,7 @@ End Function
 ```
 
 #### Audio Effects
+
 ```blitzbasic
 Function ExecuteAudioEffect(params$)
     ; Parse parameters: "AUDIO:sound_name,volume,loop"
@@ -601,6 +625,7 @@ End Function
 ## System Integration
 
 ### Event/Trigger Update Loop
+
 ```blitzbasic
 Function UpdateEventTriggerSystems()
     ; Update events
@@ -631,6 +656,7 @@ End Function
 ```
 
 ### State Persistence
+
 ```blitzbasic
 Function SaveEventTriggerState()
     ; Save active events
@@ -677,12 +703,14 @@ End Function
 ```
 
 ### Performance Considerations
+
 - **Event Culling**: Only process events in active areas
 - **Trigger Spatial Indexing**: Use spatial partitioning for trigger queries
 - **Effect Batching**: Group similar effects for efficient execution
 - **Cooldown Management**: Prevent trigger spam
 
 ### Balancing Considerations
+
 - **Event Frequency**: Balance tension without frustration
 - **Trigger Visibility**: Make triggers discoverable but not obvious
 - **Consequence Scaling**: Match event severity to player actions
@@ -690,4 +718,7 @@ End Function
 
 ---
 
-*Event and trigger systems create the dynamic, unpredictable world of SCP: Containment Breach, where player actions have real consequences and the facility itself seems alive with automated responses to containment breaches and security incidents.*
+_Event and trigger systems create the dynamic, unpredictable world of SCP:
+Containment Breach, where player actions have real consequences and the facility
+itself seems alive with automated responses to containment breaches and security
+incidents._

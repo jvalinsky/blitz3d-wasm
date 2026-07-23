@@ -21,9 +21,9 @@ function parseArgs() {
   const opts = { pattern: "../../scpcb/**/*.bb", out: null, summary: false };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
-    if (a === "--glob") { opts.pattern = args[++i]; }
-    else if (a === "--out") { opts.out = args[++i]; }
-    else if (a === "--summary") { opts.summary = true; }
+    if (a === "--glob") opts.pattern = args[++i];
+    else if (a === "--out") opts.out = args[++i];
+    else if (a === "--summary") opts.summary = true;
   }
   return opts;
 }
@@ -34,8 +34,32 @@ function extractCalls(text) {
   const calls = [];
   const regex = /([A-Za-z_][A-Za-z0-9_]*)\s*\(/g;
   const exclusions = new Set([
-    "if","while","for","foreach","repeat","until","select","case","function","local","global","type",
-    "int","float","str","then","else","elseif","wend","next","end","return","abs","sgn","mod","pi"
+    "if",
+    "while",
+    "for",
+    "foreach",
+    "repeat",
+    "until",
+    "select",
+    "case",
+    "function",
+    "local",
+    "global",
+    "type",
+    "int",
+    "float",
+    "str",
+    "then",
+    "else",
+    "elseif",
+    "wend",
+    "next",
+    "end",
+    "return",
+    "abs",
+    "sgn",
+    "mod",
+    "pi",
   ]);
   let m;
   while ((m = regex.exec(text)) !== null) {
@@ -65,7 +89,9 @@ async function scanFiles(pattern) {
   }
   // Serialize sets
   const normalized = Object.fromEntries(
-    Object.entries(result).map(([k, v]) => [k, { name: v.name, calls: v.calls, files: Array.from(v.files) }])
+    Object.entries(result).map((
+      [k, v],
+    ) => [k, { name: v.name, calls: v.calls, files: Array.from(v.files) }]),
   );
   return normalized;
 }
@@ -73,7 +99,11 @@ async function scanFiles(pattern) {
 function toSummary(data) {
   return Object.entries(data)
     .sort((a, b) => b[1].calls - a[1].calls)
-    .map(([k, v]) => ({ name: v.name, calls: v.calls, fileCount: v.files.length }));
+    .map(([k, v]) => ({
+      name: v.name,
+      calls: v.calls,
+      fileCount: v.files.length,
+    }));
 }
 
 async function main() {
@@ -84,7 +114,9 @@ async function main() {
     return;
   }
   if (opts.out) {
-    const outPath = path.isAbsolute(opts.out) ? opts.out : path.join(__dirname, opts.out);
+    const outPath = path.isAbsolute(opts.out)
+      ? opts.out
+      : path.join(__dirname, opts.out);
     await fs.writeFile(outPath, JSON.stringify(data, null, 2));
     console.log(`Wrote ${Object.keys(data).length} imports to ${outPath}`);
   } else {

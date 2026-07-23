@@ -4,21 +4,38 @@ var Blitz3DCompiler = (() => {
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
   var __hasOwnProp = Object.prototype.hasOwnProperty;
-  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __defNormalProp = (obj, key, value) =>
+    key in obj
+      ? __defProp(obj, key, {
+        enumerable: true,
+        configurable: true,
+        writable: true,
+        value,
+      })
+      : obj[key] = value;
   var __export = (target, all) => {
-    for (var name in all)
+    for (var name in all) {
       __defProp(target, name, { get: all[name], enumerable: true });
+    }
   };
   var __copyProps = (to, from, except, desc) => {
     if (from && typeof from === "object" || typeof from === "function") {
-      for (let key of __getOwnPropNames(from))
-        if (!__hasOwnProp.call(to, key) && key !== except)
-          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+      for (let key of __getOwnPropNames(from)) {
+        if (!__hasOwnProp.call(to, key) && key !== except) {
+          __defProp(to, key, {
+            get: () => from[key],
+            enumerable: !(desc = __getOwnPropDesc(from, key)) ||
+              desc.enumerable,
+          });
+        }
+      }
     }
     return to;
   };
-  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+  var __toCommonJS = (mod) =>
+    __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var __publicField = (obj, key, value) =>
+    __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
 
   // web-ide/src/compiler/all.ts
   var all_exports = {};
@@ -35,61 +52,61 @@ var Blitz3DCompiler = (() => {
     Parser: () => Parser,
     TimeoutChecker: () => TimeoutChecker,
     ValidationError: () => ValidationError,
-    withTimeout: () => withTimeout
+    withTimeout: () => withTimeout,
   });
 
   // web-ide/src/compiler/lexer.ts
   var KEYWORDS = {
-    "if": "IF" /* IF */,
-    "then": "THEN" /* THEN */,
-    "else": "ELSE" /* ELSE */,
-    "elseif": "ELSEIF" /* ELSEIF */,
-    "endif": "ENDIF" /* ENDIF */,
-    "for": "FOR" /* FOR */,
-    "to": "TO" /* TO */,
-    "step": "STEP" /* STEP */,
-    "next": "NEXT" /* NEXT */,
-    "while": "WHILE" /* WHILE */,
-    "wend": "WEND" /* WEND */,
-    "repeat": "REPEAT" /* REPEAT */,
-    "until": "UNTIL" /* UNTIL */,
-    "forever": "FOREVER" /* FOREVER */,
-    "select": "SELECT" /* SELECT */,
-    "case": "CASE" /* CASE */,
-    "default": "DEFAULT" /* DEFAULT */,
-    "end": "END" /* END */,
-    "function": "FUNCTION" /* FUNCTION */,
-    "return": "RETURN" /* RETURN */,
-    "local": "LOCAL" /* LOCAL */,
-    "global": "GLOBAL" /* GLOBAL */,
-    "const": "CONST" /* CONST */,
-    "dim": "DIM" /* DIM */,
-    "type": "TYPE" /* TYPE */,
-    "field": "FIELD" /* FIELD */,
-    "new": "NEW" /* NEW */,
-    "delete": "DELETE" /* DELETE */,
-    "first": "FIRST" /* FIRST */,
-    "last": "LAST" /* LAST */,
-    "before": "BEFORE" /* BEFORE */,
-    "after": "AFTER" /* AFTER */,
-    "each": "EACH" /* EACH */,
-    "data": "DATA" /* DATA */,
-    "read": "READ" /* READ */,
-    "restore": "RESTORE" /* RESTORE */,
-    "include": "INCLUDE" /* INCLUDE */,
-    "true": "TRUE" /* TRUE */,
-    "false": "FALSE" /* FALSE */,
-    "null": "NULL" /* NULL */,
-    "goto": "GOTO" /* GOTO */,
-    "gosub": "GOSUB" /* GOSUB */,
-    "mod": "MOD" /* MOD */,
-    "and": "AND" /* AND */,
-    "or": "OR" /* OR */,
-    "not": "NOT" /* NOT */,
-    "xor": "XOR" /* XOR */,
-    "shl": "SHL" /* SHL */,
-    "shr": "SHR" /* SHR */,
-    "sar": "SAR" /* SAR */
+    "if": "IF", /* IF */
+    "then": "THEN", /* THEN */
+    "else": "ELSE", /* ELSE */
+    "elseif": "ELSEIF", /* ELSEIF */
+    "endif": "ENDIF", /* ENDIF */
+    "for": "FOR", /* FOR */
+    "to": "TO", /* TO */
+    "step": "STEP", /* STEP */
+    "next": "NEXT", /* NEXT */
+    "while": "WHILE", /* WHILE */
+    "wend": "WEND", /* WEND */
+    "repeat": "REPEAT", /* REPEAT */
+    "until": "UNTIL", /* UNTIL */
+    "forever": "FOREVER", /* FOREVER */
+    "select": "SELECT", /* SELECT */
+    "case": "CASE", /* CASE */
+    "default": "DEFAULT", /* DEFAULT */
+    "end": "END", /* END */
+    "function": "FUNCTION", /* FUNCTION */
+    "return": "RETURN", /* RETURN */
+    "local": "LOCAL", /* LOCAL */
+    "global": "GLOBAL", /* GLOBAL */
+    "const": "CONST", /* CONST */
+    "dim": "DIM", /* DIM */
+    "type": "TYPE", /* TYPE */
+    "field": "FIELD", /* FIELD */
+    "new": "NEW", /* NEW */
+    "delete": "DELETE", /* DELETE */
+    "first": "FIRST", /* FIRST */
+    "last": "LAST", /* LAST */
+    "before": "BEFORE", /* BEFORE */
+    "after": "AFTER", /* AFTER */
+    "each": "EACH", /* EACH */
+    "data": "DATA", /* DATA */
+    "read": "READ", /* READ */
+    "restore": "RESTORE", /* RESTORE */
+    "include": "INCLUDE", /* INCLUDE */
+    "true": "TRUE", /* TRUE */
+    "false": "FALSE", /* FALSE */
+    "null": "NULL", /* NULL */
+    "goto": "GOTO", /* GOTO */
+    "gosub": "GOSUB", /* GOSUB */
+    "mod": "MOD", /* MOD */
+    "and": "AND", /* AND */
+    "or": "OR", /* OR */
+    "not": "NOT", /* NOT */
+    "xor": "XOR", /* XOR */
+    "shl": "SHL", /* SHL */
+    "shr": "SHR", /* SHR */
+    "sar": "SAR", /* SAR */
   };
   var Lexer = class {
     // Prevent infinite tokenization
@@ -116,11 +133,13 @@ var Blitz3DCompiler = (() => {
               tokenCount++;
             }
           } catch (error) {
-            const errorMsg = error instanceof Error ? error.message : String(error);
+            const errorMsg = error instanceof Error
+              ? error.message
+              : String(error);
             this.errors.push({
               message: errorMsg,
               line: this.line,
-              column: this.column
+              column: this.column,
             });
             while (!this.isAtEnd() && this.peek() !== "\n") {
               this.advance();
@@ -130,23 +149,24 @@ var Blitz3DCompiler = (() => {
         }
         if (tokenCount >= this.MAX_TOKENS) {
           this.errors.push({
-            message: "Maximum token count exceeded (possible infinite loop in source)",
+            message:
+              "Maximum token count exceeded (possible infinite loop in source)",
             line: this.line,
-            column: this.column
+            column: this.column,
           });
         }
         tokens.push({
-          type: "EOF" /* EOF */,
+          type: "EOF", /* EOF */
           value: "",
           line: this.line,
-          column: this.column
+          column: this.column,
         });
       } catch (error) {
         const errorMsg = error instanceof Error ? error.message : String(error);
         this.errors.push({
           message: `Fatal lexer error: ${errorMsg}`,
           line: this.line,
-          column: this.column
+          column: this.column,
         });
       }
       return { tokens, errors: this.errors };
@@ -162,7 +182,12 @@ var Blitz3DCompiler = (() => {
       }
       if (ch === "\n") {
         this.advance();
-        const token = this.makeToken("NEWLINE" /* NEWLINE */, "\n", startLine, startColumn);
+        const token = this.makeToken(
+          "NEWLINE", /* NEWLINE */
+          "\n",
+          startLine,
+          startColumn,
+        );
         this.line++;
         this.column = 1;
         return token;
@@ -179,71 +204,126 @@ var Blitz3DCompiler = (() => {
       switch (ch) {
         case "(":
           this.advance();
-          return this.makeToken("LPAREN" /* LPAREN */, "(", startLine, startColumn);
+          return this.makeToken(
+            "LPAREN", /* LPAREN */
+            "(",
+            startLine,
+            startColumn,
+          );
         case ")":
           this.advance();
-          return this.makeToken("RPAREN" /* RPAREN */, ")", startLine, startColumn);
+          return this.makeToken(
+            "RPAREN", /* RPAREN */
+            ")",
+            startLine,
+            startColumn,
+          );
         case ",":
           this.advance();
-          return this.makeToken("COMMA" /* COMMA */, ",", startLine, startColumn);
+          return this.makeToken(
+            "COMMA", /* COMMA */
+            ",",
+            startLine,
+            startColumn,
+          );
         case ":":
           this.advance();
-          return this.makeToken("COLON" /* COLON */, ":", startLine, startColumn);
+          return this.makeToken(
+            "COLON", /* COLON */
+            ":",
+            startLine,
+            startColumn,
+          );
         case ".":
           this.advance();
-          return this.makeToken("DOT" /* DOT */, ".", startLine, startColumn);
+          return this.makeToken("DOT", /* DOT */ ".", startLine, startColumn);
         case "\\":
           this.advance();
-          return this.makeToken("BACKSLASH" /* BACKSLASH */, "\\", startLine, startColumn);
+          return this.makeToken(
+            "BACKSLASH", /* BACKSLASH */
+            "\\",
+            startLine,
+            startColumn,
+          );
         case "+":
           this.advance();
-          return this.makeToken("PLUS" /* PLUS */, "+", startLine, startColumn);
+          return this.makeToken("PLUS", /* PLUS */ "+", startLine, startColumn);
         case "-":
           this.advance();
-          return this.makeToken("MINUS" /* MINUS */, "-", startLine, startColumn);
+          return this.makeToken(
+            "MINUS", /* MINUS */
+            "-",
+            startLine,
+            startColumn,
+          );
         case "*":
           this.advance();
-          return this.makeToken("MULTIPLY" /* MULTIPLY */, "*", startLine, startColumn);
+          return this.makeToken(
+            "MULTIPLY", /* MULTIPLY */
+            "*",
+            startLine,
+            startColumn,
+          );
         case "/":
           this.advance();
-          return this.makeToken("DIVIDE" /* DIVIDE */, "/", startLine, startColumn);
+          return this.makeToken(
+            "DIVIDE", /* DIVIDE */
+            "/",
+            startLine,
+            startColumn,
+          );
         case "^":
           this.advance();
-          return this.makeToken("POWER" /* POWER */, "^", startLine, startColumn);
+          return this.makeToken(
+            "POWER", /* POWER */
+            "^",
+            startLine,
+            startColumn,
+          );
         case "%":
           this.advance();
-          return this.makeToken("PERCENT" /* PERCENT */, "%", startLine, startColumn);
+          return this.makeToken(
+            "PERCENT", /* PERCENT */
+            "%",
+            startLine,
+            startColumn,
+          );
         case "#":
           this.advance();
-          return this.makeToken("HASH" /* HASH */, "#", startLine, startColumn);
+          return this.makeToken("HASH", /* HASH */ "#", startLine, startColumn);
         case "$":
           this.advance();
-          return this.makeToken("DOLLAR" /* DOLLAR */, "$", startLine, startColumn);
+          return this.makeToken(
+            "DOLLAR", /* DOLLAR */
+            "$",
+            startLine,
+            startColumn,
+          );
         case "=":
           this.advance();
-          return this.makeToken("EQ" /* EQ */, "=", startLine, startColumn);
+          return this.makeToken("EQ", /* EQ */ "=", startLine, startColumn);
         case "<":
           this.advance();
           if (this.peek() === ">") {
             this.advance();
-            return this.makeToken("NE" /* NE */, "<>", startLine, startColumn);
+            return this.makeToken("NE", /* NE */ "<>", startLine, startColumn);
           } else if (this.peek() === "=") {
             this.advance();
-            return this.makeToken("LE" /* LE */, "<=", startLine, startColumn);
+            return this.makeToken("LE", /* LE */ "<=", startLine, startColumn);
           }
-          return this.makeToken("LT" /* LT */, "<", startLine, startColumn);
+          return this.makeToken("LT", /* LT */ "<", startLine, startColumn);
         case ">":
           this.advance();
           if (this.peek() === "=") {
             this.advance();
-            return this.makeToken("GE" /* GE */, ">=", startLine, startColumn);
+            return this.makeToken("GE", /* GE */ ">=", startLine, startColumn);
           }
-          return this.makeToken("GT" /* GT */, ">", startLine, startColumn);
+          return this.makeToken("GT", /* GT */ ">", startLine, startColumn);
         default:
           this.errors.push({
             message: `Unexpected character: '${ch}'`,
             line: startLine,
-            column: startColumn
+            column: startColumn,
           });
           this.advance();
           return null;
@@ -263,13 +343,18 @@ var Blitz3DCompiler = (() => {
         this.errors.push({
           message: "Unterminated string",
           line: startLine,
-          column: startColumn
+          column: startColumn,
         });
       } else {
         this.advance();
       }
       const value = this.source.substring(start, this.pos - 1);
-      return this.makeToken("STRING" /* STRING */, value, startLine, startColumn);
+      return this.makeToken(
+        "STRING", /* STRING */
+        value,
+        startLine,
+        startColumn,
+      );
     }
     scanNumber(startLine, startColumn) {
       const start = this.pos;
@@ -282,10 +367,20 @@ var Blitz3DCompiler = (() => {
           this.advance();
         }
         const value2 = this.source.substring(start, this.pos);
-        return this.makeToken("FLOAT" /* FLOAT */, value2, startLine, startColumn);
+        return this.makeToken(
+          "FLOAT", /* FLOAT */
+          value2,
+          startLine,
+          startColumn,
+        );
       }
       const value = this.source.substring(start, this.pos);
-      return this.makeToken("INTEGER" /* INTEGER */, value, startLine, startColumn);
+      return this.makeToken(
+        "INTEGER", /* INTEGER */
+        value,
+        startLine,
+        startColumn,
+      );
     }
     scanIdentifier(startLine, startColumn) {
       const start = this.pos;
@@ -350,7 +445,9 @@ var Blitz3DCompiler = (() => {
   // web-ide/src/compiler/parser.ts
   var ParseError = class extends Error {
     constructor(message, token) {
-      super(`Parse error at line ${token.line}, column ${token.column}: ${message}`);
+      super(
+        `Parse error at line ${token.line}, column ${token.column}: ${message}`,
+      );
       this.token = token;
       this.name = "ParseError";
     }
@@ -386,7 +483,8 @@ var Blitz3DCompiler = (() => {
         }
       }
       if (iterations >= MAX_STATEMENTS) {
-        const error = "Parser exceeded maximum statement count (possible infinite loop or extremely large program)";
+        const error =
+          "Parser exceeded maximum statement count (possible infinite loop or extremely large program)";
         this.errors.push(error);
         console.error(error);
       }
@@ -403,7 +501,14 @@ var Blitz3DCompiler = (() => {
       if (this.match("TYPE" /* TYPE */)) {
         return this.typeDeclaration();
       }
-      if (this.match("LOCAL" /* LOCAL */, "GLOBAL" /* GLOBAL */, "CONST" /* CONST */, "DIM" /* DIM */)) {
+      if (
+        this.match(
+          "LOCAL", /* LOCAL */
+          "GLOBAL", /* GLOBAL */
+          "CONST", /* CONST */
+          "DIM", /* DIM */
+        )
+      ) {
         return this.variableDeclaration();
       }
       if (this.match("IF" /* IF */)) return this.ifStatement();
@@ -413,14 +518,23 @@ var Blitz3DCompiler = (() => {
       if (this.match("SELECT" /* SELECT */)) return this.selectStatement();
       if (this.match("RETURN" /* RETURN */)) return this.returnStatement();
       if (this.match("GOTO" /* GOTO */)) {
-        const label = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected label name after Goto").value;
+        const label = this.consume(
+          "IDENTIFIER", /* IDENTIFIER */
+          "Expected label name after Goto",
+        ).value;
         return { type: "GotoStatement", label };
       }
       if (this.match("GOSUB" /* GOSUB */)) {
-        const label = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected label name after Gosub").value;
+        const label = this.consume(
+          "IDENTIFIER", /* IDENTIFIER */
+          "Expected label name after Gosub",
+        ).value;
         return { type: "GosubStatement", label };
       }
-      if (this.check("DOT" /* DOT */) && this.peekNext().type === "IDENTIFIER" /* IDENTIFIER */) {
+      if (
+        this.check("DOT" /* DOT */) &&
+        this.peekNext().type === "IDENTIFIER" /* IDENTIFIER */
+      ) {
         this.advance();
         const labelName = this.advance().value;
         return { type: "LabelStatement", name: labelName };
@@ -435,47 +549,62 @@ var Blitz3DCompiler = (() => {
           return {
             type: "Assignment",
             target: { type: "Identifier", name: varName },
-            value
+            value,
           };
         }
-        if (nextToken.type !== "LPAREN" /* LPAREN */ && nextToken.type !== "NEWLINE" /* NEWLINE */ && nextToken.type !== "EOF" /* EOF */ && !this.isEndOfStatement(nextToken)) {
+        if (
+          nextToken.type !== "LPAREN" /* LPAREN */ &&
+          nextToken.type !== "NEWLINE" /* NEWLINE */ &&
+          nextToken.type !== "EOF" /* EOF */ &&
+          !this.isEndOfStatement(nextToken)
+        ) {
           this.advance();
           const args = [];
           if (!this.check("NEWLINE" /* NEWLINE */) && !this.isAtEnd()) {
             do {
               args.push(this.expression());
-            } while (this.match("COMMA" /* COMMA */) && !this.check("NEWLINE" /* NEWLINE */));
+            } while (
+              this.match("COMMA" /* COMMA */) &&
+              !this.check("NEWLINE" /* NEWLINE */)
+            );
           }
           return {
             type: "ExpressionStatement",
             expression: {
               type: "FunctionCall",
               name: { type: "Identifier", name },
-              arguments: args
-            }
+              arguments: args,
+            },
           };
         }
       }
-      if (this.check(
-        "NEXT" /* NEXT */,
-        "WEND" /* WEND */,
-        "UNTIL" /* UNTIL */,
-        "FOREVER" /* FOREVER */,
-        "CASE" /* CASE */,
-        "DEFAULT" /* DEFAULT */,
-        "ENDIF" /* ENDIF */
-      )) {
+      if (
+        this.check(
+          "NEXT", /* NEXT */
+          "WEND", /* WEND */
+          "UNTIL", /* UNTIL */
+          "FOREVER", /* FOREVER */
+          "CASE", /* CASE */
+          "DEFAULT", /* DEFAULT */
+          "ENDIF", /* ENDIF */
+        )
+      ) {
         return null;
       }
       if (this.check("END" /* END */)) {
         const next = this.peekNext();
-        if (next.type === "FUNCTION" /* FUNCTION */ || next.type === "TYPE" /* TYPE */ || next.type === "IF" /* IF */ || next.type === "SELECT" /* SELECT */ || next.type === "WHILE" /* WHILE */) {
+        if (
+          next.type === "FUNCTION" /* FUNCTION */ ||
+          next.type === "TYPE" /* TYPE */ || next.type === "IF" /* IF */ ||
+          next.type === "SELECT" /* SELECT */ ||
+          next.type === "WHILE" /* WHILE */
+        ) {
           return null;
         }
         this.advance();
         return { type: "EndStatement" };
       }
-      if (this.check("ELSE" /* ELSE */, "ELSEIF" /* ELSEIF */)) {
+      if (this.check("ELSE", /* ELSE */ "ELSEIF" /* ELSEIF */)) {
         return null;
       }
       if (this.match("DATA" /* DATA */)) {
@@ -493,7 +622,9 @@ var Blitz3DCompiler = (() => {
       return this.expressionStatement();
     }
     functionDeclaration() {
-      let name = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected function name").value;
+      let name =
+        this.consume("IDENTIFIER", /* IDENTIFIER */ "Expected function name")
+          .value;
       let returnType;
       const lastChar = name[name.length - 1];
       if (lastChar === "%") {
@@ -506,11 +637,14 @@ var Blitz3DCompiler = (() => {
         returnType = { kind: "primitive", name: "String" };
         name = name.slice(0, -1);
       }
-      this.consume("LPAREN" /* LPAREN */, 'Expected "(" after function name');
+      this.consume("LPAREN", /* LPAREN */ 'Expected "(" after function name');
       const parameters = [];
       if (!this.check("RPAREN" /* RPAREN */)) {
         do {
-          let paramName = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected parameter name").value;
+          let paramName = this.consume(
+            "IDENTIFIER", /* IDENTIFIER */
+            "Expected parameter name",
+          ).value;
           let paramType = { kind: "primitive", name: "Int" };
           const lastChar2 = paramName[paramName.length - 1];
           if (lastChar2 === "%") {
@@ -530,32 +664,38 @@ var Blitz3DCompiler = (() => {
           parameters.push({ name: paramName, type: paramType, defaultValue });
         } while (this.match("COMMA" /* COMMA */));
       }
-      this.consume("RPAREN" /* RPAREN */, 'Expected ")" after parameters');
+      this.consume("RPAREN", /* RPAREN */ 'Expected ")" after parameters');
       this.consumeNewlines();
       const body = [];
       while (!this.check("END" /* END */) && !this.isAtEnd()) {
         const stmt = this.statement();
         if (stmt) body.push(stmt);
       }
-      this.consume("END" /* END */, 'Expected "End" after function body');
-      this.consume("FUNCTION" /* FUNCTION */, 'Expected "Function" after "End"');
+      this.consume("END", /* END */ 'Expected "End" after function body');
+      this.consume(
+        "FUNCTION", /* FUNCTION */
+        'Expected "Function" after "End"',
+      );
       return {
         type: "FunctionDeclaration",
         name,
         parameters,
         returnType,
-        body
+        body,
       };
     }
     typeDeclaration() {
-      const name = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected type name").value;
+      const name =
+        this.consume("IDENTIFIER", /* IDENTIFIER */ "Expected type name").value;
       this.consumeNewlines();
       const fields = [];
       while (!this.check("END" /* END */) && !this.isAtEnd()) {
         if (this.match("NEWLINE" /* NEWLINE */)) continue;
         if (this.check("FIELD" /* FIELD */)) {
           this.advance();
-          const fieldName = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected field name").value;
+          const fieldName =
+            this.consume("IDENTIFIER", /* IDENTIFIER */ "Expected field name")
+              .value;
           let fieldType = { kind: "primitive", name: "Int" };
           const lastChar = fieldName[fieldName.length - 1];
           if (["#", "$", "%"].includes(lastChar)) {
@@ -567,13 +707,21 @@ var Blitz3DCompiler = (() => {
           break;
         }
       }
-      this.consume("END" /* END */, 'Expected "End" after type body');
-      this.consume("TYPE" /* TYPE */, 'Expected "Type" after "End"');
+      this.consume("END", /* END */ 'Expected "End" after type body');
+      this.consume("TYPE", /* TYPE */ 'Expected "Type" after "End"');
       return { type: "TypeDeclaration", name, fields };
     }
     variableDeclaration() {
-      const scope = this.previous().type === "LOCAL" /* LOCAL */ ? "local" : this.previous().type === "GLOBAL" /* GLOBAL */ ? "global" : this.previous().type === "CONST" /* CONST */ ? "const" : "dim";
-      const name = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected variable name").value;
+      const scope = this.previous().type === "LOCAL" /* LOCAL */
+        ? "local"
+        : this.previous().type === "GLOBAL" /* GLOBAL */
+        ? "global"
+        : this.previous().type === "CONST" /* CONST */
+        ? "const"
+        : "dim";
+      const name =
+        this.consume("IDENTIFIER", /* IDENTIFIER */ "Expected variable name")
+          .value;
       let varType = { kind: "primitive", name: "Int" };
       const lastChar = name[name.length - 1];
       if (["#", "$", "%"].includes(lastChar)) {
@@ -586,7 +734,10 @@ var Blitz3DCompiler = (() => {
             dimensions.push(this.expression());
           } while (this.match("COMMA" /* COMMA */));
         }
-        this.consume("RPAREN" /* RPAREN */, 'Expected ")" after array dimensions');
+        this.consume(
+          "RPAREN", /* RPAREN */
+          'Expected ")" after array dimensions',
+        );
       }
       let initializer;
       if (this.match("EQ" /* EQ */)) {
@@ -598,12 +749,14 @@ var Blitz3DCompiler = (() => {
         varType,
         scope,
         dimensions,
-        initializer
+        initializer,
       };
     }
     dataStatement() {
       const values = [];
-      while (!this.check("NEWLINE" /* NEWLINE */, "EOF" /* EOF */) && !this.isAtEnd()) {
+      while (
+        !this.check("NEWLINE", /* NEWLINE */ "EOF" /* EOF */) && !this.isAtEnd()
+      ) {
         const value = this.expression();
         if (value) values.push(value);
         this.match("COMMA" /* COMMA */);
@@ -612,7 +765,9 @@ var Blitz3DCompiler = (() => {
     }
     readStatement() {
       const variables = [];
-      while (!this.check("NEWLINE" /* NEWLINE */, "EOF" /* EOF */) && !this.isAtEnd()) {
+      while (
+        !this.check("NEWLINE", /* NEWLINE */ "EOF" /* EOF */) && !this.isAtEnd()
+      ) {
         if (this.check("IDENTIFIER" /* IDENTIFIER */)) {
           const name = this.advance().value;
           variables.push({ type: "Identifier", name });
@@ -627,11 +782,14 @@ var Blitz3DCompiler = (() => {
     includeStatement() {
       const filename = this.expression();
       if (filename.type !== "StringLiteral") {
-        throw new ParseError("Include requires a string literal", this.previous());
+        throw new ParseError(
+          "Include requires a string literal",
+          this.previous(),
+        );
       }
       return {
         type: "IncludeStatement",
-        filename: filename.value
+        filename: filename.value,
       };
     }
     ifStatement() {
@@ -639,12 +797,22 @@ var Blitz3DCompiler = (() => {
       this.match("THEN" /* THEN */);
       this.consumeNewlines();
       const thenBranch = [];
-      while (!this.check("ELSE" /* ELSE */, "ELSEIF" /* ELSEIF */, "ENDIF" /* ENDIF */, "END" /* END */) && !this.isAtEnd()) {
+      while (
+        !this.check(
+          "ELSE", /* ELSE */
+          "ELSEIF", /* ELSEIF */
+          "ENDIF", /* ENDIF */
+          "END", /* END */
+        ) && !this.isAtEnd()
+      ) {
         const stmt = this.statement();
         if (stmt) thenBranch.push(stmt);
       }
       const elseIfBranches = [];
-      while (this.match("ELSEIF" /* ELSEIF */) || this.check("ELSE" /* ELSE */) && this.peekNext().type === "IF" /* IF */) {
+      while (
+        this.match("ELSEIF" /* ELSEIF */) ||
+        this.check("ELSE" /* ELSE */) && this.peekNext().type === "IF" /* IF */
+      ) {
         if (this.previous().type !== "ELSEIF" /* ELSEIF */) {
           this.advance();
           this.advance();
@@ -653,7 +821,14 @@ var Blitz3DCompiler = (() => {
         this.match("THEN" /* THEN */);
         this.consumeNewlines();
         const elseIfBody = [];
-        while (!this.check("ELSE" /* ELSE */, "ELSEIF" /* ELSEIF */, "ENDIF" /* ENDIF */, "END" /* END */) && !this.isAtEnd()) {
+        while (
+          !this.check(
+            "ELSE", /* ELSE */
+            "ELSEIF", /* ELSEIF */
+            "ENDIF", /* ENDIF */
+            "END", /* END */
+          ) && !this.isAtEnd()
+        ) {
           const stmt = this.statement();
           if (stmt) elseIfBody.push(stmt);
         }
@@ -663,23 +838,33 @@ var Blitz3DCompiler = (() => {
       if (this.match("ELSE" /* ELSE */)) {
         this.consumeNewlines();
         elseBranch = [];
-        while (!this.check("ENDIF" /* ENDIF */, "END" /* END */) && !this.isAtEnd()) {
+        while (
+          !this.check("ENDIF", /* ENDIF */ "END" /* END */) && !this.isAtEnd()
+        ) {
           const stmt = this.statement();
           if (stmt) elseBranch.push(stmt);
         }
       }
       if (this.match("END" /* END */)) {
-        this.consume("IF" /* IF */, 'Expected "If" after "End"');
+        this.consume("IF", /* IF */ 'Expected "If" after "End"');
       } else {
-        this.consume("ENDIF" /* ENDIF */, 'Expected "EndIf" or "End If"');
+        this.consume("ENDIF", /* ENDIF */ 'Expected "EndIf" or "End If"');
       }
-      return { type: "IfStatement", condition, thenBranch, elseIfBranches, elseBranch };
+      return {
+        type: "IfStatement",
+        condition,
+        thenBranch,
+        elseIfBranches,
+        elseBranch,
+      };
     }
     forLoop() {
-      const variable = this.consume("IDENTIFIER" /* IDENTIFIER */, "Expected loop variable").value;
-      this.consume("EQ" /* EQ */, 'Expected "=" after loop variable');
+      const variable =
+        this.consume("IDENTIFIER", /* IDENTIFIER */ "Expected loop variable")
+          .value;
+      this.consume("EQ", /* EQ */ 'Expected "=" after loop variable');
       const start = this.expression();
-      this.consume("TO" /* TO */, 'Expected "To" in for loop');
+      this.consume("TO", /* TO */ 'Expected "To" in for loop');
       const end = this.expression();
       let step;
       if (this.match("STEP" /* STEP */)) {
@@ -691,7 +876,7 @@ var Blitz3DCompiler = (() => {
         const stmt = this.statement();
         if (stmt) body.push(stmt);
       }
-      this.consume("NEXT" /* NEXT */, 'Expected "Next" after for loop body');
+      this.consume("NEXT", /* NEXT */ 'Expected "Next" after for loop body');
       this.match("IDENTIFIER" /* IDENTIFIER */);
       return { type: "ForLoop", variable, start, end, step, body };
     }
@@ -699,22 +884,33 @@ var Blitz3DCompiler = (() => {
       const condition = this.expression();
       this.consumeNewlines();
       const body = [];
-      while (!this.check("WEND" /* WEND */) && !(this.check("END" /* END */) && this.peekNext().type === "WHILE" /* WHILE */) && !this.isAtEnd()) {
+      while (
+        !this.check("WEND" /* WEND */) &&
+        !(this.check("END" /* END */) &&
+          this.peekNext().type === "WHILE" /* WHILE */) &&
+        !this.isAtEnd()
+      ) {
         const stmt = this.statement();
         if (stmt) body.push(stmt);
       }
       if (this.match("WEND" /* WEND */)) {
       } else if (this.match("END" /* END */)) {
-        this.consume("WHILE" /* WHILE */, 'Expected "While" after "End"');
+        this.consume("WHILE", /* WHILE */ 'Expected "While" after "End"');
       } else {
-        this.consume("WEND" /* WEND */, 'Expected "Wend" or "End While" after while loop body');
+        this.consume(
+          "WEND", /* WEND */
+          'Expected "Wend" or "End While" after while loop body',
+        );
       }
       return { type: "WhileLoop", condition, body };
     }
     repeatLoop() {
       this.consumeNewlines();
       const body = [];
-      while (!this.check("UNTIL" /* UNTIL */, "FOREVER" /* FOREVER */) && !this.isAtEnd()) {
+      while (
+        !this.check("UNTIL", /* UNTIL */ "FOREVER" /* FOREVER */) &&
+        !this.isAtEnd()
+      ) {
         const stmt = this.statement();
         if (stmt) body.push(stmt);
       }
@@ -722,7 +918,10 @@ var Blitz3DCompiler = (() => {
       if (this.match("UNTIL" /* UNTIL */)) {
         condition = this.expression();
       } else {
-        this.consume("FOREVER" /* FOREVER */, 'Expected "Until" or "Forever" after repeat loop');
+        this.consume(
+          "FOREVER", /* FOREVER */
+          'Expected "Until" or "Forever" after repeat loop',
+        );
       }
       return { type: "RepeatStatement", body, condition };
     }
@@ -731,12 +930,24 @@ var Blitz3DCompiler = (() => {
       this.consumeNewlines();
       const cases = [];
       let defaultCase;
-      while ((this.check("CASE" /* CASE */) || this.check("DEFAULT" /* DEFAULT */)) && !this.isAtEnd()) {
-        if (this.match("DEFAULT" /* DEFAULT */) || this.match("CASE" /* CASE */) && this.check("DEFAULT" /* DEFAULT */)) {
+      while (
+        (this.check("CASE" /* CASE */) ||
+          this.check("DEFAULT" /* DEFAULT */)) && !this.isAtEnd()
+      ) {
+        if (
+          this.match("DEFAULT" /* DEFAULT */) ||
+          this.match("CASE" /* CASE */) && this.check("DEFAULT" /* DEFAULT */)
+        ) {
           if (this.check("DEFAULT" /* DEFAULT */)) this.advance();
           this.consumeNewlines();
           defaultCase = [];
-          while (!this.check("CASE" /* CASE */, "DEFAULT" /* DEFAULT */, "END" /* END */) && !this.isAtEnd()) {
+          while (
+            !this.check(
+              "CASE", /* CASE */
+              "DEFAULT", /* DEFAULT */
+              "END", /* END */
+            ) && !this.isAtEnd()
+          ) {
             const stmt = this.statement();
             if (stmt) defaultCase.push(stmt);
           }
@@ -747,15 +958,21 @@ var Blitz3DCompiler = (() => {
           } while (this.match("COMMA" /* COMMA */));
           this.consumeNewlines();
           const body = [];
-          while (!this.check("CASE" /* CASE */, "DEFAULT" /* DEFAULT */, "END" /* END */) && !this.isAtEnd()) {
+          while (
+            !this.check(
+              "CASE", /* CASE */
+              "DEFAULT", /* DEFAULT */
+              "END", /* END */
+            ) && !this.isAtEnd()
+          ) {
             const stmt = this.statement();
             if (stmt) body.push(stmt);
           }
           cases.push({ values, body });
         }
       }
-      this.consume("END" /* END */, 'Expected "End" after select statement');
-      this.consume("SELECT" /* SELECT */, 'Expected "Select" after "End"');
+      this.consume("END", /* END */ 'Expected "End" after select statement');
+      this.consume("SELECT", /* SELECT */ 'Expected "Select" after "End"');
       return { type: "SelectStatement", expression, cases, defaultCase };
     }
     returnStatement() {
@@ -769,10 +986,20 @@ var Blitz3DCompiler = (() => {
       const expr = this.expression();
       if (expr.type === "BinaryOp" && expr.operator === "=") {
         let target = expr.left;
-        if (target.type === "FunctionCall" && target.name && target.name.type === "Identifier") {
-          target = { type: "ArrayAccess", array: target.name, indices: target.arguments };
+        if (
+          target.type === "FunctionCall" && target.name &&
+          target.name.type === "Identifier"
+        ) {
+          target = {
+            type: "ArrayAccess",
+            array: target.name,
+            indices: target.arguments,
+          };
         }
-        if (target.type === "Identifier" || target.type === "FieldAccess" || target.type === "ArrayAccess") {
+        if (
+          target.type === "Identifier" || target.type === "FieldAccess" ||
+          target.type === "ArrayAccess"
+        ) {
           return { type: "Assignment", target, value: expr.right };
         }
       }
@@ -787,10 +1014,20 @@ var Blitz3DCompiler = (() => {
       if (this.match("EQ" /* EQ */)) {
         const value = this.assignment();
         let target = expr;
-        if (target.type === "FunctionCall" && target.name && target.name.type === "Identifier") {
-          target = { type: "ArrayAccess", array: target.name, indices: target.arguments };
+        if (
+          target.type === "FunctionCall" && target.name &&
+          target.name.type === "Identifier"
+        ) {
+          target = {
+            type: "ArrayAccess",
+            array: target.name,
+            indices: target.arguments,
+          };
         }
-        if (target.type === "Identifier" || target.type === "FieldAccess" || target.type === "ArrayAccess") {
+        if (
+          target.type === "Identifier" || target.type === "FieldAccess" ||
+          target.type === "ArrayAccess"
+        ) {
           return { type: "Assignment", target, value };
         }
         throw new ParseError("Invalid assignment target", this.previous());
@@ -826,7 +1063,7 @@ var Blitz3DCompiler = (() => {
     }
     equality() {
       let expr = this.comparison();
-      while (this.match("EQ" /* EQ */, "NE" /* NE */)) {
+      while (this.match("EQ", /* EQ */ "NE" /* NE */)) {
         const operator = this.previous().value;
         const right = this.comparison();
         expr = { type: "BinaryOp", left: expr, operator, right };
@@ -835,7 +1072,9 @@ var Blitz3DCompiler = (() => {
     }
     comparison() {
       let expr = this.bitshift();
-      while (this.match("LT" /* LT */, "LE" /* LE */, "GT" /* GT */, "GE" /* GE */)) {
+      while (
+        this.match("LT", /* LT */ "LE", /* LE */ "GT", /* GT */ "GE" /* GE */)
+      ) {
         const operator = this.previous().value;
         const right = this.bitshift();
         expr = { type: "BinaryOp", left: expr, operator, right };
@@ -844,7 +1083,7 @@ var Blitz3DCompiler = (() => {
     }
     bitshift() {
       let expr = this.additive();
-      while (this.match("SHL" /* SHL */, "SHR" /* SHR */, "SAR" /* SAR */)) {
+      while (this.match("SHL", /* SHL */ "SHR", /* SHR */ "SAR" /* SAR */)) {
         const operator = this.previous().value;
         const right = this.additive();
         expr = { type: "BinaryOp", left: expr, operator, right };
@@ -853,7 +1092,7 @@ var Blitz3DCompiler = (() => {
     }
     additive() {
       let expr = this.multiplicative();
-      while (this.match("PLUS" /* PLUS */, "MINUS" /* MINUS */)) {
+      while (this.match("PLUS", /* PLUS */ "MINUS" /* MINUS */)) {
         const operator = this.previous().value;
         const right = this.multiplicative();
         expr = { type: "BinaryOp", left: expr, operator, right };
@@ -862,7 +1101,13 @@ var Blitz3DCompiler = (() => {
     }
     multiplicative() {
       let expr = this.power();
-      while (this.match("MULTIPLY" /* MULTIPLY */, "DIVIDE" /* DIVIDE */, "MOD" /* MOD */)) {
+      while (
+        this.match(
+          "MULTIPLY", /* MULTIPLY */
+          "DIVIDE", /* DIVIDE */
+          "MOD", /* MOD */
+        )
+      ) {
         const operator = this.previous().value;
         const right = this.power();
         expr = { type: "BinaryOp", left: expr, operator, right };
@@ -879,7 +1124,7 @@ var Blitz3DCompiler = (() => {
       return expr;
     }
     unary() {
-      if (this.match("NOT" /* NOT */, "MINUS" /* MINUS */)) {
+      if (this.match("NOT", /* NOT */ "MINUS" /* MINUS */)) {
         const operator = this.previous().value;
         const operand = this.unary();
         return { type: "UnaryOp", operator, operand };
@@ -898,29 +1143,43 @@ var Blitz3DCompiler = (() => {
               args.push(this.expression());
             } while (this.match("COMMA" /* COMMA */));
           }
-          this.consume("RPAREN" /* RPAREN */, 'Expected ")" after arguments');
+          this.consume("RPAREN", /* RPAREN */ 'Expected ")" after arguments');
           expr = { type: "FunctionCall", name: expr, arguments: args };
         } else if (this.match("DOT" /* DOT */)) {
-          const field = this.consume("IDENTIFIER" /* IDENTIFIER */, 'Expected field name after "."').value;
+          const field = this.consume(
+            "IDENTIFIER", /* IDENTIFIER */
+            'Expected field name after "."',
+          ).value;
           expr = { type: "FieldAccess", object: expr, field };
         } else if (this.match("BACKSLASH" /* BACKSLASH */)) {
-          const field = this.consume("IDENTIFIER" /* IDENTIFIER */, 'Expected field name after "\\"').value;
+          const field = this.consume(
+            "IDENTIFIER", /* IDENTIFIER */
+            'Expected field name after "\\"',
+          ).value;
           expr = { type: "FieldAccess", object: expr, field };
         } else {
           break;
         }
       }
       if (iterations >= MAX_POSTFIX_ITERATIONS) {
-        this.error("Parser exceeded maximum iterations in postfix expression (possible infinite loop)");
+        this.error(
+          "Parser exceeded maximum iterations in postfix expression (possible infinite loop)",
+        );
       }
       return expr;
     }
     primary() {
       if (this.match("INTEGER" /* INTEGER */)) {
-        return { type: "IntegerLiteral", value: parseInt(this.previous().value) };
+        return {
+          type: "IntegerLiteral",
+          value: parseInt(this.previous().value),
+        };
       }
       if (this.match("FLOAT" /* FLOAT */)) {
-        return { type: "FloatLiteral", value: parseFloat(this.previous().value) };
+        return {
+          type: "FloatLiteral",
+          value: parseFloat(this.previous().value),
+        };
       }
       if (this.match("STRING" /* STRING */)) {
         return { type: "StringLiteral", value: this.previous().value };
@@ -939,14 +1198,20 @@ var Blitz3DCompiler = (() => {
       }
       if (this.match("LPAREN" /* LPAREN */)) {
         const expr = this.expression();
-        this.consume("RPAREN" /* RPAREN */, 'Expected ")" after expression');
+        this.consume("RPAREN", /* RPAREN */ 'Expected ")" after expression');
         return expr;
       }
       if (this.match("NEW" /* NEW */)) {
-        const typeName = this.consume("IDENTIFIER" /* IDENTIFIER */, 'Expected type name after "New"').value;
+        const typeName = this.consume(
+          "IDENTIFIER", /* IDENTIFIER */
+          'Expected type name after "New"',
+        ).value;
         return { type: "NewExpression", typeName };
       }
-      throw new ParseError(`Unexpected token: ${this.peek().value}`, this.peek());
+      throw new ParseError(
+        `Unexpected token: ${this.peek().value}`,
+        this.peek(),
+      );
     }
     // Helper methods
     suffixToType(suffix) {
@@ -988,7 +1253,13 @@ var Blitz3DCompiler = (() => {
       return this.tokens[this.current + 1] || this.peek();
     }
     isEndOfStatement(token) {
-      return token.type === "NEWLINE" /* NEWLINE */ || token.type === "EOF" /* EOF */ || token.type === "THEN" /* THEN */ || token.type === "END" /* END */ || token.type === "ELSE" /* ELSE */ || token.type === "ELSEIF" /* ELSEIF */ || token.type === "NEXT" /* NEXT */ || token.type === "WEND" /* WEND */ || token.type === "UNTIL" /* UNTIL */ || token.type === "FOREVER" /* FOREVER */;
+      return token.type === "NEWLINE" /* NEWLINE */ ||
+        token.type === "EOF" /* EOF */ || token.type === "THEN" /* THEN */ ||
+        token.type === "END" /* END */ || token.type === "ELSE" /* ELSE */ ||
+        token.type === "ELSEIF" /* ELSEIF */ ||
+        token.type === "NEXT" /* NEXT */ || token.type === "WEND" /* WEND */ ||
+        token.type === "UNTIL" /* UNTIL */ ||
+        token.type === "FOREVER" /* FOREVER */;
     }
     previous() {
       return this.tokens[this.current - 1];
@@ -1098,7 +1369,7 @@ var Blitz3DCompiler = (() => {
     "animate": { params: ["i32", "i32", "f32", "f32"], result: "" },
     "createplane": { params: [], result: "i32" },
     "createskybox": { params: ["i32"], result: "i32" },
-    "keydown": { params: ["i32"], result: "i32" }
+    "keydown": { params: ["i32"], result: "i32" },
   };
   var CodeGenerator = class {
     constructor() {
@@ -1138,7 +1409,9 @@ ${this.errors.join("\n")}`);
             try {
               this.generateFunctionBody(stmt);
             } catch (error) {
-              const msg = error instanceof Error ? error.message : String(error);
+              const msg = error instanceof Error
+                ? error.message
+                : String(error);
               throw new Error(`Error in function '${stmt.name}': ${msg}`);
             }
           }
@@ -1179,7 +1452,9 @@ ${this.errors.join("\n")}`);
       for (const [name, sig] of Object.entries(BUILTIN_FUNCTIONS)) {
         const params = sig.params.map((p) => `(param ${p})`).join(" ");
         const result = sig.result ? `(result ${sig.result})` : "";
-        this.emit(`(import "env" "b3d_${name}" (func $b3d_${name} ${params} ${result}))`);
+        this.emit(
+          `(import "env" "b3d_${name}" (func $b3d_${name} ${params} ${result}))`,
+        );
       }
       this.emit("");
     }
@@ -1202,7 +1477,9 @@ ${this.errors.join("\n")}`);
     }
     collectStringLiterals(node) {
       if (!node || typeof node !== "object") return;
-      if (node.type === "StringLiteral" && !this.stringLiterals.has(node.value)) {
+      if (
+        node.type === "StringLiteral" && !this.stringLiterals.has(node.value)
+      ) {
         this.stringLiterals.set(node.value, this.nextStringIndex++);
       }
       for (const key in node) {
@@ -1220,7 +1497,7 @@ ${this.errors.join("\n")}`);
         // LOWERCASE for case-insensitive lookup
         index: funcIndex,
         params: func.parameters.map((p) => this.typeToWasm(p.type)),
-        returns: func.returnType ? this.typeToWasm(func.returnType) : ""
+        returns: func.returnType ? this.typeToWasm(func.returnType) : "",
       });
     }
     // Generate function body (second pass - after all signatures registered)
@@ -1233,8 +1510,12 @@ ${this.errors.join("\n")}`);
         this.localIndex++;
         return `(param $${p.name} ${wasmType})`;
       }).join(" ");
-      const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : "";
-      this.emit(`(func $${func.name.toLowerCase()} (export "${func.name}") ${params} ${returns}`);
+      const returns = func.returnType
+        ? `(result ${this.typeToWasm(func.returnType)})`
+        : "";
+      this.emit(
+        `(func $${func.name.toLowerCase()} (export "${func.name}") ${params} ${returns}`,
+      );
       this.indent++;
       const localDecls = [];
       for (const stmt of func.body) {
@@ -1254,7 +1535,7 @@ ${this.errors.join("\n")}`);
     }
     generateMainFunction(program) {
       const topLevelStmts = program.statements.filter(
-        (s) => s.type !== "FunctionDeclaration" && s.type !== "TypeDeclaration"
+        (s) => s.type !== "FunctionDeclaration" && s.type !== "TypeDeclaration",
       );
       if (topLevelStmts.length === 0) return;
       this.emit('(func $main (export "main")');
@@ -1347,7 +1628,9 @@ ${this.errors.join("\n")}`);
     }
     generateVariableDeclaration(decl) {
       const wasmType = decl.varType ? this.typeToWasm(decl.varType) : "i32";
-      if (decl.scope === "dim" && decl.dimensions && decl.dimensions.length > 0) {
+      if (
+        decl.scope === "dim" && decl.dimensions && decl.dimensions.length > 0
+      ) {
         const rawName = decl.name;
         const baseName = rawName.replace(/[%#$]$/, "");
         this.dimArrays.set(rawName, { dimensions: [] });
@@ -1356,7 +1639,10 @@ ${this.errors.join("\n")}`);
         const localIndex = this.localIndex++;
         const localName = `__dim_${baseName}`;
         this.locals.set(localName, { index: localIndex, type: "i32" });
-        this.locals.set(`__dim_${baseName.toLowerCase()}`, { index: localIndex, type: "i32" });
+        this.locals.set(`__dim_${baseName.toLowerCase()}`, {
+          index: localIndex,
+          type: "i32",
+        });
         this.emit(`(local $${localName} i32)`);
         this.emit("global.get $__heap_ptr");
         this.emit(`local.set $${localName}`);
@@ -1373,7 +1659,11 @@ ${this.errors.join("\n")}`);
       if (decl.scope === "global") {
         const globalIndex = this.globals.size;
         this.globals.set(decl.name, { index: globalIndex, type: wasmType });
-        const initialValue = decl.initializer ? this.expressionToString(decl.initializer) : wasmType === "i32" ? "i32.const 0" : "f32.const 0";
+        const initialValue = decl.initializer
+          ? this.expressionToString(decl.initializer)
+          : wasmType === "i32"
+          ? "i32.const 0"
+          : "f32.const 0";
         this.emit(`(global $${decl.name} (mut ${wasmType}) (${initialValue}))`);
       } else {
         const localIndex = this.localIndex++;
@@ -1596,7 +1886,9 @@ ${this.errors.join("\n")}`);
           }
           if (local) {
             const actualName = Array.from(this.locals.keys()).find(
-              (k) => k === varName || k.startsWith(varName) && k.length === varName.length + 1
+              (k) =>
+                k === varName ||
+                k.startsWith(varName) && k.length === varName.length + 1,
             );
             this.emit(`local.get $${actualName}`);
           } else {
@@ -1630,7 +1922,11 @@ ${this.errors.join("\n")}`);
           if (arrExpr.type === "Identifier") {
             const arrName = arrExpr.name;
             const arrBaseName = arrName.replace(/[%#$]$/, "").toLowerCase();
-            const dimKey = this.dimArrays.has(arrBaseName) ? arrBaseName : this.dimArrays.has(arrName) ? arrName : null;
+            const dimKey = this.dimArrays.has(arrBaseName)
+              ? arrBaseName
+              : this.dimArrays.has(arrName)
+              ? arrName
+              : null;
             if (dimKey) {
               this.emit(`local.get $__dim_${dimKey}`);
               if (expr.indices.length > 0) {
@@ -1756,7 +2052,9 @@ ${this.errors.join("\n")}`);
       }
       const baseNameForDim = lowerName.replace(/[%#$]$/, "");
       if (this.dimArrays.has(baseNameForDim) || this.dimArrays.has(rawName)) {
-        const dimKey = this.dimArrays.has(baseNameForDim) ? baseNameForDim : rawName;
+        const dimKey = this.dimArrays.has(baseNameForDim)
+          ? baseNameForDim
+          : rawName;
         const localKey = `__dim_${dimKey}`;
         this.emit(`local.get $${localKey}`);
         if (expr.arguments.length > 0) {
@@ -1803,7 +2101,11 @@ ${this.errors.join("\n")}`);
         if (arrayExpr.type === "Identifier") {
           const arrName = arrayExpr.name;
           const baseName = arrName.replace(/[%#$]$/, "").toLowerCase();
-          const dimKey = this.dimArrays.has(baseName) ? baseName : this.dimArrays.has(arrName) ? arrName : null;
+          const dimKey = this.dimArrays.has(baseName)
+            ? baseName
+            : this.dimArrays.has(arrName)
+            ? arrName
+            : null;
           if (dimKey) {
             const localKey = `__dim_${dimKey}`;
             this.emit(`local.get $${localKey}`);
@@ -1912,7 +2214,8 @@ ${this.errors.join("\n")}`);
         case "UnaryOp":
           return this.isIntegerExpression(expr.operand);
         case "BinaryOp":
-          return this.isIntegerExpression(expr.left) && this.isIntegerExpression(expr.right);
+          return this.isIntegerExpression(expr.left) &&
+            this.isIntegerExpression(expr.right);
         case "Identifier":
           const varName = expr.name.toLowerCase();
           const local = this.locals.get(varName);
@@ -1936,7 +2239,8 @@ ${this.errors.join("\n")}`);
         case "UnaryOp":
           return this.isFloatExpression(expr.operand);
         case "BinaryOp":
-          return this.isFloatExpression(expr.left) || this.isFloatExpression(expr.right);
+          return this.isFloatExpression(expr.left) ||
+            this.isFloatExpression(expr.right);
         case "Identifier":
           const varName = expr.name.toLowerCase();
           const local = this.locals.get(varName);
@@ -1956,7 +2260,7 @@ ${this.errors.join("\n")}`);
   __export(ast_exports, {
     inferTypeFromSuffix: () => inferTypeFromSuffix,
     isExpression: () => isExpression,
-    isStatement: () => isStatement
+    isStatement: () => isStatement,
   });
   function inferTypeFromSuffix(suffix) {
     if (!suffix) return void 0;
@@ -1991,7 +2295,7 @@ ${this.errors.join("\n")}`);
       "GotoStatement",
       "GosubStatement",
       "EndStatement",
-      "IncludeStatement"
+      "IncludeStatement",
     ].includes(node.kind);
   }
   function isExpression(node) {
@@ -2011,7 +2315,7 @@ ${this.errors.join("\n")}`);
       "BeforeExpression",
       "AfterExpression",
       "HandleExpression",
-      "ObjectCastExpression"
+      "ObjectCastExpression",
     ].includes(node.kind);
   }
 
@@ -2025,7 +2329,9 @@ ${this.errors.join("\n")}`);
   async function withTimeout(fn, timeoutMs = 5e3) {
     return new Promise((resolve, reject) => {
       const timeoutId = setTimeout(() => {
-        reject(new CompilationTimeout(`Compilation exceeded ${timeoutMs}ms timeout`));
+        reject(
+          new CompilationTimeout(`Compilation exceeded ${timeoutMs}ms timeout`),
+        );
       }, timeoutMs);
       try {
         const result = fn();
@@ -2046,7 +2352,9 @@ ${this.errors.join("\n")}`);
     }
     check() {
       if (Date.now() - this.startTime > this.timeoutMs) {
-        throw new CompilationTimeout(`Operation exceeded ${this.timeoutMs}ms timeout`);
+        throw new CompilationTimeout(
+          `Operation exceeded ${this.timeoutMs}ms timeout`,
+        );
       }
     }
     elapsed() {
@@ -2067,7 +2375,8 @@ ${this.errors.join("\n")}`);
         return `${this.name}: ${this.message}`;
       }
       const { line, column, length } = this.location;
-      let result = `${this.name} at line ${line}, column ${column}: ${this.message}`;
+      let result =
+        `${this.name} at line ${line}, column ${column}: ${this.message}`;
       if (this.source) {
         const lines = this.source.split("\n");
         if (line > 0 && line <= lines.length) {
@@ -2078,7 +2387,9 @@ ${line} | ${sourceLine}`;
           result += `
 ${" ".repeat(String(line).length)} | ${" ".repeat(column - 1)}^`;
           if (length && length > 1) {
-            result += "~".repeat(Math.min(length - 1, sourceLine.length - column));
+            result += "~".repeat(
+              Math.min(length - 1, sourceLine.length - column),
+            );
           }
         }
       }

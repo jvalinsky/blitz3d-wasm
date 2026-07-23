@@ -1,6 +1,7 @@
 # Building Blitz3D WASM with Docker
 
-If you encounter Swift compiler crashes (Signal 6) on macOS when building the WASM target, you can use Docker to build in a stable Linux environment.
+If you encounter Swift compiler crashes (Signal 6) on macOS when building the
+WASM target, you can use Docker to build in a stable Linux environment.
 
 ## Prerequisites
 
@@ -35,5 +36,7 @@ If you encounter Swift compiler crashes (Signal 6) on macOS when building the WA
 
 ## Troubleshooting
 
-- **Architecture:** The Dockerfile automatically detects `x86_64` vs `aarch64` (Apple Silicon).
-- **SDK Version:** If the build fails due to SDK mismatch, check the latest WASM SDK version at [swiftwasm.org](https://swiftwasm.org/).
+- **Architecture:** The Dockerfile automatically detects `x86_64` vs `aarch64`
+  (Apple Silicon).
+- **SDK Version:** If the build fails due to SDK mismatch, check the latest WASM
+  SDK version at [swiftwasm.org](https://swiftwasm.org/).

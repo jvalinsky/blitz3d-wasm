@@ -3,6 +3,7 @@
 This is the SCPCB “world model”: rooms, templates, waypoints, and world loading.
 
 Primary source:
+
 - `~/Software/scpcb/MapSystem.bb`
 
 ## `Rooms` Type (Core World Container)
@@ -16,9 +17,11 @@ Primary source:
   - `Lights[]` + intensities + sprites + flicker flags
   - `SoundEmitter*[]`
   - adjacency: `Adjacent[]`, `AdjDoor[]`
-- gameplay: trigger boxes, room-local texture caches, “nonfreeable” entities, etc.
+- gameplay: trigger boxes, room-local texture caches, “nonfreeable” entities,
+  etc.
 
 Porting implication:
+
 - Rooms are “fat structs” with many arrays; your compiler/runtime must support:
   - custom Types with many fields,
   - array fields on Types,
@@ -28,13 +31,17 @@ Porting implication:
 
 `MapSystem.bb` implements:
 
-- `LoadMaterials(file$)` (reads `Data/materials.ini` and preps textures/stepsounds)
-- `LoadWorld(file$, rt.RoomTemplates)` (loads a world mesh, assigns collision/pick types, extracts nodes)
+- `LoadMaterials(file$)` (reads `Data/materials.ini` and preps
+  textures/stepsounds)
+- `LoadWorld(file$, rt.RoomTemplates)` (loads a world mesh, assigns
+  collision/pick types, extracts nodes)
 - `LoadRMesh(file$, rt.RoomTemplates)` (loads room geometry in `.rmesh`)
 
 The loader uses:
+
 - `LoadAnimMesh_Strict` and other StrictLoads helpers
-- node metadata via `KeyValue(node, "classname")` to decide how to treat mesh nodes
+- node metadata via `KeyValue(node, "classname")` to decide how to treat mesh
+  nodes
 
 ## Grid / Hiding System
 
@@ -43,7 +50,9 @@ includes update logic like `UpdateGrid(grid.Grids)` that hides/shows entities
 based on player distance and `HideDistance`.
 
 Porting implication:
-- Visibility management is part of gameplay performance; it’s not “just rendering”.
+
+- Visibility management is part of gameplay performance; it’s not “just
+  rendering”.
 
 ## Waypoints and Cameras
 
@@ -53,4 +62,3 @@ Porting implication:
 - `Type SecurityCams` (used for camera systems / monitoring)
 
 These are referenced heavily from the main loop and event system.
-

@@ -3,7 +3,10 @@ import { parseX } from "./x/parse_x.ts";
 import { XFile, XMesh } from "./x/types.ts";
 import { encodeSmpk } from "./smpk/codec.ts";
 import { SmpkFile, SmpkMaterial, SmpkMesh, SmpkNode } from "./smpk/types.ts";
-import { resolveTextureName, buildCaseInsensitiveMap } from "./texture_utils.ts";
+import {
+  buildCaseInsensitiveMap,
+  resolveTextureName,
+} from "./texture_utils.ts";
 
 type Args = {
   input: string;
@@ -13,9 +16,15 @@ type Args = {
 
 const parseArgs = (): Args => {
   const input = Deno.args[0];
-  if (!input) throw new Error("usage: Tools/convert_x_to_smpk.ts <input.x> [-o out.smpk]");
+  if (!input) {
+    throw new Error(
+      "usage: Tools/convert_x_to_smpk.ts <input.x> [-o out.smpk]",
+    );
+  }
   const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
-  const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.x$/i, ".smpk");
+  const output = oIdx >= 0
+    ? (Deno.args[oIdx + 1] ?? "")
+    : input.replace(/\.x$/i, ".smpk");
   if (!output) throw new Error("missing -o output");
 
   const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
@@ -24,7 +33,9 @@ const parseArgs = (): Args => {
   return { input, output, textureFormat };
 };
 
-const quatFromRowMajorMat4 = (m: Float32Array): [number, number, number, number] => {
+const quatFromRowMajorMat4 = (
+  m: Float32Array,
+): [number, number, number, number] => {
   // m is row-major 4x4; extract 3x3 rotation. Return xyzw.
   const m00 = m[0], m11 = m[5], m22 = m[10];
   const tr = m00 + m11 + m22;
@@ -81,9 +92,13 @@ const main = async () => {
   const skins = mesh.skins ?? [];
   const boneNames = [...new Set(skins.map((s) => s.boneName))];
   const boneNameToIndex = new Map<string, number>();
-  for (let i = 0; i < boneNames.length; i++) boneNameToIndex.set(boneNames[i]!, i);
+  for (let i = 0; i < boneNames.length; i++) {
+    boneNameToIndex.set(boneNames[i]!, i);
+  }
 
-  const influences: Array<Array<{ j: number; w: number }>> = Array.from({ length: vCount }, () => []);
+  const influences: Array<Array<{ j: number; w: number }>> = Array.from({
+    length: vCount,
+  }, () => []);
   const invBind = new Float32Array(Math.max(1, boneNames.length) * 16);
   if (boneNames.length) {
     for (const sw of skins) {
@@ -121,7 +136,13 @@ const main = async () => {
   const binParts: Uint8Array[] = [];
   const accessors: SmpkAccessor[] = [];
   const currentBinOff = () => binParts.reduce((s, p) => s + p.byteLength, 0);
-  const push = (name: string, view: ArrayBufferView, componentType: any, type: any, count: number): number => {
+  const push = (
+    name: string,
+    view: ArrayBufferView,
+    componentType: any,
+    type: any,
+    count: number,
+  ): number => {
     const off = currentBinOff();
     const u8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
     binParts.push(u8);
@@ -130,17 +151,45 @@ const main = async () => {
   };
 
   const posAcc = push("POSITION", mesh.positions, "f32", "VEC3", vCount);
-  const norAcc = push("NORMAL", mesh.normals ?? new Float32Array(vCount * 3), "f32", "VEC3", vCount);
-  const uvAcc = push("TEXCOORD_0", mesh.uvs0 ?? new Float32Array(vCount * 2), "f32", "VEC2", vCount);
-  const idxAcc = push("INDICES", mesh.indices, "u32", "SCALAR", mesh.indices.length);
+  const norAcc = push(
+    "NORMAL",
+    mesh.normals ?? new Float32Array(vCount * 3),
+    "f32",
+    "VEC3",
+    vCount,
+  );
+  const uvAcc = push(
+    "TEXCOORD_0",
+    mesh.uvs0 ?? new Float32Array(vCount * 2),
+    "f32",
+    "VEC2",
+    vCount,
+  );
+  const idxAcc = push(
+    "INDICES",
+    mesh.indices,
+    "u32",
+    "SCALAR",
+    mesh.indices.length,
+  );
 
-  const attrs: Record<string, number> = { POSITION: posAcc, NORMAL: norAcc, TEXCOORD_0: uvAcc };
+  const attrs: Record<string, number> = {
+    POSITION: posAcc,
+    NORMAL: norAcc,
+    TEXCOORD_0: uvAcc,
+  };
   let skinsArr: any[] | undefined;
   let invBindAcc: number | undefined;
   if (boneNames.length) {
     const jointsAcc = push("JOINTS_0", joints0, "u16", "VEC4", vCount);
     const weightsAcc = push("WEIGHTS_0", weights0, "f32", "VEC4", vCount);
-    invBindAcc = push("inverseBindMatrices", invBind, "f32", "MAT4", boneNames.length);
+    invBindAcc = push(
+      "inverseBindMatrices",
+      invBind,
+      "f32",
+      "MAT4",
+      boneNames.length,
+    );
     attrs.JOINTS_0 = jointsAcc;
     attrs.WEIGHTS_0 = weightsAcc;
     skinsArr = [{ name: "skin0", joints: [], inverseBindMatrices: invBindAcc }];
@@ -178,7 +227,8 @@ const main = async () => {
   };
   const rootIdx = addFrame(x.root, undefined);
 
-  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") || ".";
+  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") ||
+    ".";
   const lowerNameToActual = await buildCaseInsensitiveMap(inputDir);
 
   const materials = [];
@@ -186,7 +236,12 @@ const main = async () => {
     const m = mesh.materials[i];
     materials.push({
       name: m.name ?? `mat${i}`,
-      baseColorTexture: await resolveTextureName(inputDir, lowerNameToActual, m.texture, args.textureFormat),
+      baseColorTexture: await resolveTextureName(
+        inputDir,
+        lowerNameToActual,
+        m.texture,
+        args.textureFormat,
+      ),
       alphaMode: (m.diffuse[3] ?? 1) < 1 ? "BLEND" : "OPAQUE",
     });
   }
@@ -198,7 +253,14 @@ const main = async () => {
     const boneNodeIndices: number[] = [];
     for (const bn of boneNames) {
       const idx = nodes.length;
-      nodes.push({ name: bn, parent: rootIdx, children: [], translation: [0, 0, 0], rotation: [0, 0, 0, 1], scale: [1, 1, 1] });
+      nodes.push({
+        name: bn,
+        parent: rootIdx,
+        children: [],
+        translation: [0, 0, 0],
+        rotation: [0, 0, 0, 1],
+        scale: [1, 1, 1],
+      });
       nodes[rootIdx]!.children.push(idx);
       boneNodeIndices.push(idx);
     }
@@ -252,7 +314,8 @@ const findFirstMeshInFrame = (f: any): any => {
 };
 
 const findFirstMesh = (x: any): any => {
-  return findFirstMeshInFrame(x.root) ?? (x.meshes && x.meshes.length ? x.meshes[0] : null);
+  return findFirstMeshInFrame(x.root) ??
+    (x.meshes && x.meshes.length ? x.meshes[0] : null);
 };
 
 if (import.meta.main) {

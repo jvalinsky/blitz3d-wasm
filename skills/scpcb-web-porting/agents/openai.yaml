@@ -2,4 +2,3 @@ interface:
   display_name: "SCPCB Web Porting"
   short_description: "Port SCPCB .bb to Blitz3D-WASM web runtime"
   default_prompt: "Use $scpcb-web-porting to identify browser-incompatible SCPCB subsystems involved here and propose the minimal code/manifest/runtime change to keep progress without hiding correctness bugs."
-

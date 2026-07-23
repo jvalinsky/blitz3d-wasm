@@ -1,9 +1,9 @@
 # Plan 07 — Animation Playback (Frame-Based, Skeletal)
 
-Created: 2026-01-30
-Last updated: 2026-01-30
+Created: 2026-01-30 Last updated: 2026-01-30
 
-Goal: Implement frame-based skeletal animation playback in demo and runtime with proper bind pose handling.
+Goal: Implement frame-based skeletal animation playback in demo and runtime with
+proper bind pose handling.
 
 ---
 
@@ -11,7 +11,8 @@ Goal: Implement frame-based skeletal animation playback in demo and runtime with
 
 ### 7.1.1 FPS Handling
 
-Use model-specific FPS from SMPK `animations[].fps` field. Fall back to 30fps if missing.
+Use model-specific FPS from SMPK `animations[].fps` field. Fall back to 30fps if
+missing.
 
 ### 7.1.2 Frame↔Time Conversion
 
@@ -24,6 +25,7 @@ const frame = Math.round(time * fps);
 ```
 
 Example (guard.smpk, fps=30):
+
 ```
 Frame 284 → time 9.47s (start of walk)
 Frame 333 → time 11.10s (end of walk)
@@ -32,11 +34,12 @@ Frame 333 → time 11.10s (end of walk)
 ### 7.1.3 Animation Sequences (SCPCB)
 
 From SCPCB NPCs.bb:
-| Animation | Frames | Duration | Notes |
-|-----------|--------|----------|-------|
-| Idle | 0-107 | 3.57s | Standing still |
-| Walk | 284-333 | 1.63s | 49 frames |
-| Run | 334-377 | 1.43s | 43 frames |
+
+| Animation | Frames  | Duration | Notes          |
+| --------- | ------- | -------- | -------------- |
+| Idle      | 0-107   | 3.57s    | Standing still |
+| Walk      | 284-333 | 1.63s    | 49 frames      |
+| Run       | 334-377 | 1.43s    | 43 frames      |
 
 ---
 
@@ -47,7 +50,7 @@ From SCPCB NPCs.bb:
 ```typescript
 // Current code causes distortion:
 const sm = new THREE.SkinnedMesh(geo, mat);
-sm.bind(skeleton);  // Bones NOT in bind pose → distorted mesh
+sm.bind(skeleton); // Bones NOT in bind pose → distorted mesh
 ```
 
 ### 7.2.2 Solution
@@ -63,10 +66,10 @@ if (clips.length > 0) {
   // Apply bind pose (frame 0) before creating SkinnedMesh
   const bindAction = mixer.clipAction(clips[0]);
   bindAction.time = 0;
-  mixer.update(0);  // Bones now in bind pose
-  
+  mixer.update(0); // Bones now in bind pose
+
   const sm = new THREE.SkinnedMesh(geo, mat);
-  sm.bind(skeleton);  // Correct: bones posed
+  sm.bind(skeleton); // Correct: bones posed
 }
 ```
 
@@ -74,28 +77,28 @@ if (clips.length > 0) {
 
 ## 7.3 Animation Modes (SCPCB-Compatible)
 
-| Mode | Value | Three.js | Notes |
-|------|-------|----------|-------|
-| Stop | 0 | action.stop() | Freezes at current frame |
-| Loop | 1 | LoopRepeat | Repeats from start |
-| PingPong | 2 | LoopPingPong | Back-and-forth |
-| OneShot | 3 | LoopOnce | Plays once, stops at end |
+| Mode     | Value | Three.js      | Notes                    |
+| -------- | ----- | ------------- | ------------------------ |
+| Stop     | 0     | action.stop() | Freezes at current frame |
+| Loop     | 1     | LoopRepeat    | Repeats from start       |
+| PingPong | 2     | LoopPingPong  | Back-and-forth           |
+| OneShot  | 3     | LoopOnce      | Plays once, stops at end |
 
 ```typescript
 function setAnimationMode(action, mode) {
-  switch(mode) {
-    case 0:  // Stop
+  switch (mode) {
+    case 0: // Stop
       action.stop();
       break;
-    case 1:  // Loop
+    case 1: // Loop
       action.setLoop(THREE.LoopRepeat, Infinity);
       action.play();
       break;
-    case 2:  // PingPong
+    case 2: // PingPong
       action.setLoop(THREE.LoopPingPong, Infinity);
       action.play();
       break;
-    case 3:  // OneShot
+    case 3: // OneShot
       action.setLoop(THREE.LoopOnce, 1);
       action.clampWhenFinished = true;
       action.play();
@@ -112,25 +115,33 @@ function setAnimationMode(action, mode) {
 
 ```html
 <!-- npc_smpk_demo.html -->
-<div id="animControls" style="display:none; margin-top: 10px;">
+<div id="animControls" style="display: none; margin-top: 10px">
   <select id="clipSelect">
     <option value="0">Walk</option>
     <!-- Populated from SMPK clips -->
   </select>
-  
-  <input type="range" id="frameSlider" min="0" max="1000" value="0" step="0.1" style="width: 300px;">
+
+  <input
+    type="range"
+    id="frameSlider"
+    min="0"
+    max="1000"
+    value="0"
+    step="0.1"
+    style="width: 300px"
+  >
   <span id="frameDisplay">Frame: 0 / 1000 (0.00s)</span>
-  
+
   <button id="btnPlay">▶ Play</button>
   <button id="btnPause">⏸ Pause</button>
-  
+
   <select id="speedSelect">
     <option value="0.25">0.25x</option>
     <option value="0.5">0.5x</option>
     <option value="1.0" selected>1.0x</option>
     <option value="2.0">2.0x</option>
   </select>
-  
+
   <select id="seqSelect">
     <option value="-1">All Frames</option>
     <!-- Populated from SMPK sequences -->
@@ -144,35 +155,35 @@ function setAnimationMode(action, mode) {
 if (json.animations && json.animations.length > 0) {
   const anim = json.animations[0];
   const fps = anim.fps || 30;
-  
+
   // Populate clip dropdown
-  const clipSelect = document.getElementById('clipSelect');
-  clipSelect.innerHTML = '';
+  const clipSelect = document.getElementById("clipSelect");
+  clipSelect.innerHTML = "";
   if (anim.clips) {
     anim.clips.forEach((clip, idx) => {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = idx;
       opt.textContent = clip.name || `Clip ${idx + 1}`;
       clipSelect.appendChild(opt);
     });
   } else {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = 0;
-    opt.textContent = 'default';
+    opt.textContent = "default";
     clipSelect.appendChild(opt);
   }
-  
+
   // Update slider max
   const duration = anim.duration || 1;
   const maxFrame = Math.round(duration * fps);
-  document.getElementById('frameSlider').max = maxFrame;
-  document.getElementById('animControls').style.display = 'block';
-  
+  document.getElementById("frameSlider").max = maxFrame;
+  document.getElementById("animControls").style.display = "block";
+
   // Populate sequences
   if (anim.sequences) {
-    const seqSelect = document.getElementById('seqSelect');
+    const seqSelect = document.getElementById("seqSelect");
     anim.sequences.forEach((seq, idx) => {
-      const opt = document.createElement('option');
+      const opt = document.createElement("option");
       opt.value = idx;
       opt.textContent = `${seq.name}: ${seq.firstFrame}-${seq.lastFrame}`;
       seqSelect.appendChild(opt);
@@ -184,30 +195,31 @@ if (json.animations && json.animations.length > 0) {
 ### 7.4.3 Frame Slider Handler
 
 ```typescript
-document.getElementById('frameSlider').addEventListener('input', (e) => {
+document.getElementById("frameSlider").addEventListener("input", (e) => {
   const frame = parseFloat(e.target.value);
   const time = frame / fps;
-  
+
   if (npcAction) {
     npcAction.time = time;
     mixer.update(0);
   }
-  
-  document.getElementById('frameDisplay').textContent = 
-    `Frame: ${frame.toFixed(1)} / ${maxFrame} (${time.toFixed(2)}s)`;
+
+  document.getElementById("frameDisplay").textContent = `Frame: ${
+    frame.toFixed(1)
+  } / ${maxFrame} (${time.toFixed(2)}s)`;
 });
 ```
 
 ### 7.4.4 Play/Pause Toggle
 
 ```typescript
-document.getElementById('btnPlay').addEventListener('click', () => {
+document.getElementById("btnPlay").addEventListener("click", () => {
   if (isPlaying) {
     npcAction?.stop();
-    document.getElementById('btnPlay').textContent = '▶ Play';
+    document.getElementById("btnPlay").textContent = "▶ Play";
   } else {
     npcAction?.play();
-    document.getElementById('btnPlay').textContent = '⏸ Pause';
+    document.getElementById("btnPlay").textContent = "⏸ Pause";
   }
   isPlaying = !isPlaying;
 });
@@ -216,7 +228,7 @@ document.getElementById('btnPlay').addEventListener('click', () => {
 ### 7.4.5 Speed Control
 
 ```typescript
-document.getElementById('speedSelect').addEventListener('change', (e) => {
+document.getElementById("speedSelect").addEventListener("change", (e) => {
   const speed = parseFloat(e.target.value);
   npcAction?.setEffectiveTimeScale(speed);
 });
@@ -225,7 +237,7 @@ document.getElementById('speedSelect').addEventListener('change', (e) => {
 ### 7.4.6 Clip Selection
 
 ```typescript
-document.getElementById('clipSelect').addEventListener('change', (e) => {
+document.getElementById("clipSelect").addEventListener("change", (e) => {
   const clipIdx = parseInt(e.target.value);
   const clips = root.animations || [];
   if (clips[clipIdx]) {
@@ -243,11 +255,11 @@ document.getElementById('clipSelect').addEventListener('change', (e) => {
 
 ### 7.5.1 Entry Points
 
-| WASM Function | JS Handler |
-|---------------|------------|
-| `LoadAnimMesh(path$)` | `animation.loadAnimMesh` |
-| `SetAnimTime(entity, time, seq)` | `animation.setAnimTime` |
-| `Animate(entity, mode, speed, seq, trans)` | `animation.animate` |
+| WASM Function                              | JS Handler               |
+| ------------------------------------------ | ------------------------ |
+| `LoadAnimMesh(path$)`                      | `animation.loadAnimMesh` |
+| `SetAnimTime(entity, time, seq)`           | `animation.setAnimTime`  |
+| `Animate(entity, mode, speed, seq, trans)` | `animation.animate`      |
 
 ### 7.5.2 Render Loop Update
 
@@ -262,8 +274,8 @@ for (const mixer of this.animMixers) {
 ### 7.5.3 Animation Events
 
 ```typescript
-action.getMixer().addEventListener('finished', (e) => {
-  this.core.events.emit('AnimFinished', { entityId: entity.id });
+action.getMixer().addEventListener("finished", (e) => {
+  this.core.events.emit("AnimFinished", { entityId: entity.id });
 });
 ```
 
@@ -271,12 +283,12 @@ action.getMixer().addEventListener('finished', (e) => {
 
 ## 7.6 Testing
 
-| Model | Test | Expected |
-|-------|------|----------|
-| guard.smpk | Walk animation | No distortion |
-| scp-049.smpk | OneShot | Plays once, stops |
-| scp-939.smpk | Clip selection | Multiple clips |
-| 173_2.smpk | No animation | Loads without error |
+| Model        | Test           | Expected            |
+| ------------ | -------------- | ------------------- |
+| guard.smpk   | Walk animation | No distortion       |
+| scp-049.smpk | OneShot        | Plays once, stops   |
+| scp-939.smpk | Clip selection | Multiple clips      |
+| 173_2.smpk   | No animation   | Loads without error |
 
 ---
 

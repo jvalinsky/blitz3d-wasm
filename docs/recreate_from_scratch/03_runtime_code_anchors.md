@@ -14,15 +14,18 @@ docs disagree, the code wins.
 
 - Runtime core and shared WASM state: `web/src/runtime/core.ts`
   - `Blitz3DCore.init(canvasId)` sets up the render canvas + 2D overlay canvas.
-  - `Blitz3DCore.readString(ptr)` defines the **string ABI** the runtime expects:
+  - `Blitz3DCore.readString(ptr)` defines the **string ABI** the runtime
+    expects:
     - Preferred: `[refCount:i32][len:i32][bytes...][0]` (headered Blitz string)
     - Fallback: raw C-string (null-terminated)
 
 ## Graphics (Imports, Rendering, Resource Lifecycle)
 
 - Primary graphics runtime: `web/src/runtime/graphics/index.ts`
-  - `setupImports(imports)` installs `env.*` and `blitz3d.*` imports via setup modules.
-  - Import groups are wired in `web/src/runtime/graphics/setup/index.ts` (core/2d/image/3d/input/collision/picking/audio).
+  - `setupImports(imports)` installs `env.*` and `blitz3d.*` imports via setup
+    modules.
+  - Import groups are wired in `web/src/runtime/graphics/setup/index.ts`
+    (core/2d/image/3d/input/collision/picking/audio).
   - `dispose()` is the authoritative lifecycle cleanup:
     - cancels RAF
     - disposes renderer + forces context loss
@@ -40,15 +43,18 @@ docs disagree, the code wins.
   - Validates that wasm exports match runtime ABI version expectations.
 
 - Runtime drain entrypoint:
-  - Graphics installs `imports.env.DrainCommandBuffer` in `web/src/runtime/graphics/index.ts`
+  - Graphics installs `imports.env.DrainCommandBuffer` in
+    `web/src/runtime/graphics/index.ts`
   - Decode/dispatch path is split:
     - decode + iteration: `web/src/shared/command_buffer.ts` (`drainCmds`)
-    - opcode dispatch table: `web/src/runtime/command_executor.ts` (`dispatchCmd`)
+    - opcode dispatch table: `web/src/runtime/command_executor.ts`
+      (`dispatchCmd`)
 
 ## Entity Table (WASM-Authoritative Transform Reads)
 
 - View over shared transform table: `web/src/shared/entity_table.ts`
-  - Defines layout (`ENTITY_ENTRY_FLOATS`, offsets) and provides getters/setters.
+  - Defines layout (`ENTITY_ENTRY_FLOATS`, offsets) and provides
+    getters/setters.
 
 ## File I/O and VFS (Manifest + Missing-File Telemetry)
 
@@ -77,4 +83,5 @@ docs disagree, the code wins.
 - Leak tooling runs runtime code under Deno headless shims:
   - `Tools/memleak/leakcheck.ts`
   - `Tools/memleak/scpcb_churn.ts`
-- Some tooling tasks use `--sloppy-imports`; don’t treat that as a production requirement.
+- Some tooling tasks use `--sloppy-imports`; don’t treat that as a production
+  requirement.

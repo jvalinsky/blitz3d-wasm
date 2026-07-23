@@ -11,14 +11,17 @@ export class BlitzZipApi {
       let data: Uint8Array | undefined;
       const core = this.fileIO?.core || (globalThis as any).__core;
       const fileSystem = core?.fileSystem || this.fileIO?.fileSystem;
-      
+
       if (fileSystem && fileSystem.has(path)) {
         data = fileSystem.get(path).data;
       }
-      
+
       let arrayBuffer: ArrayBuffer;
       if (data) {
-        arrayBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        arrayBuffer = data.buffer.slice(
+          data.byteOffset,
+          data.byteOffset + data.byteLength,
+        );
       } else {
         const response = await fetch(path);
         if (!response.ok) throw new Error("HTTP " + response.status);
@@ -85,16 +88,20 @@ export class BlitzZipApi {
           const filename = entries[index];
           const core = this.fileIO?.core || (globalThis as any).__core;
           if (core && core.allocString) {
-             return core.allocString(filename as string);
+            return core.allocString(filename as string);
           } else if (this.context.allocString) {
-             return this.context.allocString(filename as string);
+            return this.context.allocString(filename as string);
           }
         }
       }
       return 0;
     };
 
-    imports.env.ZlibWapi_ExtractFile = async (zip: number, index: number, destPtr: number) => {
+    imports.env.ZlibWapi_ExtractFile = async (
+      zip: number,
+      index: number,
+      destPtr: number,
+    ) => {
       const archive = this.zipArchives.get(zip);
       if (archive && archive.files) {
         const entries = Array.from(archive.files.keys());
@@ -110,7 +117,9 @@ export class BlitzZipApi {
               const core = this.fileIO?.core || (globalThis as any).__core;
               if (core && core.registerFile) {
                 core.registerFile(destPath, data);
-              } else if (this.fileIO && typeof this.fileIO.registerFile === "function") {
+              } else if (
+                this.fileIO && typeof this.fileIO.registerFile === "function"
+              ) {
                 this.fileIO.registerFile(destPath, data);
               }
 

@@ -1,7 +1,7 @@
 # Phase 4B: WASM Integration
 
-**Duration**: 7 hours  
-**Priority**: High  
+**Duration**: 7 hours\
+**Priority**: High\
 **Prerequisites**: Phase 4A complete
 
 ---
@@ -15,6 +15,7 @@ Wire video runtime and complete imports into main WASM loader.
 ## Tasks
 
 ### 1. Integrate VideoRuntime (2 hours)
+
 - Add VideoRuntime to main runtime exports
 - Ensure all 7 WASM API functions exported:
   - `BlitzMovie_Open`
@@ -25,31 +26,38 @@ Wire video runtime and complete imports into main WASM loader.
   - `BlitzMovie_IsPlaying`
 
 **Files**:
+
 - `web/src/runtime/index.ts`
 - `web/src/worker/scpcb_worker.ts`
 
 ### 2. WASM String Reading (1 hour)
+
 - Implement string reading from WASM linear memory
 - Helper for reading null-terminated strings
 - Handle UTF-8 encoding
 
 **Files**:
+
 - `web/src/runtime/memory.ts`
 
 ### 3. Wire scpcb_worker.ts (2 hours)
+
 - Connect VideoRuntime to worker harness
 - Add movie handle management
 - Implement lifecycle (init, update, cleanup)
 
 **Files**:
+
 - `web/src/worker/scpcb_worker.ts`
 
 ### 4. Test Video Playback (1 hour)
+
 - Test in full runtime context
 - Verify startup videos play
 - Check memory management
 
 ### 5. Memory Management (1 hour)
+
 - Implement movie handle reference counting
 - Cleanup on movie close
 - Handle browser memory limits

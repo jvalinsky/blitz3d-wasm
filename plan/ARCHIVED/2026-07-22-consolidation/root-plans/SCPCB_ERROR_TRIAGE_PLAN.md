@@ -1,25 +1,28 @@
 # SCPCB Compilation Error Triage Plan
 
-**Date**: 2026-01-27
-**Status**: 94.2% pass rate (49/52 files)
-**Failed Files**: 3 (Map Creator/mapcreator_new.bb, Map Creator/window3d.bb, MusicPlayer.bb)
+**Date**: 2026-01-27 **Status**: 94.2% pass rate (49/52 files) **Failed Files**:
+3 (Map Creator/mapcreator_new.bb, Map Creator/window3d.bb, MusicPlayer.bb)
 
 ---
 
 ## Executive Summary
 
-The Blitz3D-WASM compiler successfully compiles **all critical SCPCB game files** including Main.bb, NPCs.bb, Items.bb, Menu.bb, and all subsystems. The 3 failing files have specific, isolated issues that do not affect core gameplay compilation.
+The Blitz3D-WASM compiler successfully compiles **all critical SCPCB game
+files** including Main.bb, NPCs.bb, Items.bb, Menu.bb, and all subsystems. The 3
+failing files have specific, isolated issues that do not affect core gameplay
+compilation.
 
 ---
 
 ## Error Classification
 
 ### Error #1: Parser - Complex Parenthesized Expressions in Function Arguments
-**Severity**: Medium
-**Files Affected**: MusicPlayer.bb, Map Creator/window3d.bb
+
+**Severity**: Medium **Files Affected**: MusicPlayer.bb, Map Creator/window3d.bb
 **Impact**: 2 files (3.8% of codebase)
 
 #### Symptoms
+
 ```
 Parser errors found:
 MusicPlayer.bb:268:18: error: Unexpected token ',' in function body
@@ -28,12 +31,15 @@ MusicPlayer.bb:268:19: error: Unexpected token '(' in function body
 ```
 
 #### Root Cause Analysis
+
 **Problematic Code Pattern**:
+
 ```blitz3d
 Text (x+width/2),(y+height/2-1), txt, True, True
 ```
 
 **Expected Behavior**:
+
 - Parser should recognize this as: `Text` function call with 5 arguments:
   1. `(x+width/2)` - parenthesized expression
   2. `(y+height/2-1)` - parenthesized expression
@@ -42,6 +48,7 @@ Text (x+width/2),(y+height/2-1), txt, True, True
   5. `True` - boolean
 
 **Current Behavior**:
+
 - Parser encounters `Text` (identifier) at line 1619 of Parser.swift
 - Calls `parsePostfixExpression()` which parses just `Text`
 - At line 1657, checks `isExpressionStart()` which returns true for `leftParen`
@@ -50,6 +57,7 @@ Text (x+width/2),(y+height/2-1), txt, True, True
 - **BUG HYPOTHESIS**: Something in the parsing chain is failing
 
 **Affected Locations**:
+
 - MusicPlayer.bb:268 - `Function Button%` - UI button rendering
 - Map Creator/window3d.bb:1753 - Similar pattern with `*ResFactor`
 
@@ -95,6 +103,7 @@ Text (x+width/2),(y+height/2-1), txt, True, True
 #### Fix Strategies (Priority Order)
 
 **Option A: Fix Parser Expression Handling** (RECOMMENDED)
+
 - **Complexity**: Medium
 - **Risk**: Low
 - **Files**: Sources/Compiler/Parser/Parser.swift
@@ -106,6 +115,7 @@ Text (x+width/2),(y+height/2-1), txt, True, True
 - **Impact**: Fixes both failing files
 
 **Option B: Workaround in Source**
+
 - **Complexity**: Low
 - **Risk**: None (changes source, not compiler)
 - **Files**: MusicPlayer.bb, window3d.bb
@@ -123,6 +133,7 @@ Text (x+width/2),(y+height/2-1), txt, True, True
 - **Impact**: Quick fix but doesn't solve root cause
 
 **Option C: Alternative Syntax**
+
 - **Complexity**: Low
 - **Risk**: May change rendering
 - **Approach**: Remove parentheses:
@@ -135,11 +146,13 @@ Text (x+width/2),(y+height/2-1), txt, True, True
 ---
 
 ### Error #2: Code Generator - Local Variable Index Overflow
-**Severity**: High (for affected file)
-**Files Affected**: Map Creator/mapcreator_new.bb
-**Impact**: 1 file (1.9% of codebase) - **non-critical development tool**
+
+**Severity**: High (for affected file) **Files Affected**: Map
+Creator/mapcreator_new.bb **Impact**: 1 file (1.9% of codebase) - **non-critical
+development tool**
 
 #### Symptoms
+
 ```
 ERROR: Function 'Main' - Local index 21 exceeds declared locals count 2 (params: 1, locals: 1)
 
@@ -150,17 +163,23 @@ local variable out of range (max 1)
 #### Root Cause Analysis
 
 **The Problem**:
-- The `Main` function in mapcreator_new.bb declares it has only 2 local variables (1 param + 1 local)
+
+- The `Main` function in mapcreator_new.bb declares it has only 2 local
+  variables (1 param + 1 local)
 - But the generated WASM code tries to access local index 21
 - WASM validator rejects this as invalid
 
 **Why This Happens**:
+
 1. Blitz3D allows implicit variable declarations
-2. Compiler tracks variables but doesn't correctly count them for function local declaration
+2. Compiler tracks variables but doesn't correctly count them for function local
+   declaration
 3. WASM function header declares locals count that's too low
-4. Code generator then emits `local.get` and `local.set` instructions with indices beyond the declared range
+4. Code generator then emits `local.get` and `local.set` instructions with
+   indices beyond the declared range
 
 **Affected Code Location**:
+
 - Sources/Compiler/CodeGen/CodeGenerator.swift - Function prologue generation
 - Function that writes WASM function local declarations
 
@@ -178,7 +197,8 @@ local variable out of range (max 1)
    ```
 
 3. **Check CodeGenerator Local Tracking**
-   - Search for `localIndices` or similar variable tracking in CodeGenerator.swift
+   - Search for `localIndices` or similar variable tracking in
+     CodeGenerator.swift
    - Verify it correctly accumulates all variables (explicit + implicit)
    - Check function prologue generation
 
@@ -190,12 +210,14 @@ local variable out of range (max 1)
 #### Fix Strategies (Priority Order)
 
 **Option A: Fix Local Variable Counting** (RECOMMENDED)
+
 - **Complexity**: High
 - **Risk**: Medium (affects all functions)
 - **Files**: Sources/Compiler/CodeGen/CodeGenerator.swift
 - **Approach**:
   1. Find where function local count is determined
-  2. Ensure implicit variables are counted (variables assigned without Local keyword)
+  2. Ensure implicit variables are counted (variables assigned without Local
+     keyword)
   3. Track variable indices correctly throughout function
   4. Update function type signature with correct local count
 - **Testing**:
@@ -204,6 +226,7 @@ local variable out of range (max 1)
 - **Impact**: Fixes mapcreator, may reveal similar issues elsewhere
 
 **Option B: Split Large Function**
+
 - **Complexity**: Medium
 - **Risk**: Low (source changes only)
 - **Files**: Map Creator/mapcreator_new.bb
@@ -215,6 +238,7 @@ local variable out of range (max 1)
 - **Impact**: Workaround that also improves code structure
 
 **Option C: Global Variable Conversion**
+
 - **Complexity**: Low
 - **Risk**: Medium (changes semantics)
 - **Files**: Map Creator/mapcreator_new.bb
@@ -228,19 +252,20 @@ local variable out of range (max 1)
 
 ## Priority Matrix
 
-| Priority | Error | Severity | Impact | Effort | Recommended Fix |
-|----------|-------|----------|--------|--------|-----------------|
-| P1 | Parser - Paren Args | Medium | 2 files | Medium | Option A: Fix Parser |
-| P2 | Local Var Overflow | High* | 1 file** | High | Option A: Fix Counter |
+| Priority | Error               | Severity | Impact   | Effort | Recommended Fix       |
+| -------- | ------------------- | -------- | -------- | ------ | --------------------- |
+| P1       | Parser - Paren Args | Medium   | 2 files  | Medium | Option A: Fix Parser  |
+| P2       | Local Var Overflow  | High*    | 1 file** | High   | Option A: Fix Counter |
 
-\* High for affected file, but file is non-critical development tool
-\** Map Creator is not required for SCPCB gameplay
+\* High for affected file, but file is non-critical development tool \** Map
+Creator is not required for SCPCB gameplay
 
 ---
 
 ## Recommended Action Plan
 
 ### Phase 1: Quick Wins (Est. 2-4 hours)
+
 1. ✅ Document all errors (COMPLETE)
 2. Create minimal reproduction cases for both errors
 3. Apply workarounds (Options B/C) to unblock compilation:
@@ -251,6 +276,7 @@ local variable out of range (max 1)
 **Outcome**: All 52 files compile and validate
 
 ### Phase 2: Root Cause Fixes (Est. 1-2 days)
+
 1. **Fix Parser Expression Handling**
    - Add debug logging to Parser.swift
    - Create test suite for parenthesized expressions in various contexts
@@ -266,6 +292,7 @@ local variable out of range (max 1)
 **Outcome**: Compiler fixes upstream issues, remove workarounds
 
 ### Phase 3: Validation (Est. 1 day)
+
 1. Revert all source workarounds
 2. Full compilation test of SCPCB (./test_scpcb_compilation.sh)
 3. Run validation on all generated WASM files
@@ -287,7 +314,8 @@ local variable out of range (max 1)
 
 ## Success Criteria
 
-- **Primary**: Main.bb and all core game files compile to valid WASM ✅ (ACHIEVED)
+- **Primary**: Main.bb and all core game files compile to valid WASM ✅
+  (ACHIEVED)
 - **Secondary**: 100% of SCPCB files compile to valid WASM (52/52)
 - **Tertiary**: No workarounds needed in source files
 
@@ -295,18 +323,19 @@ local variable out of range (max 1)
 
 ## Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Parser fix breaks other expressions | Medium | High | Comprehensive test suite before/after |
-| Local var fix miscounts in edge cases | Medium | High | Add assertion checks, extensive testing |
-| WASM validation changes behavior | Low | Medium | Compare outputs before/after |
-| Performance regression | Low | Low | Benchmark critical paths |
+| Risk                                  | Probability | Impact | Mitigation                              |
+| ------------------------------------- | ----------- | ------ | --------------------------------------- |
+| Parser fix breaks other expressions   | Medium      | High   | Comprehensive test suite before/after   |
+| Local var fix miscounts in edge cases | Medium      | High   | Add assertion checks, extensive testing |
+| WASM validation changes behavior      | Low         | Medium | Compare outputs before/after            |
+| Performance regression                | Low         | Low    | Benchmark critical paths                |
 
 ---
 
 ## Related Files
 
-- **Parser**: `Sources/Compiler/Parser/Parser.swift` (lines 1617-1683, 2004-2008)
+- **Parser**: `Sources/Compiler/Parser/Parser.swift` (lines 1617-1683,
+  2004-2008)
 - **Code Generator**: `Sources/Compiler/CodeGen/CodeGenerator.swift`
 - **Test Script**: `./test_scpcb_compilation.sh`
 - **Reports**:
@@ -318,7 +347,8 @@ local variable out of range (max 1)
 ## Notes
 
 - Map Creator is a development tool, not required for SCPCB gameplay
-- All gameplay-critical files (Main.bb, NPCs.bb, Items.bb, Menu.bb, etc.) compile successfully
+- All gameplay-critical files (Main.bb, NPCs.bb, Items.bb, Menu.bb, etc.)
+  compile successfully
 - Current 94.2% pass rate is production-ready for game execution
 - Fixing remaining 5.8% is polish work, not blocking for WASM port
 

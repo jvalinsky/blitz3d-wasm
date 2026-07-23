@@ -16,19 +16,24 @@ tags: [compiler, syntax, select-statements, expressions, type-promotion]
 
 ## Overview
 
-Advanced syntax issues involve complex BlitzBasic constructs that compile correctly in isolation but fail when used in large, nested patterns. These issues primarily affect Select statements, complex expressions, and type promotion, causing stack validation errors and runtime failures.
+Advanced syntax issues involve complex BlitzBasic constructs that compile
+correctly in isolation but fail when used in large, nested patterns. These
+issues primarily affect Select statements, complex expressions, and type
+promotion, causing stack validation errors and runtime failures.
 
-🔗 **Related:** [Compilation Gaps](compilation-gaps.md) | [Handle Arrays](handle-arrays.md) | [Object References](object-references.md)
+🔗 **Related:** [Compilation Gaps](compilation-gaps.md) |
+[Handle Arrays](handle-arrays.md) | [Object References](object-references.md)
 
 ## Current Implementation Status
 
-**✅ Basic Syntax:** Simple Select statements and expressions work
-**⚠️ Complex Patterns:** Large nested constructs cause WASM validation errors
-**❌ Type Promotion:** i32/f32 mixing doesn't promote correctly
+**✅ Basic Syntax:** Simple Select statements and expressions work **⚠️ Complex
+Patterns:** Large nested constructs cause WASM validation errors **❌ Type
+Promotion:** i32/f32 mixing doesn't promote correctly
 
 ## Problem Statement
 
-SCPB uses complex syntax patterns that work in small examples but fail in production code:
+SCPB uses complex syntax patterns that work in small examples but fail in
+production code:
 
 ```blitzbasic
 ; This works (small)
@@ -45,15 +50,18 @@ Select n\NPCtype
 End Select
 ```
 
-**Root Cause:** WASM validation requires consistent stack states, but complex BlitzBasic patterns leave inconsistent stacks.
+**Root Cause:** WASM validation requires consistent stack states, but complex
+BlitzBasic patterns leave inconsistent stacks.
 
 ## Technical Issues
 
 ### 1. Select Statement Stack Imbalance
 
-**Problem:** Large Select statements with complex Case bodies leave different stack states, causing WASM validation failures.
+**Problem:** Large Select statements with complex Case bodies leave different
+stack states, causing WASM validation failures.
 
 **Evidence:**
+
 ```blitzbasic
 Select npc\NPCtype
     Case NPCtype173
@@ -67,15 +75,19 @@ Select npc\NPCtype
 End Select
 ```
 
-**WASM Validation Error:** `type mismatch at end of branch, expected [] but got [i32]`
+**WASM Validation Error:**
+`type mismatch at end of branch, expected [] but got [i32]`
 
-**Root Cause:** Each Case branch must leave the stack in the same state, but BlitzBasic allows different operation complexity per branch.
+**Root Cause:** Each Case branch must leave the stack in the same state, but
+BlitzBasic allows different operation complexity per branch.
 
 ### 2. Function Call Return Value Issues - ✅ FIXED
 
-**Status:** **RESOLVED** - Function call return value dropping has been implemented
+**Status:** **RESOLVED** - Function call return value dropping has been
+implemented
 
 **Solution Implemented:**
+
 ```swift
 // In StatementGeneration.swift - function call handling
 if shouldDrop {
@@ -84,6 +96,7 @@ if shouldDrop {
 ```
 
 **Previous Problem:**
+
 ```blitzbasic
 ; This failed - return value left on stack
 GetValue()              ; Return value left on stack, causing validation error
@@ -92,6 +105,7 @@ CheckCondition()        ; Validation errors
 ```
 
 **Current Status:**
+
 ```blitzbasic
 ; These patterns now work correctly:
 GetValue()              ; ✅ Return value automatically dropped
@@ -100,6 +114,7 @@ CheckCondition()        ; ✅ Clean statement execution
 ```
 
 **Technical Implementation:**
+
 - Signature-based detection of function return types
 - Automatic `.drop` instruction insertion for statement-context calls
 - Fallback type-based dropping for unknown functions
@@ -107,9 +122,11 @@ CheckCondition()        ; ✅ Clean statement execution
 
 ### 3. Type Promotion Issues
 
-**Problem:** i32/f32 arithmetic doesn't promote correctly, causing type mismatches.
+**Problem:** i32/f32 arithmetic doesn't promote correctly, causing type
+mismatches.
 
 **Problem Code:**
+
 ```blitzbasic
 ; This fails due to incorrect type promotion
 Local health# = 100.0
@@ -120,7 +137,8 @@ health = health - damage  ; i32 - f32 operation fails
 health = health - Float(damage)
 ```
 
-**Root Cause:** The `commonType()` function uses incorrect enum ordering for type promotion.
+**Root Cause:** The `commonType()` function uses incorrect enum ordering for
+type promotion.
 
 ## Implementation Requirements
 
@@ -261,6 +279,7 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 ## SCPB Usage Patterns
 
 ### Complex Select Statements
+
 ```blitzbasic
 ; Large Select statements in NPC AI - currently fail
 Function UpdateNPC(npc.NPCs)
@@ -287,6 +306,7 @@ End Function
 ```
 
 ### Function Call Issues
+
 ```blitzbasic
 ; Function calls in expressions - currently fail
 Function ComplexLogic()
@@ -307,6 +327,7 @@ End Function
 ```
 
 ### Type Promotion Issues
+
 ```blitzbasic
 ; Mixed type arithmetic - currently fails
 Function DamageCalculation()
@@ -328,21 +349,25 @@ End Function
 ## Implementation Plan
 
 ### Phase 1: Select Statement Fixes (Week 1)
+
 1. Implement stack effect calculation for Select branches
 2. Add automatic stack balancing with drop instructions
 3. Test with complex SCPB Select statements
 
 ### Phase 2: Function Call Handling (Week 2)
+
 1. Detect statement-context function calls
 2. Automatically drop unused return values
 3. Update function definition tracking
 
 ### Phase 3: Type Promotion (Week 3)
+
 1. Fix commonType() function logic
 2. Update enum comparison order if needed
 3. Test mixed-type arithmetic operations
 
 ### Phase 4: Integration Testing (Week 4)
+
 1. Test complete SCPB functions with complex syntax
 2. Validate WASM output correctness
 3. Performance testing with large codebases
@@ -350,6 +375,7 @@ End Function
 ## Testing Strategy
 
 ### Unit Tests
+
 ```swift
 func testSelectStackBalancing() {
     let code = """
@@ -376,6 +402,7 @@ func testTypePromotion() {
 ```
 
 ### Integration Tests
+
 ```blitzbasic
 ; Test complex SCPB patterns
 Function TestAdvancedSyntax()
@@ -398,27 +425,33 @@ End Function
 
 ## Success Criteria
 
-- **Select Statements:** Complex nested Select statements compile without WASM validation errors
-- **Function Calls:** Statement-context function calls automatically drop return values
+- **Select Statements:** Complex nested Select statements compile without WASM
+  validation errors
+- **Function Calls:** Statement-context function calls automatically drop return
+  values
 - **Type Promotion:** i32/f32 arithmetic operations promote correctly
-- **SCPB Compatibility:** Large SCPB functions with complex syntax compile successfully
+- **SCPB Compatibility:** Large SCPB functions with complex syntax compile
+  successfully
 - **Performance:** No significant compilation overhead for syntax fixes
 
 ## Dependencies
 
 - **WASM Validation:** Requires accurate stack effect calculation
-- **Function Tracking:** Needs function definition information for return type detection
+- **Function Tracking:** Needs function definition information for return type
+  detection
 - **Type System:** Depends on existing type information for promotion logic
 - **Parser:** Complex expressions must be parsed correctly
 
 ## Risk Assessment
 
 ### Low Risk
+
 - **Select Balancing:** Stack effect calculation is well-understood
 - **Function Dropping:** Straightforward pattern matching and code generation
 - **Backward Compatibility:** Changes don't break existing working code
 
 ### Medium Risk
+
 - **Type Promotion:** May require changes to enum ordering with broader impact
 - **Stack Analysis:** Complex for deeply nested expressions
 - **Performance:** Stack balancing may add compilation overhead
@@ -432,4 +465,6 @@ End Function
 
 ---
 
-*Advanced syntax fixes address the "last mile" issues preventing full SCPB compilation, enabling complex game logic and AI systems that currently fail due to WASM validation and type system limitations.*
+_Advanced syntax fixes address the "last mile" issues preventing full SCPB
+compilation, enabling complex game logic and AI systems that currently fail due
+to WASM validation and type system limitations._

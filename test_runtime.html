@@ -1,113 +1,141 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="UTF-8">
     <title>Blitz3D WASM Runtime Test</title>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Consolas', 'Monaco', monospace;
-            background: #1e1e1e;
-            color: #d4d4d4;
-        }
-        #container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #4ec9b0;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-        #gameCanvas {
-            display: block;
-            margin: 20px 0;
-            border: 2px solid #4ec9b0;
-            background: #000;
-        }
-        #controls {
-            background: #252526;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-        }
-        button {
-            background: #0e639c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 14px;
-        }
-        button:hover {
-            background: #1177bb;
-        }
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
-        }
-        #console {
-            background: #1e1e1e;
-            border: 1px solid #3c3c3c;
-            padding: 15px;
-            height: 300px;
-            overflow-y: auto;
-            font-size: 12px;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        .log-info { color: #4ec9b0; }
-        .log-error { color: #f48771; }
-        .log-warn { color: #dcdcaa; }
-        .log-success { color: #4fc1b4; }
-        #status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 3px;
-            background: #252526;
-        }
-        .status-ready { border-left: 4px solid #4ec9b0; }
-        .status-loading { border-left: 4px solid #dcdcaa; }
-        .status-error { border-left: 4px solid #f48771; }
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: "Consolas", "Monaco", monospace;
+        background: #1e1e1e;
+        color: #d4d4d4;
+      }
+      #container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        color: #4ec9b0;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      #gameCanvas {
+        display: block;
+        margin: 20px 0;
+        border: 2px solid #4ec9b0;
+        background: #000;
+      }
+      #controls {
+        background: #252526;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 20px 0;
+      }
+      button {
+        background: #0e639c;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 14px;
+      }
+      button:hover {
+        background: #1177bb;
+      }
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+      #console {
+        background: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        padding: 15px;
+        height: 300px;
+        overflow-y: auto;
+        font-size: 12px;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+      .log-info {
+        color: #4ec9b0;
+      }
+      .log-error {
+        color: #f48771;
+      }
+      .log-warn {
+        color: #dcdcaa;
+      }
+      .log-success {
+        color: #4fc1b4;
+      }
+      #status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 3px;
+        background: #252526;
+      }
+      .status-ready {
+        border-left: 4px solid #4ec9b0;
+      }
+      .status-loading {
+        border-left: 4px solid #dcdcaa;
+      }
+      .status-error {
+        border-left: 4px solid #f48771;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="container">
-        <h1>🎮 Blitz3D WASM Runtime Test</h1>
-        
-        <div id="status" class="status-loading">
-            <strong>Status:</strong> <span id="statusText">Initializing...</span>
-        </div>
+      <h1>🎮 Blitz3D WASM Runtime Test</h1>
 
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+      <div id="status" class="status-loading">
+        <strong>Status:</strong> <span id="statusText">Initializing...</span>
+      </div>
 
-        <div id="controls">
-            <h3>🎵 Audio Tests</h3>
-            <button onclick="testAudioInit()">Initialize Audio</button>
-            <button onclick="testBeep()" id="btnBeep" disabled>Test Beep (440Hz)</button>
-            <button onclick="testMusic()" id="btnMusic" disabled>Test Music Stream</button>
-            <button onclick="testSCPSound()" id="btnSCP">🎵 Play SCP Horror Sound</button>
-            
-            <h3 style="margin-top: 20px;">📦 File System Tests</h3>
-            <button onclick="testFileSystem()">Test Virtual FS</button>
-            <button onclick="loadTestZip()" id="btnZip">Load Test ZIP</button>
-            
-            <h3 style="margin-top: 20px;">🎮 WASM Module Tests</h3>
-            <button onclick="loadWASM('test_audio.wasm')" id="btnLoadAudio">Load Audio Test</button>
-            <button onclick="loadWASM('test_2d_graphics.wasm')" id="btnLoad2D">Load 2D Test</button>
-        </div>
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-        <div id="console"></div>
+      <div id="controls">
+        <h3>🎵 Audio Tests</h3>
+        <button onclick="testAudioInit()">Initialize Audio</button>
+        <button onclick="testBeep()" id="btnBeep" disabled>
+          Test Beep (440Hz)
+        </button>
+        <button onclick="testMusic()" id="btnMusic" disabled>
+          Test Music Stream
+        </button>
+        <button onclick="testSCPSound()" id="btnSCP">
+          🎵 Play SCP Horror Sound
+        </button>
+
+        <h3 style="margin-top: 20px">📦 File System Tests</h3>
+        <button onclick="testFileSystem()">Test Virtual FS</button>
+        <button onclick="loadTestZip()" id="btnZip">Load Test ZIP</button>
+
+        <h3 style="margin-top: 20px">🎮 WASM Module Tests</h3>
+        <button onclick="loadWASM('test_audio.wasm')" id="btnLoadAudio">
+          Load Audio Test
+        </button>
+        <button onclick="loadWASM('test_2d_graphics.wasm')" id="btnLoad2D">
+          Load 2D Test
+        </button>
+      </div>
+
+      <div id="console"></div>
     </div>
 
     <!-- Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    ></script>
+
     <!-- Blitz3D Runtime -->
     <script src="Sources/Runtime/browser_compat.js"></script>
     <script src="Sources/Runtime/modules/core.js"></script>
@@ -122,299 +150,357 @@
     <script src="Sources/Runtime/modules/runtime.js"></script>
 
     <script>
-        // Console logging
-        const consoleEl = document.getElementById('console');
-        const statusEl = document.getElementById('statusText');
-        
-        function log(message, type = 'info') {
-            const time = new Date().toLocaleTimeString();
-            const line = document.createElement('div');
-            line.className = `log-${type}`;
-            line.textContent = `[${time}] ${message}`;
-            consoleEl.appendChild(line);
-            consoleEl.scrollTop = consoleEl.scrollHeight;
-            console.log(message);
+      // Console logging
+      const consoleEl = document.getElementById("console");
+      const statusEl = document.getElementById("statusText");
+
+      function log(message, type = "info") {
+        const time = new Date().toLocaleTimeString();
+        const line = document.createElement("div");
+        line.className = `log-${type}`;
+        line.textContent = `[${time}] ${message}`;
+        consoleEl.appendChild(line);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+        console.log(message);
+      }
+
+      function setStatus(message, type = "loading") {
+        statusEl.textContent = message;
+        document.getElementById("status").className = `status-${type}`;
+      }
+
+      // Initialize runtime
+      let audioContext = null;
+      let wasmModule = null;
+
+      async function init() {
+        try {
+          log("Initializing Blitz3D Runtime...", "info");
+
+          // Check if Blitz3D is loaded
+          if (typeof Blitz3D === "undefined") {
+            throw new Error(
+              "Blitz3D runtime not loaded. Check script tags.",
+            );
+          }
+
+          // Initialize core runtime
+          Blitz3D.init("gameCanvas");
+
+          log("✓ Core initialized", "success");
+          log("✓ Graphics initialized", "success");
+          log("✓ Physics initialized", "success");
+          log("✓ Input initialized", "success");
+          log("✓ Audio module loaded", "success");
+          log("✓ Virtual FS loaded", "success");
+
+          // Debug info (optional)
+          if (typeof window.debugBlitz3D === "function") {
+            const debug = window.debugBlitz3D();
+            log(
+              `Runtime status: ${JSON.stringify(debug, null, 2)}`,
+              "info",
+            );
+          }
+
+          setStatus("Runtime ready!", "ready");
+
+          // Enable buttons
+          document.getElementById("btnBeep").disabled = false;
+          document.getElementById("btnMusic").disabled = false;
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          setStatus("Initialization failed", "error");
         }
+      }
 
-        function setStatus(message, type = 'loading') {
-            statusEl.textContent = message;
-            document.getElementById('status').className = `status-${type}`;
-        }
+      // Audio Tests
+      function testAudioInit() {
+        try {
+          log("Testing FSOUND_Init...", "info");
 
-        // Initialize runtime
-        let audioContext = null;
-        let wasmModule = null;
+          if (!Blitz3D.audio) {
+            log("Audio system not initialized yet", "error");
+            return;
+          }
 
-        async function init() {
-            try {
-                log('Initializing Blitz3D Runtime...', 'info');
-                
-                // Check if Blitz3D is loaded
-                if (typeof Blitz3D === 'undefined') {
-                    throw new Error('Blitz3D runtime not loaded. Check script tags.');
-                }
-                
-                // Initialize core runtime
-                Blitz3D.init('gameCanvas');
-                
-                log('✓ Core initialized', 'success');
-                log('✓ Graphics initialized', 'success');
-                log('✓ Physics initialized', 'success');
-                log('✓ Input initialized', 'success');
-                log('✓ Audio module loaded', 'success');
-                log('✓ Virtual FS loaded', 'success');
-                
-                // Debug info (optional)
-                if (typeof window.debugBlitz3D === 'function') {
-                    const debug = window.debugBlitz3D();
-                    log(`Runtime status: ${JSON.stringify(debug, null, 2)}`, 'info');
-                }
-                
-                setStatus('Runtime ready!', 'ready');
-                
-                // Enable buttons
-                document.getElementById('btnBeep').disabled = false;
-                document.getElementById('btnMusic').disabled = false;
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                setStatus('Initialization failed', 'error');
-            }
-        }
-
-        // Audio Tests
-        function testAudioInit() {
-            try {
-                log('Testing FSOUND_Init...', 'info');
-                
-                if (!Blitz3D.audio) {
-                    log('Audio system not initialized yet', 'error');
-                    return;
-                }
-                
-                // Initialize Web Audio
-                if (!Blitz3D.audio.audioContext) {
-                    const result = Blitz3D.audio.init();
-                    if (result) {
-                        log('✓ Audio context initialized', 'success');
-                        log(`  Sample rate: ${Blitz3D.audio.audioContext.sampleRate}Hz`, 'info');
-                        log(`  State: ${Blitz3D.audio.audioContext.state}`, 'info');
-                        document.getElementById('btnBeep').disabled = false;
-                        document.getElementById('btnMusic').disabled = false;
-                    } else {
-                        log('✗ Audio init failed', 'error');
-                    }
-                } else {
-                    log('Audio already initialized', 'warn');
-                }
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-            }
-        }
-
-        function testBeep() {
-            try {
-                log('Playing test beep (440Hz sine wave)...', 'info');
-                
-                if (!Blitz3D.audio || !Blitz3D.audio.audioContext) {
-                    log('Audio not initialized! Click "Initialize Audio" first.', 'error');
-                    return;
-                }
-
-                // Create oscillator for beep
-                const oscillator = Blitz3D.audio.audioContext.createOscillator();
-                const gainNode = Blitz3D.audio.audioContext.createGain();
-                
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 440; // A4 note
-                
-                gainNode.gain.value = 0.3;
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(Blitz3D.audio.masterGain);
-                
-                oscillator.start();
-                oscillator.stop(Blitz3D.audio.audioContext.currentTime + 0.5);
-                
-                log('✓ Beep played', 'success');
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-            }
-        }
-
-        function testMusic() {
-            log('Music test requires actual audio file', 'warn');
-            log('Would call: FSOUND_Stream_Open("music.ogg", 0, 0, 0)', 'info');
-        }
-
-        async function testSCPSound() {
-            try {
-                log('Loading SCP: Containment Breach horror sound...', 'info');
-                
-                const response = await fetch('assets/horror.ogg');
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
-                const arrayBuffer = await response.arrayBuffer();
-                log(`✓ Loaded ${arrayBuffer.byteLength} bytes`, 'success');
-                
-                const audioContext = Blitz3D.audio.audioContext;
-                if (!audioContext) {
-                    log('Initialize audio first!', 'error');
-                    return;
-                }
-                
-                log('Decoding OGG audio...', 'info');
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                log(`✓ Decoded: ${audioBuffer.duration.toFixed(2)}s`, 'success');
-                
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                source.start(0);
-                
-                log('🎵 Playing SCP horror sound!', 'success');
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-            }
-        }
-
-        // File System Tests
-        function testFileSystem() {
-            try {
-                log('Testing Virtual File System...', 'info');
-                
-                if (!Blitz3D.vfs) {
-                    log('VFS not initialized yet', 'error');
-                    return;
-                }
-                
-                // Test file type check (should return 0 for non-existent file)
-                log('Creating test file in memory...', 'info');
-                
-                // Manually add a test file to VFS
-                const testData = new Uint8Array([
-                    0x48, 0x65, 0x6C, 0x6C, 0x6F, // "Hello"
-                    0x00, 0x00, 0x00, 0x2A,       // int: 42
-                    0x00, 0x00, 0x20, 0x41        // float: 10.0
-                ]);
-                
-                Blitz3D.vfs.files.set(999, {
-                    data: testData,
-                    position: 0,
-                    path: 'test.dat',
-                    source: 'memory'
-                });
-                
-                log('✓ Test file created (ID: 999)', 'success');
-                log(`  Size: ${testData.length} bytes`, 'info');
-                
-                // Test reading
-                const file = Blitz3D.vfs.files.get(999);
-                const byte = file.data[0];
-                log(`✓ Read first byte: 0x${byte.toString(16).toUpperCase()} (${String.fromCharCode(byte)})`, 'success');
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-            }
-        }
-
-        async function loadTestZip() {
-            try {
-                log('ZIP loading requires a .zip file to test', 'warn');
-                log('Example usage:', 'info');
-                log('  await Blitz3D.vfs.loadZip("assets/test.zip")', 'info');
-                log('  File would be accessible via OpenFile()', 'info');
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-            }
-        }
-
-        // WASM Module Loading
-        async function loadWASM(filename) {
-            try {
-                log(`Loading ${filename}...`, 'info');
-                
-                // Try to fetch from current directory
-                const response = await fetch(filename);
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const bytes = await response.arrayBuffer();
-                log(`✓ Loaded ${bytes.byteLength} bytes`, 'success');
-                
-                log('Instantiating WebAssembly module...', 'info');
-                
-                // Ensure Blitz3D is initialized first
-                if (!Blitz3D.core) {
-                    log('Blitz3D not initialized! Call Blitz3D.init() first.', 'error');
-                    return;
-                }
-                
-                log(`Using imports with ${Object.keys(Blitz3D.imports.env).length} env functions`, 'info');
-                const result = await WebAssembly.instantiate(bytes, Blitz3D.imports);
-                wasmModule = result.instance;
-                
-                log('✓ WASM module instantiated', 'success');
-                log(`  Exports: ${Object.keys(wasmModule.exports).length}`, 'info');
-                
-                // Store references
-                Blitz3D.core.instance = wasmModule;
-                Blitz3D.core.memory = wasmModule.exports.memory;
-                
-                // Call main function if it exists
-                if (wasmModule.exports._start) {
-                    log('Calling _start()...', 'info');
-                    wasmModule.exports._start();
-                    log('✓ Program executed', 'success');
-                } else if (wasmModule.exports.main) {
-                    log('Calling main()...', 'info');
-                    wasmModule.exports.main();
-                    log('✓ Program executed', 'success');
-                } else {
-                    log('No entry point found (_start or main)', 'warn');
-                }
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                log(`  Make sure WASM files are in /tmp/ or adjust path`, 'warn');
-            }
-        }
-
-        // Initialize on load
-        window.addEventListener('load', () => {
-            log('=== Blitz3D WASM Runtime Test ===', 'info');
-            log('Checking dependencies...', 'info');
-            
-            if (typeof THREE !== 'undefined') {
-                log('✓ Three.js loaded', 'success');
+          // Initialize Web Audio
+          if (!Blitz3D.audio.audioContext) {
+            const result = Blitz3D.audio.init();
+            if (result) {
+              log("✓ Audio context initialized", "success");
+              log(
+                `  Sample rate: ${Blitz3D.audio.audioContext.sampleRate}Hz`,
+                "info",
+              );
+              log(
+                `  State: ${Blitz3D.audio.audioContext.state}`,
+                "info",
+              );
+              document.getElementById("btnBeep").disabled = false;
+              document.getElementById("btnMusic").disabled = false;
             } else {
-                log('✗ Three.js not loaded', 'error');
+              log("✗ Audio init failed", "error");
             }
-            
-            if (typeof JSZip !== 'undefined') {
-                log('✓ JSZip loaded', 'success');
-            } else {
-                log('✗ JSZip not loaded', 'error');
-            }
-            
-            // Check if Blitz3D runtime loaded
-            if (typeof Blitz3D !== 'undefined') {
-                log('✓ Blitz3D runtime loaded', 'success');
-            } else {
-                log('✗ Blitz3D runtime not loaded', 'error');
-                log('  Check that all runtime modules loaded correctly', 'warn');
-                setStatus('Runtime failed to load', 'error');
-                return;
-            }
-            
-            // Small delay to ensure all modules initialized
-            setTimeout(() => {
-                init();
-            }, 100);
-        });
+          } else {
+            log("Audio already initialized", "warn");
+          }
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+        }
+      }
+
+      function testBeep() {
+        try {
+          log("Playing test beep (440Hz sine wave)...", "info");
+
+          if (!Blitz3D.audio || !Blitz3D.audio.audioContext) {
+            log(
+              'Audio not initialized! Click "Initialize Audio" first.',
+              "error",
+            );
+            return;
+          }
+
+          // Create oscillator for beep
+          const oscillator = Blitz3D.audio.audioContext
+            .createOscillator();
+          const gainNode = Blitz3D.audio.audioContext.createGain();
+
+          oscillator.type = "sine";
+          oscillator.frequency.value = 440; // A4 note
+
+          gainNode.gain.value = 0.3;
+
+          oscillator.connect(gainNode);
+          gainNode.connect(Blitz3D.audio.masterGain);
+
+          oscillator.start();
+          oscillator.stop(Blitz3D.audio.audioContext.currentTime + 0.5);
+
+          log("✓ Beep played", "success");
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+        }
+      }
+
+      function testMusic() {
+        log("Music test requires actual audio file", "warn");
+        log(
+          'Would call: FSOUND_Stream_Open("music.ogg", 0, 0, 0)',
+          "info",
+        );
+      }
+
+      async function testSCPSound() {
+        try {
+          log(
+            "Loading SCP: Containment Breach horror sound...",
+            "info",
+          );
+
+          const response = await fetch("assets/horror.ogg");
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+          const arrayBuffer = await response.arrayBuffer();
+          log(`✓ Loaded ${arrayBuffer.byteLength} bytes`, "success");
+
+          const audioContext = Blitz3D.audio.audioContext;
+          if (!audioContext) {
+            log("Initialize audio first!", "error");
+            return;
+          }
+
+          log("Decoding OGG audio...", "info");
+          const audioBuffer = await audioContext.decodeAudioData(
+            arrayBuffer,
+          );
+          log(
+            `✓ Decoded: ${audioBuffer.duration.toFixed(2)}s`,
+            "success",
+          );
+
+          const source = audioContext.createBufferSource();
+          source.buffer = audioBuffer;
+          source.connect(audioContext.destination);
+          source.start(0);
+
+          log("🎵 Playing SCP horror sound!", "success");
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+        }
+      }
+
+      // File System Tests
+      function testFileSystem() {
+        try {
+          log("Testing Virtual File System...", "info");
+
+          if (!Blitz3D.vfs) {
+            log("VFS not initialized yet", "error");
+            return;
+          }
+
+          // Test file type check (should return 0 for non-existent file)
+          log("Creating test file in memory...", "info");
+
+          // Manually add a test file to VFS
+          const testData = new Uint8Array([
+            0x48,
+            0x65,
+            0x6C,
+            0x6C,
+            0x6F, // "Hello"
+            0x00,
+            0x00,
+            0x00,
+            0x2A, // int: 42
+            0x00,
+            0x00,
+            0x20,
+            0x41, // float: 10.0
+          ]);
+
+          Blitz3D.vfs.files.set(999, {
+            data: testData,
+            position: 0,
+            path: "test.dat",
+            source: "memory",
+          });
+
+          log("✓ Test file created (ID: 999)", "success");
+          log(`  Size: ${testData.length} bytes`, "info");
+
+          // Test reading
+          const file = Blitz3D.vfs.files.get(999);
+          const byte = file.data[0];
+          log(
+            `✓ Read first byte: 0x${byte.toString(16).toUpperCase()} (${
+              String.fromCharCode(byte)
+            })`,
+            "success",
+          );
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+        }
+      }
+
+      async function loadTestZip() {
+        try {
+          log("ZIP loading requires a .zip file to test", "warn");
+          log("Example usage:", "info");
+          log('  await Blitz3D.vfs.loadZip("assets/test.zip")', "info");
+          log("  File would be accessible via OpenFile()", "info");
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+        }
+      }
+
+      // WASM Module Loading
+      async function loadWASM(filename) {
+        try {
+          log(`Loading ${filename}...`, "info");
+
+          // Try to fetch from current directory
+          const response = await fetch(filename);
+          if (!response.ok) {
+            throw new Error(
+              `HTTP ${response.status}: ${response.statusText}`,
+            );
+          }
+
+          const bytes = await response.arrayBuffer();
+          log(`✓ Loaded ${bytes.byteLength} bytes`, "success");
+
+          log("Instantiating WebAssembly module...", "info");
+
+          // Ensure Blitz3D is initialized first
+          if (!Blitz3D.core) {
+            log(
+              "Blitz3D not initialized! Call Blitz3D.init() first.",
+              "error",
+            );
+            return;
+          }
+
+          log(
+            `Using imports with ${
+              Object.keys(Blitz3D.imports.env).length
+            } env functions`,
+            "info",
+          );
+          const result = await WebAssembly.instantiate(
+            bytes,
+            Blitz3D.imports,
+          );
+          wasmModule = result.instance;
+
+          log("✓ WASM module instantiated", "success");
+          log(
+            `  Exports: ${Object.keys(wasmModule.exports).length}`,
+            "info",
+          );
+
+          // Store references
+          Blitz3D.core.instance = wasmModule;
+          Blitz3D.core.memory = wasmModule.exports.memory;
+
+          // Call main function if it exists
+          if (wasmModule.exports._start) {
+            log("Calling _start()...", "info");
+            wasmModule.exports._start();
+            log("✓ Program executed", "success");
+          } else if (wasmModule.exports.main) {
+            log("Calling main()...", "info");
+            wasmModule.exports.main();
+            log("✓ Program executed", "success");
+          } else {
+            log("No entry point found (_start or main)", "warn");
+          }
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          log(
+            `  Make sure WASM files are in /tmp/ or adjust path`,
+            "warn",
+          );
+        }
+      }
+
+      // Initialize on load
+      window.addEventListener("load", () => {
+        log("=== Blitz3D WASM Runtime Test ===", "info");
+        log("Checking dependencies...", "info");
+
+        if (typeof THREE !== "undefined") {
+          log("✓ Three.js loaded", "success");
+        } else {
+          log("✗ Three.js not loaded", "error");
+        }
+
+        if (typeof JSZip !== "undefined") {
+          log("✓ JSZip loaded", "success");
+        } else {
+          log("✗ JSZip not loaded", "error");
+        }
+
+        // Check if Blitz3D runtime loaded
+        if (typeof Blitz3D !== "undefined") {
+          log("✓ Blitz3D runtime loaded", "success");
+        } else {
+          log("✗ Blitz3D runtime not loaded", "error");
+          log(
+            "  Check that all runtime modules loaded correctly",
+            "warn",
+          );
+          setStatus("Runtime failed to load", "error");
+          return;
+        }
+
+        // Small delay to ensure all modules initialized
+        setTimeout(() => {
+          init();
+        }, 100);
+      });
     </script>
-</body>
+  </body>
 </html>

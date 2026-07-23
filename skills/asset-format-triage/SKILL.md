@@ -14,7 +14,8 @@ description: Parse, understand, convert, and debug SCPCB asset formats in Blitz3
 
 - B3D → SMPK: `Tools/convert_b3d_to_smpk.ts` (parser: `Tools/b3d/parse.ts`)
 - X → SMPK: `Tools/convert_x_to_smpk.ts` (parsers: `Tools/x/parse_*.ts`)
-- RMESH → SMPK: `Tools/convert_rmesh_to_smpk.ts` (parser: `Tools/rmesh/parse.ts`)
+- RMESH → SMPK: `Tools/convert_rmesh_to_smpk.ts` (parser:
+  `Tools/rmesh/parse.ts`)
 
 ## Runtime loaders (debug harness)
 
@@ -40,25 +41,31 @@ description: Parse, understand, convert, and debug SCPCB asset formats in Blitz3
 
 ### `.rmesh`
 
-- SCPCB convention: RMESH texture slot0 is often **LIGHTMAP**, slot1 is **DIFFUSE**.
+- SCPCB convention: RMESH texture slot0 is often **LIGHTMAP**, slot1 is
+  **DIFFUSE**.
   - The converter swaps these (`Tools/convert_rmesh_to_smpk.ts`).
-- If materials look wrong, confirm slot mapping and texture name resolution (case-insensitive maps).
+- If materials look wrong, confirm slot mapping and texture name resolution
+  (case-insensitive maps).
 
 ### `.x`
 
 - Can be text, binary, or MSZIP-compressed variants.
-- Skin weights require correct bone name mapping; missing/empty SkinWeights often means rigid mesh output.
-- Texture paths in materials are frequently relative and case-sensitive in practice; fix via conversion-time mapping.
+- Skin weights require correct bone name mapping; missing/empty SkinWeights
+  often means rigid mesh output.
+- Texture paths in materials are frequently relative and case-sensitive in
+  practice; fix via conversion-time mapping.
 
 ### `.b3d`
 
 - Must start with `BB3D` and a supported version.
-- Bone weights + keyframes require correct node hierarchy; verify “root exists” and that at least one MESH node is found.
-- Texture naming in B3D can be inconsistent; prioritize conversion-time texture name normalization.
+- Bone weights + keyframes require correct node hierarchy; verify “root exists”
+  and that at least one MESH node is found.
+- Texture naming in B3D can be inconsistent; prioritize conversion-time texture
+  name normalization.
 
 ## When the issue is “missing textures”
 
 1. Treat it as a path/casing problem first.
 2. Prefer fixing on disk/manifest/conversion over adding runtime aliases.
-3. If you do add aliasing, keep it narrow and test with `validate_smpk_material_textures`.
-
+3. If you do add aliasing, keep it narrow and test with
+   `validate_smpk_material_textures`.

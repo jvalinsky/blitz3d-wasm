@@ -15,10 +15,17 @@ type WorkerCallMsg = {
   args?: Array<number | string>;
 };
 
-const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  p: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> => {
   let id: number | null = null;
   const timeout = new Promise<T>((_resolve, reject) => {
-    id = setTimeout(() => reject(new Error(`timeout after ${ms}ms: ${label}`)), ms) as unknown as number;
+    id = setTimeout(
+      () => reject(new Error(`timeout after ${ms}ms: ${label}`)),
+      ms,
+    ) as unknown as number;
   });
   try {
     return await Promise.race([p, timeout]);
@@ -32,7 +39,12 @@ const startWorker = () => {
   return new Worker(url.href, { type: "module" });
 };
 
-const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: number, label: string) => {
+const waitFor = async (
+  worker: Worker,
+  predicate: (msg: any) => boolean,
+  ms: number,
+  label: string,
+) => {
   return await withTimeout(
     new Promise<any>((resolve, reject) => {
       const onMsg = (ev: MessageEvent) => {
@@ -63,9 +75,19 @@ const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: num
   );
 };
 
-const callExport = async (worker: Worker, callId: number, exportName: string, args?: Array<number | string>) => {
+const callExport = async (
+  worker: Worker,
+  callId: number,
+  exportName: string,
+  args?: Array<number | string>,
+) => {
   const msg: WorkerCallMsg = { cmd: "call", callId, exportName, args };
-  const pDone = waitFor(worker, (m) => m?.type === "callDone" && m?.callId === callId, 5000, `callDone ${exportName}`);
+  const pDone = waitFor(
+    worker,
+    (m) => m?.type === "callDone" && m?.callId === callId,
+    5000,
+    `callDone ${exportName}`,
+  );
   worker.postMessage(msg);
   const done = await pDone;
   return done?.result as number;
@@ -81,7 +103,10 @@ Deno.test("scpcb_worker smoke: init + call export", async () => {
   const exports = WebAssembly.Module.exports(mod).map((e) => e.name);
   assert(exports.includes("add"), "fixture wasm must export add");
 
-  const tmp = await Deno.makeTempDir({ dir: "/tmp", prefix: "blitz3d-wasm-worker-smoke-" });
+  const tmp = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: "blitz3d-wasm-worker-smoke-",
+  });
   const wasmPath = `${tmp}/min_add.wasm`;
   await Deno.writeFile(wasmPath, wasmBytes);
 
@@ -102,7 +127,12 @@ Deno.test("scpcb_worker smoke: init + call export", async () => {
       preloadGroup: "boot",
       wasmUrl: pathToFileURL(wasmPath).href,
     };
-    const pReady = waitFor(worker, (m) => m?.type === "ready", 20_000, "worker ready");
+    const pReady = waitFor(
+      worker,
+      (m) => m?.type === "ready",
+      20_000,
+      "worker ready",
+    );
     worker.postMessage(initMsg);
     await pReady;
 
@@ -112,7 +142,12 @@ Deno.test("scpcb_worker smoke: init + call export", async () => {
     }
 
     worker.postMessage({ cmd: "dispose" });
-    await waitFor(worker, (m) => m?.type === "status" && m?.status?.stage === "disposed", 2000, "worker disposed");
+    await waitFor(
+      worker,
+      (m) => m?.type === "status" && m?.status?.stage === "disposed",
+      2000,
+      "worker disposed",
+    );
   } finally {
     worker.terminate();
   }

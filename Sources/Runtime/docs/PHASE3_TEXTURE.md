@@ -1,12 +1,17 @@
 # Phase 3: Texture Loading System
 
 ## Overview
-Phase 3 implements a comprehensive texture loading system for SCPCB assets, supporting BMP, JPG, PNG, and DDS formats with proper caching and material integration.
+
+Phase 3 implements a comprehensive texture loading system for SCPCB assets,
+supporting BMP, JPG, PNG, and DDS formats with proper caching and material
+integration.
 
 ## Components
 
 ### 1. Texture Loader (`texture.js`)
+
 Core texture loading system with features:
+
 - **Format Support**: BMP, JPG, PNG, DDS
 - **Caching**: LRU-style texture cache
 - **Async Loading**: Non-blocking texture loading
@@ -15,7 +20,9 @@ Core texture loading system with features:
 - **Anisotropy**: Enhanced texture quality at angles
 
 ### 2. Material System (`material.js`)
+
 Blitz3D-compatible material/brush system:
+
 - **Brush Creation**: Create and configure brushes
 - **Texture Assignment**: Up to 2 texture units per brush
 - **Blend Modes**: Replace, Add, Alpha, Multiply, Blend
@@ -23,7 +30,9 @@ Blitz3D-compatible material/brush system:
 - **Surface Painting**: Apply materials to surfaces
 
 ### 3. Graphics Integration
+
 Updated `graphics.js` with:
+
 - Texture loader initialization
 - Material system integration
 - WASM imports for texture/material functions
@@ -32,14 +41,15 @@ Updated `graphics.js` with:
 
 ### Supported Texture Formats
 
-| Format | Support | Notes |
-|--------|---------|-------|
-| BMP | Full | Uncompressed, 8/16/24/32-bit |
-| JPG | Full | Baseline JPEG |
-| PNG | Full | RGBA support |
-| DDS | Partial | Basic support, compressed formats limited |
+| Format | Support | Notes                                     |
+| ------ | ------- | ----------------------------------------- |
+| BMP    | Full    | Uncompressed, 8/16/24/32-bit              |
+| JPG    | Full    | Baseline JPEG                             |
+| PNG    | Full    | RGBA support                              |
+| DDS    | Partial | Basic support, compressed formats limited |
 
 ### BMP Format Support
+
 ```
 Header Types:
 ├── BITMAPINFOHEADER (40 bytes) - Windows
@@ -53,6 +63,7 @@ Pixel Formats:
 ```
 
 ### Texture Cache System
+
 ```
 ┌─────────────────────────────────────┐
 │         Texture Cache               │
@@ -67,31 +78,33 @@ Pixel Formats:
 
 ### Blend Mode Mapping
 
-| Blitz3D Mode | Name | Three.js Blending |
-|--------------|------|-------------------|
-| 0 | Replace | NoBlending |
-| 1 | Add | AdditiveBlending |
-| 2 | Alpha | NormalBlending (transparent) |
-| 3 | Multiply | MultiplyBlending |
-| 5 | Blend | NormalBlending (opacity) |
+| Blitz3D Mode | Name     | Three.js Blending            |
+| ------------ | -------- | ---------------------------- |
+| 0            | Replace  | NoBlending                   |
+| 1            | Add      | AdditiveBlending             |
+| 2            | Alpha    | NormalBlending (transparent) |
+| 3            | Multiply | MultiplyBlending             |
+| 5            | Blend    | NormalBlending (opacity)     |
 
 ## Usage
 
 ### Basic Texture Loading
+
 ```javascript
 // Initialize texture loader
 const textureLoader = new Blitz3DTextureLoader(graphics, fileIO, assetManager);
 textureLoader.init();
 
 // Load a texture
-const texture = await textureLoader.loadTexture('textures/wall.png', {
-    smooth: true,
-    wrapU: THREE.RepeatWrapping,
-    wrapV: THREE.RepeatWrapping
+const texture = await textureLoader.loadTexture("textures/wall.png", {
+  smooth: true,
+  wrapU: THREE.RepeatWrapping,
+  wrapV: THREE.RepeatWrapping,
 });
 ```
 
 ### Using with Materials
+
 ```javascript
 // Create a brush
 const brushId = material.createBrush();
@@ -100,17 +113,18 @@ const brushId = material.createBrush();
 material.brushColor(brushId, 255, 128, 64);
 
 // Add textures
-material.brushTexture(brushId, textureId1, 0, 0);  // Diffuse
-material.brushTexture(brushId, textureId2, 0, 1);  // Lightmap
+material.brushTexture(brushId, textureId1, 0, 0); // Diffuse
+material.brushTexture(brushId, textureId2, 0, 1); // Lightmap
 
 // Set blend mode
-material.brushBlend(brushId, 3);  // Multiply (lightmap)
+material.brushBlend(brushId, 3); // Multiply (lightmap)
 
 // Paint surface
 material.paintSurface(surfaceId, brushId);
 ```
 
 ### Direct Material Creation
+
 ```javascript
 // Create material from brush
 const threeMaterial = material.createMaterialFromBrush(brush);
@@ -123,10 +137,10 @@ mesh.material = threeMaterial;
 
 ```javascript
 const options = {
-    smooth: true,           // Linear filtering
-    wrapU: THREE.RepeatWrapping,  // U wrapping
-    wrapV: THREE.RepeatWrapping,  // V wrapping
-    flags: 0                // Blitz3D texture flags
+  smooth: true, // Linear filtering
+  wrapU: THREE.RepeatWrapping, // U wrapping
+  wrapV: THREE.RepeatWrapping, // V wrapping
+  flags: 0, // Blitz3D texture flags
 };
 ```
 
@@ -142,12 +156,14 @@ Standard indicator for missing textures in games
 ## Performance
 
 ### Optimization Strategies
+
 1. **Texture Atllas**: Combine multiple small textures
 2. **Mipmaps**: Pre-generate for better performance
 3. **Compression**: Use DDS BC formats where supported
 4. **Streaming**: Load textures on demand
 
 ### Cache Management
+
 ```javascript
 // Get cache stats
 const stats = textureLoader.getStats();
@@ -157,12 +173,13 @@ console.log(`Cached: ${stats.cached}, Loading: ${stats.loading}`);
 textureLoader.clearCache();
 
 // Remove specific texture
-textureLoader.uncacheTexture('textures/wall.png');
+textureLoader.uncacheTexture("textures/wall.png");
 ```
 
 ## WASM Integration
 
 ### Texture Functions
+
 ```blitz3d
 ; Load texture with flags
 tex = LoadTexture("textures/wall.png", 1)
@@ -179,6 +196,7 @@ TextureBlend(tex, 3)  ; Multiply
 ```
 
 ### Material Functions
+
 ```blitz3d
 ; Create brush
 brush = CreateBrush()
@@ -201,12 +219,14 @@ FreeBrush brush
 ## Testing
 
 Run texture tests:
+
 ```bash
 cd Sources/Runtime
 node tools/test_texture.js
 ```
 
 Expected output:
+
 ```
 Running Texture Loader Tests...
 

@@ -2,9 +2,11 @@
 
 Source: https://github.com/blitz-research/blitz3d (official source release)
 
-The Blitz3D runtime is organized into subsystems. Each function is documented with its signature where:
+The Blitz3D runtime is organized into subsystems. Each function is documented
+with its signature where:
+
 - `%` = integer parameter/return
-- `#` = float parameter/return  
+- `#` = float parameter/return
 - `$` = string parameter/return
 - `=value` = default parameter value
 
@@ -300,6 +302,7 @@ BufferDirty%buffer
 ## Graphics 3D (bbblitz3d.cpp)
 
 ### World/Rendering
+
 ```
 LoaderMatrix$file_ext#xx#xy#xz#yx#yy#yz#zx#zy#zz
 HWMultiTex%enable
@@ -322,6 +325,7 @@ ClearWorld%entities=1%brushes=1%textures=1
 ```
 
 ### Textures
+
 ```
 %CreateTexture%width%height%flags=0%frames=1
 %LoadTexture$file%flags=1
@@ -343,6 +347,7 @@ TextureFilter$match_text%texture_flags=0
 ```
 
 ### Brushes
+
 ```
 %CreateBrush#red=255#green=255#blue=255
 %LoadBrush$file%texture_flags=1#u_scale=1#v_scale=1
@@ -357,6 +362,7 @@ BrushFX%brush%fx
 ```
 
 ### Meshes
+
 ```
 %LoadMesh$file%parent=0
 %LoadAnimMesh$file%parent=0
@@ -386,6 +392,7 @@ MeshCullBox%mesh#x#y#z#width#height#depth
 ```
 
 ### Surfaces
+
 ```
 %CreateSurface%mesh%brush=0
 %GetSurfaceBrush%surface
@@ -418,6 +425,7 @@ VertexTexCoords%surface%index#u#v#w=1%coord_set=0
 ```
 
 ### Camera
+
 ```
 %CreateCamera%parent=0
 CameraZoom%camera#zoom
@@ -436,6 +444,7 @@ CameraProject%camera#x#y#z
 ```
 
 ### Picking
+
 ```
 %EntityInView%entity%camera
 %EntityVisible%src_entity%dest_entity
@@ -455,6 +464,7 @@ CameraProject%camera#x#y#z
 ```
 
 ### Lights
+
 ```
 %CreateLight%type=1%parent=0
 LightColor%light#red#green#blue
@@ -463,6 +473,7 @@ LightConeAngles%light#inner_angle#outer_angle
 ```
 
 ### Sprites
+
 ```
 %CreateSprite%parent=0
 %LoadSprite$file%texture_flags=1%parent=0
@@ -473,6 +484,7 @@ SpriteViewMode%sprite%view_mode
 ```
 
 ### Entity Transforms
+
 ```
 %CopyEntity%entity%parent=0
 #EntityX%entity%global=0
@@ -503,6 +515,7 @@ AlignToVector%entity#vector_x#vector_y#vector_z%axis#rate=1
 ```
 
 ### Entity Collision
+
 ```
 ResetEntity%entity
 EntityType%entity%collision_type%recursive=0
@@ -527,6 +540,7 @@ EntityBox%entity#x#y#z#width#height#depth
 ```
 
 ### Entity Animation
+
 ```
 SetAnimTime%entity#time%anim_seq=0
 Animate%entity%mode=1#speed=1%sequence=0#transition=0
@@ -540,6 +554,7 @@ SetAnimKey%entity%frame%pos_key=1%rot_key=1%scale_key=1
 ```
 
 ### Entity Hierarchy
+
 ```
 EntityParent%entity%parent%global=1
 %CountChildren%entity
@@ -548,6 +563,7 @@ EntityParent%entity%parent%global=1
 ```
 
 ### Entity Appearance
+
 ```
 PaintEntity%entity%brush
 EntityColor%entity#red#green#blue
@@ -567,6 +583,7 @@ $EntityClass%entity
 ```
 
 ### Other 3D
+
 ```
 %CreatePivot%parent=0
 %CreateMirror%parent=0
@@ -622,18 +639,18 @@ TCPTimeouts%read_millis%accept_millis
 
 ## Implementation Status in blitz3d-wasm
 
-| Subsystem | Functions | Implemented | Notes |
-|-----------|-----------|-------------|-------|
-| System | 15 | ~8 | MilliSecs, Delay, Print, etc. |
-| Math | 17 | 17 | All implemented |
-| String | 18 | ~10 | Basic string ops |
-| Stream | 15 | ~8 | ReadInt, WriteInt, etc. |
-| FileSystem | 17 | ~5 | Basic file ops |
-| Bank | 16 | 16 | All implemented |
-| Input | 35 | ~20 | Key/Mouse, partial Joy |
-| Audio | 17 | ~5 | Basic sound |
-| Graphics 2D | 80+ | ~20 | Basic drawing |
-| Graphics 3D | 150+ | ~60 | Core 3D rendering |
-| Sockets | 18 | 0 | Not needed for SCPCB |
+| Subsystem   | Functions | Implemented | Notes                         |
+| ----------- | --------- | ----------- | ----------------------------- |
+| System      | 15        | ~8          | MilliSecs, Delay, Print, etc. |
+| Math        | 17        | 17          | All implemented               |
+| String      | 18        | ~10         | Basic string ops              |
+| Stream      | 15        | ~8          | ReadInt, WriteInt, etc.       |
+| FileSystem  | 17        | ~5          | Basic file ops                |
+| Bank        | 16        | 16          | All implemented               |
+| Input       | 35        | ~20         | Key/Mouse, partial Joy        |
+| Audio       | 17        | ~5          | Basic sound                   |
+| Graphics 2D | 80+       | ~20         | Basic drawing                 |
+| Graphics 3D | 150+      | ~60         | Core 3D rendering             |
+| Sockets     | 18        | 0           | Not needed for SCPCB          |
 
 Total: ~400+ functions in original Blitz3D runtime

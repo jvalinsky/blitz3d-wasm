@@ -50,7 +50,10 @@ const walkBbFiles = async function* (dir: string): AsyncGenerator<string> {
     const full = `${dir}/${entry.name}`;
     if (entry.isDirectory) {
       // Skip obvious build artifacts.
-      if (entry.name === "bin" || entry.name === "dist" || entry.name === "node_modules") continue;
+      if (
+        entry.name === "bin" || entry.name === "dist" ||
+        entry.name === "node_modules"
+      ) continue;
       yield* walkBbFiles(full);
       continue;
     }
@@ -124,7 +127,7 @@ const extractDynamicMeshCallsFromLine = (
     const arg = (m[2] ?? "").trim();
     if (!fn) continue;
     // If it's a string literal, it's handled by asset extraction.
-    if (arg.startsWith("\"")) continue;
+    if (arg.startsWith('"')) continue;
     // If it’s clearly empty or numeric, ignore.
     if (!arg || /^[0-9.\-+]+$/.test(arg)) continue;
     // Skip obvious commented-out (inline) occurrences.
@@ -150,7 +153,9 @@ export const scanScpcb = async (root: string): Promise<ScpcbAuditResult> => {
       const line = stripInlineComment(rawLine);
       if (!line) continue;
       assets.push(...extractAssetsFromLine(rel, lineNo, rawLine));
-      dynamicCalls.push(...extractDynamicMeshCallsFromLine(rel, lineNo, rawLine));
+      dynamicCalls.push(
+        ...extractDynamicMeshCallsFromLine(rel, lineNo, rawLine),
+      );
       perFile += 1;
     }
   }
@@ -175,9 +180,18 @@ export const scanScpcb = async (root: string): Promise<ScpcbAuditResult> => {
       dynamicMeshCalls: dynamicCalls.length,
     },
     extensions: {
-      b3d: { hits: (byExt.get("b3d") ?? []).length, unique: uniqAssetsByExt("b3d").length },
-      x: { hits: (byExt.get("x") ?? []).length, unique: uniqAssetsByExt("x").length },
-      rmesh: { hits: (byExt.get("rmesh") ?? []).length, unique: uniqAssetsByExt("rmesh").length },
+      b3d: {
+        hits: (byExt.get("b3d") ?? []).length,
+        unique: uniqAssetsByExt("b3d").length,
+      },
+      x: {
+        hits: (byExt.get("x") ?? []).length,
+        unique: uniqAssetsByExt("x").length,
+      },
+      rmesh: {
+        hits: (byExt.get("rmesh") ?? []).length,
+        unique: uniqAssetsByExt("rmesh").length,
+      },
     },
   };
 
@@ -186,7 +200,9 @@ export const scanScpcb = async (root: string): Promise<ScpcbAuditResult> => {
 
 const args = new Set(Deno.args);
 const rootArgIdx = Deno.args.findIndex((a) => a === "--root");
-const root = rootArgIdx >= 0 ? (Deno.args[rootArgIdx + 1] ?? "../scpcb") : "../scpcb";
+const root = rootArgIdx >= 0
+  ? (Deno.args[rootArgIdx + 1] ?? "../scpcb")
+  : "../scpcb";
 const jsonOut = args.has("--json");
 
 const main = async () => {
@@ -206,7 +222,9 @@ const main = async () => {
   console.log(
     `unique assets: b3d=${summary.extensions.b3d.unique}, x=${summary.extensions.x.unique}, rmesh=${summary.extensions.rmesh.unique}`,
   );
-  console.log(`dynamic LoadMesh* callsites: ${summary.totals.dynamicMeshCalls}`);
+  console.log(
+    `dynamic LoadMesh* callsites: ${summary.totals.dynamicMeshCalls}`,
+  );
 
   printTop("Unique .x assets", uniqAssetsByExt("x"));
   printTop("Unique .b3d assets", uniqAssetsByExt("b3d"));
@@ -217,7 +235,9 @@ const main = async () => {
     for (const h of dynamicCalls.slice(0, 30)) {
       console.log(`- ${h.file}:${h.line} ${h.fn}(${h.arg})`);
     }
-    if (dynamicCalls.length > 30) console.log(`- … ${dynamicCalls.length - 30} more`);
+    if (dynamicCalls.length > 30) {
+      console.log(`- … ${dynamicCalls.length - 30} more`);
+    }
   }
 };
 

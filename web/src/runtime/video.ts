@@ -2,7 +2,7 @@
 
 /**
  * Video playback runtime for Blitz3D WASM engine
- * 
+ *
  * Implements BlitzMovie_* functions using HTML5 video elements.
  * Maps WASM video handles to actual <video> elements in the DOM.
  */
@@ -24,16 +24,16 @@ export class VideoRuntime {
 
   /**
    * Open a video file for playback
-   * 
+   *
    * @param path - Path to video file (relative to dist/)
    * @returns Movie handle, or 0 on failure
    */
   openMovie(path: string): number {
     try {
-      const video = document.createElement('video');
+      const video = document.createElement("video");
       video.src = path;
-      video.style.display = 'none'; // Hidden by default
-      video.preload = 'metadata';
+      video.style.display = "none"; // Hidden by default
+      video.preload = "metadata";
 
       // Auto-remove on error
       video.onerror = () => {
@@ -61,7 +61,7 @@ export class VideoRuntime {
 
     // Stop playback and cleanup
     movie.video.pause();
-    movie.video.src = '';
+    movie.video.src = "";
     movie.video.remove();
 
     this.movies.delete(handle);
@@ -99,7 +99,7 @@ export class VideoRuntime {
       }
 
       // Show video
-      movie.video.style.display = 'block';
+      movie.video.style.display = "block";
 
       await movie.video.play();
       console.log(`[VideoRuntime] Playing (handle=${handle})`);
@@ -119,7 +119,7 @@ export class VideoRuntime {
 
     movie.video.pause();
     movie.video.currentTime = 0;
-    movie.video.style.display = 'none';
+    movie.video.style.display = "none";
 
     console.log(`[VideoRuntime] Stopped (handle=${handle})`);
     return true;
@@ -207,7 +207,14 @@ export class VideoRuntime {
   /**
    * Draw video frame to canvas
    */
-  drawToCanvas(handle: number, ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+  drawToCanvas(
+    handle: number,
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+  ): void {
     const movie = this.movies.get(handle);
     if (!movie || movie.video.paused) return;
 
@@ -245,7 +252,10 @@ export function getVideoRuntime(container?: HTMLElement): VideoRuntime {
  * WASM-compatible exports
  * These match the signatures in PlatformStubs.swift
  */
-export function createVideoWasmExports(runtime: VideoRuntime | undefined, readString: (ptr: number) => string) {
+export function createVideoWasmExports(
+  runtime: VideoRuntime | undefined,
+  readString: (ptr: number) => string,
+) {
   const vr = runtime || getVideoRuntime();
 
   return {
@@ -275,7 +285,10 @@ export function createVideoWasmExports(runtime: VideoRuntime | undefined, readSt
       return vr.stop(handle) ? 1 : 0;
     },
 
-    BlitzMovie_OpenDecodeToImage: (handle: number, imagePtr: number): number => {
+    BlitzMovie_OpenDecodeToImage: (
+      handle: number,
+      imagePtr: number,
+    ): number => {
       // TODO: Implement frame capture to image buffer
       console.log(`[VideoRuntime] OpenDecodeToImage not implemented`);
       return 0;

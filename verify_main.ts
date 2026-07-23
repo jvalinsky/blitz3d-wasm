@@ -1,4 +1,3 @@
-
 // verify_main.ts
 const filename = "Main.wasm";
 console.log(`Reading ${filename}...`);
@@ -26,12 +25,21 @@ try {
         return 0;
       };
     } else if (imp.kind === "memory") {
-      importObject[imp.module][imp.name] = new WebAssembly.Memory({ initial: 256, maximum: 32768 });
+      importObject[imp.module][imp.name] = new WebAssembly.Memory({
+        initial: 256,
+        maximum: 32768,
+      });
     } else if (imp.kind === "global") {
       // Guess type. Usually i32.
-      importObject[imp.module][imp.name] = new WebAssembly.Global({ value: 'i32', mutable: true }, 0);
+      importObject[imp.module][imp.name] = new WebAssembly.Global({
+        value: "i32",
+        mutable: true,
+      }, 0);
     } else if (imp.kind === "table") {
-      importObject[imp.module][imp.name] = new WebAssembly.Table({ initial: 10, element: "anyfunc" });
+      importObject[imp.module][imp.name] = new WebAssembly.Table({
+        initial: 10,
+        element: "anyfunc",
+      });
     }
   }
 
@@ -43,10 +51,12 @@ try {
   const exports = WebAssembly.Module.exports(module);
   console.log(`Detected ${exports.length} exports.`);
 
-  const exportedNames = exports.map(e => e.name);
+  const exportedNames = exports.map((e) => e.name);
   // console.log("Exported names (first 20):", exportedNames.slice(0, 20));
 
-  const mainExports = exportedNames.filter(n => n.toLowerCase() === "main" || n.toLowerCase() === "bbmain");
+  const mainExports = exportedNames.filter((n) =>
+    n.toLowerCase() === "main" || n.toLowerCase() === "bbmain"
+  );
 
   if (mainExports.length > 0) {
     console.log(`Found main export(s): ${JSON.stringify(mainExports)}`);
@@ -57,7 +67,9 @@ try {
       console.warn("WARNING: Neither 'main' (any case) nor '_start' found.");
 
       // fuzzy search
-      const candidates = exportedNames.filter(n => n.toLowerCase().includes("main"));
+      const candidates = exportedNames.filter((n) =>
+        n.toLowerCase().includes("main")
+      );
       if (candidates.length > 0) {
         console.log("Candidates found containing 'main':", candidates);
       }
@@ -65,8 +77,9 @@ try {
   }
 
   // globals check
-  if (exportedNames.includes("ParticleCam")) console.log("Confimred: ParticleCam exported.");
-
+  if (exportedNames.includes("ParticleCam")) {
+    console.log("Confimred: ParticleCam exported.");
+  }
 } catch (e) {
   console.error("❌ verification failed:", e);
   Deno.exit(1);

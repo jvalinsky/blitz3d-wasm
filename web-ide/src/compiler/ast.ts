@@ -1,6 +1,6 @@
 /**
  * Blitz3D AST (Abstract Syntax Tree)
- * 
+ *
  * Represents the parsed structure of Blitz3D programs
  */
 
@@ -19,7 +19,7 @@ export interface Node {
 // ============================================================================
 
 export interface Program extends Node {
-  kind: 'Program';
+  kind: "Program";
   statements: Statement[];
 }
 
@@ -49,8 +49,8 @@ export type Statement =
   | IncludeStatement;
 
 export interface VariableDeclaration extends Node {
-  kind: 'VariableDeclaration';
-  scope: 'Local' | 'Global' | 'Const' | 'Dim';
+  kind: "VariableDeclaration";
+  scope: "Local" | "Global" | "Const" | "Dim";
   name: string;
   type?: TypeAnnotation;
   initializer?: Expression;
@@ -58,7 +58,7 @@ export interface VariableDeclaration extends Node {
 }
 
 export interface FunctionDeclaration extends Node {
-  kind: 'FunctionDeclaration';
+  kind: "FunctionDeclaration";
   name: string;
   parameters: Parameter[];
   returnType?: TypeAnnotation;
@@ -72,7 +72,7 @@ export interface Parameter {
 }
 
 export interface TypeDeclaration extends Node {
-  kind: 'TypeDeclaration';
+  kind: "TypeDeclaration";
   name: string;
   fields: Field[];
 }
@@ -84,29 +84,29 @@ export interface Field {
 }
 
 export interface DataStatement extends Node {
-  kind: 'DataStatement';
+  kind: "DataStatement";
   values: Expression[];
   label?: string;
 }
 
 export interface ReadStatement extends Node {
-  kind: 'ReadStatement';
+  kind: "ReadStatement";
   variables: Identifier[];
 }
 
 export interface RestoreStatement extends Node {
-  kind: 'RestoreStatement';
+  kind: "RestoreStatement";
   label?: string;
 }
 
 export interface Assignment extends Node {
-  kind: 'Assignment';
+  kind: "Assignment";
   target: Expression; // Variable, field access, or array element
   value: Expression;
 }
 
 export interface IfStatement extends Node {
-  kind: 'IfStatement';
+  kind: "IfStatement";
   condition: Expression;
   thenBranch: Statement[];
   elseIfBranches?: ElseIfBranch[];
@@ -119,7 +119,7 @@ export interface ElseIfBranch {
 }
 
 export interface ForStatement extends Node {
-  kind: 'ForStatement';
+  kind: "ForStatement";
   variable: string;
   start: Expression;
   end: Expression;
@@ -128,19 +128,19 @@ export interface ForStatement extends Node {
 }
 
 export interface WhileStatement extends Node {
-  kind: 'WhileStatement';
+  kind: "WhileStatement";
   condition: Expression;
   body: Statement[];
 }
 
 export interface RepeatStatement extends Node {
-  kind: 'RepeatStatement';
+  kind: "RepeatStatement";
   body: Statement[];
   condition?: Expression; // Until condition (optional for Forever)
 }
 
 export interface SelectStatement extends Node {
-  kind: 'SelectStatement';
+  kind: "SelectStatement";
   value: Expression;
   cases: CaseClause[];
   defaultCase?: Statement[];
@@ -152,36 +152,36 @@ export interface CaseClause {
 }
 
 export interface ReturnStatement extends Node {
-  kind: 'ReturnStatement';
+  kind: "ReturnStatement";
   value?: Expression;
 }
 
 export interface ExpressionStatement extends Node {
-  kind: 'ExpressionStatement';
+  kind: "ExpressionStatement";
   expression: Expression;
 }
 
 export interface LabelStatement extends Node {
-  kind: 'LabelStatement';
+  kind: "LabelStatement";
   name: string;
 }
 
 export interface GotoStatement extends Node {
-  kind: 'GotoStatement';
+  kind: "GotoStatement";
   label: string;
 }
 
 export interface GosubStatement extends Node {
-  kind: 'GosubStatement';
+  kind: "GosubStatement";
   label: string;
 }
 
 export interface EndStatement extends Node {
-  kind: 'EndStatement';
+  kind: "EndStatement";
 }
 
 export interface IncludeStatement extends Node {
-  kind: 'IncludeStatement';
+  kind: "IncludeStatement";
   filename: string;
 }
 
@@ -208,97 +208,111 @@ export type Expression =
   | ObjectCastExpression;
 
 export interface IntegerLiteral extends Node {
-  kind: 'IntegerLiteral';
+  kind: "IntegerLiteral";
   value: number;
 }
 
 export interface FloatLiteral extends Node {
-  kind: 'FloatLiteral';
+  kind: "FloatLiteral";
   value: number;
 }
 
 export interface StringLiteral extends Node {
-  kind: 'StringLiteral';
+  kind: "StringLiteral";
   value: string;
 }
 
 export interface Identifier extends Node {
-  kind: 'Identifier';
+  kind: "Identifier";
   name: string;
   type?: TypeAnnotation; // For type suffixes: x%, y#, s$
 }
 
 export interface BinaryExpression extends Node {
-  kind: 'BinaryExpression';
+  kind: "BinaryExpression";
   operator: BinaryOperator;
   left: Expression;
   right: Expression;
 }
 
 export type BinaryOperator =
-  | '+' | '-' | '*' | '/' | 'Mod' | '^'
-  | '=' | '<>' | '<' | '<=' | '>' | '>='
-  | 'And' | 'Or' | 'Xor'
-  | 'Shl' | 'Shr' | 'Sar';
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "Mod"
+  | "^"
+  | "="
+  | "<>"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "And"
+  | "Or"
+  | "Xor"
+  | "Shl"
+  | "Shr"
+  | "Sar";
 
 export interface UnaryExpression extends Node {
-  kind: 'UnaryExpression';
+  kind: "UnaryExpression";
   operator: UnaryOperator;
   operand: Expression;
 }
 
-export type UnaryOperator = '+' | '-' | 'Not';
+export type UnaryOperator = "+" | "-" | "Not";
 
 export interface CallExpression extends Node {
-  kind: 'CallExpression';
+  kind: "CallExpression";
   callee: string;
   arguments: Expression[];
 }
 
 export interface FieldAccess extends Node {
-  kind: 'FieldAccess';
+  kind: "FieldAccess";
   object: Expression;
   field: string;
 }
 
 export interface ArrayAccess extends Node {
-  kind: 'ArrayAccess';
+  kind: "ArrayAccess";
   array: Expression;
   indices: Expression[];
 }
 
 export interface NewExpression extends Node {
-  kind: 'NewExpression';
+  kind: "NewExpression";
   typeName: string;
 }
 
 export interface FirstExpression extends Node {
-  kind: 'FirstExpression';
+  kind: "FirstExpression";
   typeName: string;
 }
 
 export interface LastExpression extends Node {
-  kind: 'LastExpression';
+  kind: "LastExpression";
   typeName: string;
 }
 
 export interface BeforeExpression extends Node {
-  kind: 'BeforeExpression';
+  kind: "BeforeExpression";
   object: Expression;
 }
 
 export interface AfterExpression extends Node {
-  kind: 'AfterExpression';
+  kind: "AfterExpression";
   object: Expression;
 }
 
 export interface HandleExpression extends Node {
-  kind: 'HandleExpression';
+  kind: "HandleExpression";
   object: Expression;
 }
 
 export interface ObjectCastExpression extends Node {
-  kind: 'ObjectCastExpression';
+  kind: "ObjectCastExpression";
   typeName: string;
   object: Expression;
 }
@@ -309,65 +323,71 @@ export interface ObjectCastExpression extends Node {
 
 export interface TypeAnnotation {
   name: string; // 'Int', 'Float', 'String', or custom type name
-  suffix?: '%' | '#' | '$'; // Type suffix
+  suffix?: "%" | "#" | "$"; // Type suffix
 }
 
 // ============================================================================
 // Utilities
 // ============================================================================
 
-export function inferTypeFromSuffix(suffix?: string): TypeAnnotation | undefined {
+export function inferTypeFromSuffix(
+  suffix?: string,
+): TypeAnnotation | undefined {
   if (!suffix) return undefined;
-  
+
   switch (suffix) {
-    case '%': return { name: 'Int', suffix: '%' };
-    case '#': return { name: 'Float', suffix: '#' };
-    case '$': return { name: 'String', suffix: '$' };
-    default: return undefined;
+    case "%":
+      return { name: "Int", suffix: "%" };
+    case "#":
+      return { name: "Float", suffix: "#" };
+    case "$":
+      return { name: "String", suffix: "$" };
+    default:
+      return undefined;
   }
 }
 
 export function isStatement(node: Node): node is Statement {
   return [
-    'VariableDeclaration',
-    'FunctionDeclaration',
-    'TypeDeclaration',
-    'DataStatement',
-    'ReadStatement',
-    'RestoreStatement',
-    'Assignment',
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'RepeatStatement',
-    'SelectStatement',
-    'ReturnStatement',
-    'ExpressionStatement',
-    'LabelStatement',
-    'GotoStatement',
-    'GosubStatement',
-    'EndStatement',
-    'IncludeStatement',
+    "VariableDeclaration",
+    "FunctionDeclaration",
+    "TypeDeclaration",
+    "DataStatement",
+    "ReadStatement",
+    "RestoreStatement",
+    "Assignment",
+    "IfStatement",
+    "ForStatement",
+    "WhileStatement",
+    "RepeatStatement",
+    "SelectStatement",
+    "ReturnStatement",
+    "ExpressionStatement",
+    "LabelStatement",
+    "GotoStatement",
+    "GosubStatement",
+    "EndStatement",
+    "IncludeStatement",
   ].includes(node.kind);
 }
 
 export function isExpression(node: Node): node is Expression {
   return [
-    'IntegerLiteral',
-    'FloatLiteral',
-    'StringLiteral',
-    'Identifier',
-    'BinaryExpression',
-    'UnaryExpression',
-    'CallExpression',
-    'FieldAccess',
-    'ArrayAccess',
-    'NewExpression',
-    'FirstExpression',
-    'LastExpression',
-    'BeforeExpression',
-    'AfterExpression',
-    'HandleExpression',
-    'ObjectCastExpression',
+    "IntegerLiteral",
+    "FloatLiteral",
+    "StringLiteral",
+    "Identifier",
+    "BinaryExpression",
+    "UnaryExpression",
+    "CallExpression",
+    "FieldAccess",
+    "ArrayAccess",
+    "NewExpression",
+    "FirstExpression",
+    "LastExpression",
+    "BeforeExpression",
+    "AfterExpression",
+    "HandleExpression",
+    "ObjectCastExpression",
   ].includes(node.kind);
 }

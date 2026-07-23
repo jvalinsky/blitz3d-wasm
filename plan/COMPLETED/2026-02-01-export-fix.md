@@ -1,11 +1,15 @@
 # WASM Export Fix Plan
-*Created: February 1, 2026*
+
+_Created: February 1, 2026_
 
 ## Problem
 
-Swift 6.2 WASM compiler doesn't automatically export `@_cdecl` functions as WASM module exports. Functions exist in the binary but aren't accessible from JavaScript.
+Swift 6.2 WASM compiler doesn't automatically export `@_cdecl` functions as WASM
+module exports. Functions exist in the binary but aren't accessible from
+JavaScript.
 
 **Evidence**:
+
 ```bash
 $ wasm2wat blitz3d-engine.wasm | grep "(export"
   (export "memory" (memory 0))
@@ -20,6 +24,7 @@ $ wasm2wat blitz3d-engine.wasm | grep "(export"
 Add linker flags to `Package.swift` to explicitly export functions.
 
 **Implementation**:
+
 ```swift
 .executableTarget(
     name: "Blitz3DEngineWASM",
@@ -50,11 +55,13 @@ Add linker flags to `Package.swift` to explicitly export functions.
 ```
 
 **Pros**:
+
 - Clean, declarative
 - No post-processing
 - Integrates with Swift build system
 
 **Cons**:
+
 - Need to list all 166 exports manually
 - Could automate with script
 
@@ -67,6 +74,7 @@ Add linker flags to `Package.swift` to explicitly export functions.
 Use `wasm-ld` to re-link the WASM with export flags.
 
 **Implementation**:
+
 ```bash
 # Extract object files
 wasm-ld \
@@ -78,10 +86,12 @@ wasm-ld \
 ```
 
 **Pros**:
+
 - Don't touch Package.swift
 - Can script easily
 
 **Cons**:
+
 - Manual build step
 - Need to track all .o files
 - Harder to integrate with CI
@@ -95,6 +105,7 @@ wasm-ld \
 Use `--export-all` or `--export-dynamic` linker flag.
 
 **Implementation**:
+
 ```swift
 linkerSettings: [
     .unsafeFlags(["-Xlinker", "--export-all"], .when(platforms: [.wasi]))
@@ -102,10 +113,12 @@ linkerSettings: [
 ```
 
 **Pros**:
+
 - One line
 - No manual listing
 
 **Cons**:
+
 - Exports EVERYTHING (bloat, security)
 - May expose internal symbols
 - Larger binary
@@ -121,6 +134,7 @@ linkerSettings: [
 Create a C header with explicit exports, compile as separate module.
 
 **Implementation**:
+
 ```c
 // exports.h
 __attribute__((visibility("default")))
@@ -128,10 +142,12 @@ int wasm_CreateBank(int size);
 ```
 
 **Pros**:
+
 - Maximum control
 - Works with all toolchains
 
 **Cons**:
+
 - Extra build complexity
 - Need C/Swift interop
 - More files to maintain
@@ -142,11 +158,11 @@ int wasm_CreateBank(int size);
 
 ## Recommended Approach
 
-**Phase 1A: Quick Win (5 min)**
-Try `--export-all` to validate everything works end-to-end.
+**Phase 1A: Quick Win (5 min)** Try `--export-all` to validate everything works
+end-to-end.
 
-**Phase 1B: Proper Fix (30 min)**
-Generate selective export list script and add to Package.swift.
+**Phase 1B: Proper Fix (30 min)** Generate selective export list script and add
+to Package.swift.
 
 ## Implementation Plan
 
@@ -177,6 +193,7 @@ grep -r "@_cdecl(\"wasm_" Sources/Blitz3DEngine Tools/engine-wasm | \
 ```
 
 Output:
+
 ```swift
 "-Xlinker", "--export=wasm_CreateBank",
 "-Xlinker", "--export=wasm_FreeBank",
@@ -192,6 +209,7 @@ Output:
 Replace `--export-all` with generated list.
 
 **Verification**:
+
 ```bash
 wasm2wat blitz3d-engine.wasm | grep "(export" | wc -l
 # Should show ~166 exports (not 1000+)
@@ -204,6 +222,7 @@ wasm2wat blitz3d-engine.wasm | grep "(export" | wc -l
 Currently only ~10 functions wrapped. Need to wrap all 166.
 
 **Auto-generate wrappers**:
+
 ```bash
 # Generate from Exports.swift
 grep "@_cdecl" Sources/Blitz3DEngine/Exports.swift | \
@@ -213,6 +232,7 @@ grep "@_cdecl" Sources/Blitz3DEngine/Exports.swift | \
 ```
 
 **OR**: Use a template:
+
 ```swift
 @_cdecl("wasm_\(funcName)")
 @MainActor
@@ -255,6 +275,7 @@ After each step:
 ## Full Export List (For Reference)
 
 Functions to export (from Phase 1 tests):
+
 - `wasm_malloc` / `wasm_free`
 - `wasm_CreateBank` / `wasm_FreeBank` / `wasm_BankSize`
 - `wasm_PeekByte` / `wasm_PokeByte`
@@ -264,6 +285,7 @@ Functions to export (from Phase 1 tests):
 - `wasm_Sqrt` / `wasm_Abs` / `wasm_Floor` / `wasm_Ceil`
 
 Eventually need all 166 from:
+
 - Banks (11 functions)
 - Strings (4 functions)
 - Math (17 functions)
@@ -290,11 +312,13 @@ Eventually need all 166 from:
 ## Success Metrics
 
 **Phase 1A Complete**:
+
 - [ ] WASM exports `wasm_CreateBank`, `wasm_malloc`, etc.
 - [ ] At least 3 tests pass
 - [ ] Can call engine functions from JavaScript
 
 **Phase 1 Fully Complete**:
+
 - [ ] All 13 tests pass
 - [ ] All critical functions exported
 - [ ] No memory leaks in tests

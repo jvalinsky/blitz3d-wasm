@@ -1,23 +1,26 @@
 # Blitz3D-to-WebAssembly Compiler Gap Analysis Report
 
-**Generated:** 2026-01-23 14:48:33 UTC
-**Git Commit:** 7563c99550bee27507d5e57ac9a92772caf6822d
-**Repository:** blitz3d-wasm
-**Report Type:** Compiler Feature Gap Analysis for SCP: Containment Breach Compatibility
+**Generated:** 2026-01-23 14:48:33 UTC **Git Commit:**
+7563c99550bee27507d5e57ac9a92772caf6822d **Repository:** blitz3d-wasm **Report
+Type:** Compiler Feature Gap Analysis for SCP: Containment Breach Compatibility
 
 ---
 
 ## Executive Summary
 
-This report analyzes the current implementation status of the Blitz3D-to-WebAssembly compiler, focusing on three critical missing features that prevent full SCP: Containment Breach (SCPB) compatibility:
+This report analyzes the current implementation status of the
+Blitz3D-to-WebAssembly compiler, focusing on three critical missing features
+that prevent full SCP: Containment Breach (SCPB) compatibility:
 
 1. **Handle Arrays** - `Field Path.WayPoints[20]` support
 2. **Complex Object References** - `object\field[index]` patterns
 3. **Advanced Syntax Issues** - Select statements, expressions, type promotion
 
-**Current Status:** ~75% of SCPB compiles successfully. The missing 25% is blocked by these three feature gaps.
+**Current Status:** ~75% of SCPB compiles successfully. The missing 25% is
+blocked by these three feature gaps.
 
-**Impact:** Without these fixes, complex NPC AI, pathfinding, inventory systems, and entity relationships cannot compile.
+**Impact:** Without these fixes, complex NPC AI, pathfinding, inventory systems,
+and entity relationships cannot compile.
 
 ---
 
@@ -25,7 +28,9 @@ This report analyzes the current implementation status of the Blitz3D-to-WebAsse
 
 ### Current Implementation Status
 
-**✅ Parser Support:** The BlitzBasic parser correctly recognizes handle array syntax:
+**✅ Parser Support:** The BlitzBasic parser correctly recognizes handle array
+syntax:
+
 ```blitzbasic
 Type NPCs
     Field Path.WayPoints[20]  ; ✅ Parser accepts this
@@ -40,6 +45,7 @@ End Type
 **Root Cause:** The code generator handles scalar fields but not array fields.
 
 **Evidence from Codebase:**
+
 ```swift
 // Sources/Compiler/CodeGen/ExpressionGeneration.swift:924
 if fieldDimensions != nil && !fieldDimensions!.isEmpty {
@@ -49,6 +55,7 @@ if fieldDimensions != nil && !fieldDimensions!.isEmpty {
 ```
 
 **SCPB Usage Patterns:**
+
 ```blitzbasic
 Type NPCs
     Field Path.WayPoints[20]      ; Navigation waypoints
@@ -60,8 +67,10 @@ End Type
 ### Implementation Requirements
 
 #### 1.1 Type System Extension
-**File:** `Sources/Compiler/CodeGen/TypeHandling.swift`
-**Task:** Track handle array dimensions in type context
+
+**File:** `Sources/Compiler/CodeGen/TypeHandling.swift` **Task:** Track handle
+array dimensions in type context
+
 ```swift
 struct TypeContext {
     // Add handle array dimension tracking
@@ -71,8 +80,10 @@ struct TypeContext {
 ```
 
 #### 1.2 Memory Allocation Enhancement
-**File:** `Sources/Compiler/CodeGen/VariableManagement.swift`
-**Task:** Allocate memory for handle arrays in type instances
+
+**File:** `Sources/Compiler/CodeGen/VariableManagement.swift` **Task:** Allocate
+memory for handle arrays in type instances
+
 ```swift
 func calculateTypeSize(_ typeName: String) -> Int {
     var totalSize = 0
@@ -86,8 +97,10 @@ func calculateTypeSize(_ typeName: String) -> Int {
 ```
 
 #### 1.3 Array Access Code Generation
-**File:** `Sources/Compiler/CodeGen/ExpressionGeneration.swift`
-**Task:** Generate proper handle array indexing
+
+**File:** `Sources/Compiler/CodeGen/ExpressionGeneration.swift` **Task:**
+Generate proper handle array indexing
+
 ```swift
 func generateHandleArrayAccess(_ fieldAccess: FieldAccessNode, _ indices: [ExpressionNode]) -> [WASMInstruction] {
     var instrs: [WASMInstruction] = []
@@ -124,6 +137,7 @@ func generateHandleArrayAccess(_ fieldAccess: FieldAccessNode, _ indices: [Expre
 ### Testing Requirements
 
 #### Unit Tests
+
 ```swift
 func testHandleArrayDeclaration() {
     let code = """
@@ -144,6 +158,7 @@ func testHandleArrayAccess() {
 ```
 
 #### Integration Tests
+
 ```blitzbasic
 ; Test SCPB-style handle arrays
 Type NPCs
@@ -170,12 +185,14 @@ End Function
 ### Current Implementation Status
 
 **✅ Basic Field Access:** `object\field` patterns work correctly
+
 ```blitzbasic
 npc\Health = 100        ; ✅ Works
 waypoint\X = 1.5        ; ✅ Works
 ```
 
 **❌ Indexed Field Access:** `object\field[index]` patterns fail
+
 ```blitzbasic
 waypoint\Connected[i] = other  ; ❌ Fails
 npc\Path[index] = wp          ; ❌ Fails
@@ -183,9 +200,11 @@ npc\Path[index] = wp          ; ❌ Fails
 
 ### Technical Analysis
 
-**Root Cause:** The AST and code generator don't support array indexing within field access expressions.
+**Root Cause:** The AST and code generator don't support array indexing within
+field access expressions.
 
 **Current AST Support:**
+
 ```swift
 // Sources/Compiler/AST/AST.swift:290
 case fieldAccess(FieldAccessNode, SourceSpan)  // Basic field access only
@@ -200,6 +219,7 @@ public struct FieldAccessNode {
 ```
 
 **Parser Limitation:**
+
 ```swift
 // Sources/Compiler/Parser/Parser.swift:1603-1611
 if consume(.backslash) {
@@ -213,6 +233,7 @@ if consume(.backslash) {
 ### SCPB Usage Patterns
 
 **Pathfinding Systems:**
+
 ```blitzbasic
 ; Waypoint connections
 waypoint\Connected[0] = northWaypoint
@@ -223,6 +244,7 @@ npc\Path[currentIndex] = nextWaypoint
 ```
 
 **Entity Relationships:**
+
 ```blitzbasic
 ; MTF squad coordination
 soldier\Teammates[0] = leader
@@ -230,6 +252,7 @@ soldier\Teammates[1] = partner
 ```
 
 **Inventory Systems:**
+
 ```blitzbasic
 ; Item arrays
 player\Inventory[slot] = newItem
@@ -239,8 +262,10 @@ container\Items[index] = storedItem
 ### Implementation Requirements
 
 #### 2.1 AST Extension
-**File:** `Sources/Compiler/AST/AST.swift`
-**Task:** Add support for indexed field access
+
+**File:** `Sources/Compiler/AST/AST.swift` **Task:** Add support for indexed
+field access
+
 ```swift
 // Extend ExpressionNode
 case indexedFieldAccess(IndexedFieldAccessNode, SourceSpan)
@@ -255,8 +280,10 @@ public struct IndexedFieldAccessNode {
 ```
 
 #### 2.2 Parser Enhancement
-**File:** `Sources/Compiler/Parser/Parser.swift`
-**Task:** Parse array indexing in field access
+
+**File:** `Sources/Compiler/Parser/Parser.swift` **Task:** Parse array indexing
+in field access
+
 ```swift
 func parseFieldAccess() -> ExpressionNode {
     let object = parseExpression()
@@ -292,8 +319,10 @@ func parseFieldAccess() -> ExpressionNode {
 ```
 
 #### 2.3 Code Generation Implementation
-**File:** `Sources/Compiler/CodeGen/ExpressionGeneration.swift`
-**Task:** Generate indexed field access code
+
+**File:** `Sources/Compiler/CodeGen/ExpressionGeneration.swift` **Task:**
+Generate indexed field access code
+
 ```swift
 case .indexedFieldAccess(let access, _):
     return generateIndexedFieldAccess(access)
@@ -345,8 +374,9 @@ private func generateIndexedFieldAccess(_ access: IndexedFieldAccessNode) -> (in
 
 ### Type Resolution Enhancement
 
-**File:** `Sources/Compiler/CodeGen/TypeHandling.swift`
-**Task:** Track field element types for arrays
+**File:** `Sources/Compiler/CodeGen/TypeHandling.swift` **Task:** Track field
+element types for arrays
+
 ```swift
 func getFieldElementType(_ objectExpr: ExpressionNode, _ fieldName: String) -> WASMType {
     guard let typeName = getTypeName(from: objectExpr),
@@ -371,9 +401,11 @@ func getFieldElementType(_ objectExpr: ExpressionNode, _ fieldName: String) -> W
 
 **Current Status:** Basic selects work, complex nested selects fail ❌
 
-**Root Cause:** WASM validation requires all branches to leave the stack in the same state.
+**Root Cause:** WASM validation requires all branches to leave the stack in the
+same state.
 
 **Problem Code:**
+
 ```blitzbasic
 Select n\NPCtype
     Case NPCtype173
@@ -386,8 +418,9 @@ Select n\NPCtype
 End Select
 ```
 
-**Implementation Fix:**
-**File:** `Sources/Compiler/CodeGen/StatementGeneration.swift`
+**Implementation Fix:** **File:**
+`Sources/Compiler/CodeGen/StatementGeneration.swift`
+
 ```swift
 func generateSelectStatement(_ select: SelectNode) -> [WASMInstruction] {
     var instrs: [WASMInstruction] = []
@@ -455,9 +488,11 @@ func generateSelectStatement(_ select: SelectNode) -> [WASMInstruction] {
 
 ### 3.2 Function Call Stack Issues
 
-**Current Status:** Function calls in expressions leave return values on stack ❌
+**Current Status:** Function calls in expressions leave return values on stack
+❌
 
 **Problem Code:**
+
 ```blitzbasic
 ; This fails - return value left on stack
 result = GetValue() + 5
@@ -469,8 +504,9 @@ result = temp + 5
 
 **Root Cause:** Statement context function calls don't drop return values.
 
-**Implementation Fix:**
-**File:** `Sources/Compiler/CodeGen/StatementGeneration.swift`
+**Implementation Fix:** **File:**
+`Sources/Compiler/CodeGen/StatementGeneration.swift`
+
 ```swift
 case .functionCall(let call, _):
     let (instrs, returnType) = expressionGenerator.generateWithInfo(.functionCall(call, call.span))
@@ -493,6 +529,7 @@ case .functionCall(let call, _):
 **Current Status:** i32/f32 mixing doesn't promote correctly ❌
 
 **Problem Code:**
+
 ```swift
 // Sources/Compiler/CodeGen/TypeHandling.swift:60
 public func commonType(_ type1: WASMType, _ type2: WASMType) -> WASMType {
@@ -501,6 +538,7 @@ public func commonType(_ type1: WASMType, _ type2: WASMType) -> WASMType {
 ```
 
 **Evidence:**
+
 ```swift
 // Sources/Compiler/CodeGen/WASM.swift:67-70
 public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
@@ -509,8 +547,8 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 }
 ```
 
-**Implementation Fix:**
-**File:** `Sources/Compiler/CodeGen/TypeHandling.swift`
+**Implementation Fix:** **File:** `Sources/Compiler/CodeGen/TypeHandling.swift`
+
 ```swift
 public func commonType(_ type1: WASMType, _ type2: WASMType) -> WASMType {
     // Proper type promotion rules
@@ -536,19 +574,23 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 ## Implementation Priority & Timeline
 
 ### Phase 1: Critical Infrastructure (Week 1-2)
+
 1. **Handle Arrays** - Core blocking feature
 2. **Type Promotion Fix** - Fixes expression compilation errors
 
 ### Phase 2: Complex References (Week 3-4)
+
 1. **Indexed Field Access** - Enables entity relationships
 2. **Enhanced Type Resolution** - Support for complex field types
 
 ### Phase 3: Syntax Polish (Week 5-6)
+
 1. **Select Statement Fixes** - Large function compilation
 2. **Function Call Cleanup** - Stack management
 3. **Advanced Expression Support** - Nested operations
 
 ### Phase 4: Testing & Validation (Week 7-8)
+
 1. **SCPB Full Compilation** - Achieve 90%+ success rate
 2. **Integration Testing** - Real gameplay scenarios
 3. **Performance Optimization** - Compilation speed improvements
@@ -558,12 +600,15 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 ## Success Metrics
 
 ### Compilation Success Targets
+
 - **Handle Arrays:** `Field Path.WayPoints[20]` compiles and executes correctly
 - **Complex References:** `waypoint\Connected[i] = other` works in all contexts
-- **Advanced Syntax:** Large SCPB functions compile without WASM validation errors
+- **Advanced Syntax:** Large SCPB functions compile without WASM validation
+  errors
 - **SCPB Coverage:** 90%+ of SCPB source files compile successfully
 
 ### Performance Targets
+
 - **Compilation Speed:** < 2 seconds for typical SCPB files
 - **WASM Size:** < 50KB overhead for runtime
 - **Runtime Performance:** 60+ FPS for compiled SCPB games
@@ -573,11 +618,13 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 ## Risk Assessment
 
 ### High-Risk Items
+
 1. **Handle Array Memory Management** - Complex pointer arithmetic in WASM
 2. **Type System Extensions** - May require major refactoring
 3. **Stack Validation** - WASM validation is strict, hard to debug
 
 ### Mitigation Strategies
+
 1. **Incremental Implementation** - Test each feature independently
 2. **Comprehensive Testing** - Unit tests + SCPB integration tests
 3. **Fallback Mechanisms** - Graceful degradation for edge cases
@@ -587,12 +634,14 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 ## Dependencies & Prerequisites
 
 ### Required Changes
+
 1. **AST Extensions** - New node types for indexed access
 2. **Parser Updates** - Complex expression parsing
 3. **Code Generation** - Multi-stage WASM instruction generation
 4. **Type System** - Enhanced type tracking and promotion
 
 ### Testing Infrastructure
+
 1. **SCPB Test Suite** - Real game code compilation
 2. **Unit Tests** - Individual feature validation
 3. **Integration Tests** - End-to-end compilation pipelines
@@ -601,20 +650,25 @@ public static func < (lhs: WASMType, rhs: WASMType) -> Bool {
 
 ## Conclusion
 
-The three missing feature categories represent the final 25% needed for full SCP: Containment Breach compatibility. Implementation requires coordinated changes across the parser, AST, type system, and code generator.
+The three missing feature categories represent the final 25% needed for full
+SCP: Containment Breach compatibility. Implementation requires coordinated
+changes across the parser, AST, type system, and code generator.
 
-**Estimated Effort:** 8 weeks of focused development
-**Risk Level:** Medium (incremental approach mitigates risk)
-**Impact:** Enables complete BlitzBasic-to-WebAssembly compilation pipeline
+**Estimated Effort:** 8 weeks of focused development **Risk Level:** Medium
+(incremental approach mitigates risk) **Impact:** Enables complete
+BlitzBasic-to-WebAssembly compilation pipeline
 
 **Next Steps:**
+
 1. Begin with handle array implementation (highest impact)
 2. Fix type promotion issues (enables expression compilation)
 3. Implement complex object references (enables data structures)
 4. Polish advanced syntax support (enables large functions)
 
-This roadmap will complete the Blitz3D-to-WebAssembly compiler and enable browser-based SCP: Containment Breach gameplay.
+This roadmap will complete the Blitz3D-to-WebAssembly compiler and enable
+browser-based SCP: Containment Breach gameplay.
 
 ---
 
-*Report generated by automated codebase analysis. Implementation details subject to validation during development.*
+_Report generated by automated codebase analysis. Implementation details subject
+to validation during development._

@@ -24,9 +24,11 @@ const parseArgs = (args: string[]): Options => {
     if (a === "--wasm") opts.wasmPath = args[++i] ?? opts.wasmPath;
     else if (a === "--init") opts.initExport = args[++i] ?? opts.initExport;
     else if (a === "--call") opts.callExport = args[++i] ?? opts.callExport;
-    else if (a === "--iterations") opts.iterations = Number(args[++i] ?? opts.iterations);
-    else if (a === "--timeout-ms") opts.timeoutMs = Number(args[++i] ?? opts.timeoutMs);
-    else if (a === "--verbose") opts.verbose = true;
+    else if (a === "--iterations") {
+      opts.iterations = Number(args[++i] ?? opts.iterations);
+    } else if (a === "--timeout-ms") {
+      opts.timeoutMs = Number(args[++i] ?? opts.timeoutMs);
+    } else if (a === "--verbose") opts.verbose = true;
     else if (a === "--help" || a === "-h") {
       console.log(
         [
@@ -53,9 +55,15 @@ const parseArgs = (args: string[]): Options => {
     }
   }
 
-  if (positional.length && !args.includes("--wasm")) opts.wasmPath = positional[0]!;
-  if (!Number.isFinite(opts.iterations) || opts.iterations < 1) opts.iterations = 1;
-  if (!Number.isFinite(opts.timeoutMs) || opts.timeoutMs < 10) opts.timeoutMs = 10;
+  if (positional.length && !args.includes("--wasm")) {
+    opts.wasmPath = positional[0]!;
+  }
+  if (!Number.isFinite(opts.iterations) || opts.iterations < 1) {
+    opts.iterations = 1;
+  }
+  if (!Number.isFinite(opts.timeoutMs) || opts.timeoutMs < 10) {
+    opts.timeoutMs = 10;
+  }
 
   return opts;
 };
@@ -73,7 +81,10 @@ const main = async () => {
   const opts = parseArgs(raw);
 
   const bytes = await Deno.readFile(opts.wasmPath);
-  const wasmBytes = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const wasmBytes = bytes.buffer.slice(
+    bytes.byteOffset,
+    bytes.byteOffset + bytes.byteLength,
+  );
 
   const worker = new Worker(
     new URL("./wasm_timeout_probe.worker.ts", import.meta.url),
@@ -100,7 +111,10 @@ const main = async () => {
     if (resolved) return;
     const age = Date.now() - lastProgress;
     if (age > opts.timeoutMs) {
-      stop(3, `FAIL: timed out after ${opts.timeoutMs}ms (completed ${completed}/${opts.iterations})`);
+      stop(
+        3,
+        `FAIL: timed out after ${opts.timeoutMs}ms (completed ${completed}/${opts.iterations})`,
+      );
     }
   }, 25);
 
@@ -144,4 +158,3 @@ const main = async () => {
 };
 
 await main();
-

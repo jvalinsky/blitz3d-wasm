@@ -12,7 +12,10 @@
  */
 
 import * as THREE from "three";
-import type { Blitz3DGraphicsInterface, GraphicsCore } from "./graphics/types.ts";
+import type {
+  Blitz3DGraphicsInterface,
+  GraphicsCore,
+} from "./graphics/types.ts";
 import type { Blitz3DFileIO } from "./fileio.ts";
 
 export type RMeshTexture = {
@@ -443,7 +446,10 @@ export class RMeshLoader {
   private core: GraphicsCore & { fileIO: Blitz3DFileIO };
   private fileIO: Blitz3DFileIO;
 
-  constructor(graphics: Blitz3DGraphicsInterface, core: GraphicsCore & { fileIO: Blitz3DFileIO }) {
+  constructor(
+    graphics: Blitz3DGraphicsInterface,
+    core: GraphicsCore & { fileIO: Blitz3DFileIO },
+  ) {
     this.graphics = graphics;
     this.core = core;
     this.fileIO = core.fileIO;
@@ -466,11 +472,14 @@ export class RMeshLoader {
       const bytes = (typeof (this.fileIO as any).readAllBytes === "function")
         ? ((this.fileIO as any).readAllBytes(handle) as Uint8Array)
         : (() => {
-          const size = (typeof (this.fileIO as any).fileSizeFromHandle === "function")
-            ? ((this.fileIO as any).fileSizeFromHandle(handle) as number)
-            : this.fileIO.fileSize(filePath);
+          const size =
+            (typeof (this.fileIO as any).fileSizeFromHandle === "function")
+              ? ((this.fileIO as any).fileSizeFromHandle(handle) as number)
+              : this.fileIO.fileSize(filePath);
           const out = new Uint8Array(Math.max(0, size | 0));
-          for (let i = 0; i < out.length; i++) out[i] = this.fileIO.readByte(handle);
+          for (let i = 0; i < out.length; i++) {
+            out[i] = this.fileIO.readByte(handle);
+          }
           return out;
         })();
       const rm = parseRMesh(bytes);
@@ -519,7 +528,10 @@ export class RMeshLoader {
       if (!n) return "unknown";
       const leaf = n.split("/").pop() ?? n;
       const base = leaf.replace(/\.[a-z0-9]+$/i, "");
-      if (/(^|[_\-.])(lm|lightmap|light)([_\-.]|$)/i.test(base) || /_lm\b/i.test(base)) {
+      if (
+        /(^|[_\-.])(lm|lightmap|light)([_\-.]|$)/i.test(base) ||
+        /_lm\b/i.test(base)
+      ) {
         return "lightmap";
       }
       return "diffuse";
@@ -565,8 +577,8 @@ export class RMeshLoader {
         ? t0?.name
         : (t0Kind === "lightmap" && t1Kind === "diffuse")
         ? t1?.name
-        : // fallback: many writers store lightmap in slot0, diffuse in slot1
-          (t1?.name ?? t0?.name);
+        // fallback: many writers store lightmap in slot0, diffuse in slot1
+        : (t1?.name ?? t0?.name);
 
       const lightmapName = (t0Kind === "lightmap" && t1Kind !== "lightmap")
         ? t0?.name
@@ -593,7 +605,8 @@ export class RMeshLoader {
             textureLoader.load(diffuseTexUrl, resolve, undefined, reject);
           });
           tex.flipY = false;
-          (tex as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
+          (tex as unknown as { colorSpace?: string }).colorSpace =
+            THREE.SRGBColorSpace;
           material.map = tex;
           material.needsUpdate = true;
         } catch {

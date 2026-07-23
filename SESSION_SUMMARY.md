@@ -1,17 +1,20 @@
 # Session Summary: SCPCB Error Triage & Fixes
 
-**Date**: 2026-01-27
-**Objective**: Implement recommended fixes for remaining SCPCB compilation errors
+**Date**: 2026-01-27 **Objective**: Implement recommended fixes for remaining
+SCPCB compilation errors
 
 ## Accomplishments
 
 ### 1. Initial Assessment ✅
+
 - Compiled full SCPCB codebase: **94.2% success** (49/52 files)
 - All core game files compile: Main.bb, NPCs.bb, Items.bb, Menu.bb, etc.
 - Identified 3 failing files (2 parser errors, 1 validation error)
 
 ### 2. Comprehensive Triage Plan ✅
+
 Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
+
 - Detailed analysis of each error
 - Root cause investigation
 - Multiple fix options with tradeoffs
@@ -19,18 +22,22 @@ Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
 - Risk assessment
 
 ### 3. Parser Fix - Deep Investigation ✅
+
 - Created minimal reproduction test cases
 - Traced execution through Parser.swift (2000+ lines)
-- Identified root cause: `parsePostfixExpression()` too greedy in statement context
+- Identified root cause: `parsePostfixExpression()` too greedy in statement
+  context
 - Implemented `parsePostfixExpressionWithoutCall()` helper function
 - Tested multiple approaches and edge cases
 
 **Parser Fix Results**:
+
 - ✅ Fixed: `Text (x+width/2), y` pattern (MusicPlayer.bb)
 - ✅ Fixed: `alInit(x, y)` pattern (BlitzAL.bb)
 - ❌ Edge case: `Text (x)*factor, y` (window3d.bb - Map Creator only)
 
 ### 4. Decision Graph Logging ✅
+
 - 11 nodes created (goals, actions, outcomes, observations)
 - Full lineage tracked from initial review to implementation
 - Files associated with outcomes for traceability
@@ -38,6 +45,7 @@ Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
 ## Current Status
 
 ### Completed
+
 - [x] Initial codebase review
 - [x] Compilation test suite (52 files)
 - [x] Triage plan creation
@@ -46,6 +54,7 @@ Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
 - [x] Parser implementation (98% complete)
 
 ### In Progress
+
 - [ ] Parser fix refinement (edge case handling)
 - [ ] Local variable counting fix
 - [ ] Full validation test
@@ -56,7 +65,8 @@ Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
    - All critical game systems compile to valid WASM
    - Only dev tools (Map Creator) have remaining issues
 
-2. **Parser complexity** - distinguishing function call syntax from expression grouping
+2. **Parser complexity** - distinguishing function call syntax from expression
+   grouping
    - `Func(x, y)` vs `Func (x), y` vs `Func (x)*y, z`
    - Without whitespace info, perfect disambiguation is hard
    - Current fix handles 98% of cases
@@ -129,6 +139,6 @@ Created `SCPCB_ERROR_TRIAGE_PLAN.md` with:
 
 ---
 
-**Status**: Ready to proceed with local variable counting fix
-**Blocking Issues**: None (parser can proceed with documented limitation)
-**Confidence**: High (core gameplay fully functional)
+**Status**: Ready to proceed with local variable counting fix **Blocking
+Issues**: None (parser can proceed with documented limitation) **Confidence**:
+High (core gameplay fully functional)

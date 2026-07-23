@@ -3,12 +3,14 @@
 ## Current State (January 27, 2026)
 
 ✅ **Working:**
+
 - Compiler generates valid WASM
 - Type system (New, Delete, For Each, field access)
 - Thin runtime (~500 lines JS)
 - Particle demo with falling particles
 
 ⚠️ **Issues:**
+
 - 20 functions SCPCB needs are missing from compiler
 - Function shadowing (user functions can't share names with runtime)
 - Goto/Gosub not fully implemented
@@ -79,7 +81,8 @@ wasm-validate /tmp/test.wasm
 
 ### 2.1 Function Shadowing Fix
 
-**Problem:** User function `Distance#()` conflicts with runtime import `Distance`.
+**Problem:** User function `Distance#()` conflicts with runtime import
+`Distance`.
 
 **Solution:** Prefix user functions or use different export names.
 
@@ -95,6 +98,7 @@ let exportName = "user_" + functionName  // or use mangling
 **Current state:** IR/Passes/Relooper.swift exists but may be incomplete.
 
 **Test case:**
+
 ```blitz
 Goto skip
 Print "should not print"
@@ -105,6 +109,7 @@ Print "skipped!"
 ### 2.3 Select/Case Edge Cases
 
 Test and fix:
+
 ```blitz
 Select x
     Case 1, 2, 3
@@ -121,6 +126,7 @@ End Select
 ### 3.1 Handle Include Files
 
 SCPCB structure:
+
 ```
 Main.bb
 ├── Include "Difficulty.bb"
@@ -133,6 +139,7 @@ Main.bb
 ```
 
 **Test:**
+
 ```bash
 ./build/debug/blitz3d-wasm ~/Software/scpcb/Main.bb -o /tmp/scpcb.wasm 2>&1 | head -50
 ```
@@ -140,12 +147,14 @@ Main.bb
 ### 3.2 Fix Case Sensitivity Issues
 
 SCPCB has inconsistent casing:
+
 - `dreamfilter.bb` vs `Dreamfilter.bb`
 - `include "file.bb"` vs `Include "File.bb"`
 
 ### 3.3 Handle Large Codebase
 
 SCPCB is 52K lines. May need:
+
 - Memory optimization
 - Better error messages
 - Progress indication
@@ -168,20 +177,23 @@ Priority order for SCPCB:
 SCPCB uses custom RMesh format. Options:
 
 **Option A:** Compile SCPCB's LoadRMesh BB code to WASM
+
 - Uses existing BB code
 - Calls runtime's low-level mesh functions
 
 **Option B:** JS implementation
+
 - Already have `Sources/Runtime/modules/rmesh.js`
 - Need to wire it up
 
 ### 4.3 Virtual File System
 
 For loading SCPCB assets:
+
 ```javascript
 // Pre-load assets into memory
-await vfs.mount('/GFX/', 'https://example.com/scpcb/GFX/');
-await vfs.mount('/SFX/', 'https://example.com/scpcb/SFX/');
+await vfs.mount("/GFX/", "https://example.com/scpcb/GFX/");
+await vfs.mount("/SFX/", "https://example.com/scpcb/SFX/");
 
 // BB code calls ReadFile("GFX\texture.png")
 // VFS intercepts and returns from cache
@@ -212,13 +224,13 @@ await vfs.mount('/SFX/', 'https://example.com/scpcb/SFX/');
 
 ## Timeline Summary
 
-| Phase | Task | Duration |
-|-------|------|----------|
-| 1 | Add missing functions | 1-2 days |
-| 2 | Fix compiler issues | 2-3 days |
-| 3 | Compile SCPCB | 3-5 days |
-| 4 | Runtime implementation | 1-2 weeks |
-| 5 | Run SCPCB | 2-4 weeks |
+| Phase | Task                   | Duration  |
+| ----- | ---------------------- | --------- |
+| 1     | Add missing functions  | 1-2 days  |
+| 2     | Fix compiler issues    | 2-3 days  |
+| 3     | Compile SCPCB          | 3-5 days  |
+| 4     | Runtime implementation | 1-2 weeks |
+| 5     | Run SCPCB              | 2-4 weeks |
 
 **Total: 4-8 weeks to playable SCPCB demo**
 

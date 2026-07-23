@@ -7,6 +7,7 @@
 **File**: `Sources/Compiler/CodeGen/StatementGeneration.swift`
 
 **Add property** (around line 28):
+
 ```swift
 // Stack validation
 private var stackValidator: StackValidator?
@@ -14,6 +15,7 @@ private var enableStackValidation: Bool = true  // Toggle for debugging
 ```
 
 **Modify init** (around line 34):
+
 ```swift
 public init(context: ModuleContext) {
     self.context = context
@@ -22,6 +24,7 @@ public init(context: ModuleContext) {
 ```
 
 **Add validation method** (add new method):
+
 ```swift
 /// Validate a sequence of instructions for stack balance
 private func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMInstruction] {
@@ -61,12 +64,14 @@ private func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMIns
 **Modify buildIfChain** (around line 280):
 
 FIND:
+
 ```swift
 // Balance if/else branches to have same stack effect
 let (balancedThen, balancedElse) = balanceIfBranches(then: thenBody, else: elseBody)
 ```
 
 REPLACE WITH:
+
 ```swift
 // Validate and balance if/else branches
 var balancedThen = thenBody
@@ -106,11 +111,13 @@ if let validator = stackValidator {
 **Modify whileLoop** (around line 322):
 
 AFTER:
+
 ```swift
 var bodyInstrs = generateStatementBlock(whileNode.body, function: &function)
 ```
 
 ADD:
+
 ```swift
 // Validate and balance loop body
 bodyInstrs = validateInstructions(bodyInstrs)
@@ -119,11 +126,13 @@ bodyInstrs = validateInstructions(bodyInstrs)
 **Modify forLoop** (around line 430):
 
 AFTER:
+
 ```swift
 bodyInstrs = generateStatementBlock(forNode.body, function: &function)
 ```
 
 ADD:
+
 ```swift
 // Validate and balance loop body
 bodyInstrs = validateInstructions(bodyInstrs)
@@ -132,11 +141,13 @@ bodyInstrs = validateInstructions(bodyInstrs)
 **Modify repeatLoop** (around line 480):
 
 AFTER:
+
 ```swift
 var bodyInstrs = generateStatementBlock(repeatNode.body, function: &function)
 ```
 
 ADD:
+
 ```swift
 // Validate and balance loop body
 bodyInstrs = validateInstructions(bodyInstrs)
@@ -149,6 +160,7 @@ bodyInstrs = validateInstructions(bodyInstrs)
 FIND where you compile each function (search for "generateFunction"):
 
 ADD BEFORE compiling function body:
+
 ```swift
 // Reset stack validator for new function
 if let stmtGen = statementGeneration {
@@ -157,6 +169,7 @@ if let stmtGen = statementGeneration {
 ```
 
 **Add method to StatementGeneration**:
+
 ```swift
 public func resetStackValidator() {
     stackValidator?.reset()
@@ -166,6 +179,7 @@ public func resetStackValidator() {
 ### Step 4: Enable Debug Logging
 
 **Add to StatementGeneration**:
+
 ```swift
 /// Get stack validation report
 public func getStackValidationReport() -> [String] {
@@ -185,6 +199,7 @@ public func isStackValid() -> Bool {
 ### Test Case 1: Simple If Balance
 
 **Create**: `blitz3d-wasm/test_stack_if.bb`
+
 ```blitz3d
 Function Test()
     Local x
@@ -195,6 +210,7 @@ End Function
 ```
 
 **Compile**:
+
 ```bash
 .build/arm64-apple-macosx/debug/blitz3d-wasm test_stack_if.bb -o /tmp/test.wasm
 wasm-validate /tmp/test.wasm
@@ -205,6 +221,7 @@ wasm-validate /tmp/test.wasm
 ### Test Case 2: If With Return Value
 
 **Create**: `test_stack_if_return.bb`
+
 ```blitz3d
 Function GetValue()
     Return 42
@@ -223,6 +240,7 @@ End Function
 ### Test Case 3: Loop Balance
 
 **Create**: `test_stack_loop.bb`
+
 ```blitz3d
 Function Test()
     For i = 1 To 10
@@ -236,6 +254,7 @@ End Function
 ### Test Case 4: Nested Control
 
 **Create**: `test_stack_nested.bb`
+
 ```blitz3d
 Function Test()
     Local x, y
@@ -261,6 +280,7 @@ cd blitz3d-wasm
 ```
 
 **Track improvements**:
+
 - Before: 40 passed (76.9%)
 - Target: 45+ passed (86%+)
 
@@ -281,6 +301,7 @@ cd blitz3d-wasm
 If function calls aren't tracked correctly:
 
 **Fix in StackValidator**:
+
 ```swift
 case .call(let funcIdx):
     // Get function signature from context
@@ -297,6 +318,7 @@ case .call(let funcIdx):
 ```
 
 **Add context to StackValidator init**:
+
 ```swift
 class StackValidator {
     private weak var context: ModuleContext?
@@ -312,6 +334,7 @@ class StackValidator {
 If types aren't tracked correctly:
 
 **Pass type info to validator**:
+
 ```swift
 func pushVal(_ type: StackValueType, fromWASMType wasmType: WASMType) {
     let stackType: StackValueType
@@ -331,6 +354,7 @@ func pushVal(_ type: StackValueType, fromWASMType wasmType: WASMType) {
 If compilation slows down significantly:
 
 **Add caching**:
+
 ```swift
 private var validationCache: [String: Bool] = [:]
 
@@ -352,16 +376,19 @@ func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMInstruction
 ## Expected Results
 
 ### Before Integration:
+
 - 40/52 files pass (76.9%)
 - 7 validation errors
 - ~90 stack balance errors in failing files
 
 ### After Integration:
+
 - **Target**: 45+/52 files pass (86%+)
 - **Target**: 2-3 validation errors (complex edge cases)
 - **Target**: ~30 stack balance errors (significant reduction)
 
 ### Files Expected to Fix:
+
 1. ✅ UpdateEvents.bb (most if/else errors)
 2. ✅ Save.bb (control flow)
 3. ✅ Update.bb (nested blocks)
@@ -369,6 +396,7 @@ func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMInstruction
 5. ⚠️ Menu.bb (state machine - complex)
 
 ### Files Still Failing (Acceptable):
+
 - Main.bb (Swift compiler crash - architectural issue)
 - MapSystem.bb (too large)
 - AAText.bb (DLL dependencies)
@@ -378,6 +406,7 @@ func validateInstructions(_ instructions: [WASMInstruction]) -> [WASMInstruction
 ## Debugging Tips
 
 ### Enable Verbose Logging:
+
 ```swift
 // Add to StackValidator
 var verbose = true
@@ -398,6 +427,7 @@ func popVal() -> StackValueType {
 ```
 
 ### Check Stack State:
+
 ```swift
 // Add to StatementGeneration after each block
 if let validator = stackValidator {
@@ -409,6 +439,7 @@ if let validator = stackValidator {
 ```
 
 ### Test Individual Instructions:
+
 ```swift
 // Create unit tests
 let validator = StackValidator()
@@ -423,19 +454,23 @@ assert(validator.stackDepth == 1)
 ## Success Criteria
 
 ✅ **Phase 2 Complete When**:
+
 - StackValidator integrated into StatementGeneration
 - Control flow uses validation
 - No compilation errors
 
 ✅ **Phase 3 Complete When**:
+
 - All 4 test cases pass
 - wasm-validate shows no errors
 
 ✅ **Phase 4 Complete When**:
+
 - Pass rate improves by 5%+ (40 → 42+ files)
 - UpdateEvents.bb validates correctly
 
 ✅ **Phase 5 Complete When**:
+
 - Pass rate improves by 10%+ (40 → 44+ files)
 - All targeted files fixed or diagnosed
 
@@ -445,7 +480,7 @@ assert(validator.stackDepth == 1)
 
 - Phase 1 (Data Structures): ✅ DONE
 - Phase 2 (Integration): 2-3 hours
-- Phase 3 (Testing): 1-2 hours  
+- Phase 3 (Testing): 1-2 hours
 - Phase 4 (Validation): 1 hour
 - Phase 5 (Refinement): 2-3 hours
 - **Buffer**: 2-3 hours for edge cases

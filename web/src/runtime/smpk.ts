@@ -77,9 +77,13 @@ type SmpkJson = {
 
 const MAGIC = [0x53, 0x4d, 0x50, 0x4b]; // "SMPK"
 
-export const decodeSmpk = (bytes: Uint8Array): { json: SmpkJson; bin: Uint8Array } => {
+export const decodeSmpk = (
+  bytes: Uint8Array,
+): { json: SmpkJson; bin: Uint8Array } => {
   if (bytes.byteLength < 16) throw new Error("SMPK too small");
-  for (let i = 0; i < 4; i++) if (bytes[i] !== MAGIC[i]) throw new Error("Invalid SMPK magic");
+  for (let i = 0; i < 4; i++) {
+    if (bytes[i] !== MAGIC[i]) throw new Error("Invalid SMPK magic");
+  }
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const version = dv.getUint32(4, true);
   if (version !== 1) throw new Error(`Unsupported SMPK version ${version}`);
@@ -108,14 +112,14 @@ const accessorView = (bin: Uint8Array, acc: SmpkAccessor): ArrayBufferView => {
   const comps = t === "SCALAR"
     ? 1
     : t === "VEC2"
-      ? 2
-      : t === "VEC3"
-        ? 3
-        : t === "VEC4"
-          ? 4
-          : t === "MAT4"
-            ? 16
-            : 1;
+    ? 2
+    : t === "VEC3"
+    ? 3
+    : t === "VEC4"
+    ? 4
+    : t === "MAT4"
+    ? 16
+    : 1;
 
   const n = count * comps;
   if (ct === "f32") return new Float32Array(buf, base, n);
@@ -147,13 +151,21 @@ export class SMPKLoader {
     }
   }
 
-  private buildAnimationClips(json: any, bin: Uint8Array, objs: any[]): THREE.AnimationClip[] {
+  private buildAnimationClips(
+    json: any,
+    bin: Uint8Array,
+    objs: any[],
+  ): THREE.AnimationClip[] {
     if (!json.animations?.length) return [];
 
     const clips: THREE.AnimationClip[] = [];
     for (const a of json.animations) {
       if (this.core?.env?.debugAnim) {
-        console.log(`[SMPK] animation ${a.name ?? "clip"} channels=${a.channels?.length ?? 0}`);
+        console.log(
+          `[SMPK] animation ${a.name ?? "clip"} channels=${
+            a.channels?.length ?? 0
+          }`,
+        );
       }
       const tracks: THREE.KeyframeTrack[] = [];
       for (const ch of a.channels) {
@@ -165,14 +177,36 @@ export class SMPKLoader {
         const target = objs[ch.targetNode]!;
         const path = ch.path;
         if (this.core?.env?.debugAnim) {
-          console.log(`[SMPK] ch path=${path} target=${target?.name ?? "?"} sampler=${ch.sampler} t=${times.length}`);
+          console.log(
+            `[SMPK] ch path=${path} target=${
+              target?.name ?? "?"
+            } sampler=${ch.sampler} t=${times.length}`,
+          );
         }
         if (path === "translation") {
-          tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.position`, times, values));
+          tracks.push(
+            new THREE.VectorKeyframeTrack(
+              `${target.name}.position`,
+              times,
+              values,
+            ),
+          );
         } else if (path === "scale") {
-          tracks.push(new THREE.VectorKeyframeTrack(`${target.name}.scale`, times, values));
+          tracks.push(
+            new THREE.VectorKeyframeTrack(
+              `${target.name}.scale`,
+              times,
+              values,
+            ),
+          );
         } else if (path === "rotation") {
-          tracks.push(new THREE.QuaternionKeyframeTrack(`${target.name}.quaternion`, times, values));
+          tracks.push(
+            new THREE.QuaternionKeyframeTrack(
+              `${target.name}.quaternion`,
+              times,
+              values,
+            ),
+          );
         }
       }
       clips.push(new THREE.AnimationClip(a.name ?? "clip", -1, tracks));
@@ -180,7 +214,12 @@ export class SMPKLoader {
     return clips;
   }
 
-  loadFromBytes(bytes: Uint8Array, parentId: number, name?: string, targetId?: number) {
+  loadFromBytes(
+    bytes: Uint8Array,
+    parentId: number,
+    name?: string,
+    targetId?: number,
+  ) {
     const { json, bin } = decodeSmpk(bytes);
 
     const root = new THREE.Group();
@@ -189,19 +228,21 @@ export class SMPKLoader {
     let rootId: number;
     if (typeof targetId === "number") {
       rootId = targetId;
-      // If an entity exists at targetId (placeholder), we should ideally replace it 
+      // If an entity exists at targetId (placeholder), we should ideally replace it
       // OR add our content to it.
-      // For now, let's assume we replace the entry in `this.graphics.entities` 
+      // For now, let's assume we replace the entry in `this.graphics.entities`
       // AND handle the scene graph replacement.
       const placeholder = this.graphics.entities[targetId];
       if (placeholder) {
-        const placeholderUserData = placeholder.userData ? { ...placeholder.userData } : null;
+        const placeholderUserData = placeholder.userData
+          ? { ...placeholder.userData }
+          : null;
         // Transfer parent
         if (placeholder.parent) {
           placeholder.parent.add(root);
           placeholder.parent.remove(placeholder);
         }
-        // Copy transform? 
+        // Copy transform?
         root.position.copy(placeholder.position);
         root.quaternion.copy(placeholder.quaternion);
         root.scale.copy(placeholder.scale);
@@ -234,8 +275,17 @@ export class SMPKLoader {
       const n = json.nodes[i]!;
       const o = new THREE.Object3D();
       o.name = n.name ?? `node_${i}`;
-      if (n.translation) o.position.set(n.translation[0], n.translation[1], n.translation[2]);
-      if (n.rotation) o.quaternion.set(n.rotation[0], n.rotation[1], n.rotation[2], n.rotation[3]);
+      if (n.translation) {
+        o.position.set(n.translation[0], n.translation[1], n.translation[2]);
+      }
+      if (n.rotation) {
+        o.quaternion.set(
+          n.rotation[0],
+          n.rotation[1],
+          n.rotation[2],
+          n.rotation[3],
+        );
+      }
       if (n.scale) o.scale.set(n.scale[0], n.scale[1], n.scale[2]);
       objs.push(o);
     }
@@ -244,7 +294,11 @@ export class SMPKLoader {
       const o = objs[i]!;
       if (typeof n.parent === "number") objs[n.parent]?.add(o);
     }
-    const sceneRoots = json.sceneRoots?.length ? json.sceneRoots : json.nodes.map((n, i) => (n.parent == null ? i : -1)).filter((i) => i >= 0);
+    const sceneRoots = json.sceneRoots?.length
+      ? json.sceneRoots
+      : json.nodes.map((n, i) => (n.parent == null ? i : -1)).filter((i) =>
+        i >= 0
+      );
     for (const r of sceneRoots) root.add(objs[r]!);
 
     const resolveAssetUrl = (rel: string) => {
@@ -252,7 +306,8 @@ export class SMPKLoader {
       // Resolve textures relative to the SMPK file location when possible.
       if (typeof window === "undefined") return rel;
       try {
-        return new URL(rel, new URL(name ?? "", window.location.href)).toString();
+        return new URL(rel, new URL(name ?? "", window.location.href))
+          .toString();
       } catch {
         return rel;
       }
@@ -274,23 +329,36 @@ export class SMPKLoader {
       }
 
       const mat = new THREE.MeshStandardMaterial({
-        color: m.color ? new THREE.Color(m.color[0], m.color[1], m.color[2]) : (m.baseColorTexture ? 0xffffff : 0x888888),
+        color: m.color
+          ? new THREE.Color(m.color[0], m.color[1], m.color[2])
+          : (m.baseColorTexture ? 0xffffff : 0x888888),
         side: THREE.DoubleSide,
         transparent: alphaMode === "BLEND",
         depthWrite: alphaMode !== "BLEND",
         alphaTest: alphaMode === "MASK" ? (m.alphaCutoff ?? 0.5) : 0,
-        roughness: m.roughness ?? (m.shininess !== undefined ? (1 - m.shininess) : 0.8),
+        roughness: m.roughness ??
+          (m.shininess !== undefined ? (1 - m.shininess) : 0.8),
         metalness: m.metalness ?? 0.0,
         emissive: m.emissiveFactor
-          ? new THREE.Color(m.emissiveFactor[0], m.emissiveFactor[1], m.emissiveFactor[2])
+          ? new THREE.Color(
+            m.emissiveFactor[0],
+            m.emissiveFactor[1],
+            m.emissiveFactor[2],
+          )
           : new THREE.Color(0x000000),
       });
       mat.name = m.name ?? "";
 
-      const loadTex = (url: string | undefined, prop: keyof THREE.MeshStandardMaterial, uScale = 1, vScale = 1) => {
+      const loadTex = (
+        url: string | undefined,
+        prop: keyof THREE.MeshStandardMaterial,
+        uScale = 1,
+        vScale = 1,
+      ) => {
         if (!url) return;
         const resolved = resolveAssetUrl(url);
-        const isKtx2 = url.toLowerCase().endsWith(".ktx2") || url.toLowerCase().endsWith(".ktx");
+        const isKtx2 = url.toLowerCase().endsWith(".ktx2") ||
+          url.toLowerCase().endsWith(".ktx");
         const usedLoader = (isKtx2 && ktx2Loader) ? ktx2Loader : loader;
 
         usedLoader.load(resolved, (t: THREE.Texture) => {
@@ -317,13 +385,19 @@ export class SMPKLoader {
         loadTex(m.detailTexture, "roughnessMap");
       }
       if (m.detailTexture2) {
-        console.log(`Material ${m.name}: detailTexture2=${m.detailTexture2} (not loaded - requires custom shader)`);
+        console.log(
+          `Material ${m.name}: detailTexture2=${m.detailTexture2} (not loaded - requires custom shader)`,
+        );
       }
       if (m.detailTexture3) {
-        console.log(`Material ${m.name}: detailTexture3=${m.detailTexture3} (not loaded - requires custom shader)`);
+        console.log(
+          `Material ${m.name}: detailTexture3=${m.detailTexture3} (not loaded - requires custom shader)`,
+        );
       }
       if (m.cubeTexture) {
-        console.log(`Material ${m.name}: cubeTexture=${m.cubeTexture} (not loaded - requires envMap)`);
+        console.log(
+          `Material ${m.name}: cubeTexture=${m.cubeTexture} (not loaded - requires envMap)`,
+        );
       }
 
       if (m.normalTexture || m.normalScale !== undefined) {
@@ -351,7 +425,10 @@ export class SMPKLoader {
 
         const norIdx = prim.attributes["NORMAL"];
         if (typeof norIdx === "number") {
-          const nor = accessorView(bin, json.accessors[norIdx]!) as Float32Array;
+          const nor = accessorView(
+            bin,
+            json.accessors[norIdx]!,
+          ) as Float32Array;
           geo.setAttribute("normal", new THREE.BufferAttribute(nor, 3));
         }
 
@@ -363,7 +440,10 @@ export class SMPKLoader {
 
         const uv2Idx = prim.attributes["TEXCOORD_1"];
         if (typeof uv2Idx === "number") {
-          const uv2 = accessorView(bin, json.accessors[uv2Idx]!) as Float32Array;
+          const uv2 = accessorView(
+            bin,
+            json.accessors[uv2Idx]!,
+          ) as Float32Array;
           geo.setAttribute("uv2", new THREE.BufferAttribute(uv2, 2));
         }
 
@@ -371,17 +451,26 @@ export class SMPKLoader {
         const weightsIdx = prim.attributes["WEIGHTS_0"];
 
         if (typeof jointsIdx === "number") {
-          const jv = accessorView(bin, json.accessors[jointsIdx]!) as Uint16Array;
+          const jv = accessorView(
+            bin,
+            json.accessors[jointsIdx]!,
+          ) as Uint16Array;
           geo.setAttribute("skinIndex", new THREE.Uint16BufferAttribute(jv, 4));
         }
         if (typeof weightsIdx === "number") {
-          const wv = accessorView(bin, json.accessors[weightsIdx]!) as Float32Array;
-          geo.setAttribute("skinWeight", new THREE.Float32BufferAttribute(wv, 4));
+          const wv = accessorView(
+            bin,
+            json.accessors[weightsIdx]!,
+          ) as Float32Array;
+          geo.setAttribute(
+            "skinWeight",
+            new THREE.Float32BufferAttribute(wv, 4),
+          );
         }
         if ((geo as any).attributes?.skinWeight) {
           try {
             geo.normalizeSkinWeights();
-          } catch { }
+          } catch {}
         }
 
         if (typeof prim.indices === "number") {
@@ -390,7 +479,11 @@ export class SMPKLoader {
           geo.setIndex(new THREE.BufferAttribute(iv, 1));
         }
 
-        const mat = materials[prim.material ?? 0] ?? new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+        const mat = materials[prim.material ?? 0] ??
+          new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+          });
 
         if (typeof n.skin === "number" && json.skins?.[n.skin]) {
           const skin = json.skins[n.skin]!;
@@ -425,11 +518,16 @@ export class SMPKLoader {
               boneInverses.push(mat4);
             }
             if (this.core?.env?.debugAnim) {
-              console.log(`[SMPK] read ${boneInverses.length} inverse bind matrices`);
+              console.log(
+                `[SMPK] read ${boneInverses.length} inverse bind matrices`,
+              );
             }
           }
 
-          const sk = new THREE.Skeleton(bones, boneInverses.length ? boneInverses : undefined);
+          const sk = new THREE.Skeleton(
+            bones,
+            boneInverses.length ? boneInverses : undefined,
+          );
 
           const sm = new THREE.SkinnedMesh(geo, mat);
           // Do NOT reparent bones to SkinnedMesh — bones must remain in the
@@ -440,7 +538,9 @@ export class SMPKLoader {
           // Update all world matrices before binding
           root.updateMatrixWorld(true);
           if (this.core?.env?.debugAnim) {
-            const hasNaN = boneInverses.some((m) => m.elements.some((v) => !Number.isFinite(v)));
+            const hasNaN = boneInverses.some((m) =>
+              m.elements.some((v) => !Number.isFinite(v))
+            );
             if (hasNaN) console.warn("[SMPK] NaN/Inf in inverse bind matrices");
           }
 
@@ -464,12 +564,17 @@ export class SMPKLoader {
       const action = mixer.clipAction(clips[0]!);
       root.userData.action = action;
       action.play();
-      if (json.animations[0]?.sequences) root.userData.sequences = json.animations[0].sequences;
+      if (json.animations[0]?.sequences) {
+        root.userData.sequences = json.animations[0].sequences;
+      }
 
       // If callers set an anim frame cursor on the placeholder before the async load completed,
       // honor it once the mixer/action exists (SCPCB commonly does this).
       const initialFrame = (root.userData as any).__b3d_animFrame;
-      if (typeof initialFrame === "number" && Number.isFinite(initialFrame) && initialFrame !== 0) {
+      if (
+        typeof initialFrame === "number" && Number.isFinite(initialFrame) &&
+        initialFrame !== 0
+      ) {
         const fps = root.userData.fps || 30;
         action.time = initialFrame / fps;
         mixer.update(0);

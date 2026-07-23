@@ -15,7 +15,8 @@ const post = (m: WorkerMsg, transfer: Transferable[] = []) => {
   (self as any).postMessage(m, transfer);
 };
 
-const nowMs = () => (typeof performance !== "undefined" ? performance.now() : Date.now());
+const nowMs =
+  () => (typeof performance !== "undefined" ? performance.now() : Date.now());
 
 const makeStubImports = async (module: WebAssembly.Module) => {
   const imports: any = {
@@ -81,4 +82,3 @@ self.onmessage = async (ev: MessageEvent<WorkerInit>) => {
     post({ type: "error", err: String(e?.stack ?? e?.message ?? e) });
   }
 };
-

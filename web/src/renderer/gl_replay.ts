@@ -20,27 +20,27 @@ import type { GPUResources } from "./gpu_resources.ts";
 
 // GL command opcodes (must match Swift engine RenderCommand.swift)
 export const enum GLCmd {
-  ClearColor       = 0x01,
-  Clear            = 0x02,
-  BindShader       = 0x03,
-  SetUniform4f     = 0x04,
-  SetUniformMat4   = 0x05,
-  SetUniform1i     = 0x06,
-  SetUniform1f     = 0x07,
-  SetUniform3f     = 0x08,
-  BindVAO          = 0x09,
-  BindTexture      = 0x0A,
-  DrawElements     = 0x0B,
-  DrawArrays       = 0x0C,
-  Enable           = 0x0D,
-  Disable          = 0x0E,
-  BlendFunc        = 0x0F,
-  DepthMask        = 0x10,
-  CullFace         = 0x11,
-  UploadVB         = 0x12,
-  UploadIB         = 0x13,
-  SetViewport      = 0x14,
-  SetUniformMat3   = 0x15,
+  ClearColor = 0x01,
+  Clear = 0x02,
+  BindShader = 0x03,
+  SetUniform4f = 0x04,
+  SetUniformMat4 = 0x05,
+  SetUniform1i = 0x06,
+  SetUniform1f = 0x07,
+  SetUniform3f = 0x08,
+  BindVAO = 0x09,
+  BindTexture = 0x0A,
+  DrawElements = 0x0B,
+  DrawArrays = 0x0C,
+  Enable = 0x0D,
+  Disable = 0x0E,
+  BlendFunc = 0x0F,
+  DepthMask = 0x10,
+  CullFace = 0x11,
+  UploadVB = 0x12,
+  UploadIB = 0x13,
+  SetViewport = 0x14,
+  SetUniformMat3 = 0x15,
 }
 
 /**
@@ -259,7 +259,11 @@ export function replayGLCommands(
       }
 
       default:
-        console.warn(`gl_replay: unknown opcode 0x${op.toString(16)} at offset ${offset - 4}`);
+        console.warn(
+          `gl_replay: unknown opcode 0x${op.toString(16)} at offset ${
+            offset - 4
+          }`,
+        );
         return; // Stop replaying on unknown opcode
     }
   }
@@ -292,7 +296,10 @@ export class GLCommandBuilder {
 
   clearColor(r: number, g: number, b: number, a: number): this {
     this.pushU32(GLCmd.ClearColor);
-    this.pushF32(r); this.pushF32(g); this.pushF32(b); this.pushF32(a);
+    this.pushF32(r);
+    this.pushF32(g);
+    this.pushF32(b);
+    this.pushF32(a);
     this.cmdCount++;
     return this;
   }
@@ -330,7 +337,9 @@ export class GLCommandBuilder {
   setUniform3f(loc: number, x: number, y: number, z: number): this {
     this.pushU32(GLCmd.SetUniform3f);
     this.pushU32(loc);
-    this.pushF32(x); this.pushF32(y); this.pushF32(z);
+    this.pushF32(x);
+    this.pushF32(y);
+    this.pushF32(z);
     this.cmdCount++;
     return this;
   }
@@ -338,7 +347,10 @@ export class GLCommandBuilder {
   setUniform4f(loc: number, x: number, y: number, z: number, w: number): this {
     this.pushU32(GLCmd.SetUniform4f);
     this.pushU32(loc);
-    this.pushF32(x); this.pushF32(y); this.pushF32(z); this.pushF32(w);
+    this.pushF32(x);
+    this.pushF32(y);
+    this.pushF32(z);
+    this.pushF32(w);
     this.cmdCount++;
     return this;
   }
@@ -374,7 +386,12 @@ export class GLCommandBuilder {
     return this;
   }
 
-  drawElements(mode: number, count: number, type: number, byteOffset: number): this {
+  drawElements(
+    mode: number,
+    count: number,
+    type: number,
+    byteOffset: number,
+  ): this {
     this.pushU32(GLCmd.DrawElements);
     this.pushU32(mode);
     this.pushU32(count);
@@ -431,7 +448,10 @@ export class GLCommandBuilder {
 
   setViewport(x: number, y: number, w: number, h: number): this {
     this.pushU32(GLCmd.SetViewport);
-    this.pushI32(x); this.pushI32(y); this.pushI32(w); this.pushI32(h);
+    this.pushI32(x);
+    this.pushI32(y);
+    this.pushI32(w);
+    this.pushI32(h);
     this.cmdCount++;
     return this;
   }

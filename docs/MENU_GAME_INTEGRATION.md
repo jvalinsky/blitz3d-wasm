@@ -35,15 +35,18 @@ How the menu system connects to WASM game initialization.
 ## File Structure
 
 ### game.html (Unified Entry Point)
+
 **URL**: `http://localhost:8000/web/game.html`
 
 Contains:
+
 - `#menuCanvas` - Canvas for menu rendering
 - `#canvas` - Canvas for game (Three.js)
 - `#startScreen` - Click to Start (autoplay policy)
 - `#loader` - Loading progress overlay
 
 ### menu-canvas.html (Standalone Menu)
+
 **URL**: `http://localhost:8000/web/menu-canvas.html`
 
 Can run independently for menu testing, or integrated into game.html.
@@ -51,19 +54,24 @@ Can run independently for menu testing, or integrated into game.html.
 ## Integration Points
 
 ### 1. window.startNewGame(seed, difficulty)
+
 Called by menu START button when game.html is loaded.
 
 **Parameters:**
+
 - `seed` (string) - Map seed (e.g., "CRUNCH", "9341", or random)
 - `difficulty` (number) - 0=Safe, 1=Euclid, 2=Keter
 
 **Example:**
+
 ```javascript
-window.startNewGame("CRUNCH", 2);  // Keter difficulty
+window.startNewGame("CRUNCH", 2); // Keter difficulty
 ```
 
 ### 2. initGameWorld(seed, difficulty)
+
 Internal function that:
+
 1. Shows loader overlay
 2. Loads WASM module
 3. Calls main.ts init() function
@@ -90,17 +98,21 @@ showGame()    → phase = 'game'
 ## Usage
 
 ### Standalone Menu (Testing)
+
 ```bash
 open http://localhost:8000/web/menu-canvas.html
 ```
+
 - Menu renders normally
 - START button shows alert (no WASM)
 - Good for testing menu UI
 
 ### Integrated Game
+
 ```bash
 open http://localhost:8000/web/game.html
 ```
+
 - Full menu → game flow
 - START button triggers WASM init
 - Loader shows progress
@@ -109,6 +121,7 @@ open http://localhost:8000/web/game.html
 ## Implementation Status
 
 ### ✅ Complete
+
 - Menu canvas rendering
 - START button detection
 - Loader overlay UI
@@ -116,12 +129,14 @@ open http://localhost:8000/web/game.html
 - Progress bar system
 
 ### 🚧 In Progress
+
 - Inline menu code into game.html
 - Wire to actual main.ts init()
 - Load first room (room2 or testroom)
 - Player spawning
 
 ### ⏳ TODO
+
 - WASM module loading
 - Room template loading
 - Asset streaming
@@ -132,6 +147,7 @@ open http://localhost:8000/web/game.html
 ## Testing
 
 ### Test Menu Integration
+
 1. Open `game.html`
 2. Click "CLICK TO START"
 3. Click "NEW GAME"
@@ -143,6 +159,7 @@ open http://localhost:8000/web/game.html
 9. ✅ Alert shows (placeholder for real game)
 
 ### Test Standalone Menu
+
 1. Open `menu-canvas.html`
 2. Click through menus
 3. Click "START"
@@ -151,12 +168,14 @@ open http://localhost:8000/web/game.html
 ## Next Steps
 
 ### Immediate (Phase 4B Completion)
+
 1. **Inline menu code** - Copy menu-canvas.html <script> into game.html
 2. **Wire to main.ts** - Call actual WASM init() function
 3. **Load test room** - Load room2 or testroom
 4. **Show game canvas** - Transition to Three.js rendering
 
 ### Soon (Phase 4C)
+
 1. **Player spawn** - Initialize player at origin
 2. **Camera setup** - First-person camera
 3. **Movement** - WASD + mouse look
@@ -165,43 +184,46 @@ open http://localhost:8000/web/game.html
 ## Code Examples
 
 ### Start New Game (from menu)
+
 ```javascript
 // In menu-canvas.html START button
-if (typeof window.startNewGame === 'function') {
-    window.startNewGame(randomSeed, selectedDifficulty);
+if (typeof window.startNewGame === "function") {
+  window.startNewGame(randomSeed, selectedDifficulty);
 }
 ```
 
 ### Game Initialization (in game.html)
+
 ```javascript
 async function initGameWorld(seed, difficulty) {
-    showLoader('Loading WASM...');
-    updateProgress(10);
-    
-    // Load WASM (TODO: call main.ts)
-    await loadWASM();
-    updateProgress(50);
-    
-    // Initialize world with seed
-    await initWorld(seed, difficulty);
-    updateProgress(90);
-    
-    // Show game
-    showGame();
+  showLoader("Loading WASM...");
+  updateProgress(10);
+
+  // Load WASM (TODO: call main.ts)
+  await loadWASM();
+  updateProgress(50);
+
+  // Initialize world with seed
+  await initWorld(seed, difficulty);
+  updateProgress(90);
+
+  // Show game
+  showGame();
 }
 ```
 
 ### Progress Updates
+
 ```javascript
 updateProgress(percent, text);
 
 // Examples:
-updateProgress(10, 'Loading WASM module...');
-updateProgress(30, 'Loading room templates...');
-updateProgress(50, 'Loading assets...');
-updateProgress(70, 'Initializing world...');
-updateProgress(90, 'Spawning player...');
-updateProgress(100, 'Complete!');
+updateProgress(10, "Loading WASM module...");
+updateProgress(30, "Loading room templates...");
+updateProgress(50, "Loading assets...");
+updateProgress(70, "Initializing world...");
+updateProgress(90, "Spawning player...");
+updateProgress(100, "Complete!");
 ```
 
 ## Related Files
@@ -213,4 +235,4 @@ updateProgress(100, 'Complete!');
 
 ---
 
-*Last updated: February 1, 2026*
+_Last updated: February 1, 2026_

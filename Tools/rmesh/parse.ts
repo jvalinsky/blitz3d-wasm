@@ -26,7 +26,15 @@ export type RMeshTriggerBox = {
 export type RMeshPointEntity =
   | { type: "screen"; x: number; y: number; z: number; imgPath: string }
   | { type: "waypoint"; x: number; y: number; z: number }
-  | { type: "light"; x: number; y: number; z: number; range: number; color: string; intensity: number }
+  | {
+    type: "light";
+    x: number;
+    y: number;
+    z: number;
+    range: number;
+    color: string;
+    intensity: number;
+  }
   | {
     type: "spotlight";
     x: number;
@@ -39,7 +47,14 @@ export type RMeshPointEntity =
     innerCone: number;
     outerCone: number;
   }
-  | { type: "soundemitter"; x: number; y: number; z: number; sound: number; range: number }
+  | {
+    type: "soundemitter";
+    x: number;
+    y: number;
+    z: number;
+    sound: number;
+    range: number;
+  }
   | { type: "playerstart"; x: number; y: number; z: number; angles: string }
   | {
     type: "model";
@@ -101,7 +116,9 @@ class Reader {
     const n = this.readI32LE();
     if (n < 0 || n > 1024 * 1024) throw new Error(`RMESH bad string len ${n}`);
     this.ensure(n);
-    const s = new TextDecoder().decode(this.u8.subarray(this.off, this.off + n));
+    const s = new TextDecoder().decode(
+      this.u8.subarray(this.off, this.off + n),
+    );
     this.off += n;
     return s;
   }
@@ -109,7 +126,9 @@ class Reader {
 
 const readCollisionSurface = (r: Reader): RMeshCollisionSurface => {
   const vCount = r.readI32LE();
-  if (vCount < 0 || vCount > 10_000_000) throw new Error(`RMESH bad vertexCount ${vCount}`);
+  if (vCount < 0 || vCount > 10_000_000) {
+    throw new Error(`RMESH bad vertexCount ${vCount}`);
+  }
   const pos = new Float32Array(vCount * 3);
   for (let i = 0; i < vCount; i++) {
     pos[i * 3 + 0] = r.readF32LE();
@@ -117,7 +136,9 @@ const readCollisionSurface = (r: Reader): RMeshCollisionSurface => {
     pos[i * 3 + 2] = r.readF32LE();
   }
   const tCount = r.readI32LE();
-  if (tCount < 0 || tCount > 10_000_000) throw new Error(`RMESH bad triCount ${tCount}`);
+  if (tCount < 0 || tCount > 10_000_000) {
+    throw new Error(`RMESH bad triCount ${tCount}`);
+  }
   const idx = new Uint32Array(tCount * 3);
   for (let i = 0; i < tCount; i++) {
     idx[i * 3 + 0] = r.readI32LE() >>> 0;
@@ -135,7 +156,9 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
   }
 
   const drawnCount = r.readI32LE();
-  if (drawnCount < 0 || drawnCount > 100_000) throw new Error(`RMESH bad drawnCount ${drawnCount}`);
+  if (drawnCount < 0 || drawnCount > 100_000) {
+    throw new Error(`RMESH bad drawnCount ${drawnCount}`);
+  }
   const drawn: RMeshSurface[] = [];
 
   for (let s = 0; s < drawnCount; s++) {
@@ -144,7 +167,9 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
     const tex1Kind = r.readU8();
     const tex1Name = tex1Kind ? r.readString() : undefined;
     const vCount = r.readI32LE();
-    if (vCount < 0 || vCount > 10_000_000) throw new Error(`RMESH bad vertexCount ${vCount}`);
+    if (vCount < 0 || vCount > 10_000_000) {
+      throw new Error(`RMESH bad vertexCount ${vCount}`);
+    }
 
     const positions = new Float32Array(vCount * 3);
     const uvs0 = new Float32Array(vCount * 2);
@@ -167,7 +192,9 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
     }
 
     const tCount = r.readI32LE();
-    if (tCount < 0 || tCount > 10_000_000) throw new Error(`RMESH bad triCount ${tCount}`);
+    if (tCount < 0 || tCount > 10_000_000) {
+      throw new Error(`RMESH bad triCount ${tCount}`);
+    }
     const indices = new Uint32Array(tCount * 3);
     for (let i = 0; i < tCount; i++) {
       indices[i * 3 + 0] = r.readI32LE() >>> 0;
@@ -189,26 +216,38 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
   }
 
   const collisionCount = r.readI32LE();
-  if (collisionCount < 0 || collisionCount > 100_000) throw new Error(`RMESH bad collisionCount ${collisionCount}`);
+  if (collisionCount < 0 || collisionCount > 100_000) {
+    throw new Error(`RMESH bad collisionCount ${collisionCount}`);
+  }
   const collision: RMeshCollisionSurface[] = [];
-  for (let i = 0; i < collisionCount; i++) collision.push(readCollisionSurface(r));
+  for (let i = 0; i < collisionCount; i++) {
+    collision.push(readCollisionSurface(r));
+  }
 
   const triggers: RMeshTriggerBox[] = [];
   if (header === "RoomMesh.HasTriggerBox") {
     const triggerCount = r.readI32LE();
-    if (triggerCount < 0 || triggerCount > 10_000) throw new Error(`RMESH bad triggerCount ${triggerCount}`);
+    if (triggerCount < 0 || triggerCount > 10_000) {
+      throw new Error(`RMESH bad triggerCount ${triggerCount}`);
+    }
     for (let t = 0; t < triggerCount; t++) {
       const surfCount = r.readI32LE();
-      if (surfCount < 0 || surfCount > 1_000_000) throw new Error(`RMESH bad trigger surfCount ${surfCount}`);
+      if (surfCount < 0 || surfCount > 1_000_000) {
+        throw new Error(`RMESH bad trigger surfCount ${surfCount}`);
+      }
       const surfaces: RMeshCollisionSurface[] = [];
-      for (let s = 0; s < surfCount; s++) surfaces.push(readCollisionSurface(r));
+      for (let s = 0; s < surfCount; s++) {
+        surfaces.push(readCollisionSurface(r));
+      }
       const name = r.readString();
       triggers.push({ name, surfaces });
     }
   }
 
   const entityCount = r.readI32LE();
-  if (entityCount < 0 || entityCount > 100_000) throw new Error(`RMESH bad entityCount ${entityCount}`);
+  if (entityCount < 0 || entityCount > 100_000) {
+    throw new Error(`RMESH bad entityCount ${entityCount}`);
+  }
   const entities: RMeshPointEntity[] = [];
 
   for (let i = 0; i < entityCount; i++) {
@@ -249,7 +288,18 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
         const angles = r.readString();
         const innerCone = r.readI32LE();
         const outerCone = r.readI32LE();
-        entities.push({ type: "spotlight", x, y, z, range, color, intensity, angles, innerCone, outerCone });
+        entities.push({
+          type: "spotlight",
+          x,
+          y,
+          z,
+          range,
+          color,
+          intensity,
+          angles,
+          innerCone,
+          outerCone,
+        });
         break;
       }
       case "soundemitter": {
@@ -280,7 +330,19 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
         const sx = r.readF32LE();
         const sy = r.readF32LE();
         const sz = r.readF32LE();
-        entities.push({ type: "model", file, x, y, z, pitch, yaw, roll, sx, sy, sz });
+        entities.push({
+          type: "model",
+          file,
+          x,
+          y,
+          z,
+          pitch,
+          yaw,
+          roll,
+          sx,
+          sy,
+          sz,
+        });
         break;
       }
       default: {
@@ -302,4 +364,3 @@ export const parseRMesh = (bytes: Uint8Array): RMeshFile => {
 
   return { header, drawn, collision, triggers, entities };
 };
-

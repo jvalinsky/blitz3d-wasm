@@ -2,4 +2,3 @@ interface:
   display_name: "X Debugging"
   short_description: "Debug DirectX .x parsing/conversion"
   default_prompt: "Use $x-debugging to diagnose this .x issue: confirm the X subformat (txt/bin/tzip/bzip), identify skin/material/texture pitfalls, and provide exact commands to reproduce and validate the conversion to .smpk."
-

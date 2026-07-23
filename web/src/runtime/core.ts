@@ -160,8 +160,12 @@ export class Blitz3DCore {
     const cssH = existingCanvas.clientHeight || parent?.clientHeight ||
       window.innerHeight;
     const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
-    const targetW = defaultSize ? Math.max(1, Math.floor(cssW * dpr)) : existingCanvas.width;
-    const targetH = defaultSize ? Math.max(1, Math.floor(cssH * dpr)) : existingCanvas.height;
+    const targetW = defaultSize
+      ? Math.max(1, Math.floor(cssW * dpr))
+      : existingCanvas.width;
+    const targetH = defaultSize
+      ? Math.max(1, Math.floor(cssH * dpr))
+      : existingCanvas.height;
 
     // Always create a dedicated WebGL canvas (avoid 2D context contamination)
     const glCanvas = document.createElement("canvas");
@@ -199,7 +203,7 @@ export class Blitz3DCore {
         const pe = this.canvas.parentElement as HTMLElement;
         const pos = globalThis.getComputedStyle?.(pe)?.position;
         if (!pos || pos === "static") pe.style.position = "relative";
-      } catch { }
+      } catch {}
       this.canvas.parentElement.appendChild(this.textCanvas);
     }
     this.ctx2d = this.textCanvas.getContext("2d");
@@ -265,11 +269,20 @@ export class Blitz3DCore {
     this.imports = imports;
 
     // --- Video (BlitzMovie) ---
-    const videoExports = createVideoWasmExports(getVideoRuntime(), (ptr) => this.readString(ptr));
+    const videoExports = createVideoWasmExports(
+      getVideoRuntime(),
+      (ptr) => this.readString(ptr),
+    );
     Object.assign(imports.env, videoExports);
 
     // Wire DrawMovie to VideoRuntime
-    imports.env.DrawMovie = (handle: number, x: number, y: number, w: number, h: number) => {
+    imports.env.DrawMovie = (
+      handle: number,
+      x: number,
+      y: number,
+      w: number,
+      h: number,
+    ) => {
       const vr = getVideoRuntime();
       const ctx = this.ctx2d;
       if (ctx) vr.drawToCanvas(handle, ctx, x, y, w, h);
@@ -297,12 +310,20 @@ export class Blitz3DCore {
       return delta;
     };
 
-    imports.env.CurveValue = (current: number, target: number, speed: number) => {
+    imports.env.CurveValue = (
+      current: number,
+      target: number,
+      speed: number,
+    ) => {
       // Smooth interpolation towards target
       return current + (target - current) * speed;
     };
 
-    imports.env.CurveAngle = (current: number, target: number, speed: number) => {
+    imports.env.CurveAngle = (
+      current: number,
+      target: number,
+      speed: number,
+    ) => {
       // Smooth angle interpolation
       let delta = target - current;
       while (delta > 180) delta -= 360;
@@ -316,7 +337,12 @@ export class Blitz3DCore {
       return Math.sqrt(dx * dx + dy * dy);
     };
 
-    imports.env.Point_Direction = (x1: number, y1: number, x2: number, y2: number) => {
+    imports.env.Point_Direction = (
+      x1: number,
+      y1: number,
+      x2: number,
+      y2: number,
+    ) => {
       const dx = x2 - x1;
       const dy = y2 - y1;
       return Math.atan2(dy, dx) * 180 / Math.PI;
@@ -396,7 +422,9 @@ export class Blitz3DCore {
       if (delta > maxDeltaMs) {
         if (clampWarns < 3) {
           console.warn(
-            `[Time] clamping MilliSecs delta ${delta.toFixed(1)}ms -> ${maxDeltaMs}ms`,
+            `[Time] clamping MilliSecs delta ${
+              delta.toFixed(1)
+            }ms -> ${maxDeltaMs}ms`,
           );
           clampWarns++;
         }
@@ -491,7 +519,7 @@ export class Blitz3DCore {
 
     // File System Stubs
     imports.blitz3d.ReadDir = (pathPtr: number) => 1; // Basic valid handle
-    imports.blitz3d.MoreFiles = (dir: number) => 0;   // Immediate EOF
+    imports.blitz3d.MoreFiles = (dir: number) => 0; // Immediate EOF
     imports.blitz3d.NextFile = (dir: number) => {
       return this.allocString ? this.allocString("") : 0;
     };
@@ -499,7 +527,9 @@ export class Blitz3DCore {
     // System/Graphics Drivers (Stubbed for Web)
     imports.blitz3d.CountGfxDrivers = () => 1;
     imports.blitz3d.GfxDriverName = (idx: number) => {
-      return this.allocString ? this.allocString(idx === 1 ? "WebGL" : "None") : 0;
+      return this.allocString
+        ? this.allocString(idx === 1 ? "WebGL" : "None")
+        : 0;
     };
     imports.blitz3d.GlobalMemoryStatus = () => 0; // Unknown/Unlimited
     imports.blitz3d.ActiveTextures = () => 0;
@@ -514,12 +544,11 @@ export class Blitz3DCore {
       console.error(`[ErrorLog] ${msg}`);
     };
 
-
     // SCPCB helpers (safe no-ops / basic stubs)
-    imports.env.UpdateSoundOrigin = (..._args: any[]) => { };
-    imports.env.UpdateSoundOrigin2 = (..._args: any[]) => { };
+    imports.env.UpdateSoundOrigin = (..._args: any[]) => {};
+    imports.env.UpdateSoundOrigin2 = (..._args: any[]) => {};
     imports.env.LoadEventSound = (..._args: any[]) => 0;
-    imports.env.PlayAnnouncement = (..._args: any[]) => { };
+    imports.env.PlayAnnouncement = (..._args: any[]) => {};
     imports.env.KeyName = (keyCode: number) => {
       const name = `KEY_${keyCode}`;
       return this.allocString ? this.allocString(name) : 0;
@@ -1185,7 +1214,12 @@ export class Blitz3DCore {
     };
 
     // ReadBytes - Read from file handle into bank
-    imports.env.ReadBytes = (bankId: number, fileHandle: number, offset: number, count: number): number => {
+    imports.env.ReadBytes = (
+      bankId: number,
+      fileHandle: number,
+      offset: number,
+      count: number,
+    ): number => {
       const bank = this.banks.get(bankId);
       if (!bank) return 0;
 
@@ -1203,7 +1237,12 @@ export class Blitz3DCore {
     };
 
     // WriteBytes - Write from bank to file handle
-    imports.env.WriteBytes = (bankId: number, fileHandle: number, offset: number, count: number): number => {
+    imports.env.WriteBytes = (
+      bankId: number,
+      fileHandle: number,
+      offset: number,
+      count: number,
+    ): number => {
       const bank = this.banks.get(bankId);
       if (!bank) return 0;
 
@@ -1256,11 +1295,17 @@ export class Blitz3DCore {
     imports.env.StreamSound_Strict = (pathPtr: number) =>
       imports.env.FSOUND_Stream_Open(pathPtr, 0);
 
-    imports.env.SetStreamVolume_Strict = (streamHandle: number, vol: number) => {
+    imports.env.SetStreamVolume_Strict = (
+      streamHandle: number,
+      vol: number,
+    ) => {
       getAudio()?.setChannelVolume?.(streamHandle, vol);
     };
 
-    imports.env.SetStreamPaused_Strict = (streamHandle: number, paused: number) => {
+    imports.env.SetStreamPaused_Strict = (
+      streamHandle: number,
+      paused: number,
+    ) => {
       imports.env.FSOUND_SetPaused(streamHandle, paused);
     };
 
@@ -1285,7 +1330,8 @@ export class Blitz3DCore {
       getAudio()?.loopSound?.(soundId, true);
     };
 
-    imports.env.PlaySound2 = (soundId: number) => imports.env.PlaySound(soundId);
+    imports.env.PlaySound2 = (soundId: number) =>
+      imports.env.PlaySound(soundId);
     imports.env.FreeSound_Strict = (soundId: number) =>
       imports.env.FreeSound(soundId);
 
@@ -1366,7 +1412,12 @@ export class Blitz3DCore {
     };
 
     // 3D Sound helpers (SCPCB doesn't call Sound3D today, but keep it wired)
-    imports.env.Sound3D = (soundId: number, x: number, y: number, z: number) => {
+    imports.env.Sound3D = (
+      soundId: number,
+      x: number,
+      y: number,
+      z: number,
+    ) => {
       getAudio()?.setSoundPosition?.(soundId, x, y, z);
     };
 
@@ -1400,7 +1451,9 @@ export class Blitz3DCore {
       const path = this.readString(pathPtr);
       if (audio.openStream && audio.playStream) {
         const streamId = audio.openStream(path, 2);
-        return streamId ? audio.playStream(streamId, undefined, undefined, undefined, true) : 0;
+        return streamId
+          ? audio.playStream(streamId, undefined, undefined, undefined, true)
+          : 0;
       }
       const soundId = audio.loadSound(path, 0);
       if (soundId) {
@@ -1418,7 +1471,7 @@ export class Blitz3DCore {
         banks: this.banks,
         nextBankId: this.nextBankId,
       },
-      this.fileIO || {}
+      this.fileIO || {},
     );
     zipApi.registerImports(imports);
 
@@ -1599,13 +1652,11 @@ export class Blitz3DCore {
       return 0;
     };
 
-
-
     // --- OpenAL Stubs ---
     // --- OpenAL Module ---
     if (!imports.al) imports.al = {};
     const alStub = () => 0;
-    const alVoidStub = () => { };
+    const alVoidStub = () => {};
 
     const alFunctions = [
       "alCreateBuffer",
@@ -1686,7 +1737,7 @@ export class Blitz3DCore {
         readString: (ptr) => this.readString(ptr),
         allocString: this.allocString,
       },
-      this.fileIO || {}
+      this.fileIO || {},
     );
     ini.registerImports(imports);
     this.ini = ini;
@@ -1706,7 +1757,7 @@ export class Blitz3DCore {
             graphics.ensureUniqueMaterial(child);
           }
         });
-      } catch { }
+      } catch {}
 
       const id = graphics.nextEntityId++;
       graphics.entities[id] = clone;
@@ -1738,32 +1789,34 @@ export class Blitz3DCore {
 
     // --- Blocking Loop Handler (for SCPCB compatibility) ---
     // Provides synthetic input injection to bypass blocking WaitKey/GetKey loops
-    const loopHandler = new BlitzLoopHandler({ graphics: this.graphics as any });
+    const loopHandler = new BlitzLoopHandler({
+      graphics: this.graphics as any,
+    });
     loopHandler.registerImports(imports);
   }
 
   shutdownAudio() {
     try {
       this.graphics?.audioSystem?.dispose?.();
-    } catch { }
+    } catch {}
     try {
       if (this.channels) {
         for (const [channelId, ch] of this.channels.entries()) {
           try {
             ch.source?.stop?.();
-          } catch { }
+          } catch {}
           try {
             ch.source?.disconnect?.();
-          } catch { }
+          } catch {}
           try {
             ch.pan?.disconnect?.();
-          } catch { }
+          } catch {}
           try {
             ch.gain?.disconnect?.();
-          } catch { }
+          } catch {}
           try {
             this.channels.delete(channelId);
-          } catch { }
+          } catch {}
         }
       }
 
@@ -1771,40 +1824,40 @@ export class Blitz3DCore {
         for (const [streamId, stream] of this.streams.entries()) {
           try {
             stream.element?.pause?.();
-          } catch { }
+          } catch {}
           try {
             if (stream.element) {
               stream.element.src = "";
               stream.element.load?.();
             }
-          } catch { }
+          } catch {}
           try {
             stream.source?.disconnect?.();
-          } catch { }
+          } catch {}
           try {
             stream.gain?.disconnect?.();
-          } catch { }
+          } catch {}
           try {
             this.streams.delete(streamId);
-          } catch { }
+          } catch {}
         }
       }
 
       if (this.sounds) {
         try {
           this.sounds.clear();
-        } catch { }
+        } catch {}
       }
 
       try {
         this.audioMaster?.disconnect?.();
-      } catch { }
+      } catch {}
       this.audioMaster = null;
 
       if (this.audioContext) {
         try {
           this.audioContext.close();
-        } catch { }
+        } catch {}
         this.audioContext = null;
       }
     } finally {
@@ -1819,26 +1872,26 @@ export class Blitz3DCore {
       if (this.textCanvas?.parentElement) {
         this.textCanvas.parentElement.removeChild(this.textCanvas);
       }
-    } catch { }
+    } catch {}
     this.textCanvas = null;
     this.ctx2d = null;
 
     try {
       this.banks?.clear?.();
-    } catch { }
+    } catch {}
     try {
       this.zipArchives?.clear?.();
-    } catch { }
+    } catch {}
 
     if (this.tcpStreams) {
       for (const stream of this.tcpStreams.values()) {
         try {
           stream.ws?.close?.();
-        } catch { }
+        } catch {}
       }
       try {
         this.tcpStreams.clear();
-      } catch { }
+      } catch {}
     }
 
     this.exports = null;

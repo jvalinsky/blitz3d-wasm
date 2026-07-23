@@ -10,27 +10,29 @@ argument-hint: <action> [args...]
 
 ## When to Use This
 
-| You're doing this... | Log this type | Command |
-|---------------------|---------------|---------|
-| Starting a new feature | `goal` **with -p** | `/decision add goal "Add user auth" -p "user request"` |
-| Choosing between approaches | `decision` | `/decision add decision "Choose auth method"` |
-| Considering an option | `option` | `/decision add option "JWT tokens"` |
-| About to write code | `action` | `/decision add action "Implementing JWT"` |
-| Noticing something | `observation` | `/decision add obs "Found existing auth code"` |
-| Finished something | `outcome` | `/decision add outcome "JWT working"` |
-| Reconsidering a past decision | `revisit` | `/decision add revisit "Reconsidering auth"` |
+| You're doing this...          | Log this type      | Command                                                |
+| ----------------------------- | ------------------ | ------------------------------------------------------ |
+| Starting a new feature        | `goal` **with -p** | `/decision add goal "Add user auth" -p "user request"` |
+| Choosing between approaches   | `decision`         | `/decision add decision "Choose auth method"`          |
+| Considering an option         | `option`           | `/decision add option "JWT tokens"`                    |
+| About to write code           | `action`           | `/decision add action "Implementing JWT"`              |
+| Noticing something            | `observation`      | `/decision add obs "Found existing auth code"`         |
+| Finished something            | `outcome`          | `/decision add outcome "JWT working"`                  |
+| Reconsidering a past decision | `revisit`          | `/decision add revisit "Reconsidering auth"`           |
 
 ## Quick Commands
 
 Based on $ARGUMENTS:
 
 ### View Commands
+
 - `nodes` or `list` -> `deciduous nodes`
 - `edges` -> `deciduous edges`
 - `graph` -> `deciduous graph`
 - `commands` -> `deciduous commands`
 
 ### Create Nodes (with optional metadata)
+
 - `add goal <title>` -> `deciduous add goal "<title>" -c 90`
 - `add decision <title>` -> `deciduous add decision "<title>" -c 75`
 - `add option <title>` -> `deciduous add option "<title>" -c 70`
@@ -40,6 +42,7 @@ Based on $ARGUMENTS:
 - `add revisit <title>` -> `deciduous add revisit "<title>" -c 75`
 
 ### Optional Flags for Nodes
+
 - `-c, --confidence <0-100>` - Confidence level
 - `-p, --prompt "..."` - Store the user prompt that triggered this node
 - `-f, --files "file1.rs,file2.rs"` - Associate files with this node
@@ -60,15 +63,18 @@ deciduous link <goal_id> <action_id> -r "Implementation"
 
 ## CRITICAL: Capture VERBATIM User Prompts
 
-**Prompts must be the EXACT user message, not a summary.** When a user request triggers new work, capture their full message word-for-word.
+**Prompts must be the EXACT user message, not a summary.** When a user request
+triggers new work, capture their full message word-for-word.
 
 **BAD - summaries are useless for context recovery:**
+
 ```bash
 # DON'T DO THIS - this is a summary, not a prompt
 deciduous add goal "Add auth" -p "User asked: add login to the app"
 ```
 
 **GOOD - verbatim prompts enable full context recovery:**
+
 ```bash
 # Use --prompt-stdin for multi-line prompts
 deciduous add goal "Add auth" -c 90 --prompt-stdin << 'EOF'
@@ -84,11 +90,13 @@ EOF
 ```
 
 **When to capture prompts:**
+
 - Root `goal` nodes: YES - the FULL original request
 - Major direction changes: YES - when user redirects the work
 - Routine downstream nodes: NO - they inherit context via edges
 
 **Updating prompts on existing nodes:**
+
 ```bash
 deciduous prompt <node_id> "full verbatim prompt here"
 cat prompt.txt | deciduous prompt <node_id>  # Multi-line from stdin
@@ -98,9 +106,11 @@ Prompts are viewable in the TUI detail panel (`deciduous tui`) and web viewer.
 
 ## Branch-Based Grouping
 
-**Nodes are automatically tagged with the current git branch.** This enables filtering by feature/PR.
+**Nodes are automatically tagged with the current git branch.** This enables
+filtering by feature/PR.
 
 ### How It Works
+
 - When you create a node, the current git branch is stored in `metadata_json`
 - Configure which branches are "main" in `.deciduous/config.toml`:
   ```toml
@@ -108,9 +118,11 @@ Prompts are viewable in the TUI detail panel (`deciduous tui`) and web viewer.
   main_branches = ["main", "master"]  # Branches not treated as "feature branches"
   auto_detect = true                    # Auto-detect branch on node creation
   ```
-- Nodes on feature branches (anything not in `main_branches`) can be grouped/filtered
+- Nodes on feature branches (anything not in `main_branches`) can be
+  grouped/filtered
 
 ### CLI Filtering
+
 ```bash
 # Show only nodes from specific branch
 deciduous nodes --branch main
@@ -123,24 +135,31 @@ deciduous add goal "Universal note" --no-branch  # No branch tag
 ```
 
 ### Web UI Branch Filter
+
 The graph viewer shows a branch dropdown in the stats bar:
+
 - "All branches" shows everything
 - Select a specific branch to filter all views (Chains, Timeline, Graph, DAG)
 
 ### When to Use Branch Grouping
+
 - **Feature work**: Nodes created on `feature-auth` branch auto-grouped
 - **PR context**: Filter to see only decisions for a specific PR
 - **Cross-cutting concerns**: Use `--no-branch` for universal notes
 - **Retrospectives**: Filter by branch to see decision history per feature
 
 ### Create Edges
+
 - `link <from> <to> [reason]` -> `deciduous link <from> <to> -r "<reason>"`
 
 ### Sync Graph
+
 - `sync` -> `deciduous sync`
 
 ### Multi-User Sync (Diff/Patch)
-- `diff export -o <file>` -> `deciduous diff export -o <file>` (export nodes as patch)
+
+- `diff export -o <file>` -> `deciduous diff export -o <file>` (export nodes as
+  patch)
 - `diff export --nodes 1-10 -o <file>` -> export specific nodes
 - `diff export --branch feature-x -o <file>` -> export nodes from branch
 - `diff apply <file>` -> `deciduous diff apply <file>` (apply patch, idempotent)
@@ -149,6 +168,7 @@ The graph viewer shows a branch dropdown in the stats bar:
 - `migrate` -> `deciduous migrate` (add change_id columns for sync)
 
 ### Export & Visualization
+
 - `dot` -> `deciduous dot` (output DOT to stdout)
 - `dot --png` -> `deciduous dot --png -o graph.dot` (generate PNG)
 - `dot --nodes 1-11` -> `deciduous dot --nodes 1-11` (filter nodes)
@@ -157,50 +177,55 @@ The graph viewer shows a branch dropdown in the stats bar:
 
 ## Node Types
 
-| Type | Purpose | Example |
-|------|---------|---------|
-| `goal` | High-level objective | "Add user authentication" |
-| `decision` | Choice point with options | "Choose auth method" |
-| `option` | Possible approach | "Use JWT tokens" |
-| `action` | Something implemented | "Added JWT middleware" |
-| `outcome` | Result of action | "JWT auth working" |
-| `observation` | Finding or data point | "Existing code uses sessions" |
-| `revisit` | Pivot point / reconsideration | "Reconsidering auth approach" |
+| Type          | Purpose                       | Example                       |
+| ------------- | ----------------------------- | ----------------------------- |
+| `goal`        | High-level objective          | "Add user authentication"     |
+| `decision`    | Choice point with options     | "Choose auth method"          |
+| `option`      | Possible approach             | "Use JWT tokens"              |
+| `action`      | Something implemented         | "Added JWT middleware"        |
+| `outcome`     | Result of action              | "JWT auth working"            |
+| `observation` | Finding or data point         | "Existing code uses sessions" |
+| `revisit`     | Pivot point / reconsideration | "Reconsidering auth approach" |
 
 ## Edge Types
 
-| Type | Meaning |
-|------|---------|
-| `leads_to` | Natural progression |
-| `chosen` | Selected option |
+| Type       | Meaning                        |
+| ---------- | ------------------------------ |
+| `leads_to` | Natural progression            |
+| `chosen`   | Selected option                |
 | `rejected` | Not selected (include reason!) |
-| `requires` | Dependency |
-| `blocks` | Preventing progress |
-| `enables` | Makes something possible |
+| `requires` | Dependency                     |
+| `blocks`   | Preventing progress            |
+| `enables`  | Makes something possible       |
 
 ## Graph Integrity - CRITICAL
 
-**Every node MUST be logically connected.** Floating nodes break the graph's value.
+**Every node MUST be logically connected.** Floating nodes break the graph's
+value.
 
 ### Connection Rules
-| Node Type | MUST connect to | Example |
-|-----------|----------------|---------|
-| `outcome` | The action/goal it resolves | "JWT working" -> links FROM "Implementing JWT" |
-| `action` | The decision/goal that spawned it | "Implementing JWT" -> links FROM "Add auth" |
-| `option` | Its parent decision | "Use JWT" -> links FROM "Choose auth method" |
-| `observation` | Related goal/action/decision | "Found existing code" -> links TO relevant node |
-| `decision` | Parent goal (if any) | "Choose auth" -> links FROM "Add auth feature" |
-| `revisit` | The decision/outcome being reconsidered | "Reconsidering auth" -> links FROM original decision |
-| `goal` | Can be a root (no parent needed) | Root goals are valid orphans |
+
+| Node Type     | MUST connect to                         | Example                                              |
+| ------------- | --------------------------------------- | ---------------------------------------------------- |
+| `outcome`     | The action/goal it resolves             | "JWT working" -> links FROM "Implementing JWT"       |
+| `action`      | The decision/goal that spawned it       | "Implementing JWT" -> links FROM "Add auth"          |
+| `option`      | Its parent decision                     | "Use JWT" -> links FROM "Choose auth method"         |
+| `observation` | Related goal/action/decision            | "Found existing code" -> links TO relevant node      |
+| `decision`    | Parent goal (if any)                    | "Choose auth" -> links FROM "Add auth feature"       |
+| `revisit`     | The decision/outcome being reconsidered | "Reconsidering auth" -> links FROM original decision |
+| `goal`        | Can be a root (no parent needed)        | Root goals are valid orphans                         |
 
 ### Audit Checklist
+
 Ask yourself after creating nodes:
+
 1. Does every **outcome** link back to what caused it?
 2. Does every **action** link to why you did it?
 3. Does every **option** link to its decision?
 4. Are there **dangling outcomes** with no parent action/goal?
 
 ### Find Disconnected Nodes
+
 ```bash
 # List nodes with no incoming edges (potential orphans)
 deciduous edges | cut -d'>' -f2 | cut -d' ' -f2 | sort -u > /tmp/has_parent.txt
@@ -208,14 +233,17 @@ deciduous nodes | tail -n+3 | awk '{print $1}' | while read id; do
   grep -q "^$id$" /tmp/has_parent.txt || echo "CHECK: $id"
 done
 ```
+
 Note: Root goals are VALID orphans. Outcomes/actions/options usually are NOT.
 
 ### Fix Missing Connections
+
 ```bash
 deciduous link <parent_id> <child_id> -r "Retroactive connection - <why>"
 ```
 
 ### When to Audit
+
 - Before every `deciduous sync`
 - After creating multiple nodes quickly
 - At session end
@@ -223,13 +251,16 @@ deciduous link <parent_id> <child_id> -r "Retroactive connection - <why>"
 
 ## Multi-User Sync
 
-**Problem**: Multiple users work on the same codebase, each with a local `.deciduous/deciduous.db` (gitignored). How to share decisions?
+**Problem**: Multiple users work on the same codebase, each with a local
+`.deciduous/deciduous.db` (gitignored). How to share decisions?
 
 **Solution**: jj-inspired dual-ID model. Each node has:
+
 - `id` (integer): Local database primary key, different per machine
 - `change_id` (UUID): Globally unique, stable across all databases
 
 ### Export Workflow
+
 ```bash
 # Export nodes from your branch as a patch file
 deciduous diff export --branch feature-x -o .deciduous/patches/alice-feature.json
@@ -239,6 +270,7 @@ deciduous diff export --nodes 172-188 -o .deciduous/patches/alice-feature.json -
 ```
 
 ### Apply Workflow
+
 ```bash
 # Apply patches from teammates (idempotent - safe to re-apply)
 deciduous diff apply .deciduous/patches/*.json
@@ -248,14 +280,18 @@ deciduous diff apply --dry-run .deciduous/patches/bob-refactor.json
 ```
 
 ### PR Workflow
+
 1. Create nodes locally while working
-2. Export: `deciduous diff export --branch my-feature -o .deciduous/patches/my-feature.json`
+2. Export:
+   `deciduous diff export --branch my-feature -o .deciduous/patches/my-feature.json`
 3. Commit the patch file (NOT the database)
 4. Open PR with patch file included
-5. Teammates pull and apply: `deciduous diff apply .deciduous/patches/my-feature.json`
+5. Teammates pull and apply:
+   `deciduous diff apply .deciduous/patches/my-feature.json`
 6. **Idempotent**: Same patch applied twice = no duplicates
 
 ### Patch Format (JSON)
+
 ```json
 {
   "version": "1.0",

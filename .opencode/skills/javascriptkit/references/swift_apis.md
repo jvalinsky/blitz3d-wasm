@@ -1,6 +1,8 @@
 # JavaScript Interop Cheat Sheet
 
-Practical recipes for manipulating JavaScript values from Swift with JavaScriptKit. Each section shows the shortest path to access, call, or convert the APIs you interact with the most.
+Practical recipes for manipulating JavaScript values from Swift with
+JavaScriptKit. Each section shows the shortest path to access, call, or convert
+the APIs you interact with the most.
 
 ## Access JavaScript Values
 
@@ -12,13 +14,17 @@ let document: JSObject = global.document.object!
 let math: JSObject = global.Math.object!
 ```
 
-- Use ``JSObject/global`` for `globalThis` and drill into properties.
-- Accessing through [dynamic member lookup](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0195-dynamic-member-lookup.md) returns ``JSValue``; call `.object`, `.number`, `.string`, etc. to unwrap a concrete type (callable values are represented as ``JSObject`` as well).
-- Prefer storing ``JSObject`` references (`document` above) when you call multiple members to avoid repeated conversions (for performance).
+- Use `JSObject/global` for `globalThis` and drill into properties.
+- Accessing through
+  [dynamic member lookup](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0195-dynamic-member-lookup.md)
+  returns `JSValue`; call `.object`, `.number`, `.string`, etc. to unwrap a
+  concrete type (callable values are represented as `JSObject` as well).
+- Prefer storing `JSObject` references (`document` above) when you call multiple
+  members to avoid repeated conversions (for performance).
 
 ### Properties, subscripts, and symbols
 
-```swift
+````swift
 extension JSObject {
     public subscript(_ name: String) -> JSValue { get set }
     public subscript(_ index: Int) -> JSValue { get set }
@@ -38,7 +44,7 @@ extension JSValue {
     public subscript(dynamicMember name: String) -> JSValue
     public subscript(_ index: Int) -> JSValue
 }
-```
+````
 
 **Example**
 
@@ -58,7 +64,7 @@ let data = obj[symbol].object
 
 ## Call Functions and Methods
 
-```swift
+````swift
 extension JSObject {
     /// Call this function with given `arguments` using [Callable values of user-defined nominal types](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0253-callable.md)
     /// ```swift
@@ -83,7 +89,7 @@ extension JSValue {
     /// - Precondition: `self` must be a JavaScript Object and specified member should be a callable object.
     public subscript(dynamicMember name: String) -> ((ConvertibleToJSValue...) -> JSValue)
 }
-```
+````
 
 **Example**
 
@@ -99,7 +105,10 @@ let button = document.createElement!("button").object!
 _ = button.classList.add("primary")
 ```
 
-- **Dynamic Member Lookup and `!`**: When calling a method on ``JSObject`` (like `createElement!`), it returns an optional closure, so `!` is used to unwrap and call it. In contrast, calling on ``JSValue`` (like `button.classList.add`) returns a non-optional closure that traps on failure for convenience.
+- **Dynamic Member Lookup and `!`**: When calling a method on `JSObject` (like
+  `createElement!`), it returns an optional closure, so `!` is used to unwrap
+  and call it. In contrast, calling on `JSValue` (like `button.classList.add`)
+  returns a non-optional closure that traps on failure for convenience.
 
 Need to bind manually? Grab the function object and supply `this`:
 
@@ -110,7 +119,7 @@ appendChild(this: document.body.object!, document.createElement!("div"))
 
 ### Passing options objects
 
-When JavaScript APIs require an options object, create one using ``JSObject``:
+When JavaScript APIs require an options object, create one using `JSObject`:
 
 ```swift
 public class JSObject: ExpressibleByDictionaryLiteral {
@@ -142,7 +151,8 @@ let response = fetch("https://api.example.com", fetchOptions)
 
 ### Throwing JavaScript
 
-JavaScript exceptions surface as ``JSException``. Wrap the function (or object) in a throwing helper.
+JavaScript exceptions surface as `JSException`. Wrap the function (or object) in
+a throwing helper.
 
 ```swift
 // Method
@@ -162,8 +172,10 @@ do {
 }
 ```
 
-- Use ``JSObject/throwing`` to access object methods that may throw JavaScript exceptions.
-- Use ``JSObject/throws`` to call the callable object itself that may throw JavaScript exceptions.
+- Use `JSObject/throwing` to access object methods that may throw JavaScript
+  exceptions.
+- Use `JSObject/throws` to call the callable object itself that may throw
+  JavaScript exceptions.
 
 ### Constructors and `new`
 
@@ -172,28 +184,31 @@ let url = JSObject.global.URL.object!.new("https://example.com", "https://exampl
 let searchParams = url.searchParams.object!
 ```
 
-Use ``JSThrowingFunction/new(_:)`` (via `throws.new`) when the constructor can throw.
+Use `JSThrowingFunction/new(_:)` (via `throws.new`) when the constructor can
+throw.
 
 ## Convert Between Swift and JavaScript
 
 ### Swift -> JavaScript
 
-Types conforming to ``ConvertibleToJSValue`` can be converted via the `.jsValue` property. Conversion behavior depends on the context:
+Types conforming to `ConvertibleToJSValue` can be converted via the `.jsValue`
+property. Conversion behavior depends on the context:
 
-| Swift type | JavaScript result | Notes |
-|------------|------------------|-------|
-| `Bool` | `JSValue.boolean(Bool)` | |
-| `String` | `JSValue.string(JSString)` | Wrapped in ``JSString`` to avoid extra copies |
-| `Int`, `UInt`, `Int8-32`, `UInt8-32`, `Float`, `Double` | `JSValue.number(Double)` | All numeric types convert to `Double` |
-| `Int64`, `UInt64` | `JSValue.bigInt(JSBigInt)` | Converted to `BigInt` (requires `import JavaScriptBigIntSupport`) |
-| `Data` | `Uint8Array` | Converted to `Uint8Array` (requires `import JavaScriptFoundationCompat`) |
-| `Array<Element>` where `Element: ConvertibleToJSValue` | JavaScript Array | Each element converted via `.jsValue` |
-| `Dictionary<String, Value>` where `Value: ConvertibleToJSValue` | Plain JavaScript object | Keys must be `String` |
-| `Optional.none` | `JSValue.null` | Use ``JSValue/undefined`` when you specifically need `undefined` |
-| `Optional.some(wrapped)` | `wrapped.jsValue` | |
-| ``JSValue``, ``JSObject``, ``JSString`` | Passed through | No conversion needed |
+| Swift type                                                      | JavaScript result          | Notes                                                                    |
+| --------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------ |
+| `Bool`                                                          | `JSValue.boolean(Bool)`    |                                                                          |
+| `String`                                                        | `JSValue.string(JSString)` | Wrapped in `JSString` to avoid extra copies                              |
+| `Int`, `UInt`, `Int8-32`, `UInt8-32`, `Float`, `Double`         | `JSValue.number(Double)`   | All numeric types convert to `Double`                                    |
+| `Int64`, `UInt64`                                               | `JSValue.bigInt(JSBigInt)` | Converted to `BigInt` (requires `import JavaScriptBigIntSupport`)        |
+| `Data`                                                          | `Uint8Array`               | Converted to `Uint8Array` (requires `import JavaScriptFoundationCompat`) |
+| `Array<Element>` where `Element: ConvertibleToJSValue`          | JavaScript Array           | Each element converted via `.jsValue`                                    |
+| `Dictionary<String, Value>` where `Value: ConvertibleToJSValue` | Plain JavaScript object    | Keys must be `String`                                                    |
+| `Optional.none`                                                 | `JSValue.null`             | Use `JSValue/undefined` when you specifically need `undefined`           |
+| `Optional.some(wrapped)`                                        | `wrapped.jsValue`          |                                                                          |
+| `JSValue`, `JSObject`, `JSString`                               | Passed through             | No conversion needed                                                     |
 
-**Function arguments**: Automatic conversion when passing to JavaScript functions:
+**Function arguments**: Automatic conversion when passing to JavaScript
+functions:
 
 ```swift
 let alert = JSObject.global.alert.object!
@@ -225,7 +240,7 @@ canvasElement.width = .number(Double(size))
 
 ### JavaScript -> Swift
 
-Access JavaScript values through ``JSValue`` accessors:
+Access JavaScript values through `JSValue` accessors:
 
 ```swift
 let jsValue: JSValue = // ... some JavaScript value
@@ -369,7 +384,11 @@ let swiftPromise = JSPromise.async {
 }
 ```
 
-- Wrap existing promise-returning APIs with ``JSPromise/init(unsafelyWrapping:)``.
-- Use `JSPromise.async(body:)` (with `Void` or `JSValue` return type) to expose Swift `async/await` work to JavaScript callers.
-- To await JavaScript `Promise` from Swift, import `JavaScriptEventLoop`, call `JavaScriptEventLoop.installGlobalExecutor()` early, and use the `value` property.
-- The `value` property suspends until the promise resolves or rejects, rethrowing rejections as ``JSException``.
+- Wrap existing promise-returning APIs with `JSPromise/init(unsafelyWrapping:)`.
+- Use `JSPromise.async(body:)` (with `Void` or `JSValue` return type) to expose
+  Swift `async/await` work to JavaScript callers.
+- To await JavaScript `Promise` from Swift, import `JavaScriptEventLoop`, call
+  `JavaScriptEventLoop.installGlobalExecutor()` early, and use the `value`
+  property.
+- The `value` property suspends until the promise resolves or rejects,
+  rethrowing rejections as `JSException`.

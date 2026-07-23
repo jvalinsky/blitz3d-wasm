@@ -4,7 +4,8 @@
 
 ## Summary
 
-Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a TypeScript runtime for browser APIs.
+Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a TypeScript runtime for
+browser APIs.
 
 **Compiler**: Production-ready (~17K lines Swift) — 94.7% SCPCB pass rate\
 **Runtime**: TypeScript runtime (~12K lines) with command buffers
@@ -14,6 +15,7 @@ Blitz3D-WASM compiles Blitz3D BASIC to WebAssembly with a TypeScript runtime for
 **URL**: https://blitz3d.exe.xyz:8000/test.html
 
 Demonstrates:
+
 - Particles falling with gravity
 - Alpha fading
 - Automatic deletion when expired
@@ -22,6 +24,7 @@ Demonstrates:
 ## Architecture
 
 ### WASM (compiled BB code)
+
 - Type system (New, Delete, linked lists)
 - Field access (p\x, p\y, p\obj)
 - Physics (gravity, velocity)
@@ -30,6 +33,7 @@ Demonstrates:
 - Memory management
 
 ### TypeScript Runtime (~12K lines)
+
 - Graphics (Three.js integration)
 - Audio (Web Audio API)
 - File I/O (Virtual filesystem)
@@ -37,6 +41,7 @@ Demonstrates:
 - Command buffer (efficient WASM→JS batching)
 
 ### Thin Demo Runtime (~500 lines)
+
 - `CreateSprite()` → Three.js Sprite
 - `PositionEntity(id,x,y,z)` → set position
 - `EntityAlpha(id,a)` → set opacity
@@ -45,11 +50,11 @@ Demonstrates:
 
 ## SCPCB Compilation Status
 
-| Metric | Value |
-|--------|-------|
-| Files Tested | 57 |
-| Passing | 54 (94.7%) |
-| WASM Validation | 100% |
+| Metric          | Value      |
+| --------------- | ---------- |
+| Files Tested    | 57         |
+| Passing         | 54 (94.7%) |
+| WASM Validation | 100%       |
 
 ## Source of Truth
 

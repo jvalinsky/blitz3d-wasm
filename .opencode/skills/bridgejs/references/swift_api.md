@@ -2,33 +2,37 @@
 
 ## Type Mapping
 
-| TypeScript | Swift |
-|:-----------|:------|
-| `number` | `Int`, `Float`, `Double` |
-| `string` | `String` |
-| `boolean` | `Bool` |
-| `T \| null` | `Optional<T>` |
-| `Promise<T>` | `async` functions |
-| `object` | `JSObject` |
-| `(args) => T` | `@escaping` closures |
+| TypeScript    | Swift                    |
+| :------------ | :----------------------- |
+| `number`      | `Int`, `Float`, `Double` |
+| `string`      | `String`                 |
+| `boolean`     | `Bool`                   |
+| `T \| null`   | `Optional<T>`            |
+| `Promise<T>`  | `async` functions        |
+| `object`      | `JSObject`               |
+| `(args) => T` | `@escaping` closures     |
 
 ## Type Bridging and Performance
 
-| Type | Strategy | Crossing Cost | Best For |
-|:-----|:---------|:--------------|:---------|
-| Classes | Reference (pointer) | Low | Stateful objects, frequent method calls |
-| Structs | Copy (serialize) | Medium | Small immutable data, infrequent passing |
-| Enums (simple) | Copy (integer/string) | Very low | Flags, options |
-| Enums (associated) | Copy (serialize payload) | Medium | Result types, variants |
-| Closures | Boxed/retained | Medium | Callbacks, transforms |
-| Primitives | Direct | Very low | Frequent access |
-| Strings | Copy (UTF-8) | Medium | Text data |
+| Type               | Strategy                 | Crossing Cost | Best For                                 |
+| :----------------- | :----------------------- | :------------ | :--------------------------------------- |
+| Classes            | Reference (pointer)      | Low           | Stateful objects, frequent method calls  |
+| Structs            | Copy (serialize)         | Medium        | Small immutable data, infrequent passing |
+| Enums (simple)     | Copy (integer/string)    | Very low      | Flags, options                           |
+| Enums (associated) | Copy (serialize payload) | Medium        | Result types, variants                   |
+| Closures           | Boxed/retained           | Medium        | Callbacks, transforms                    |
+| Primitives         | Direct                   | Very low      | Frequent access                          |
+| Strings            | Copy (UTF-8)             | Medium        | Text data                                |
 
-**Classes** use `FinalizationRegistry` for automatic cleanup when JS garbage collects. Call `release()` for deterministic cleanup in performance-critical code.
+**Classes** use `FinalizationRegistry` for automatic cleanup when JS garbage
+collects. Call `release()` for deterministic cleanup in performance-critical
+code.
 
-**Structs/Enums** are value types - data is copied across the boundary. No shared state between Swift and JS.
+**Structs/Enums** are value types - data is copied across the boundary. No
+shared state between Swift and JS.
 
-**Tip:** Prefer classes for objects with many method calls. Use structs for data transfer objects passed once.
+**Tip:** Prefer classes for objects with many method calls. Use structs for data
+transfer objects passed once.
 
 ---
 
@@ -64,26 +68,26 @@ import JavaScriptKit
 const total = exports.calculateTotal(19.99, 3);
 
 try {
-    const user = exports.findUser(42);
+  const user = exports.findUser(42);
 } catch (e) {
-    console.error(e);
+  console.error(e);
 }
 
 const data = await exports.fetchData("/api");
 
-exports.greet("World");         // "Hello, World!"
-exports.greet("World", "Hi");   // "Hi, World!"
+exports.greet("World"); // "Hello, World!"
+exports.greet("World", "Hi"); // "Hi, World!"
 ```
 
-| Feature | Status |
-|:--------|:-------|
-| Primitives, String params/returns | Supported |
-| `@JS class`, `@JS enum` params/returns | Supported |
-| `throws(JSException)` | Supported |
-| `throws` (any error) | Not supported |
-| `async` | Supported |
-| Default parameter values | Supported |
-| Generics, opaque types | Not supported |
+| Feature                                | Status        |
+| :------------------------------------- | :------------ |
+| Primitives, String params/returns      | Supported     |
+| `@JS class`, `@JS enum` params/returns | Supported     |
+| `throws(JSException)`                  | Supported     |
+| `throws` (any error)                   | Not supported |
+| `async`                                | Supported     |
+| Default parameter values               | Supported     |
+| Generics, opaque types                 | Not supported |
 
 ---
 
@@ -116,9 +120,9 @@ exports.greet("World", "Hi");   // "Hi, World!"
 ```javascript
 const counter = new exports.Counter();
 counter.increment();
-console.log(counter.count);     // 1
-console.log(counter.doubled);   // 2
-counter.release();  // explicit cleanup (optional but recommended)
+console.log(counter.count); // 1
+console.log(counter.doubled); // 2
+counter.release(); // explicit cleanup (optional but recommended)
 
 // Static members
 console.log(exports.Counter.instanceCount);
@@ -126,9 +130,9 @@ exports.Counter.resetAll();
 
 // Throwing initializer
 try {
-    const c = new exports.Counter(-1);
+  const c = new exports.Counter(-1);
 } catch (e) {
-    console.error(e);  // "Start must be positive"
+  console.error(e); // "Start must be positive"
 }
 ```
 
@@ -136,45 +140,46 @@ try {
 
 ```typescript
 export interface SwiftHeapObject {
-    release(): void;
+  release(): void;
 }
 
 export interface Counter extends SwiftHeapObject {
-    count: number;
-    readonly doubled: number;
-    increment(): void;
-    add(amount: number): void;
+  count: number;
+  readonly doubled: number;
+  increment(): void;
+  add(amount: number): void;
 }
 
 export type Exports = {
-    Counter: {
-        new(): Counter;
-        new(start: number): Counter;
-        instanceCount: number;
-        resetAll(): void;
-    };
-}
+  Counter: {
+    new (): Counter;
+    new (start: number): Counter;
+    instanceCount: number;
+    resetAll(): void;
+  };
+};
 ```
 
-| Feature | Status |
-|:--------|:-------|
-| `init()` | Supported |
-| `init() throws(JSException)` | Supported |
-| `init() throws` (any error) | Not supported |
-| `init() async` | Not supported |
-| Stored properties (`var`, `let`) | Supported |
-| Computed properties | Supported |
-| Instance methods | Supported |
-| Static properties/methods | Supported |
-| `deinit` | Supported |
-| Subscripts | Not supported |
-| Generics | Not supported |
+| Feature                          | Status        |
+| :------------------------------- | :------------ |
+| `init()`                         | Supported     |
+| `init() throws(JSException)`     | Supported     |
+| `init() throws` (any error)      | Not supported |
+| `init() async`                   | Not supported |
+| Stored properties (`var`, `let`) | Supported     |
+| Computed properties              | Supported     |
+| Instance methods                 | Supported     |
+| Static properties/methods        | Supported     |
+| `deinit`                         | Supported     |
+| Subscripts                       | Not supported |
+| Generics                         | Not supported |
 
 ---
 
 ## Structs
 
-Structs are value types - data is copied across the Swift-JS boundary (no shared state).
+Structs are value types - data is copied across the Swift-JS boundary (no shared
+state).
 
 ```swift
 @JS struct Point {
@@ -205,28 +210,28 @@ Structs are value types - data is copied across the Swift-JS boundary (no shared
 ```javascript
 // Structs are created via init function, returned as plain JS objects
 const point = exports.Point.init(10.0, 20.0, "origin");
-console.log(point.x, point.y);  // 10.0, 20.0
+console.log(point.x, point.y); // 10.0, 20.0
 
 // Passing to Swift copies the data
 const moved = exports.movePoint(point, 5.0, 5.0);
-console.log(moved.x, moved.y);  // 15.0, 25.0
+console.log(moved.x, moved.y); // 15.0, 25.0
 
 // Static members
-console.log(exports.AppConfig.version);  // "1.0.0"
+console.log(exports.AppConfig.version); // "1.0.0"
 exports.AppConfig.debugMode = true;
 exports.AppConfig.reset();
 ```
 
-| Feature | Status |
-|:--------|:-------|
-| Stored properties | Supported |
-| Optional properties | Supported |
-| Nested structs | Supported |
-| Class properties in structs | Supported |
-| Static properties/methods | Supported |
-| Instance methods | Not supported |
-| Computed properties | Not supported |
-| Generics | Not supported |
+| Feature                     | Status        |
+| :-------------------------- | :------------ |
+| Stored properties           | Supported     |
+| Optional properties         | Supported     |
+| Nested structs              | Supported     |
+| Class properties in structs | Supported     |
+| Static properties/methods   | Supported     |
+| Instance methods            | Not supported |
+| Computed properties         | Not supported |
+| Generics                    | Not supported |
 
 ---
 
@@ -246,7 +251,7 @@ exports.AppConfig.reset();
 **JavaScript:**
 
 ```javascript
-exports.setDirection(exports.Direction.North);  // passes integer 0
+exports.setDirection(exports.Direction.North); // passes integer 0
 const dir = exports.getDirection();
 if (dir === exports.Direction.North) { /* ... */ }
 ```
@@ -270,8 +275,8 @@ if (dir === exports.Direction.North) { /* ... */ }
 **JavaScript:**
 
 ```javascript
-exports.setTheme(exports.Theme.Dark);      // passes "dark"
-exports.setStatus(exports.HttpStatus.Ok);  // passes 200
+exports.setTheme(exports.Theme.Dark); // passes "dark"
+exports.setStatus(exports.HttpStatus.Ok); // passes 200
 ```
 
 ### Associated Value Enums
@@ -300,25 +305,25 @@ exports.handleResult(success);
 // Pattern match on result
 const result = exports.getResult();
 switch (result.tag) {
-    case exports.APIResult.Tag.Success:
-        console.log("Data:", result.param0);
-        break;
-    case exports.APIResult.Tag.Failure:
-        console.log("Error code:", result.param0);
-        break;
-    case exports.APIResult.Tag.Loading:
-        console.log("Loading...");
-        break;
+  case exports.APIResult.Tag.Success:
+    console.log("Data:", result.param0);
+    break;
+  case exports.APIResult.Tag.Failure:
+    console.log("Error code:", result.param0);
+    break;
+  case exports.APIResult.Tag.Loading:
+    console.log("Loading...");
+    break;
 }
 ```
 
-| Associated Value Type | Status |
-|:----------------------|:-------|
-| `String`, `Int`, `Bool`, `Float`, `Double` | Supported |
-| Classes, structs | Not supported |
-| Other enums | Not supported |
-| Arrays/Collections | Not supported |
-| Optionals | Not supported |
+| Associated Value Type                      | Status        |
+| :----------------------------------------- | :------------ |
+| `String`, `Int`, `Bool`, `Float`, `Double` | Supported     |
+| Classes, structs                           | Not supported |
+| Other enums                                | Not supported |
+| Arrays/Collections                         | Not supported |
+| Optionals                                  | Not supported |
 
 ---
 
@@ -362,37 +367,38 @@ const processor = new exports.DataProcessor();
 
 // Pass JS function to Swift
 const result = processor.process("hello", (s) => s.toUpperCase());
-console.log(result);  // "HELLO"
+console.log(result); // "HELLO"
 
 // Callback with enum
 processor.filterDirections((dir) => dir === exports.Direction.North);
 
 // Get Swift closure
 const triple = processor.makeMultiplier(3);
-console.log(triple(5));  // 15
+console.log(triple(5)); // 15
 
 const format = processor.makeFormatter();
-console.log(format(null));    // "N/A"
-console.log(format("test"));  // "test"
+console.log(format(null)); // "N/A"
+console.log(format("test")); // "test"
 ```
 
-| Feature | Status |
-|:--------|:-------|
-| `(T) -> U` | Supported |
-| `(T, U) -> V` (multiple params) | Supported |
-| `(T?) -> U` (optional params) | Supported |
-| `(T) -> U?` (optional return) | Supported |
-| Enum parameters | Supported |
-| Class parameters | Supported |
-| `@escaping` | Required |
-| `async` closures | Not supported |
-| `throws` closures | Not supported |
+| Feature                         | Status        |
+| :------------------------------ | :------------ |
+| `(T) -> U`                      | Supported     |
+| `(T, U) -> V` (multiple params) | Supported     |
+| `(T?) -> U` (optional params)   | Supported     |
+| `(T) -> U?` (optional return)   | Supported     |
+| Enum parameters                 | Supported     |
+| Class parameters                | Supported     |
+| `@escaping`                     | Required      |
+| `async` closures                | Not supported |
+| `throws` closures               | Not supported |
 
 ---
 
 ## Protocols
 
-Protocols enable duck-typed interoperability - JavaScript objects can implement Swift protocol requirements.
+Protocols enable duck-typed interoperability - JavaScript objects can implement
+Swift protocol requirements.
 
 ```swift
 @JS protocol DataDelegate {
@@ -424,32 +430,32 @@ Protocols enable duck-typed interoperability - JavaScript objects can implement 
 ```javascript
 // JS object implementing the protocol
 const myDelegate = {
-    processedCount: 0,
-    delegateName: "MyDelegate",
+  processedCount: 0,
+  delegateName: "MyDelegate",
 
-    onDataReceived(data) {
-        console.log("Received:", data);
-    },
-    shouldProcess(item) {
-        return item > 0;
-    }
+  onDataReceived(data) {
+    console.log("Received:", data);
+  },
+  shouldProcess(item) {
+    return item > 0;
+  },
 };
 
 const manager = new exports.DataManager(myDelegate);
 manager.processItem(42);
-console.log(myDelegate.processedCount);  // 1
+console.log(myDelegate.processedCount); // 1
 ```
 
-| Feature | Status |
-|:--------|:-------|
-| Properties (`get`, `get set`) | Supported |
-| Optional properties | Supported |
-| Methods | Supported |
-| Methods with return values | Supported |
-| Enum parameters/returns | Supported |
-| Class parameters/returns | Supported |
-| Associated types | Not supported |
-| Protocol inheritance | Not supported |
+| Feature                       | Status        |
+| :---------------------------- | :------------ |
+| Properties (`get`, `get set`) | Supported     |
+| Optional properties           | Supported     |
+| Methods                       | Supported     |
+| Methods with return values    | Supported     |
+| Enum parameters/returns       | Supported     |
+| Class parameters/returns      | Supported     |
+| Associated types              | Not supported |
+| Protocol inheritance          | Not supported |
 
 ---
 
@@ -494,7 +500,8 @@ const user = new exports.MyApp.Models.User("Alice");
 const user = new exports.MyApp.Models.User("Alice");
 ```
 
-**Note:** Only empty enums (no cases) work as namespaces. Nested items cannot use `@JS(namespace:)`.
+**Note:** Only empty enums (no cases) work as namespaces. Nested items cannot
+use `@JS(namespace:)`.
 
 ---
 
@@ -506,15 +513,15 @@ Create `bridge-js.d.ts` in your target source directory:
 export function consoleLog(message: string): void;
 
 interface Document {
-    title: string;
-    readonly body: HTMLElement;
-    getElementById(id: string): HTMLElement;
-    createElement(tagName: string): HTMLElement;
+  title: string;
+  readonly body: HTMLElement;
+  getElementById(id: string): HTMLElement;
+  createElement(tagName: string): HTMLElement;
 }
 
 interface HTMLElement {
-    innerText: string;
-    appendChild(child: HTMLElement): void;
+  innerText: string;
+  appendChild(child: HTMLElement): void;
 }
 
 export function getDocument(): Document;
@@ -563,10 +570,10 @@ func getDocument() throws(JSException) -> Document
 
 ```javascript
 const { exports } = await init({
-    getImports: () => ({
-        consoleLog: (msg) => console.log(msg),
-        getDocument: () => document,
-    })
+  getImports: () => ({
+    consoleLog: (msg) => console.log(msg),
+    getDocument: () => document,
+  }),
 });
 
 exports.setupUI();
@@ -580,14 +587,15 @@ Create `bridge-js.config.json` in your target directory:
 
 ```json
 {
-    "exposeToGlobal": false,
-    "tools": {
-        "node": "/usr/local/bin/node"
-    }
+  "exposeToGlobal": false,
+  "tools": {
+    "node": "/usr/local/bin/node"
+  }
 }
 ```
 
-- **`exposeToGlobal`**: When `true`, exports available on `globalThis`. Default: `false`.
+- **`exposeToGlobal`**: When `true`, exports available on `globalThis`. Default:
+  `false`.
 - **`tools.node`**: Custom path to Node.js executable.
 
 Create `bridge-js.config.local.json` for local overrides (add to `.gitignore`).

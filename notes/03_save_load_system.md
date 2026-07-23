@@ -2,9 +2,13 @@
 
 ## Executive Summary
 
-**Critical Finding: The SCPB save/load system cannot be analyzed from this repository.**
+**Critical Finding: The SCPB save/load system cannot be analyzed from this
+repository.**
 
-This repository contains a **Blitz3D-to-WASM compiler infrastructure** (Swift-based compiler + JavaScript runtime), not the SCPB game source code. The SCPB game files (Save.bb, Main.bb, Items.bb, NPCs.bb, etc.) do not exist in this codebase.
+This repository contains a **Blitz3D-to-WASM compiler infrastructure**
+(Swift-based compiler + JavaScript runtime), not the SCPB game source code. The
+SCPB game files (Save.bb, Main.bb, Items.bb, NPCs.bb, etc.) do not exist in this
+codebase.
 
 ---
 
@@ -12,23 +16,23 @@ This repository contains a **Blitz3D-to-WASM compiler infrastructure** (Swift-ba
 
 ### What This Repository Contains
 
-| Component | Description |
-|-----------|-------------|
-| **Compiler** | Swift-based toolchain converting BlitzBasic to WebAssembly |
-| **Runtime** | JavaScript library providing browser APIs (Three.js, WebGL, Web Audio) |
-| **Test Suite** | Integration tests validating compilation and runtime |
-| **Build System** | Swift Package Manager configuration |
+| Component        | Description                                                            |
+| ---------------- | ---------------------------------------------------------------------- |
+| **Compiler**     | Swift-based toolchain converting BlitzBasic to WebAssembly             |
+| **Runtime**      | JavaScript library providing browser APIs (Three.js, WebGL, Web Audio) |
+| **Test Suite**   | Integration tests validating compilation and runtime                   |
+| **Build System** | Swift Package Manager configuration                                    |
 
 ### What Is Missing
 
-| File | Purpose | Status |
-|------|---------|--------|
-| `Save.bb` | Save/Load system implementation | **NOT FOUND** |
-| `Main.bb` | Game initialization and main loop | **NOT FOUND** |
-| `Items.bb` | Inventory system | **NOT FOUND** |
-| `NPCs.bb` | NPC behavior and AI | **NOT FOUND** |
-| `Map.bb` | Room/map system | **NOT FOUND** |
-| `Config.bb` | Game configuration | **NOT FOUND** |
+| File        | Purpose                           | Status        |
+| ----------- | --------------------------------- | ------------- |
+| `Save.bb`   | Save/Load system implementation   | **NOT FOUND** |
+| `Main.bb`   | Game initialization and main loop | **NOT FOUND** |
+| `Items.bb`  | Inventory system                  | **NOT FOUND** |
+| `NPCs.bb`   | NPC behavior and AI               | **NOT FOUND** |
+| `Map.bb`    | Room/map system                   | **NOT FOUND** |
+| `Config.bb` | Game configuration                | **NOT FOUND** |
 
 ### Evidence of Absence
 
@@ -45,6 +49,7 @@ grep("quicksave|autosave") in *.bb    → No matches
 ```
 
 The only `.bb` files present are compiler test files:
+
 - `Tests/IntegrationTests/*.bb` (test programs)
 - `Tests/IntegrationTests/Assets/*.bb` (test programs)
 - `test_project/src/*.bb` (example programs)
@@ -53,7 +58,8 @@ The only `.bb` files present are compiler test files:
 
 ## Expected Save/Load System Architecture
 
-Based on the BlitzBasic/Blitz3D engine patterns and typical SCPB game structure, the save/load system would conceptually include:
+Based on the BlitzBasic/Blitz3D engine patterns and typical SCPB game structure,
+the save/load system would conceptually include:
 
 ### 1. SaveData Type Definition
 
@@ -264,7 +270,8 @@ End Function
 
 ## Runtime Support for Save/Load
 
-The JavaScript runtime provides file I/O capabilities that would be used by the save/load system:
+The JavaScript runtime provides file I/O capabilities that would be used by the
+save/load system:
 
 ### Virtual File System
 
@@ -276,14 +283,14 @@ Blitz3D.nextFileId = 1;
 
 // ZIP archive support
 Blitz3D.zipManager = {
-    archives: new Map(),
-    mountedFiles: new Map(),
-    nextHandle: 1,
-    
-    loadZip: async function(url) {
-        // Loads ZIP archives containing game assets
-        // Could be used to store save files in archives
-    }
+  archives: new Map(),
+  mountedFiles: new Map(),
+  nextHandle: 1,
+
+  loadZip: async function (url) {
+    // Loads ZIP archives containing game assets
+    // Could be used to store save files in archives
+  },
 };
 ```
 
@@ -291,14 +298,14 @@ Blitz3D.zipManager = {
 
 The WASM runtime would provide file I/O functions:
 
-| Function | Purpose |
-|----------|---------|
-| `ReadFile$(path)` | Read text file |
-| `WriteFile(path, data$)` | Write text file |
-| `ReadDir$(path)` | List directory contents |
-| `FileExists(path)` | Check file existence |
-| `DeleteFile(path)` | Delete file |
-| `CreateDir(path)` | Create directory |
+| Function                 | Purpose                 |
+| ------------------------ | ----------------------- |
+| `ReadFile$(path)`        | Read text file          |
+| `WriteFile(path, data$)` | Write text file         |
+| `ReadDir$(path)`         | List directory contents |
+| `FileExists(path)`       | Check file existence    |
+| `DeleteFile(path)`       | Delete file             |
+| `CreateDir(path)`        | Create directory        |
 
 ---
 
@@ -329,11 +336,13 @@ The WASM runtime would provide file I/O functions:
 ### Current Repository Status
 
 This compiler repository can:
+
 - Compile save/load code when provided with SCPB source
 - Generate WASM modules containing save functionality
 - Execute save/load operations via JavaScript runtime
 
 But cannot:
+
 - Analyze save/load system without game source code
 - Test save/load without compiled game WASM
 
@@ -366,15 +375,19 @@ blitz3d-wasm/
 
 ## Conclusion
 
-The SCPB save/load system analysis cannot be completed with the current repository contents. The compiler infrastructure is complete and functional, but the actual SCPB game source code (including Save.bb) is not present.
+The SCPB save/load system analysis cannot be completed with the current
+repository contents. The compiler infrastructure is complete and functional, but
+the actual SCPB game source code (including Save.bb) is not present.
 
 **Next Steps:**
+
 1. Acquire SCPB/-SCPCB source code from original repositories
 2. Copy game source files to `Sources/Game/` directory
 3. Recompile with save/load enabled
 4. Analyze the compiled output or source files
 
-The existing codebase provides a solid foundation for compiling and running the SCPB game with save/load functionality once the source files are obtained.
+The existing codebase provides a solid foundation for compiling and running the
+SCPB game with save/load functionality once the source files are obtained.
 
 ---
 
@@ -387,6 +400,5 @@ The existing codebase provides a solid foundation for compiling and running the 
 
 ---
 
-*Document generated: January 18, 2026*
-*Repository: blitz3d-wasm*
-*Analysis scope: Save/Load system implementation*
+_Document generated: January 18, 2026_ _Repository: blitz3d-wasm_ _Analysis
+scope: Save/Load system implementation_

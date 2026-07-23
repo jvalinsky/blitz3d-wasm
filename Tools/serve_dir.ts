@@ -14,7 +14,9 @@ const parseArgs = (): Args => {
   const root = rootIdx >= 0 ? (Deno.args[rootIdx + 1] ?? ".") : ".";
   const port = portIdx >= 0 ? Number(Deno.args[portIdx + 1] ?? "8000") : 8000;
   const host = hostIdx >= 0 ? (Deno.args[hostIdx + 1] ?? "0.0.0.0") : "0.0.0.0";
-  if (!Number.isFinite(port) || port <= 0) throw new Error(`bad --port: ${port}`);
+  if (!Number.isFinite(port) || port <= 0) {
+    throw new Error(`bad --port: ${port}`);
+  }
   return { root, port, host };
 };
 
@@ -84,13 +86,16 @@ if (import.meta.main) {
       if (st.isDirectory) {
         const idx = join(full, "index.html");
         const bytes = await Deno.readFile(idx);
-        return new Response(bytes, { headers: { "content-type": mimeFor(idx) } });
+        return new Response(bytes, {
+          headers: { "content-type": mimeFor(idx) },
+        });
       }
       const bytes = await Deno.readFile(full);
-      return new Response(bytes, { headers: { "content-type": mimeFor(full) } });
+      return new Response(bytes, {
+        headers: { "content-type": mimeFor(full) },
+      });
     } catch {
       return new Response("Not found", { status: 404 });
     }
   });
 }
-

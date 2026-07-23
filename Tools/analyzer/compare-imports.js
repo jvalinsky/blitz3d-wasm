@@ -38,7 +38,9 @@ async function loadJSON(p) {
 }
 
 function collectRuntimeImports(runtimeDir) {
-  const dir = path.isAbsolute(runtimeDir) ? runtimeDir : path.join(__dirname, runtimeDir);
+  const dir = path.isAbsolute(runtimeDir)
+    ? runtimeDir
+    : path.join(__dirname, runtimeDir);
   const files = globSync(path.join(dir, "**/*.js"));
   const names = new Set();
   const regex = /imports\.env\.([A-Za-z0-9_]+)/g;
@@ -57,7 +59,12 @@ async function main() {
   const reqData = await loadJSON(opts.requirements);
   const runtimeNames = collectRuntimeImports(opts.runtimeDir);
 
-  const required = reqData.map((e) => ({ name: e.name, key: e.name.toLowerCase(), calls: e.calls, fileCount: e.fileCount }));
+  const required = reqData.map((e) => ({
+    name: e.name,
+    key: e.name.toLowerCase(),
+    calls: e.calls,
+    fileCount: e.fileCount,
+  }));
 
   const missing = required.filter((r) => !runtimeNames.has(r.key));
   const providedUnused = opts.showUnused
@@ -71,12 +78,16 @@ async function main() {
   missing
     .sort((a, b) => b.calls - a.calls)
     .slice(0, 50)
-    .forEach((m) => console.log(`- ${m.name} (calls=${m.calls}, files=${m.fileCount})`));
+    .forEach((m) =>
+      console.log(`- ${m.name} (calls=${m.calls}, files=${m.fileCount})`)
+    );
 
   if (opts.showUnused) {
     console.log("\nUnused provided (runtime but not required):");
     providedUnused.slice(0, 50).forEach((p) => console.log(`- ${p}`));
-    if (providedUnused.length > 50) console.log(`...and ${providedUnused.length - 50} more`);
+    if (providedUnused.length > 50) {
+      console.log(`...and ${providedUnused.length - 50} more`);
+    }
   }
 }
 

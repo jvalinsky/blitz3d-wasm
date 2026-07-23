@@ -2,4 +2,3 @@ interface:
   display_name: "Web Worker Debugging"
   short_description: "Debug SCPCB worker messaging and hangs"
   default_prompt: "Use $web-worker-debugging to diagnose a worker hang/message failure (protocol/transferables/status/logs) and propose the minimal instrumentation or fix."
-

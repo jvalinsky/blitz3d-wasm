@@ -48,4 +48,6 @@ Deno.serve({ port }, async (req) => {
 });
 
 console.log(`Server running on http://localhost:${port}/`);
-console.log(`Open http://localhost:${port}/demo-live.html for the live compiler demo`);
+console.log(
+  `Open http://localhost:${port}/demo-live.html for the live compiler demo`,
+);

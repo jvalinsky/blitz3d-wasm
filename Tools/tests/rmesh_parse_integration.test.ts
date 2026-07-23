@@ -11,4 +11,3 @@ Deno.test("parseRMesh parses a real SCPCB RMESH", async () => {
   assert(s0.uvs0.length === (s0.positions.length / 3) * 2);
   assert(s0.indices.length > 0);
 });
-

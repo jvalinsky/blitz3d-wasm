@@ -1,11 +1,13 @@
 # Particle Demo Fix Plan
 
 ## Goal
+
 Get SCPCB's Particles.bb running in browser with actual rendered particles.
 
 ## Current Status
 
 ### Working
+
 - ✅ Thin runtime (517 lines JS)
 - ✅ WASM loads and executes
 - ✅ Global variables
@@ -14,6 +16,7 @@ Get SCPCB's Particles.bb running in browser with actual rendered particles.
 - ✅ Three.js rendering pipeline
 
 ### Not Working
+
 1. **Type System** - `New`, `Delete`, `For Each` generate broken code
 2. **Function Shadowing** - User functions shadowed by runtime imports
 3. **String Concatenation** - `"text" + number` outputs blank
@@ -41,6 +44,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 **Files to Fix:**
+
 - `Sources/Compiler/CodeGen/CodeGenerator.swift` - Type instantiation
 - `Sources/Compiler/CodeGen/StatementGeneration.swift` - New/Delete
 
@@ -59,6 +63,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 **Files to Fix:**
+
 - `Sources/Compiler/CodeGen/CodeGenerator.swift` - Export generation
 - Need to check if user function exists before exporting import
 
@@ -69,6 +74,7 @@ local.set 7      ;; Now local 7 = allocated address
 **Root Cause:** Missing `IntToString`/`FloatToString` conversion
 
 **Files to Fix:**
+
 - `Sources/Compiler/CodeGen/ExpressionGeneration.swift` - Binary `+` with string
 
 ## Fix Implementation Plan
@@ -76,6 +82,7 @@ local.set 7      ;; Now local 7 = allocated address
 ### Phase 1: Type System (Critical)
 
 #### Step 1.1: Add Type Runtime Imports
+
 ```swift
 // In CodeGenerator.swift - ensure these imports exist:
 // bb_type_new(typeId: i32) -> i32 (returns instance pointer)
@@ -85,6 +92,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 #### Step 1.2: Generate New Statement
+
 ```swift
 // For: Local p.Particles = New Particles
 // Generate:
@@ -94,6 +102,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 #### Step 1.3: Generate Delete Statement
+
 ```swift
 // For: Delete p
 // Generate:
@@ -102,6 +111,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 #### Step 1.4: Generate For Each Loop
+
 ```swift
 // For: For p.Particles = Each Particles
 // Generate:
@@ -123,6 +133,7 @@ local.set 7      ;; Now local 7 = allocated address
 ```
 
 #### Step 1.5: Implement JS Runtime Side
+
 ```javascript
 // In thin/runtime.js
 bb_type_new: (typeId) => {
@@ -145,6 +156,7 @@ bb_type_each_next: (ptr) => {
 ### Phase 2: Function Shadowing Fix
 
 #### Step 2.1: Track User Functions
+
 ```swift
 // In CodeGenerator - maintain set of user-defined function names
 var userDefinedFunctions: Set<String> = []
@@ -154,6 +166,7 @@ userDefinedFunctions.insert(functionName)
 ```
 
 #### Step 2.2: Fix Export Generation
+
 ```swift
 // When generating exports:
 for (name, funcIndex) in functionExports {
@@ -169,6 +182,7 @@ for (name, funcIndex) in functionExports {
 ```
 
 #### Step 2.3: Fix Call Sites
+
 ```swift
 // When generating function call:
 if userDefinedFunctions.contains(calledName) {
@@ -182,6 +196,7 @@ if userDefinedFunctions.contains(calledName) {
 ### Phase 3: String Concatenation
 
 #### Step 3.1: Detect String + Number
+
 ```swift
 // In ExpressionGeneration.swift - binary add:
 if leftType == .string && rightType == .int {
@@ -194,6 +209,7 @@ if leftType == .string && rightType == .int {
 ```
 
 #### Step 3.2: Implement Conversion Functions
+
 ```javascript
 // In runtime
 IntToString: (value) => {
@@ -213,39 +229,40 @@ Once Types work, update test to show particles:
 ```javascript
 // In test.html
 async function main() {
-    const runtime = new Blitz3DThinRuntime(canvas);
-    const instance = await runtime.loadAndRun('particles.wasm');
-    
-    // Create camera
-    const cam = instance.exports.CreateCamera(0);
-    instance.exports.PositionEntity(cam, 0, 0, -5);
-    
-    // Create some particles
-    for (let i = 0; i < 10; i++) {
-        instance.exports['CreateParticle%'](
-            Math.random() * 2 - 1,  // x
-            Math.random() * 2,       // y
-            0,                       // z
-            0,                       // image
-            0.1,                     // size
-            0.5,                     // gravity
-            200                      // lifetime
-        );
-    }
-    
-    // Game loop
-    function loop() {
-        instance.exports.UpdateParticles();
-        runtime.render();
-        requestAnimationFrame(loop);
-    }
-    loop();
+  const runtime = new Blitz3DThinRuntime(canvas);
+  const instance = await runtime.loadAndRun("particles.wasm");
+
+  // Create camera
+  const cam = instance.exports.CreateCamera(0);
+  instance.exports.PositionEntity(cam, 0, 0, -5);
+
+  // Create some particles
+  for (let i = 0; i < 10; i++) {
+    instance.exports["CreateParticle%"](
+      Math.random() * 2 - 1, // x
+      Math.random() * 2, // y
+      0, // z
+      0, // image
+      0.1, // size
+      0.5, // gravity
+      200, // lifetime
+    );
+  }
+
+  // Game loop
+  function loop() {
+    instance.exports.UpdateParticles();
+    runtime.render();
+    requestAnimationFrame(loop);
+  }
+  loop();
 }
 ```
 
 ## Testing Plan
 
 ### Test 1: Type Allocation
+
 ```blitz
 Type Test
     Field value%
@@ -258,6 +275,7 @@ Delete t
 ```
 
 ### Test 2: For Each
+
 ```blitz
 Type Item
     Field id%
@@ -275,6 +293,7 @@ Print count  ; Should print 3
 ```
 
 ### Test 3: Full Particles
+
 ```blitz
 ; Create 5 particles
 For i = 1 To 5
@@ -289,13 +308,13 @@ Print GetParticleCount()  ; Should print 5 (or less if some expired)
 
 ## File Change Summary
 
-| File | Changes |
-|------|---------|
-| `Sources/Compiler/CodeGen/CodeGenerator.swift` | Add type tracking, fix exports |
-| `Sources/Compiler/CodeGen/StatementGeneration.swift` | New, Delete, For Each |
-| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | String + number |
-| `Sources/Runtime/thin/runtime.js` | Add bb_type_* implementations |
-| `Sources/Runtime/thin/test.html` | Visual particle test |
+| File                                                  | Changes                        |
+| ----------------------------------------------------- | ------------------------------ |
+| `Sources/Compiler/CodeGen/CodeGenerator.swift`        | Add type tracking, fix exports |
+| `Sources/Compiler/CodeGen/StatementGeneration.swift`  | New, Delete, For Each          |
+| `Sources/Compiler/CodeGen/ExpressionGeneration.swift` | String + number                |
+| `Sources/Runtime/thin/runtime.js`                     | Add bb_type_* implementations  |
+| `Sources/Runtime/thin/test.html`                      | Visual particle test           |
 
 ## Success Criteria
 
@@ -309,10 +328,10 @@ Print GetParticleCount()  ; Should print 5 (or less if some expired)
 
 ## Estimated Effort
 
-| Phase | Effort |
-|-------|--------|
-| Phase 1: Type System | 4-6 hours |
-| Phase 2: Function Shadowing | 1-2 hours |
-| Phase 3: String Concat | 1 hour |
-| Phase 4: Visual Demo | 1 hour |
-| **Total** | **7-10 hours** |
+| Phase                       | Effort         |
+| --------------------------- | -------------- |
+| Phase 1: Type System        | 4-6 hours      |
+| Phase 2: Function Shadowing | 1-2 hours      |
+| Phase 3: String Concat      | 1 hour         |
+| Phase 4: Visual Demo        | 1 hour         |
+| **Total**                   | **7-10 hours** |

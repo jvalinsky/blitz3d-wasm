@@ -1,339 +1,399 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Blitz3D WASM - Mesh Test</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
     <script>
-        document.write('<script src="dist/runtime.bundle.js?v=' + Date.now() + '"><\/script>');
+      document.write(
+        '<script src="dist/runtime.bundle.js?v=' + Date.now() +
+          '"><\/script>',
+      );
     </script>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            color: #fff;
-            font-family: monospace;
-        }
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        color: #fff;
+        font-family: monospace;
+      }
 
-        canvas {
-            width: 100vw;
-            height: 100vh;
-            display: block;
-        }
+      canvas {
+        width: 100vw;
+        height: 100vh;
+        display: block;
+      }
 
-        #log {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            pointer-events: none;
-        }
+      #log {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        pointer-events: none;
+      }
 
-        #debug {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.8);
-            color: #0f0;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            border: 1px solid #0f0;
-            min-width: 200px;
-        }
+      #debug {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #0f0;
+        padding: 10px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #0f0;
+        min-width: 200px;
+      }
 
-        #debug.error {
-            color: #f00;
-            border-color: #f00;
-        }
+      #debug.error {
+        color: #f00;
+        border-color: #f00;
+      }
 
-        #debug.warning {
-            color: #ff0;
-            border-color: #ff0;
-        }
+      #debug.warning {
+        color: #ff0;
+        border-color: #ff0;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <div id="log">Mesh Test<br>Wait for "WASM Loaded"...</div>
     <div id="debug">Debug Panel<br>Initializing...</div>
     <canvas id="canvas" width="800" height="600"></canvas>
     <script>
-        const log = document.getElementById('log');
-        const debug = document.getElementById('debug');
-        const originalLog = console.log;
-        const originalError = console.error;
-        const originalWarn = console.warn;
+      const log = document.getElementById("log");
+      const debug = document.getElementById("debug");
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
 
-        // Debug panel update function
-        function updateDebugPanel(data) {
-            if (!debug) return;
-            let html = '<strong>=== DEBUG PANEL (v1.0.5) ===</strong><br>';
-            html += `Time: ${new Date().toLocaleTimeString()}<br>`;
-            html += `Canvas: ${data.canvasWidth}x${data.canvasHeight}<br>`;
-            html += `Renderer: <span style="color:${data.rendererReady ? '#0f0' : '#f00'}">${data.rendererReady ? 'READY' : 'NOT READY'}</span><br>`;
-            html += `Scene: <span style="color:${data.sceneReady ? '#0f0' : '#f00'}">${data.sceneReady ? 'READY' : 'NOT READY'}</span><br>`;
-            html += `Camera: <span style="color:${data.cameraReady ? '#0f0' : '#f00'}">${data.cameraReady ? 'READY' : 'NOT READY'}</span><br>`;
-            html += `WASM: <span style="color:${data.wasmLoaded ? '#0f0' : '#f00'}">${data.wasmLoaded ? 'LOADED' : 'NOT LOADED'}</span><br>`;
-            html += `Mesh: ${data.meshCount} entity(ies)<br>`;
-            html += `Light: ${data.lightCount} entity(ies)<br>`;
-            if (data.lastError) {
-                html += `<span style="color:#f00">ERROR: ${data.lastError}</span><br>`;
-                debug.className = 'error';
-            } else if (data.lastWarning) {
-                html += `<span style="color:#ff0">WARNING: ${data.lastWarning}</span><br>`;
-                debug.className = 'warning';
-            } else {
-                debug.className = '';
-            }
-            debug.innerHTML = html;
+      // Debug panel update function
+      function updateDebugPanel(data) {
+        if (!debug) return;
+        let html = "<strong>=== DEBUG PANEL (v1.0.5) ===</strong><br>";
+        html += `Time: ${new Date().toLocaleTimeString()}<br>`;
+        html += `Canvas: ${data.canvasWidth}x${data.canvasHeight}<br>`;
+        html += `Renderer: <span style="color:${
+          data.rendererReady ? "#0f0" : "#f00"
+        }">${data.rendererReady ? "READY" : "NOT READY"}</span><br>`;
+        html += `Scene: <span style="color:${
+          data.sceneReady ? "#0f0" : "#f00"
+        }">${data.sceneReady ? "READY" : "NOT READY"}</span><br>`;
+        html += `Camera: <span style="color:${
+          data.cameraReady ? "#0f0" : "#f00"
+        }">${data.cameraReady ? "READY" : "NOT READY"}</span><br>`;
+        html += `WASM: <span style="color:${
+          data.wasmLoaded ? "#0f0" : "#f00"
+        }">${data.wasmLoaded ? "LOADED" : "NOT LOADED"}</span><br>`;
+        html += `Mesh: ${data.meshCount} entity(ies)<br>`;
+        html += `Light: ${data.lightCount} entity(ies)<br>`;
+        if (data.lastError) {
+          html +=
+            `<span style="color:#f00">ERROR: ${data.lastError}</span><br>`;
+          debug.className = "error";
+        } else if (data.lastWarning) {
+          html +=
+            `<span style="color:#ff0">WARNING: ${data.lastWarning}</span><br>`;
+          debug.className = "warning";
+        } else {
+          debug.className = "";
         }
+        debug.innerHTML = html;
+      }
 
-        // Console logging with debug panel update
-        console.log = function (...args) {
-            originalLog.apply(console, args);
-            const msg = args.join(' ');
-            const line = document.createElement('div');
-            line.textContent = msg;
-            log.appendChild(line);
-            if (log.childNodes.length > 20) log.removeChild(log.firstChild);
-        };
+      // Console logging with debug panel update
+      console.log = function (...args) {
+        originalLog.apply(console, args);
+        const msg = args.join(" ");
+        const line = document.createElement("div");
+        line.textContent = msg;
+        log.appendChild(line);
+        if (log.childNodes.length > 20) log.removeChild(log.firstChild);
+      };
 
-        console.error = function (...args) {
-            originalError.apply(console, args);
-            const msg = args.join(' ');
-            if (debug) {
-                debug.dataset.lastError = msg;
-            }
-            // Also update log
-            const line = document.createElement('div');
-            line.textContent = 'ERROR: ' + msg;
-            line.style.color = '#f00';
-            log.appendChild(line);
-            if (log.childNodes.length > 20) log.removeChild(log.firstChild);
-        };
-
-        console.warn = function (...args) {
-            originalWarn.apply(console, args);
-            const msg = args.join(' ');
-            if (debug) {
-                debug.dataset.lastWarning = msg;
-            }
-        };
-
-        // Initial debug state
-        let debugState = {
-            canvasWidth: 0,
-            canvasHeight: 0,
-            rendererReady: false,
-            sceneReady: false,
-            cameraReady: false,
-            wasmLoaded: false,
-            meshCount: 0,
-            lightCount: 0,
-            lastError: null,
-            lastWarning: null
-        };
-
-        // Assertion helper
-        function assert(condition, message) {
-            if (!condition) {
-                console.error('ASSERTION FAILED: ' + message);
-                throw new Error('Assertion failed: ' + message);
-            }
+      console.error = function (...args) {
+        originalError.apply(console, args);
+        const msg = args.join(" ");
+        if (debug) {
+          debug.dataset.lastError = msg;
         }
+        // Also update log
+        const line = document.createElement("div");
+        line.textContent = "ERROR: " + msg;
+        line.style.color = "#f00";
+        log.appendChild(line);
+        if (log.childNodes.length > 20) log.removeChild(log.firstChild);
+      };
 
-        // Assertion helper for non-throwing check
-        function check(condition, message) {
-            if (!condition) {
-                console.warn('CHECK FAILED: ' + message);
-                return false;
-            }
-            return true;
+      console.warn = function (...args) {
+        originalWarn.apply(console, args);
+        const msg = args.join(" ");
+        if (debug) {
+          debug.dataset.lastWarning = msg;
         }
+      };
 
-        window.onload = async function () {
-            try {
-                // Validate canvas exists
-                const canvas = document.getElementById('canvas');
-                assert(canvas !== null, 'Canvas element not found');
+      // Initial debug state
+      let debugState = {
+        canvasWidth: 0,
+        canvasHeight: 0,
+        rendererReady: false,
+        sceneReady: false,
+        cameraReady: false,
+        wasmLoaded: false,
+        meshCount: 0,
+        lightCount: 0,
+        lastError: null,
+        lastWarning: null,
+      };
 
-                // Get canvas dimensions
-                debugState.canvasWidth = canvas.width;
-                debugState.canvasHeight = canvas.height;
-                console.log('Canvas dimensions: ' + debugState.canvasWidth + 'x' + debugState.canvasHeight);
+      // Assertion helper
+      function assert(condition, message) {
+        if (!condition) {
+          console.error("ASSERTION FAILED: " + message);
+          throw new Error("Assertion failed: " + message);
+        }
+      }
 
-                // Assert valid dimensions
-                assert(debugState.canvasWidth > 0, 'Canvas width is 0');
-                assert(debugState.canvasHeight > 0, 'Canvas height is 0');
-                assert(debugState.canvasWidth <= 4096, 'Canvas width exceeds maximum');
-                assert(debugState.canvasHeight <= 4096, 'Canvas height exceeds maximum');
+      // Assertion helper for non-throwing check
+      function check(condition, message) {
+        if (!condition) {
+          console.warn("CHECK FAILED: " + message);
+          return false;
+        }
+        return true;
+      }
 
-                // Update debug panel with initial state
-                updateDebugPanel(debugState);
+      window.onload = async function () {
+        try {
+          // Validate canvas exists
+          const canvas = document.getElementById("canvas");
+          assert(canvas !== null, "Canvas element not found");
 
-                // Check Three.js is loaded
-                assert(typeof THREE !== 'undefined', 'Three.js not loaded');
-                console.log('Three.js version: ' + THREE.REVISION);
+          // Get canvas dimensions
+          debugState.canvasWidth = canvas.width;
+          debugState.canvasHeight = canvas.height;
+          console.log(
+            "Canvas dimensions: " + debugState.canvasWidth + "x" +
+              debugState.canvasHeight,
+          );
 
-                // Initialize Blitz3D
-                if (window.Blitz3D) {
-                    console.log('Initializing Blitz3D...');
+          // Assert valid dimensions
+          assert(debugState.canvasWidth > 0, "Canvas width is 0");
+          assert(debugState.canvasHeight > 0, "Canvas height is 0");
+          assert(
+            debugState.canvasWidth <= 4096,
+            "Canvas width exceeds maximum",
+          );
+          assert(
+            debugState.canvasHeight <= 4096,
+            "Canvas height exceeds maximum",
+          );
 
-                    // Hook into initialization to track state
-                    const originalInit = Blitz3D.init;
-                    Blitz3D.init = function(canvasId) {
-                        console.log('Blitz3D.init called with canvasId: ' + canvasId);
-                        const result = originalInit.apply(this, arguments);
+          // Update debug panel with initial state
+          updateDebugPanel(debugState);
 
-                        // Check if graphics initialized
-                        if (this.graphics) {
-                            debugState.rendererReady = true;
-                            debugState.sceneReady = true;
-                            console.log('Graphics module initialized');
+          // Check Three.js is loaded
+          assert(typeof THREE !== "undefined", "Three.js not loaded");
+          console.log("Three.js version: " + THREE.REVISION);
 
-                            // Check renderer
-                            if (this.graphics.renderer) {
-                                const renderer = this.graphics.renderer;
-                                console.log('Renderer type: ' + (renderer.render ? 'WebGLRenderer' : 'MockRenderer'));
+          // Initialize Blitz3D
+          if (window.Blitz3D) {
+            console.log("Initializing Blitz3D...");
 
-                                if (renderer.render) {
-                                    console.log('WebGL renderer active');
-                                } else {
-                                    console.warn('Using mock renderer - WebGL may not be available');
-                                    debugState.lastWarning = 'Using mock renderer';
-                                }
-                            }
-                        }
+            // Hook into initialization to track state
+            const originalInit = Blitz3D.init;
+            Blitz3D.init = function (canvasId) {
+              console.log(
+                "Blitz3D.init called with canvasId: " + canvasId,
+              );
+              const result = originalInit.apply(this, arguments);
 
-                        updateDebugPanel(debugState);
-                        return result;
-                    };
+              // Check if graphics initialized
+              if (this.graphics) {
+                debugState.rendererReady = true;
+                debugState.sceneReady = true;
+                console.log("Graphics module initialized");
 
-                    // Hook into WASM load to track camera
-                    const originalLoad = Blitz3D.load;
-                    Blitz3D.load = async function(wasmUrl, canvasId) {
-                        console.log('Loading WASM from: ' + wasmUrl);
-                        debugState.wasmLoaded = false;
-                        updateDebugPanel(debugState);
+                // Check renderer
+                if (this.graphics.renderer) {
+                  const renderer = this.graphics.renderer;
+                  console.log(
+                    "Renderer type: " +
+                      (renderer.render
+                        ? "WebGLRenderer"
+                        : "MockRenderer"),
+                  );
 
-                        try {
-                            const result = await originalLoad.apply(this, arguments);
-
-                            // Mark WASM as loaded immediately
-                            debugState.wasmLoaded = true;
-                            console.log("WASM Loaded. Running...");
-                            updateDebugPanel(debugState);
-
-                            // After load, check if camera exists
-                            setTimeout(() => {
-                                if (this.graphics && this.graphics.camera) {
-                                    debugState.cameraReady = true;
-                                    console.log('Camera verified: position=' + this.graphics.camera.position.x.toFixed(2) + ',' +
-                                        this.graphics.camera.position.y.toFixed(2) + ',' +
-                                        this.graphics.camera.position.z.toFixed(2));
-                                } else if (this.graphics && this.graphics.scene && this.graphics.scene.children) {
-                                    // Check if scene has a camera
-                                    const hasCamera = this.graphics.scene.children.some(c => c.isPerspectiveCamera || c.isCamera);
-                                    if (hasCamera) {
-                                        debugState.cameraReady = true;
-                                        console.log('Camera found in scene children');
-                                    }
-                                } else {
-                                    console.warn('Camera not explicitly found, will check scene');
-                                }
-
-                                // Check entities
-                                if (this.graphics && this.graphics.entities) {
-                                    let meshCount = 0;
-                                    let lightCount = 0;
-                                    for (let id in this.graphics.entities) {
-                                        const ent = this.graphics.entities[id];
-                                        if (ent.isMesh) meshCount++;
-                                        if (ent.isLight) lightCount++;
-                                    }
-                                    debugState.meshCount = meshCount;
-                                    debugState.lightCount = lightCount;
-                                    console.log('Entities - Meshes: ' + meshCount + ', Lights: ' + lightCount);
-                                }
-
-                                updateDebugPanel(debugState);
-                            }, 100);
-
-                            return result;
-                        } catch (e) {
-                            console.error('WASM load failed: ' + e.message);
-                            debugState.lastError = 'WASM load failed: ' + e.message;
-                            debugState.wasmLoaded = false;
-                            updateDebugPanel(debugState);
-                            throw e;
-                        }
-                    };
-
-                    // Initialize
-                    Blitz3D.init('canvas');
-
-                    // Verify core initialization
-                    check(Blitz3D.core !== null, 'Blitz3D.core is null');
-                    check(Blitz3D.core.canvas !== null, 'Blitz3D.core.canvas is null');
-
-                    // Load WASM
-                    await Blitz3D.load('Tests/IntegrationTests/MeshTest.wasm?v=' + Date.now());
-                    console.log("WASM Loaded. Running...");
-
-                    // Periodic debug update
-                    setInterval(() => {
-                        if (Blitz3D.graphics) {
-                            // Check camera - may be stored as graphics.camera or this.camera
-                            const cam = Blitz3D.graphics.camera || (Blitz3D.core && Blitz3D.core.camera);
-                            debugState.cameraReady = !!cam;
-
-                            // Update renderer and scene status
-                            debugState.rendererReady = !!(Blitz3D.graphics.renderer);
-                            debugState.sceneReady = !!(Blitz3D.graphics.scene);
-
-                            // Check entities
-                            if (Blitz3D.graphics.entities) {
-                                let meshCount = 0;
-                                let lightCount = 0;
-                                let cameraCount = 0;
-                                for (let id in Blitz3D.graphics.entities) {
-                                    const ent = Blitz3D.graphics.entities[id];
-                                    if (ent.isMesh) meshCount++;
-                                    if (ent.isLight) lightCount++;
-                                    if (ent.isCamera || ent.isPerspectiveCamera) cameraCount++;
-                                }
-                                debugState.meshCount = meshCount;
-                                debugState.lightCount = lightCount;
-
-                                // If we have cameras but none marked, update cameraReady
-                                if (cameraCount > 0 && !debugState.cameraReady) {
-                                    debugState.cameraReady = true;
-                                }
-                            }
-
-                            // Check if scene has children (camera, light, mesh)
-                            if (Blitz3D.graphics.scene && Blitz3D.graphics.scene.children) {
-                                const children = Blitz3D.graphics.scene.children;
-                                if (children.length > 0) {
-                                    debugState.sceneReady = true;
-                                }
-                            }
-
-                            updateDebugPanel(debugState);
-                        }
-                    }, 500);
-
-                } else {
-                    assert(false, 'Blitz3D runtime not loaded!');
+                  if (renderer.render) {
+                    console.log("WebGL renderer active");
+                  } else {
+                    console.warn(
+                      "Using mock renderer - WebGL may not be available",
+                    );
+                    debugState.lastWarning = "Using mock renderer";
+                  }
                 }
-            } catch (e) {
-                console.error("WASM LOAD ERROR: " + e.toString());
-                debugState.lastError = e.toString();
-                updateDebugPanel(debugState);
-            }
-        };
-    </script>
-</body>
+              }
 
+              updateDebugPanel(debugState);
+              return result;
+            };
+
+            // Hook into WASM load to track camera
+            const originalLoad = Blitz3D.load;
+            Blitz3D.load = async function (wasmUrl, canvasId) {
+              console.log("Loading WASM from: " + wasmUrl);
+              debugState.wasmLoaded = false;
+              updateDebugPanel(debugState);
+
+              try {
+                const result = await originalLoad.apply(
+                  this,
+                  arguments,
+                );
+
+                // Mark WASM as loaded immediately
+                debugState.wasmLoaded = true;
+                console.log("WASM Loaded. Running...");
+                updateDebugPanel(debugState);
+
+                // After load, check if camera exists
+                setTimeout(() => {
+                  if (this.graphics && this.graphics.camera) {
+                    debugState.cameraReady = true;
+                    console.log(
+                      "Camera verified: position=" +
+                        this.graphics.camera.position.x.toFixed(2) +
+                        "," +
+                        this.graphics.camera.position.y.toFixed(2) +
+                        "," +
+                        this.graphics.camera.position.z.toFixed(2),
+                    );
+                  } else if (
+                    this.graphics && this.graphics.scene &&
+                    this.graphics.scene.children
+                  ) {
+                    // Check if scene has a camera
+                    const hasCamera = this.graphics.scene.children.some(
+                      (c) => c.isPerspectiveCamera || c.isCamera,
+                    );
+                    if (hasCamera) {
+                      debugState.cameraReady = true;
+                      console.log("Camera found in scene children");
+                    }
+                  } else {
+                    console.warn(
+                      "Camera not explicitly found, will check scene",
+                    );
+                  }
+
+                  // Check entities
+                  if (this.graphics && this.graphics.entities) {
+                    let meshCount = 0;
+                    let lightCount = 0;
+                    for (let id in this.graphics.entities) {
+                      const ent = this.graphics.entities[id];
+                      if (ent.isMesh) meshCount++;
+                      if (ent.isLight) lightCount++;
+                    }
+                    debugState.meshCount = meshCount;
+                    debugState.lightCount = lightCount;
+                    console.log(
+                      "Entities - Meshes: " + meshCount + ", Lights: " +
+                        lightCount,
+                    );
+                  }
+
+                  updateDebugPanel(debugState);
+                }, 100);
+
+                return result;
+              } catch (e) {
+                console.error("WASM load failed: " + e.message);
+                debugState.lastError = "WASM load failed: " + e.message;
+                debugState.wasmLoaded = false;
+                updateDebugPanel(debugState);
+                throw e;
+              }
+            };
+
+            // Initialize
+            Blitz3D.init("canvas");
+
+            // Verify core initialization
+            check(Blitz3D.core !== null, "Blitz3D.core is null");
+            check(
+              Blitz3D.core.canvas !== null,
+              "Blitz3D.core.canvas is null",
+            );
+
+            // Load WASM
+            await Blitz3D.load(
+              "Tests/IntegrationTests/MeshTest.wasm?v=" + Date.now(),
+            );
+            console.log("WASM Loaded. Running...");
+
+            // Periodic debug update
+            setInterval(() => {
+              if (Blitz3D.graphics) {
+                // Check camera - may be stored as graphics.camera or this.camera
+                const cam = Blitz3D.graphics.camera ||
+                  (Blitz3D.core && Blitz3D.core.camera);
+                debugState.cameraReady = !!cam;
+
+                // Update renderer and scene status
+                debugState.rendererReady =
+                  !!(Blitz3D.graphics.renderer);
+                debugState.sceneReady = !!(Blitz3D.graphics.scene);
+
+                // Check entities
+                if (Blitz3D.graphics.entities) {
+                  let meshCount = 0;
+                  let lightCount = 0;
+                  let cameraCount = 0;
+                  for (let id in Blitz3D.graphics.entities) {
+                    const ent = Blitz3D.graphics.entities[id];
+                    if (ent.isMesh) meshCount++;
+                    if (ent.isLight) lightCount++;
+                    if (ent.isCamera || ent.isPerspectiveCamera) {
+                      cameraCount++;
+                    }
+                  }
+                  debugState.meshCount = meshCount;
+                  debugState.lightCount = lightCount;
+
+                  // If we have cameras but none marked, update cameraReady
+                  if (cameraCount > 0 && !debugState.cameraReady) {
+                    debugState.cameraReady = true;
+                  }
+                }
+
+                // Check if scene has children (camera, light, mesh)
+                if (
+                  Blitz3D.graphics.scene &&
+                  Blitz3D.graphics.scene.children
+                ) {
+                  const children = Blitz3D.graphics.scene.children;
+                  if (children.length > 0) {
+                    debugState.sceneReady = true;
+                  }
+                }
+
+                updateDebugPanel(debugState);
+              }
+            }, 500);
+          } else {
+            assert(false, "Blitz3D runtime not loaded!");
+          }
+        } catch (e) {
+          console.error("WASM LOAD ERROR: " + e.toString());
+          debugState.lastError = e.toString();
+          updateDebugPanel(debugState);
+        }
+      };
+    </script>
+  </body>
 </html>

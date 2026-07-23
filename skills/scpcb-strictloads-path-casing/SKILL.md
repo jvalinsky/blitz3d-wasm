@@ -7,7 +7,8 @@ description: Port and debug SCPCB StrictLoads and path behavior for Blitz3D-WASM
 
 ## What SCPCB does
 
-- `StrictLoads.bb` wraps `LoadImage/LoadMesh/LoadTexture/LoadSound/...` and often:
+- `StrictLoads.bb` wraps `LoadImage/LoadMesh/LoadTexture/LoadSound/...` and
+  often:
   - checks `FileType(file$)`,
   - reports errors loudly (console msg or `RuntimeError`),
   - assumes local disk layout and Windows-style paths (`GFX\...`).
@@ -19,7 +20,8 @@ description: Port and debug SCPCB StrictLoads and path behavior for Blitz3D-WASM
    - Avoid relying on case-sensitive lookups
 2. Keep missing-file behavior explicit:
    - Prefer returning `0` in the same places native Blitz3D returns `0`
-   - Avoid “hard crash during boot” unless you’re intentionally enforcing a preload contract
+   - Avoid “hard crash during boot” unless you’re intentionally enforcing a
+     preload contract
 
 ## Repo reference points
 
@@ -36,8 +38,9 @@ description: Port and debug SCPCB StrictLoads and path behavior for Blitz3D-WASM
    - First fix the manifest/preload group, not the SCPCB code:
      - Use `scpcb-manifest-auditor` and run `deno task test:web:build`.
 2. If SCPCB fails due to casing or `Data/` vs root quirks:
-   - Prefer fixing/rewriting asset paths at conversion time and in `scpcb_manifest.json`.
+   - Prefer fixing/rewriting asset paths at conversion time and in
+     `scpcb_manifest.json`.
    - Use aliasing only as a fallback (to avoid masking real path bugs).
 3. If `StrictLoads.bb` is too aggressive for early web iterations:
-   - Gate the strict `RuntimeError` paths behind a single global (one switch), so you can later re-enable strictness to harden builds.
-
+   - Gate the strict `RuntimeError` paths behind a single global (one switch),
+     so you can later re-enable strictness to harden builds.

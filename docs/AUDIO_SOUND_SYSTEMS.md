@@ -1,16 +1,22 @@
 # Audio/Sound Systems Documentation
 
 ## Overview
-The audio/sound systems in SCP: Containment Breach create the immersive horror atmosphere through sophisticated sound design, 3D positional audio, and dynamic music that responds to game events and player actions.
+
+The audio/sound systems in SCP: Containment Breach create the immersive horror
+atmosphere through sophisticated sound design, 3D positional audio, and dynamic
+music that responds to game events and player actions.
 
 ## Sound Effect System
 
 ### Purpose
-The sound effect system manages environmental audio, player actions, NPC vocalizations, and SCP-specific sounds that create tension and immersion.
+
+The sound effect system manages environmental audio, player actions, NPC
+vocalizations, and SCP-specific sounds that create tension and immersion.
 
 ### Architecture
 
 #### Sound Data Structure
+
 ```blitzbasic
 Type SoundEffect
     Field SoundID%             ; Unique sound identifier
@@ -44,6 +50,7 @@ Const SOUND_AMBIENT% = 6      ; Background atmosphere
 ### Core Functions
 
 #### Sound Management
+
 ```blitzbasic
 Global SoundChannels%[32]     ; Audio channels (0-31)
 Global ActiveSounds.SoundEffect[100] ; Currently loaded sounds
@@ -87,6 +94,7 @@ End Function
 ```
 
 #### Sound Playback
+
 ```blitzbasic
 Function PlaySoundEffect(soundID%, x# = 0, y# = 0, z# = 0, volume# = 1.0)
     sound.SoundEffect = FindSound(soundID)
@@ -170,6 +178,7 @@ End Function
 ### Sound Categories
 
 #### Player Sounds
+
 ```blitzbasic
 Function PlayPlayerSound(action$)
     Select action
@@ -204,6 +213,7 @@ End Function
 ```
 
 #### SCP Sounds
+
 ```blitzbasic
 Function PlaySCPSound(scpID%, action$)
     Select scpID
@@ -238,6 +248,7 @@ End Function
 ```
 
 #### Environmental Sounds
+
 ```blitzbasic
 Function UpdateEnvironmentalSounds()
     ; Facility ambience
@@ -284,11 +295,14 @@ End Function
 ## Music System
 
 ### Purpose
-The music system provides dynamic atmospheric soundtrack that responds to game tension, SCP proximity, and player state.
+
+The music system provides dynamic atmospheric soundtrack that responds to game
+tension, SCP proximity, and player state.
 
 ### Architecture
 
 #### Music Track Structure
+
 ```blitzbasic
 Type MusicTrack
     Field TrackID%             ; Unique track identifier
@@ -318,6 +332,7 @@ Const MUSIC_EMERGENCY% = 5    ; Emergency situations
 ```
 
 ### Dynamic Music System
+
 ```blitzbasic
 Global CurrentMusic.MusicTrack ; Currently playing track
 Global MusicIntensity% = 1     ; Current intensity level (1-5)
@@ -410,6 +425,7 @@ End Function
 ```
 
 #### Music Transitions
+
 ```blitzbasic
 Type MusicTransition
     Field FromTrack.MusicTrack  ; Track transitioning from
@@ -476,9 +492,12 @@ End Function
 ## Voice System
 
 ### Purpose
-The voice system manages NPC dialogue, SCP vocalizations, and facility announcements that create personality and immersion.
+
+The voice system manages NPC dialogue, SCP vocalizations, and facility
+announcements that create personality and immersion.
 
 ### Dialogue System
+
 ```blitzbasic
 Type DialogueLine
     Field LineID%              ; Unique dialogue identifier
@@ -528,6 +547,7 @@ End Function
 ```
 
 ### Facility Announcements
+
 ```blitzbasic
 Type Announcement
     Field AnnounceID%          ; Unique announcement ID
@@ -575,6 +595,7 @@ End Function
 ```
 
 ### SCP Vocalizations
+
 ```blitzbasic
 Function PlaySCPVocalization(scpID%, context$)
     Select scpID
@@ -606,6 +627,7 @@ End Function
 ## Audio System Integration
 
 ### 3D Audio Updates
+
 ```blitzbasic
 Function Update3DAudio()
     ; Update listener position
@@ -632,6 +654,7 @@ End Function
 ```
 
 ### Audio State Management
+
 ```blitzbasic
 Function SaveAudioState()
     ; Save music state
@@ -679,17 +702,23 @@ End Function
 ```
 
 ### Performance Considerations
+
 - **Channel Pooling**: Reuse audio channels efficiently
 - **Distance Culling**: Don't play distant sounds
 - **Streaming**: Use for large music files
 - **Compression**: Balance quality and file size
 
 ### Integration Points
+
 - **[Entity Systems](ENTITY_SYSTEMS.md)**: NPC vocalizations and SCP sounds
-- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Audio responses to events
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Audio state persistence
+- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Audio responses to
+  events
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Audio state
+  persistence
 - **[Physics System](CORE_SYSTEMS.md#physics-system)**: 3D positional audio
 
 ---
 
-*Audio/sound systems create the terrifying atmosphere of SCP: Containment Breach through immersive 3D audio, dynamic music that responds to tension, and contextual sound effects that make the facility feel alive and dangerous.*
+_Audio/sound systems create the terrifying atmosphere of SCP: Containment Breach
+through immersive 3D audio, dynamic music that responds to tension, and
+contextual sound effects that make the facility feel alive and dangerous._

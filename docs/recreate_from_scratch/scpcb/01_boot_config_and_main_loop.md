@@ -26,15 +26,18 @@ and reads many settings via `GetINIInt/GetINIFloat/GetINIString`, including:
 - input key binds (inventory/save/console/etc)
 
 Porting implication:
+
 - `options.ini` must be available before any init path that reads it.
 
 ## Launcher vs Game
 
-`Main.bb` can run a launcher first (`LauncherEnabled`), then configures
-graphics via `Graphics3DExt(...)` or equivalent.
+`Main.bb` can run a launcher first (`LauncherEnabled`), then configures graphics
+via `Graphics3DExt(...)` or equivalent.
 
 Web port implication:
-- The launcher is a blocking UI loop in desktop builds; for web, it’s typically disabled.
+
+- The launcher is a blocking UI loop in desktop builds; for web, it’s typically
+  disabled.
 
 ## Frame Timing and `FPSfactor`
 
@@ -43,7 +46,8 @@ In the main loop (`Repeat ... Forever` in `Main.bb`), SCPCB computes:
 - `ElapsedTime` from `MilliSecs`
 - `FPSfactor = clamp(ElapsedTime * 70, 0.2..5.0)`
 
-and then **forces `FPSfactor = 0`** when certain UI/interaction modes are active:
+and then **forces `FPSfactor = 0`** when certain UI/interaction modes are
+active:
 
 - menu open
 - inventory open
@@ -73,13 +77,15 @@ Within the loop, SCPCB branches primarily on `MainMenuOpen`:
 - per-room branches (dimension1499 / gatea / exit1 / normal):
   - `UpdateDoors()`
   - `UpdateEvents()` (when not in a “quickload” phase)
-  - `UpdateScreens()`, `UpdateRoomLights(Camera)`, `TimeCheckpointMonitors()`, `Update294()`
-- `UpdateDecals()`, `UpdateMTF()`, `UpdateNPCs()`, `UpdateItems()`, `UpdateParticles()`
+  - `UpdateScreens()`, `UpdateRoomLights(Camera)`, `TimeCheckpointMonitors()`,
+    `Update294()`
+- `UpdateDecals()`, `UpdateMTF()`, `UpdateNPCs()`, `UpdateItems()`,
+  `UpdateParticles()`
 - `UpdateWorld()` then `RenderWorld2()`
 - overlays/UI: inventory, console, GUI, menus, save prompts
 - final present: `Flip` with vsync toggle
 
 Porting implication:
+
 - For web/WASM, you’ll almost always want an explicit “single tick” function
   that runs this pipeline once, rather than calling a `Repeat ... Forever` loop.
-

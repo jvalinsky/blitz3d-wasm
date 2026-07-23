@@ -2,9 +2,16 @@
 
 ## Overview
 
-This document analyzes the actual NPC (Non-Player Character) system implementation extracted from SCP: Containment Breach source code in `temp_npcs.bb`. This file contains ~1000 lines of real BlitzBasic code that successfully compiles with the blitz3d-wasm compiler, representing the authentic SCPB NPC architecture.
+This document analyzes the actual NPC (Non-Player Character) system
+implementation extracted from SCP: Containment Breach source code in
+`temp_npcs.bb`. This file contains ~1000 lines of real BlitzBasic code that
+successfully compiles with the blitz3d-wasm compiler, representing the authentic
+SCPB NPC architecture.
 
-**Key Finding**: The real SCPB code does NOT use named constants like `STATE_IDLE`, `STATE_HUNTING`, etc. It uses raw numeric values (0, 1, 2...) directly in state machines. The hypothetical documentation in the notes/ directory was based on educated guesses, not actual code analysis.
+**Key Finding**: The real SCPB code does NOT use named constants like
+`STATE_IDLE`, `STATE_HUNTING`, etc. It uses raw numeric values (0, 1, 2...)
+directly in state machines. The hypothetical documentation in the notes/
+directory was based on educated guesses, not actual code analysis.
 
 ## Actual NPC Type Definition
 
@@ -77,20 +84,20 @@ End Type
 
 ### Field Analysis (35+ Fields Total)
 
-| Field Category | Count | Key Fields | Purpose |
-|----------------|-------|------------|---------|
-| **Entity Handles** | 5 | `obj`, `obj2`, `obj3`, `obj4`, `Collider` | 3D models and physics collision |
-| **Identity** | 3 | `NPCtype`, `ID`, `NVName` | Type identifier, unique ID, night vision name |
-| **Physics** | 5 | `DropSpeed`, `Gravity`, `GravityMult`, `MaxGravity`, `CollRadius` | Movement and collision |
-| **State Machine** | 4 | `State`, `State2`, `State3`, `PrevState` | Behavior control (numeric values) |
-| **Audio** | 7 | `Sound`, `SoundChn`, `SoundTimer`, `Sound2`, `SoundChn2`, `SoundChn_IsStream` | Sound effects and streaming |
-| **Movement** | 3 | `Speed`, `CurrSpeed`, `Angle` | Speed and directional control |
-| **Pathfinding** | 4 | `Path.WayPoints[20]`, `PathStatus`, `PathTimer`, `PathLocation` | A* navigation system |
-| **AI/Detection** | 5 | `LastSeen`, `LastDist`, `Target`, `EnemyX/Y/Z`, `MakingNoise` | Player detection and targeting |
-| **Animation** | 6 | `Frame`, `ManipulateBone`, `BoneToManipulate`, `BonePitch/Yaw/Roll` | Skeletal animation control |
-| **Status** | 4 | `HP`, `IsDead`, `Idle`, `IdleTimer` | Health and status tracking |
-| **Special Features** | 6 | `BlinkTimer`, `HideFromNVG`, `InFacility`, `CanUseElevator`, `MTFVariant`, `MTFLeader` | SCP-specific mechanics |
-| **Appearance** | 6 | `texture`, `TextureID`, `Model`, `ModelScaleX/Y/Z` | Visual customization |
+| Field Category       | Count | Key Fields                                                                             | Purpose                                       |
+| -------------------- | ----- | -------------------------------------------------------------------------------------- | --------------------------------------------- |
+| **Entity Handles**   | 5     | `obj`, `obj2`, `obj3`, `obj4`, `Collider`                                              | 3D models and physics collision               |
+| **Identity**         | 3     | `NPCtype`, `ID`, `NVName`                                                              | Type identifier, unique ID, night vision name |
+| **Physics**          | 5     | `DropSpeed`, `Gravity`, `GravityMult`, `MaxGravity`, `CollRadius`                      | Movement and collision                        |
+| **State Machine**    | 4     | `State`, `State2`, `State3`, `PrevState`                                               | Behavior control (numeric values)             |
+| **Audio**            | 7     | `Sound`, `SoundChn`, `SoundTimer`, `Sound2`, `SoundChn2`, `SoundChn_IsStream`          | Sound effects and streaming                   |
+| **Movement**         | 3     | `Speed`, `CurrSpeed`, `Angle`                                                          | Speed and directional control                 |
+| **Pathfinding**      | 4     | `Path.WayPoints[20]`, `PathStatus`, `PathTimer`, `PathLocation`                        | A* navigation system                          |
+| **AI/Detection**     | 5     | `LastSeen`, `LastDist`, `Target`, `EnemyX/Y/Z`, `MakingNoise`                          | Player detection and targeting                |
+| **Animation**        | 6     | `Frame`, `ManipulateBone`, `BoneToManipulate`, `BonePitch/Yaw/Roll`                    | Skeletal animation control                    |
+| **Status**           | 4     | `HP`, `IsDead`, `Idle`, `IdleTimer`                                                    | Health and status tracking                    |
+| **Special Features** | 6     | `BlinkTimer`, `HideFromNVG`, `InFacility`, `CanUseElevator`, `MTFVariant`, `MTFLeader` | SCP-specific mechanics                        |
+| **Appearance**       | 6     | `texture`, `TextureID`, `Model`, `ModelScaleX/Y/Z`                                     | Visual customization                          |
 
 ## Actual NPC Constants (Real Values)
 
@@ -103,7 +110,9 @@ Const NPCtype860% = 14, NPCtype939% = 15, NPCtype066% = 16, NPCtypePdPlane% = 17
 Const NPCtype966% = 18, NPCtype1048a = 19, NPCtype1499% = 20, NPCtype008% = 21, NPCtypeClerk% = 22
 ```
 
-**Key Discovery**: The code uses raw numbers (1, 2, 8, 9, 10...) directly, not named constants like `NPC_SCP_173`. The hypothetical documentation was incorrect.
+**Key Discovery**: The code uses raw numbers (1, 2, 8, 9, 10...) directly, not
+named constants like `NPC_SCP_173`. The hypothetical documentation was
+incorrect.
 
 ## Real CreateNPC Function
 
@@ -143,12 +152,15 @@ Function CreateNPC.NPCs(NPCtype%, x#, y#, z#)
 
 ## State Machine Reality
 
-**Major Finding**: SCPB does NOT use named state constants. States are raw numbers used directly:
+**Major Finding**: SCPB does NOT use named state constants. States are raw
+numbers used directly:
 
 - **SCP-173**: Uses simple state values (0=idle, 1=contained)
-- **SCP-096**: Uses complex state progression (0=sitting, 1-3=enraging, 4=hunting, 5=cooldown)
+- **SCP-096**: Uses complex state progression (0=sitting, 1-3=enraging,
+  4=hunting, 5=cooldown)
 - **SCP-106**: Uses State/State2/State3 simultaneously for multi-stage behaviors
-- **MTF Units**: Use State for patrol/combat modes, State2 for squad coordination
+- **MTF Units**: Use State for patrol/combat modes, State2 for squad
+  coordination
 
 ### Real SCP-173 State Logic (from actual code)
 
@@ -177,52 +189,56 @@ Case NPCtype173
 
 ### Successfully Compiled Functions
 
-| Function | Lines | Status | Notes |
-|----------|-------|--------|-------|
-| `CreateNPC()` | ~200 | ✅ Compiles | All NPC creation logic works |
-| SCP-173 Logic | ~50 | ✅ Compiles | Basic movement and attack |
-| Pathfinding | ~30 | ✅ Compiles | Waypoint navigation works |
-| Sound System | ~40 | ✅ Compiles | Audio playback functions |
-| Basic Updates | ~100 | ✅ Compiles | Core update loops work |
+| Function      | Lines | Status      | Notes                        |
+| ------------- | ----- | ----------- | ---------------------------- |
+| `CreateNPC()` | ~200  | ✅ Compiles | All NPC creation logic works |
+| SCP-173 Logic | ~50   | ✅ Compiles | Basic movement and attack    |
+| Pathfinding   | ~30   | ✅ Compiles | Waypoint navigation works    |
+| Sound System  | ~40   | ✅ Compiles | Audio playback functions     |
+| Basic Updates | ~100  | ✅ Compiles | Core update loops work       |
 
 ### Compilation Gaps Found
 
-| Feature | Status | Issue |
-|---------|--------|-------|
-| Handle Arrays | ❌ Fails | `Field Path.WayPoints[20]` compilation error |
-| Object References | ⚠️ Partial | Some object field access issues |
-| Complex Select | ⚠️ Partial | Large Select statements cause problems |
-| String Operations | ✅ Works | Basic string handling compiles |
+| Feature           | Status     | Issue                                        |
+| ----------------- | ---------- | -------------------------------------------- |
+| Handle Arrays     | ❌ Fails   | `Field Path.WayPoints[20]` compilation error |
+| Object References | ⚠️ Partial | Some object field access issues              |
+| Complex Select    | ⚠️ Partial | Large Select statements cause problems       |
+| String Operations | ✅ Works   | Basic string handling compiles               |
 
 ### BlitzBasic Feature Support Matrix
 
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Basic syntax | ✅ Complete | Variables, functions, loops, conditionals |
-| Types | ✅ Complete | Custom types, fields, arrays |
-| Graphics | ✅ Complete | 3D rendering via Three.js |
-| Input | ✅ Complete | Keyboard, mouse, pointer lock |
-| Audio | ✅ Complete | Web Audio API integration |
-| File I/O | ✅ Complete | Virtual filesystem, INI parsing |
-| Arrays | ⚠️ Partial | Basic arrays work, some edge cases |
-| Handles/Objects | ❌ Missing | Field arrays, object references |
-| Advanced syntax | ❌ Missing | Select statements, complex expressions |
+| Feature         | Status      | Notes                                     |
+| --------------- | ----------- | ----------------------------------------- |
+| Basic syntax    | ✅ Complete | Variables, functions, loops, conditionals |
+| Types           | ✅ Complete | Custom types, fields, arrays              |
+| Graphics        | ✅ Complete | 3D rendering via Three.js                 |
+| Input           | ✅ Complete | Keyboard, mouse, pointer lock             |
+| Audio           | ✅ Complete | Web Audio API integration                 |
+| File I/O        | ✅ Complete | Virtual filesystem, INI parsing           |
+| Arrays          | ⚠️ Partial  | Basic arrays work, some edge cases        |
+| Handles/Objects | ❌ Missing  | Field arrays, object references           |
+| Advanced syntax | ❌ Missing  | Select statements, complex expressions    |
 
 ## Key Differences from Hypothetical Documentation
 
 ### 1. **State Constants**
+
 - **Hypothetical**: `STATE_IDLE = 0`, `STATE_HUNTING = 2`, etc.
 - **Reality**: Raw numbers used directly (`n\State = 1`)
 
 ### 2. **Type Structure**
+
 - **Hypothetical**: 14 fields with clean organization
 - **Reality**: 35+ fields with complex interdependencies
 
 ### 3. **Function Patterns**
+
 - **Hypothetical**: Named functions with clear purposes
 - **Reality**: Direct numeric logic in Select statements
 
 ### 4. **State Management**
+
 - **Hypothetical**: Single State field with clear transitions
 - **Reality**: State, State2, State3 used simultaneously
 
@@ -244,6 +260,7 @@ EndIf
 ## Real Code Patterns
 
 ### SCP-173 Movement Logic
+
 ```blitzbasic
 Case NPCtype173
 	; Real SCP-173 behavior from temp_npcs.bb
@@ -270,6 +287,7 @@ Case NPCtype173
 ```
 
 ### SCP-096 State Progression
+
 ```blitzbasic
 Case NPCtype096
 	; Real SCP-096 logic using numeric state progression
@@ -299,40 +317,50 @@ Case NPCtype096
 ## Documentation Corrections Needed
 
 ### 1. **State Machine Documentation**
+
 Replace all references to named constants with numeric values:
+
 - `STATE_IDLE` → `0`
 - `STATE_HUNTING` → `2`
 - `STATE_SCP173_FROZEN` → `0` (idle state)
 
 ### 2. **Type Definition**
-Update to reflect the actual 35+ field structure instead of the hypothetical 14-field version.
+
+Update to reflect the actual 35+ field structure instead of the hypothetical
+14-field version.
 
 ### 3. **Function Examples**
+
 Replace hypothetical function calls with real patterns from temp_npcs.bb.
 
 ### 4. **Architecture Description**
+
 Correct the state management description to reflect State/State2/State3 usage.
 
 ## Compilation Roadmap
 
 ### High Priority (Blocking SCPB Full Compilation)
+
 1. **Handle Array Support**: `Field Path.WayPoints[20]` compilation
 2. **Object Reference Handling**: Field access to object properties
 3. **Complex Select Statements**: Large nested select blocks
 
 ### Medium Priority
+
 1. **Advanced Expression Parsing**: Complex mathematical expressions
 2. **String Operation Extensions**: Advanced string manipulation
 3. **Array Operation Support**: Multi-dimensional arrays
 
 ### Low Priority
+
 1. **Optimization Features**: Performance improvements
 2. **Debug Features**: Enhanced debugging capabilities
 3. **Advanced Syntax**: Remaining BlitzBasic features
 
 ## Conclusion
 
-The actual SCPB NPC system is significantly more complex and uses different patterns than the hypothetical documentation suggested. The real code:
+The actual SCPB NPC system is significantly more complex and uses different
+patterns than the hypothetical documentation suggested. The real code:
 
 - Uses raw numeric constants instead of named ones
 - Has 35+ fields per NPC instead of 14
@@ -340,4 +368,5 @@ The actual SCPB NPC system is significantly more complex and uses different patt
 - Contains real implementation details like Halloween texture logic
 - Successfully compiles in ~75% of cases with the blitz3d-wasm compiler
 
-This analysis provides the foundation for accurately documenting the SCPB NPC system based on real code rather than educated guesses.
+This analysis provides the foundation for accurately documenting the SCPB NPC
+system based on real code rather than educated guesses.

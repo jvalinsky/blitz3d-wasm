@@ -2,28 +2,36 @@
 
 ## Testing Architecture
 
-The Deno test suite follows a layered testing architecture designed specifically for WebAssembly memory management and browser runtime simulation.
+The Deno test suite follows a layered testing architecture designed specifically
+for WebAssembly memory management and browser runtime simulation.
 
 ## BB compile-and-run smoke suite (2026-02-02)
 
-In addition to unit-style runtime tests, the repo includes an end-to-end smoke suite that exercises the **full** pipeline:
+In addition to unit-style runtime tests, the repo includes an end-to-end smoke
+suite that exercises the **full** pipeline:
 
-1) Compile a `.bb` script using the Swift compiler (`.build/debug/blitz3d-wasm`)  
-2) Execute the resulting `.wasm` under Deno with the JS runtime glue
+1. Compile a `.bb` script using the Swift compiler (`.build/debug/blitz3d-wasm`)
+2. Execute the resulting `.wasm` under Deno with the JS runtime glue
 
 Key pieces:
+
 - Runner: `Tools/bb_deno_compile_and_run.ts`
 - Smoke scripts: `Tests/deno_smoke/*.bb`
 - Coverage notes + gaps: `Tests/deno_smoke/COVERAGE.md`
 - Deno test wrapper: `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`
 
-This smoke suite is the fastest way to validate changes to the Swift compiler, runtime imports, and the Deno runner together. It is also the reference behavior for the “safe web interpreter” demos (run compiled WASM in a killable Worker with a watchdog timeout to avoid UI-thread freezes).
+This smoke suite is the fastest way to validate changes to the Swift compiler,
+runtime imports, and the Deno runner together. It is also the reference behavior
+for the “safe web interpreter” demos (run compiled WASM in a killable Worker
+with a watchdog timeout to avoid UI-thread freezes).
 
 ## Core Testing Framework
 
 ### Assertion Framework (`Tools/tests/assert.ts`)
 
-The project uses a minimal custom assertion framework rather than Deno's built-in assertions to maintain compatibility across different Deno versions and environments.
+The project uses a minimal custom assertion framework rather than Deno's
+built-in assertions to maintain compatibility across different Deno versions and
+environments.
 
 ```typescript
 export const assert: (cond: unknown, msg?: string) => void = (
@@ -43,6 +51,7 @@ export const assertEquals = <T>(a: T, b: T, msg?: string) => {
 ```
 
 This approach provides:
+
 - Consistent error messages across environments
 - JSON-based comparison for complex object structures
 - Minimal dependencies and overhead
@@ -51,7 +60,9 @@ This approach provides:
 
 ### Mock Browser API Implementation
 
-The `headless.ts` module provides a comprehensive mock browser environment that enables testing browser-dependent code without requiring an actual browser. This is critical for:
+The `headless.ts` module provides a comprehensive mock browser environment that
+enables testing browser-dependent code without requiring an actual browser. This
+is critical for:
 
 1. **CI/CD Integration**: Tests can run in headless environments
 2. **Performance Testing**: Eliminates browser variability
@@ -68,13 +79,15 @@ const listenersAfterDispose = headless.getActiveListenerCount();
 const rafAfterDispose = headless.getActiveRafCount();
 ```
 
-This approach follows the same principles as Chrome DevTools' event listener inspection but provides programmatic access for automated testing.
+This approach follows the same principles as Chrome DevTools' event listener
+inspection but provides programmatic access for automated testing.
 
 ## Memory Management Testing Strategy
 
 ### Multi-Level Memory Tracking
 
-Based on industry best practices for WebAssembly memory management, the test suite implements:
+Based on industry best practices for WebAssembly memory management, the test
+suite implements:
 
 1. **JavaScript Heap Monitoring**: Using `Deno.memoryUsage().heapUsed`
    - Follows Node.js/Deno memory usage patterns
@@ -93,20 +106,26 @@ Based on industry best practices for WebAssembly memory management, the test sui
 
 ### Threshold-Based Validation
 
-The test suite uses configurable thresholds rather than absolute memory requirements, following the principle that:
+The test suite uses configurable thresholds rather than absolute memory
+requirements, following the principle that:
 
-Memory leak detection should focus on **growth patterns** rather than absolute values, because different environments have different baselines.
+Memory leak detection should focus on **growth patterns** rather than absolute
+values, because different environments have different baselines.
 
 ## WebAssembly-Specific Testing
 
 ### SCPCB Runtime Integration
 
-The SCPCB-specific tests (`scpcb_churn.ts`) demonstrate advanced WebAssembly testing techniques:
+The SCPCB-specific tests (`scpcb_churn.ts`) demonstrate advanced WebAssembly
+testing techniques:
 
 1. **Import/Export Validation**: Ensures proper WASM module integration
-2. **Memory Boundary Testing**: Validates WASM memory doesn't grow uncontrollably
-3. **Runtime Handle Cleanup**: Verifies JavaScript-WASM bridge objects are properly managed
-4. **Initialization Handling**: Special handling for WASM initialization patterns
+2. **Memory Boundary Testing**: Validates WASM memory doesn't grow
+   uncontrollably
+3. **Runtime Handle Cleanup**: Verifies JavaScript-WASM bridge objects are
+   properly managed
+4. **Initialization Handling**: Special handling for WASM initialization
+   patterns
 
 ### WASM Memory Growth Detection
 
@@ -117,7 +136,9 @@ const wasmMemEnd = core.memory?.buffer?.byteLength ?? wasmMemStart;
 const wasmGrowth = wasmMemEnd - wasmMemStart;
 ```
 
-This approach follows the WebAssembly specification's guidance on memory monitoring and is consistent with tools like Wasmtime and Wasmer's memory tracking capabilities.
+This approach follows the WebAssembly specification's guidance on memory
+monitoring and is consistent with tools like Wasmtime and Wasmer's memory
+tracking capabilities.
 
 ## Industry Standards Compliance
 
@@ -125,7 +146,8 @@ This approach follows the WebAssembly specification's guidance on memory monitor
 
 The test suite implements patterns identified in:
 
-1. **Chrome DevTools Memory Inspector**: Event listener and RAF tracking patterns
+1. **Chrome DevTools Memory Inspector**: Event listener and RAF tracking
+   patterns
 2. **WebAssembly Memory Model**: Linear memory growth monitoring
 3. **WebGPU Specification**: Resource lifecycle validation
 4. **JavaScript Best Practices**: Closure and reference leak prevention
@@ -147,7 +169,8 @@ The test suite is designed for efficient execution:
 
 1. **Parallel Execution**: Independent tests can run simultaneously
 2. **Selective Testing**: Individual test categories can be run separately
-3. **Configurable Intensity**: Test parameters can be adjusted for different environments
+3. **Configurable Intensity**: Test parameters can be adjusted for different
+   environments
 4. **Fast Feedback**: Static analysis provides immediate pre-commit feedback
 
 ### Resource Utilization
@@ -164,15 +187,18 @@ Tests are optimized to minimize resource consumption:
 ### Pre-Commit Validation
 
 Static analysis (`memleak:scan`) provides immediate feedback:
+
 ```bash
 deno task memleak:scan --fail
 ```
 
-This follows the "shift-left" testing principle, catching issues before they enter the codebase.
+This follows the "shift-left" testing principle, catching issues before they
+enter the codebase.
 
 ### Continuous Integration
 
 CI/CD pipelines can run comprehensive tests:
+
 ```bash
 deno task test:all  # Runs Swift, Deno, web, and WASM tests
 ```
@@ -182,6 +208,7 @@ The test suite's headless nature makes it ideal for automated environments.
 ### Development-Time Testing
 
 During development, focused testing provides rapid feedback:
+
 ```bash
 # Quick memory validation
 deno task memleak:run --cycles 3
@@ -213,6 +240,7 @@ The test suite is designed to complement rather than replace existing tools:
 ### Extended Resource Tracking
 
 Future versions could include:
+
 - Audio context resource monitoring
 - IndexedDB and storage API tracking
 - Network request lifecycle validation
@@ -221,6 +249,7 @@ Future versions could include:
 ### Advanced Analysis
 
 Potential enhancements:
+
 - Memory allocation pattern analysis
 - Performance regression detection
 - Automated memory leak root cause analysis
@@ -228,4 +257,6 @@ Potential enhancements:
 
 ---
 
-*This technical documentation provides implementation details for developers working with and extending the Deno test suite. For usage instructions, see the main documentation file.*
+_This technical documentation provides implementation details for developers
+working with and extending the Deno test suite. For usage instructions, see the
+main documentation file._

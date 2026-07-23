@@ -2,7 +2,9 @@
 
 ## Overview
 
-SMPK (Simple Package) is a custom binary format for optimized web asset delivery in Blitz3D-WASM. It provides a compact, efficient way to bundle game assets with metadata for progressive loading in browsers.
+SMPK (Simple Package) is a custom binary format for optimized web asset delivery
+in Blitz3D-WASM. It provides a compact, efficient way to bundle game assets with
+metadata for progressive loading in browsers.
 
 ### Design Goals
 
@@ -28,11 +30,11 @@ SMPK (Simple Package) is a custom binary format for optimized web asset delivery
 
 ### Header Format
 
-| Offset | Size | Field | Description |
-|---------|-------|--------|-------------|
-| 0       | 4     | Magic  | "SMPK" (0x534D504B) |
-| 4       | 4     | Version| Format version (currently 1) |
-| 8       | 4     | Flags  | Feature flags (unused) |
+| Offset | Size | Field   | Description                  |
+| ------ | ---- | ------- | ---------------------------- |
+| 0      | 4    | Magic   | "SMPK" (0x534D504B)          |
+| 4      | 4    | Version | Format version (currently 1) |
+| 8      | 4    | Flags   | Feature flags (unused)       |
 
 ### JSON Metadata Section
 
@@ -71,7 +73,8 @@ SMPK (Simple Package) is a custom binary format for optimized web asset delivery
 
 ## Material Schema
 
-SMPK models include a `materials` array for mesh materials. Each material maps B3D brush properties to glTF-style PBR.
+SMPK models include a `materials` array for mesh materials. Each material maps
+B3D brush properties to glTF-style PBR.
 
 ### Material Fields
 
@@ -119,29 +122,29 @@ SMPK models include a `materials` array for mesh materials. Each material maps B
 
 ### B3D Brush to SMPK Material Mapping
 
-| B3D Brush Field | SMPK Material Field | Conversion |
-|-----------------|---------------------|------------|
-| name | name | Direct |
-| color[0-3] | color, alpha | RGB + alpha |
-| shininess | roughness, shininess | roughness = 1 - shininess |
-| blend | blendMode | Direct |
-| fx | fx | Direct |
-| texIds[0] | baseColorTexture | Texture lookup |
-| texIds[1] | detailTexture | As roughnessMap |
-| texIds[2-3] | detailTexture2/3 | Logged only |
-| texIds[7] | cubeTexture | Logged only |
+| B3D Brush Field | SMPK Material Field  | Conversion                |
+| --------------- | -------------------- | ------------------------- |
+| name            | name                 | Direct                    |
+| color[0-3]      | color, alpha         | RGB + alpha               |
+| shininess       | roughness, shininess | roughness = 1 - shininess |
+| blend           | blendMode            | Direct                    |
+| fx              | fx                   | Direct                    |
+| texIds[0]       | baseColorTexture     | Texture lookup            |
+| texIds[1]       | detailTexture        | As roughnessMap           |
+| texIds[2-3]     | detailTexture2/3     | Logged only               |
+| texIds[7]       | cubeTexture          | Logged only               |
 
 ### Alpha Mode Mapping
 
 B3D blend modes to SMPK alphaMode:
 
-| B3D blend | Name | alphaMode | Three.js Behavior |
-|-----------|------|-----------|-------------------|
-| 0 | NONE | OPAQUE | transparent=false, depthWrite=true |
-| 1 | ALPHA | BLEND | transparent=true, depthWrite=false |
-| 2 | ADD | BLEND | Additive blending |
-| 3 | MASK | MASK | alphaTest=0.5, depthWrite=true |
-| 4 | MUL | OPAQUE | Multiplicative |
+| B3D blend | Name  | alphaMode | Three.js Behavior                  |
+| --------- | ----- | --------- | ---------------------------------- |
+| 0         | NONE  | OPAQUE    | transparent=false, depthWrite=true |
+| 1         | ALPHA | BLEND     | transparent=true, depthWrite=false |
+| 2         | ADD   | BLEND     | Additive blending                  |
+| 3         | MASK  | MASK      | alphaTest=0.5, depthWrite=true     |
+| 4         | MUL   | OPAQUE    | Multiplicative                     |
 
 ## Conversion Tools
 
@@ -229,34 +232,34 @@ The build system generates `scpcb_manifest.json`:
 
 ```typescript
 // Load SMPK from manifest
-const smpk = await Blitz3D.loadAsset('player_mesh.smpk');
+const smpk = await Blitz3D.loadAsset("player_mesh.smpk");
 
 // Access metadata
-const metadata = smpk.getMetadata('player_mesh');
+const metadata = smpk.getMetadata("player_mesh");
 console.log(`Asset size: ${metadata.size} bytes`);
 
 // Get binary data
-const meshData = smpk.getAssetData('player_mesh');
+const meshData = smpk.getAssetData("player_mesh");
 ```
 
 ### Progressive Loading
 
 ```typescript
 // Load boot assets first
-await Blitz3D.loadGroup('boot');
+await Blitz3D.loadGroup("boot");
 
 // Then init assets
-await Blitz3D.loadGroup('init');
+await Blitz3D.loadGroup("init");
 
 // Finally gameplay assets
-await Blitz3D.loadGroup('facility_assets');
+await Blitz3D.loadGroup("facility_assets");
 ```
 
 ### Asset Properties
 
 ```typescript
 // Check asset properties
-const asset = await Blitz3D.loadAsset('player_mesh.smpk');
+const asset = await Blitz3D.loadAsset("player_mesh.smpk");
 if (asset.properties.collision) {
   // Initialize collision mesh
 }
@@ -338,7 +341,7 @@ The runtime maintains backward compatibility:
 
 ```typescript
 // Runtime automatically handles version differences
-const smpk = await Blitz3D.loadAsset('legacy_asset.smpk');
+const smpk = await Blitz3D.loadAsset("legacy_asset.smpk");
 if (smpk.version >= 2) {
   // Use version 2+ features
 } else {
@@ -374,7 +377,7 @@ When updating SMPK format:
 ```typescript
 // Monitor loading performance
 const startTime = performance.now();
-await Blitz3D.loadGroup('facility_assets');
+await Blitz3D.loadGroup("facility_assets");
 const loadTime = performance.now() - startTime;
 console.log(`Load time: ${loadTime}ms`);
 ```
@@ -384,20 +387,25 @@ console.log(`Load time: ${loadTime}ms`);
 ### Common Issues
 
 **Conversion fails**:
+
 ```
 deno run -A Tools/convert_b3d_to_smpk.ts model.b3d -o model.smpk
 # Error: Invalid B3D format
 ```
+
 Solution: Validate original B3D file format and integrity
 
 **Asset not found**:
+
 ```typescript
-await Blitz3D.loadAsset('missing_model.smpk');
+await Blitz3D.loadAsset("missing_model.smpk");
 // Error: Asset not found in manifest
 ```
+
 Solution: Ensure asset is in correct asset group and manifest is updated
 
 **Loading performance issues**:
+
 - Check asset grouping (too many assets in boot group)
 - Verify compression settings are appropriate
 - Monitor network conditions for large SMPK files
@@ -417,4 +425,7 @@ deno run -A Tools/smpk/compare.ts old.smpk new.smpk
 
 ---
 
-The SMPK asset system provides a robust foundation for efficient web deployment of Blitz3D games, with automatic conversion tools and progressive loading capabilities that scale from simple demos to complex games like SCP: Containment Breach.
+The SMPK asset system provides a robust foundation for efficient web deployment
+of Blitz3D games, with automatic conversion tools and progressive loading
+capabilities that scale from simple demos to complex games like SCP: Containment
+Breach.

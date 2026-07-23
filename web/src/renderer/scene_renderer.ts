@@ -7,7 +7,7 @@
  */
 
 import type { EngineBridge } from "../engine/bridge.ts";
-import type { Renderer, CompiledProgram } from "./renderer.ts";
+import type { CompiledProgram, Renderer } from "./renderer.ts";
 import type { GPUResources } from "./gpu_resources.ts";
 
 // FX flag bits (matching Blitz3D / Entity.swift)
@@ -50,16 +50,21 @@ function normalMatrix3x3(m: Float32Array, out: Float32Array): void {
   const a10 = m[4], a11 = m[5], a12 = m[6];
   const a20 = m[8], a21 = m[9], a22 = m[10];
 
-  const det =
-    a00 * (a11 * a22 - a12 * a21) -
+  const det = a00 * (a11 * a22 - a12 * a21) -
     a01 * (a10 * a22 - a12 * a20) +
     a02 * (a10 * a21 - a11 * a20);
 
   if (Math.abs(det) < 1e-10) {
     // Degenerate — just use identity
-    out[0] = 1; out[1] = 0; out[2] = 0;
-    out[3] = 0; out[4] = 1; out[5] = 0;
-    out[6] = 0; out[7] = 0; out[8] = 1;
+    out[0] = 1;
+    out[1] = 0;
+    out[2] = 0;
+    out[3] = 0;
+    out[4] = 1;
+    out[5] = 0;
+    out[6] = 0;
+    out[7] = 0;
+    out[8] = 1;
     return;
   }
 
@@ -98,7 +103,8 @@ function invert4x4(m: Float32Array, out: Float32Array): boolean {
   const b10 = m21 * m33 - m23 * m31;
   const b11 = m22 * m33 - m23 * m32;
 
-  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 +
+    b05 * b06;
   if (Math.abs(det) < 1e-10) return false;
   det = 1.0 / det;
 
@@ -134,10 +140,22 @@ function perspectiveMatrix(
 ): void {
   const f = 1.0 / Math.tan((fovDeg * Math.PI) / 360.0);
   const nf = 1.0 / (near - far);
-  out[0] = f / aspect; out[1] = 0; out[2] = 0; out[3] = 0;
-  out[4] = 0; out[5] = f; out[6] = 0; out[7] = 0;
-  out[8] = 0; out[9] = 0; out[10] = (far + near) * nf; out[11] = -1;
-  out[12] = 0; out[13] = 0; out[14] = 2.0 * far * near * nf; out[15] = 0;
+  out[0] = f / aspect;
+  out[1] = 0;
+  out[2] = 0;
+  out[3] = 0;
+  out[4] = 0;
+  out[5] = f;
+  out[6] = 0;
+  out[7] = 0;
+  out[8] = 0;
+  out[9] = 0;
+  out[10] = (far + near) * nf;
+  out[11] = -1;
+  out[12] = 0;
+  out[13] = 0;
+  out[14] = 2.0 * far * near * nf;
+  out[15] = 0;
 }
 
 export class SceneRenderer {
@@ -155,7 +173,11 @@ export class SceneRenderer {
   private _modelCopy = new Float32Array(16);
   private _invWorld = new Float32Array(16);
 
-  constructor(bridge: EngineBridge, renderer: Renderer, resources: GPUResources) {
+  constructor(
+    bridge: EngineBridge,
+    renderer: Renderer,
+    resources: GPUResources,
+  ) {
     this.bridge = bridge;
     this.renderer = renderer;
     this.resources = resources;
@@ -186,7 +208,13 @@ export class SceneRenderer {
     if (!invert4x4(this._modelCopy, this._viewMatrix)) return;
 
     // Build projection matrix
-    perspectiveMatrix(camParams.fov, aspect, camParams.near, camParams.far, this._projMatrix);
+    perspectiveMatrix(
+      camParams.fov,
+      aspect,
+      camParams.near,
+      camParams.far,
+      this._projMatrix,
+    );
 
     // Camera world position (column 3 of camera world matrix)
     const camX = this._modelCopy[12];
@@ -232,7 +260,13 @@ export class SceneRenderer {
       this.setUniform1i(prog, `${prefix}.type`, lType);
 
       const lColor = bridge.getLightColor(lid);
-      this.setUniform3f(prog, `${prefix}.color`, lColor[0], lColor[1], lColor[2]);
+      this.setUniform3f(
+        prog,
+        `${prefix}.color`,
+        lColor[0],
+        lColor[1],
+        lColor[2],
+      );
 
       this.setUniform1f(prog, `${prefix}.range`, bridge.getLightRange(lid));
 
@@ -240,15 +274,35 @@ export class SceneRenderer {
       const lWorld = bridge.getWorldMatrix(lid);
       if (lWorld) {
         // Position = column 3
-        this.setUniform3f(prog, `${prefix}.position`, lWorld[12], lWorld[13], lWorld[14]);
+        this.setUniform3f(
+          prog,
+          `${prefix}.position`,
+          lWorld[12],
+          lWorld[13],
+          lWorld[14],
+        );
         // Direction = column 2 (forward in Blitz3D convention)
-        this.setUniform3f(prog, `${prefix}.direction`, lWorld[8], lWorld[9], lWorld[10]);
+        this.setUniform3f(
+          prog,
+          `${prefix}.direction`,
+          lWorld[8],
+          lWorld[9],
+          lWorld[10],
+        );
       }
 
       if (lType === 3) { // spot
         const cones = bridge.getLightCones(lid);
-        this.setUniform1f(prog, `${prefix}.innerCone`, Math.cos(cones.inner * Math.PI / 180));
-        this.setUniform1f(prog, `${prefix}.outerCone`, Math.cos(cones.outer * Math.PI / 180));
+        this.setUniform1f(
+          prog,
+          `${prefix}.innerCone`,
+          Math.cos(cones.inner * Math.PI / 180),
+        );
+        this.setUniform1f(
+          prog,
+          `${prefix}.outerCone`,
+          Math.cos(cones.outer * Math.PI / 180),
+        );
       } else {
         this.setUniform1f(prog, `${prefix}.innerCone`, 0);
         this.setUniform1f(prog, `${prefix}.outerCone`, -1);
@@ -278,12 +332,12 @@ export class SceneRenderer {
       const w = bridge.getWorldMatrix(eid);
       if (!w) continue;
       // View-space Z of entity origin
-      const vz =
-        this._viewMatrix[2] * w[12] +
+      const vz = this._viewMatrix[2] * w[12] +
         this._viewMatrix[6] * w[13] +
         this._viewMatrix[10] * w[14] +
         this._viewMatrix[14];
-      const isTransparent = blend === BLEND_ALPHA && alpha < 1.0 || blend === BLEND_ADDITIVE;
+      const isTransparent = blend === BLEND_ALPHA && alpha < 1.0 ||
+        blend === BLEND_ADDITIVE;
       items.push({ entityId: eid, depth: vz, blend: isTransparent ? 1 : 0 });
     }
 
@@ -331,7 +385,14 @@ export class SceneRenderer {
     // b. Material properties
     const brushColor = bridge.getEntityBrushColor(eid);
     const alpha = bridge.getEntityAlpha(eid);
-    this.setUniform4f(prog, "u_brushColor", brushColor[0], brushColor[1], brushColor[2], alpha);
+    this.setUniform4f(
+      prog,
+      "u_brushColor",
+      brushColor[0],
+      brushColor[1],
+      brushColor[2],
+      alpha,
+    );
 
     const fx = bridge.getEntityFX(eid);
     this.setUniform1i(prog, "u_entityFX", fx);
@@ -382,7 +443,11 @@ export class SceneRenderer {
       this.resources.bindTexture(0, texId0);
       this.setUniform1i(prog, "u_hasTexture0", 1);
       this.setUniform1i(prog, "u_texture0", 0);
-      this.setUniform1i(prog, "u_textureBlend0", bridge.getEntityTextureBlend(eid, 0));
+      this.setUniform1i(
+        prog,
+        "u_textureBlend0",
+        bridge.getEntityTextureBlend(eid, 0),
+      );
     } else {
       this.resources.bindTexture(0, 0); // default
       this.setUniform1i(prog, "u_hasTexture0", 0);
@@ -392,7 +457,11 @@ export class SceneRenderer {
       this.resources.bindTexture(1, texId1);
       this.setUniform1i(prog, "u_hasTexture1", 1);
       this.setUniform1i(prog, "u_texture1", 1);
-      this.setUniform1i(prog, "u_textureBlend1", bridge.getEntityTextureBlend(eid, 1));
+      this.setUniform1i(
+        prog,
+        "u_textureBlend1",
+        bridge.getEntityTextureBlend(eid, 1),
+      );
     } else {
       this.setUniform1i(prog, "u_hasTexture1", 0);
     }
@@ -415,14 +484,19 @@ export class SceneRenderer {
    * Lazily upload surface vertex/index data from WASM memory to GPU buffers.
    * Returns the cached GPU handles.
    */
-  private ensureSurfaceGPU(meshId: number, surfaceIdx: number): SurfaceGPU | null {
+  private ensureSurfaceGPU(
+    meshId: number,
+    surfaceIdx: number,
+  ): SurfaceGPU | null {
     const key = `${meshId}_${surfaceIdx}`;
     const bridge = this.bridge;
     const gl = this.renderer.gl;
 
     const vertData = bridge.getSurfaceVertices(meshId, surfaceIdx);
     const idxData = bridge.getSurfaceIndices(meshId, surfaceIdx);
-    if (!vertData || !idxData || vertData.length === 0 || idxData.length === 0) return null;
+    if (
+      !vertData || !idxData || vertData.length === 0 || idxData.length === 0
+    ) return null;
 
     const existing = this.surfaceCache.get(key);
     if (existing && existing.vertexBytes === vertData.byteLength) {
@@ -442,7 +516,11 @@ export class SceneRenderer {
       if (ib) {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib.glBuffer);
         // Convert Int32 indices to Uint32 for drawElements
-        const uint32Indices = new Uint32Array(idxData.buffer, idxData.byteOffset, idxData.length);
+        const uint32Indices = new Uint32Array(
+          idxData.buffer,
+          idxData.byteOffset,
+          idxData.length,
+        );
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, uint32Indices, gl.STATIC_DRAW);
       }
       existing.indexCount = idxData.length;
@@ -454,8 +532,15 @@ export class SceneRenderer {
     // Create new
     const vboId = this.resources.createBuffer(gl.ARRAY_BUFFER, vertData);
     // Convert Int32 indices to Uint32
-    const uint32Indices = new Uint32Array(idxData.buffer, idxData.byteOffset, idxData.length);
-    const iboId = this.resources.createBuffer(gl.ELEMENT_ARRAY_BUFFER, uint32Indices);
+    const uint32Indices = new Uint32Array(
+      idxData.buffer,
+      idxData.byteOffset,
+      idxData.length,
+    );
+    const iboId = this.resources.createBuffer(
+      gl.ELEMENT_ARRAY_BUFFER,
+      uint32Indices,
+    );
     const vaoId = this.resources.createEngineVAO(vboId, iboId);
 
     const gpu: SurfaceGPU = {
@@ -515,22 +600,43 @@ export class SceneRenderer {
     if (loc !== undefined) this.renderer.gl.uniform1f(loc, v);
   }
 
-  private setUniform3f(prog: CompiledProgram, name: string, x: number, y: number, z: number): void {
+  private setUniform3f(
+    prog: CompiledProgram,
+    name: string,
+    x: number,
+    y: number,
+    z: number,
+  ): void {
     const loc = prog.uniforms.get(name);
     if (loc !== undefined) this.renderer.gl.uniform3f(loc, x, y, z);
   }
 
-  private setUniform4f(prog: CompiledProgram, name: string, x: number, y: number, z: number, w: number): void {
+  private setUniform4f(
+    prog: CompiledProgram,
+    name: string,
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+  ): void {
     const loc = prog.uniforms.get(name);
     if (loc !== undefined) this.renderer.gl.uniform4f(loc, x, y, z, w);
   }
 
-  private setUniformMat3(prog: CompiledProgram, name: string, m: Float32Array): void {
+  private setUniformMat3(
+    prog: CompiledProgram,
+    name: string,
+    m: Float32Array,
+  ): void {
     const loc = prog.uniforms.get(name);
     if (loc !== undefined) this.renderer.gl.uniformMatrix3fv(loc, false, m);
   }
 
-  private setUniformMat4(prog: CompiledProgram, name: string, m: Float32Array): void {
+  private setUniformMat4(
+    prog: CompiledProgram,
+    name: string,
+    m: Float32Array,
+  ): void {
     const loc = prog.uniforms.get(name);
     if (loc !== undefined) this.renderer.gl.uniformMatrix4fv(loc, false, m);
   }

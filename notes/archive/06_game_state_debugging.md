@@ -2,13 +2,37 @@
 
 ## Overview
 
-This document provides a comprehensive analysis of the game state tracking and debugging capabilities expected for SCPB (SCP - Containment Breach) based on the documented skill patterns and architectural specifications. The debugging infrastructure is designed to support runtime inspection of player state, NPC behavior, room conditions, save states, time progression, and visual debugging helpers for development and troubleshooting purposes.
+This document provides a comprehensive analysis of the game state tracking and
+debugging capabilities expected for SCPB (SCP - Containment Breach) based on the
+documented skill patterns and architectural specifications. The debugging
+infrastructure is designed to support runtime inspection of player state, NPC
+behavior, room conditions, save states, time progression, and visual debugging
+helpers for development and troubleshooting purposes.
 
-The debugging system is built around a conditional compilation approach where debug functions only execute when DEBUG_MODE is enabled, ensuring zero performance overhead in release builds. This infrastructure supports both text-based console debugging and visual debugging helpers including wireframe overlays, colored indicators, and real-time stat displays.
+The debugging system is built around a conditional compilation approach where
+debug functions only execute when DEBUG_MODE is enabled, ensuring zero
+performance overhead in release builds. This infrastructure supports both
+text-based console debugging and visual debugging helpers including wireframe
+overlays, colored indicators, and real-time stat displays.
 
-The debugging framework is organized into several interconnected systems: player state debugging covers core statistics like health, stamina, and sanity along with position and equipment tracking; NPC state debugging provides detailed insights into individual and collective NPC behavior, states, and AI decision-making; room state debugging monitors room transitions, door states, item locations, and active events; save state debugging validates save file integrity and current state snapshots; time state debugging tracks game time, day/night cycles, and event timers; visual debugging helpers provide wireframe rendering, coordinate axes, state indicators, and path visualization; debug hotkeys enable rapid access to common debugging functions; watch variables allow real-time monitoring of specific game variables; and debug console functionality provides a scrolling text buffer for game state output.
+The debugging framework is organized into several interconnected systems: player
+state debugging covers core statistics like health, stamina, and sanity along
+with position and equipment tracking; NPC state debugging provides detailed
+insights into individual and collective NPC behavior, states, and AI
+decision-making; room state debugging monitors room transitions, door states,
+item locations, and active events; save state debugging validates save file
+integrity and current state snapshots; time state debugging tracks game time,
+day/night cycles, and event timers; visual debugging helpers provide wireframe
+rendering, coordinate axes, state indicators, and path visualization; debug
+hotkeys enable rapid access to common debugging functions; watch variables allow
+real-time monitoring of specific game variables; and debug console functionality
+provides a scrolling text buffer for game state output.
 
-The system architecture emphasizes modularity and extensibility, allowing developers to add new debug functions without modifying the core debugging infrastructure. All debug output is channeled through standardized interfaces that support both console display and visual overlays, ensuring consistent behavior across different debugging contexts.
+The system architecture emphasizes modularity and extensibility, allowing
+developers to add new debug functions without modifying the core debugging
+infrastructure. All debug output is channeled through standardized interfaces
+that support both console display and visual overlays, ensuring consistent
+behavior across different debugging contexts.
 
 ---
 
@@ -16,41 +40,68 @@ The system architecture emphasizes modularity and extensibility, allowing develo
 
 ### 1.1 Core Player State Variables
 
-The player state is managed through a set of global variables that track the player's physical condition, spatial position, equipment status, and special abilities. These variables form the foundation of the player debugging system and are continuously updated throughout gameplay.
+The player state is managed through a set of global variables that track the
+player's physical condition, spatial position, equipment status, and special
+abilities. These variables form the foundation of the player debugging system
+and are continuously updated throughout gameplay.
 
 The following table documents the primary player state variables:
 
-| Variable | Type | Purpose | Range |
-|----------|------|---------|-------|
-| PlayerRoom | Integer | Current room identifier | 0 to N-1 |
-| PlayerHealth | Float | Current health percentage | 0.0 to 100.0 |
-| PlayerStamina | Float | Current stamina percentage | 0.0 to 100.0 |
-| Sanity | Float | Current sanity percentage | 0.0 to 100.0 |
-| BlinkTimer | Float | Time until next blink | 0.0 to 1.0 |
-| BlinkEffect | Float | Current blink visual effect intensity | 0.0 to 1.0 |
-| PlayerCollider | Integer | Physics collider entity handle | Entity reference |
-| Camera | Integer | Player camera entity handle | Entity reference |
-| GOD_MODE | Boolean | God mode toggle for invincibility | True/False |
+| Variable       | Type    | Purpose                               | Range            |
+| -------------- | ------- | ------------------------------------- | ---------------- |
+| PlayerRoom     | Integer | Current room identifier               | 0 to N-1         |
+| PlayerHealth   | Float   | Current health percentage             | 0.0 to 100.0     |
+| PlayerStamina  | Float   | Current stamina percentage            | 0.0 to 100.0     |
+| Sanity         | Float   | Current sanity percentage             | 0.0 to 100.0     |
+| BlinkTimer     | Float   | Time until next blink                 | 0.0 to 1.0       |
+| BlinkEffect    | Float   | Current blink visual effect intensity | 0.0 to 1.0       |
+| PlayerCollider | Integer | Physics collider entity handle        | Entity reference |
+| Camera         | Integer | Player camera entity handle           | Entity reference |
+| GOD_MODE       | Boolean | God mode toggle for invincibility     | True/False       |
 
-The PlayerRoom variable serves as the primary index into the room system, allowing the debugging infrastructure to retrieve room names, door connections, and room-specific information. This variable is essential for tracking player progression and identifying the current game context.
+The PlayerRoom variable serves as the primary index into the room system,
+allowing the debugging infrastructure to retrieve room names, door connections,
+and room-specific information. This variable is essential for tracking player
+progression and identifying the current game context.
 
-PlayerHealth represents the player's remaining life force, with values below certain thresholds triggering different health states. The debugging system provides granular health information including damage taken, bleeding severity, and health zone classifications ranging from EXCELLENT through NEAR DEATH.
+PlayerHealth represents the player's remaining life force, with values below
+certain thresholds triggering different health states. The debugging system
+provides granular health information including damage taken, bleeding severity,
+and health zone classifications ranging from EXCELLENT through NEAR DEATH.
 
-PlayerStamina tracks the player's endurance reserves used for sprinting and other physical activities. The debug functions display current stamina, regeneration rates, sprint costs, and depleted state information including cooldown timers.
+PlayerStamina tracks the player's endurance reserves used for sprinting and
+other physical activities. The debug functions display current stamina,
+regeneration rates, sprint costs, and depleted state information including
+cooldown timers.
 
-Sanity represents the player's mental stability, which degrades in certain environments and when witnessing traumatic events. The sanity system includes multiple sanity states from STABLE through BREAKING, with associated effects like hallucinations, panic chance, and confusion at lower sanity levels.
+Sanity represents the player's mental stability, which degrades in certain
+environments and when witnessing traumatic events. The sanity system includes
+multiple sanity states from STABLE through BREAKING, with associated effects
+like hallucinations, panic chance, and confusion at lower sanity levels.
 
-BlinkTimer and BlinkEffect manage the player's eye blink mechanic, which is crucial for avoiding SCP-173. The debug overlay displays the blink timer as a percentage and shows the current visual effect intensity, helping developers test and balance the blink system.
+BlinkTimer and BlinkEffect manage the player's eye blink mechanic, which is
+crucial for avoiding SCP-173. The debug overlay displays the blink timer as a
+percentage and shows the current visual effect intensity, helping developers
+test and balance the blink system.
 
-PlayerCollider is the physics entity representing the player's physical presence in the game world. This entity handle is used for position queries, collision detection, and visual debugging helpers like coordinate axes and direction indicators.
+PlayerCollider is the physics entity representing the player's physical presence
+in the game world. This entity handle is used for position queries, collision
+detection, and visual debugging helpers like coordinate axes and direction
+indicators.
 
-GOD_MODE is a debug-only flag that enables invincibility and other developer-friendly features. When enabled, the player cannot take damage, stamina does not deplete, and sanity effects are suspended.
+GOD_MODE is a debug-only flag that enables invincibility and other
+developer-friendly features. When enabled, the player cannot take damage,
+stamina does not deplete, and sanity effects are suspended.
 
 ### 1.2 Player Debug Functions
 
-The player debugging system is implemented through a collection of specialized functions that output detailed player state information to the debug console. These functions are designed to be called from the main game loop or triggered by debug hotkeys.
+The player debugging system is implemented through a collection of specialized
+functions that output detailed player state information to the debug console.
+These functions are designed to be called from the main game loop or triggered
+by debug hotkeys.
 
-The Debug_PlayerState function provides a comprehensive overview of the player's current condition:
+The Debug_PlayerState function provides a comprehensive overview of the player's
+current condition:
 
 ```blitzbasic
 Function Debug_PlayerState()
@@ -85,23 +136,45 @@ Function Debug_PlayerState()
 End Function
 ```
 
-This function serves as the primary entry point for player state debugging, displaying all relevant information in a structured format. The function first checks the DEBUG_MODE flag to ensure debug output is only generated when debugging is enabled, following the conditional compilation pattern that minimizes overhead in release builds.
+This function serves as the primary entry point for player state debugging,
+displaying all relevant information in a structured format. The function first
+checks the DEBUG_MODE flag to ensure debug output is only generated when
+debugging is enabled, following the conditional compilation pattern that
+minimizes overhead in release builds.
 
-The core stats section displays the player's current room with its associated name, followed by health, stamina, and sanity values normalized against their maximum values. The room display includes both the numeric room identifier and the human-readable room name, facilitating quick identification of the player's location.
+The core stats section displays the player's current room with its associated
+name, followed by health, stamina, and sanity values normalized against their
+maximum values. The room display includes both the numeric room identifier and
+the human-readable room name, facilitating quick identification of the player's
+location.
 
-Position information is displayed using the FormatVector helper function, which converts the 3D position vector into a clean string representation suitable for console output. Rotation is displayed using FormatRotation, which separates pitch, yaw, and roll components for easier interpretation.
+Position information is displayed using the FormatVector helper function, which
+converts the 3D position vector into a clean string representation suitable for
+console output. Rotation is displayed using FormatRotation, which separates
+pitch, yaw, and roll components for easier interpretation.
 
-The blink state section shows both the time until the next blink as a percentage and the current visual effect intensity. This information is particularly useful for testing SCP-173 interactions and balancing the blink mechanic.
+The blink state section shows both the time until the next blink as a percentage
+and the current visual effect intensity. This information is particularly useful
+for testing SCP-173 interactions and balancing the blink mechanic.
 
-Equipment status displays whether the player possesses night vision goggles and a gas mask, both of which are important for survival in certain SCP encounters. The equipment check uses dedicated helper functions (HaveNVG and HaveGasMask) that encapsulate the inventory query logic.
+Equipment status displays whether the player possesses night vision goggles and
+a gas mask, both of which are important for survival in certain SCP encounters.
+The equipment check uses dedicated helper functions (HaveNVG and HaveGasMask)
+that encapsulate the inventory query logic.
 
-Status effects are aggregated and displayed as a single string, showing conditions like BLEEDING, POISONED, ON FIRE, DARK VISION, and EXHAUSTED. If no status effects are active, the string displays "NONE".
+Status effects are aggregated and displayed as a single string, showing
+conditions like BLEEDING, POISONED, ON FIRE, DARK VISION, and EXHAUSTED. If no
+status effects are active, the string displays "NONE".
 
-The God mode indicator shows the current debug mode status, helping developers quickly verify that the invincibility flag is in the expected state.
+The God mode indicator shows the current debug mode status, helping developers
+quickly verify that the invincibility flag is in the expected state.
 
 ### 1.3 Health Debug Functions
 
-The health debugging subsystem provides detailed insights into the player's physical condition, including damage tracking, health zones, bleeding mechanics, and recent damage history. These functions help developers identify issues with the health system and balance damage values.
+The health debugging subsystem provides detailed insights into the player's
+physical condition, including damage tracking, health zones, bleeding mechanics,
+and recent damage history. These functions help developers identify issues with
+the health system and balance damage values.
 
 ```blitzbasic
 Function Debug_HealthState()
@@ -138,17 +211,31 @@ Function Debug_HealthState()
 End Function
 ```
 
-The health debug function calculates and displays the total damage taken by subtracting the current health from the maximum health. This calculation helps developers verify that damage values are being applied correctly and that health regeneration mechanics are functioning.
+The health debug function calculates and displays the total damage taken by
+subtracting the current health from the maximum health. This calculation helps
+developers verify that damage values are being applied correctly and that health
+regeneration mechanics are functioning.
 
-The health zone classification system provides immediate visual feedback on the player's condition through categorical labels. These zones (EXCELLENT, GOOD, FAIR, CRITICAL, NEAR DEATH) correspond to health thresholds and help developers quickly assess player status during testing.
+The health zone classification system provides immediate visual feedback on the
+player's condition through categorical labels. These zones (EXCELLENT, GOOD,
+FAIR, CRITICAL, NEAR DEATH) correspond to health thresholds and help developers
+quickly assess player status during testing.
 
-Bleeding is displayed as a severity value from 0 to 100, with the calculated blood loss per second shown alongside. This information is crucial for testing and balancing the bleeding mechanic, ensuring that bleed damage is appropriately calibrated against health regeneration.
+Bleeding is displayed as a severity value from 0 to 100, with the calculated
+blood loss per second shown alongside. This information is crucial for testing
+and balancing the bleeding mechanic, ensuring that bleed damage is appropriately
+calibrated against health regeneration.
 
-The recent damage tracking feature displays cumulative damage taken since the last debug output, helping developers identify sudden damage spikes that might indicate bugs or balance issues.
+The recent damage tracking feature displays cumulative damage taken since the
+last debug output, helping developers identify sudden damage spikes that might
+indicate bugs or balance issues.
 
 ### 1.4 Stamina Debug Functions
 
-The stamina debugging subsystem tracks the player's endurance system, including regeneration rates, sprint costs, depletion states, and current sprinting status. These functions support development of movement mechanics and balance testing.
+The stamina debugging subsystem tracks the player's endurance system, including
+regeneration rates, sprint costs, depletion states, and current sprinting
+status. These functions support development of movement mechanics and balance
+testing.
 
 ```blitzbasic
 Function Debug_StaminaState()
@@ -179,17 +266,29 @@ Function Debug_StaminaState()
 End Function
 ```
 
-The stamina debug function displays the current and maximum stamina values as integers for clean output. When stamina is below maximum, the regeneration rate per second is calculated and displayed, helping developers verify that regeneration mechanics are functioning correctly.
+The stamina debug function displays the current and maximum stamina values as
+integers for clean output. When stamina is below maximum, the regeneration rate
+per second is calculated and displayed, helping developers verify that
+regeneration mechanics are functioning correctly.
 
-The sprint cost display shows how much stamina is consumed per second of sprinting. This information is essential for balancing the stamina economy and ensuring that sprinting is appropriately limited without being too restrictive.
+The sprint cost display shows how much stamina is consumed per second of
+sprinting. This information is essential for balancing the stamina economy and
+ensuring that sprinting is appropriately limited without being too restrictive.
 
-The depleted state display shows when the player has exhausted their stamina and entered a cooldown period during which sprinting is impossible. The remaining cooldown time is displayed, helping developers test the depletion and recovery mechanics.
+The depleted state display shows when the player has exhausted their stamina and
+entered a cooldown period during which sprinting is impossible. The remaining
+cooldown time is displayed, helping developers test the depletion and recovery
+mechanics.
 
-The current sprinting status is indicated when the player is actively sprinting, providing immediate feedback on player actions.
+The current sprinting status is indicated when the player is actively sprinting,
+providing immediate feedback on player actions.
 
 ### 1.5 Sanity Debug Functions
 
-The sanity debugging subsystem monitors the player's mental state, including sanity zones, active sanity effects, and recent sanity changes. This system helps developers balance environmental horror elements and test sanity-related gameplay mechanics.
+The sanity debugging subsystem monitors the player's mental state, including
+sanity zones, active sanity effects, and recent sanity changes. This system
+helps developers balance environmental horror elements and test sanity-related
+gameplay mechanics.
 
 ```blitzbasic
 Function Debug_SanityState()
@@ -227,15 +326,25 @@ Function Debug_SanityState()
 End Function
 ```
 
-The sanity debug function displays the current and maximum sanity values along with a categorical status label based on sanity thresholds. The status labels (STABLE, SHAKEN, UNSTABLE, FRACTURED, BREAKING) correspond to increasingly severe mental states that affect gameplay.
+The sanity debug function displays the current and maximum sanity values along
+with a categorical status label based on sanity thresholds. The status labels
+(STABLE, SHAKEN, UNSTABLE, FRACTURED, BREAKING) correspond to increasingly
+severe mental states that affect gameplay.
 
-When sanity drops below 40%, the debug output displays any active sanity effects. Hallucinations, fear (which introduces panic chance), and confusion are displayed with appropriate labels. This granular effect display helps developers verify that sanity effects are triggering at the correct thresholds.
+When sanity drops below 40%, the debug output displays any active sanity
+effects. Hallucinations, fear (which introduces panic chance), and confusion are
+displayed with appropriate labels. This granular effect display helps developers
+verify that sanity effects are triggering at the correct thresholds.
 
-The recent sanity changes tracking displays cumulative sanity damage, helping developers identify sudden sanity loss events and verify that environmental effects are being applied correctly.
+The recent sanity changes tracking displays cumulative sanity damage, helping
+developers identify sudden sanity loss events and verify that environmental
+effects are being applied correctly.
 
 ### 1.6 Helper Functions
 
-The player debugging system relies on several helper functions that encapsulate common queries and formatting operations. These functions promote code reuse and maintainability.
+The player debugging system relies on several helper functions that encapsulate
+common queries and formatting operations. These functions promote code reuse and
+maintainability.
 
 ```blitzbasic
 Function GetMaxHealth()
@@ -279,17 +388,28 @@ Function GetStatusEffects()
 End Function
 ```
 
-The maximum value functions (GetMaxHealth, GetMaxStamina, GetMaxSanity) currently return constant values but are implemented as functions to allow for future modifications such as difficulty scaling or equipment bonuses.
+The maximum value functions (GetMaxHealth, GetMaxStamina, GetMaxSanity)
+currently return constant values but are implemented as functions to allow for
+future modifications such as difficulty scaling or equipment bonuses.
 
-PlayerPosition retrieves the player's current coordinates by querying the collider entity's position. This abstraction allows the position query to be modified if the position tracking method changes.
+PlayerPosition retrieves the player's current coordinates by querying the
+collider entity's position. This abstraction allows the position query to be
+modified if the position tracking method changes.
 
-PlayerRotation extracts the camera's pitch, yaw, and roll values using the GetEntityRotation function. The rotation is returned as a tuple for formatting.
+PlayerRotation extracts the camera's pitch, yaw, and roll values using the
+GetEntityRotation function. The rotation is returned as a tuple for formatting.
 
-FormatVector converts a 3D position vector into a clean string representation with integer coordinates. This formatting ensures consistent, readable output regardless of the underlying precision.
+FormatVector converts a 3D position vector into a clean string representation
+with integer coordinates. This formatting ensures consistent, readable output
+regardless of the underlying precision.
 
-FormatRotation converts a rotation tuple into a labeled string showing pitch, yaw, and roll components. The P/Y/R prefix makes the output immediately understandable.
+FormatRotation converts a rotation tuple into a labeled string showing pitch,
+yaw, and roll components. The P/Y/R prefix makes the output immediately
+understandable.
 
-GetStatusEffects aggregates all active status effects into a single space-separated string. This function checks for bleeding, poisoning, fire damage, dark vision, and exhaustion, displaying "NONE" if no effects are active.
+GetStatusEffects aggregates all active status effects into a single
+space-separated string. This function checks for bleeding, poisoning, fire
+damage, dark vision, and exhaustion, displaying "NONE" if no effects are active.
 
 ---
 
@@ -297,13 +417,22 @@ GetStatusEffects aggregates all active status effects into a single space-separa
 
 ### 2.1 NPC State Debugging Overview
 
-The NPC debugging system provides comprehensive visibility into all non-player characters in the game, including their current state, position, health, behavior, and AI perception of the player. This system is essential for debugging AI behavior, testing SCP encounters, and balancing entity interactions.
+The NPC debugging system provides comprehensive visibility into all non-player
+characters in the game, including their current state, position, health,
+behavior, and AI perception of the player. This system is essential for
+debugging AI behavior, testing SCP encounters, and balancing entity
+interactions.
 
-The NPC debugging infrastructure is organized around three primary functions: Debug_AllNPCs for displaying all NPCs, Debug_NPCState for examining individual entities, and Debug_NPCSummary for providing statistical overviews of the NPC population.
+The NPC debugging infrastructure is organized around three primary functions:
+Debug_AllNPCs for displaying all NPCs, Debug_NPCState for examining individual
+entities, and Debug_NPCSummary for providing statistical overviews of the NPC
+population.
 
 ### 2.2 All NPCs Debug Function
 
-The Debug_AllNPCs function iterates through all active NPCs and displays detailed state information for each one. This function provides complete visibility into the entire NPC population.
+The Debug_AllNPCs function iterates through all active NPCs and displays
+detailed state information for each one. This function provides complete
+visibility into the entire NPC population.
 
 ```blitzbasic
 Function Debug_AllNPCs()
@@ -317,13 +446,22 @@ Function Debug_AllNPCs()
 End Function
 ```
 
-This function begins by printing the total number of NPCs currently active in the game. The count is obtained through the CountNPCs function, which iterates through the NPCs type collection. The function then iterates through each NPC in the collection, calling Debug_NPCState for each one to display detailed information.
+This function begins by printing the total number of NPCs currently active in
+the game. The count is obtained through the CountNPCs function, which iterates
+through the NPCs type collection. The function then iterates through each NPC in
+the collection, calling Debug_NPCState for each one to display detailed
+information.
 
-The iteration pattern uses the BlitzBasic ForEach syntax, which provides efficient traversal of type collections. This approach ensures that all NPCs are processed regardless of their specific type or state.
+The iteration pattern uses the BlitzBasic ForEach syntax, which provides
+efficient traversal of type collections. This approach ensures that all NPCs are
+processed regardless of their specific type or state.
 
 ### 2.3 Single NPC Debug Function
 
-The Debug_NPCState function displays detailed information about a single NPC, including its type, current state, position, speed, health, and perception status. This function provides the granular detail needed for debugging specific NPC behavior.
+The Debug_NPCState function displays detailed information about a single NPC,
+including its type, current state, position, speed, health, and perception
+status. This function provides the granular detail needed for debugging specific
+NPC behavior.
 
 ```blitzbasic
 Function Debug_NPCState(npc.NPCs)
@@ -371,21 +509,39 @@ Function Debug_NPCState(npc.NPCs)
 End Function
 ```
 
-The NPC state function begins with basic identification information, displaying the NPC's unique ID, type name with numeric identifier, and current state with name and numeric value. The State2 and State3 fields provide additional state information that varies by NPC type.
+The NPC state function begins with basic identification information, displaying
+the NPC's unique ID, type name with numeric identifier, and current state with
+name and numeric value. The State2 and State3 fields provide additional state
+information that varies by NPC type.
 
-Position information is extracted from the NPC's 3D object using EntityX, EntityY, and EntityZ functions, then formatted into a clean coordinate string. The position display uses integer conversion for readability.
+Position information is extracted from the NPC's 3D object using EntityX,
+EntityY, and EntityZ functions, then formatted into a clean coordinate string.
+The position display uses integer conversion for readability.
 
-Speed information shows both the NPC's base speed and current speed, allowing developers to identify speed modifiers and movement variations. The distance to player calculation uses the Distance function, which is essential for testing encounter ranges and AI perception thresholds.
+Speed information shows both the NPC's base speed and current speed, allowing
+developers to identify speed modifiers and movement variations. The distance to
+player calculation uses the Distance function, which is essential for testing
+encounter ranges and AI perception thresholds.
 
-Health information is displayed only if the NPC has health defined (indicated by a non-zero Health field). This conditional display prevents cluttering the output with health information for entities that don't use the health system.
+Health information is displayed only if the NPC has health defined (indicated by
+a non-zero Health field). This conditional display prevents cluttering the
+output with health information for entities that don't use the health system.
 
-The alert status section queries the NPC's perception capabilities using CanSeePlayer and CanHearPlayer functions. The output indicates whether the NPC currently sees the player (highest alert), hears the player (medium alert), or is unaware (lowest alert).
+The alert status section queries the NPC's perception capabilities using
+CanSeePlayer and CanHearPlayer functions. The output indicates whether the NPC
+currently sees the player (highest alert), hears the player (medium alert), or
+is unaware (lowest alert).
 
-Pathfinding status displays whether the NPC has an active path and how many nodes are in that path. Active paths indicate the NPC is navigating toward a target, while idle paths indicate the NPC is stationary or patrolling without a specific navigation goal.
+Pathfinding status displays whether the NPC has an active path and how many
+nodes are in that path. Active paths indicate the NPC is navigating toward a
+target, while idle paths indicate the NPC is stationary or patrolling without a
+specific navigation goal.
 
 ### 2.4 NPC Summary Debug Function
 
-The Debug_NPCSummary function provides a statistical overview of the NPC population, including counts by type and state, as well as dead NPC tracking. This function is particularly useful for testing spawn mechanics and balance.
+The Debug_NPCSummary function provides a statistical overview of the NPC
+population, including counts by type and state, as well as dead NPC tracking.
+This function is particularly useful for testing spawn mechanics and balance.
 
 ```blitzbasic
 Function Debug_NPCSummary()
@@ -429,9 +585,15 @@ Function Debug_NPCSummary()
 End Function
 ```
 
-The NPC summary function uses temporary arrays to count NPCs by type and by state. The type counting helps developers verify that spawn rates are correct and that NPC distributions match design expectations. The state counting provides insight into AI behavior patterns, showing how many NPCs are in each behavioral state.
+The NPC summary function uses temporary arrays to count NPCs by type and by
+state. The type counting helps developers verify that spawn rates are correct
+and that NPC distributions match design expectations. The state counting
+provides insight into AI behavior patterns, showing how many NPCs are in each
+behavioral state.
 
-The dead NPC count is obtained through a dedicated function that filters the NPC collection for deceased entities. This count is essential for tracking player progress and testing kill-related mechanics.
+The dead NPC count is obtained through a dedicated function that filters the NPC
+collection for deceased entities. This count is essential for tracking player
+progress and testing kill-related mechanics.
 
 ---
 
@@ -439,11 +601,15 @@ The dead NPC count is obtained through a dedicated function that filters the NPC
 
 ### 3.1 Room State Debugging Overview
 
-The room debugging system provides visibility into the player's current environment, including room identification, door connections, contained NPCs and items, active events, and visitation history. This system helps developers test level transitions, event triggers, and room-specific mechanics.
+The room debugging system provides visibility into the player's current
+environment, including room identification, door connections, contained NPCs and
+items, active events, and visitation history. This system helps developers test
+level transitions, event triggers, and room-specific mechanics.
 
 ### 3.2 Room State Debug Function
 
-The Debug_RoomState function displays comprehensive information about the current room, including connections, contents, and state.
+The Debug_RoomState function displays comprehensive information about the
+current room, including connections, contents, and state.
 
 ```blitzbasic
 Function Debug_RoomState()
@@ -483,15 +649,27 @@ Function Debug_RoomState()
 End Function
 ```
 
-The room state function displays the current room identifier and name, providing immediate context for all other room-related information. The zone name indicates the facility area the room belongs to, which is useful for testing level layout and zone-specific behaviors.
+The room state function displays the current room identifier and name, providing
+immediate context for all other room-related information. The zone name
+indicates the facility area the room belongs to, which is useful for testing
+level layout and zone-specific behaviors.
 
-Door information is displayed by iterating through the room's door connections and showing the target room for each door. This information helps developers verify that room connections are correct and that doors lead to expected destinations.
+Door information is displayed by iterating through the room's door connections
+and showing the target room for each door. This information helps developers
+verify that room connections are correct and that doors lead to expected
+destinations.
 
-NPC and item counts in the room provide quick visibility into room contents without requiring individual entity inspection. These counts are obtained through specialized counting functions that filter entities by room.
+NPC and item counts in the room provide quick visibility into room contents
+without requiring individual entity inspection. These counts are obtained
+through specialized counting functions that filter entities by room.
 
-Event detection shows whether the current room has any active events triggered, displaying the event name if present. This feature helps developers test event triggers and verify that room events are activating correctly.
+Event detection shows whether the current room has any active events triggered,
+displaying the event name if present. This feature helps developers test event
+triggers and verify that room events are activating correctly.
 
-Visitation tracking shows whether the player has previously visited the room and provides a visit count for tracking exploration patterns. This information supports achievement systems and exploration-based mechanics.
+Visitation tracking shows whether the player has previously visited the room and
+provides a visit count for tracking exploration patterns. This information
+supports achievement systems and exploration-based mechanics.
 
 ---
 
@@ -499,11 +677,15 @@ Visitation tracking shows whether the player has previously visited the room and
 
 ### 4.1 Save State Debugging Overview
 
-The save state debugging system validates save file integrity, displays save slot information, and provides current state snapshots for comparison with saved states. This system helps developers test save/load functionality and identify serialization issues.
+The save state debugging system validates save file integrity, displays save
+slot information, and provides current state snapshots for comparison with saved
+states. This system helps developers test save/load functionality and identify
+serialization issues.
 
 ### 4.2 Save State Debug Function
 
-The Debug_SaveState function displays information about available save slots and the current game state for comparison.
+The Debug_SaveState function displays information about available save slots and
+the current game state for comparison.
 
 ```blitzbasic
 Function Debug_SaveState()
@@ -538,9 +720,17 @@ Function Debug_SaveState()
 End Function
 ```
 
-The save state function iterates through available save slots (0-3 in this implementation), checking for existing save files using SaveFileExists. When a save file exists, the function retrieves detailed save information including the room, health, play time, and save date. Empty slots are explicitly marked as such.
+The save state function iterates through available save slots (0-3 in this
+implementation), checking for existing save files using SaveFileExists. When a
+save file exists, the function retrieves detailed save information including the
+room, health, play time, and save date. Empty slots are explicitly marked as
+such.
 
-The current state snapshot provides a point-in-time capture of the player's current condition for comparison with saved states. This snapshot includes all critical state variables: room, health, stamina, sanity, inventory count, kill count, and total play time. Developers can use this snapshot to verify that save/load operations correctly preserve game state.
+The current state snapshot provides a point-in-time capture of the player's
+current condition for comparison with saved states. This snapshot includes all
+critical state variables: room, health, stamina, sanity, inventory count, kill
+count, and total play time. Developers can use this snapshot to verify that
+save/load operations correctly preserve game state.
 
 ---
 
@@ -548,11 +738,14 @@ The current state snapshot provides a point-in-time capture of the player's curr
 
 ### 5.1 Time State Debugging Overview
 
-The time state debugging system tracks game time progression, day/night cycles, and scheduled event timers. This system helps developers test time-based mechanics, event triggers, and environmental changes that depend on time.
+The time state debugging system tracks game time progression, day/night cycles,
+and scheduled event timers. This system helps developers test time-based
+mechanics, event triggers, and environmental changes that depend on time.
 
 ### 5.2 Time State Debug Function
 
-The Debug_TimeState function displays the current game time, real time, time of day, day/night cycle status, and upcoming event timers.
+The Debug_TimeState function displays the current game time, real time, time of
+day, day/night cycle status, and upcoming event timers.
 
 ```blitzbasic
 Function Debug_TimeState()
@@ -586,11 +779,19 @@ Function Debug_TimeState()
 End Function
 ```
 
-The time state function displays both game time (elapsed time within the current play session) and real time (actual wall clock time). The FormatTime helper converts time values to human-readable strings.
+The time state function displays both game time (elapsed time within the current
+play session) and real time (actual wall clock time). The FormatTime helper
+converts time values to human-readable strings.
 
-Time of day indicates the current period within the facility's day/night cycle, which affects lighting and enemy behavior. The day/night cycle section displays the current phase and overall darkness percentage, helping developers test lighting-dependent mechanics.
+Time of day indicates the current period within the facility's day/night cycle,
+which affects lighting and enemy behavior. The day/night cycle section displays
+the current phase and overall darkness percentage, helping developers test
+lighting-dependent mechanics.
 
-Event timers show the time remaining until scheduled events like MTF (Mobile Task Force) spawns, Chaos Insurgency encounters, and containment breaches. The MTF spawn timer includes a warning when the event is imminent (less than 60 seconds away), providing proactive notification of approaching events.
+Event timers show the time remaining until scheduled events like MTF (Mobile
+Task Force) spawns, Chaos Insurgency encounters, and containment breaches. The
+MTF spawn timer includes a warning when the event is imminent (less than 60
+seconds away), providing proactive notification of approaching events.
 
 ---
 
@@ -598,9 +799,13 @@ Event timers show the time remaining until scheduled events like MTF (Mobile Tas
 
 ### 6.1 Debug Drawing System Overview
 
-The visual debugging system provides wireframe rendering, colored indicators, and on-screen text overlays for runtime inspection of game state. Unlike text-based debugging that outputs to the console, visual debugging helpers render directly into the game world and on-screen display.
+The visual debugging system provides wireframe rendering, colored indicators,
+and on-screen text overlays for runtime inspection of game state. Unlike
+text-based debugging that outputs to the console, visual debugging helpers
+render directly into the game world and on-screen display.
 
-The visual debugging system is controlled by the DEBUG_MODE global variable, ensuring that all visual debug elements can be disabled for release builds.
+The visual debugging system is controlled by the DEBUG_MODE global variable,
+ensuring that all visual debug elements can be disabled for release builds.
 
 ### 6.2 Debug Drawing Init and Toggle Functions
 
@@ -617,11 +822,14 @@ Function Debug_Toggle()
 End Function
 ```
 
-The Debug_Init function loads a font for debug text rendering. This font is used for all on-screen debug displays. The Debug_Toggle function provides a simple mechanism to enable or disable all debugging output with a single function call.
+The Debug_Init function loads a font for debug text rendering. This font is used
+for all on-screen debug displays. The Debug_Toggle function provides a simple
+mechanism to enable or disable all debugging output with a single function call.
 
 ### 6.3 Debug Draw Function
 
-The Debug_Draw function provides the core on-screen debug overlay displaying essential player information.
+The Debug_Draw function provides the core on-screen debug overlay displaying
+essential player information.
 
 ```blitzbasic
 Function Debug_Draw()
@@ -648,11 +856,15 @@ Function Debug_Draw()
 End Function
 ```
 
-The Debug_Draw function renders essential player information in the top-left corner of the screen. The function sets the debug font and green color before drawing text. The displayed information includes frame rate, health, stamina, sanity, current room, player position, and blink timer.
+The Debug_Draw function renders essential player information in the top-left
+corner of the screen. The function sets the debug font and green color before
+drawing text. The displayed information includes frame rate, health, stamina,
+sanity, current room, player position, and blink timer.
 
 ### 6.4 Wireframe Debug Helpers
 
-The wireframe debug helpers render simple geometric shapes around entities for visual identification and position verification.
+The wireframe debug helpers render simple geometric shapes around entities for
+visual identification and position verification.
 
 ```blitzbasic
 ; Draw wireframe box around entity
@@ -708,19 +920,30 @@ Function Debug_DrawArrow(entity, length# = 2.0, r% = 255, g% = 0, b% = 0)
 End Function
 ```
 
-Debug_DrawBox renders a wireframe bounding box around an entity using the specified color. This function is useful for visualizing entity extents and collision boundaries.
+Debug_DrawBox renders a wireframe bounding box around an entity using the
+specified color. This function is useful for visualizing entity extents and
+collision boundaries.
 
-Debug_DrawSphere renders a wireframe sphere at a specified position with configurable radius and color. This function is commonly used to mark waypoints, path nodes, and target locations.
+Debug_DrawSphere renders a wireframe sphere at a specified position with
+configurable radius and color. This function is commonly used to mark waypoints,
+path nodes, and target locations.
 
-Debug_DrawLine renders a simple line between two 3D points with configurable color. This function is used to create connections between related objects and visualize relationships.
+Debug_DrawLine renders a simple line between two 3D points with configurable
+color. This function is used to create connections between related objects and
+visualize relationships.
 
-Debug_DrawAxes renders a set of three orthogonal lines representing the X (red), Y (green), and Z (blue) axes. This function is essential for debugging rotation and orientation issues.
+Debug_DrawAxes renders a set of three orthogonal lines representing the X (red),
+Y (green), and Z (blue) axes. This function is essential for debugging rotation
+and orientation issues.
 
-Debug_DrawArrow renders a line indicating the forward direction of an entity based on its yaw rotation. This function helps visualize entity facing direction for debugging movement and AI behavior.
+Debug_DrawArrow renders a line indicating the forward direction of an entity
+based on its yaw rotation. This function helps visualize entity facing direction
+for debugging movement and AI behavior.
 
 ### 6.5 Player Visual Debug Function
 
-The Debug_PlayerInfo function renders visual debug elements around the player character for position and orientation verification.
+The Debug_PlayerInfo function renders visual debug elements around the player
+character for position and orientation verification.
 
 ```blitzbasic
 Function Debug_PlayerInfo()
@@ -749,11 +972,16 @@ Function Debug_PlayerInfo()
 End Function
 ```
 
-The player debug function renders multiple visual elements around the player: a small green sphere marking the player's position, a green arrow indicating facing direction, coordinate axes at the camera position, a cyan line showing the camera's view direction, and a large yellow sphere indicating the blink radius.
+The player debug function renders multiple visual elements around the player: a
+small green sphere marking the player's position, a green arrow indicating
+facing direction, coordinate axes at the camera position, a cyan line showing
+the camera's view direction, and a large yellow sphere indicating the blink
+radius.
 
 ### 6.6 NPC Visual Debug Function
 
-The Debug_NPCInfo function renders visual debug elements around all NPCs, including state indicators, path visualization, and player perception lines.
+The Debug_NPCInfo function renders visual debug elements around all NPCs,
+including state indicators, path visualization, and player perception lines.
 
 ```blitzbasic
 Function Debug_NPCInfo()
@@ -801,13 +1029,20 @@ Function Debug_NPCInfo()
 End Function
 ```
 
-The NPC debug function iterates through all NPCs and renders multiple visual elements for each. A red bounding box shows the NPC's spatial extent. A colored sphere above the NPC indicates its current state: green for IDLE, red for HUNTING, yellow for ATTACK, and cyan for FLEE.
+The NPC debug function iterates through all NPCs and renders multiple visual
+elements for each. A red bounding box shows the NPC's spatial extent. A colored
+sphere above the NPC indicates its current state: green for IDLE, red for
+HUNTING, yellow for ATTACK, and cyan for FLEE.
 
-When an NPC has an active path, white spheres mark each path node with lines connecting consecutive nodes, visualizing the navigation path. Red lines connect NPCs that can see the player, and yellow lines connect NPCs that can hear the player but cannot see them.
+When an NPC has an active path, white spheres mark each path node with lines
+connecting consecutive nodes, visualizing the navigation path. Red lines connect
+NPCs that can see the player, and yellow lines connect NPCs that can hear the
+player but cannot see them.
 
 ### 6.7 Collision Visual Debug Function
 
-The Debug_CollisionInfo function renders visual debug elements around colliders for physics debugging.
+The Debug_CollisionInfo function renders visual debug elements around colliders
+for physics debugging.
 
 ```blitzbasic
 Function Debug_CollisionInfo()
@@ -840,11 +1075,15 @@ Function Debug_CollisionInfo()
 End Function
 ```
 
-The collision debug function renders bounding boxes for the player (green), NPCs (red), and items (cyan). Active collision points are marked with small magenta spheres, helping developers identify collision issues and verify physics behavior.
+The collision debug function renders bounding boxes for the player (green), NPCs
+(red), and items (cyan). Active collision points are marked with small magenta
+spheres, helping developers identify collision issues and verify physics
+behavior.
 
 ### 6.8 Room Visual Debug Function
 
-The Debug_RoomInfo function renders visual debug elements for room elements including doors and room bounds.
+The Debug_RoomInfo function renders visual debug elements for room elements
+including doors and room bounds.
 
 ```blitzbasic
 Function Debug_RoomInfo()
@@ -871,11 +1110,14 @@ Function Debug_RoomInfo()
 End Function
 ```
 
-The room debug function displays room information text and renders visual markers at door positions with white lines indicating connections to target rooms. The room bounds are rendered as a white wireframe box.
+The room debug function displays room information text and renders visual
+markers at door positions with white lines indicating connections to target
+rooms. The room bounds are rendered as a white wireframe box.
 
 ### 6.9 AI State Visual Debug Function
 
-The Debug_AIState function renders 3D text labels above NPCs displaying their current state and relevant statistics.
+The Debug_AIState function renders 3D text labels above NPCs displaying their
+current state and relevant statistics.
 
 ```blitzbasic
 Function Debug_AIState(npc)
@@ -913,11 +1155,15 @@ Function Debug_AIState(npc)
 End Function
 ```
 
-The AI state function renders floating text above NPCs showing their state name, current speed, distance to player, and type-specific information. SCP-specific debug data includes observation time for SCP-173, agitation level for SCP-096, corrosion level for SCP-106, and cure timer for SCP-049.
+The AI state function renders floating text above NPCs showing their state name,
+current speed, distance to player, and type-specific information. SCP-specific
+debug data includes observation time for SCP-173, agitation level for SCP-096,
+corrosion level for SCP-106, and cure timer for SCP-049.
 
 ### 6.10 Performance Debug Function
 
-The Debug_Performance function monitors and displays performance metrics including frame rate, entity counts, and memory usage.
+The Debug_Performance function monitors and displays performance metrics
+including frame rate, entity counts, and memory usage.
 
 ```blitzbasic
 Global DEBUG_FRAMES%[60]
@@ -949,7 +1195,10 @@ Function Debug_Performance()
 End Function
 ```
 
-The performance function calculates FPS using a rolling window of 60 frame times. The FPS display changes color from green (good performance) to red (poor performance) when frame rate drops below 30. Entity counts for total entities, NPCs, and items are displayed along with memory usage.
+The performance function calculates FPS using a rolling window of 60 frame
+times. The FPS display changes color from green (good performance) to red (poor
+performance) when frame rate drops below 30. Entity counts for total entities,
+NPCs, and items are displayed along with memory usage.
 
 ---
 
@@ -957,7 +1206,9 @@ The performance function calculates FPS using a rolling window of 60 frame times
 
 ### 7.1 Debug Hotkey System Overview
 
-The debug hotkey system provides keyboard shortcuts for common debugging operations, enabling rapid access to debugging features without accessing debug menus. Each hotkey triggers a specific debugging function when pressed.
+The debug hotkey system provides keyboard shortcuts for common debugging
+operations, enabling rapid access to debugging features without accessing debug
+menus. Each hotkey triggers a specific debugging function when pressed.
 
 ### 7.2 Debug Hotkey Functions
 
@@ -1040,35 +1291,46 @@ Function Debug_Step()
 End Function
 ```
 
-The F1 key toggles the global DEBUG_MODE flag, enabling or disabling all debug output and visual elements. The function prints the new debug mode status for confirmation.
+The F1 key toggles the global DEBUG_MODE flag, enabling or disabling all debug
+output and visual elements. The function prints the new debug mode status for
+confirmation.
 
-The F2 key toggles GOD_MODE, providing invincibility and unlimited resources for testing. The function prints the new god mode status for confirmation.
+The F2 key toggles GOD_MODE, providing invincibility and unlimited resources for
+testing. The function prints the new god mode status for confirmation.
 
-The F3 key is designated for teleport functionality, with a placeholder for room selector UI implementation. This hotkey would typically open an in-game menu for room selection.
+The F3 key is designated for teleport functionality, with a placeholder for room
+selector UI implementation. This hotkey would typically open an in-game menu for
+room selection.
 
-The F4 key spawns an SCP-939 instance at a position near the player, with the NPC positioned 5 units in front of the player collider. This hotkey is useful for testing specific SCP encounters.
+The F4 key spawns an SCP-939 instance at a position near the player, with the
+NPC positioned 5 units in front of the player collider. This hotkey is useful
+for testing specific SCP encounters.
 
-The F5 key iterates through all NPCs and kills them, useful for quickly clearing the level for testing other content. The function prints a confirmation message.
+The F5 key iterates through all NPCs and kills them, useful for quickly clearing
+the level for testing other content. The function prints a confirmation message.
 
-The F6 key restores the player to full health, stamina, and sanity, useful for quickly resetting player state after testing damage mechanics.
+The F6 key restores the player to full health, stamina, and sanity, useful for
+quickly resetting player state after testing damage mechanics.
 
-The F7 key saves a state snapshot for later comparison, allowing developers to record the game state at specific points for debugging.
+The F7 key saves a state snapshot for later comparison, allowing developers to
+record the game state at specific points for debugging.
 
-The F8 key toggles step mode, which pauses the game and enables single-frame advancement. The F9 key advances the game by one frame when in step mode.
+The F8 key toggles step mode, which pauses the game and enables single-frame
+advancement. The F9 key advances the game by one frame when in step mode.
 
 ### 7.3 Debug Hotkey Quick Reference
 
-| Hotkey | Action |
-|--------|--------|
-| F1 | Toggle debug mode |
-| F2 | God mode toggle |
-| F3 | Teleport menu |
-| F4 | Spawn SCP-939 |
-| F5 | Kill all NPCs |
-| F6 | Full health restore |
-| F7 | Save state snapshot |
-| F8 | Pause/step mode toggle |
-| F9 | Step one frame |
+| Hotkey | Action                 |
+| ------ | ---------------------- |
+| F1     | Toggle debug mode      |
+| F2     | God mode toggle        |
+| F3     | Teleport menu          |
+| F4     | Spawn SCP-939          |
+| F5     | Kill all NPCs          |
+| F6     | Full health restore    |
+| F7     | Save state snapshot    |
+| F8     | Pause/step mode toggle |
+| F9     | Step one frame         |
 
 ---
 
@@ -1076,7 +1338,9 @@ The F8 key toggles step mode, which pauses the game and enables single-frame adv
 
 ### 8.1 Watch Variables System Overview
 
-The watch variables system allows developers to monitor specific game variables for changes in real-time. This system is particularly useful for tracking variable modifications that might indicate bugs or unexpected behavior.
+The watch variables system allows developers to monitor specific game variables
+for changes in real-time. This system is particularly useful for tracking
+variable modifications that might indicate bugs or unexpected behavior.
 
 ### 8.2 Watch Variables Implementation
 
@@ -1118,11 +1382,20 @@ Function Debug_UpdateWatches()
 End Function
 ```
 
-The watch system uses two parallel arrays: WATCH_LIST$ stores the names of variables to monitor, and WATCH_VALUES$ stores the last observed values. The system supports up to 10 watched variables simultaneously.
+The watch system uses two parallel arrays: WATCH_LIST$ stores the names of
+variables to monitor, and WATCH_VALUES$ stores the last observed values. The
+system supports up to 10 watched variables simultaneously.
 
-The Debug_AddWatch function attempts to add a variable to the watch list by finding the first empty slot. If all slots are full, the function prints a warning message and returns False. On successful addition, the function returns True.
+The Debug_AddWatch function attempts to add a variable to the watch list by
+finding the first empty slot. If all slots are full, the function prints a
+warning message and returns False. On successful addition, the function returns
+True.
 
-The Debug_UpdateWatches function iterates through the watch list and evaluates each variable using the EvaluateVariable helper function. The current value is compared against the stored previous value, and changes are highlighted with a "(CHANGED)" suffix. Updated values are stored for comparison in subsequent updates.
+The Debug_UpdateWatches function iterates through the watch list and evaluates
+each variable using the EvaluateVariable helper function. The current value is
+compared against the stored previous value, and changes are highlighted with a
+"(CHANGED)" suffix. Updated values are stored for comparison in subsequent
+updates.
 
 ---
 
@@ -1130,7 +1403,10 @@ The Debug_UpdateWatches function iterates through the watch list and evaluates e
 
 ### 9.1 Debug Console Overview
 
-The debug console provides a scrolling text buffer for debug output, ensuring that important debug messages are preserved and visible even when they scroll off the immediate screen. The console supports 20 lines of history with automatic wrapping.
+The debug console provides a scrolling text buffer for debug output, ensuring
+that important debug messages are preserved and visible even when they scroll
+off the immediate screen. The console supports 20 lines of history with
+automatic wrapping.
 
 ### 9.2 Debug Console Implementation
 
@@ -1161,9 +1437,15 @@ Function Debug_DrawConsole()
 End Function
 ```
 
-The Debug_Print function stores messages in a circular buffer of 20 lines. The DEBUG_CONSOLE_INDEX tracks the current write position, wrapping around when it reaches the buffer limit. Messages are also sent to the standard Print function for development environment output.
+The Debug_Print function stores messages in a circular buffer of 20 lines. The
+DEBUG_CONSOLE_INDEX tracks the current write position, wrapping around when it
+reaches the buffer limit. Messages are also sent to the standard Print function
+for development environment output.
 
-The Debug_DrawConsole function renders the console buffer on screen, displaying the most recent 20 messages in reverse order (newest at the bottom). The function skips empty lines to prevent blank spaces from appearing in the console display.
+The Debug_DrawConsole function renders the console buffer on screen, displaying
+the most recent 20 messages in reverse order (newest at the bottom). The
+function skips empty lines to prevent blank spaces from appearing in the console
+display.
 
 ---
 
@@ -1171,7 +1453,8 @@ The Debug_DrawConsole function renders the console buffer on screen, displaying 
 
 ### 10.1 Debug Update Loop
 
-The debug update loop coordinates all debug input handling, ensuring that hotkeys are processed and state updates occur each frame.
+The debug update loop coordinates all debug input handling, ensuring that
+hotkeys are processed and state updates occur each frame.
 
 ```blitzbasic
 Function Debug_Update()
@@ -1186,11 +1469,13 @@ Function Debug_Update()
 End Function
 ```
 
-The Debug_Update function calls each hotkey handler in sequence, allowing multiple hotkey functions to be triggered within a single frame.
+The Debug_Update function calls each hotkey handler in sequence, allowing
+multiple hotkey functions to be triggered within a single frame.
 
 ### 10.2 Debug Render Loop
 
-The debug render loop coordinates all visual debug output, ensuring that all debug elements are drawn in the correct order.
+The debug render loop coordinates all visual debug output, ensuring that all
+debug elements are drawn in the correct order.
 
 ```blitzbasic
 Function Debug_Render()
@@ -1210,7 +1495,11 @@ Function Debug_Render()
 End Function
 ```
 
-The Debug_Render function begins by calling Debug_Update to process input, then proceeds to render performance metrics, player information, NPC information, collision visualization, room information, and the console buffer. If a NPC is currently selected for detailed inspection, its AI state is rendered last to ensure the text appears on top of other visual elements.
+The Debug_Render function begins by calling Debug_Update to process input, then
+proceeds to render performance metrics, player information, NPC information,
+collision visualization, room information, and the console buffer. If a NPC is
+currently selected for detailed inspection, its AI state is rendered last to
+ensure the text appears on top of other visual elements.
 
 ---
 
@@ -1218,41 +1507,41 @@ The Debug_Render function begins by calling Debug_Update to process input, then 
 
 ### 11.1 Debug Function Quick Reference
 
-| Debug Function | Shows |
-|---------------|-------|
-| Debug_PlayerState() | Core player stats, position, equipment |
-| Debug_HealthState() | Detailed health information, bleeding |
-| Debug_StaminaState() | Stamina levels, regeneration, depletion |
-| Debug_SanityState() | Sanity levels, effects, status |
-| Debug_AllNPCs() | All NPCs with detailed state |
-| Debug_NPCState(npc) | Single NPC detailed state |
-| Debug_NPCSummary() | NPC counts by type and state |
-| Debug_RoomState() | Current room, doors, NPCs, events |
-| Debug_InventoryState() | All items, keycards, selection |
-| Debug_SaveState() | Save slots, current snapshot |
-| Debug_TimeState() | Game time, event timers |
-| Debug_AllState() | Complete state dump |
+| Debug Function         | Shows                                   |
+| ---------------------- | --------------------------------------- |
+| Debug_PlayerState()    | Core player stats, position, equipment  |
+| Debug_HealthState()    | Detailed health information, bleeding   |
+| Debug_StaminaState()   | Stamina levels, regeneration, depletion |
+| Debug_SanityState()    | Sanity levels, effects, status          |
+| Debug_AllNPCs()        | All NPCs with detailed state            |
+| Debug_NPCState(npc)    | Single NPC detailed state               |
+| Debug_NPCSummary()     | NPC counts by type and state            |
+| Debug_RoomState()      | Current room, doors, NPCs, events       |
+| Debug_InventoryState() | All items, keycards, selection          |
+| Debug_SaveState()      | Save slots, current snapshot            |
+| Debug_TimeState()      | Game time, event timers                 |
+| Debug_AllState()       | Complete state dump                     |
 
 ### 11.2 Visual Debug Color Reference
 
-| Color | Meaning |
-|-------|---------|
-| Green | Idle/Safe state |
-| Red | Hunting/Attacking state |
-| Yellow | Warning/Caution state |
-| Cyan | Fleeing/Retreating state |
-| White | Path nodes, neutral elements |
-| Magenta | Collision points |
-| Blue | Player position markers |
+| Color   | Meaning                      |
+| ------- | ---------------------------- |
+| Green   | Idle/Safe state              |
+| Red     | Hunting/Attacking state      |
+| Yellow  | Warning/Caution state        |
+| Cyan    | Fleeing/Retreating state     |
+| White   | Path nodes, neutral elements |
+| Magenta | Collision points             |
+| Blue    | Player position markers      |
 
 ### 11.3 NPC State Color Mapping
 
-| State | Color | Meaning |
-|-------|-------|---------|
-| STATE_IDLE | Green | NPC is stationary or patrolling |
-| STATE_HUNTING | Red | NPC is actively pursuing the player |
-| STATE_ATTACK | Yellow | NPC is in attack sequence |
-| STATE_FLEE | Cyan | NPC is retreating from danger |
+| State         | Color  | Meaning                             |
+| ------------- | ------ | ----------------------------------- |
+| STATE_IDLE    | Green  | NPC is stationary or patrolling     |
+| STATE_HUNTING | Red    | NPC is actively pursuing the player |
+| STATE_ATTACK  | Yellow | NPC is in attack sequence           |
+| STATE_FLEE    | Cyan   | NPC is retreating from danger       |
 
 ---
 
@@ -1262,31 +1551,49 @@ The Debug_Render function begins by calling Debug_Update to process input, then 
 
 The debugging infrastructure integrates with several SCPB systems:
 
-The player state debugging depends on the core player variables (PlayerHealth, PlayerStamina, Sanity, PlayerRoom, etc.) which are maintained by Main.bb. The debugging system reads these variables directly without modification.
+The player state debugging depends on the core player variables (PlayerHealth,
+PlayerStamina, Sanity, PlayerRoom, etc.) which are maintained by Main.bb. The
+debugging system reads these variables directly without modification.
 
-The NPC state debugging depends on the NPCs type collection maintained by NPCs.bb. The debug functions iterate through this collection and read NPC fields without modification.
+The NPC state debugging depends on the NPCs type collection maintained by
+NPCs.bb. The debug functions iterate through this collection and read NPC fields
+without modification.
 
-The room state debugging depends on the room management system (Map.bb) which provides room information through accessor functions. The debug system queries room data through these interfaces.
+The room state debugging depends on the room management system (Map.bb) which
+provides room information through accessor functions. The debug system queries
+room data through these interfaces.
 
-The save state debugging depends on the Save.bb system for save file information. The debug functions query save metadata without direct save system access.
+The save state debugging depends on the Save.bb system for save file
+information. The debug functions query save metadata without direct save system
+access.
 
 ### 12.2 Compiler Support
 
-The Blitz3D-to-WASM compiler supports all debugging infrastructure constructs including:
+The Blitz3D-to-WASM compiler supports all debugging infrastructure constructs
+including:
 
-The global variable declarations for debug flags and buffers compile correctly with proper type handling. The conditional DEBUG_MODE checks compile to simple boolean comparisons that the WebAssembly optimizer can eliminate in release builds.
+The global variable declarations for debug flags and buffers compile correctly
+with proper type handling. The conditional DEBUG_MODE checks compile to simple
+boolean comparisons that the WebAssembly optimizer can eliminate in release
+builds.
 
-The ForEach iteration patterns used for NPC and entity traversal compile efficiently to WebAssembly loops with proper type collection handling.
+The ForEach iteration patterns used for NPC and entity traversal compile
+efficiently to WebAssembly loops with proper type collection handling.
 
-The function calls between debug functions compile normally, supporting the modular debug system architecture.
+The function calls between debug functions compile normally, supporting the
+modular debug system architecture.
 
 ### 12.3 Runtime Support
 
 The JavaScript runtime provides essential functions for debug rendering:
 
-The SetFont and SetColor functions control text appearance for debug overlays. The DrawText function renders debug text on screen. The DrawLine, DrawWireframeBox, and DrawWireframeSphere functions enable wireframe rendering for visual debugging.
+The SetFont and SetColor functions control text appearance for debug overlays.
+The DrawText function renders debug text on screen. The DrawLine,
+DrawWireframeBox, and DrawWireframeSphere functions enable wireframe rendering
+for visual debugging.
 
-The KeyHit function provides keyboard input detection for hotkey handling. The GetMilliSecs function supports performance monitoring with accurate timing.
+The KeyHit function provides keyboard input detection for hotkey handling. The
+GetMilliSecs function supports performance monitoring with accurate timing.
 
 ---
 
@@ -1294,7 +1601,8 @@ The KeyHit function provides keyboard input detection for hotkey handling. The G
 
 ### 13.1 Enabling Debug Mode
 
-To enable debug mode during development, set the DEBUG_MODE global variable to True before the main game loop begins:
+To enable debug mode during development, set the DEBUG_MODE global variable to
+True before the main game loop begins:
 
 ```blitzbasic
 Global DEBUG_MODE% = True
@@ -1303,7 +1611,8 @@ Global DEBUG_MODE% = True
 Debug_Init()
 ```
 
-Alternatively, use the F1 hotkey to toggle debug mode at runtime without restarting the game.
+Alternatively, use the F1 hotkey to toggle debug mode at runtime without
+restarting the game.
 
 ### 13.2 Adding New Debug Functions
 
@@ -1318,34 +1627,60 @@ Function Debug_CustomSystem()
 End Function
 ```
 
-The function should check DEBUG_MODE at the start, print a section header, and output relevant state information through Debug_Print calls.
+The function should check DEBUG_MODE at the start, print a section header, and
+output relevant state information through Debug_Print calls.
 
 ### 13.3 Performance Considerations
 
-The debug system is designed to have minimal performance impact when disabled. All debug functions include an early return when DEBUG_MODE is False, preventing any debug code from executing in release builds.
+The debug system is designed to have minimal performance impact when disabled.
+All debug functions include an early return when DEBUG_MODE is False, preventing
+any debug code from executing in release builds.
 
-For visual debugging, limit the number of entities being rendered in complex scenes. The NPC and collision debug functions iterate through all entities, which can become expensive with large entity counts.
+For visual debugging, limit the number of entities being rendered in complex
+scenes. The NPC and collision debug functions iterate through all entities,
+which can become expensive with large entity counts.
 
 ### 13.4 Best Practices
 
-When debugging specific systems, use targeted debug functions rather than comprehensive dumps. For example, use Debug_StaminaState() instead of Debug_AllState() when debugging stamina mechanics.
+When debugging specific systems, use targeted debug functions rather than
+comprehensive dumps. For example, use Debug_StaminaState() instead of
+Debug_AllState() when debugging stamina mechanics.
 
-Use the watch variables system to track specific values that change unexpectedly. The watch system highlights changes, making it easier to identify when and how values are modified.
+Use the watch variables system to track specific values that change
+unexpectedly. The watch system highlights changes, making it easier to identify
+when and how values are modified.
 
-Use the console buffer to capture debug output across frames. The circular buffer preserves the most recent 20 debug messages, which is useful for tracking sequences of events.
+Use the console buffer to capture debug output across frames. The circular
+buffer preserves the most recent 20 debug messages, which is useful for tracking
+sequences of events.
 
-Use visual debugging helpers for spatial issues like position, rotation, and collision detection. Wireframe overlays make it easy to visualize entity placement and extents.
+Use visual debugging helpers for spatial issues like position, rotation, and
+collision detection. Wireframe overlays make it easy to visualize entity
+placement and extents.
 
-Use the step mode (F8/F9) for frame-by-frame debugging of timing-sensitive mechanics. This allows precise observation of state changes within a single frame.
+Use the step mode (F8/F9) for frame-by-frame debugging of timing-sensitive
+mechanics. This allows precise observation of state changes within a single
+frame.
 
 ---
 
 ## 14. Conclusion
 
-The SCPB game state debugging and visual debugging infrastructure provides comprehensive tools for game development, testing, and troubleshooting. The system covers all major game subsystems including player state, NPC behavior, room conditions, save states, time progression, and visual debugging helpers.
+The SCPB game state debugging and visual debugging infrastructure provides
+comprehensive tools for game development, testing, and troubleshooting. The
+system covers all major game subsystems including player state, NPC behavior,
+room conditions, save states, time progression, and visual debugging helpers.
 
-The debugging infrastructure is designed with performance in mind, using conditional compilation through the DEBUG_MODE flag to eliminate all debug code in release builds. The modular architecture allows developers to add new debug functions without modifying core debug infrastructure.
+The debugging infrastructure is designed with performance in mind, using
+conditional compilation through the DEBUG_MODE flag to eliminate all debug code
+in release builds. The modular architecture allows developers to add new debug
+functions without modifying core debug infrastructure.
 
-The hotkey system provides rapid access to common debugging operations, while the watch variables system enables targeted monitoring of specific game variables. The debug console preserves output history and provides both text and visual output channels for maximum debugging flexibility.
+The hotkey system provides rapid access to common debugging operations, while
+the watch variables system enables targeted monitoring of specific game
+variables. The debug console preserves output history and provides both text and
+visual output channels for maximum debugging flexibility.
 
-This documentation provides the complete specification for implementing the debugging infrastructure in SCPB, supporting efficient game development and maintenance throughout the project lifecycle.
+This documentation provides the complete specification for implementing the
+debugging infrastructure in SCPB, supporting efficient game development and
+maintenance throughout the project lifecycle.

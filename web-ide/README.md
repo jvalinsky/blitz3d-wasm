@@ -1,30 +1,42 @@
 # Blitz3D Web IDE ✨
 
-A **fully client-side** Blitz3D development environment that runs entirely in the browser with **zero server dependencies**!
+A **fully client-side** Blitz3D development environment that runs entirely in
+the browser with **zero server dependencies**!
 
 **🎮 [Try it now →](demo-live.html)** Just open in any modern browser!
 
 ## Scope (important)
 
-This `web-ide/` directory contains a **TypeScript** Blitz3D-to-WASM compiler intended for small, interactive browser demos.
+This `web-ide/` directory contains a **TypeScript** Blitz3D-to-WASM compiler
+intended for small, interactive browser demos.
 
-It is **not** the same compiler as the main project’s **Swift** compiler (`.build/debug/blitz3d-wasm`), and it should not be treated as the source-of-truth for full language compatibility (e.g. SCPCB).
+It is **not** the same compiler as the main project’s **Swift** compiler
+(`.build/debug/blitz3d-wasm`), and it should not be treated as the
+source-of-truth for full language compatibility (e.g. SCPCB).
 
 If you are validating “real” compiler/runtime behavior, prefer:
-- `Tools/bb_deno_compile_and_run.ts` + `Tests/deno_smoke/` (BB→WASM end-to-end smoke scripts)
-- `web/interpreter.html` and `web/public/bb_wasm_runner_demo.html` for **safe execution** (Worker + Stop + watchdog timeout)
+
+- `Tools/bb_deno_compile_and_run.ts` + `Tests/deno_smoke/` (BB→WASM end-to-end
+  smoke scripts)
+- `web/interpreter.html` and `web/public/bb_wasm_runner_demo.html` for **safe
+  execution** (Worker + Stop + watchdog timeout)
 
 ## 🚀 Features
 
 ### ✅ Browser-Based TypeScript Compiler (demo-focused)
+
 - **Client-side TypeScript compiler** (~3000 lines)
 - Compiles Blitz3D → WebAssembly in milliseconds
 - Complete pipeline: Lexer → Parser → CodeGen
 - Demo-oriented safety guards (see note below)
 
-**Execution safety note:** any user-editable language with `While/For` can hang if run on the UI thread. For the main web interpreter demos, compiled WASM executes in a **Worker** with a **watchdog timeout** and a **Stop** button. If you extend `web-ide/` execution, follow the same pattern.
+**Execution safety note:** any user-editable language with `While/For` can hang
+if run on the UI thread. For the main web interpreter demos, compiled WASM
+executes in a **Worker** with a **watchdog timeout** and a **Stop** button. If
+you extend `web-ide/` execution, follow the same pattern.
 
-### 🎨 Beautiful Code Editor  
+### 🎨 Beautiful Code Editor
+
 - **Monaco Editor** (same engine as VS Code!)
 - **Custom Blitz3D syntax highlighting**
   - Keywords, built-ins, operators beautifully color-coded
@@ -36,6 +48,7 @@ If you are validating “real” compiler/runtime behavior, prefer:
 - Auto-compile on change (1 second debounce)
 
 ### 💾 Never Lose Your Work
+
 - **URL Sharing** - Share code via compressed URLs
   - Pako compression (tiny shareable links!)
   - One-click copy to clipboard
@@ -47,9 +60,11 @@ If you are validating “real” compiler/runtime behavior, prefer:
   - Survives browser restarts!
 
 ### 📚 Example Library
+
 **17 Built-in Examples** covering all major features:
 
 **🎓 Basics (8 examples):**
+
 1. **Hello World** - Your first program
 2. **Math** - Arithmetic operations
 3. **Loops** - For/Next iteration
@@ -60,6 +75,7 @@ If you are validating “real” compiler/runtime behavior, prefer:
 8. **Conditionals** - If/ElseIf/Else and Select/Case
 
 **🎮 3D Graphics (7 examples):**
+
 1. **Rotating Cube** - Simple 3D cube with rotation
 2. **Colorful Cube** - Custom mesh with vertices/triangles
 3. **Particle System** - 100 particles with physics simulation
@@ -69,10 +85,12 @@ If you are validating “real” compiler/runtime behavior, prefer:
 7. **Skybox Scene** - Full skybox with ground plane
 
 **🎨 2D Graphics (2 examples):**
+
 1. **Sprite Movement** - 2D sprite with keyboard input
 2. **Collision Detection** - 3D collision between objects
 
 ### 🔧 Developer-Friendly Tools
+
 - **Three-Tab Output**: WASM / AST / Console
 - **Compilation Statistics**
   - Source lines, token count
@@ -89,16 +107,18 @@ If you are validating “real” compiler/runtime behavior, prefer:
   - Collision detection
 - **Isolated Test Pages** for debugging
   - `test-lexer-only.html` - Test tokenization
-  - `test-parser-only.html` - Test AST generation  
+  - `test-parser-only.html` - Test AST generation
   - `test-codegen-only.html` - Test WASM generation
 
 ## 🏁 Quick Start
 
 ### Option 1: Just Open It! (Recommended)
+
 1. Open `demo-live.html` in any modern browser
 2. Start coding immediately - no installation required!
 
 ### Option 2: Local Development Server
+
 ```bash
 # Build the compiler bundle
 deno task webide:build
@@ -114,21 +134,21 @@ deno task webide:serve
 1. **Write Code**
    - Type directly in the Monaco editor
    - Or load one of 8 built-in examples
-   
+
 2. **Compile**
    - Click "▶️ Compile to WASM" button
    - Or just wait 1 second (auto-compile)
    - Watch the magic happen in <1ms!
-   
+
 3. **Run**
    - Click "▶️ Run (Safe)" to execute in a killable Worker (recommended)
    - Use "⏹ Stop" or the timeout to avoid infinite-loop tab freezes
    - See output in the Console tab
-   
+
 4. **Share**
    - Click "🔗 Share URL" to get shareable link
    - Automatically copied to clipboard!
-   
+
 5. **Save**
    - Click "💾 Save" to persist to localStorage
    - Or rely on auto-save (every 30 sec)
@@ -136,6 +156,7 @@ deno task webide:serve
 ## 🏗️ Architecture
 
 ### Compilation Pipeline
+
 ```
 Blitz3D Source Code
         ↓
@@ -155,6 +176,7 @@ WebAssembly Binary
 ```
 
 ### Project Structure
+
 ```
 web-ide/
 ├── demo-live.html              Main IDE interface
@@ -178,6 +200,7 @@ web-ide/
 ## 🧪 Testing
 
 ### Automated Tests
+
 ```bash
 # Run all example tests
 deno run --allow-read web-ide/test_examples.ts
@@ -190,6 +213,7 @@ deno run --allow-read web-ide/test_examples.ts
 ```
 
 ### Manual Testing
+
 - Open `test-lexer-only.html` - Test tokenization only
 - Open `test-parser-only.html` - Test parsing only
 - Open `test-codegen-only.html` - Test full pipeline
@@ -207,6 +231,7 @@ deno run --allow-read web-ide/test_examples.ts
 ## 🎨 Color Themes
 
 ### Dark Theme (`blitz3d-dark`)
+
 - Comments: Green italic
 - Keywords: Purple
 - Built-ins: Yellow
@@ -215,11 +240,12 @@ deno run --allow-read web-ide/test_examples.ts
 - Type suffixes: Cyan
 
 ### Light Theme (`blitz3d-light`)
+
 - Comments: Green italic
 - Keywords: Blue bold
 - Built-ins: Brown
 - Strings: Red
-- Numbers: Dark green  
+- Numbers: Dark green
 - Type suffixes: Blue
 
 ## 🐛 Known Limitations
@@ -232,6 +258,7 @@ deno run --allow-read web-ide/test_examples.ts
 ## 🛠️ Build System
 
 ### esbuild Bundler
+
 ```bash
 # Build compiler bundle
 deno run -A --node-modules-dir=auto web-ide/build_bundle.js
@@ -240,6 +267,7 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
 ```
 
 ### Development Workflow
+
 1. Edit TypeScript files in `src/compiler/`
 2. Run `deno task webide:build` to rebuild
 3. Refresh browser to see changes
@@ -248,9 +276,11 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
 ## 📚 Language Support
 
 ### ✅ Implemented
+
 - **Variables**: `Local`, `Global`, `Const`, `Dim`
 - **Types**: Integer (`%`), Float (`#`), String (`$`)
-- **Control Flow**: `If`/`Then`/`Else`, `For`/`Next`, `While`/`Wend`, `Repeat`/`Until`
+- **Control Flow**: `If`/`Then`/`Else`, `For`/`Next`, `While`/`Wend`,
+  `Repeat`/`Until`
 - **Functions**: With parameters, return types, defaults
 - **Operators**: Arithmetic, comparison, logical
 - **Arrays**: `Dim arr%(10)`
@@ -264,10 +294,12 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
   - `PositionEntity`, `RotateEntity`, `ScaleEntity`
 
 ### 🚧 Partially Implemented
+
 - Custom Types (`Type`...`End Type`) - parsed, not codegen
 - Field access (`object\field`)
 
 ### ❌ Not Yet Implemented
+
 - `For Each` iteration
 - `Data`/`Read`/`Restore` (parsed, not codegen)
 - `Include` files
@@ -277,17 +309,20 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
 ## 🚀 Future Roadmap
 
 ### Phase 2: Language Features
+
 - [ ] Complete custom types codegen
 - [ ] Multi-dimensional arrays
 - [ ] For Each iteration
 - [ ] Data/Read/Restore completion
 
-### Phase 3: Runtime Integration  
+### Phase 3: Runtime Integration
+
 - [ ] Three.js graphics runtime
 - [ ] Virtual filesystem (VFS)
 - [ ] Graphics examples (rotating cube, etc.)
 
 ### Phase 5: Polish
+
 - [ ] More example programs (20+ total)
 - [ ] Categorized example gallery
 - [ ] Syntax error suggestions
@@ -295,7 +330,8 @@ deno run -A --node-modules-dir=auto web-ide/build_bundle.js
 
 ## 🤝 Contributing
 
-This is part of the larger Blitz3D-WASM project. See main repo README for contribution guidelines.
+This is part of the larger Blitz3D-WASM project. See main repo README for
+contribution guidelines.
 
 ## 📜 License
 
@@ -312,4 +348,4 @@ See main project LICENSE.
 
 **Built with ❤️ using TypeScript, Monaco, and WebAssembly**
 
-🎉 *Zero servers. Zero installations. Just open and code!*
+🎉 _Zero servers. Zero installations. Just open and code!_

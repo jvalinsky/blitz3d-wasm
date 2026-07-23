@@ -1,23 +1,31 @@
 # RMesh Parser Implementation Plan
 
-> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
+> **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to
+> implement this plan task-by-task.
 
-**Goal:** Implement a high-performance binary RMesh parser in Swift to replace legacy Blitz3D parsing, enabling instant loading of SCP:CB assets.
+**Goal:** Implement a high-performance binary RMesh parser in Swift to replace
+legacy Blitz3D parsing, enabling instant loading of SCP:CB assets.
 
-**Architecture:** 
-A `RMeshParser` class wraps `BinaryReader` to traverse the RMesh file structure. It populates the existing `Mesh` and `Surface` classes in `Blitz3DEngine`. The parser unpacks the compact RMesh vertex format (Pos + 2xUV + Color) into the engine's standard vertex format (Pos + Normal + UV + Color).
+**Architecture:** A `RMeshParser` class wraps `BinaryReader` to traverse the
+RMesh file structure. It populates the existing `Mesh` and `Surface` classes in
+`Blitz3DEngine`. The parser unpacks the compact RMesh vertex format (Pos +
+2xUV + Color) into the engine's standard vertex format (Pos + Normal + UV +
+Color).
 
-**Tech Stack:** Swift 6.0, UnsafeMutableBufferPointer (for performance), Blitz3D-WASM Runtime
+**Tech Stack:** Swift 6.0, UnsafeMutableBufferPointer (for performance),
+Blitz3D-WASM Runtime
 
 ### Task 1: Skeleton & Test Setup
 
 **Files:**
+
 - Modify: `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
 - Create: `Tests/CompilerTests/RMeshParserTests.swift`
 
 **Step 1: Create Test Harness**
 
 Create `Tests/CompilerTests/RMeshParserTests.swift`:
+
 ```swift
 import XCTest
 @testable import Blitz3DEngine
@@ -50,17 +58,17 @@ final class RMeshParserTests: XCTestCase {
 
 **Step 2: Run test to verify it fails (or compile error)**
 
-Run: `swift test --filter RMeshParserTests`
-Expected: Fail (Methods unimplemented or logic missing)
+Run: `swift test --filter RMeshParserTests` Expected: Fail (Methods
+unimplemented or logic missing)
 
 **Step 3: Update Skeleton**
 
-Modify `Sources/Blitz3DEngine/Parsers/RMeshParser.swift` to ensure `parse()` can handle the minimal structure without error.
+Modify `Sources/Blitz3DEngine/Parsers/RMeshParser.swift` to ensure `parse()` can
+handle the minimal structure without error.
 
 **Step 4: Run test to verify it passes**
 
-Run: `swift test --filter RMeshParserTests`
-Expected: PASS
+Run: `swift test --filter RMeshParserTests` Expected: PASS
 
 **Step 5: Commit**
 
@@ -72,43 +80,47 @@ git commit -m "feat: skeleton rmesh parser and basic header test"
 ### Task 2: Drawn Mesh Parsing (Geometry)
 
 **Files:**
+
 - Modify: `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
 - Modify: `Tests/CompilerTests/RMeshParserTests.swift`
 
 **Step 1: Enhance Test Case**
 
 Add `testDrawnMeshParsing` to `Tests/CompilerTests/RMeshParserTests.swift`:
+
 - Construct a binary buffer representing:
-    - 1 Drawn Mesh
-    - 0 Textures
-    - 3 Vertices (Triangle)
-    - 1 Triangle (Indices 0, 1, 2)
-- Assert that `MeshManager` contains the new mesh and it has correct vertex count.
+  - 1 Drawn Mesh
+  - 0 Textures
+  - 3 Vertices (Triangle)
+  - 1 Triangle (Indices 0, 1, 2)
+- Assert that `MeshManager` contains the new mesh and it has correct vertex
+  count.
 
 **Step 2: Run test to verify failure**
 
-Run: `swift test --filter RMeshParserTests`
-Expected: Fail (Parser logic for meshes is empty/wrong)
+Run: `swift test --filter RMeshParserTests` Expected: Fail (Parser logic for
+meshes is empty/wrong)
 
 **Step 3: Implement `parseDrawnMeshes`**
 
 Update `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`:
+
 - Read Texture Flags & Paths
 - Read Vertex Count
 - Loop Vertices:
-    - Read X, Y, Z
-    - Read UVs (2 sets)
-    - Read RGB
-    - **Logic:** Call `surface.addVertex(...)` (Need to ensure `Surface` supports this)
+  - Read X, Y, Z
+  - Read UVs (2 sets)
+  - Read RGB
+  - **Logic:** Call `surface.addVertex(...)` (Need to ensure `Surface` supports
+    this)
 - Read Triangle Count
 - Loop Triangles:
-    - Read v0, v1, v2
-    - **Logic:** Call `surface.addTriangle(...)`
+  - Read v0, v1, v2
+  - **Logic:** Call `surface.addTriangle(...)`
 
 **Step 4: Run test to verify pass**
 
-Run: `swift test --filter RMeshParserTests`
-Expected: PASS
+Run: `swift test --filter RMeshParserTests` Expected: PASS
 
 **Step 5: Commit**
 
@@ -120,17 +132,20 @@ git commit -m "feat: implement drawn mesh geometry parsing"
 ### Task 3: Collision Mesh Parsing
 
 **Files:**
+
 - Modify: `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
 
 **Step 1: Enhance Test Case**
 
 Add `testCollisionMeshParsing`:
+
 - Construct binary buffer with 1 Collision Mesh.
 - Verify parser reads it correctly (skips or processes it).
 
 **Step 2: Implement `parseCollisionMeshes`**
 
 Update `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`:
+
 - Logic similar to drawn meshes but simpler vertex format (Pos only).
 - Create a `Mesh` with name "CollisionMesh".
 
@@ -148,16 +163,19 @@ git commit -m "feat: implement collision mesh parsing"
 ### Task 4: Entity Parsing (Lights/Screens/Waypoints)
 
 **Files:**
+
 - Modify: `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`
 
 **Step 1: Enhance Test Case**
 
 Add `testEntityParsing`:
+
 - Construct buffer with 1 "light" entity.
 
 **Step 2: Implement `parsePointEntities`**
 
 Update `Sources/Blitz3DEngine/Parsers/RMeshParser.swift`:
+
 - Switch statement on entity type string.
 - Create `Entity` objects (Pivot/Light) in the scene graph.
 
@@ -175,11 +193,13 @@ git commit -m "feat: implement rmesh entity parsing"
 ### Task 5: Integration & API Exposure
 
 **Files:**
+
 - Modify: `Sources/Blitz3DEngine/Exports.swift`
 
 **Step 1: Expose to C/WASM**
 
 Add `_bb_LoadRMesh` function:
+
 ```swift
 @_cdecl("_bb_LoadRMesh")
 public func _bb_LoadRMesh(pathPtr: UnsafePointer<CChar>) -> Int32 {

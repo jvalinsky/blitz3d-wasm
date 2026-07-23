@@ -24,7 +24,9 @@ deciduous edges
 deciduous commands
 ```
 
-**Branch-scoped context**: If working on a feature branch, filter nodes to see only decisions relevant to this branch. Main branch nodes are tagged with `[branch: main]`.
+**Branch-scoped context**: If working on a feature branch, filter nodes to see
+only decisions relevant to this branch. Main branch nodes are tagged with
+`[branch: main]`.
 
 ## Step 1.5: Audit Graph Integrity
 
@@ -39,12 +41,14 @@ done
 ```
 
 **Review each flagged node:**
+
 - Root `goal` nodes are VALID without parents
 - `outcome` nodes MUST link back to their action/goal
 - `action` nodes MUST link to their parent goal/decision
 - `option` nodes MUST link to their parent decision
 
 **Fix missing connections:**
+
 ```bash
 deciduous link <parent_id> <child_id> -r "Retroactive connection - <reason>"
 ```
@@ -75,6 +79,7 @@ cat git.log | tail -30
 ### Branch Configuration
 
 Check `.deciduous/config.toml` for branch settings:
+
 ```toml
 [branch]
 main_branches = ["main", "master"]  # Which branches are "main"
@@ -112,7 +117,8 @@ deciduous add action "Switching approach" -c 85 -p "User said: use X instead"
 deciduous sync  # Do this frequently!
 ```
 
-**When to use `--prompt`:** On root goals (always) and when user gives new direction mid-stream. Downstream nodes inherit context via edges.
+**When to use `--prompt`:** On root goals (always) and when user gives new
+direction mid-stream. Downstream nodes inherit context via edges.
 
 ---
 

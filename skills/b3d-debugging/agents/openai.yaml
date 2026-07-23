@@ -2,4 +2,3 @@ interface:
   display_name: "B3D Debugging"
   short_description: "Debug B3D parsing and conversion"
   default_prompt: "Use $b3d-debugging to triage this .b3d issue: confirm parser-level structure (textures/brushes/nodes/skins/keys), identify common SCPCB path/casing problems, and give the exact conversion + validation commands to reproduce and verify the fix."
-

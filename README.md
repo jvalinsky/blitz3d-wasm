@@ -1,6 +1,7 @@
 # Blitz3D WASM Compiler
 
-A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser execution.
+A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser
+execution.
 
 ## 🎯 Current Status (January 2026)
 
@@ -18,20 +19,25 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 ### ✅ Working Demos
 
 **Particle System**: https://blitz3d.exe.xyz:8000/test.html
+
 - Real-time particle physics with gravity
 - Alpha blending and lifecycle management
 - All game logic in compiled BB → WASM
 - Browser rendering via Three.js integration
 
 **NPC Model Viewer**: https://blitz3d.exe.xyz:8000/npc_smpk_demo.html
+
 - SCPCB NPC models (SCP-173, SCP-049, SCP-939, etc.)
 - Full material/texture support (baseColor, normal, specular)
 - SCPCB-style lighting (brightness 140/255, warm flashlight)
 - Camera controls: orbit, free, flashlight modes with view presets
 
 **Safe WASM Runner (no-freeze)**:
-- `web/public/bb_wasm_runner_demo.html` (upload a compiled `.wasm`, run in Worker with watchdog timeout)
-- `web/interpreter.html` (in-browser editor; compiled modules execute in Worker with Stop + timeout)
+
+- `web/public/bb_wasm_runner_demo.html` (upload a compiled `.wasm`, run in
+  Worker with watchdog timeout)
+- `web/interpreter.html` (in-browser editor; compiled modules execute in Worker
+  with Stop + timeout)
 
 ## 🏗️ Building
 
@@ -67,7 +73,8 @@ Comment out the macOS linker flag in Package.swift:
 
 ## 🌐 Web Frontend
 
-The `web/` directory contains the modern TypeScript runtime and development tools.
+The `web/` directory contains the modern TypeScript runtime and development
+tools.
 
 ### Development Workflow
 
@@ -119,7 +126,8 @@ deno task memleak:scpcb:churn -- --steps 2000 --export "__LeakTestStep%"
 
 ### BB→WASM smoke suite (runner correctness)
 
-Fast end-to-end coverage for language/codegen/runtime ABI (includes an infinite-loop timeout test):
+Fast end-to-end coverage for language/codegen/runtime ABI (includes an
+infinite-loop timeout test):
 
 ```bash
 deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests/bb_deno_compile_and_run_smoke.test.ts
@@ -238,6 +246,7 @@ deno task deploy:staging       # Build and validate for deployment
 ### Browser Debugging
 
 Access `https://localhost:8000/test.html?debug=1` for:
+
 - Real-time logging overlay
 - Performance metrics display
 - WASM instruction stepping
@@ -278,6 +287,7 @@ deno task web:build
 ### CI/CD Pipeline
 
 GitHub Actions provides:
+
 - Multi-platform Swift testing
 - Comprehensive Deno test suite
 - Security scanning
@@ -286,10 +296,13 @@ GitHub Actions provides:
 
 ## 📚 Documentation
 
-- **[Compiler Status](docs/COMPILER_STATUS_ANALYSIS.md)**: Current metrics and analysis
-- **[Command Buffer System](docs/COMMAND_BUFFER_SYSTEM.md)**: Binary protocol specification
+- **[Compiler Status](docs/COMPILER_STATUS_ANALYSIS.md)**: Current metrics and
+  analysis
+- **[Command Buffer System](docs/COMMAND_BUFFER_SYSTEM.md)**: Binary protocol
+  specification
 - **[SMPK System](docs/SMPK_SYSTEM.md)**: Asset format specification
-- **[Compiler Architecture](docs/compiler_architecture.md)**: Technical internals
+- **[Compiler Architecture](docs/compiler_architecture.md)**: Technical
+  internals
 
 ## 📄 License
 
@@ -297,4 +310,6 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Current Status**: Production-ready with active development. Successfully running complex games like SCP: Containment Breach in browsers through WebAssembly compilation.
+**Current Status**: Production-ready with active development. Successfully
+running complex games like SCP: Containment Breach in browsers through
+WebAssembly compilation.

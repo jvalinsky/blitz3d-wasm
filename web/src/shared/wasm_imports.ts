@@ -81,7 +81,10 @@ export const stubMissingImports = (
       if (env && Object.prototype.hasOwnProperty.call(env, imp.name)) {
         if (!(imports as any).blitz3d) (imports as any).blitz3d = {};
         if (
-          !Object.prototype.hasOwnProperty.call((imports as any).blitz3d, imp.name)
+          !Object.prototype.hasOwnProperty.call(
+            (imports as any).blitz3d,
+            imp.name,
+          )
         ) {
           (imports as any).blitz3d[imp.name] = env[imp.name];
         }
@@ -116,8 +119,14 @@ export const stubMissingImports = (
     onStub?.({ module: imp.module, name: imp.name, kind: imp.kind });
 
     if (imp.name.toLowerCase() === "graphics3d") {
-      console.log(`[DEBUG_STUB] stubMissingImports checking Graphics3D. Module=${imp.module}. Keys in imports[${imp.module}]:`, Object.keys(imports[imp.module] || {}));
-      console.log(`[DEBUG_STUB] imports.env keys:`, Object.keys((imports as any).env || {}));
+      console.log(
+        `[DEBUG_STUB] stubMissingImports checking Graphics3D. Module=${imp.module}. Keys in imports[${imp.module}]:`,
+        Object.keys(imports[imp.module] || {}),
+      );
+      console.log(
+        `[DEBUG_STUB] imports.env keys:`,
+        Object.keys((imports as any).env || {}),
+      );
     }
 
     if (imp.kind === "function") {
@@ -125,7 +134,7 @@ export const stubMissingImports = (
       imports[imp.module][imp.name] = (..._args: any[]) => {
         try {
           onCallMissingFunction?.({ key });
-        } catch { }
+        } catch {}
         return defaultReturn;
       };
       continue;

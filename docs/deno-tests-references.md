@@ -2,14 +2,17 @@
 
 ## Repository references (source of truth)
 
-For how the repo’s Deno tests actually work today, prefer these in-repo references over external links:
+For how the repo’s Deno tests actually work today, prefer these in-repo
+references over external links:
 
 - Overview + commands: `docs/deno-tests-documentation.md`
 - Technical details: `docs/deno-tests-technical.md`
-- End-to-end BB→WASM smoke suite: `Tests/deno_smoke/` and `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`
+- End-to-end BB→WASM smoke suite: `Tests/deno_smoke/` and
+  `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`
 - Deno runner used by the smoke suite: `Tools/bb_deno_compile_and_run.ts`
 
-External URLs below are useful background reading, but they may drift/rot over time.
+External URLs below are useful background reading, but they may drift/rot over
+time.
 
 ## Academic and Industry Standards
 
@@ -17,11 +20,13 @@ External URLs below are useful background reading, but they may drift/rot over t
 
 1. **Chrome DevTools Memory Inspector Documentation**
    - URL: https://developer.chrome.com/docs/devtools/memory-inspector
-   - Relevance: Foundation for ArrayBuffer, TypedArray, DataView, and Wasm Memory inspection techniques
+   - Relevance: Foundation for ArrayBuffer, TypedArray, DataView, and Wasm
+     Memory inspection techniques
    - Applied in: Headless environment implementation, WASM memory tracking
 
 2. **V8 Engine Memory Management**
-   - URL: https://dev.to/deepu105/visualizing-memory-management-in-v8-engine-javascript-nodejs-deno-webassembly-105p
+   - URL:
+     https://dev.to/deepu105/visualizing-memory-management-in-v8-engine-javascript-nodejs-deno-webassembly-105p
    - Relevance: Understanding how V8 manages JavaScript and WebAssembly memory
    - Applied in: Heap usage monitoring, GC integration patterns
 
@@ -45,7 +50,8 @@ External URLs below are useful background reading, but they may drift/rot over t
 ### JavaScript Memory Management
 
 6. **JavaScript Memory Leak Patterns**
-   - Source: Multiple industry sources including MDN and Chrome DevTools documentation
+   - Source: Multiple industry sources including MDN and Chrome DevTools
+     documentation
    - Relevance: Common JavaScript memory leak patterns and detection methods
    - Applied in: Static analysis patterns, event listener tracking
 
@@ -71,7 +77,8 @@ External URLs below are useful background reading, but they may drift/rot over t
 ### WebAssembly Testing
 
 10. **WebAssembly Testing Best Practices**
-    - Source: WebAssembly Community Group specifications and implementation guides
+    - Source: WebAssembly Community Group specifications and implementation
+      guides
     - Relevance: Standard approaches to testing WASM modules
     - Applied in: WASM instantiation, export validation, memory tracking
 
@@ -85,8 +92,10 @@ External URLs below are useful background reading, but they may drift/rot over t
 ### Browser Memory Profiling
 
 12. **JavaScript and WebAssembly Memory Leak Debugging**
-    - URL: https://www.scichart.com/blog/debugging-javascript-webassembly-memory-leaks/
-    - Relevance: Real-world experience with high-performance WebAssembly applications
+    - URL:
+      https://www.scichart.com/blog/debugging-javascript-webassembly-memory-leaks/
+    - Relevance: Real-world experience with high-performance WebAssembly
+      applications
     - Applied in: Test methodology and leak detection patterns
 
 13. **Three.js Memory Management**
@@ -102,8 +111,10 @@ External URLs below are useful background reading, but they may drift/rot over t
     - Applied in: Headless environment implementation
 
 15. **DOM API Mocking Patterns**
-    - Source: JavaScript testing frameworks (Jest, Vitest) and browser mock libraries
-    - Relevance: Standard patterns for mocking browser APIs in server-side environments
+    - Source: JavaScript testing frameworks (Jest, Vitest) and browser mock
+      libraries
+    - Relevance: Standard patterns for mocking browser APIs in server-side
+      environments
     - Applied in: Event listener and RAF tracking implementation
 
 ## Technical Specifications
@@ -112,8 +123,10 @@ External URLs below are useful background reading, but they may drift/rot over t
 
 16. **WebAssembly Core Specification**
     - URL: https://www.w3.org/TR/wasm-core-1/
-    - Relevance: Complete WASM specification including memory model and module lifecycle
-    - Applied in: WASM module handling, memory growth detection, export validation
+    - Relevance: Complete WASM specification including memory model and module
+      lifecycle
+    - Applied in: WASM module handling, memory growth detection, export
+      validation
 
 17. **WebAssembly JavaScript Interface**
     - URL: https://www.w3.org/TR/wasm-js-api-1/
@@ -229,7 +242,8 @@ External URLs below are useful background reading, but they may drift/rot over t
 ### Advanced Memory Analysis
 
 34. **Advanced JavaScript Memory Analysis Techniques**
-    - Source: Recent research papers and industry blog posts on JavaScript memory management
+    - Source: Recent research papers and industry blog posts on JavaScript
+      memory management
     - Relevance: Advanced memory leak detection patterns
     - Applied in: Ongoing test suite improvements
 
@@ -237,15 +251,19 @@ External URLs below are useful background reading, but they may drift/rot over t
 
 ### Code Inspiration and Patterns
 
-The test suite incorporates patterns and techniques from numerous open-source projects, including:
+The test suite incorporates patterns and techniques from numerous open-source
+projects, including:
 
 - **Chrome DevTools**: Memory inspection and leak detection patterns
 - **Node.js**: Memory usage monitoring and process management
 - **Jest**: Testing framework patterns and assertion libraries
 - **Puppeteer**: Headless browser testing methodologies
 - **WebGPU Implementations**: Resource management and validation patterns
-- **Various WebAssembly Projects**: Module loading and memory management patterns
+- **Various WebAssembly Projects**: Module loading and memory management
+  patterns
 
 ---
 
-*This reference document provides the theoretical foundation and sources for the Deno test suite implementation. All referenced materials are publicly available and represent current best practices as of January 2026.*
+_This reference document provides the theoretical foundation and sources for the
+Deno test suite implementation. All referenced materials are publicly available
+and represent current best practices as of January 2026._

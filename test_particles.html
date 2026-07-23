@@ -1,77 +1,92 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <meta charset="UTF-8">
     <title>Particles.wasm Test - SCP:CB Particle System</title>
     <style>
-        body {
-            font-family: 'Courier New', monospace;
-            background: #000;
-            color: #0f0;
-            padding: 20px;
-        }
-        #canvas {
-            border: 2px solid #0f0;
-            display: block;
-            margin: 20px auto;
-        }
-        .status {
-            background: #111;
-            padding: 15px;
-            border: 1px solid #0f0;
-            margin: 10px 0;
-            border-radius: 5px;
-        }
-        button {
-            background: #0e639c;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin: 5px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-family: 'Courier New', monospace;
-        }
-        button:hover {
-            background: #0a4d7a;
-        }
-        .success { color: #0f0; }
-        .error { color: #f00; }
-        .info { color: #0af; }
-        .warn { color: #fa0; }
+      body {
+        font-family: "Courier New", monospace;
+        background: #000;
+        color: #0f0;
+        padding: 20px;
+      }
+      #canvas {
+        border: 2px solid #0f0;
+        display: block;
+        margin: 20px auto;
+      }
+      .status {
+        background: #111;
+        padding: 15px;
+        border: 1px solid #0f0;
+        margin: 10px 0;
+        border-radius: 5px;
+      }
+      button {
+        background: #0e639c;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin: 5px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-family: "Courier New", monospace;
+      }
+      button:hover {
+        background: #0a4d7a;
+      }
+      .success {
+        color: #0f0;
+      }
+      .error {
+        color: #f00;
+      }
+      .info {
+        color: #0af;
+      }
+      .warn {
+        color: #fa0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>🎮 Particles.wasm Test</h1>
     <div class="status">
-        <h2>SCP: Containment Breach - Particle System Test</h2>
-        <p>Testing compiled Particles.bb module with 62 new runtime functions</p>
+      <h2>SCP: Containment Breach - Particle System Test</h2>
+      <p>Testing compiled Particles.bb module with 62 new runtime functions</p>
     </div>
 
     <canvas id="canvas" width="800" height="600"></canvas>
 
     <div class="status">
-        <h3>Controls</h3>
-        <button onclick="initRuntime()">Initialize Runtime</button>
-        <button onclick="loadParticles()">Load Particles.wasm</button>
-        <button onclick="runParticles()">Execute Module</button>
-        <button onclick="createTestScene()">Create Test Scene</button>
-        <button onclick="enableControls()">Enable Camera Controls</button>
-        <button onclick="addPhysics()">Add Physics</button>
-        <button onclick="useSCPCBParticles()">Use SCPCB Particle Code!</button>
+      <h3>Controls</h3>
+      <button onclick="initRuntime()">Initialize Runtime</button>
+      <button onclick="loadParticles()">Load Particles.wasm</button>
+      <button onclick="runParticles()">Execute Module</button>
+      <button onclick="createTestScene()">Create Test Scene</button>
+      <button onclick="enableControls()">Enable Camera Controls</button>
+      <button onclick="addPhysics()">Add Physics</button>
+      <button onclick="useSCPCBParticles()">Use SCPCB Particle Code!</button>
     </div>
-    
+
     <div class="status">
-        <h3>Camera Controls</h3>
-        <p><strong>WASD</strong> - Move camera | <strong>Arrow Keys</strong> - Look around | <strong>Mouse Drag</strong> - Rotate view</p>
+      <h3>Camera Controls</h3>
+      <p>
+        <strong>WASD</strong> - Move camera | <strong>Arrow Keys</strong> - Look
+        around | <strong>Mouse Drag</strong> - Rotate view
+      </p>
     </div>
 
     <div class="status" id="log"></div>
 
     <!-- Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+    ></script>
     <!-- JSZip for virtual FS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"
+    ></script>
 
     <!-- Runtime modules -->
     <script src="Sources/Runtime/browser_compat.js"></script>
@@ -87,373 +102,450 @@
     <script src="Sources/Runtime/modules/runtime.js"></script>
 
     <script>
-        let wasmInstance = null;
+      let wasmInstance = null;
 
-        function log(msg, type = 'info') {
-            const logDiv = document.getElementById('log');
-            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warn' ? 'warn' : 'info';
-            const time = new Date().toLocaleTimeString();
-            logDiv.innerHTML += `<div class="${className}">[${time}] ${msg}</div>`;
-            console.log(`[${type}] ${msg}`);
+      function log(msg, type = "info") {
+        const logDiv = document.getElementById("log");
+        const className = type === "error"
+          ? "error"
+          : type === "success"
+          ? "success"
+          : type === "warn"
+          ? "warn"
+          : "info";
+        const time = new Date().toLocaleTimeString();
+        logDiv.innerHTML +=
+          `<div class="${className}">[${time}] ${msg}</div>`;
+        console.log(`[${type}] ${msg}`);
+      }
+
+      async function initRuntime() {
+        try {
+          log("Initializing Blitz3D Runtime...", "info");
+
+          if (!window.Blitz3D) {
+            log("ERROR: Blitz3D runtime not loaded", "error");
+            return;
+          }
+
+          // Pass canvas ID (not element)
+          await Blitz3D.init("canvas");
+          log("✓ Runtime initialized", "success");
+          log(
+            `  Canvas: ${Blitz3D.core.canvas.width}x${Blitz3D.core.canvas.height}`,
+            "info",
+          );
+          log(
+            `  Functions: ${
+              Object.keys(Blitz3D.imports.env).length
+            } env`,
+            "info",
+          );
+          if (Blitz3D.graphics.scene) {
+            log(
+              `  Scene objects: ${Blitz3D.graphics.scene.children.length}`,
+              "info",
+            );
+          }
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          console.error(err);
         }
+      }
 
-        async function initRuntime() {
-            try {
-                log('Initializing Blitz3D Runtime...', 'info');
-                
-                if (!window.Blitz3D) {
-                    log('ERROR: Blitz3D runtime not loaded', 'error');
-                    return;
-                }
+      async function loadParticles() {
+        try {
+          log("Loading Particles.wasm...", "info");
 
-                // Pass canvas ID (not element)
-                await Blitz3D.init('canvas');
-                log('✓ Runtime initialized', 'success');
-                log(`  Canvas: ${Blitz3D.core.canvas.width}x${Blitz3D.core.canvas.height}`, 'info');
-                log(`  Functions: ${Object.keys(Blitz3D.imports.env).length} env`, 'info');
-                if (Blitz3D.graphics.scene) {
-                    log(`  Scene objects: ${Blitz3D.graphics.scene.children.length}`, 'info');
-                }
+          const response = await fetch("Particles.wasm");
+          if (!response.ok) {
+            throw new Error(
+              `HTTP ${response.status}: ${response.statusText}`,
+            );
+          }
 
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                console.error(err);
-            }
+          const buffer = await response.arrayBuffer();
+          log(`✓ Loaded ${buffer.byteLength} bytes`, "success");
+
+          log("Instantiating WASM module...", "info");
+          const result = await WebAssembly.instantiate(
+            buffer,
+            Blitz3D.imports,
+          );
+
+          wasmInstance = result.instance;
+          log("✓ WASM module instantiated", "success");
+          log(
+            `  Exports: ${Object.keys(wasmInstance.exports).length}`,
+            "info",
+          );
+
+          // List some key exports
+          const exports = Object.keys(wasmInstance.exports);
+          const functions = exports.filter((e) =>
+            typeof wasmInstance.exports[e] === "function"
+          );
+          log(`  Functions: ${functions.length}`, "info");
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          console.error(err);
         }
+      }
 
-        async function loadParticles() {
-            try {
-                log('Loading Particles.wasm...', 'info');
-                
-                const response = await fetch('Particles.wasm');
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const buffer = await response.arrayBuffer();
-                log(`✓ Loaded ${buffer.byteLength} bytes`, 'success');
-                
-                log('Instantiating WASM module...', 'info');
-                const result = await WebAssembly.instantiate(buffer, Blitz3D.imports);
-                
-                wasmInstance = result.instance;
-                log('✓ WASM module instantiated', 'success');
-                log(`  Exports: ${Object.keys(wasmInstance.exports).length}`, 'info');
-                
-                // List some key exports
-                const exports = Object.keys(wasmInstance.exports);
-                const functions = exports.filter(e => typeof wasmInstance.exports[e] === 'function');
-                log(`  Functions: ${functions.length}`, 'info');
-                
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                console.error(err);
-            }
+      async function runParticles() {
+        try {
+          if (!wasmInstance) {
+            log("ERROR: Load WASM first!", "error");
+            return;
+          }
+
+          log("Calling main()...", "info");
+
+          // Call the main function
+          if (wasmInstance.exports.main) {
+            wasmInstance.exports.main();
+            log("✓ main() executed", "success");
+          } else if (wasmInstance.exports._start) {
+            wasmInstance.exports._start();
+            log("✓ _start() executed", "success");
+          } else {
+            log("No main() or _start() found", "warn");
+            log(
+              "Available exports: " +
+                Object.keys(wasmInstance.exports).join(", "),
+              "info",
+            );
+          }
+
+          // Check if particles were created
+          const particleCount = Blitz3D.graphics.particles?.length || 0;
+          log(`Particles created: ${particleCount}`, "info");
+
+          // Check scene children
+          const sceneChildren = Blitz3D.graphics.scene
+            ? Blitz3D.graphics.scene.children.length
+            : 0;
+          log(`Scene objects: ${sceneChildren}`, "info");
+
+          // Check entities created
+          const entityCount =
+            Object.keys(Blitz3D.graphics.entities).length;
+          log(`Entities created: ${entityCount}`, "info");
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          console.error(err);
         }
+      }
 
-        async function runParticles() {
-            try {
-                if (!wasmInstance) {
-                    log('ERROR: Load WASM first!', 'error');
-                    return;
-                }
+      function createTestScene() {
+        try {
+          log("Creating enhanced test scene...", "info");
 
-                log('Calling main()...', 'info');
-                
-                // Call the main function
-                if (wasmInstance.exports.main) {
-                    wasmInstance.exports.main();
-                    log('✓ main() executed', 'success');
-                } else if (wasmInstance.exports._start) {
-                    wasmInstance.exports._start();
-                    log('✓ _start() executed', 'success');
-                } else {
-                    log('No main() or _start() found', 'warn');
-                    log('Available exports: ' + Object.keys(wasmInstance.exports).join(', '), 'info');
-                }
+          // Set scene background to dark gray
+          Blitz3D.graphics.scene.background = new THREE.Color(0x1a1a2e);
 
-                // Check if particles were created
-                const particleCount = Blitz3D.graphics.particles?.length || 0;
-                log(`Particles created: ${particleCount}`, 'info');
+          // Add ambient light for base illumination
+          Blitz3D.imports.env.AmbientLight(0.3, 0.3, 0.4);
+          log("✓ Ambient light added", "success");
 
-                // Check scene children
-                const sceneChildren = Blitz3D.graphics.scene ? Blitz3D.graphics.scene.children.length : 0;
-                log(`Scene objects: ${sceneChildren}`, 'info');
-                
-                // Check entities created
-                const entityCount = Object.keys(Blitz3D.graphics.entities).length;
-                log(`Entities created: ${entityCount}`, 'info');
+          // Create camera
+          const camera = Blitz3D.imports.env.CreateCamera(0);
+          Blitz3D.imports.env.PositionEntity(camera, 0, 3, -8, 0);
+          log("✓ Camera created at (0, 3, -8)", "success");
 
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                console.error(err);
-            }
-        }
-
-        function createTestScene() {
-            try {
-                log('Creating enhanced test scene...', 'info');
-
-                // Set scene background to dark gray
-                Blitz3D.graphics.scene.background = new THREE.Color(0x1a1a2e);
-                
-                // Add ambient light for base illumination
-                Blitz3D.imports.env.AmbientLight(0.3, 0.3, 0.4);
-                log('✓ Ambient light added', 'success');
-
-                // Create camera
-                const camera = Blitz3D.imports.env.CreateCamera(0);
-                Blitz3D.imports.env.PositionEntity(camera, 0, 3, -8, 0);
-                log('✓ Camera created at (0, 3, -8)', 'success');
-
-                // Create main cube with color
-                const cube = Blitz3D.imports.env.CreateCube(0);
-                const cubeEntity = Blitz3D.graphics.entities[cube];
-                if (cubeEntity && cubeEntity.material) {
-                    cubeEntity.material = new THREE.MeshLambertMaterial({ 
-                        color: 0x4a90e2,
-                        emissive: 0x0a1a3a
-                    });
-                }
-                log('✓ Blue cube created with Lambert shading', 'success');
-
-                // Create a ground plane
-                const ground = Blitz3D.imports.env.CreatePlane(0);
-                Blitz3D.imports.env.PositionEntity(ground, 0, -2, 0, 0);
-                Blitz3D.imports.env.ScaleEntity(ground, 10, 1, 10);
-                const groundEntity = Blitz3D.graphics.entities[ground];
-                if (groundEntity && groundEntity.material) {
-                    groundEntity.material = new THREE.MeshLambertMaterial({ 
-                        color: 0x2a2a3e,
-                        side: THREE.DoubleSide
-                    });
-                }
-                log('✓ Ground plane created', 'success');
-
-                // Create directional light (like sun)
-                const light = Blitz3D.imports.env.CreateLight(1);
-                Blitz3D.imports.env.PositionEntity(light, 10, 15, -10, 0);
-                Blitz3D.imports.env.LightColor(light, 1.0, 0.95, 0.9);
-                log('✓ Directional light created', 'success');
-
-                // Create particles with smaller size
-                for (let i = 0; i < 20; i++) {
-                    const x = (Math.random() - 0.5) * 8;
-                    const y = Math.random() * 5;
-                    const z = (Math.random() - 0.5) * 8;
-                    Blitz3D.imports.env.CreateParticle(x, y, z, 0, 1.0, 0.01, 1000);
-                }
-                log('✓ 20 small particles created', 'success');
-
-                const sceneChildren = Blitz3D.graphics.scene.children.length;
-                log(`Scene: ${sceneChildren} objects total`, 'info');
-
-                Blitz3D.imports.env.RenderWorld(1.0);
-                
-                log('🎮 Enhanced scene ready! Blue cube with particles!', 'success');
-
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                console.error(err);
-            }
-        }
-
-        // Camera controls
-        let cameraControls = {
-            enabled: false,
-            velocity: { x: 0, y: 0, z: 0 },
-            rotation: { pitch: 0, yaw: 0 },
-            speed: 0.1,
-            mouseDown: false,
-            lastMouseX: 0,
-            lastMouseY: 0
-        };
-
-        function enableControls() {
-            if (cameraControls.enabled) {
-                log('Camera controls already enabled', 'warn');
-                return;
-            }
-
-            cameraControls.enabled = true;
-            log('✓ Camera controls enabled!', 'success');
-            log('Use WASD to move, Arrow keys to look, or drag mouse', 'info');
-
-            const canvas = document.getElementById('canvas');
-
-            // Keyboard controls
-            const keys = {};
-            document.addEventListener('keydown', (e) => {
-                keys[e.key.toLowerCase()] = true;
+          // Create main cube with color
+          const cube = Blitz3D.imports.env.CreateCube(0);
+          const cubeEntity = Blitz3D.graphics.entities[cube];
+          if (cubeEntity && cubeEntity.material) {
+            cubeEntity.material = new THREE.MeshLambertMaterial({
+              color: 0x4a90e2,
+              emissive: 0x0a1a3a,
             });
-            document.addEventListener('keyup', (e) => {
-                keys[e.key.toLowerCase()] = false;
+          }
+          log("✓ Blue cube created with Lambert shading", "success");
+
+          // Create a ground plane
+          const ground = Blitz3D.imports.env.CreatePlane(0);
+          Blitz3D.imports.env.PositionEntity(ground, 0, -2, 0, 0);
+          Blitz3D.imports.env.ScaleEntity(ground, 10, 1, 10);
+          const groundEntity = Blitz3D.graphics.entities[ground];
+          if (groundEntity && groundEntity.material) {
+            groundEntity.material = new THREE.MeshLambertMaterial({
+              color: 0x2a2a3e,
+              side: THREE.DoubleSide,
             });
+          }
+          log("✓ Ground plane created", "success");
 
-            // Mouse controls
-            canvas.addEventListener('mousedown', (e) => {
-                cameraControls.mouseDown = true;
-                cameraControls.lastMouseX = e.clientX;
-                cameraControls.lastMouseY = e.clientY;
-            });
-            canvas.addEventListener('mouseup', () => {
-                cameraControls.mouseDown = false;
-            });
-            canvas.addEventListener('mousemove', (e) => {
-                if (cameraControls.mouseDown) {
-                    const dx = e.clientX - cameraControls.lastMouseX;
-                    const dy = e.clientY - cameraControls.lastMouseY;
-                    cameraControls.rotation.yaw += dx * 0.3;
-                    cameraControls.rotation.pitch += dy * 0.3;
-                    cameraControls.lastMouseX = e.clientX;
-                    cameraControls.lastMouseY = e.clientY;
-                }
-            });
+          // Create directional light (like sun)
+          const light = Blitz3D.imports.env.CreateLight(1);
+          Blitz3D.imports.env.PositionEntity(light, 10, 15, -10, 0);
+          Blitz3D.imports.env.LightColor(light, 1.0, 0.95, 0.9);
+          log("✓ Directional light created", "success");
 
-            // Update loop
-            function updateCamera() {
-                if (!cameraControls.enabled) return;
+          // Create particles with smaller size
+          for (let i = 0; i < 20; i++) {
+            const x = (Math.random() - 0.5) * 8;
+            const y = Math.random() * 5;
+            const z = (Math.random() - 0.5) * 8;
+            Blitz3D.imports.env.CreateParticle(
+              x,
+              y,
+              z,
+              0,
+              1.0,
+              0.01,
+              1000,
+            );
+          }
+          log("✓ 20 small particles created", "success");
 
-                const camera = Blitz3D.graphics.camera;
-                if (!camera) return;
+          const sceneChildren = Blitz3D.graphics.scene.children.length;
+          log(`Scene: ${sceneChildren} objects total`, "info");
 
-                // Movement (WASD)
-                if (keys['w']) cameraControls.velocity.z += 0.01;
-                if (keys['s']) cameraControls.velocity.z -= 0.01;
-                if (keys['a']) cameraControls.velocity.x += 0.01;
-                if (keys['d']) cameraControls.velocity.x -= 0.01;
-                if (keys['q']) cameraControls.velocity.y += 0.01;
-                if (keys['e']) cameraControls.velocity.y -= 0.01;
+          Blitz3D.imports.env.RenderWorld(1.0);
 
-                // Rotation (Arrow keys)
-                if (keys['arrowleft']) cameraControls.rotation.yaw += 2;
-                if (keys['arrowright']) cameraControls.rotation.yaw -= 2;
-                if (keys['arrowup']) cameraControls.rotation.pitch += 2;
-                if (keys['arrowdown']) cameraControls.rotation.pitch -= 2;
+          log(
+            "🎮 Enhanced scene ready! Blue cube with particles!",
+            "success",
+          );
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          console.error(err);
+        }
+      }
 
-                // Apply movement
-                camera.position.x += cameraControls.velocity.x * cameraControls.speed;
-                camera.position.y += cameraControls.velocity.y * cameraControls.speed;
-                camera.position.z += cameraControls.velocity.z * cameraControls.speed;
+      // Camera controls
+      let cameraControls = {
+        enabled: false,
+        velocity: { x: 0, y: 0, z: 0 },
+        rotation: { pitch: 0, yaw: 0 },
+        speed: 0.1,
+        mouseDown: false,
+        lastMouseX: 0,
+        lastMouseY: 0,
+      };
 
-                // Apply rotation
-                camera.rotation.y = cameraControls.rotation.yaw * Math.PI / 180;
-                camera.rotation.x = cameraControls.rotation.pitch * Math.PI / 180;
-
-                // Damping
-                cameraControls.velocity.x *= 0.9;
-                cameraControls.velocity.y *= 0.9;
-                cameraControls.velocity.z *= 0.9;
-
-                requestAnimationFrame(updateCamera);
-            }
-
-            updateCamera();
+      function enableControls() {
+        if (cameraControls.enabled) {
+          log("Camera controls already enabled", "warn");
+          return;
         }
 
-        // Physics system
-        let physicsEnabled = false;
-        const physicsObjects = [];
+        cameraControls.enabled = true;
+        log("✓ Camera controls enabled!", "success");
+        log(
+          "Use WASD to move, Arrow keys to look, or drag mouse",
+          "info",
+        );
 
-        function addPhysics() {
-            if (physicsEnabled) {
-                log('Physics already enabled', 'warn');
-                return;
-            }
+        const canvas = document.getElementById("canvas");
 
-            physicsEnabled = true;
-            log('✓ Physics enabled!', 'success');
-            log('Particles and objects now have gravity and velocity', 'info');
-
-            // Add physics to all particles
-            Blitz3D.graphics.particles.forEach(p => {
-                const sprite = Blitz3D.graphics.entities[p.id];
-                if (sprite) {
-                    physicsObjects.push({
-                        object: sprite,
-                        velocity: { 
-                            x: (Math.random() - 0.5) * 0.02, 
-                            y: Math.random() * 0.01, 
-                            z: (Math.random() - 0.5) * 0.02 
-                        },
-                        gravity: 0.001,
-                        bounce: 0.7
-                    });
-                }
-            });
-
-            log(`Physics added to ${physicsObjects.length} objects`, 'info');
-
-            // Physics update loop
-            function updatePhysics() {
-                if (!physicsEnabled) return;
-
-                physicsObjects.forEach(po => {
-                    // Apply gravity
-                    po.velocity.y -= po.gravity;
-
-                    // Apply velocity
-                    po.object.position.x += po.velocity.x;
-                    po.object.position.y += po.velocity.y;
-                    po.object.position.z += po.velocity.z;
-
-                    // Bounce off ground
-                    if (po.object.position.y < -1.5) {
-                        po.object.position.y = -1.5;
-                        po.velocity.y *= -po.bounce;
-                        po.velocity.x *= 0.95; // Friction
-                        po.velocity.z *= 0.95;
-                    }
-
-                    // Keep in bounds
-                    if (Math.abs(po.object.position.x) > 10) po.velocity.x *= -0.8;
-                    if (Math.abs(po.object.position.z) > 10) po.velocity.z *= -0.8;
-                });
-
-                requestAnimationFrame(updatePhysics);
-            }
-
-            updatePhysics();
-        }
-
-        // Use actual SCPCB particle code
-        function useSCPCBParticles() {
-            if (!wasmInstance) {
-                log('ERROR: Load Particles.wasm first!', 'error');
-                return;
-            }
-
-            try {
-                log('🎮 Calling ACTUAL SCPCB CreateParticle() from compiled WASM!', 'info');
-
-                // Call the SCPCB CreateParticle function exported from WASM
-                // This is the REAL game code, compiled from Blitz3D!
-                if (wasmInstance.exports.CreateParticle) {
-                    for (let i = 0; i < 10; i++) {
-                        // Call the actual SCPCB function
-                        const particleId = wasmInstance.exports.CreateParticle();
-                        log(`✓ SCPCB CreateParticle() returned ID: ${particleId}`, 'success');
-                    }
-                    
-                    log('🎉 You just ran ACTUAL SCP:CB game code!', 'success');
-                    log('The particles were created by compiled Blitz3D code, not JavaScript!', 'info');
-                } else {
-                    log('CreateParticle not found in exports', 'error');
-                    log('Available exports: ' + Object.keys(wasmInstance.exports).filter(e => e.includes('Particle')).join(', '), 'info');
-                }
-
-            } catch (err) {
-                log(`ERROR: ${err.message}`, 'error');
-                console.error(err);
-            }
-        }
-
-        // Auto-init on load
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                log('Page loaded - click Initialize Runtime to begin', 'info');
-            }, 500);
+        // Keyboard controls
+        const keys = {};
+        document.addEventListener("keydown", (e) => {
+          keys[e.key.toLowerCase()] = true;
         });
+        document.addEventListener("keyup", (e) => {
+          keys[e.key.toLowerCase()] = false;
+        });
+
+        // Mouse controls
+        canvas.addEventListener("mousedown", (e) => {
+          cameraControls.mouseDown = true;
+          cameraControls.lastMouseX = e.clientX;
+          cameraControls.lastMouseY = e.clientY;
+        });
+        canvas.addEventListener("mouseup", () => {
+          cameraControls.mouseDown = false;
+        });
+        canvas.addEventListener("mousemove", (e) => {
+          if (cameraControls.mouseDown) {
+            const dx = e.clientX - cameraControls.lastMouseX;
+            const dy = e.clientY - cameraControls.lastMouseY;
+            cameraControls.rotation.yaw += dx * 0.3;
+            cameraControls.rotation.pitch += dy * 0.3;
+            cameraControls.lastMouseX = e.clientX;
+            cameraControls.lastMouseY = e.clientY;
+          }
+        });
+
+        // Update loop
+        function updateCamera() {
+          if (!cameraControls.enabled) return;
+
+          const camera = Blitz3D.graphics.camera;
+          if (!camera) return;
+
+          // Movement (WASD)
+          if (keys["w"]) cameraControls.velocity.z += 0.01;
+          if (keys["s"]) cameraControls.velocity.z -= 0.01;
+          if (keys["a"]) cameraControls.velocity.x += 0.01;
+          if (keys["d"]) cameraControls.velocity.x -= 0.01;
+          if (keys["q"]) cameraControls.velocity.y += 0.01;
+          if (keys["e"]) cameraControls.velocity.y -= 0.01;
+
+          // Rotation (Arrow keys)
+          if (keys["arrowleft"]) cameraControls.rotation.yaw += 2;
+          if (keys["arrowright"]) cameraControls.rotation.yaw -= 2;
+          if (keys["arrowup"]) cameraControls.rotation.pitch += 2;
+          if (keys["arrowdown"]) cameraControls.rotation.pitch -= 2;
+
+          // Apply movement
+          camera.position.x += cameraControls.velocity.x *
+            cameraControls.speed;
+          camera.position.y += cameraControls.velocity.y *
+            cameraControls.speed;
+          camera.position.z += cameraControls.velocity.z *
+            cameraControls.speed;
+
+          // Apply rotation
+          camera.rotation.y = cameraControls.rotation.yaw * Math.PI /
+            180;
+          camera.rotation.x = cameraControls.rotation.pitch * Math.PI /
+            180;
+
+          // Damping
+          cameraControls.velocity.x *= 0.9;
+          cameraControls.velocity.y *= 0.9;
+          cameraControls.velocity.z *= 0.9;
+
+          requestAnimationFrame(updateCamera);
+        }
+
+        updateCamera();
+      }
+
+      // Physics system
+      let physicsEnabled = false;
+      const physicsObjects = [];
+
+      function addPhysics() {
+        if (physicsEnabled) {
+          log("Physics already enabled", "warn");
+          return;
+        }
+
+        physicsEnabled = true;
+        log("✓ Physics enabled!", "success");
+        log(
+          "Particles and objects now have gravity and velocity",
+          "info",
+        );
+
+        // Add physics to all particles
+        Blitz3D.graphics.particles.forEach((p) => {
+          const sprite = Blitz3D.graphics.entities[p.id];
+          if (sprite) {
+            physicsObjects.push({
+              object: sprite,
+              velocity: {
+                x: (Math.random() - 0.5) * 0.02,
+                y: Math.random() * 0.01,
+                z: (Math.random() - 0.5) * 0.02,
+              },
+              gravity: 0.001,
+              bounce: 0.7,
+            });
+          }
+        });
+
+        log(
+          `Physics added to ${physicsObjects.length} objects`,
+          "info",
+        );
+
+        // Physics update loop
+        function updatePhysics() {
+          if (!physicsEnabled) return;
+
+          physicsObjects.forEach((po) => {
+            // Apply gravity
+            po.velocity.y -= po.gravity;
+
+            // Apply velocity
+            po.object.position.x += po.velocity.x;
+            po.object.position.y += po.velocity.y;
+            po.object.position.z += po.velocity.z;
+
+            // Bounce off ground
+            if (po.object.position.y < -1.5) {
+              po.object.position.y = -1.5;
+              po.velocity.y *= -po.bounce;
+              po.velocity.x *= 0.95; // Friction
+              po.velocity.z *= 0.95;
+            }
+
+            // Keep in bounds
+            if (Math.abs(po.object.position.x) > 10) {
+              po.velocity.x *= -0.8;
+            }
+            if (Math.abs(po.object.position.z) > 10) {
+              po.velocity.z *= -0.8;
+            }
+          });
+
+          requestAnimationFrame(updatePhysics);
+        }
+
+        updatePhysics();
+      }
+
+      // Use actual SCPCB particle code
+      function useSCPCBParticles() {
+        if (!wasmInstance) {
+          log("ERROR: Load Particles.wasm first!", "error");
+          return;
+        }
+
+        try {
+          log(
+            "🎮 Calling ACTUAL SCPCB CreateParticle() from compiled WASM!",
+            "info",
+          );
+
+          // Call the SCPCB CreateParticle function exported from WASM
+          // This is the REAL game code, compiled from Blitz3D!
+          if (wasmInstance.exports.CreateParticle) {
+            for (let i = 0; i < 10; i++) {
+              // Call the actual SCPCB function
+              const particleId = wasmInstance.exports.CreateParticle();
+              log(
+                `✓ SCPCB CreateParticle() returned ID: ${particleId}`,
+                "success",
+              );
+            }
+
+            log("🎉 You just ran ACTUAL SCP:CB game code!", "success");
+            log(
+              "The particles were created by compiled Blitz3D code, not JavaScript!",
+              "info",
+            );
+          } else {
+            log("CreateParticle not found in exports", "error");
+            log(
+              "Available exports: " +
+                Object.keys(wasmInstance.exports).filter((e) =>
+                  e.includes("Particle")
+                ).join(", "),
+              "info",
+            );
+          }
+        } catch (err) {
+          log(`ERROR: ${err.message}`, "error");
+          console.error(err);
+        }
+      }
+
+      // Auto-init on load
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          log(
+            "Page loaded - click Initialize Runtime to begin",
+            "info",
+          );
+        }, 500);
+      });
     </script>
-</body>
+  </body>
 </html>

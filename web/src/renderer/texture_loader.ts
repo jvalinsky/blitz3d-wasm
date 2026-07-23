@@ -70,12 +70,24 @@ export function createTextureFromPixels(
   const clampU = (f & 16) !== 0;
   const clampV = (f & 32) !== 0;
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, clampU ? gl.CLAMP_TO_EDGE : gl.REPEAT);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, clampV ? gl.CLAMP_TO_EDGE : gl.REPEAT);
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_S,
+    clampU ? gl.CLAMP_TO_EDGE : gl.REPEAT,
+  );
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_T,
+    clampV ? gl.CLAMP_TO_EDGE : gl.REPEAT,
+  );
 
   if (mipmap) {
     gl.generateMipmap(gl.TEXTURE_2D);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_MIN_FILTER,
+      gl.LINEAR_MIPMAP_LINEAR,
+    );
   } else {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   }
@@ -91,13 +103,16 @@ export function createTextureFromPixels(
  * Convert ARGB pixel buffer (from Blitz3D WritePixelFast) to RGBA.
  * Operates in-place or returns a new array.
  */
-export function convertARGBtoRGBA(argb: Uint8Array, out?: Uint8Array): Uint8Array {
+export function convertARGBtoRGBA(
+  argb: Uint8Array,
+  out?: Uint8Array,
+): Uint8Array {
   const rgba = out ?? new Uint8Array(argb.length);
   for (let i = 0; i < argb.length; i += 4) {
-    rgba[i] = argb[i + 1];     // R
+    rgba[i] = argb[i + 1]; // R
     rgba[i + 1] = argb[i + 2]; // G
     rgba[i + 2] = argb[i + 3]; // B
-    rgba[i + 3] = argb[i];     // A
+    rgba[i + 3] = argb[i]; // A
   }
   return rgba;
 }

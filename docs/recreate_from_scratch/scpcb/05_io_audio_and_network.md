@@ -1,6 +1,7 @@
 # IO, Audio, and Network Touchpoints
 
-This doc highlights SCPCB subsystems that have special implications for a web port.
+This doc highlights SCPCB subsystems that have special implications for a web
+port.
 
 ## File IO Patterns (Everywhere)
 
@@ -13,6 +14,7 @@ SCPCB uses classic Blitz file APIs:
   - `GetINIInt`, `GetINIFloat`, `GetINIString`
 
 Porting implication:
+
 - The runtime’s VFS must emulate these calls (including EOF/seek semantics) and
   the loader must preload init-critical files (especially `options.ini`).
 
@@ -25,11 +27,13 @@ SCPCB prefers strict wrappers like:
 - `LoadAnimMesh_Strict`
 - `LoadSound_Strict`
 
-These are designed to surface missing assets early and keep behavior deterministic.
+These are designed to surface missing assets early and keep behavior
+deterministic.
 
 ## Audio (FMOD + streams + 3D)
 
 Primary sources:
+
 - `~/Software/scpcb/FMod.bb`
 - `~/Software/scpcb/MusicPlayer.bb`
 - `~/Software/scpcb/LoadAllSounds.bb`
@@ -41,11 +45,14 @@ Notable behaviors:
 - user tracks scanned from `SFX/Radio/UserTracks/`
 
 Web port implication:
-- web audio must handle user gesture restrictions; “audio not ready yet” must be a normal state.
+
+- web audio must handle user gesture restrictions; “audio not ready yet” must be
+  a normal state.
 
 ## Network / Updater
 
 Primary source:
+
 - `~/Software/scpcb/Update.bb`
 
 SCPCB contains an update-check subsystem that:
@@ -55,5 +62,5 @@ SCPCB contains an update-check subsystem that:
 - reads headers and remote file content
 
 Web port implication:
-- This should be disabled or replaced; browsers do not allow raw TCP sockets.
 
+- This should be disabled or replaced; browsers do not allow raw TCP sockets.

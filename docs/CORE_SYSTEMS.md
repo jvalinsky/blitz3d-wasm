@@ -1,14 +1,21 @@
 # Core Systems Documentation
 
 ## Overview
-Core systems form the foundation of the SCP: Containment Breach game engine. These systems provide the fundamental infrastructure that all other game systems build upon. They handle rendering, input, audio, and physics - the essential components for any interactive 3D game.
+
+Core systems form the foundation of the SCP: Containment Breach game engine.
+These systems provide the fundamental infrastructure that all other game systems
+build upon. They handle rendering, input, audio, and physics - the essential
+components for any interactive 3D game.
 
 ## Rendering System
 
 ### Purpose
-The rendering system provides 3D graphics capabilities using WebGL and Three.js, creating the immersive horror environment of the SCP facility.
+
+The rendering system provides 3D graphics capabilities using WebGL and Three.js,
+creating the immersive horror environment of the SCP facility.
 
 ### Architecture
+
 - **Three.js Integration**: WebGL-based 3D rendering pipeline
 - **Entity Management**: Hierarchical 3D object system
 - **Camera System**: First-person perspective with field-of-view control
@@ -17,6 +24,7 @@ The rendering system provides 3D graphics capabilities using WebGL and Three.js,
 - **Animation System**: Skeletal animation for NPCs and player
 
 ### Key Functions
+
 ```blitzbasic
 ; Core rendering functions
 Graphics3D(width, height, depth)           ; Initialize 3D rendering context
@@ -47,12 +55,18 @@ CameraZoom(camera, zoom#)                   ; Set zoom level
 ```
 
 ### Integration Points
-- **[Physics System](#physics-system)**: Provides collision detection for entity interactions
-- **[Lighting System](../GRAPHICS_RENDERING_SYSTEMS.md#lighting-system)**: Creates atmospheric horror effects
-- **[Material System](../GRAPHICS_RENDERING_SYSTEMS.md#material-system)**: Manages surface properties
-- **[Animation System](../ENTITY_SYSTEMS.md#entity-state-system)**: Drives character animations
+
+- **[Physics System](#physics-system)**: Provides collision detection for entity
+  interactions
+- **[Lighting System](../GRAPHICS_RENDERING_SYSTEMS.md#lighting-system)**:
+  Creates atmospheric horror effects
+- **[Material System](../GRAPHICS_RENDERING_SYSTEMS.md#material-system)**:
+  Manages surface properties
+- **[Animation System](../ENTITY_SYSTEMS.md#entity-state-system)**: Drives
+  character animations
 
 ### Performance Considerations
+
 - **Frustum Culling**: Only render visible entities
 - **LOD System**: Use lower-detail models for distant objects
 - **Batch Rendering**: Group similar objects for GPU efficiency
@@ -63,15 +77,19 @@ CameraZoom(camera, zoom#)                   ; Set zoom level
 ## Input System
 
 ### Purpose
-The input system handles keyboard and mouse input, providing the foundation for player control and UI interaction.
+
+The input system handles keyboard and mouse input, providing the foundation for
+player control and UI interaction.
 
 ### Architecture
+
 - **Keyboard Input**: Full key state tracking with hit detection
 - **Mouse Input**: Position tracking and button states
 - **Pointer Lock**: Mouse capture for first-person control
 - **Input Mapping**: Configurable control scheme
 
 ### Key Functions
+
 ```blitzbasic
 ; Keyboard input
 KeyDown(keyCode%)            ; Returns true if key is currently held
@@ -100,6 +118,7 @@ MapAction(action$, keyCode%)  ; Map keyboard key to game action
 ```
 
 ### Input Mapping Example
+
 ```blitzbasic
 ; Control configuration
 Type ControlMap
@@ -121,11 +140,15 @@ End Function
 ```
 
 ### Integration Points
-- **[Player Control System](../GAME_MECHANICS.md#player-control-system)**: Primary consumer of input events
-- **[UI/HUD Systems](../UI_HUD_SYSTEMS.md)**: Handle menu and inventory interactions
+
+- **[Player Control System](../GAME_MECHANICS.md#player-control-system)**:
+  Primary consumer of input events
+- **[UI/HUD Systems](../UI_HUD_SYSTEMS.md)**: Handle menu and inventory
+  interactions
 - **[Camera System](#rendering-system)**: Mouse look for first-person view
 
 ### Performance Considerations
+
 - **Event Polling**: Efficient input state checking
 - **Debouncing**: Prevent multiple rapid-fire inputs
 - **Buffer Management**: Smooth mouse movement tracking
@@ -135,9 +158,12 @@ End Function
 ## Audio System
 
 ### Purpose
-The audio system provides comprehensive sound support using the Web Audio API, creating immersive audio experiences with positional 3D sound.
+
+The audio system provides comprehensive sound support using the Web Audio API,
+creating immersive audio experiences with positional 3D sound.
 
 ### Architecture
+
 - **Web Audio API**: FMOD emulation layer
 - **Sound Management**: Sample loading and playback
 - **Stream System**: Background music and ambient audio
@@ -146,6 +172,7 @@ The audio system provides comprehensive sound support using the Web Audio API, c
 - **Audio Effects**: Reverb, echo, and other effects
 
 ### Key Functions
+
 ```blitzbasic
 ; System initialization
 FSOUND_Init(driver, mixrate, flags)        ; Initialize audio system
@@ -184,6 +211,7 @@ SetEcho(delay#, decay#)                    ; Set echo effect
 ```
 
 ### 3D Audio Implementation
+
 ```blitzbasic
 Type Sound3D
     Field sound%               ; Sound resource
@@ -223,12 +251,17 @@ End Function
 ```
 
 ### Integration Points
-- **[Sound Effect System](../AUDIO_SOUND_SYSTEMS.md#sound-effect-system)**: Manages game-specific sounds
-- **[Music System](../AUDIO_SOUND_SYSTEMS.md#music-system)**: Handles dynamic soundtrack
-- **[Voice System](../AUDIO_SOUND_SYSTEMS.md#voice-system)**: Manages NPC dialogue
+
+- **[Sound Effect System](../AUDIO_SOUND_SYSTEMS.md#sound-effect-system)**:
+  Manages game-specific sounds
+- **[Music System](../AUDIO_SOUND_SYSTEMS.md#music-system)**: Handles dynamic
+  soundtrack
+- **[Voice System](../AUDIO_SOUND_SYSTEMS.md#voice-system)**: Manages NPC
+  dialogue
 - **[Entity Systems](../ENTITY_SYSTEMS.md)**: Provides positional audio for NPCs
 
 ### Performance Considerations
+
 - **Channel Pooling**: Reuse audio channels for efficiency
 - **Distance Culling**: Don't play distant sounds
 - **Audio Streaming**: Stream large audio files instead of loading entirely
@@ -239,9 +272,12 @@ End Function
 ## Physics System
 
 ### Purpose
-The physics system provides collision detection and basic physics simulation, enabling realistic object interactions and spatial queries for the game world.
+
+The physics system provides collision detection and basic physics simulation,
+enabling realistic object interactions and spatial queries for the game world.
 
 ### Architecture
+
 - **Collision Detection**: Raycasting and entity collisions
 - **Entity Picking**: Mouse-based selection
 - **Collision Rules**: Configurable collision groups
@@ -249,6 +285,7 @@ The physics system provides collision detection and basic physics simulation, en
 - **Physics Simulation**: Basic physics for objects
 
 ### Key Functions
+
 ```blitzbasic
 ; Collision setup
 Collisions(sourceType%, destType%, method%, response%)  ; Setup collision rules
@@ -282,6 +319,7 @@ EntityPickMode(entity%, mode%)                          ; Set picking mode
 ```
 
 ### Collision Types and Methods
+
 ```blitzbasic
 ; Collision types
 Const COLLISION_NONE% = 0           ; No collision
@@ -300,6 +338,7 @@ Const COLLISION_RESPONSE_STOP% = 2  ; Stop movement
 ```
 
 ### Collision Setup Example
+
 ```blitzbasic
 ; Setup collision system for SCP:CB
 Function SetupCollisions()
@@ -321,12 +360,17 @@ End Function
 ```
 
 ### Integration Points
-- **[Player Control System](../GAME_MECHANICS.md#player-control-system)**: Movement collision detection
-- **[NPC AI System](../ENTITY_SYSTEMS.md#npc-ai-system)**: Navigation and collision avoidance
+
+- **[Player Control System](../GAME_MECHANICS.md#player-control-system)**:
+  Movement collision detection
+- **[NPC AI System](../ENTITY_SYSTEMS.md#npc-ai-system)**: Navigation and
+  collision avoidance
 - **[Rendering System](#rendering-system)**: Entity picking for interaction
-- **[Event/Trigger Systems](../EVENT_TRIGGER_SYSTEMS.md)**: Spatial trigger detection
+- **[Event/Trigger Systems](../EVENT_TRIGGER_SYSTEMS.md)**: Spatial trigger
+  detection
 
 ### Performance Considerations
+
 - **Collision Optimization**: Use simple collision shapes when possible
 - **Spatial Partitioning**: Group objects by location for faster queries
 - **Collision Culling**: Skip unnecessary collision checks
@@ -337,6 +381,7 @@ End Function
 ## System Integration
 
 ### Data Flow
+
 ```
 Input System → Player Control → Physics System → Rendering System
      ↓               ↓                ↓                ↓
@@ -344,6 +389,7 @@ UI/HUD System  → Game Logic → Entity States → Audio System
 ```
 
 ### Initialization Sequence
+
 ```blitzbasic
 Function InitializeCoreSystems()
     ; 1. Initialize rendering
@@ -362,6 +408,7 @@ End Function
 ```
 
 ### Main Game Loop
+
 ```blitzbasic
 Function MainGameLoop()
     While Not KeyHit(KEY_ESCAPE)
@@ -385,6 +432,7 @@ End Function
 ```
 
 ### Error Handling
+
 ```blitzbasic
 Function HandleCoreErrors()
     ; Graphics errors
@@ -407,28 +455,34 @@ End Function
 ## Performance Optimization
 
 ### Rendering Optimizations
+
 - **Frustum Culling**: Only render visible entities
 - **Occlusion Culling**: Skip hidden objects
 - **Batch Rendering**: Group similar objects
 - **Level of Detail**: Use simpler models for distant objects
 
 ### Physics Optimizations
+
 - **Simple Collision**: Use spheres/boxes instead of polygons
 - **Collision Filtering**: Skip unnecessary collision checks
 - **Spatial Partitioning**: Use grid/quadtree for spatial queries
 - **Collision Cache**: Store and reuse collision results
 
 ### Audio Optimizations
+
 - **Distance Culling**: Skip distant sounds
 - **Channel Pooling**: Reuse audio channels
 - **Audio Streaming**: Stream large audio files
 - **Compression**: Use efficient audio formats
 
 ### Input Optimizations
+
 - **Event Polling**: Use efficient input checking
 - **Input Buffering**: Smooth out input timing
 - **Custom Mapping**: Cache input mappings for fast lookup
 
 ---
 
-*These core systems provide the foundation for all other game systems in SCP: Containment Breach. Their proper integration and optimization are crucial for maintaining the game's performance and immersive experience.*
+_These core systems provide the foundation for all other game systems in SCP:
+Containment Breach. Their proper integration and optimization are crucial for
+maintaining the game's performance and immersive experience._

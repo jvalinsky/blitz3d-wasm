@@ -1,16 +1,23 @@
 # Game Mechanics Documentation
 
 ## Overview
-Game mechanics define the core gameplay experience in SCP: Containment Breach. These systems govern player interaction with the game world, character progression, and the fundamental rules that create the survival horror experience.
+
+Game mechanics define the core gameplay experience in SCP: Containment Breach.
+These systems govern player interaction with the game world, character
+progression, and the fundamental rules that create the survival horror
+experience.
 
 ## Player Control System
 
 ### Purpose
-The player control system handles all player movement and interaction mechanics, creating the immersive first-person experience essential for the horror genre.
+
+The player control system handles all player movement and interaction mechanics,
+creating the immersive first-person experience essential for the horror genre.
 
 ### Core Mechanics
 
 #### Movement System
+
 ```blitzbasic
 ; Player movement variables
 Global PlayerSpeed# = 0.05          ; Base movement speed
@@ -45,6 +52,7 @@ End Function
 ```
 
 #### Mouse Look System
+
 ```blitzbasic
 Function UpdateMouseLook()
     ; Mouse input from [Input System](CORE_SYSTEMS.md#input-system)
@@ -62,6 +70,7 @@ End Function
 ```
 
 #### Stamina System
+
 ```blitzbasic
 ; Stamina variables
 Global PlayerStamina# = 100.0      ; Current stamina
@@ -88,6 +97,7 @@ End Function
 ```
 
 #### Health System
+
 ```blitzbasic
 ; Health variables
 Global PlayerHealth# = 100.0       ; Current health
@@ -117,6 +127,7 @@ End Function
 ```
 
 #### Sanity System
+
 ```blitzbasic
 ; Sanity variables
 Global PlayerSanity# = 100.0       ; Current sanity
@@ -141,6 +152,7 @@ End Function
 ```
 
 #### Blink System
+
 ```blitzbasic
 ; Blink variables (critical for SCP-173)
 Global BlinkTimer# = 0.0          ; Time until next blink
@@ -169,21 +181,29 @@ End Function
 ```
 
 ### Integration Points
-- **[Input System](CORE_SYSTEMS.md#input-system)**: Provides keyboard and mouse input
-- **[Physics System](CORE_SYSTEMS.md#physics-system)**: Handles collision detection for movement
-- **[Entity Systems](ENTITY_SYSTEMS.md)**: Player interactions with NPCs and SCP entities
-- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Player movement triggers events
+
+- **[Input System](CORE_SYSTEMS.md#input-system)**: Provides keyboard and mouse
+  input
+- **[Physics System](CORE_SYSTEMS.md#physics-system)**: Handles collision
+  detection for movement
+- **[Entity Systems](ENTITY_SYSTEMS.md)**: Player interactions with NPCs and SCP
+  entities
+- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Player movement
+  triggers events
 
 ---
 
 ## Inventory System
 
 ### Purpose
-The inventory system manages item collection, organization, and combination mechanics, providing players with tools for survival and puzzle solving.
+
+The inventory system manages item collection, organization, and combination
+mechanics, providing players with tools for survival and puzzle solving.
 
 ### Architecture
 
 #### Item Data Structure
+
 ```blitzbasic
 Type Items
     Field obj%                  ; 3D model handle
@@ -202,6 +222,7 @@ End Type
 ```
 
 #### Inventory Data Structure
+
 ```blitzbasic
 Type Inventory
     Field Items[9]              ; 9 inventory slots (3x3 grid)
@@ -221,6 +242,7 @@ Const ITEM_TYPE_MISC% = 6
 ### Core Functions
 
 #### Item Management
+
 ```blitzbasic
 ; Add item to inventory
 Function AddItemToInventory(item.Items, slot% = -1)
@@ -260,6 +282,7 @@ End Function
 ```
 
 #### Item Combination System
+
 ```blitzbasic
 Type ItemCombination
     Field Item1ID%               ; First item ID
@@ -309,6 +332,7 @@ End Function
 ```
 
 #### Keycard Security System
+
 ```blitzbasic
 ; Keycard security levels (from lowest to highest)
 Const KEYCARD_LEVEL_NONE% = 0
@@ -331,21 +355,28 @@ End Function
 ```
 
 ### Integration Points
+
 - **[UI/HUD Systems](UI_HUD_SYSTEMS.md)**: Visual inventory management
-- **[Input System](CORE_SYSTEMS.md#input-system)**: Mouse-based drag-drop operations
-- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Item usage triggers events
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Inventory state persistence
+- **[Input System](CORE_SYSTEMS.md#input-system)**: Mouse-based drag-drop
+  operations
+- **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Item usage triggers
+  events
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Inventory state
+  persistence
 
 ---
 
 ## Save/Load System
 
 ### Purpose
-The save/load system provides game state persistence, allowing players to save their progress and resume gameplay later.
+
+The save/load system provides game state persistence, allowing players to save
+their progress and resume gameplay later.
 
 ### Architecture
 
 #### Save Data Structure
+
 ```blitzbasic
 Type SaveData
     Field Version%               ; Save file version
@@ -376,6 +407,7 @@ End Type
 ### Core Functions
 
 #### Save Game Function
+
 ```blitzbasic
 Function SaveGame(slot%)
     filename$ = "save" + slot + ".sav"
@@ -419,6 +451,7 @@ End Function
 ```
 
 #### Load Game Function
+
 ```blitzbasic
 Function LoadGame(slot%)
     filename$ = "save" + slot + ".sav"
@@ -466,6 +499,7 @@ End Function
 ```
 
 #### Auto-Save System
+
 ```blitzbasic
 ; Auto-save triggers
 Global AutoSaveTimer# = 0
@@ -489,7 +523,9 @@ End Function
 ```
 
 ### Integration Points
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Provides state serialization
+
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Provides state
+  serialization
 - **[File Format Loaders](FILE_FORMAT_LOADERS.md)**: Handles file I/O operations
 - **[Entity Systems](ENTITY_SYSTEMS.md)**: Saves and restores NPC states
 - **[Room/Level Management](ROOM_LEVEL_MANAGEMENT.md)**: Preserves room states
@@ -499,6 +535,7 @@ End Function
 ## Game Mechanics Integration
 
 ### Update Loop Integration
+
 ```blitzbasic
 Function UpdateGameMechanics()
     ; Player systems
@@ -522,6 +559,7 @@ End Function
 ```
 
 ### State Dependencies
+
 ```
 Player Movement → Stamina Drain → Sprint Ability
 Sanity Level → Visual Effects → Horror Experience
@@ -531,12 +569,14 @@ Save States → Player Experience → Game Accessibility
 ```
 
 ### Performance Considerations
+
 - **Input Buffering**: Smooth out input timing for responsive controls
 - **State Caching**: Cache frequently accessed player state
 - **Auto-Save Optimization**: Minimize save frequency to prevent stuttering
 - **Memory Management**: Efficient inventory data structures
 
 ### Balancing Considerations
+
 - **Movement Speed**: Balance between survival and accessibility
 - **Stamina Drain**: Create tension without frustration
 - **Sanity Effects**: Enhance horror without breaking gameplay
@@ -544,4 +584,6 @@ Save States → Player Experience → Game Accessibility
 
 ---
 
-*Game mechanics form the core interactive experience of SCP: Containment Breach, creating the tension, challenge, and immersion that define the survival horror genre.*
+_Game mechanics form the core interactive experience of SCP: Containment Breach,
+creating the tension, challenge, and immersion that define the survival horror
+genre._

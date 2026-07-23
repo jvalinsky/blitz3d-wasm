@@ -2,22 +2,24 @@
 
 ## Principle
 
-**Use compiled BB code (WASM) for game logic. Use JavaScript only for browser API bindings.**
+**Use compiled BB code (WASM) for game logic. Use JavaScript only for browser
+API bindings.**
 
-SCPCB has extensive BB code for particles, physics, AI, file parsing, etc. We should compile and use that code rather than reimplementing it in JavaScript.
+SCPCB has extensive BB code for particles, physics, AI, file parsing, etc. We
+should compile and use that code rather than reimplementing it in JavaScript.
 
 ## Current State (Problematic)
 
 We've reimplemented too much in JavaScript:
 
-| JS Module | Lines | Should Be |
-|-----------|-------|----------|
-| rmesh.js | 869 | **WASM** - SCPCB has LoadRMesh in MapSystem.bb |
-| physics.js | 552 | **Minimal JS** - only Three.js raycasting, game logic in WASM |
-| b3d.js | 876 | **WASM** - B3D parsing is pure data processing |
-| graphics.js | 2327 | **Split** - Three.js calls in JS, entity logic in WASM |
-| room.js | 347 | **WASM** - SCPCB has room management in MapSystem.bb |
-| animation.js | 150 | **Split** - Three.js animation API in JS, timing in WASM |
+| JS Module    | Lines | Should Be                                                     |
+| ------------ | ----- | ------------------------------------------------------------- |
+| rmesh.js     | 869   | **WASM** - SCPCB has LoadRMesh in MapSystem.bb                |
+| physics.js   | 552   | **Minimal JS** - only Three.js raycasting, game logic in WASM |
+| b3d.js       | 876   | **WASM** - B3D parsing is pure data processing                |
+| graphics.js  | 2327  | **Split** - Three.js calls in JS, entity logic in WASM        |
+| room.js      | 347   | **WASM** - SCPCB has room management in MapSystem.bb          |
+| animation.js | 150   | **Split** - Three.js animation API in JS, timing in WASM      |
 
 ## Correct Architecture
 
@@ -122,6 +124,7 @@ MouseX() -> mouseState.x
 ### Phase 3: Compile SCPCB Systems
 
 Compile these BB files to WASM:
+
 1. MapSystem.bb (LoadRMesh, room loading)
 2. Particles.bb (particle system)
 3. NPCs.bb (AI, pathfinding)
@@ -131,6 +134,7 @@ Compile these BB files to WASM:
 ### Phase 4: Wire Up
 
 WASM calls JS imports for rendering:
+
 ```
 WASM: CreateParticle() 
   -> calls JS: CreateSprite()
@@ -152,6 +156,7 @@ WASM: UpdateParticles()
 ## Example: Particle System
 
 ### Current (Wrong)
+
 ```javascript
 // particles.js - 200 lines of JS reimplementing BB
 class ParticleSystem {
@@ -161,6 +166,7 @@ class ParticleSystem {
 ```
 
 ### Correct
+
 ```javascript
 // particles.js - 10 lines, just imports
 imports.env.CreateSprite = (parent) => { return createThreeSprite(); };
@@ -171,13 +177,13 @@ imports.env.ScaleSprite = (e, w, h) => { ... };
 
 ## Files to Review in SCPCB
 
-| BB File | Lines | Contains |
-|---------|-------|----------|
-| MapSystem.bb | 8750 | LoadRMesh, LoadWorld, room management |
-| NPCs.bb | 7460 | All NPC types and AI |
-| UpdateEvents.bb | ~5000 | Room events, triggers |
-| Items.bb | ~3000 | Inventory, item types |
-| Particles.bb | 288 | Simple particle system |
-| DevilParticleSystem.bb | 421 | Advanced particles |
-| Menu.bb | ~2000 | Menu system |
-| Save.bb | ~1000 | Save/load |
+| BB File                | Lines | Contains                              |
+| ---------------------- | ----- | ------------------------------------- |
+| MapSystem.bb           | 8750  | LoadRMesh, LoadWorld, room management |
+| NPCs.bb                | 7460  | All NPC types and AI                  |
+| UpdateEvents.bb        | ~5000 | Room events, triggers                 |
+| Items.bb               | ~3000 | Inventory, item types                 |
+| Particles.bb           | 288   | Simple particle system                |
+| DevilParticleSystem.bb | 421   | Advanced particles                    |
+| Menu.bb                | ~2000 | Menu system                           |
+| Save.bb                | ~1000 | Save/load                             |

@@ -166,12 +166,12 @@ export function highlightBlitzBasicLine(line: string): string {
     const ch = line[i]!;
 
     // Strings: " ... "
-    if (ch === "\"") {
+    if (ch === '"') {
       let j = i + 1;
       while (j < line.length) {
-        if (line[j] === "\"") {
+        if (line[j] === '"') {
           // allow "" inside a string
-          if (line[j + 1] === "\"") {
+          if (line[j + 1] === '"') {
             j += 2;
             continue;
           }
@@ -259,4 +259,3 @@ export function highlightBlitzBasicLine(line: string): string {
 
   return out;
 }
-

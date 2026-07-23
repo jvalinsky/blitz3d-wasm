@@ -2,7 +2,8 @@
 
 ## Overview
 
-Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in WASM with a TypeScript runtime for browser API bindings.
+Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in
+WASM with a TypeScript runtime for browser API bindings.
 
 ## Design Principle
 
@@ -40,20 +41,22 @@ Blitz3D-WASM compiles Blitz3D BASIC code to WebAssembly, running game logic in W
 
 ### TypeScript Runtime (Production)
 
-The main runtime in `web/src/runtime/` (~9K lines) plus loader/worker (~3K lines):
+The main runtime in `web/src/runtime/` (~9K lines) plus loader/worker (~3K
+lines):
 
-| Module | Lines | Purpose |
-|--------|-------|--------|
-| `core.ts` | ~2066 | Core runtime functions |
-| `graphics.ts` | ~3695 | Three.js integration |
-| `fileio.ts` | ~1010 | Virtual filesystem |
-| `b3d.ts` | ~880 | B3D format parser |
-| `smpk.ts` | ~332 | SMPK format loader |
-| `animation.ts` | ~144 | Animation system |
-| `mesh.ts` | ~278 | Mesh utilities |
-| `xloader.ts` | ~402 | X format loader |
+| Module         | Lines | Purpose                |
+| -------------- | ----- | ---------------------- |
+| `core.ts`      | ~2066 | Core runtime functions |
+| `graphics.ts`  | ~3695 | Three.js integration   |
+| `fileio.ts`    | ~1010 | Virtual filesystem     |
+| `b3d.ts`       | ~880  | B3D format parser      |
+| `smpk.ts`      | ~332  | SMPK format loader     |
+| `animation.ts` | ~144  | Animation system       |
+| `mesh.ts`      | ~278  | Mesh utilities         |
+| `xloader.ts`   | ~402  | X format loader        |
 
 Plus shared systems:
+
 - `shared/command_buffer.ts` - Binary WASM→JS protocol
 - `shared/boot_state_machine.ts` - Startup sequencing
 - `shared/path_alias.ts` - Legacy path resolution
@@ -62,6 +65,7 @@ Plus shared systems:
 ### Thin Demo Runtime
 
 For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
+
 - Basic Three.js entity management
 - Simple input handling
 - Timer and frame management
@@ -69,6 +73,7 @@ For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
 ## What Goes Where
 
 ### In WASM (compiled BB code)
+
 - **Game Logic**: AI, physics, particles, events
 - **Data Structures**: Types, arrays, linked lists
 - **Math**: Distance calculations, interpolation
@@ -76,6 +81,7 @@ For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
 - **Control Flow**: Loops, conditionals, function calls
 
 ### In TypeScript Runtime (browser bindings)
+
 - **3D Rendering**: Three.js wrapper (CreateMesh, PositionEntity, etc.)
 - **Audio**: Web Audio API wrapper (LoadSound, PlaySound)
 - **Input**: DOM events → KeyDown, MouseX, etc.
@@ -85,6 +91,7 @@ For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
 ## Example: Particle System
 
 **BB Code (particles.bb)** - compiled to WASM:
+
 ```blitz
 Type Particles
     Field obj%          ; Sprite handle
@@ -115,18 +122,24 @@ End Function
 ```
 
 **TypeScript Runtime** - implements the imports:
+
 ```typescript
-export function PositionEntity(id: number, x: number, y: number, z: number): void {
-    const entity = entities.get(id);
-    if (entity) entity.obj.position.set(x, y, -z);
+export function PositionEntity(
+  id: number,
+  x: number,
+  y: number,
+  z: number,
+): void {
+  const entity = entities.get(id);
+  if (entity) entity.obj.position.set(x, y, -z);
 }
 
 export function FreeEntity(id: number): void {
-    const entity = entities.get(id);
-    if (entity) {
-        scene.remove(entity.obj);
-        entities.delete(id);
-    }
+  const entity = entities.get(id);
+  if (entity) {
+    scene.remove(entity.obj);
+    entities.delete(id);
+  }
 }
 ```
 
@@ -150,6 +163,7 @@ BB Source → Lexer → Parser → AST → IR → WASM Binary
 ```
 
 **Compiler**: ~17K lines Swift
+
 - Lexer: Tokenizer
 - Parser: Recursive descent (~2.2K lines)
 - AST: Abstract syntax tree
@@ -161,11 +175,11 @@ BB Source → Lexer → Parser → AST → IR → WASM Binary
 
 The WASM module imports from namespaces:
 
-| Module | Purpose | Example Functions |
-|--------|---------|-------------------|
-| `env` | Core Blitz3D API | PositionEntity, CreateSprite, Print |
-| `blitz3d` | Bank/mesh operations | CreateBank, PeekInt |
-| `al` | OpenAL audio | alCreateSource, alSourcePlay |
+| Module    | Purpose              | Example Functions                   |
+| --------- | -------------------- | ----------------------------------- |
+| `env`     | Core Blitz3D API     | PositionEntity, CreateSprite, Print |
+| `blitz3d` | Bank/mesh operations | CreateBank, PeekInt                 |
+| `al`      | OpenAL audio         | alCreateSource, alSourcePlay        |
 
 ## File Structure
 
@@ -195,7 +209,8 @@ web/
 
 ## Command Buffer System
 
-For high-frequency operations, the runtime uses a binary command buffer protocol:
+For high-frequency operations, the runtime uses a binary command buffer
+protocol:
 
 ```
 ┌─────────────────────────────────────┐

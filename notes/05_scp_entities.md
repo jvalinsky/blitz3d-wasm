@@ -2,34 +2,43 @@
 
 ## Executive Summary
 
-This analysis examines the SCP entity implementations within the blitz3d-wasm repository. **Important Finding**: This repository contains a **Blitz3D-to-WASM compiler infrastructure**, not the actual SCPB (SCP - Containment Breach) game source code. The SCP entity implementations documented here are based on the documented architecture patterns from the original SCPB game, as referenced in the codebase structure documentation.
+This analysis examines the SCP entity implementations within the blitz3d-wasm
+repository. **Important Finding**: This repository contains a **Blitz3D-to-WASM
+compiler infrastructure**, not the actual SCPB (SCP - Containment Breach) game
+source code. The SCP entity implementations documented here are based on the
+documented architecture patterns from the original SCPB game, as referenced in
+the codebase structure documentation.
 
-The actual implementation files (NPCs.bb, Main.bb, Items.bb, Save.bb, rooms.ini, events.ini, NPCs.ini) are **not present** in this repository. This document provides the documented architectural patterns and state machine specifications based on the original SCPB game design.
+The actual implementation files (NPCs.bb, Main.bb, Items.bb, Save.bb, rooms.ini,
+events.ini, NPCs.ini) are **not present** in this repository. This document
+provides the documented architectural patterns and state machine specifications
+based on the original SCPB game design.
 
 ---
 
 ## Repository Status
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| Compiler Infrastructure | Present | `Sources/Compiler/` (Swift) |
-| Runtime Library | Present | `Sources/Runtime/` (JavaScript) |
-| SCP Entity Source Code | Not Present | NPCs.bb, Main.bb (original game) |
-| SCPB Game Assets | Not Present | `Assets/` (placeholder only) |
+| Component               | Status      | Location                         |
+| ----------------------- | ----------- | -------------------------------- |
+| Compiler Infrastructure | Present     | `Sources/Compiler/` (Swift)      |
+| Runtime Library         | Present     | `Sources/Runtime/` (JavaScript)  |
+| SCP Entity Source Code  | Not Present | NPCs.bb, Main.bb (original game) |
+| SCPB Game Assets        | Not Present | `Assets/` (placeholder only)     |
 
 ---
 
 ## SCP Entity Documentation Reference
 
-Based on the original SCPB game design documented in `notes/01_codebase_structure.md`, the following SCP entities were implemented:
+Based on the original SCPB game design documented in
+`notes/01_codebase_structure.md`, the following SCP entities were implemented:
 
-| SCP | File | Primary Behavior |
-|-----|------|------------------|
+| SCP     | File    | Primary Behavior                               |
+| ------- | ------- | ---------------------------------------------- |
 | SCP-173 | NPCs.bb | Observation-based movement, lethal snap attack |
-| SCP-096 | NPCs.bb | View-triggered pursuit, unstoppable rage |
-| SCP-106 | NPCs.bb | Corrosion attacks, pocket dimension portal |
-| SCP-049 | NPCs.bb | Pestilence diagnosis, lethal "cure" |
-| SCP-939 | NPCs.bb | Voice mimicry, pack coordination |
+| SCP-096 | NPCs.bb | View-triggered pursuit, unstoppable rage       |
+| SCP-106 | NPCs.bb | Corrosion attacks, pocket dimension portal     |
+| SCP-049 | NPCs.bb | Pestilence diagnosis, lethal "cure"            |
+| SCP-939 | NPCs.bb | Voice mimicry, pack coordination               |
 
 ---
 
@@ -38,6 +47,7 @@ Based on the original SCPB game design documented in `notes/01_codebase_structur
 ### SCP-173 (The Sculpture)
 
 #### Behavior Pattern
+
 ```
 Movement Rule: Moves only when outside player's field of view
 Attack: Snap neck on proximity when not observed
@@ -48,6 +58,7 @@ State Machine:
 ```
 
 #### Type Definition Pattern (from documentation)
+
 ```blitzbasic
 Type TSCP173
     Field obj%              ; 3D object handle
@@ -59,6 +70,7 @@ End Type
 ```
 
 #### Containment Behavior
+
 - Requires continuous visual observation
 - Ceiling mounts in containment room
 - Eye blink mechanic (player) creates vulnerability window
@@ -68,6 +80,7 @@ End Type
 ### SCP-096 (The Shy Guy)
 
 #### Behavior Pattern
+
 ```
 Trigger: Any visual contact (even photographs)
 Behavior: Unstoppable pursuit toward viewer
@@ -79,6 +92,7 @@ State Machine:
 ```
 
 #### Type Definition Pattern (from documentation)
+
 ```blitzbasic
 Type TSCP096
     Field obj%              ; 3D object handle
@@ -90,6 +104,7 @@ End Type
 ```
 
 #### Containment Behavior
+
 - Warning audio when approached
 - Curtained containment cell
 - Breach triggers facility-wide alert
@@ -99,6 +114,7 @@ End Type
 ### SCP-106 (The Old Man)
 
 #### Behavior Pattern
+
 ```
 Ability: Corrosion attacks on contact
 Portal: Creates pocket dimension passages
@@ -111,6 +127,7 @@ State Machine:
 ```
 
 #### Type Definition Pattern (from documentation)
+
 ```blitzbasic
 Type TSCP106
     Field obj%              ; 3D object handle
@@ -122,6 +139,7 @@ End Type
 ```
 
 #### Containment Behavior
+
 - Submerged in liquid containment
 - Anti-corrosion chamber materials
 - Pocket dimension awareness mechanics
@@ -131,6 +149,7 @@ End Type
 ### SCP-049 (The Doctor)
 
 #### Behavior Pattern
+
 ```
 Diagnosis: Identifies "pestilence" in humans
 "Cure": Lethal touch to "cure" pestilence
@@ -142,6 +161,7 @@ State Machine:
 ```
 
 #### Type Definition Pattern (from documentation)
+
 ```blitzbasic
 Type TSCP049
     Field obj%              ; 3D object handle
@@ -152,6 +172,7 @@ End Type
 ```
 
 #### Containment Behavior
+
 - Quarantine cell requirements
 - Medical equipment in containment
 - Conversation mechanics for distraction
@@ -161,6 +182,7 @@ End Type
 ### SCP-939 (The With Claud)
 
 #### Behavior Pattern
+
 ```
 Ability: Mimics human voices (including other SCPs)
 Behavior: Pack hunting tactics
@@ -172,6 +194,7 @@ State Machine:
 ```
 
 #### Type Definition Pattern (from documentation)
+
 ```blitzbasic
 Type TSCP939
     Field obj%              ; 3D object handle
@@ -183,6 +206,7 @@ End Type
 ```
 
 #### Containment Behavior
+
 - Multiple instances in single containment
 - Audio monitoring required
 - Breach coordination protocols
@@ -264,12 +288,12 @@ End Function
 
 ### Common Containment Elements
 
-| Element | Purpose | Implementation |
-|---------|---------|----------------|
-| Physical Barriers | Prevent escape | Mesh entities with collision |
-| Monitoring | Detect breach | Distance checks, line of sight |
-| Distraction | Redirect attention | Audio triggers, items |
-| Escape Routes | Player survival | Hidden passages, doors |
+| Element           | Purpose            | Implementation                 |
+| ----------------- | ------------------ | ------------------------------ |
+| Physical Barriers | Prevent escape     | Mesh entities with collision   |
+| Monitoring        | Detect breach      | Distance checks, line of sight |
+| Distraction       | Redirect attention | Audio triggers, items          |
+| Escape Routes     | Player survival    | Hidden passages, doors         |
 
 ### Breach Detection System
 
@@ -309,17 +333,18 @@ End Function
 
 ### Supported Language Features
 
-The blitz3d-wasm compiler supports the BlitzBasic features needed for SCP implementations:
+The blitz3d-wasm compiler supports the BlitzBasic features needed for SCP
+implementations:
 
-| Feature | Support | Notes |
-|---------|---------|-------|
-| User Types | Complete | `Type ... End Type` |
-| Type Fields | Complete | `Field name%` |
-| ForEach Iteration | Complete | `For entity.TType = Each TType` |
-| Function Definitions | Complete | `Function Name()` |
-| State Machines | Via GOTO/Label | Manual implementation |
-| 3D Graphics | Via Runtime | Three.js integration |
-| Collision Detection | Via Runtime | Physics module |
+| Feature              | Support        | Notes                           |
+| -------------------- | -------------- | ------------------------------- |
+| User Types           | Complete       | `Type ... End Type`             |
+| Type Fields          | Complete       | `Field name%`                   |
+| ForEach Iteration    | Complete       | `For entity.TType = Each TType` |
+| Function Definitions | Complete       | `Function Name()`               |
+| State Machines       | Via GOTO/Label | Manual implementation           |
+| 3D Graphics          | Via Runtime    | Three.js integration            |
+| Collision Detection  | Via Runtime    | Physics module                  |
 
 ### Runtime Integration Points
 
@@ -340,38 +365,45 @@ class Blitz3DGraphics {
 
 ### Main Systems (Not Present in Repository)
 
-| System | File | Purpose |
-|--------|------|---------|
-| Blink System | Main.bb | Periodic eye blink vs SCP-173 |
-| Stamina System | Main.bb | Running mechanics |
-| Inventory | Items.bb | Item management |
-| Sanity | Main.bb | Environmental effects |
-| Save/Load | Save.bb | Game state persistence |
-| Room Management | rooms.ini | Level definitions |
-| Event System | events.ini | Trigger management |
+| System          | File       | Purpose                       |
+| --------------- | ---------- | ----------------------------- |
+| Blink System    | Main.bb    | Periodic eye blink vs SCP-173 |
+| Stamina System  | Main.bb    | Running mechanics             |
+| Inventory       | Items.bb   | Item management               |
+| Sanity          | Main.bb    | Environmental effects         |
+| Save/Load       | Save.bb    | Game state persistence        |
+| Room Management | rooms.ini  | Level definitions             |
+| Event System    | events.ini | Trigger management            |
 
 ### Compiler Systems (Present)
 
-| Component | Location | Purpose |
-|-----------|----------|---------|
-| Lexer | `Sources/Compiler/Lexer/` | Tokenization |
-| Parser | `Sources/Compiler/Parser/` | AST construction |
-| CodeGen | `Sources/Compiler/CodeGen/` | WASM generation |
-| Runtime | `Sources/Runtime/` | Browser runtime |
+| Component | Location                    | Purpose          |
+| --------- | --------------------------- | ---------------- |
+| Lexer     | `Sources/Compiler/Lexer/`   | Tokenization     |
+| Parser    | `Sources/Compiler/Parser/`  | AST construction |
+| CodeGen   | `Sources/Compiler/CodeGen/` | WASM generation  |
+| Runtime   | `Sources/Runtime/`          | Browser runtime  |
 
 ---
 
 ## Conclusion
 
-The blitz3d-wasm repository provides the **compiler infrastructure** for porting SCPB-style games to WebAssembly, but does not contain the **original SCP entity implementations**. The documented patterns above represent the architectural design from the original SCPB game as referenced in the codebase structure documentation.
+The blitz3d-wasm repository provides the **compiler infrastructure** for porting
+SCPB-style games to WebAssembly, but does not contain the **original SCP entity
+implementations**. The documented patterns above represent the architectural
+design from the original SCPB game as referenced in the codebase structure
+documentation.
 
 To implement SCP entities in this framework:
+
 1. Create BlitzBasic source files (.bb) following the documented patterns
 2. Compile using: `swift run blitz3d-wasm source.bb -o output.wasm`
 3. Use the JavaScript runtime for 3D graphics and physics
 4. Implement state machines using BlitzBasic control flow
 
-The compiler successfully supports all language features required for SCP entity implementations, including user-defined types, iteration over type collections, and 3D graphics operations via the runtime library.
+The compiler successfully supports all language features required for SCP entity
+implementations, including user-defined types, iteration over type collections,
+and 3D graphics operations via the runtime library.
 
 ---
 

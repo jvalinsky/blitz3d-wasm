@@ -10,8 +10,10 @@ description: Port SCPCB audio behavior (FMOD-style LoadSound/PlaySound/Channel* 
 - `FMod.bb` initializes FMOD and defines constants like `Mode=2` (looping).
 - `StrictLoads.bb` provides:
   - `LoadSound_Strict`, `PlaySound_Strict`, `FreeSound_Strict`
-  - streaming helpers (`StreamSound_Strict`, `StopStream_Strict`, `SetStream*`, `IsStreamPlaying_Strict`)
-  - channel semantics: `ChannelPlaying`, `ChannelVolume`, `ChannelPan`, `ChannelPitch`, `StopChannel`, `PauseChannel`
+  - streaming helpers (`StreamSound_Strict`, `StopStream_Strict`, `SetStream*`,
+    `IsStreamPlaying_Strict`)
+  - channel semantics: `ChannelPlaying`, `ChannelVolume`, `ChannelPan`,
+    `ChannelPitch`, `StopChannel`, `PauseChannel`
 
 ## What the web runtime provides (repo)
 
@@ -25,13 +27,17 @@ description: Port SCPCB audio behavior (FMOD-style LoadSound/PlaySound/Channel* 
 
 - **Sync vs async**:
   - SCPCB assumes `LoadSound` is synchronous; WebAudio decoding is async.
-  - Decide whether to (a) preload key sounds, (b) allow “0 until loaded”, or (c) block on preload groups.
+  - Decide whether to (a) preload key sounds, (b) allow “0 until loaded”, or (c)
+    block on preload groups.
 - **Looping semantics**:
-  - SCPCB uses `Mode=2` for loops; ensure loop flags map to `AudioBufferSourceNode.loop`.
+  - SCPCB uses `Mode=2` for loops; ensure loop flags map to
+    `AudioBufferSourceNode.loop`.
 - **Channel identity**:
-  - SCPCB stores channel ids and polls `ChannelPlaying`; ensure ids stay stable and are cleaned up on end.
+  - SCPCB stores channel ids and polls `ChannelPlaying`; ensure ids stay stable
+    and are cleaned up on end.
 - **Streaming**:
-  - SCPCB “streams” music; in web port you may model this as regular decoded buffers initially, then upgrade to streaming if needed.
+  - SCPCB “streams” music; in web port you may model this as regular decoded
+    buffers initially, then upgrade to streaming if needed.
 
 ## Recommended workflow
 
@@ -41,5 +47,5 @@ description: Port SCPCB audio behavior (FMOD-style LoadSound/PlaySound/Channel* 
 3. If timing matters (e.g., immediate `ChannelPlaying` after `PlaySound`):
    - Add a deterministic “loaded” state for sounds and/or preload those assets.
 4. Verify with a narrow repro:
-   - Call `LoadSound_Strict` + `PlaySound_Strict` on a known `.ogg` and ensure `ChannelPlaying` toggles as expected.
-
+   - Call `LoadSound_Strict` + `PlaySound_Strict` on a known `.ogg` and ensure
+     `ChannelPlaying` toggles as expected.

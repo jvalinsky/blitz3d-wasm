@@ -18,15 +18,22 @@ tags: [compiler, handle-arrays, type-system, scpb, implemented]
 
 ## Overview
 
-Handle arrays are a critical BlitzBasic feature where Type fields can be declared as arrays of handles (object references). This feature is extensively used in SCP: Containment Breach for pathfinding, entity relationships, and complex data structures.
+Handle arrays are a critical BlitzBasic feature where Type fields can be
+declared as arrays of handles (object references). This feature is extensively
+used in SCP: Containment Breach for pathfinding, entity relationships, and
+complex data structures.
 
-🔗 **Related:** [Compilation Gaps](compilation-gaps.md) | [Object References](object-references.md) | [NPC AI](../../game-systems/entities/npc-ai.md) | [Status Update](../../COMPILER_STATUS_UPDATE_20260123.md)
+🔗 **Related:** [Compilation Gaps](compilation-gaps.md) |
+[Object References](object-references.md) |
+[NPC AI](../../game-systems/entities/npc-ai.md) |
+[Status Update](../../COMPILER_STATUS_UPDATE_20260123.md)
 
 ## Current Implementation Status
 
 **✅ FULLY IMPLEMENTED** - Handle arrays are now working in the compiler
 
 **Implementation Details:**
+
 - ✅ Parser support for `Field Path.WayPoints[20]` syntax
 - ✅ Code generation for handle array storage and retrieval
 - ✅ Multi-dimensional field array support
@@ -45,7 +52,8 @@ Type NPCs
 End Type
 ```
 
-**Compilation Result:** Parser accepts syntax, but code generation fails with runtime errors.
+**Compilation Result:** Parser accepts syntax, but code generation fails with
+runtime errors.
 
 ## Technical Requirements
 
@@ -53,7 +61,8 @@ End Type
 
 **File:** `Sources/Compiler/CodeGen/TypeHandling.swift`
 
-Current implementation only tracks scalar field types. Need to extend to handle arrays:
+Current implementation only tracks scalar field types. Need to extend to handle
+arrays:
 
 ```swift
 struct FieldInfo {
@@ -123,6 +132,7 @@ func generateHandleArrayAccess(_ fieldAccess: FieldAccessNode, _ indices: [Expre
 ## SCPB Usage Patterns
 
 ### Pathfinding Systems
+
 ```blitzbasic
 ; NPC navigation - currently fails compilation
 Type NPCs
@@ -138,6 +148,7 @@ End Function
 ```
 
 ### Entity Relationships
+
 ```blitzbasic
 ; MTF squad coordination - currently fails
 Type MTFUnit
@@ -153,6 +164,7 @@ End Function
 ```
 
 ### Inventory Systems
+
 ```blitzbasic
 ; Item management - currently fails
 Type Player
@@ -170,21 +182,25 @@ End Function
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure (Week 1)
+
 1. Extend TypeContext to track handle array dimensions
 2. Update field parsing to capture array information
 3. Add handle array memory allocation
 
 ### Phase 2: Code Generation (Week 2)
+
 1. Implement handle array access in ExpressionGeneration
 2. Add bounds checking for array access
 3. Update AST to support handle array operations
 
 ### Phase 3: Testing & Validation (Week 3)
+
 1. Test basic handle array operations
 2. Validate SCPB pathfinding compilation
 3. Performance testing with large arrays
 
 ### Phase 4: Advanced Features (Week 4)
+
 1. Multi-dimensional handle arrays
 2. Handle array assignment operations
 3. Integration with existing type system
@@ -192,6 +208,7 @@ End Function
 ## Testing Strategy
 
 ### Unit Tests
+
 ```swift
 func testHandleArrayDeclaration() {
     let code = """
@@ -212,6 +229,7 @@ func testHandleArrayAccess() {
 ```
 
 ### Integration Tests
+
 ```blitzbasic
 ; Test SCPB-style handle arrays
 Type NPCs
@@ -233,7 +251,8 @@ End Function
 
 ## Success Criteria
 
-- **Handle Array Declaration:** `Field Path.WayPoints[20]` compiles without errors
+- **Handle Array Declaration:** `Field Path.WayPoints[20]` compiles without
+  errors
 - **Handle Array Access:** `npc\Path[index] = waypoint` generates correct WASM
 - **SCPB Pathfinding:** NPC navigation systems compile and execute
 - **Memory Management:** Proper allocation and bounds checking
@@ -249,11 +268,15 @@ End Function
 ## Risk Assessment
 
 ### High Risk
-- **Memory Layout Changes:** Handle arrays may require different memory layout than primitive arrays
-- **Type System Complexity:** Tracking handle vs primitive arrays adds complexity
+
+- **Memory Layout Changes:** Handle arrays may require different memory layout
+  than primitive arrays
+- **Type System Complexity:** Tracking handle vs primitive arrays adds
+  complexity
 - **Performance Impact:** Array bounds checking may affect performance
 
 ### Mitigation
+
 - **Incremental Implementation:** Start with single-dimensional arrays
 - **Comprehensive Testing:** Test with real SCPB code patterns
 - **Fallback Support:** Maintain compatibility with existing code
@@ -267,4 +290,5 @@ End Function
 
 ---
 
-*Implementation of handle arrays is the highest-priority missing feature, blocking ~25% of SCPB compilation and enabling complex game systems.*
+_Implementation of handle arrays is the highest-priority missing feature,
+blocking ~25% of SCPB compilation and enabling complex game systems._

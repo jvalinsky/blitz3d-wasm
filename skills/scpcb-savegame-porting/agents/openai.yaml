@@ -2,4 +2,3 @@ interface:
   display_name: "SCPCB Savegame Porting"
   short_description: "Port Save.bb to browser persistence/VFS"
   default_prompt: "Use $scpcb-savegame-porting to decide disable vs implement SCPCB saves, then outline the minimal Save.bb changes and the runtime storage hooks needed."
-

@@ -18,7 +18,13 @@ export class NativeAnimation {
    * Start/stop animation on an entity.
    * Mode: 0=stop, 1=loop, 2=pingpong, 3=oneshot
    */
-  animate(entityId: number, mode: number, speed: number, _seq: number, _trans: number): void {
+  animate(
+    entityId: number,
+    mode: number,
+    speed: number,
+    _seq: number,
+    _trans: number,
+  ): void {
     // The Swift engine handles animation state via entity properties.
     // We set the animation mode and speed on the entity.
     // Sequence handling is done via animDataId in the engine.

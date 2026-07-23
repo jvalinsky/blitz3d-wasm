@@ -46,7 +46,7 @@ const parseArgs = (args: string[]): Options => {
           "  --unique-only        only print strings with count==1",
           "",
           "Examples:",
-          "  deno run -A Tools/memleak/fxsnapshot_strings.ts /path/to/file.fxsnapshot --kind both --match \"wasm|WebGL|THREE\"",
+          '  deno run -A Tools/memleak/fxsnapshot_strings.ts /path/to/file.fxsnapshot --kind both --match "wasm|WebGL|THREE"',
         ].join("\n"),
       );
       Deno.exit(0);
@@ -141,7 +141,9 @@ const main = async () => {
     strings.push(...extractAsciiRuns(data, opts.minLen));
   }
 
-  const filtered = opts.match ? strings.filter((s) => opts.match!.test(s)) : strings;
+  const filtered = opts.match
+    ? strings.filter((s) => opts.match!.test(s))
+    : strings;
 
   const counts = new Map<string, number>();
   for (const s of filtered) counts.set(s, (counts.get(s) ?? 0) + 1);
@@ -152,7 +154,9 @@ const main = async () => {
 
   console.log(`file: ${opts.path}`);
   console.log(`bytes: ${raw.length} (raw) -> ${data.length} (decoded)`);
-  console.log(`extracted: ${strings.length} strings (${counts.size} unique after filter)`);
+  console.log(
+    `extracted: ${strings.length} strings (${counts.size} unique after filter)`,
+  );
   if (opts.match) console.log(`match: ${opts.match}`);
   console.log(`kind: ${opts.kind} minLen: ${opts.minLen} top: ${opts.top}`);
 

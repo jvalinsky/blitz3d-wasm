@@ -49,7 +49,12 @@ export const enum CmdOpcode {
 }
 
 export type Cmd =
-  | { op: CmdOpcode.CreateEntity; entityType: number; parent: number; id: number }
+  | {
+    op: CmdOpcode.CreateEntity;
+    entityType: number;
+    parent: number;
+    id: number;
+  }
   | { op: CmdOpcode.DestroyEntity; id: number }
   | {
     op: CmdOpcode.SetTransform;
@@ -61,12 +66,32 @@ export type Cmd =
   | { op: CmdOpcode.DebugLogPtrLen; ptr: number; len: number }
   | { op: CmdOpcode.SetVisibility; id: number; visible: number }
   | { op: CmdOpcode.SetMaterial; id: number; materialId: number }
-  | { op: CmdOpcode.PlaySound; soundId: number; volume: number; loop: number; outChannelPtr?: number }
+  | {
+    op: CmdOpcode.PlaySound;
+    soundId: number;
+    volume: number;
+    loop: number;
+    outChannelPtr?: number;
+  }
   | { op: CmdOpcode.SetPosition; id: number; x: number; y: number; z: number }
-  | { op: CmdOpcode.SetRotationEuler; id: number; pitch: number; yaw: number; roll: number; global: number }
+  | {
+    op: CmdOpcode.SetRotationEuler;
+    id: number;
+    pitch: number;
+    yaw: number;
+    roll: number;
+    global: number;
+  }
   | { op: CmdOpcode.SetScale; id: number; x: number; y: number; z: number }
   | { op: CmdOpcode.MoveEntity; id: number; x: number; y: number; z: number }
-  | { op: CmdOpcode.TurnEntity; id: number; pitch: number; yaw: number; roll: number; global: number }
+  | {
+    op: CmdOpcode.TurnEntity;
+    id: number;
+    pitch: number;
+    yaw: number;
+    roll: number;
+    global: number;
+  }
   | { op: CmdOpcode.SetParent; id: number; parent: number; global: number }
   | { op: CmdOpcode.LoadMesh; id: number; parent: number; pathPtr: number }
   | { op: CmdOpcode.LoadAnimMesh; id: number; parent: number; pathPtr: number }
@@ -78,16 +103,38 @@ export type Cmd =
   | { op: CmdOpcode.BrushColor; id: number; r: number; g: number; b: number }
   | { op: CmdOpcode.BrushAlpha; id: number; a: number }
   | { op: CmdOpcode.BrushShininess; id: number; s: number }
-  | { op: CmdOpcode.BrushTexture; brushId: number; textureId: number; frame: number; index: number }
-  | { op: CmdOpcode.EntityTexture; entityId: number; textureId: number; frame: number; index: number }
-  | { op: CmdOpcode.EntityColor; entityId: number; r: number; g: number; b: number }
+  | {
+    op: CmdOpcode.BrushTexture;
+    brushId: number;
+    textureId: number;
+    frame: number;
+    index: number;
+  }
+  | {
+    op: CmdOpcode.EntityTexture;
+    entityId: number;
+    textureId: number;
+    frame: number;
+    index: number;
+  }
+  | {
+    op: CmdOpcode.EntityColor;
+    entityId: number;
+    r: number;
+    g: number;
+    b: number;
+  }
   | { op: CmdOpcode.EntityAlpha; entityId: number; a: number }
   | { op: CmdOpcode.EntityShininess; entityId: number; s: number }
   | { op: CmdOpcode.EntityFX; entityId: number; fx: number }
   | { op: CmdOpcode.EntityBlend; entityId: number; blend: number }
   | { op: CmdOpcode.FreeEntity; id: number };
 
-export const initCmdBuf = (buffer: ArrayBuffer, byteOffset = 0, totalBytes?: number) => {
+export const initCmdBuf = (
+  buffer: ArrayBuffer,
+  byteOffset = 0,
+  totalBytes?: number,
+) => {
   const bytes = totalBytes ?? (buffer.byteLength - byteOffset);
   if (bytes < CMDB_HEADER_BYTES) throw new Error("CMDB: buffer too small");
   const dv = new DataView(buffer, byteOffset, bytes);
@@ -101,17 +148,22 @@ export const initCmdBuf = (buffer: ArrayBuffer, byteOffset = 0, totalBytes?: num
 };
 
 export const validateCmdBuf = (dv: DataView) => {
-  if (dv.byteLength < CMDB_HEADER_BYTES) throw new Error("CMDB: buffer too small");
+  if (dv.byteLength < CMDB_HEADER_BYTES) {
+    throw new Error("CMDB: buffer too small");
+  }
   const magic = dv.getUint32(0, true);
   if (magic !== CMDB_MAGIC) throw new Error("CMDB: bad magic");
   const version = dv.getUint32(4, true);
-  if (version !== CMDB_VERSION) throw new Error(`CMDB: unsupported version ${version}`);
+  if (version !== CMDB_VERSION) {
+    throw new Error(`CMDB: unsupported version ${version}`);
+  }
   const total = dv.getUint32(8, true);
   if (total !== dv.byteLength) throw new Error("CMDB: totalBytes mismatch");
 };
 
 const getWriteOff = (dv: DataView) => dv.getUint32(12, true) >>> 0;
-const setWriteOff = (dv: DataView, v: number) => dv.setUint32(12, v >>> 0, true);
+const setWriteOff = (dv: DataView, v: number) =>
+  dv.setUint32(12, v >>> 0, true);
 const getReadOff = (dv: DataView) => dv.getUint32(16, true) >>> 0;
 const setReadOff = (dv: DataView, v: number) => dv.setUint32(16, v >>> 0, true);
 const getFlags = (dv: DataView) => dv.getUint32(20, true) >>> 0;
@@ -128,10 +180,14 @@ const ensureSpace = (dv: DataView, bytesNeeded: number) => {
   }
 };
 
-const writeU32 = (dv: DataView, relOff: number, v: number) => dv.setUint32(CMDB_HEADER_BYTES + relOff, v >>> 0, true);
-const writeF32 = (dv: DataView, relOff: number, v: number) => dv.setFloat32(CMDB_HEADER_BYTES + relOff, v, true);
-const readU32 = (dv: DataView, relOff: number) => dv.getUint32(CMDB_HEADER_BYTES + relOff, true) >>> 0;
-const readF32 = (dv: DataView, relOff: number) => dv.getFloat32(CMDB_HEADER_BYTES + relOff, true);
+const writeU32 = (dv: DataView, relOff: number, v: number) =>
+  dv.setUint32(CMDB_HEADER_BYTES + relOff, v >>> 0, true);
+const writeF32 = (dv: DataView, relOff: number, v: number) =>
+  dv.setFloat32(CMDB_HEADER_BYTES + relOff, v, true);
+const readU32 = (dv: DataView, relOff: number) =>
+  dv.getUint32(CMDB_HEADER_BYTES + relOff, true) >>> 0;
+const readF32 = (dv: DataView, relOff: number) =>
+  dv.getFloat32(CMDB_HEADER_BYTES + relOff, true);
 
 // Command encoding:
 // u32 opcode
@@ -178,16 +234,26 @@ export const writeCmd = (dv: DataView, cmd: Cmd) => {
       commit(byteLen);
       writeU32(dv, base + 8, cmd.id);
       let o = base + 12;
-      writeF32(dv, o, cmd.pos[0]); o += 4;
-      writeF32(dv, o, cmd.pos[1]); o += 4;
-      writeF32(dv, o, cmd.pos[2]); o += 4;
-      writeF32(dv, o, cmd.rot[0]); o += 4;
-      writeF32(dv, o, cmd.rot[1]); o += 4;
-      writeF32(dv, o, cmd.rot[2]); o += 4;
-      writeF32(dv, o, cmd.rot[3]); o += 4;
-      writeF32(dv, o, cmd.scl[0]); o += 4;
-      writeF32(dv, o, cmd.scl[1]); o += 4;
-      writeF32(dv, o, cmd.scl[2]); o += 4;
+      writeF32(dv, o, cmd.pos[0]);
+      o += 4;
+      writeF32(dv, o, cmd.pos[1]);
+      o += 4;
+      writeF32(dv, o, cmd.pos[2]);
+      o += 4;
+      writeF32(dv, o, cmd.rot[0]);
+      o += 4;
+      writeF32(dv, o, cmd.rot[1]);
+      o += 4;
+      writeF32(dv, o, cmd.rot[2]);
+      o += 4;
+      writeF32(dv, o, cmd.rot[3]);
+      o += 4;
+      writeF32(dv, o, cmd.scl[0]);
+      o += 4;
+      writeF32(dv, o, cmd.scl[1]);
+      o += 4;
+      writeF32(dv, o, cmd.scl[2]);
+      o += 4;
       return;
     }
     case CmdOpcode.DebugLogPtrLen: {
@@ -445,7 +511,11 @@ export const drainCmds = (dv: DataView, onCmd: (cmd: Cmd) => void) => {
       case CmdOpcode.SetTransform: {
         const id = readU32(dv, r + 8);
         let o = r + 12;
-        const pos: [number, number, number] = [readF32(dv, o), readF32(dv, o + 4), readF32(dv, o + 8)];
+        const pos: [number, number, number] = [
+          readF32(dv, o),
+          readF32(dv, o + 4),
+          readF32(dv, o + 8),
+        ];
         o += 12;
         const rot: [number, number, number, number] = [
           readF32(dv, o),
@@ -454,7 +524,11 @@ export const drainCmds = (dv: DataView, onCmd: (cmd: Cmd) => void) => {
           readF32(dv, o + 12),
         ];
         o += 16;
-        const scl: [number, number, number] = [readF32(dv, o), readF32(dv, o + 4), readF32(dv, o + 8)];
+        const scl: [number, number, number] = [
+          readF32(dv, o),
+          readF32(dv, o + 4),
+          readF32(dv, o + 8),
+        ];
         onCmd({ op, id, pos, rot, scl });
         break;
       }
@@ -663,4 +737,5 @@ export const drainCmds = (dv: DataView, onCmd: (cmd: Cmd) => void) => {
   setWriteOff(dv, 0);
 };
 
-export const hasOverflowed = (dv: DataView) => (getFlags(dv) & CmdBufFlag.Overflow) !== 0;
+export const hasOverflowed = (dv: DataView) =>
+  (getFlags(dv) & CmdBufFlag.Overflow) !== 0;

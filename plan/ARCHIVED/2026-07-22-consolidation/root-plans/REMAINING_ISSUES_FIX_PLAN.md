@@ -1,7 +1,6 @@
 # Comprehensive Plan to Fix All Remaining SCPCB Issues
 
-**Date**: 2026-01-27
-**Current Status**: 49/52 files passing (94.2%)
+**Date**: 2026-01-27 **Current Status**: 49/52 files passing (94.2%)
 **Objective**: Achieve 100% compilation success (52/52 files)
 
 ---
@@ -9,30 +8,34 @@
 ## Executive Summary
 
 Three files remain problematic:
+
 1. **MusicPlayer.bb** - Parser issue (via BlitzAL.bb includes)
 2. **Map Creator/window3d.bb** - Parser edge case: `(expr)*factor` pattern
 3. **Map Creator/mapcreator_new.bb** - Local variable overflow (530 errors)
 
-**Estimated Total Effort**: 6-10 hours
-**Priority**: High (completion of SCPCB port)
+**Estimated Total Effort**: 6-10 hours **Priority**: High (completion of SCPCB
+port)
 
 ---
 
 ## Issue #1: Parser - Complex Expression Patterns
 
 ### Current Status
+
 - ✅ Fixed: `Text (x+width/2), y` pattern
 - ✅ Fixed: `alInit(x, y)` with parens
 - ❌ Broken: `Text (x)*factor, y` pattern
 - ❌ Broken: `alInit(x, y)` without space (edge case)
 
 ### Files Affected
+
 - MusicPlayer.bb (via BlitzAL.bb)
 - Map Creator/window3d.bb (18 occurrences)
 
 ### Root Cause Analysis
 
 **The Ambiguity Problem**:
+
 ```blitz3d
 ' Case 1: Function call with parens
 alInit(x, y)        ' This IS function call syntax
@@ -45,6 +48,7 @@ Text (x)*factor, y  ' This is NOT function call syntax (edge case)
 ```
 
 Parser cannot distinguish without:
+
 - Whitespace information (currently discarded by lexer)
 - Full lookahead (expensive)
 - Backtracking (complex to implement)
@@ -52,9 +56,9 @@ Parser cannot distinguish without:
 ### Solution Strategy: Two-Phase Approach
 
 #### Phase 1: Add Whitespace Tracking (RECOMMENDED)
-**Effort**: 3-4 hours
-**Complexity**: Medium
-**Impact**: Solves problem completely
+
+**Effort**: 3-4 hours **Complexity**: Medium **Impact**: Solves problem
+completely
 
 **Implementation Steps**:
 
@@ -100,21 +104,24 @@ Parser cannot distinguish without:
    ```
 
 **Pros**:
+
 - Solves all cases completely
 - Matches Blitz3D's actual behavior
 - Future-proof solution
 
 **Cons**:
+
 - Requires lexer changes (ripple effect)
 - Need to update all Token creation sites
 - More testing required
 
 #### Phase 2: Pragmatic Workaround (ALTERNATIVE)
-**Effort**: 30 minutes
-**Complexity**: Low
-**Impact**: Fixes files with minimal source changes
+
+**Effort**: 30 minutes **Complexity**: Low **Impact**: Fixes files with minimal
+source changes
 
 **Option A: Modify Source Files**
+
 ```blitz3d
 ' window3d.bb line 1753 - BEFORE:
 Text (x+width/2)*ResFactor,(y+height/2-1)*ResFactor, txt, True, True
@@ -128,6 +135,7 @@ Text tx, ty, txt, True, True
 Apply to 18 occurrences in window3d.bb.
 
 **Option B: Add Parser Heuristic**
+
 ```swift
 // In parseIdentifierStatement()
 // After parsing args from leftParen...rightParen
@@ -141,16 +149,19 @@ if isBinaryOperator(currentToken) {
 ```
 
 **Pros**:
+
 - Quick fix
 - No compiler changes (Option A)
 - Works for current codebase
 
 **Cons**:
+
 - Modifies source files (Option A)
 - Doesn't solve root cause
 - Fragile heuristics (Option B)
 
 ### Recommendation
+
 **Phase 1 (Whitespace Tracking)** if time permits (production-quality solution).
 **Phase 2A (Source Modification)** for immediate fix.
 
@@ -159,16 +170,19 @@ if isBinaryOperator(currentToken) {
 ## Issue #2: Local Variable Index Overflow
 
 ### Current Status
+
 - ❌ File: Map Creator/mapcreator_new.bb
 - ❌ Error: `local variable out of range (max 1)` (530 occurrences)
 - ❌ Root: Function declares 2 locals but accesses index 21+
 
 ### Files Affected
+
 - Map Creator/mapcreator_new.bb (Main function - 2140 lines)
 
 ### Root Cause Analysis
 
 **Problem Flow**:
+
 1. Blitz3D allows implicit variable declarations (assignment without `Local`)
 2. Compiler tracks variables internally but miscounts when generating WASM
 3. WASM function header declares incorrect local count
@@ -176,11 +190,13 @@ if isBinaryOperator(currentToken) {
 5. WASM validation fails
 
 **Evidence**:
+
 ```
 ERROR: Function 'Main' - Local index 21 exceeds declared locals count 2 (params: 1, locals: 1)
 ```
 
 This means:
+
 - Function has 1 parameter
 - Declares only 1 local variable
 - But tries to access local index 21
@@ -188,13 +204,13 @@ This means:
 
 ### Solution Strategy: Fix Variable Counting
 
-**Effort**: 4-6 hours
-**Complexity**: High
-**Impact**: Fixes mapcreator_new.bb completely
+**Effort**: 4-6 hours **Complexity**: High **Impact**: Fixes mapcreator_new.bb
+completely
 
 **Investigation Steps**:
 
-1. **Find Variable Tracking Code** (`Sources/Compiler/CodeGen/CodeGenerator.swift`)
+1. **Find Variable Tracking Code**
+   (`Sources/Compiler/CodeGen/CodeGenerator.swift`)
    ```bash
    grep -n "localIndices\|localVariables\|declareLocal\|functionLocals" Sources/Compiler/CodeGen/CodeGenerator.swift
    ```
@@ -212,6 +228,7 @@ This means:
 **Expected Issues**:
 
 **Issue A: Separate Counters**
+
 ```swift
 // BAD: Two separate tracking mechanisms
 var explicitLocals: [String: Int] = [:]  // Only Local keyword
@@ -222,6 +239,7 @@ let localCount = explicitLocals.count  // WRONG!
 ```
 
 **Issue B: Function-Scope Variables Not Counted**
+
 ```swift
 // Variables declared in nested blocks might not be counted
 if condition {
@@ -230,6 +248,7 @@ if condition {
 ```
 
 **Issue C: Parameter Offset Confusion**
+
 ```swift
 // Parameters occupy first N local indices
 // But counter might not account for this properly
@@ -318,11 +337,10 @@ wasm-validate mapcreator.wasm  # Should succeed
 
 ### Alternative: Split Function (Quick Fix)
 
-**Effort**: 2 hours
-**Complexity**: Low
-**Impact**: Workaround only
+**Effort**: 2 hours **Complexity**: Low **Impact**: Workaround only
 
 Extract large Main function into smaller helper functions:
+
 ```blitz3d
 ' mapcreator_new.bb - BEFORE
 Function Main()
@@ -350,14 +368,14 @@ Function RenderScene()
 End Function
 ```
 
-**Pros**: Works immediately
-**Cons**: Modifies source, doesn't fix root cause
+**Pros**: Works immediately **Cons**: Modifies source, doesn't fix root cause
 
 ---
 
 ## Overall Implementation Plan
 
 ### Phase 1: Quick Wins (2-3 hours)
+
 **Objective**: Get to 51/52 passing (98% success)
 
 1. ✅ **Parser fix documented** (DONE)
@@ -367,6 +385,7 @@ End Function
    - Commit: "workaround: simplify window3d expressions for parser"
 
 ### Phase 2: Parser Permanent Fix (3-4 hours)
+
 **Objective**: Solve parser ambiguity completely
 
 1. **Add whitespace tracking to lexer**
@@ -385,6 +404,7 @@ End Function
    - No regressions in other files
 
 ### Phase 3: Local Variable Fix (4-6 hours)
+
 **Objective**: Fix variable counting in code generator
 
 1. **Investigation**
@@ -403,6 +423,7 @@ End Function
    - Full regression test
 
 ### Phase 4: Final Validation (1-2 hours)
+
 **Objective**: 100% success, production-ready
 
 1. **Full compilation test**
@@ -421,6 +442,7 @@ End Function
    - Create migration guide if source changes needed
 
 ### Phase 5: Cleanup & Commit (1 hour)
+
 **Objective**: Production-quality code
 
 1. **Code review**
@@ -443,17 +465,20 @@ End Function
 ## Success Criteria
 
 ### Minimum Success (Phase 1 Complete)
+
 - ✅ 51/52 files compile and validate (98%)
 - ✅ All gameplay-critical files work
 - ✅ Known limitations documented
 
 ### Full Success (All Phases Complete)
+
 - ✅ 52/52 files compile and validate (100%)
 - ✅ No source modifications required
 - ✅ No validation errors
 - ✅ Production-ready compiler
 
 ### Stretch Goals
+
 - ✅ Runtime testing in browser
 - ✅ Performance benchmarks
 - ✅ Comprehensive test suite
@@ -463,31 +488,34 @@ End Function
 
 ## Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| Lexer changes break existing code | Medium | High | Comprehensive regression testing |
-| Variable counting fix too complex | Medium | Medium | Have source-modification fallback |
-| Edge cases remain after fixes | Low | Low | Document limitations clearly |
-| Performance regression | Low | Medium | Benchmark before/after |
-| Runtime bugs appear | Medium | High | Browser testing phase |
+| Risk                              | Probability | Impact | Mitigation                        |
+| --------------------------------- | ----------- | ------ | --------------------------------- |
+| Lexer changes break existing code | Medium      | High   | Comprehensive regression testing  |
+| Variable counting fix too complex | Medium      | Medium | Have source-modification fallback |
+| Edge cases remain after fixes     | Low         | Low    | Document limitations clearly      |
+| Performance regression            | Low         | Medium | Benchmark before/after            |
+| Runtime bugs appear               | Medium      | High   | Browser testing phase             |
 
 ---
 
 ## Resource Requirements
 
 **Time**: 10-15 hours total
+
 - Phase 1: 2-3 hours
 - Phase 2: 3-4 hours
 - Phase 3: 4-6 hours
 - Phases 4-5: 2-3 hours
 
 **Skills Needed**:
+
 - Swift programming
 - Compiler/parser design
 - WASM format knowledge
 - Blitz3D language familiarity
 
 **Tools Required**:
+
 - Swift 6.0 toolchain
 - wasm-validate (wabt)
 - wasm-objdump (wabt)
@@ -498,24 +526,28 @@ End Function
 ## Recommended Approach
 
 ### Conservative (Minimize Risk)
+
 1. Apply source workarounds (Phase 1)
 2. Fix local variable counting (Phase 3)
 3. Document parser limitations
 4. **Result**: 100% compilation with minor source changes
 
 ### Aggressive (Complete Fix)
+
 1. Fix parser with whitespace tracking (Phase 2)
 2. Fix local variable counting (Phase 3)
 3. Full validation (Phase 4)
 4. **Result**: 100% compilation, zero workarounds
 
 ### Pragmatic (Balance)
+
 1. Apply source workarounds (Phase 1) - **DO FIRST**
 2. Fix local variable counting (Phase 3) - **DO SECOND**
 3. Parser permanent fix (Phase 2) - **DO IF TIME PERMITS**
 4. **Result**: 100% compilation quickly, improve later
 
 **Recommendation**: **Pragmatic Approach**
+
 - Delivers results fast
 - Reduces risk
 - Allows iterative improvement
@@ -557,6 +589,5 @@ End Function
 
 ---
 
-**Status**: Plan Ready for Execution
-**Next Action**: Choose approach and begin Phase 1
-**Estimated Completion**: 2-3 days (full aggressive approach)
+**Status**: Plan Ready for Execution **Next Action**: Choose approach and begin
+Phase 1 **Estimated Completion**: 2-3 days (full aggressive approach)

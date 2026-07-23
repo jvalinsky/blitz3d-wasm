@@ -19,7 +19,8 @@ description: Safely add or evolve Track B command-buffer (cmdbuf) ABI commands a
   - binary layout of a command,
   - shared header structure,
   - semantics that would misdecode old streams.
-- New commands should be backward compatible when possible (older runtimes can ignore unknown opcodes only if the stream stays parseable).
+- New commands should be backward compatible when possible (older runtimes can
+  ignore unknown opcodes only if the stream stays parseable).
 
 ## Add a new command (workflow)
 
@@ -31,10 +32,12 @@ description: Safely add or evolve Track B command-buffer (cmdbuf) ABI commands a
 
 3. Add executor plumbing:
    - Extend `CommandExecutor` with `onYourNewCommand`.
-   - Add a `case` in `dispatchCmd(...)` in `web/src/runtime/command_executor.ts`.
+   - Add a `case` in `dispatchCmd(...)` in
+     `web/src/runtime/command_executor.ts`.
 
 4. If ABI versioning is involved:
-   - Ensure `web/src/shared/cmdbuf_abi.ts` agrees with the module’s exported `__CmdBufAbiVersion`.
+   - Ensure `web/src/shared/cmdbuf_abi.ts` agrees with the module’s exported
+     `__CmdBufAbiVersion`.
 
 ## Verify
 
@@ -46,8 +49,8 @@ description: Safely add or evolve Track B command-buffer (cmdbuf) ABI commands a
 
 ## Triage: “CMDB: ABI mismatch”
 
-- The runtime saw `__CmdBufPtr/__CmdBufBytes` and compared `__CmdBufAbiVersion` against `CMDB_VERSION`.
+- The runtime saw `__CmdBufPtr/__CmdBufBytes` and compared `__CmdBufAbiVersion`
+  against `CMDB_VERSION`.
 - Fix by aligning:
   - the runtime `CMDB_VERSION` (and any decoder assumptions), and
   - the WASM producer’s exported ABI version / encoding.
-

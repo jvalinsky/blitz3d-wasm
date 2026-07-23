@@ -1,7 +1,7 @@
 # Phase 6: Deployment
 
-**Duration**: 8-12 hours  
-**Priority**: Low  
+**Duration**: 8-12 hours\
+**Priority**: Low\
 **Prerequisites**: All phases complete
 
 ---

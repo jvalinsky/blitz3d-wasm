@@ -10,7 +10,9 @@ class BuildComparator {
   }
 
   async compare(fileA, fileB, verbose = false) {
-    console.log(`\nComparing builds:\n  Before: ${fileA}\n  After:  ${fileB}\n`);
+    console.log(
+      `\nComparing builds:\n  Before: ${fileA}\n  After:  ${fileB}\n`,
+    );
 
     if (!existsSync(fileA)) {
       return { error: `File not found: ${fileA}` };
@@ -60,20 +62,26 @@ class BuildComparator {
     };
 
     const changes = {
-      instructions: after.summary.totalInstructions - before.summary.totalInstructions,
+      instructions: after.summary.totalInstructions -
+        before.summary.totalInstructions,
       errors: after.errors.length - before.errors.length,
       stackIssues: !before.summary.stackValid !== !after.summary.stackValid,
       typeIssues: !before.summary.typeValid !== !after.summary.typeValid,
-      controlIssues: !before.summary.controlFlowValid !== !after.summary.controlFlowValid,
+      controlIssues:
+        !before.summary.controlFlowValid !== !after.summary.controlFlowValid,
     };
 
     const improvements = [];
     const regressions = [];
 
     if (before.errors.length > after.errors.length) {
-      improvements.push(`Errors: ${before.errors.length} → ${after.errors.length}`);
+      improvements.push(
+        `Errors: ${before.errors.length} → ${after.errors.length}`,
+      );
     } else if (before.errors.length < after.errors.length) {
-      regressions.push(`Errors: ${before.errors.length} → ${after.errors.length}`);
+      regressions.push(
+        `Errors: ${before.errors.length} → ${after.errors.length}`,
+      );
     }
 
     if (!before.summary.stackValid && after.summary.stackValid) {
@@ -151,23 +159,47 @@ class BuildComparator {
     console.log("│ Metric               │ Before   │ After    │ Change │");
     console.log("├──────────────────────┼──────────┼──────────┼────────┤");
     console.log(
-      `│ Functions            │ ${String(result.summary.before.functions).padEnd(8)} │ ${String(result.summary.after.functions).padEnd(8)} │ ${String(result.changes.instructions === 0 ? "-" : "").padEnd(6)} │`,
+      `│ Functions            │ ${
+        String(result.summary.before.functions).padEnd(8)
+      } │ ${String(result.summary.after.functions).padEnd(8)} │ ${
+        String(result.changes.instructions === 0 ? "-" : "").padEnd(6)
+      } │`,
     );
     console.log(
-      `│ Instructions         │ ${String(result.summary.before.instructions).padEnd(8)} │ ${String(result.summary.after.instructions).padEnd(8)} │ ${String(result.changes.instructions).padEnd(6)} │`,
+      `│ Instructions         │ ${
+        String(result.summary.before.instructions).padEnd(8)
+      } │ ${String(result.summary.after.instructions).padEnd(8)} │ ${
+        String(result.changes.instructions).padEnd(6)
+      } │`,
     );
     console.log(
-      `│ Errors               │ ${String(result.summary.before.errors).padEnd(8)} │ ${String(result.summary.after.errors).padEnd(8)} │ ${String(result.changes.errors).padEnd(6)} │`,
+      `│ Errors               │ ${
+        String(result.summary.before.errors).padEnd(8)
+      } │ ${String(result.summary.after.errors).padEnd(8)} │ ${
+        String(result.changes.errors).padEnd(6)
+      } │`,
     );
     console.log("├──────────────────────┼──────────┼──────────┼────────┤");
     console.log(
-      `│ Stack Valid          │ ${result.summary.before.stackValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.stackValid ? "    ✓   " : "    ✗   "} │        │`,
+      `│ Stack Valid          │ ${
+        result.summary.before.stackValid ? "    ✓   " : "    ✗   "
+      } │ ${
+        result.summary.after.stackValid ? "    ✓   " : "    ✗   "
+      } │        │`,
     );
     console.log(
-      `│ Type Valid           │ ${result.summary.before.typeValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.typeValid ? "    ✓   " : "    ✗   "} │        │`,
+      `│ Type Valid           │ ${
+        result.summary.before.typeValid ? "    ✓   " : "    ✗   "
+      } │ ${
+        result.summary.after.typeValid ? "    ✓   " : "    ✗   "
+      } │        │`,
     );
     console.log(
-      `│ Control Flow Valid   │ ${result.summary.before.controlFlowValid ? "    ✓   " : "    ✗   "} │ ${result.summary.after.controlFlowValid ? "    ✓   " : "    ✗   "} │        │`,
+      `│ Control Flow Valid   │ ${
+        result.summary.before.controlFlowValid ? "    ✓   " : "    ✗   "
+      } │ ${
+        result.summary.after.controlFlowValid ? "    ✓   " : "    ✗   "
+      } │        │`,
     );
     console.log("└──────────────────────┴──────────┴──────────┴────────┘");
 

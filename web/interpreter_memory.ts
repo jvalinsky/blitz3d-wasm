@@ -32,4 +32,3 @@ export function formatHexDump(bytes: Uint8Array, baseOffset: number): string {
   }
   return lines.join("\n");
 }
-

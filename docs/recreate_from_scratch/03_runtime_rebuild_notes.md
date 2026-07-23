@@ -12,29 +12,34 @@ Rebuilding it from scratch is mostly about:
 
 In practice, runtime imports fall into:
 
-- **Graphics** (Three.js/WebGL): entity creation, transforms, rendering, textures
+- **Graphics** (Three.js/WebGL): entity creation, transforms, rendering,
+  textures
 - **Audio** (Web Audio): load/decode/play, channel controls
 - **Input**: keyboard/mouse state
 - **File IO**: VFS reads, seeking, INI reads, etc.
 - **Debugging**: logs, error reporting, tracing hooks
 
 This repo’s implementation lives in:
+
 - `web/src/runtime/`
 - and shared support in `web/src/shared/`
 
 ## Boundary Performance: When to Batch
 
 Some calls are low frequency (fine as direct imports):
+
 - `LoadTexture`, `CreateCamera`, `LoadSound` (relatively rare)
 
 Some calls are high frequency (should be batched):
+
 - `PositionEntity`, `RotateEntity`, `EntityAlpha`, per-entity updates
 
 ### Command Buffer
 
 For hot paths, use a binary “write in WASM, drain in JS” protocol.
 
-See: `docs/COMMAND_BUFFER_SYSTEM.md`, and code in `web/src/shared/command_buffer.ts`.
+See: `docs/COMMAND_BUFFER_SYSTEM.md`, and code in
+`web/src/shared/command_buffer.ts`.
 
 ### Entity Table
 
@@ -59,7 +64,8 @@ See: `docs/MEMORY_LEAK_DETECTION.md`.
 
 ## “MVP Runtime” Suggestion
 
-Start with a minimal import surface for one demo and expand only from call-path evidence:
+Start with a minimal import surface for one demo and expand only from call-path
+evidence:
 
 1. Minimal graphics imports
 2. Debug logging
@@ -73,4 +79,3 @@ Start with a minimal import surface for one demo and expand only from call-path 
 - Graphics: `web/src/runtime/graphics/index.ts`
 - File IO + VFS: `web/src/runtime/fileio.ts`
 - Command buffer: `web/src/shared/command_buffer.ts`
-

@@ -2,7 +2,9 @@
 
 Created: 2026-01-29
 
-This folder contains per-workstream plans for the SCPCB web port (Track B: WASM-first, thin JS runtime, offline asset conversion). Each plan is a checklist with timestamps so it can be used as a working execution log.
+This folder contains per-workstream plans for the SCPCB web port (Track B:
+WASM-first, thin JS runtime, offline asset conversion). Each plan is a checklist
+with timestamps so it can be used as a working execution log.
 
 ## Plans
 
@@ -17,5 +19,7 @@ This folder contains per-workstream plans for the SCPCB web port (Track B: WASM-
 ## Conventions
 
 - Use `- [ ]` for todo and `- [x]` for done.
-- When completing a significant checkbox, add a short note with a date (YYYY-MM-DD) on the same line or directly below it.
-- Prefer measurable acceptance criteria (counts, timings, “no .b3d/.x/.rmesh in dist”, etc.).
+- When completing a significant checkbox, add a short note with a date
+  (YYYY-MM-DD) on the same line or directly below it.
+- Prefer measurable acceptance criteria (counts, timings, “no .b3d/.x/.rmesh in
+  dist”, etc.).

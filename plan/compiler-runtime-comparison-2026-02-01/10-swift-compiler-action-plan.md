@@ -1,7 +1,7 @@
 # Swift Compiler Improvement Action Plan
 
-**Date**: February 1, 2026  
-**Focus**: Swift compiler + Swift engine (WASM-first approach)  
+**Date**: February 1, 2026\
+**Focus**: Swift compiler + Swift engine (WASM-first approach)\
 **Scope**: Main SCPCB port (not web-ide)
 
 ---
@@ -9,22 +9,26 @@
 ## Philosophy
 
 **Mostly WASM with thin JS runtime:**
-- ✅ **Swift engine (WASM)**: Math, strings, file I/O, game logic, core runtime
-- ✅ **TypeScript (thin)**: Three.js rendering, Web Audio, DOM events, VFS management
 
-**Web-IDE is separate** - has its own TypeScript compiler for in-browser compilation
+- ✅ **Swift engine (WASM)**: Math, strings, file I/O, game logic, core runtime
+- ✅ **TypeScript (thin)**: Three.js rendering, Web Audio, DOM events, VFS
+  management
+
+**Web-IDE is separate** - has its own TypeScript compiler for in-browser
+compilation
 
 ---
 
 ## Phase 1: Swift Compiler - Include Files (Week 1)
 
 ### Goal
+
 Enable multi-file compilation for SCPCB
 
 ### Task: Implement Include File Support
 
-**Priority**: P0 - Critical blocker  
-**Effort**: 2-3 days  
+**Priority**: P0 - Critical blocker\
+**Effort**: 2-3 days\
 **File**: `Sources/Compiler/Parser/Parser.swift`
 
 #### Implementation
@@ -199,12 +203,13 @@ class IncludeTests: XCTestCase {
 ## Phase 2: Swift Engine - Math Library (Week 1)
 
 ### Goal
+
 Implement all 29 math functions in Swift (compiled to WASM)
 
 ### Task: Math Functions in Swift Engine
 
-**Priority**: P0 - Critical blocker  
-**Effort**: 2-3 days  
+**Priority**: P0 - Critical blocker\
+**Effort**: 2-3 days\
 **Location**: `Sources/Blitz3DEngine/Math/`
 
 #### Create Math Module
@@ -426,12 +431,13 @@ class MathTests: XCTestCase {
 ## Phase 3: Swift Engine - String Operations (Week 2-3)
 
 ### Goal
+
 Implement all 28 string functions in Swift (compiled to WASM)
 
 ### Task: String Functions in Swift Engine
 
-**Priority**: P0 - Critical blocker  
-**Effort**: 1-2 weeks  
+**Priority**: P0 - Critical blocker\
+**Effort**: 1-2 weeks\
 **Location**: `Sources/Blitz3DEngine/Strings/`
 
 #### String Memory Model
@@ -617,12 +623,13 @@ public func FreeString(_ handle: Int32) {
 ## Phase 4: Swift Engine - File I/O (Week 3-5)
 
 ### Goal
+
 Implement file I/O operations in Swift (using VFS provided by TypeScript)
 
 ### Task: File I/O in Swift Engine
 
-**Priority**: P0 - Critical blocker  
-**Effort**: 2-3 weeks  
+**Priority**: P0 - Critical blocker\
+**Effort**: 2-3 weeks\
 **Location**: `Sources/Blitz3DEngine/FileIO/`
 
 #### File Handle Management
@@ -795,20 +802,24 @@ public func WriteByte(_ handle: Int32, _ value: Int32) {
 ## Timeline Summary
 
 ### Week 1
+
 - ✅ Include file support (2-3 days)
 - ✅ Math library in Swift (2-3 days)
 - ✅ Test SCPCB compilation
 
 ### Week 2-3
+
 - ✅ String operations in Swift (5-7 days)
 - ✅ Test SCPCB string usage
 
 ### Week 3-5
+
 - ✅ File I/O in Swift (2-3 weeks)
 - ✅ VFS integration with TypeScript
 - ✅ Test SCPCB config loading
 
 ### Week 6+
+
 - Asset loading (LoadMesh, LoadTexture)
 - Audio system expansion
 - Physics improvements
@@ -818,26 +829,31 @@ public func WriteByte(_ handle: Int32, _ value: Int32) {
 ## Success Metrics
 
 ### Phase 1 Complete
+
 - [x] SCPCB Main.bb compiles with all 23 includes
 - [x] No include-related errors
 - [x] All files processed correctly
 
 ### Phase 2 Complete
+
 - [x] All 29 math functions implemented in Swift
 - [x] SCPCB calculations work correctly
 - [x] Math tests pass
 
 ### Phase 3 Complete
+
 - [x] All 28 string functions implemented in Swift
 - [x] SCPCB config parsing works
 - [x] String tests pass
 - [x] No memory leaks
 
 ### Phase 4 Complete
+
 - [x] File I/O works with VFS
 - [x] SCPCB loads options.ini
 - [x] Can read game data files
 
 ---
 
-**Note**: This focuses on Swift compiler + Swift engine improvements. The web-ide TypeScript compiler is a separate project with its own implementation.
+**Note**: This focuses on Swift compiler + Swift engine improvements. The
+web-ide TypeScript compiler is a separate project with its own implementation.

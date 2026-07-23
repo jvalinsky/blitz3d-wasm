@@ -2,4 +2,3 @@ interface:
   display_name: "Track B WASM Sanity"
   short_description: "Check cmdbuf exports and ABI compatibility"
   default_prompt: "Use $track-b-wasm-sanity-check to verify this Track B module’s cmdbuf exports/ABI/import surface and list the exact commands to confirm compatibility."
-

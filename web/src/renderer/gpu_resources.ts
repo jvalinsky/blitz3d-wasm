@@ -66,7 +66,9 @@ export class GPUResources {
       gl.TEXTURE_2D,
       0,
       gl.RGBA,
-      1, 1, 0,
+      1,
+      1,
+      0,
       gl.RGBA,
       gl.UNSIGNED_BYTE,
       new Uint8Array([255, 255, 255, 255]),
@@ -229,7 +231,10 @@ export class GPUResources {
   // Textures
   // ------------------------------------------------------------------
 
-  createTexture(image: ImageBitmap | HTMLImageElement | HTMLCanvasElement, flags?: number): number {
+  createTexture(
+    image: ImageBitmap | HTMLImageElement | HTMLCanvasElement,
+    flags?: number,
+  ): number {
     const gl = this.gl;
     const tex = gl.createTexture()!;
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -244,12 +249,24 @@ export class GPUResources {
     const clampU = (f & 16) !== 0;
     const clampV = (f & 32) !== 0;
 
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, clampU ? gl.CLAMP_TO_EDGE : gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, clampV ? gl.CLAMP_TO_EDGE : gl.REPEAT);
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_WRAP_S,
+      clampU ? gl.CLAMP_TO_EDGE : gl.REPEAT,
+    );
+    gl.texParameteri(
+      gl.TEXTURE_2D,
+      gl.TEXTURE_WRAP_T,
+      clampV ? gl.CLAMP_TO_EDGE : gl.REPEAT,
+    );
 
     if (mipmap) {
       gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(
+        gl.TEXTURE_2D,
+        gl.TEXTURE_MIN_FILTER,
+        gl.LINEAR_MIPMAP_LINEAR,
+      );
     } else {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
@@ -284,7 +301,11 @@ export class GPUResources {
   }
 
   /** Register an externally-created WebGL texture for tracking. */
-  registerTexture(glTexture: WebGLTexture, width: number, height: number): number {
+  registerTexture(
+    glTexture: WebGLTexture,
+    width: number,
+    height: number,
+  ): number {
     const id = this.nextTextureId++;
     this.textures.set(id, { glTexture, width, height });
     return id;

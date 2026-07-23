@@ -47,4 +47,3 @@ export const openFileCandidates = (path: string): string[] => {
 
   return out;
 };
-

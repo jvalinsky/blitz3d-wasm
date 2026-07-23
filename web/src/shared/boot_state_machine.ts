@@ -55,9 +55,10 @@ export class BootStateMachine {
   }
 
   getSnapshot(): BootSnapshot {
-    return { ...this.#snapshot, progress: this.#snapshot.progress
-      ? { ...this.#snapshot.progress }
-      : null };
+    return {
+      ...this.#snapshot,
+      progress: this.#snapshot.progress ? { ...this.#snapshot.progress } : null,
+    };
   }
 
   setPhase(phase: BootPhase, message = "") {
@@ -103,4 +104,3 @@ export class BootStateMachine {
     return { msSinceProgress, msSincePhaseChange };
   }
 }
-

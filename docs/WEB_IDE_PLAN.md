@@ -2,7 +2,8 @@
 
 ## Vision
 
-A fully client-side Blitz3D development environment that runs entirely in the browser:
+A fully client-side Blitz3D development environment that runs entirely in the
+browser:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -33,8 +34,11 @@ Any “web interpreter / IDE” must treat user/game WASM as potentially untrust
 - Enforce a **watchdog timeout** (infinite loops must not freeze the tab).
 
 Reference implementations in this repo:
-- `web/interpreter.html` + `web/interpreter.js` (Stop + timeout; execution in Worker)
-- `web/public/bb_wasm_runner_demo.html` (upload a `.wasm`, run with Worker + watchdog)
+
+- `web/interpreter.html` + `web/interpreter.js` (Stop + timeout; execution in
+  Worker)
+- `web/public/bb_wasm_runner_demo.html` (upload a `.wasm`, run with Worker +
+  watchdog)
 
 ## Components
 
@@ -45,6 +49,7 @@ Reference implementations in this repo:
 **Status**: In Progress
 
 **Challenges**:
+
 - Foundation not available in WASM
 - File I/O needs WASI or JS bridge
 - Swift WASM support is still maturing
@@ -52,35 +57,44 @@ Reference implementations in this repo:
 **Approaches**:
 
 #### Approach A: Swift to WASM (Native)
+
 ✅ **Pros**:
+
 - Reuse existing Swift compiler code
 - Single source of truth
 - Full Swift language features
 
 ❌ **Cons**:
+
 - Foundation dependencies
 - Large binary size (~5-10MB)
 - WASI limitations
 - Compilation complexity
 
 #### Approach B: TypeScript Compiler (New Implementation)
+
 ✅ **Pros**:
+
 - Native web platform
 - Easy JS/browser integration
 - Smaller bundle size
 - Better debugging
 
 ❌ **Cons**:
+
 - Need to port compiler logic
 - Two implementations to maintain
 - More development time
 
 #### Approach C: Swift -> TypeScript Transpilation
+
 ✅ **Pros**:
+
 - Automated conversion
 - Maintain single codebase
 
 ❌ **Cons**:
+
 - Complex tooling
 - Limited viability
 
@@ -94,15 +108,16 @@ Reason: Better web integration, easier maintenance, smaller size.
 
 ```typescript
 interface WebIDE {
-  editor: CodeEditor;        // Monaco or CodeMirror
-  compiler: Compiler;        // TypeScript or WASM
-  runtime: Runtime;          // Existing Three.js runtime
-  fileSystem: VirtualFS;     // In-memory file system
-  console: OutputConsole;    // Compilation output
+  editor: CodeEditor; // Monaco or CodeMirror
+  compiler: Compiler; // TypeScript or WASM
+  runtime: Runtime; // Existing Three.js runtime
+  fileSystem: VirtualFS; // In-memory file system
+  console: OutputConsole; // Compilation output
 }
 ```
 
 **Features**:
+
 - ✅ Syntax highlighting (Blitz3D grammar)
 - ✅ Code completion
 - ✅ Error diagnostics
@@ -121,19 +136,19 @@ Port the Swift compiler to TypeScript:
 class Blitz3DCompiler {
   // Lexer: Source -> Tokens
   lex(source: string): Token[];
-  
+
   // Parser: Tokens -> AST
   parse(tokens: Token[]): Program;
-  
+
   // Lowering: AST -> IR
   lower(ast: Program): IRModule;
-  
+
   // Optimization: IR -> IR (optimized)
   optimize(ir: IRModule): IRModule;
-  
+
   // CodeGen: IR -> WASM
   generate(ir: IRModule): Uint8Array;
-  
+
   // All-in-one
   compile(source: string): CompileResult;
 }
@@ -153,6 +168,7 @@ interface CompileResult {
 **Goal**: Basic Blitz3D to WASM compilation in TypeScript
 
 **Tasks**:
+
 - [x] Set up TypeScript project structure
 - [ ] Implement lexer (tokenization)
 - [ ] Implement parser (AST generation)
@@ -163,6 +179,7 @@ interface CompileResult {
 **Deliverable**: TypeScript compiler that can compile simple programs
 
 **Example**:
+
 ```blitz3d
 ; Simple test program
 For i = 0 To 10
@@ -175,6 +192,7 @@ Next
 **Goal**: Basic browser-based IDE
 
 **Tasks**:
+
 - [ ] Set up Monaco Editor
 - [ ] Integrate TypeScript compiler
 - [ ] Add compile button and output
@@ -188,6 +206,7 @@ Next
 **Goal**: Production-ready IDE
 
 **Tasks**:
+
 - [ ] Syntax highlighting for Blitz3D
 - [ ] Code completion
 - [ ] Error diagnostics (red squiggles)
@@ -201,6 +220,7 @@ Next
 **Goal**: Match Swift compiler features
 
 **Tasks**:
+
 - [ ] All language constructs
 - [ ] Type system
 - [ ] Include files
@@ -215,6 +235,7 @@ Next
 **Decision**: Implement new TypeScript compiler
 
 **Rationale**:
+
 1. Native web platform - no WASI complications
 2. Easier debugging in browser devtools
 3. Better integration with Monaco Editor
@@ -226,12 +247,14 @@ Next
 **Decision**: Use Monaco Editor (VS Code's editor)
 
 **Rationale**:
+
 1. Excellent TypeScript/language server integration
 2. Rich API for diagnostics and completion
 3. Professional UI
 4. Good performance
 
 **Alternative**: CodeMirror 6
+
 - More lightweight
 - Simpler API
 - Good for embedded use
@@ -241,6 +264,7 @@ Next
 **Decision**: In-memory virtual file system
 
 **Rationale**:
+
 1. No server needed
 2. Fast access
 3. Easy to implement
@@ -251,12 +275,14 @@ Next
 **Decision**: Encode programs in URL
 
 **Rationale**:
+
 1. No backend needed
 2. Easy to share
 3. Works offline
 4. Privacy-friendly
 
 **Implementation**:
+
 ```typescript
 // Compress and encode
 const compressed = pako.deflate(source);
@@ -265,8 +291,8 @@ const url = `https://blitz3d.exe.xyz/ide#code=${base64}`;
 
 // Decode and decompress
 const base64 = location.hash.slice(6); // Remove '#code='
-const compressed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-const source = pako.inflate(compressed, { to: 'string' });
+const compressed = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+const source = pako.inflate(compressed, { to: "string" });
 ```
 
 ## Architecture
@@ -356,12 +382,14 @@ web-ide/
 **Goal**: Prove the concept works
 
 **Scope**:
+
 - Parse simple Blitz3D programs
 - Generate WASM
 - Run in browser
 - Basic UI
 
 **Example Program**:
+
 ```blitz3d
 ; MVP Test Program
 Global x = 100
@@ -429,18 +457,21 @@ Next
 ## Success Metrics
 
 ### MVP Success
+
 - [ ] Compile simple program in browser
 - [ ] Run compiled WASM
 - [ ] See output on canvas
 - [ ] No backend required
 
 ### Beta Success
+
 - [ ] Compile SCPCB demo programs
 - [ ] Professional IDE UI
 - [ ] Share programs via URL
 - [ ] Good performance (<1s compilation)
 
 ### Production Success
+
 - [ ] Full Blitz3D language support
 - [ ] Optimizations working
 - [ ] Excellent user experience
@@ -449,16 +480,19 @@ Next
 ## Resources
 
 ### Reference Implementations
+
 - Swift compiler: `Sources/Compiler/`
 - Existing runtime: `web/src/runtime/`
 - Parser reference: Original Blitz3D-NG
 
 ### Tools & Libraries
+
 - **Monaco Editor**: https://microsoft.github.io/monaco-editor/
 - **WASM Binaryen**: https://github.com/WebAssembly/binaryen (if needed)
 - **Pako**: https://github.com/nodeca/pako (compression for URL sharing)
 
 ### Learning Resources
+
 - Crafting Interpreters: https://craftinginterpreters.com/
 - WASM Spec: https://webassembly.github.io/spec/
 - Relooper: Emscripten algorithm
@@ -468,6 +502,7 @@ Next
 A client-side Blitz3D IDE is achievable and valuable:
 
 ✅ **Benefits**:
+
 - Instant gratification (no setup)
 - Educational tool
 - Easy sharing
@@ -475,9 +510,11 @@ A client-side Blitz3D IDE is achievable and valuable:
 - Portfolio piece
 
 ✅ **Feasible**:
+
 - TypeScript compiler is doable
 - Runtime already works
 - Monaco provides great UX
 - All client-side (no backend costs)
 
-**Recommended Path**: Start with TypeScript compiler MVP, prove concept, then build out full IDE.
+**Recommended Path**: Start with TypeScript compiler MVP, prove concept, then
+build out full IDE.

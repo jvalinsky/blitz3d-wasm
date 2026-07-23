@@ -12,21 +12,27 @@ import { setupAnimation } from "./animation.ts";
 import { setupSCPCB } from "./scpcb.ts";
 import { setupWin32 } from "../../win32_stubs.ts";
 
-export function setupAllImports(graphics: Blitz3DGraphicsInterface, imports: any) {
-    setupCore(graphics, imports);
-    setup2D(graphics, imports);
-    setupImage(graphics, imports);
-    setup3D(graphics, imports);
-    setupAnimation(graphics, imports);
-    setupInput(graphics, imports);
-    setupCollision(graphics, imports);
-    setupPicking(graphics, imports);
-    setupWasmAudio(graphics, imports);
-    setupSCPCB(graphics, imports);
-    setupWin32(graphics, imports);
+export function setupAllImports(
+  graphics: Blitz3DGraphicsInterface,
+  imports: any,
+) {
+  setupCore(graphics, imports);
+  setup2D(graphics, imports);
+  setupImage(graphics, imports);
+  setup3D(graphics, imports);
+  setupAnimation(graphics, imports);
+  setupInput(graphics, imports);
+  setupCollision(graphics, imports);
+  setupPicking(graphics, imports);
+  setupWasmAudio(graphics, imports);
+  setupSCPCB(graphics, imports);
+  setupWin32(graphics, imports);
 
-    // Particles
-    if (graphics.particles && typeof graphics.particles.registerImports === "function") {
-        graphics.particles.registerImports(imports);
-    }
+  // Particles
+  if (
+    graphics.particles &&
+    typeof graphics.particles.registerImports === "function"
+  ) {
+    graphics.particles.registerImports(imports);
+  }
 }

@@ -7,7 +7,8 @@ guarding every call with timeouts.
 
 - Loader entrypoint and UI controls: `web/src/main.ts`
   - Worker lifecycle:
-    - `terminateWorker()` tears down worker + clears pending calls + updates status.
+    - `terminateWorker()` tears down worker + clears pending calls + updates
+      status.
   - Single in-flight call policy + watchdog:
     - `workerCall(exportName, timeoutMs, args)` enforces “only one pending call”
       and terminates the worker on timeout.
@@ -15,7 +16,8 @@ guarding every call with timeouts.
     - `startWorkerUpdateLoop()` repeatedly calls `UpdateGame` with yields and
       strict idle checks.
   - Probe sequence:
-    - `runWorkerProbe()` calls a curated list of SCPCB exports with per-export timeouts.
+    - `runWorkerProbe()` calls a curated list of SCPCB exports with per-export
+      timeouts.
 
 ## Worker (Dedicated Thread)
 
@@ -28,10 +30,13 @@ guarding every call with timeouts.
     - `cmd: "dispose"` (terminate/cleanup)
     - Debug tooling: `dbg*` messages (read memory/global, breakpoints, config)
   - Status reporting:
-    - `postStatus()` / `maybePostStatus()` posts throttled status snapshots for the HUD.
+    - `postStatus()` / `maybePostStatus()` posts throttled status snapshots for
+      the HUD.
   - String ABI helpers (must match compiler/runtime):
-    - `readString(mem, ptr)` prefers the headered Blitz string layout and falls back to C-strings.
-    - `writeString(mem, __StringAlloc, str)` grows memory on-demand before writing.
+    - `readString(mem, ptr)` prefers the headered Blitz string layout and falls
+      back to C-strings.
+    - `writeString(mem, __StringAlloc, str)` grows memory on-demand before
+      writing.
 
 ## Path Resolution in the Worker
 
@@ -42,5 +47,5 @@ guarding every call with timeouts.
 
 - Worker uses stubbing for missing imports in some paths:
   - `web/src/shared/wasm_imports.ts`
-  - This is useful for demo/debug flows but should be treated as “dev-only safety net”.
-
+  - This is useful for demo/debug flows but should be treated as “dev-only
+    safety net”.

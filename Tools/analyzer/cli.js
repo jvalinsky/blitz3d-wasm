@@ -104,7 +104,8 @@ Output:
       this.watchAnalyze();
     } else if (
       existsSync(this.options.target) &&
-      (this.options.target.endsWith(".wasm") || this.options.target.endsWith(".wat"))
+      (this.options.target.endsWith(".wasm") ||
+        this.options.target.endsWith(".wat"))
     ) {
       await this.analyzeSingle(this.options.target);
     } else if (existsSync(this.options.target)) {
@@ -173,7 +174,9 @@ Output:
   async batchAnalyze() {
     const files = globSync(this.options.pattern);
 
-    console.log(`\nBatch analyzing ${files.length} files matching: ${this.options.pattern}`);
+    console.log(
+      `\nBatch analyzing ${files.length} files matching: ${this.options.pattern}`,
+    );
     console.log("=".repeat(60));
 
     const results = [];
@@ -247,13 +250,20 @@ Output:
     console.log(`  Globals:          ${summary.totalGlobals}`);
 
     console.log("\n✅ Validation:");
-    console.log(`  Stack Balance:    ${summary.stackValid ? "✓ PASS" : "✗ FAIL"}`);
-    console.log(`  Type Checking:    ${summary.typeValid ? "✓ PASS" : "✗ FAIL"}`);
-    console.log(`  Control Flow:     ${summary.controlFlowValid ? "✓ PASS" : "✗ FAIL"}`);
+    console.log(
+      `  Stack Balance:    ${summary.stackValid ? "✓ PASS" : "✗ FAIL"}`,
+    );
+    console.log(
+      `  Type Checking:    ${summary.typeValid ? "✓ PASS" : "✗ FAIL"}`,
+    );
+    console.log(
+      `  Control Flow:     ${summary.controlFlowValid ? "✓ PASS" : "✗ FAIL"}`,
+    );
 
     if (metrics.stackDepths?.length > 0) {
       const maxStack = Math.max(...metrics.stackDepths.map((d) => d.max));
-      const avgStack = metrics.stackDepths.reduce((sum, d) => sum + d.max, 0) / metrics.stackDepths.length;
+      const avgStack = metrics.stackDepths.reduce((sum, d) => sum + d.max, 0) /
+        metrics.stackDepths.length;
       console.log(`\n📈 Stack Usage:`);
       console.log(`  Maximum Depth:    ${maxStack}`);
       console.log(`  Average Depth:    ${avgStack.toFixed(1)}`);
@@ -303,12 +313,16 @@ Output:
 
     results.forEach((r) => {
       const status = r.stackValid && r.typeValid ? "✓" : "✗";
-      console.log(`  ${status} ${r.file}: ${r.totalFunctions} funcs, ${r.totalInstructions} instr`);
+      console.log(
+        `  ${status} ${r.file}: ${r.totalFunctions} funcs, ${r.totalInstructions} instr`,
+      );
       if (r.stackValid && r.typeValid) passed++;
       else failed++;
     });
 
-    console.log(`\nTotal: ${results.length} files | ${passed} passed | ${failed} failed`);
+    console.log(
+      `\nTotal: ${results.length} files | ${passed} passed | ${failed} failed`,
+    );
   }
 
   printBatchSummary(results) {
@@ -322,7 +336,9 @@ Output:
       console.log(`  ✗ ${r.file}`);
     });
 
-    console.log(`\nTotal: ${results.length} files | ${passed} passed | ${failed} failed`);
+    console.log(
+      `\nTotal: ${results.length} files | ${passed} passed | ${failed} failed`,
+    );
   }
 
   printComparison(reportA, reportB) {
@@ -332,10 +348,26 @@ Output:
     console.log("\n📊 Comparison:");
     console.log("─".repeat(60));
     console.log(`                    Before           After`);
-    console.log(`  Functions:       ${String(summaryA.totalFunctions).padEnd(15)} ${summaryB.totalFunctions}`);
-    console.log(`  Instructions:    ${String(summaryA.totalInstructions).padEnd(15)} ${summaryB.totalInstructions}`);
-    console.log(`  Stack Valid:     ${String(summaryA.stackValid).padEnd(15)} ${summaryB.stackValid}`);
-    console.log(`  Type Valid:      ${String(summaryA.typeValid).padEnd(15)} ${summaryB.typeValid}`);
+    console.log(
+      `  Functions:       ${
+        String(summaryA.totalFunctions).padEnd(15)
+      } ${summaryB.totalFunctions}`,
+    );
+    console.log(
+      `  Instructions:    ${
+        String(summaryA.totalInstructions).padEnd(15)
+      } ${summaryB.totalInstructions}`,
+    );
+    console.log(
+      `  Stack Valid:     ${
+        String(summaryA.stackValid).padEnd(15)
+      } ${summaryB.stackValid}`,
+    );
+    console.log(
+      `  Type Valid:      ${
+        String(summaryA.typeValid).padEnd(15)
+      } ${summaryB.typeValid}`,
+    );
 
     const metricsA = reportA.metrics;
     const metricsB = reportB.metrics;
@@ -346,12 +378,20 @@ Output:
       const diff = sizeB - sizeA;
       const pct = sizeA > 0 ? ((diff / sizeA) * 100).toFixed(1) : 0;
 
-      console.log(`\n  Code Size:       ${sizeA}              ${sizeB} (${diff >= 0 ? "+" : ""}${diff}, ${pct}%)`);
+      console.log(
+        `\n  Code Size:       ${sizeA}              ${sizeB} (${
+          diff >= 0 ? "+" : ""
+        }${diff}, ${pct}%)`,
+      );
     }
 
     const errorsA = reportA.errors?.length || 0;
     const errorsB = reportB.errors?.length || 0;
-    console.log(`  Errors:          ${errorsA}               ${errorsB} (${errorsB - errorsA >= 0 ? "+" : ""}${errorsB - errorsA})`);
+    console.log(
+      `  Errors:          ${errorsA}               ${errorsB} (${
+        errorsB - errorsA >= 0 ? "+" : ""
+      }${errorsB - errorsA})`,
+    );
   }
 }
 

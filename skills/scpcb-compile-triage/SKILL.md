@@ -21,7 +21,8 @@ Helpful flags:
 Outputs (defaults):
 
 - Runtime output: `/tmp/scpcb_cmdbuf.wasm`
-- Web loader artifact: `web/public/scpcb.wasm` (copied into dist on `deno task web:build`)
+- Web loader artifact: `web/public/scpcb.wasm` (copied into dist on
+  `deno task web:build`)
 
 ## Post-compile gates (catch silent breakage)
 
@@ -29,7 +30,8 @@ Outputs (defaults):
    - `deno run -A Tools/scpcb_import_leak_gate.ts --wasm web/public/scpcb.wasm --require-root`
 
 2. Ensure the module exposes the command buffer exports (Track B):
-   - Use the cmdbuf check helper from `Tools/cmdbuf_wasm_check.ts` (or run the project’s `test:web:build` gate which will trip if incompatible).
+   - Use the cmdbuf check helper from `Tools/cmdbuf_wasm_check.ts` (or run the
+     project’s `test:web:build` gate which will trip if incompatible).
 
 3. If you touched runtime imports/stubs:
    - `deno task interpreter:audit`
@@ -37,16 +39,20 @@ Outputs (defaults):
 
 ## Failure patterns → next action
 
-- **Missing SCPCB root**: `Tools/compile_scpcb_main.ts` assumes `../../scpcb/` by default.
+- **Missing SCPCB root**: `Tools/compile_scpcb_main.ts` assumes `../../scpcb/`
+  by default.
   - Re-run with `--scpcb-root <dir>` if needed.
 - **WASM instantiation fails (unknown import)**:
   - Audit host-side import objects and intentional stubs:
     - `web/src/shared/wasm_imports.ts`
     - `web/src/runtime/wasm-loader.ts`
-  - Prefer adding real implementations for core functions; only stub when explicitly intended.
+  - Prefer adding real implementations for core functions; only stub when
+    explicitly intended.
 - **“Import leak” gate fails**:
-  - Treat as correctness bug: the SCPCB function should execute inside the module.
-  - Investigate name collisions and lowering/codegen decisions rather than adding stubs.
+  - Treat as correctness bug: the SCPCB function should execute inside the
+    module.
+  - Investigate name collisions and lowering/codegen decisions rather than
+    adding stubs.
 - **Freeze during init**:
-  - Prefer debug builds (`--debug`) and use bbdbg-aware paths in the web interpreter/loader.
-
+  - Prefer debug builds (`--debug`) and use bbdbg-aware paths in the web
+    interpreter/loader.

@@ -35,7 +35,8 @@ memory and heap semantics (Types/New/Delete, strings, arrays, lists).
 
 - Tick/frame stepping (manual `UpdateGame()` stepping).
 - Input record/replay (deterministic bug repro).
-- Trace timeline (asset loads, command buffer flushes, audio decode, render steps).
+- Trace timeline (asset loads, command buffer flushes, audio decode, render
+  steps).
 - Render/GPU capture compatibility (e.g. “capture this frame” workflow).
 
 ## What exists in the ecosystem (tools/patterns to copy)
@@ -44,9 +45,9 @@ memory and heap semantics (Types/New/Delete, strings, arrays, lists).
 
 Two practical strategies exist:
 
-1) **Emit DWARF debug info in the WASM module** and use existing debugger UIs
+1. **Emit DWARF debug info in the WASM module** and use existing debugger UIs
    (browser devtools and/or VS Code).
-2) **Build a custom “debug build” mode** that instruments statement boundaries
+2. **Build a custom “debug build” mode** that instruments statement boundaries
    and uses an out-of-band mapping file to drive a debugger UI you control.
 
 In practice, (2) is the fastest path to a usable debugger and de-risks gaps or
@@ -72,7 +73,8 @@ Representative tools/patterns (inspiration, not necessarily direct integration):
 
 - Memory scanners and watch lists (classic “cheat engine” style UX).
 - Emulator memory tools and scripting (TAS tools like BizHawk/Dolphin).
-- Timing/autosplitting driven by state/memory reads (LiveSplit-style integration).
+- Timing/autosplitting driven by state/memory reads (LiveSplit-style
+  integration).
 - GPU frame inspection/capture tooling (RenderDoc-style workflows).
 
 ## Proposed architecture for Blitz3D-WASM debugging
@@ -82,7 +84,8 @@ Representative tools/patterns (inspiration, not necessarily direct integration):
 Compiler outputs (debug builds):
 
 - `program.wasm`: compiled output.
-- `program.bbdbg.json`: sidecar mapping + debug metadata (emitted by `-d/--debug` today):
+- `program.bbdbg.json`: sidecar mapping + debug metadata (emitted by
+  `-d/--debug` today):
   - function IDs/names
   - BB source file/line/col spans
   - mapping: function IDs + statement boundaries → BB spans
@@ -91,9 +94,13 @@ Compiler outputs (debug builds):
 
 Runtime provides (debug builds):
 
-- `bbdbg.__bbdbg_enter/leave/stmt` imports: lightweight instrumentation hooks for call stack + statement tracing (used by the worker debugger overlay today).
-- (future) `__dbg_trap(id)` import: statement boundary hook that can pause mid-call (used for true step over/into/out).
-- Optional: `__dbg_event(kind, a, b, c)` import or a shared ring buffer for trace events.
+- `bbdbg.__bbdbg_enter/leave/stmt` imports: lightweight instrumentation hooks
+  for call stack + statement tracing (used by the worker debugger overlay
+  today).
+- (future) `__dbg_trap(id)` import: statement boundary hook that can pause
+  mid-call (used for true step over/into/out).
+- Optional: `__dbg_event(kind, a, b, c)` import or a shared ring buffer for
+  trace events.
 - Optional: debug exports to simplify memory inspection:
   - `__dbg_heap_regions()` (returns region table)
   - `__dbg_describe_ptr(ptr)` (returns type tag / field descriptors)
@@ -108,8 +115,8 @@ Frontend (web UI) provides:
 
 Power-tool mode (optional, recommended):
 
-- A host-run CLI debugger (run WASM outside the browser) for deterministic stepping,
-  easier repros, and deep inspection without browser constraints.
+- A host-run CLI debugger (run WASM outside the browser) for deterministic
+  stepping, easier repros, and deep inspection without browser constraints.
 
 ### Why a trap-based debugger first
 
@@ -117,10 +124,11 @@ DWARF-first is attractive, but a trap-based debugger delivers:
 
 - A stable stepping experience even when browser DWARF support is incomplete.
 - Domain-specific stepping points (statement boundaries, “tick boundaries”).
-- Tight integration with Blitz-specific memory semantics (which generic debuggers
-  won’t understand).
+- Tight integration with Blitz-specific memory semantics (which generic
+  debuggers won’t understand).
 
-DWARF can then be layered on top once the internal mapping and semantics are proven.
+DWARF can then be layered on top once the internal mapping and semantics are
+proven.
 
 ## Detailed implementation plan (milestones)
 
@@ -128,8 +136,10 @@ DWARF can then be layered on top once the internal mapping and semantics are pro
 
 Define two supported modes:
 
-- **Browser-attached debugging (primary UX):** real web runtime + debugger overlay.
-- **Host-run debugging (power tool):** deterministic stepping + deep memory inspection.
+- **Browser-attached debugging (primary UX):** real web runtime + debugger
+  overlay.
+- **Host-run debugging (power tool):** deterministic stepping + deep memory
+  inspection.
 
 Deliverables:
 
@@ -148,7 +158,8 @@ Add/verify invariants in the Swift compiler pipeline:
 Deliverables:
 
 - `--debug` compile flag that emits:
-  - stable function naming (WASM `name` section and/or export naming conventions)
+  - stable function naming (WASM `name` section and/or export naming
+    conventions)
   - `*.bbdbg.json` mapping sidecar.
 - CLI helper `b3d-dbg dump`:
   - input: wasm PC (or trap id)
@@ -158,8 +169,12 @@ Deliverables:
 
 In debug codegen:
 
-- Today: statement boundaries are already reported via `bbdbg.__bbdbg_stmt` and surfaced in the worker overlay as a bounded trace + “breakpoint hits during the last call”.
-- Next: insert a pausable `call __dbg_trap(id)` at statement boundaries and/or basic-block heads so the debugger can pause mid-WASM-call (needed for true step over/into/out).
+- Today: statement boundaries are already reported via `bbdbg.__bbdbg_stmt` and
+  surfaced in the worker overlay as a bounded trace + “breakpoint hits during
+  the last call”.
+- Next: insert a pausable `call __dbg_trap(id)` at statement boundaries and/or
+  basic-block heads so the debugger can pause mid-WASM-call (needed for true
+  step over/into/out).
 
 Stepping semantics:
 
@@ -181,7 +196,8 @@ Add debug-only metadata and hooks so memory is inspectable:
 - Linear memory regions:
   - stack region (if applicable), heap arena(s), static data, type tables, etc.
 - Alloc/free hooks:
-  - on alloc/free, emit events `{ptr,size,typeTag,siteId,tick}` into a ring buffer.
+  - on alloc/free, emit events `{ptr,size,typeTag,siteId,tick}` into a ring
+    buffer.
 - Type-aware decoding:
   - expose type layout tables and field offsets from compiler → runtime → UI.
 - RAM watch list UX:
@@ -213,7 +229,8 @@ Once Milestones 1–3 are stable:
 
 Deliverables:
 
-- `--debug=dwarf` build that supports breakpoints by file:line in external tools.
+- `--debug=dwarf` build that supports breakpoints by file:line in external
+  tools.
 
 ### Milestone 5 — Game debugging features (daily-driver ergonomics)
 
@@ -221,7 +238,8 @@ Borrowed from game RE / speedrun workflows:
 
 - Tick/frame stepping: one `UpdateGame()` per click.
 - Input record/replay: log inputs with tick index; replay deterministically.
-- Trace timeline: VFS loads, audio decode/play, GPU uploads, command-buffer flushes.
+- Trace timeline: VFS loads, audio decode/play, GPU uploads, command-buffer
+  flushes.
 - Render capture hooks: make it easy to capture a frame for graphics triage.
 
 Deliverables:
@@ -232,11 +250,14 @@ Deliverables:
 ## Risks / gotchas
 
 - Browser DWARF support varies; the custom trap debugger avoids blocking on it.
-- Optimizations harm stepping fidelity; maintain a dedicated debug codegen profile.
+- Optimizations harm stepping fidelity; maintain a dedicated debug codegen
+  profile.
 - Memory semantics must be versioned; snapshots should record layout versions.
 
 ## Open questions (needs product decisions)
 
-1) First “win”: prioritize source stepping (Milestone 2) or memory inspector (Milestone 3)?
-2) Acceptable debug-only instrumentation: can debug builds import a pausable `__dbg_trap` (in addition to the existing `bbdbg.__bbdbg_*` hooks)?
-3) Should host-run debugging be a first-class mode, or a later power tool?
+1. First “win”: prioritize source stepping (Milestone 2) or memory inspector
+   (Milestone 3)?
+2. Acceptable debug-only instrumentation: can debug builds import a pausable
+   `__dbg_trap` (in addition to the existing `bbdbg.__bbdbg_*` hooks)?
+3. Should host-run debugging be a first-class mode, or a later power tool?

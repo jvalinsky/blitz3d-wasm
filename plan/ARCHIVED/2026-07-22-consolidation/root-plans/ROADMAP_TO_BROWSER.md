@@ -1,11 +1,14 @@
 # Roadmap to 100% SCP:CB Running in Browser
 
-**Goal**: Compile all SCPCB files to WASM and run the game in a browser with full functionality.
+**Goal**: Compile all SCPCB files to WASM and run the game in a browser with
+full functionality.
 
-> Note (2026-02-02): this document is a historical “snapshot plan” and parts of it may be outdated.
-> Prefer `plan/README.md` and `plan/scpcb-web-track-b/README.md` for current execution status.
+> Note (2026-02-02): this document is a historical “snapshot plan” and parts of
+> it may be outdated. Prefer `plan/README.md` and
+> `plan/scpcb-web-track-b/README.md` for current execution status.
 
-**Current State**: 
+**Current State**:
+
 - [DONE] 100% compilation rate (36/36 files compile without crashes)
 - [TODO] ~450 WASM validation errors across 7 files
 - [TODO] Parser bug causes missing functions/globals
@@ -18,16 +21,21 @@
 
 ## 2026-02-02 progress (what changed since this doc)
 
-- Added BB→WASM end-to-end smoke tests (`Tests/deno_smoke/` + `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate language features quickly by running WASM.
-- Implemented “safe runner” execution for interpreter demos (Worker + watchdog timeout + Stop control) to prevent browser freezes from infinite loops.
+- Added BB→WASM end-to-end smoke tests (`Tests/deno_smoke/` +
+  `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`) to validate language
+  features quickly by running WASM.
+- Implemented “safe runner” execution for interpreter demos (Worker + watchdog
+  timeout + Stop control) to prevent browser freezes from infinite loops.
 
-### 1.1 Parser Bug: Missing Functions/Globals (HIGH PRIORITY)  4-6 hours
+### 1.1 Parser Bug: Missing Functions/Globals (HIGH PRIORITY) 4-6 hours
 
-**Problem**: Parser processes entire file but only finds 1/28 functions, 16/23 globals in Menu.bb
-**Root Cause**: `parseFunction()` doesn't correctly identify `End Function` boundary
-**Impact**: Blocks all other work - can't test runtime without valid WASM
+**Problem**: Parser processes entire file but only finds 1/28 functions, 16/23
+globals in Menu.bb **Root Cause**: `parseFunction()` doesn't correctly identify
+`End Function` boundary **Impact**: Blocks all other work - can't test runtime
+without valid WASM
 
 **Tasks**:
+
 1. **Investigate parseFunction() body parsing** (1h)
    - Add logging to track token consumption
    - Find where `End Function` detection fails
@@ -53,26 +61,29 @@
    - Remove verbose diagnostics
 
 **Success Criteria**:
+
 - [DONE] All 28 functions found in Menu.bb
-- [DONE] All 23 globals found in Menu.bb  
+- [DONE] All 23 globals found in Menu.bb
 - [DONE] All SCPCB files parse completely
 - [DONE] Zero parser-related errors
 
-**Estimated Time**: 4-6 hours
-**Priority**: [CRITICAL] CRITICAL - Blocks everything else
+**Estimated Time**: 4-6 hours **Priority**: [CRITICAL] CRITICAL - Blocks
+everything else
 
 ---
 
-### 1.2 Optional Parameter Support (HIGH PRIORITY)  6-8 hours
+### 1.2 Optional Parameter Support (HIGH PRIORITY) 6-8 hours
 
 **Problem**: 86 errors in Main.bb alone - functions with 2-4 parameter variants
-**Examples**: 
+**Examples**:
+
 - `EntityTexture(mesh, tex)` vs `EntityTexture(mesh, tex, frame, index)`
 - `LoadMesh(file)` vs `LoadMesh(file, parent)`
 
 **Current State**: Compiler doesn't support optional parameters at all
 
 **Research Needed**:
+
 - Check blitz3d-ng reference for how Blitz3D handles this
 - Determine if it's true optional parameters or function overloading
 
@@ -111,17 +122,18 @@
    - Add default values to signatures
 
 **Success Criteria**:
+
 - [DONE] Parser accepts `Function Foo(x%, y% = 10)`
 - [DONE] Calls with missing args compile correctly
 - [DONE] 86 call errors in Main.bb → 0
 - [DONE] EntityTexture/LoadMesh work with variable arg counts
 
-**Estimated Time**: 6-8 hours
-**Priority**: [CRITICAL] HIGH - Affects 86 errors in Main.bb
+**Estimated Time**: 6-8 hours **Priority**: [CRITICAL] HIGH - Affects 86 errors
+in Main.bb
 
 ---
 
-### 1.3 Type Promotion Fixes (MEDIUM PRIORITY)  3-4 hours
+### 1.3 Type Promotion Fixes (MEDIUM PRIORITY) 3-4 hours
 
 **Problem**: 147 errors across Save.bb (96), UpdateEvents.bb (7), NPCs.bb (14)
 **Pattern**: Float variables used in integer operations without conversion
@@ -149,20 +161,21 @@
    - UpdateEvents.bb: 7 errors → 0
    - NPCs.bb: 14 type errors → 0
 
-**Note**: Type conversion infrastructure already exists (from Session 4), just need to USE it correctly.
+**Note**: Type conversion infrastructure already exists (from Session 4), just
+need to USE it correctly.
 
 **Success Criteria**:
+
 - [DONE] Float variables work in arithmetic
 - [DONE] Mixed int/float expressions auto-convert
 - [DONE] Save.bb validates (96 errors → 0)
 - [DONE] All type-related errors eliminated
 
-**Estimated Time**: 3-4 hours
-**Priority**: [MEDIUM] MEDIUM - Affects 147 errors
+**Estimated Time**: 3-4 hours **Priority**: [MEDIUM] MEDIUM - Affects 147 errors
 
 ---
 
-### 1.4 Stack Balance Fixes (LOW PRIORITY)  2-3 hours
+### 1.4 Stack Balance Fixes (LOW PRIORITY) 2-3 hours
 
 **Problem**: 3 errors across DevilParticleSystem.bb (1), MapSystem.bb (2)
 **Pattern**: If branches leaving orphaned values (function calls as statements)
@@ -184,21 +197,21 @@
    - MapSystem.bb: 2 errors → 0
 
 **Success Criteria**:
+
 - [DONE] All if branches balanced
 - [DONE] Function call return values properly dropped
 - [DONE] Zero stack balance errors
 
-**Estimated Time**: 2-3 hours
-**Priority**: [LOW] LOW - Only 3 errors total
+**Estimated Time**: 2-3 hours **Priority**: [LOW] LOW - Only 3 errors total
 
 ---
 
 ## Phase 2: Runtime Implementation (PARALLEL TRACK)
 
-### 2.1 Runtime Function Audit  3-4 hours
+### 2.1 Runtime Function Audit 3-4 hours
 
-**Current State**: 425+ functions (363 env, 18 blitz3d, 40+ al)
-**Unknown**: Which functions are stubs vs fully implemented
+**Current State**: 425+ functions (363 env, 18 blitz3d, 40+ al) **Unknown**:
+Which functions are stubs vs fully implemented
 
 **Tasks**:
 
@@ -227,21 +240,23 @@
    - Can defer: Advanced features
 
 **Deliverable**: RUNTIME_AUDIT.md with:
+
 - Complete function list
 - Implementation status ([DONE] Done, [STUB] Stub, [TODO] Missing)
 - Priority ranking
 - Estimated hours per function
 
-**Estimated Time**: 3-4 hours
-**Priority**: [MEDIUM] MEDIUM - Can run in parallel with Phase 1
+**Estimated Time**: 3-4 hours **Priority**: [MEDIUM] MEDIUM - Can run in
+parallel with Phase 1
 
 ---
 
-### 2.2 Core Runtime Functions  20-30 hours
+### 2.2 Core Runtime Functions 20-30 hours
 
 **Critical for basic functionality**:
 
 **Graphics (Blitz3D 3D Engine)** (10-12h):
+
 - [DONE] CreateCamera, CameraRange (done)
 - [STUB] CreateMesh, CreateSurface (need implementation)
 - [STUB] LoadMesh, LoadTexture (need Three.js integration)
@@ -250,32 +265,36 @@
 - [STUB] RenderWorld, UpdateWorld (main loop)
 
 **File I/O** (4-5h):
+
 - [STUB] OpenFile, CloseFile (virtual filesystem)
 - [STUB] ReadInt, ReadFloat, ReadString
 - [STUB] WriteInt, WriteFloat, WriteString
 - [STUB] FileSize, FileType (directory support)
 
 **Input** (3-4h):
+
 - [STUB] KeyDown, KeyHit (keyboard)
 - [STUB] MouseX, MouseY, MouseDown (mouse)
 - [STUB] FlushKeys, FlushMouse
 
 **String Functions** (2-3h):
+
 - [DONE] Basic string ops (done)
 - [STUB] Left, Right, Mid (substring)
 - [STUB] Replace, Instr (search)
 - [STUB] Chr, Asc (character conversion)
 
 **Math** (1h):
+
 - [DONE] Most done
 - [STUB] Rand, Rnd (random - need proper seed)
 
-**Estimated Time**: 20-30 hours
-**Priority**: [CRITICAL] CRITICAL - Game can't run without these
+**Estimated Time**: 20-30 hours **Priority**: [CRITICAL] CRITICAL - Game can't
+run without these
 
 ---
 
-### 2.3 Asset Loading System  6-8 hours
+### 2.3 Asset Loading System 6-8 hours
 
 **Problem**: SCPCB assets are in ZIP files, need virtual filesystem
 
@@ -302,16 +321,17 @@
    - Check memory usage
 
 **Success Criteria**:
+
 - [DONE] Can load SCPCB ZIP files
 - [DONE] ReadFile/WriteFile work with virtual paths
 - [DONE] Three.js can load textures from virtual FS
 
-**Estimated Time**: 6-8 hours
-**Priority**: [CRITICAL] HIGH - Needed for textures/models/sounds
+**Estimated Time**: 6-8 hours **Priority**: [CRITICAL] HIGH - Needed for
+textures/models/sounds
 
 ---
 
-## Phase 3: Browser Integration  8-10 hours
+## Phase 3: Browser Integration 8-10 hours
 
 ### 3.1 WASM Loading and Initialization (3-4h)
 
@@ -370,6 +390,7 @@
    - Render scene
 
 **Success Criteria**:
+
 - [DONE] Can create meshes from WASM
 - [DONE] Entities render in 3D
 - [DONE] Camera movement works
@@ -397,6 +418,7 @@
    - Handle escape to release
 
 **Success Criteria**:
+
 - [DONE] WASD movement works
 - [DONE] Mouse look works
 - [DONE] ESC menu works
@@ -405,7 +427,7 @@
 
 ---
 
-## Phase 4: Testing and Debugging  10-20 hours
+## Phase 4: Testing and Debugging 10-20 hours
 
 ### 4.1 Unit Testing (3-4h)
 
@@ -465,7 +487,7 @@
 
 ---
 
-## Phase 5: Polish and Release  5-10 hours
+## Phase 5: Polish and Release 5-10 hours
 
 ### 5.1 Error Handling (2-3h)
 
@@ -500,26 +522,26 @@
 
 ## Summary: Total Time Estimate
 
-| Phase | Component | Time | Priority |
-|-------|-----------|------|----------|
-| **1** | **Compiler Bugs** | **15-21h** | **[CRITICAL] CRITICAL** |
-| 1.1 | Parser bug | 4-6h | [CRITICAL] Blocks all |
-| 1.2 | Optional params | 6-8h | [CRITICAL] 86 errors |
-| 1.3 | Type promotion | 3-4h | [MEDIUM] 147 errors |
-| 1.4 | Stack balance | 2-3h | [LOW] 3 errors |
-| **2** | **Runtime** | **29-42h** | **[CRITICAL] CRITICAL** |
-| 2.1 | Function audit | 3-4h | [MEDIUM] Planning |
-| 2.2 | Core functions | 20-30h | [CRITICAL] Essential |
-| 2.3 | Asset loading | 6-8h | [CRITICAL] Essential |
-| **3** | **Browser Integration** | **8-10h** | **[CRITICAL] HIGH** |
-| 3.1 | WASM loading | 3-4h | [CRITICAL] Required |
-| 3.2 | Three.js integration | 4-5h | [CRITICAL] Required |
-| 3.3 | Input/controls | 1-2h | [CRITICAL] Required |
-| **4** | **Testing/Debug** | **10-20h** | **[MEDIUM] IMPORTANT** |
-| 4.1 | Unit tests | 3-4h | [MEDIUM] Quality |
-| 4.2 | Integration tests | 5-8h | [MEDIUM] Quality |
-| 4.3 | Performance | 5-10h | [LOW] Nice-to-have |
-| **5** | **Polish** | **5-10h** | **[LOW] OPTIONAL** |
+| Phase | Component               | Time       | Priority                |
+| ----- | ----------------------- | ---------- | ----------------------- |
+| **1** | **Compiler Bugs**       | **15-21h** | **[CRITICAL] CRITICAL** |
+| 1.1   | Parser bug              | 4-6h       | [CRITICAL] Blocks all   |
+| 1.2   | Optional params         | 6-8h       | [CRITICAL] 86 errors    |
+| 1.3   | Type promotion          | 3-4h       | [MEDIUM] 147 errors     |
+| 1.4   | Stack balance           | 2-3h       | [LOW] 3 errors          |
+| **2** | **Runtime**             | **29-42h** | **[CRITICAL] CRITICAL** |
+| 2.1   | Function audit          | 3-4h       | [MEDIUM] Planning       |
+| 2.2   | Core functions          | 20-30h     | [CRITICAL] Essential    |
+| 2.3   | Asset loading           | 6-8h       | [CRITICAL] Essential    |
+| **3** | **Browser Integration** | **8-10h**  | **[CRITICAL] HIGH**     |
+| 3.1   | WASM loading            | 3-4h       | [CRITICAL] Required     |
+| 3.2   | Three.js integration    | 4-5h       | [CRITICAL] Required     |
+| 3.3   | Input/controls          | 1-2h       | [CRITICAL] Required     |
+| **4** | **Testing/Debug**       | **10-20h** | **[MEDIUM] IMPORTANT**  |
+| 4.1   | Unit tests              | 3-4h       | [MEDIUM] Quality        |
+| 4.2   | Integration tests       | 5-8h       | [MEDIUM] Quality        |
+| 4.3   | Performance             | 5-10h      | [LOW] Nice-to-have      |
+| **5** | **Polish**              | **5-10h**  | **[LOW] OPTIONAL**      |
 
 **TOTAL ESTIMATED TIME: 67-103 hours** (8-13 working days)
 
@@ -545,24 +567,28 @@ To get a **working demo** (not full game):
 ## Recommended Approach
 
 ### Week 1: Compiler (3-4 days)
+
 - Fix parser bug
 - Implement optional parameters
 - Fix type promotion
 - All SCPCB files compile with zero errors
 
 ### Week 2: Runtime (4-5 days)
+
 - Audit existing runtime
 - Implement core graphics functions
 - Build asset loading system
 - Test with simple WASM programs
 
 ### Week 3: Integration (3-4 days)
+
 - Browser WASM loading
 - Three.js integration
 - Input handling
 - Get SCPCB menu displaying
 
 ### Week 4+: Testing and Polish
+
 - Integration testing
 - Bug fixes
 - Performance optimization
@@ -573,14 +599,15 @@ To get a **working demo** (not full game):
 ## Dependencies and Blockers
 
 **Hard Blockers** (Must fix before anything else):
+
 1. [BLOCKING] Parser bug - Affects all subsequent work
 2. [BLOCKING] Optional parameters - 86 errors in Main.bb alone
 
-**Soft Blockers** (Can work around temporarily):
-3. Type promotion - Can manually fix in source if needed
-4. Stack balance - Only 3 errors, low impact
+**Soft Blockers** (Can work around temporarily): 3. Type promotion - Can
+manually fix in source if needed 4. Stack balance - Only 3 errors, low impact
 
 **Parallel Work Possible**:
+
 - Runtime implementation CAN start while fixing compiler
 - Asset system CAN be built independently
 - Browser integration CAN be prototyped with stub WASM
@@ -590,23 +617,26 @@ To get a **working demo** (not full game):
 ## Risk Assessment
 
 ### High Risk
+
 - **Parser bug complexity**: May be deeper than current hypothesis
-  - *Mitigation*: Allocated extra time (4-6h), have multiple approaches
-  
+  - _Mitigation_: Allocated extra time (4-6h), have multiple approaches
+
 - **Optional parameters**: Might need major architecture changes
-  - *Mitigation*: Research blitz3d-ng first, have fallback to function wrappers
+  - _Mitigation_: Research blitz3d-ng first, have fallback to function wrappers
 
 - **Runtime completeness**: Unknown how many stubs exist
-  - *Mitigation*: Audit first, prioritize by usage frequency
+  - _Mitigation_: Audit first, prioritize by usage frequency
 
 ### Medium Risk
+
 - **Three.js integration**: .b3d/.rmesh format parsing
-  - *Mitigation*: Use existing Blitz3D mesh loaders as reference
+  - _Mitigation_: Use existing Blitz3D mesh loaders as reference
 
 - **Performance**: WASM may be slower than native
-  - *Mitigation*: Profile early, optimize hot paths
+  - _Mitigation_: Profile early, optimize hot paths
 
 ### Low Risk
+
 - **Browser compatibility**: WebAssembly well-supported
 - **Asset loading**: JSZip is mature library
 
@@ -615,23 +645,27 @@ To get a **working demo** (not full game):
 ## Success Metrics
 
 ### Phase 1 Complete:
+
 - [DONE] All 36 SCPCB files compile
 - [DONE] Zero WASM validation errors
 - [DONE] Test suite: 244/244 passing
 - [DONE] Fixture tests: 47/47 passing
 
 ### Phase 2 Complete:
+
 - [DONE] All critical runtime functions implemented
 - [DONE] Can load SCPCB assets from ZIP
 - [DONE] Basic 3D rendering works
 
 ### Phase 3 Complete:
+
 - [DONE] Game runs in browser
 - [DONE] Main menu displays
 - [DONE] Can start new game
 - [DONE] Basic movement works
 
 ### Phase 4 Complete:
+
 - [DONE] Full gameplay functional
 - [DONE] Save/load works
 - [DONE] No critical bugs
@@ -659,12 +693,14 @@ To get a **working demo** (not full game):
 ## Questions to Answer
 
 Before starting Phase 2, research:
+
 1. How does blitz3d-ng handle optional parameters?
 2. What's the actual format of .rmesh files?
 3. Which Three.js version should we target?
 4. Do we need SharedArrayBuffer for threading?
 
 Before starting Phase 3:
+
 1. What's the minimum WebAssembly browser version needed?
 2. Should we use WebGL 1.0 or 2.0?
 3. How much memory should we allocate?
@@ -675,6 +711,7 @@ Before starting Phase 3:
 ## Long-Term Vision
 
 **After initial release**:
+
 - Multiplayer support (WebRTC)
 - Mobile controls (touch)
 - VR support (WebXR)

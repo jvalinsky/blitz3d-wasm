@@ -1,338 +1,362 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blitz3D WASM - BB Runner Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: #121a2f;
+        --text: #d7e1ff;
+        --muted: #9fb0e6;
+        --border: #24304f;
+        --accent: #4aa3ff;
+        --bad: #ff5a6a;
+        --warn: #ffb020;
+        --ok: #47d18c;
+        --mono:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
+        --sans:
+          ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+          Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      }
 
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Blitz3D WASM - BB Runner Demo</title>
-  <style>
-    :root {
-      color-scheme: dark;
-      --bg: #0b1020;
-      --panel: #121a2f;
-      --text: #d7e1ff;
-      --muted: #9fb0e6;
-      --border: #24304f;
-      --accent: #4aa3ff;
-      --bad: #ff5a6a;
-      --warn: #ffb020;
-      --ok: #47d18c;
-      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
+      body {
+        margin: 0;
+        font-family: var(--sans);
+        background: radial-gradient(
+          1200px 700px at 10% 0%,
+          #14204a,
+          var(--bg)
+        );
+        color: var(--text);
+      }
 
-    body {
-      margin: 0;
-      font-family: var(--sans);
-      background: radial-gradient(1200px 700px at 10% 0%, #14204a, var(--bg));
-      color: var(--text);
-    }
+      header {
+        padding: 18px 18px 12px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(18, 26, 47, 0.75);
+        backdrop-filter: blur(8px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
 
-    header {
-      padding: 18px 18px 12px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(18, 26, 47, 0.75);
-      backdrop-filter: blur(8px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+      }
 
-    h1 {
-      margin: 0 0 6px;
-      font-size: 18px;
-      letter-spacing: 0.2px;
-    }
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
 
-    .sub {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.35;
-    }
-
-    .wrap {
-      padding: 16px 18px 20px;
-      display: grid;
-      grid-template-columns: 440px 1fr;
-      gap: 16px;
-    }
-
-    @media (max-width: 980px) {
       .wrap {
-        grid-template-columns: 1fr;
+        padding: 16px 18px 20px;
+        display: grid;
+        grid-template-columns: 440px 1fr;
+        gap: 16px;
       }
-    }
 
-    .panel {
-      background: rgba(18, 26, 47, 0.85);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
+      @media (max-width: 980px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    .panel h2 {
-      margin: 0;
-      padding: 12px 12px;
-      font-size: 13px;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-    }
+      .panel {
+        background: rgba(18, 26, 47, 0.85);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
 
-    .panel .body {
-      padding: 12px;
-    }
+      .panel h2 {
+        margin: 0;
+        padding: 12px 12px;
+        font-size: 13px;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
 
-    label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
+      .panel .body {
+        padding: 12px;
+      }
 
-    input[type="file"] {
-      width: 100%;
-      padding: 10px;
-      border: 1px dashed var(--border);
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.1);
-      color: var(--text);
-      font-family: var(--mono);
-    }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
 
-    .row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
+      input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.1);
+        color: var(--text);
+        font-family: var(--mono);
+      }
 
-    .row3 {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
 
-    input[type="number"] {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--text);
-      font-family: var(--mono);
-    }
+      .row3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
 
-    button {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: rgba(0, 0, 0, 0.2);
-      color: var(--text);
-      font-family: var(--sans);
-      cursor: pointer;
-      transition: transform 0.05s ease, background 0.15s ease;
-    }
+      input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+        font-family: var(--mono);
+      }
 
-    button:hover {
-      background: rgba(74, 163, 255, 0.12);
-      border-color: rgba(74, 163, 255, 0.35);
-    }
+      button {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.2);
+        color: var(--text);
+        font-family: var(--sans);
+        cursor: pointer;
+        transition: transform 0.05s ease, background 0.15s ease;
+      }
 
-    button:active {
-      transform: translateY(1px);
-    }
+      button:hover {
+        background: rgba(74, 163, 255, 0.12);
+        border-color: rgba(74, 163, 255, 0.35);
+      }
 
-    button.primary {
-      background: rgba(74, 163, 255, 0.2);
-      border-color: rgba(74, 163, 255, 0.5);
-    }
+      button:active {
+        transform: translateY(1px);
+      }
 
-    button.danger {
-      background: rgba(255, 90, 106, 0.12);
-      border-color: rgba(255, 90, 106, 0.35);
-    }
+      button.primary {
+        background: rgba(74, 163, 255, 0.2);
+        border-color: rgba(74, 163, 255, 0.5);
+      }
 
-    .hint {
-      margin-top: 10px;
-      font-size: 12px;
-      color: var(--muted);
-      line-height: 1.4;
-    }
+      button.danger {
+        background: rgba(255, 90, 106, 0.12);
+        border-color: rgba(255, 90, 106, 0.35);
+      }
 
-    .mono {
-      font-family: var(--mono);
-    }
+      .hint {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
 
-    #out {
-      height: 70vh;
-      overflow: auto;
-      padding: 12px;
-      font-family: var(--mono);
-      font-size: 12px;
-      line-height: 1.35;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
+      .mono {
+        font-family: var(--mono);
+      }
 
-    .line {
-      padding: 2px 0;
-    }
+      #out {
+        height: 70vh;
+        overflow: auto;
+        padding: 12px;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.35;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
 
-    .line.info {
-      color: var(--muted);
-    }
+      .line {
+        padding: 2px 0;
+      }
 
-    .line.ok {
-      color: var(--ok);
-    }
+      .line.info {
+        color: var(--muted);
+      }
 
-    .line.warn {
-      color: var(--warn);
-    }
+      .line.ok {
+        color: var(--ok);
+      }
 
-    .line.err {
-      color: var(--bad);
-    }
+      .line.warn {
+        color: var(--warn);
+      }
 
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-top: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 12px;
-    }
+      .line.err {
+        color: var(--bad);
+      }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 999px;
-      background: #6572a7;
-      box-shadow: 0 0 0 3px rgba(101, 114, 167, 0.15);
-    }
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 12px;
+      }
 
-    .dot.ok {
-      background: var(--ok);
-      box-shadow: 0 0 0 3px rgba(71, 209, 140, 0.15);
-    }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #6572a7;
+        box-shadow: 0 0 0 3px rgba(101, 114, 167, 0.15);
+      }
 
-    .dot.warn {
-      background: var(--warn);
-      box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.15);
-    }
+      .dot.ok {
+        background: var(--ok);
+        box-shadow: 0 0 0 3px rgba(71, 209, 140, 0.15);
+      }
 
-    .dot.err {
-      background: var(--bad);
-      box-shadow: 0 0 0 3px rgba(255, 90, 106, 0.15);
-    }
-  </style>
-</head>
+      .dot.warn {
+        background: var(--warn);
+        box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.15);
+      }
 
-<body>
-  <header>
-    <h1>BB Runner Demo (WASM-only, worker + watchdog)</h1>
-    <p class="sub">
-      This is the “safe runner” half of a web interpreter: it runs a compiled BB→WASM module in a Web Worker, stubs
-      missing imports, captures output, and can terminate on infinite loops (timeout).
-    </p>
-  </header>
+      .dot.err {
+        background: var(--bad);
+        box-shadow: 0 0 0 3px rgba(255, 90, 106, 0.15);
+      }
+    </style>
+  </head>
 
-  <div class="wrap">
-    <div class="panel">
-      <h2>Inputs</h2>
-      <div class="body">
-        <label for="wasmFile">WASM file (compiled from BB)</label>
-        <input id="wasmFile" type="file" accept=".wasm,application/wasm" />
+  <body>
+    <header>
+      <h1>BB Runner Demo (WASM-only, worker + watchdog)</h1>
+      <p class="sub">
+        This is the “safe runner” half of a web interpreter: it runs a compiled
+        BB→WASM module in a Web Worker, stubs missing imports, captures output,
+        and can terminate on infinite loops (timeout).
+      </p>
+    </header>
 
-        <div class="row">
-          <div>
-            <label for="timeoutMs">Timeout (ms)</label>
-            <input id="timeoutMs" type="number" min="0" step="50" value="2000" />
+    <div class="wrap">
+      <div class="panel">
+        <h2>Inputs</h2>
+        <div class="body">
+          <label for="wasmFile">WASM file (compiled from BB)</label>
+          <input id="wasmFile" type="file" accept=".wasm,application/wasm" />
+
+          <div class="row">
+            <div>
+              <label for="timeoutMs">Timeout (ms)</label>
+              <input
+                id="timeoutMs"
+                type="number"
+                min="0"
+                step="50"
+                value="2000"
+              />
+            </div>
+            <div>
+              <label for="maxLines">Max output lines</label>
+              <input
+                id="maxLines"
+                type="number"
+                min="10"
+                step="10"
+                value="2000"
+              />
+            </div>
           </div>
-          <div>
-            <label for="maxLines">Max output lines</label>
-            <input id="maxLines" type="number" min="10" step="10" value="2000" />
+
+          <div class="row3">
+            <button id="runBtn" class="primary">Run</button>
+            <button id="stopBtn" class="danger">Stop</button>
+            <button id="clearBtn">Clear</button>
+          </div>
+
+          <div class="hint">
+            <div>
+              <span class="mono">Run</span> instantiates in a dedicated worker
+              and calls the first available entrypoint:
+              <span class="mono">main, _start, Main, Main_, __main</span>.
+            </div>
+            <div style="margin-top: 6px">
+              To compile quickly from the repo, use:
+              <div class="mono" style="margin-top: 6px">
+                deno run -A Tools/bb_deno_compile_and_run.ts path/to/program.bb
+              </div>
+              Then upload the produced <span class="mono">.wasm</span>.
+            </div>
           </div>
         </div>
+      </div>
 
-        <div class="row3">
-          <button id="runBtn" class="primary">Run</button>
-          <button id="stopBtn" class="danger">Stop</button>
-          <button id="clearBtn">Clear</button>
-        </div>
-
-        <div class="hint">
-          <div><span class="mono">Run</span> instantiates in a dedicated worker and calls the first available entrypoint:
-            <span class="mono">main, _start, Main, Main_, __main</span>.
-          </div>
-          <div style="margin-top:6px;">
-            To compile quickly from the repo, use:
-            <div class="mono" style="margin-top:6px;">deno run -A Tools/bb_deno_compile_and_run.ts path/to/program.bb</div>
-            Then upload the produced <span class="mono">.wasm</span>.
-          </div>
+      <div class="panel">
+        <h2>Output</h2>
+        <div id="out"></div>
+        <div class="status">
+          <div id="dot" class="dot"></div>
+          <div id="statusText" class="mono">idle</div>
         </div>
       </div>
     </div>
 
-    <div class="panel">
-      <h2>Output</h2>
-      <div id="out"></div>
-      <div class="status">
-        <div id="dot" class="dot"></div>
-        <div id="statusText" class="mono">idle</div>
-      </div>
-    </div>
-  </div>
+    <script type="module">
+      const out = document.getElementById("out");
+      const wasmFile = document.getElementById("wasmFile");
+      const timeoutMs = document.getElementById("timeoutMs");
+      const maxLines = document.getElementById("maxLines");
+      const runBtn = document.getElementById("runBtn");
+      const stopBtn = document.getElementById("stopBtn");
+      const clearBtn = document.getElementById("clearBtn");
+      const dot = document.getElementById("dot");
+      const statusText = document.getElementById("statusText");
 
-  <script type="module">
-    const out = document.getElementById("out");
-    const wasmFile = document.getElementById("wasmFile");
-    const timeoutMs = document.getElementById("timeoutMs");
-    const maxLines = document.getElementById("maxLines");
-    const runBtn = document.getElementById("runBtn");
-    const stopBtn = document.getElementById("stopBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const dot = document.getElementById("dot");
-    const statusText = document.getElementById("statusText");
+      /** @type {Worker | null} */
+      let currentWorker = null;
+      /** @type {number | null} */
+      let watchdog = null;
+      let lineCount = 0;
 
-    /** @type {Worker | null} */
-    let currentWorker = null;
-    /** @type {number | null} */
-    let watchdog = null;
-    let lineCount = 0;
+      const setStatus = (kind, text) => {
+        dot.className = `dot${kind ? ` ${kind}` : ""}`;
+        statusText.textContent = text;
+      };
 
-    const setStatus = (kind, text) => {
-      dot.className = `dot${kind ? ` ${kind}` : ""}`;
-      statusText.textContent = text;
-    };
+      const addLine = (text, kind = "") => {
+        const div = document.createElement("div");
+        div.className = `line${kind ? ` ${kind}` : ""}`;
+        div.textContent = text;
+        out.appendChild(div);
+        out.scrollTop = out.scrollHeight;
+      };
 
-    const addLine = (text, kind = "") => {
-      const div = document.createElement("div");
-      div.className = `line${kind ? ` ${kind}` : ""}`;
-      div.textContent = text;
-      out.appendChild(div);
-      out.scrollTop = out.scrollHeight;
-    };
+      const terminate = (reason) => {
+        if (watchdog !== null) {
+          clearTimeout(watchdog);
+          watchdog = null;
+        }
+        if (currentWorker) {
+          currentWorker.terminate();
+          currentWorker = null;
+        }
+        if (reason) addLine(reason, "warn");
+        setStatus("warn", "stopped");
+      };
 
-    const terminate = (reason) => {
-      if (watchdog !== null) {
-        clearTimeout(watchdog);
-        watchdog = null;
-      }
-      if (currentWorker) {
-        currentWorker.terminate();
-        currentWorker = null;
-      }
-      if (reason) addLine(reason, "warn");
-      setStatus("warn", "stopped");
-    };
-
-    const makeWorker = () => {
-      const workerCode = `
+      const makeWorker = () => {
+        const workerCode = `
         const entryPoints = ["main", "_start", "Main", "Main_", "__main"];
 
         const decodeB3DString = (ptr, memory) => {
@@ -452,90 +476,90 @@
         };
       `;
 
-      const blob = new Blob([workerCode], { type: "text/javascript" });
-      const url = URL.createObjectURL(blob);
-      const w = new Worker(url, { type: "module" });
-      URL.revokeObjectURL(url);
-      return w;
-    };
-
-    const run = async () => {
-      terminate("");
-      lineCount = 0;
-      out.textContent = "";
-
-      const file = wasmFile.files?.[0];
-      if (!file) {
-        addLine("Pick a .wasm file first.", "err");
-        setStatus("err", "missing input");
-        return;
-      }
-
-      const tMs = Number(timeoutMs.value || "0") || 0;
-      const max = Number(maxLines.value || "0") || 0;
-
-      setStatus("", "running...");
-      addLine(`Running: ${file.name} (${file.size} bytes)`, "info");
-      if (tMs > 0) addLine(`Watchdog: ${tMs}ms`, "info");
-
-      const wasmBytes = await file.arrayBuffer();
-      const w = makeWorker();
-      currentWorker = w;
-
-      if (tMs > 0) {
-        watchdog = setTimeout(() => {
-          terminate(`Timed out after ${tMs}ms (worker terminated).`);
-          setStatus("err", "timed out");
-        }, tMs);
-      }
-
-      w.onmessage = (ev) => {
-        const msg = ev.data;
-        if (msg.type === "stdout") {
-          addLine(msg.line);
-          lineCount++;
-          return;
-        }
-        if (msg.type === "warn") {
-          addLine(msg.line, "warn");
-          return;
-        }
-        if (msg.type === "error") {
-          addLine(`Error: ${msg.message}`, "err");
-          if (msg.stack) addLine(msg.stack, "err");
-          terminate("");
-          setStatus("err", "error");
-          return;
-        }
-        if (msg.type === "done") {
-          addLine(`(done) lines=${lineCount}`, "ok");
-          setStatus("ok", "done");
-          terminate("");
-          return;
-        }
+        const blob = new Blob([workerCode], {
+          type: "text/javascript",
+        });
+        const url = URL.createObjectURL(blob);
+        const w = new Worker(url, { type: "module" });
+        URL.revokeObjectURL(url);
+        return w;
       };
 
-      w.onerror = (e) => {
-        addLine(`Worker error: ${e.message}`, "err");
+      const run = async () => {
         terminate("");
-        setStatus("err", "worker error");
+        lineCount = 0;
+        out.textContent = "";
+
+        const file = wasmFile.files?.[0];
+        if (!file) {
+          addLine("Pick a .wasm file first.", "err");
+          setStatus("err", "missing input");
+          return;
+        }
+
+        const tMs = Number(timeoutMs.value || "0") || 0;
+        const max = Number(maxLines.value || "0") || 0;
+
+        setStatus("", "running...");
+        addLine(`Running: ${file.name} (${file.size} bytes)`, "info");
+        if (tMs > 0) addLine(`Watchdog: ${tMs}ms`, "info");
+
+        const wasmBytes = await file.arrayBuffer();
+        const w = makeWorker();
+        currentWorker = w;
+
+        if (tMs > 0) {
+          watchdog = setTimeout(() => {
+            terminate(`Timed out after ${tMs}ms (worker terminated).`);
+            setStatus("err", "timed out");
+          }, tMs);
+        }
+
+        w.onmessage = (ev) => {
+          const msg = ev.data;
+          if (msg.type === "stdout") {
+            addLine(msg.line);
+            lineCount++;
+            return;
+          }
+          if (msg.type === "warn") {
+            addLine(msg.line, "warn");
+            return;
+          }
+          if (msg.type === "error") {
+            addLine(`Error: ${msg.message}`, "err");
+            if (msg.stack) addLine(msg.stack, "err");
+            terminate("");
+            setStatus("err", "error");
+            return;
+          }
+          if (msg.type === "done") {
+            addLine(`(done) lines=${lineCount}`, "ok");
+            setStatus("ok", "done");
+            terminate("");
+            return;
+          }
+        };
+
+        w.onerror = (e) => {
+          addLine(`Worker error: ${e.message}`, "err");
+          terminate("");
+          setStatus("err", "worker error");
+        };
+
+        w.postMessage({ wasmBytes, maxLines: max }, [wasmBytes]);
       };
 
-      w.postMessage({ wasmBytes, maxLines: max }, [wasmBytes]);
-    };
+      runBtn.addEventListener("click", () => void run());
+      stopBtn.addEventListener("click", () => terminate("Stopped."));
+      clearBtn.addEventListener("click", () => {
+        terminate("");
+        out.textContent = "";
+        setStatus("", "idle");
+      });
 
-    runBtn.addEventListener("click", () => void run());
-    stopBtn.addEventListener("click", () => terminate("Stopped."));
-    clearBtn.addEventListener("click", () => {
-      terminate("");
-      out.textContent = "";
       setStatus("", "idle");
-    });
-
-    setStatus("", "idle");
-    addLine("Ready. Upload a compiled .wasm and click Run.", "info");
-  </script>
-</body>
-
+      addLine("Ready. Upload a compiled .wasm and click Run.", "info");
+    </script>
+  </body>
 </html>
-

@@ -73,7 +73,17 @@ const accessorView = (bin: Uint8Array, acc: SmpkAccessor): ArrayBufferView => {
   const ct = acc.componentType;
   const t = acc.type;
 
-  const comps = t === "SCALAR" ? 1 : t === "VEC2" ? 2 : t === "VEC3" ? 3 : t === "VEC4" ? 4 : t === "MAT4" ? 16 : 1;
+  const comps = t === "SCALAR"
+    ? 1
+    : t === "VEC2"
+    ? 2
+    : t === "VEC3"
+    ? 3
+    : t === "VEC4"
+    ? 4
+    : t === "MAT4"
+    ? 16
+    : 1;
 
   const n = count * comps;
   if (ct === "f32") return new Float32Array(buf, base, n);
@@ -113,7 +123,12 @@ export async function loadSmpkNative(
 
     // Set transform
     if (n.translation) {
-      bridge.setPosition(eid, n.translation[0], n.translation[1], n.translation[2]);
+      bridge.setPosition(
+        eid,
+        n.translation[0],
+        n.translation[1],
+        n.translation[2],
+      );
     }
     if (n.rotation) {
       // SMPK stores rotation as quaternion [x,y,z,w]
@@ -138,7 +153,9 @@ export async function loadSmpkNative(
   // Attach scene roots to root pivot
   const sceneRoots = json.sceneRoots?.length
     ? json.sceneRoots
-    : json.nodes.map((n, i) => (n.parent == null ? i : -1)).filter((i) => i >= 0);
+    : json.nodes.map((n, i) => (n.parent == null ? i : -1)).filter((i) =>
+      i >= 0
+    );
   for (const r of sceneRoots) {
     bridge.setParent(entityIds[r], rootId);
   }
@@ -213,7 +230,11 @@ export async function loadSmpkNative(
       const vertPtr = bridge.exports.GetSurfaceVerticesPtr(meshId, surfIdx);
       if (vertPtr > 0) {
         const stride = 11; // floats per vertex
-        const vertView = new Float32Array(bridge.memoryBuffer, vertPtr, vertexCount * stride);
+        const vertView = new Float32Array(
+          bridge.memoryBuffer,
+          vertPtr,
+          vertexCount * stride,
+        );
         for (let v = 0; v < vertexCount; v++) {
           const off = v * stride;
           // Position
@@ -238,7 +259,11 @@ export async function loadSmpkNative(
       if (indices && indexCount > 0) {
         const idxPtr = bridge.exports.GetSurfaceIndicesPtr(meshId, surfIdx);
         if (idxPtr > 0) {
-          const idxView = new Int32Array(bridge.memoryBuffer, idxPtr, indexCount);
+          const idxView = new Int32Array(
+            bridge.memoryBuffer,
+            idxPtr,
+            indexCount,
+          );
           for (let i = 0; i < indexCount; i++) {
             idxView[i] = indices[i];
           }
@@ -254,7 +279,12 @@ export async function loadSmpkNative(
     if (json.materials && matIdx < json.materials.length) {
       const mat = json.materials[matIdx]!;
       if (mat.color) {
-        bridge.entityColor(entityId, mat.color[0] * 255, mat.color[1] * 255, mat.color[2] * 255);
+        bridge.entityColor(
+          entityId,
+          mat.color[0] * 255,
+          mat.color[1] * 255,
+          mat.color[2] * 255,
+        );
       }
       if (mat.alpha !== undefined) {
         bridge.entityAlpha(entityId, mat.alpha);
@@ -279,7 +309,12 @@ export async function loadSmpkNative(
 }
 
 /** Convert quaternion (x,y,z,w) to Euler angles (pitch, yaw, roll) in degrees. */
-function quatToEuler(x: number, y: number, z: number, w: number): { pitch: number; yaw: number; roll: number } {
+function quatToEuler(
+  x: number,
+  y: number,
+  z: number,
+  w: number,
+): { pitch: number; yaw: number; roll: number } {
   // Blitz3D Euler order: Y*X*Z (yaw * pitch * roll)
   const sinp = 2 * (w * x - y * z);
   let pitch: number;
@@ -304,7 +339,8 @@ function resolveUrl(rel: string, base?: string): string {
   if (!rel) return rel;
   if (typeof globalThis.window === "undefined") return rel;
   try {
-    return new URL(rel, new URL(base ?? "", globalThis.window.location.href)).toString();
+    return new URL(rel, new URL(base ?? "", globalThis.window.location.href))
+      .toString();
   } catch {
     return rel;
   }

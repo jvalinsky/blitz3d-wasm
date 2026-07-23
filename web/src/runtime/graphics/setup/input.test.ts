@@ -4,9 +4,15 @@
 import { setupInput } from "./input.ts";
 import type { Blitz3DGraphicsInterface } from "../types.ts";
 
-function assertEquals<T>(actual: T, expected: T, message = "assertEquals failed") {
+function assertEquals<T>(
+  actual: T,
+  expected: T,
+  message = "assertEquals failed",
+) {
   if (actual !== expected) {
-    throw new Error(`${message}: expected=${String(expected)} actual=${String(actual)}`);
+    throw new Error(
+      `${message}: expected=${String(expected)} actual=${String(actual)}`,
+    );
   }
 }
 

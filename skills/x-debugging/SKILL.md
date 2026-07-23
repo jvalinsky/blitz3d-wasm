@@ -10,18 +10,21 @@ description: Debug DirectX `.x` models (text, binary, and MSZIP-compressed varia
 - `deno run -A Tools/convert_x_to_smpk.ts in.x -o out.smpk`
 
 If the conversion fails:
+
 - Parser entrypoint: `Tools/x/parse_x.ts`
-  - Handles `txt `, `bin `, `tzip` and `bzip`.
+  - Handles `txt`, `bin`, `tzip` and `bzip`.
 
 ## Common failure modes
 
 - **“Unsupported X format” / header issues**
-  - Verify the first 16 bytes start with `xof ` and the format is one of: `txt `, `bin `, `tzip`, `bzip`.
+  - Verify the first 16 bytes start with `xof` and the format is one of: `txt`,
+    `bin`, `tzip`, `bzip`.
 - **Rigid mesh (no skin)**
   - The converter only emits JOINTS/WEIGHTS when `SkinWeights` exist.
   - Missing/empty `SkinWeights` blocks produce static meshes.
 - **Materials load but textures missing**
-  - Fix via conversion-time texture name resolution (prefer basenames + on-disk casing).
+  - Fix via conversion-time texture name resolution (prefer basenames + on-disk
+    casing).
 
 ## Validate output correctness
 
@@ -32,4 +35,3 @@ If the conversion fails:
 
 - X loader: `web/src/runtime/xloader.ts`
 - SMPK loader: `web/src/runtime/smpk.ts`
-

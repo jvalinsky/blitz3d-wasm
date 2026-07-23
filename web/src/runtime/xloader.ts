@@ -4,7 +4,10 @@
  */
 
 import * as THREE from "three";
-import type { Blitz3DGraphicsInterface, GraphicsCore } from "./graphics/types.ts";
+import type {
+  Blitz3DGraphicsInterface,
+  GraphicsCore,
+} from "./graphics/types.ts";
 import type { Blitz3DFileIO } from "./fileio.ts";
 
 type XMeshData = {
@@ -32,12 +35,12 @@ class XScanner {
 
   private skipString() {
     // Skip a quoted string: "..."
-    if (this.s[this.i] !== "\"") return;
+    if (this.s[this.i] !== '"') return;
     this.i++;
     while (this.i < this.s.length) {
       const c = this.s[this.i]!;
       this.i++;
-      if (c === "\"") break;
+      if (c === '"') break;
       // X text format doesn't have standard escapes; treat backslash as literal.
     }
   }
@@ -45,7 +48,7 @@ class XScanner {
   skipJunk() {
     while (this.i < this.s.length) {
       const c = this.s[this.i]!;
-      if (c === "\"") {
+      if (c === '"') {
         this.skipString();
         continue;
       }
@@ -189,11 +192,14 @@ export class XLoader {
         const bytes = (typeof (this.fileIO as any).readAllBytes === "function")
           ? ((this.fileIO as any).readAllBytes(handle) as Uint8Array)
           : (() => {
-            const size = (typeof (this.fileIO as any).fileSizeFromHandle === "function")
-              ? ((this.fileIO as any).fileSizeFromHandle(handle) as number)
-              : this.fileIO.fileSize(filePath);
+            const size =
+              (typeof (this.fileIO as any).fileSizeFromHandle === "function")
+                ? ((this.fileIO as any).fileSizeFromHandle(handle) as number)
+                : this.fileIO.fileSize(filePath);
             const out = new Uint8Array(Math.max(0, size | 0));
-            for (let i = 0; i < out.length; i++) out[i] = this.fileIO.readByte(handle);
+            for (let i = 0; i < out.length; i++) {
+              out[i] = this.fileIO.readByte(handle);
+            }
             return out;
           })();
         try {
@@ -302,7 +308,10 @@ export class XLoader {
       const scan = new XScanner(cleaned);
 
       const vertexCount = scan.readInt();
-      if (!Number.isFinite(vertexCount) || vertexCount <= 0 || vertexCount > 20_000_000) {
+      if (
+        !Number.isFinite(vertexCount) || vertexCount <= 0 ||
+        vertexCount > 20_000_000
+      ) {
         this.log("Bad vertex count:", vertexCount);
         return null;
       }
@@ -316,7 +325,9 @@ export class XLoader {
       }
 
       const faceCount = scan.readInt();
-      if (!Number.isFinite(faceCount) || faceCount < 0 || faceCount > 20_000_000) {
+      if (
+        !Number.isFinite(faceCount) || faceCount < 0 || faceCount > 20_000_000
+      ) {
         this.log("Bad face count:", faceCount);
         return null;
       }
@@ -392,7 +403,9 @@ export class XLoader {
     try {
       const scan = new XScanner(block);
       const count = scan.readInt();
-      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) return uvs;
+      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) {
+        return uvs;
+      }
       for (let i = 0; i < count; i++) {
         uvs.push(scan.readFloat(), scan.readFloat());
       }
@@ -407,7 +420,9 @@ export class XLoader {
     try {
       const scan = new XScanner(block);
       const count = scan.readInt();
-      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) return normals;
+      if (!Number.isFinite(count) || count <= 0 || count > 50_000_000) {
+        return normals;
+      }
       for (let i = 0; i < count; i++) {
         normals.push(scan.readFloat(), scan.readFloat(), scan.readFloat());
       }
@@ -461,7 +476,10 @@ export class XLoader {
     return id;
   }
 
-  async createMesh(meshData: XMeshData, filePath: string): Promise<THREE.Mesh | null> {
+  async createMesh(
+    meshData: XMeshData,
+    filePath: string,
+  ): Promise<THREE.Mesh | null> {
     if (!meshData.vertices.length || !meshData.faces.length) {
       this.log("Empty mesh data");
       return null;
@@ -507,10 +525,16 @@ export class XLoader {
       try {
         const textureLoader = new THREE.TextureLoader();
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
-          textureLoader.load(resolved ?? meshData.textureName!, resolve, undefined, reject);
+          textureLoader.load(
+            resolved ?? meshData.textureName!,
+            resolve,
+            undefined,
+            reject,
+          );
         });
         texture.flipY = false;
-        (texture as unknown as { colorSpace?: string }).colorSpace = THREE.SRGBColorSpace;
+        (texture as unknown as { colorSpace?: string }).colorSpace =
+          THREE.SRGBColorSpace;
         material = new THREE.MeshPhongMaterial({
           map: texture,
           side: THREE.DoubleSide,

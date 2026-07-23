@@ -2,9 +2,11 @@
 
 ## Problem Statement
 
-**Critical Bug**: Parser stops after processing ~50 top-level items, missing Global declarations that appear after function definitions.
+**Critical Bug**: Parser stops after processing ~50 top-level items, missing
+Global declarations that appear after function definitions.
 
 **Evidence**:
+
 - Menu.bb has 23 Global declarations, parser only finds 16
 - Missing: 7 Globals on lines 1992-1994, 2266, 2525-2527
 - Parser processes exactly 50 items then stops (file has 2636 lines)
@@ -16,13 +18,18 @@
 ### 1. Recursive Descent Parser Best Practices (Source: GeeksforGeeks, Bison docs)
 
 **Error Recovery Strategies**:
-- **Panic Mode**: Skip tokens until synchronization point (delimiter like `;` or `}`)
-- **Statement Mode**: Skip to next statement on error
-- **Never fail completely**: Parser should ALWAYS produce output, even with errors
 
-**Key Principle**: "Parsing should *never* fail. If some kind of syntax tree isn't produced, it's considered a bug in the parser."
+- **Panic Mode**: Skip tokens until synchronization point (delimiter like `;` or
+  `}`)
+- **Statement Mode**: Skip to next statement on error
+- **Never fail completely**: Parser should ALWAYS produce output, even with
+  errors
+
+**Key Principle**: "Parsing should _never_ fail. If some kind of syntax tree
+isn't produced, it's considered a bug in the parser."
 
 **Synchronization Points**:
+
 - After semicolons
 - After statement keywords (Function, End, Global)
 - At block boundaries
@@ -30,12 +37,15 @@
 ### 2. WASM Global Variable Requirements (Source: WebAssembly Spec 3.0)
 
 **Module Structure**:
+
 - Globals must be defined in Global section BEFORE code section
-- "Sequences of globals are handled incrementally, such that each definition has access to previous definitions"
+- "Sequences of globals are handled incrementally, such that each definition has
+  access to previous definitions"
 - Global types validated before usage
 - Each global stores single value of specified type
 
 **Validation Rules**:
+
 - Type must be specified (i32, f32, i64, f64, v128)
 - Mutability flag required (mutable/immutable)
 - Exports reference globals by index
@@ -43,12 +53,16 @@
 ### 3. Parser Loop Issues (Source: StackOverflow, Elm Discourse)
 
 **Common Causes of Early Termination**:
+
 1. **Missing advance() call** - parser stuck reading same token forever
-2. **Unhandled error returns nil** - loop exits when parseTopLevelStatement() returns nil
-3. **Infinite loop protection gone wrong** - synchronize() called when not needed
+2. **Unhandled error returns nil** - loop exits when parseTopLevelStatement()
+   returns nil
+3. **Infinite loop protection gone wrong** - synchronize() called when not
+   needed
 4. **EOF detection too early** - token type incorrectly set to EOF
 
-**Our Specific Issue**: 
+**Our Specific Issue**:
+
 - Parser loop exits when `parseTopLevelStatement()` returns `nil`
 - After 50 items, something causes nil return
 - No errors logged, so it's silent failure
@@ -56,12 +70,15 @@
 ### 4. Blitz BASIC Language Rules (Source: BlitzMax docs)
 
 **Global Declaration Rules**:
+
 - "Global declarations of variables and functions may be interleaved"
-- "Every function call or occurrence of a variable must be preceded by its declaration"
+- "Every function call or occurrence of a variable must be preceded by its
+  declaration"
 - Globals exist for entire program lifetime
 - Can appear anywhere at top level (before, between, after functions)
 
 **This is VALID Blitz3D**:
+
 ```blitz3d
 Global x%               ; Initial globals
 Function Foo()
@@ -78,9 +95,11 @@ End Function
 ### Hypothesis 1: synchronize() Called After Error ❌
 
 **Test**: Check if synchronize() is being called
+
 ```bash
 grep -n "synchronize()" Parser.swift
 ```
+
 **Result**: synchronize() is called in error handler (line 354)
 
 **But**: No errors are being reported! So this shouldn't be the issue.
@@ -88,6 +107,7 @@ grep -n "synchronize()" Parser.swift
 ### Hypothesis 2: parseTopLevelStatement() Returns nil Unexpectedly ✅ **LIKELY**
 
 **Current Code** (Parser.swift:367):
+
 ```swift
 private mutating func parseTopLevelStatement() -> StatementNode? {
     switch currentToken.type {
@@ -104,14 +124,16 @@ private mutating func parseTopLevelStatement() -> StatementNode? {
 }
 ```
 
-**Issue**: After processing ~50 items, something causes `currentToken.type` to not match any case, returns `nil`, loop exits.
+**Issue**: After processing ~50 items, something causes `currentToken.type` to
+not match any case, returns `nil`, loop exits.
 
 ### Hypothesis 3: Function Parsing Consumes Too Many Tokens ✅ **VERY LIKELY**
 
-**Observation**: All 16 Globals found are "after 0 functions"
-**Implication**: First function is parsed, then parser never recovers
+**Observation**: All 16 Globals found are "after 0 functions" **Implication**:
+First function is parsed, then parser never recovers
 
-**Possible Cause**: 
+**Possible Cause**:
+
 - `parseFunction()` parses function body
 - Body contains many statements/expressions
 - After parsing function, currentToken is NOT at next top-level item
@@ -121,6 +143,7 @@ private mutating func parseTopLevelStatement() -> StatementNode? {
 ### Hypothesis 4: Newline Handling Issue ✅ **POSSIBLE**
 
 **Code** (Parser.swift:294-297):
+
 ```swift
 while currentToken.type != .endOfFile {
     if currentToken.type == .newline {
@@ -129,7 +152,8 @@ while currentToken.type != .endOfFile {
     }
 ```
 
-**But**: After processing 50 items, if currentToken is NOT newline and NOT a known keyword, parseTopLevelStatement() returns nil, loop exits.
+**But**: After processing 50 items, if currentToken is NOT newline and NOT a
+known keyword, parseTopLevelStatement() returns nil, loop exits.
 
 ## The Fix: Multiple Approaches
 
@@ -138,6 +162,7 @@ while currentToken.type != .endOfFile {
 **Strategy**: Make parseTopLevelStatement() resilient - never fail completely
 
 **Changes**:
+
 ```swift
 private mutating func parseTopLevelStatement() -> StatementNode? {
     switch currentToken.type {
@@ -172,12 +197,14 @@ private mutating func parseTopLevelStatement() -> StatementNode? {
 ```
 
 **Benefits**:
+
 - ✅ Parser never gives up
 - ✅ Continues through entire file
 - ✅ Reports warnings but doesn't stop
 - ✅ Aligns with modern parser best practices
 
 **Risks**:
+
 - May mask real syntax errors
 - Need good warning messages
 
@@ -186,11 +213,13 @@ private mutating func parseTopLevelStatement() -> StatementNode? {
 **Strategy**: Ensure parseFunction() leaves currentToken at correct position
 
 **Investigation Needed**:
+
 1. Add logging to track currentToken before/after parseFunction()
 2. Check if parseFunction() consumes extra tokens
 3. Verify End Function is properly consumed
 
 **Changes**:
+
 ```swift
 private mutating func parseFunction() -> StatementNode? {
     print("DEBUG: Entering parseFunction at token '\(currentToken.text)'")
@@ -209,10 +238,12 @@ private mutating func parseFunction() -> StatementNode? {
 ```
 
 **Benefits**:
+
 - ✅ Targets specific problem
 - ✅ Maintains existing error handling
 
 **Risks**:
+
 - May not fix the root cause if issue is elsewhere
 
 ### Approach C: Add Synchronization Points ⭐⭐⭐⭐
@@ -220,6 +251,7 @@ private mutating func parseFunction() -> StatementNode? {
 **Strategy**: After any parse error, skip to next known synchronization point
 
 **Implementation**:
+
 ```swift
 private mutating func synchronizeToTopLevel() {
     // Skip until we find a top-level keyword or EOF
@@ -246,11 +278,13 @@ if let statement = parseTopLevelStatement() {
 ```
 
 **Benefits**:
+
 - ✅ Robust error recovery
 - ✅ Continues parsing after errors
 - ✅ Industry-standard approach
 
 **Risks**:
+
 - More complex implementation
 
 ## Recommended Implementation Plan
@@ -260,6 +294,7 @@ if let statement = parseTopLevelStatement() {
 **Goal**: Understand exact cause of early exit
 
 1. Add detailed logging to parse() loop:
+
 ```swift
 while currentToken.type != .endOfFile {
     let startToken = currentToken
@@ -305,6 +340,7 @@ while currentToken.type != .endOfFile {
    - Update.bb
 
 2. **Verify Global counts**:
+
 ```bash
 for f in Menu.bb Main.bb Update.bb; do
     expected=$(grep -c "^Global" scpcb/$f)
@@ -314,6 +350,7 @@ done
 ```
 
 3. **Run full test suite**:
+
 ```bash
 bash test_scpcb_fast.sh
 swift test
@@ -332,17 +369,16 @@ swift test
 
 ## Success Criteria
 
-✅ Parser processes ENTIRE file (all 2636 lines of Menu.bb)
-✅ All 23 Global declarations found in Menu.bb  
-✅ All 7 missing Globals now registered (lines 1992-1994, 2266, 2525-2527)
-✅ Global.set type mismatch errors eliminated
-✅ No new errors introduced
-✅ All unit tests pass
-✅ All SCPCB files compile successfully
+✅ Parser processes ENTIRE file (all 2636 lines of Menu.bb) ✅ All 23 Global
+declarations found in Menu.bb\
+✅ All 7 missing Globals now registered (lines 1992-1994, 2266, 2525-2527) ✅
+Global.set type mismatch errors eliminated ✅ No new errors introduced ✅ All
+unit tests pass ✅ All SCPCB files compile successfully
 
 ## Rollback Plan
 
 If fix causes new issues:
+
 1. Git revert to commit before changes
 2. Analyze what went wrong
 3. Try alternative approach (B or C instead of A)
@@ -350,7 +386,8 @@ If fix causes new issues:
 ## Timeline Estimate
 
 - Phase 1 (Diagnostics): [x] Done (Added in Parser.swift)
-- Phase 2 (Implementation): [x] Done (Approach C implemented: `synchronize()` calls added)
+- Phase 2 (Implementation): [x] Done (Approach C implemented: `synchronize()`
+  calls added)
 - Phase 3 (Testing): [ ] Pending
 - Phase 4 (Validation): [ ] Pending
 
@@ -367,6 +404,7 @@ If fix causes new issues:
 ## Next Steps
 
 After parser is fixed:
+
 1. Remove debug instrumentation
 2. Fix remaining type promotion issues (UpdateEvents.bb, NPCs.bb, Save.bb)
 3. Implement optional parameter support (86 errors in Main.bb)

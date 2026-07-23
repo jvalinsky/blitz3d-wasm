@@ -1,17 +1,32 @@
 #!/usr/bin/env -S deno run -A
 import { parseRMesh } from "./rmesh/parse.ts";
 import { encodeSmpk } from "./smpk/codec.ts";
-import type { SmpkAccessor, SmpkFile, SmpkJson, SmpkMaterial, SmpkPrimitive } from "./smpk/types.ts";
+import type {
+  SmpkAccessor,
+  SmpkFile,
+  SmpkJson,
+  SmpkMaterial,
+  SmpkPrimitive,
+} from "./smpk/types.ts";
 
-import { resolveTextureName, buildCaseInsensitiveMap } from "./texture_utils.ts";
+import {
+  buildCaseInsensitiveMap,
+  resolveTextureName,
+} from "./texture_utils.ts";
 
 type Args = { input: string; output: string };
 
 const parseArgs = (): Args => {
   const input = Deno.args[0];
-  if (!input) throw new Error("usage: Tools/convert_rmesh_to_smpk.ts <input.rmesh> [-o out.smpk]");
+  if (!input) {
+    throw new Error(
+      "usage: Tools/convert_rmesh_to_smpk.ts <input.rmesh> [-o out.smpk]",
+    );
+  }
   const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
-  const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.rmesh$/i, ".smpk");
+  const output = oIdx >= 0
+    ? (Deno.args[oIdx + 1] ?? "")
+    : input.replace(/\.rmesh$/i, ".smpk");
   if (!output) throw new Error("missing -o output");
 
   const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
@@ -20,23 +35,38 @@ const parseArgs = (): Args => {
   return { input, output, textureFormat };
 };
 
-const computeNormals = (positions: Float32Array, indices: Uint32Array): Float32Array => {
+const computeNormals = (
+  positions: Float32Array,
+  indices: Uint32Array,
+): Float32Array => {
   const n = new Float32Array(positions.length);
   for (let i = 0; i < indices.length; i += 3) {
     const i0 = indices[i + 0]! * 3;
     const i1 = indices[i + 1]! * 3;
     const i2 = indices[i + 2]! * 3;
-    const ax = positions[i0 + 0]!, ay = positions[i0 + 1]!, az = positions[i0 + 2]!;
-    const bx = positions[i1 + 0]!, by = positions[i1 + 1]!, bz = positions[i1 + 2]!;
-    const cx = positions[i2 + 0]!, cy = positions[i2 + 1]!, cz = positions[i2 + 2]!;
+    const ax = positions[i0 + 0]!,
+      ay = positions[i0 + 1]!,
+      az = positions[i0 + 2]!;
+    const bx = positions[i1 + 0]!,
+      by = positions[i1 + 1]!,
+      bz = positions[i1 + 2]!;
+    const cx = positions[i2 + 0]!,
+      cy = positions[i2 + 1]!,
+      cz = positions[i2 + 2]!;
     const abx = bx - ax, aby = by - ay, abz = bz - az;
     const acx = cx - ax, acy = cy - ay, acz = cz - az;
     const nx = aby * acz - abz * acy;
     const ny = abz * acx - abx * acz;
     const nz = abx * acy - aby * acx;
-    n[i0 + 0] += nx; n[i0 + 1] += ny; n[i0 + 2] += nz;
-    n[i1 + 0] += nx; n[i1 + 1] += ny; n[i1 + 2] += nz;
-    n[i2 + 0] += nx; n[i2 + 1] += ny; n[i2 + 2] += nz;
+    n[i0 + 0] += nx;
+    n[i0 + 1] += ny;
+    n[i0 + 2] += nz;
+    n[i1 + 0] += nx;
+    n[i1 + 1] += ny;
+    n[i1 + 2] += nz;
+    n[i2 + 0] += nx;
+    n[i2 + 1] += ny;
+    n[i2 + 2] += nz;
   }
   for (let i = 0; i < n.length; i += 3) {
     const x = n[i + 0]!, y = n[i + 1]!, z = n[i + 2]!;
@@ -53,7 +83,8 @@ const main = async () => {
   const st = await Deno.stat(args.input);
   if (st.size === 0) throw new Error(`RMESH is empty: ${args.input}`);
 
-  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") || ".";
+  const inputDir = args.input.replace(/\\/g, "/").replace(/\/[^/]+$/, "") ||
+    ".";
   const lowerNameToActual = await buildCaseInsensitiveMap(inputDir);
 
   const bytes = await Deno.readFile(args.input);
@@ -82,7 +113,10 @@ const main = async () => {
       if (!Number.isFinite(maxX)) maxX = maxY = maxZ = 0;
       return {
         name: t.name,
-        aabb: { min: [minX, minY, minZ] as [number, number, number], max: [maxX, maxY, maxZ] as [number, number, number] },
+        aabb: {
+          min: [minX, minY, minZ] as [number, number, number],
+          max: [maxX, maxY, maxZ] as [number, number, number],
+        },
       };
     })
     : undefined;
@@ -103,7 +137,13 @@ const main = async () => {
   const binParts: Uint8Array[] = [];
   const accessors: SmpkAccessor[] = [];
   const currentBinOff = () => binParts.reduce((s, p) => s + p.byteLength, 0);
-  const push = (name: string, view: ArrayBufferView, componentType: any, type: any, count: number): number => {
+  const push = (
+    name: string,
+    view: ArrayBufferView,
+    componentType: any,
+    type: any,
+    count: number,
+  ): number => {
     const off = currentBinOff();
     const u8 = new Uint8Array(view.buffer, view.byteOffset, view.byteLength);
     binParts.push(u8);
@@ -131,26 +171,53 @@ const main = async () => {
 
     const normals = computeNormals(surf.positions, surf.indices);
 
-    const posAcc = push(`POSITION_s${s}`, surf.positions, "f32", "VEC3", vCount);
+    const posAcc = push(
+      `POSITION_s${s}`,
+      surf.positions,
+      "f32",
+      "VEC3",
+      vCount,
+    );
     const norAcc = push(`NORMAL_s${s}`, normals, "f32", "VEC3", vCount);
     const uv0Acc = push(`TEXCOORD_0_s${s}`, surf.uvs0, "f32", "VEC2", vCount);
     const uv1Acc = push(`TEXCOORD_1_s${s}`, surf.uvs1, "f32", "VEC2", vCount);
-    const idxAcc = push(`INDICES_s${s}`, surf.indices, "u32", "SCALAR", surf.indices.length);
+    const idxAcc = push(
+      `INDICES_s${s}`,
+      surf.indices,
+      "u32",
+      "SCALAR",
+      surf.indices.length,
+    );
 
     // Materials: RMESH slot0 is LIGHTMAP, slot1 is DIFFUSE (SCPCB actual convention)
-    const tex0 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[0].name, args.textureFormat);
-    const tex1 = await resolveTextureName(inputDir, lowerNameToActual, surf.textures[1].name, args.textureFormat);
+    const tex0 = await resolveTextureName(
+      inputDir,
+      lowerNameToActual,
+      surf.textures[0].name,
+      args.textureFormat,
+    );
+    const tex1 = await resolveTextureName(
+      inputDir,
+      lowerNameToActual,
+      surf.textures[1].name,
+      args.textureFormat,
+    );
     const alphaMode = surf.textures[0].kind === 3 ? "BLEND" : "OPAQUE";
     const matIdx = materials.length;
     materials.push({
       name: `surf_${s}`,
-      baseColorTexture: tex1,     // SWAPPED: slot1 is diffuse
-      lightmapTexture: tex0,      // SWAPPED: slot0 is lightmap
+      baseColorTexture: tex1, // SWAPPED: slot1 is diffuse
+      lightmapTexture: tex0, // SWAPPED: slot0 is lightmap
       alphaMode,
     });
 
     primitives.push({
-      attributes: { POSITION: posAcc, NORMAL: norAcc, TEXCOORD_0: uv0Acc, TEXCOORD_1: uv1Acc },
+      attributes: {
+        POSITION: posAcc,
+        NORMAL: norAcc,
+        TEXCOORD_0: uv0Acc,
+        TEXCOORD_1: uv1Acc,
+      },
       indices: idxAcc,
       material: matIdx,
     });
@@ -164,7 +231,11 @@ const main = async () => {
     nodes: [{ name: "root", children: [], mesh: 0 }],
     materials: materials.length ? materials : undefined,
     sceneRoots: [0],
-    extras: (extrasRmeshTriggers || extrasRmeshEntities) ? { rmesh: { triggers: extrasRmeshTriggers, entities: extrasRmeshEntities } } : undefined,
+    extras: (extrasRmeshTriggers || extrasRmeshEntities)
+      ? {
+        rmesh: { triggers: extrasRmeshTriggers, entities: extrasRmeshEntities },
+      }
+      : undefined,
   };
 
   const smpk: SmpkFile = { json, bin: makeBin() };

@@ -5,13 +5,22 @@ import * as THREE from "three";
 import { setup3D } from "./3d.ts";
 import type { Blitz3DGraphicsInterface } from "../types.ts";
 
-function assert(condition: unknown, message = "assertion failed"): asserts condition {
+function assert(
+  condition: unknown,
+  message = "assertion failed",
+): asserts condition {
   if (!condition) throw new Error(message);
 }
 
-function assertEquals<T>(actual: T, expected: T, message = "assertEquals failed") {
+function assertEquals<T>(
+  actual: T,
+  expected: T,
+  message = "assertEquals failed",
+) {
   if (actual !== expected) {
-    throw new Error(`${message}: expected=${String(expected)} actual=${String(actual)}`);
+    throw new Error(
+      `${message}: expected=${String(expected)} actual=${String(actual)}`,
+    );
   }
 }
 
@@ -76,13 +85,25 @@ Deno.test("EntityBlend sets Three.js blending mode", () => {
   if (graphics.scene) graphics.scene.add(mesh);
 
   imports.env.EntityBlend(id, 3);
-  assertEquals((mesh.material as THREE.MeshBasicMaterial).blending, THREE.AdditiveBlending, "Should be additive");
+  assertEquals(
+    (mesh.material as THREE.MeshBasicMaterial).blending,
+    THREE.AdditiveBlending,
+    "Should be additive",
+  );
 
   imports.env.EntityBlend(id, 2);
-  assertEquals((mesh.material as THREE.MeshBasicMaterial).blending, THREE.MultiplyBlending, "Should be multiply");
+  assertEquals(
+    (mesh.material as THREE.MeshBasicMaterial).blending,
+    THREE.MultiplyBlending,
+    "Should be multiply",
+  );
 
   imports.env.EntityBlend(id, 1);
-  assertEquals((mesh.material as THREE.MeshBasicMaterial).blending, THREE.NormalBlending, "Should be normal");
+  assertEquals(
+    (mesh.material as THREE.MeshBasicMaterial).blending,
+    THREE.NormalBlending,
+    "Should be normal",
+  );
 });
 
 Deno.test("HideEntity sets visible=false", () => {
@@ -90,7 +111,10 @@ Deno.test("HideEntity sets visible=false", () => {
   const imports: any = { env: {}, blitz3d: {} };
   setup3D(graphics, imports);
 
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshBasicMaterial(),
+  );
   const id = graphics.nextEntityId++;
   graphics.entities[id] = mesh;
 
@@ -104,7 +128,10 @@ Deno.test("ShowEntity sets visible=true", () => {
   const imports: any = { env: {}, blitz3d: {} };
   setup3D(graphics, imports);
 
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshBasicMaterial(),
+  );
   const id = graphics.nextEntityId++;
   graphics.entities[id] = mesh;
 
@@ -118,7 +145,10 @@ Deno.test("EntityVisible returns visibility", () => {
   const imports: any = { env: {}, blitz3d: {} };
   setup3D(graphics, imports);
 
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshBasicMaterial(),
+  );
   const id = graphics.nextEntityId++;
   graphics.entities[id] = mesh;
 
@@ -309,7 +339,10 @@ Deno.test("DeltaPitch returns angle between entities", () => {
   dst.position.set(0, 10, 10);
 
   const pitch = imports.env.DeltaPitch(srcId, dstId);
-  assert(Math.abs(pitch - (-45)) < 0.01, `DeltaPitch should be ~-45, got ${pitch}`);
+  assert(
+    Math.abs(pitch - (-45)) < 0.01,
+    `DeltaPitch should be ~-45, got ${pitch}`,
+  );
 });
 
 Deno.test("DeltaPitch returns 0 for same height", () => {

@@ -15,10 +15,17 @@ type WorkerCallMsg = {
   args?: Array<number | string>;
 };
 
-const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  p: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> => {
   let id: number | null = null;
   const timeout = new Promise<T>((_resolve, reject) => {
-    id = setTimeout(() => reject(new Error(`timeout after ${ms}ms: ${label}`)), ms) as unknown as number;
+    id = setTimeout(
+      () => reject(new Error(`timeout after ${ms}ms: ${label}`)),
+      ms,
+    ) as unknown as number;
   });
   try {
     return await Promise.race([p, timeout]);
@@ -32,7 +39,12 @@ const startWorker = () => {
   return new Worker(url.href, { type: "module" });
 };
 
-const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: number, label: string) => {
+const waitFor = async (
+  worker: Worker,
+  predicate: (msg: any) => boolean,
+  ms: number,
+  label: string,
+) => {
   return await withTimeout(
     new Promise<any>((resolve, reject) => {
       const onMsg = (ev: MessageEvent) => {
@@ -63,9 +75,19 @@ const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: num
   );
 };
 
-const callExport = async (worker: Worker, callId: number, exportName: string, args?: Array<number | string>) => {
+const callExport = async (
+  worker: Worker,
+  callId: number,
+  exportName: string,
+  args?: Array<number | string>,
+) => {
   const msg: WorkerCallMsg = { cmd: "call", callId, exportName, args };
-  const pDone = waitFor(worker, (m) => m?.type === "callDone" && m?.callId === callId, 5000, `callDone ${exportName}`);
+  const pDone = waitFor(
+    worker,
+    (m) => m?.type === "callDone" && m?.callId === callId,
+    5000,
+    `callDone ${exportName}`,
+  );
   worker.postMessage(msg);
   const done = await pDone;
   return done?.result as number;
@@ -81,14 +103,19 @@ Deno.test("scpcb_worker integration: preload group + step UpdateGame 300 frames"
     "AGFzbQEAAAABBQFgAAF/AwMCAAAGBgF/AUEACwcZAghJbml0T25jZQAAClVwZGF0ZUdhbWUAAQoZAgsAIwBBAWokACMACwsAIwBBAWokACMACw==";
   const wasmBytes = Uint8Array.from(atob(wasmB64), (c) => c.charCodeAt(0));
 
-  const tmp = await Deno.makeTempDir({ dir: "/tmp", prefix: "blitz3d-wasm-worker-preload-step-" });
+  const tmp = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: "blitz3d-wasm-worker-preload-step-",
+  });
   const wasmPath = `${tmp}/stepper.wasm`;
   await Deno.writeFile(wasmPath, wasmBytes);
 
   // Fake preload assets (small, local, no network).
   const optionsIniPath = `${tmp}/options.ini`;
   const initDatPath = `${tmp}/init.dat`;
-  const optionsIniBytes = new TextEncoder().encode("[options]\nGraphicWidth=800\n");
+  const optionsIniBytes = new TextEncoder().encode(
+    "[options]\nGraphicWidth=800\n",
+  );
   const initDatBytes = new Uint8Array([1, 2, 3, 4, 5]);
   await Deno.writeFile(optionsIniPath, optionsIniBytes);
   await Deno.writeFile(initDatPath, initDatBytes);
@@ -116,11 +143,18 @@ Deno.test("scpcb_worker integration: preload group + step UpdateGame 300 frames"
 
     const sawPreload = waitFor(
       worker,
-      (m) => m?.type === "status" && typeof m?.status?.stage === "string" && String(m.status.stage).startsWith("preload:"),
+      (m) =>
+        m?.type === "status" && typeof m?.status?.stage === "string" &&
+        String(m.status.stage).startsWith("preload:"),
       20_000,
       "saw preload status",
     );
-    const pReady = waitFor(worker, (m) => m?.type === "ready", 20_000, "worker ready");
+    const pReady = waitFor(
+      worker,
+      (m) => m?.type === "ready",
+      20_000,
+      "worker ready",
+    );
     worker.postMessage(initMsg);
     await sawPreload;
     await pReady;
@@ -135,9 +169,13 @@ Deno.test("scpcb_worker integration: preload group + step UpdateGame 300 frames"
     assert(last === 301, "after 300 frames, tick must be 301");
 
     worker.postMessage({ cmd: "dispose" });
-    await waitFor(worker, (m) => m?.type === "status" && m?.status?.stage === "disposed", 2000, "worker disposed");
+    await waitFor(
+      worker,
+      (m) => m?.type === "status" && m?.status?.stage === "disposed",
+      2000,
+      "worker disposed",
+    );
   } finally {
     worker.terminate();
   }
 });
-

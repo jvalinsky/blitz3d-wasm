@@ -1,13 +1,15 @@
 # Swift Compiler vs Blitz3D-NG Compiler
 
-**Date**: February 1, 2026  
+**Date**: February 1, 2026\
 **Comparison**: Swift (~17K lines) vs Blitz3D-NG C++ (~1K lines)
 
 ---
 
 ## Overview
 
-Both compilers support the core Blitz3D language, but differ significantly in **architecture**, **type system**, **code generation strategy**, and **include file handling**.
+Both compilers support the core Blitz3D language, but differ significantly in
+**architecture**, **type system**, **code generation strategy**, and **include
+file handling**.
 
 ---
 
@@ -16,30 +18,35 @@ Both compilers support the core Blitz3D language, but differ significantly in **
 ### Swift Compiler: Import-Based Runtime
 
 **Design**:
+
 - Compiler generates WASM that **imports** runtime functions
 - Zero built-in functions in compiler
 - Runtime provided separately (TypeScript + Swift engine)
 - Clean separation: Compiler = language→WASM, Runtime = API implementations
 
 **Files**:
+
 - Location: `Sources/Compiler/` (~17K lines)
 - Modular: Lexer, Parser, AST, IR, Lowering, CodeGen (12 files)
 
 ### Blitz3D-NG: Monolithic Compiler + Runtime
 
 **Design**:
+
 - Compiler + 750+ built-in functions in single executable
 - All runtime functions compiled into binary
 - Self-contained: No external dependencies
 - Monolithic: Compiler knows about all functions at compile time
 
 **Files**:
+
 - Location: `src/tools/compiler/` (~1K lines core)
 - Compact: Lexer (150), Parser (650), Codegen (200)
 
 ### Verdict
 
 ✅ **Swift's separation is sound architecture for WASM**
+
 - Allows runtime flexibility (browser APIs)
 - Easier to maintain (smaller compiler)
 - Runtime can evolve independently
@@ -51,6 +58,7 @@ Both compilers support the core Blitz3D language, but differ significantly in **
 ### Swift: WebAssembly
 
 **Characteristics**:
+
 ```
 Target: WebAssembly binary format
 Memory: Linear heap (bump allocator + free list)
@@ -61,11 +69,13 @@ Output: Binary .wasm file
 ```
 
 **Files**:
+
 - `CodeGen/WASM.swift` - 200+ instruction enum
 - `CodeGen/WASMBinaryEncoder.swift` - Binary encoding
 - `IR/Passes/Relooper.swift` - GOTO → structured blocks
 
 **Key Feature**: **Relooper Algorithm**
+
 - Converts unstructured control flow (GOTO/GOSUB) to structured WASM blocks
 - Required because WASM only has `br` (break to block), no direct jumps
 - Standard solution for compiling unstructured languages to WASM
@@ -73,6 +83,7 @@ Output: Binary .wasm file
 ### Blitz3D-NG: Native Code (x86 / LLVM)
 
 **Characteristics**:
+
 ```
 Target: x86 assembly OR LLVM IR
 Memory: Native process memory
@@ -83,11 +94,13 @@ Output: Native executable or LLVM bitcode
 ```
 
 **Files**:
+
 - `codegen.h` - Abstract codegen interface
 - `codegen_x86.cpp` - x86 assembly backend
 - `codegen_llvm/` - LLVM IR backend
 
 **IR Operations**:
+
 ```cpp
 enum {
     IR_JUMP, IR_JUMPT, IR_JUMPF,     // Direct jumps
@@ -102,6 +115,7 @@ enum {
 ### Verdict
 
 ✅ **Both approaches valid for their targets**
+
 - Swift's Relooper is **correct and necessary** for WASM
 - Blitz3D-NG's direct jumps are optimal for native code
 - **Risk**: Edge cases with complex nested gotos should be tested
@@ -123,12 +137,14 @@ private let typeSuffixMap: [TypeSuffix: WASMType] = [
 ```
 
 **Strategy**:
+
 - Simple 1:1 suffix → WASM type
 - Forward-scanning type inference for implicit variables
 - Minimal type metadata stored
 - No polymorphic type checking
 
 **Type Inference**: `CodeGen/TypeInference.swift`
+
 1. Variable used without declaration
 2. Forward scan AST for first type hint (e.g., `x% = value`)
 3. Infer type from suffix on assignment
@@ -168,6 +184,7 @@ struct VectorType : public Type { };
 ```
 
 **Strategy**:
+
 - Full type hierarchy with inheritance
 - Semantic analysis phase before codegen
 - Complete compile-time type validation
@@ -176,6 +193,7 @@ struct VectorType : public Type { };
 ### Verdict
 
 ⚠️ **Swift's approach is pragmatic but risky**
+
 - **Pro**: Simpler, works for WASM target
 - **Con**: May miss type errors that Blitz3D-NG catches
 - **Con**: Forward scanning may guess wrong types
@@ -200,6 +218,7 @@ if let next = peek(), next == "%" || next == "#" || next == "$" {
 ```
 
 **Behavior**:
+
 - Suffix attached to identifier at tokenization
 - Single token returned to parser
 - Suffix cannot be optional (always present if specified)
@@ -223,6 +242,7 @@ std::string Parser::parseTypeTag(){
 ```
 
 **Behavior**:
+
 - Identifier and suffix are separate tokens
 - Suffix is optional (can be omitted)
 - Parser explicitly handles suffix presence/absence
@@ -230,6 +250,7 @@ std::string Parser::parseTypeTag(){
 ### Verdict
 
 ⚠️ **Potential compatibility issue**
+
 - **Risk**: Swift expects suffixes attached; Blitz3D-NG treats as optional
 - **Edge Case**: Can you use `x` and `x%` interchangeably in Blitz3D?
 - **Impact**: If SCPCB mixes suffixed/unsuffixed usage, may break
@@ -270,6 +291,7 @@ map<string,int> lowerTokes;  // Lowercase
 ### Verdict
 
 ✅ **Minor difference, no impact**
+
 - Both are effectively case-insensitive
 - Swift's approach is simpler
 
@@ -291,13 +313,15 @@ case .keywordInclude:
     return nil
 ```
 
-**Status**: 
+**Status**:
+
 - ❌ Parsed but **ignored**
 - ❌ No file loading
 - ❌ No recursive parsing
 - ❌ No duplicate detection
 
 **Impact**:
+
 - Cannot compile multi-file projects
 - SCPCB Main.bb uses **23 #Include statements**:
   ```
@@ -345,6 +369,7 @@ void Parser::parseInclude() {
 ```
 
 **Features**:
+
 - ✅ File loading and reading
 - ✅ Recursive parsing
 - ✅ Duplicate detection (via `included` set)
@@ -354,6 +379,7 @@ void Parser::parseInclude() {
 ### Verdict
 
 🔴 **CRITICAL BLOCKER**
+
 - Swift compiler **cannot compile SCPCB** due to missing includes
 - Individual files compile (explains 94.7% success rate)
 - Assembled game cannot work (Main.bb needs all includes)
@@ -384,6 +410,7 @@ Return                )
 ```
 
 **Reason**: WASM only supports structured control flow
+
 - No `JMP` instruction (only `br` to block labels)
 - No arbitrary jumps
 - Must transform to blocks/loops
@@ -407,6 +434,7 @@ Return                  ret
 ```
 
 **Reason**: Native code supports arbitrary jumps
+
 - Direct `JMP`, `CALL`, `RET` instructions
 - Native call stack
 - No transformation needed
@@ -414,6 +442,7 @@ Return                  ret
 ### Verdict
 
 ✅ **Both approaches correct for their targets**
+
 - Relooper is **required** for WASM (not a bug)
 - Semantically equivalent in most cases
 - **Risk**: Edge cases with complex nested gotos/gosubs
@@ -426,6 +455,7 @@ Return                  ret
 ### Swift: WASM Linear Memory
 
 **Model**:
+
 ```
 Linear Address Space (0 to N)
 ├─ Heap (bump allocator)
@@ -437,6 +467,7 @@ Linear Address Space (0 to N)
 ```
 
 **Characteristics**:
+
 - Single contiguous memory region
 - Bump allocator + free list for heap
 - No native stack frames (uses WASM locals)
@@ -445,6 +476,7 @@ Linear Address Space (0 to N)
 ### Blitz3D-NG: Native Process Memory
 
 **Model**:
+
 ```
 Process Virtual Memory
 ├─ Code segment
@@ -454,6 +486,7 @@ Process Virtual Memory
 ```
 
 **Characteristics**:
+
 - OS-managed virtual memory
 - System memory allocator
 - Native stack frames with CALL/RET
@@ -462,6 +495,7 @@ Process Virtual Memory
 ### Verdict
 
 ⚠️ **Fundamentally incompatible but workable**
+
 - Cannot directly port memory-dependent code
 - **Risk**: DATA/READ/RESTORE blocks may not work identically
 - **Recommendation**: Test memory-intensive SCPCB features
@@ -489,6 +523,7 @@ for stmt in statements {
 ```
 
 **Limitation**:
+
 - Only scans forward (not full semantic analysis)
 - Defaults to i32 if no type hint found
 - May guess wrong if first usage has no suffix
@@ -510,6 +545,7 @@ void analyzeVariable(std::string name) {
 ```
 
 **Features**:
+
 - Full type information before codegen
 - Clear errors for undefined variables
 - Complete type propagation
@@ -518,6 +554,7 @@ void analyzeVariable(std::string name) {
 ### Verdict
 
 ⚠️ **Swift's approach is pragmatic but risky**
+
 - Works for simple cases
 - May fail for complex SCPCB patterns
 - **Risk**: Wrong type inference → runtime bugs
@@ -530,6 +567,7 @@ void analyzeVariable(std::string name) {
 ### Swift: Zero Built-ins (by Design)
 
 **Approach**:
+
 ```swift
 // Compiler generates WASM imports
 (import "env" "LoadMesh" (func $LoadMesh (param i32) (result i32)))
@@ -540,6 +578,7 @@ void analyzeVariable(std::string name) {
 ```
 
 **Characteristics**:
+
 - Compiler has zero knowledge of function implementations
 - All functions treated as imports
 - Runtime can evolve independently
@@ -548,6 +587,7 @@ void analyzeVariable(std::string name) {
 ### Blitz3D-NG: 750+ Built-ins (Monolithic)
 
 **Approach**:
+
 ```cpp
 // Functions registered at compiler link time
 // Example: blitz3d/commands.h
@@ -558,6 +598,7 @@ void BBCALL bbRenderWorld(bb_float_t tween);
 ```
 
 **Characteristics**:
+
 - Compiler knows all function signatures
 - Type checking at compile time
 - Functions compiled into executable
@@ -566,6 +607,7 @@ void BBCALL bbRenderWorld(bb_float_t tween);
 ### Verdict
 
 ✅ **Swift's separation is sound for WASM**
+
 - Allows runtime flexibility
 - Browser APIs can be easily integrated
 - Smaller compiler binary
@@ -575,33 +617,36 @@ void BBCALL bbRenderWorld(bb_float_t tween);
 
 ## Summary of Differences
 
-| Aspect | Swift Compiler | Blitz3D-NG | Impact |
-|--------|---------------|-----------|--------|
-| **Runtime** | Separate (imports) | Monolithic (built-in) | ✅ Good separation |
-| **Target** | WebAssembly | x86/LLVM | ✅ Correct for web |
-| **Type System** | Simple suffix map | Polymorphic hierarchy | ⚠️ May miss errors |
-| **Type Suffixes** | Lexer-level (attached) | Parser-level (separate) | ⚠️ Edge case risk |
-| **Control Flow** | Relooper (structured) | Direct jumps | ✅ Required for WASM |
-| **Include Files** | Stub (broken) | Full implementation | 🔴 Critical blocker |
-| **Memory Model** | Linear heap | Native memory | ⚠️ Incompatible but OK |
-| **Type Inference** | Forward scanning | Semantic analysis | ⚠️ Risk of wrong types |
-| **Case Handling** | Lowercase only | Dual maps | ✅ No impact |
+| Aspect             | Swift Compiler         | Blitz3D-NG              | Impact                 |
+| ------------------ | ---------------------- | ----------------------- | ---------------------- |
+| **Runtime**        | Separate (imports)     | Monolithic (built-in)   | ✅ Good separation     |
+| **Target**         | WebAssembly            | x86/LLVM                | ✅ Correct for web     |
+| **Type System**    | Simple suffix map      | Polymorphic hierarchy   | ⚠️ May miss errors     |
+| **Type Suffixes**  | Lexer-level (attached) | Parser-level (separate) | ⚠️ Edge case risk      |
+| **Control Flow**   | Relooper (structured)  | Direct jumps            | ✅ Required for WASM   |
+| **Include Files**  | Stub (broken)          | Full implementation     | 🔴 Critical blocker    |
+| **Memory Model**   | Linear heap            | Native memory           | ⚠️ Incompatible but OK |
+| **Type Inference** | Forward scanning       | Semantic analysis       | ⚠️ Risk of wrong types |
+| **Case Handling**  | Lowercase only         | Dual maps               | ✅ No impact           |
 
 ---
 
 ## Recommendations
 
 ### Immediate (P0)
+
 1. ✅ **Keep Relooper** - Correct for WASM
 2. ✅ **Keep import-based architecture** - Sound design
 3. 🔴 **Implement include files** - Critical blocker
 
 ### Short Term (P1)
+
 4. ⚠️ **Test type suffix edge cases** - Verify compatibility
 5. ⚠️ **Test control flow edge cases** - Verify Relooper semantics
 6. ⚠️ **Monitor type inference** - Watch for wrong types
 
 ### Medium Term (P2)
+
 7. Consider adding semantic analysis phase for better type checking
 8. Add compile-time function signature validation (optional)
 
@@ -609,4 +654,5 @@ void BBCALL bbRenderWorld(bb_float_t tween);
 
 ## Next Document
 
-See **03-runtime-comparison.md** for detailed analysis of Swift engine vs Blitz3D-NG runtime (750+ functions).
+See **03-runtime-comparison.md** for detailed analysis of Swift engine vs
+Blitz3D-NG runtime (750+ functions).

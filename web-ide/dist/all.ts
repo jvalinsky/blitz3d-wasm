@@ -1,100 +1,100 @@
 /**
  * Blitz3D Lexer - Tokenization
- * 
+ *
  * Converts source code into tokens for parsing
  */
 
 export enum TokenType {
   // Literals
-  INTEGER = 'INTEGER',
-  FLOAT = 'FLOAT',
-  STRING = 'STRING',
-  
+  INTEGER = "INTEGER",
+  FLOAT = "FLOAT",
+  STRING = "STRING",
+
   // Identifiers and keywords
-  IDENTIFIER = 'IDENTIFIER',
-  
+  IDENTIFIER = "IDENTIFIER",
+
   // Keywords
-  IF = 'IF',
-  THEN = 'THEN',
-  ELSE = 'ELSE',
-  ELSEIF = 'ELSEIF',
-  ENDIF = 'ENDIF',
-  FOR = 'FOR',
-  TO = 'TO',
-  STEP = 'STEP',
-  NEXT = 'NEXT',
-  WHILE = 'WHILE',
-  WEND = 'WEND',
-  REPEAT = 'REPEAT',
-  UNTIL = 'UNTIL',
-  FOREVER = 'FOREVER',
-  SELECT = 'SELECT',
-  CASE = 'CASE',
-  DEFAULT = 'DEFAULT',
-  END = 'END',
-  FUNCTION = 'FUNCTION',
-  RETURN = 'RETURN',
-  LOCAL = 'LOCAL',
-  GLOBAL = 'GLOBAL',
-  CONST = 'CONST',
-  DIM = 'DIM',
-  TYPE = 'TYPE',
-  FIELD = 'FIELD',
-  NEW = 'NEW',
-  DELETE = 'DELETE',
-  FIRST = 'FIRST',
-  LAST = 'LAST',
-  BEFORE = 'BEFORE',
-  AFTER = 'AFTER',
-  EACH = 'EACH',
-  DATA = 'DATA',
-  READ = 'READ',
-  RESTORE = 'RESTORE',
-  INCLUDE = 'INCLUDE',
-  
+  IF = "IF",
+  THEN = "THEN",
+  ELSE = "ELSE",
+  ELSEIF = "ELSEIF",
+  ENDIF = "ENDIF",
+  FOR = "FOR",
+  TO = "TO",
+  STEP = "STEP",
+  NEXT = "NEXT",
+  WHILE = "WHILE",
+  WEND = "WEND",
+  REPEAT = "REPEAT",
+  UNTIL = "UNTIL",
+  FOREVER = "FOREVER",
+  SELECT = "SELECT",
+  CASE = "CASE",
+  DEFAULT = "DEFAULT",
+  END = "END",
+  FUNCTION = "FUNCTION",
+  RETURN = "RETURN",
+  LOCAL = "LOCAL",
+  GLOBAL = "GLOBAL",
+  CONST = "CONST",
+  DIM = "DIM",
+  TYPE = "TYPE",
+  FIELD = "FIELD",
+  NEW = "NEW",
+  DELETE = "DELETE",
+  FIRST = "FIRST",
+  LAST = "LAST",
+  BEFORE = "BEFORE",
+  AFTER = "AFTER",
+  EACH = "EACH",
+  DATA = "DATA",
+  READ = "READ",
+  RESTORE = "RESTORE",
+  INCLUDE = "INCLUDE",
+
   // Operators
-  PLUS = 'PLUS',
-  MINUS = 'MINUS',
-  MULTIPLY = 'MULTIPLY',
-  DIVIDE = 'DIVIDE',
-  MOD = 'MOD',
-  POWER = 'POWER',
-  
+  PLUS = "PLUS",
+  MINUS = "MINUS",
+  MULTIPLY = "MULTIPLY",
+  DIVIDE = "DIVIDE",
+  MOD = "MOD",
+  POWER = "POWER",
+
   // Comparisons
-  EQ = 'EQ',         // =
-  NE = 'NE',         // <>
-  LT = 'LT',         // <
-  LE = 'LE',         // <=
-  GT = 'GT',         // >
-  GE = 'GE',         // >=
-  
+  EQ = "EQ", // =
+  NE = "NE", // <>
+  LT = "LT", // <
+  LE = "LE", // <=
+  GT = "GT", // >
+  GE = "GE", // >=
+
   // Logical
-  AND = 'AND',
-  OR = 'OR',
-  NOT = 'NOT',
-  XOR = 'XOR',
-  
+  AND = "AND",
+  OR = "OR",
+  NOT = "NOT",
+  XOR = "XOR",
+
   // Bitwise
-  SHL = 'SHL',
-  SHR = 'SHR',
-  SAR = 'SAR',
-  
+  SHL = "SHL",
+  SHR = "SHR",
+  SAR = "SAR",
+
   // Punctuation
-  LPAREN = 'LPAREN',       // (
-  RPAREN = 'RPAREN',       // )
-  COMMA = 'COMMA',         // ,
-  COLON = 'COLON',         // :
-  DOT = 'DOT',             // .
-  BACKSLASH = 'BACKSLASH', // \
-  
+  LPAREN = "LPAREN", // (
+  RPAREN = "RPAREN", // )
+  COMMA = "COMMA", // ,
+  COLON = "COLON", // :
+  DOT = "DOT", // .
+  BACKSLASH = "BACKSLASH", // \
+
   // Special
-  NEWLINE = 'NEWLINE',
-  EOF = 'EOF',
-  
+  NEWLINE = "NEWLINE",
+  EOF = "EOF",
+
   // Type suffixes
-  PERCENT = 'PERCENT',   // % (integer)
-  HASH = 'HASH',         // # (float)
-  DOLLAR = 'DOLLAR',     // $ (string)
+  PERCENT = "PERCENT", // % (integer)
+  HASH = "HASH", // # (float)
+  DOLLAR = "DOLLAR", // $ (string)
 }
 
 export interface Token {
@@ -111,51 +111,51 @@ export interface LexerError {
 }
 
 const KEYWORDS: Record<string, TokenType> = {
-  'if': TokenType.IF,
-  'then': TokenType.THEN,
-  'else': TokenType.ELSE,
-  'elseif': TokenType.ELSEIF,
-  'endif': TokenType.ENDIF,
-  'for': TokenType.FOR,
-  'to': TokenType.TO,
-  'step': TokenType.STEP,
-  'next': TokenType.NEXT,
-  'while': TokenType.WHILE,
-  'wend': TokenType.WEND,
-  'repeat': TokenType.REPEAT,
-  'until': TokenType.UNTIL,
-  'forever': TokenType.FOREVER,
-  'select': TokenType.SELECT,
-  'case': TokenType.CASE,
-  'default': TokenType.DEFAULT,
-  'end': TokenType.END,
-  'function': TokenType.FUNCTION,
-  'return': TokenType.RETURN,
-  'local': TokenType.LOCAL,
-  'global': TokenType.GLOBAL,
-  'const': TokenType.CONST,
-  'dim': TokenType.DIM,
-  'type': TokenType.TYPE,
-  'field': TokenType.FIELD,
-  'new': TokenType.NEW,
-  'delete': TokenType.DELETE,
-  'first': TokenType.FIRST,
-  'last': TokenType.LAST,
-  'before': TokenType.BEFORE,
-  'after': TokenType.AFTER,
-  'each': TokenType.EACH,
-  'data': TokenType.DATA,
-  'read': TokenType.READ,
-  'restore': TokenType.RESTORE,
-  'include': TokenType.INCLUDE,
-  'mod': TokenType.MOD,
-  'and': TokenType.AND,
-  'or': TokenType.OR,
-  'not': TokenType.NOT,
-  'xor': TokenType.XOR,
-  'shl': TokenType.SHL,
-  'shr': TokenType.SHR,
-  'sar': TokenType.SAR,
+  "if": TokenType.IF,
+  "then": TokenType.THEN,
+  "else": TokenType.ELSE,
+  "elseif": TokenType.ELSEIF,
+  "endif": TokenType.ENDIF,
+  "for": TokenType.FOR,
+  "to": TokenType.TO,
+  "step": TokenType.STEP,
+  "next": TokenType.NEXT,
+  "while": TokenType.WHILE,
+  "wend": TokenType.WEND,
+  "repeat": TokenType.REPEAT,
+  "until": TokenType.UNTIL,
+  "forever": TokenType.FOREVER,
+  "select": TokenType.SELECT,
+  "case": TokenType.CASE,
+  "default": TokenType.DEFAULT,
+  "end": TokenType.END,
+  "function": TokenType.FUNCTION,
+  "return": TokenType.RETURN,
+  "local": TokenType.LOCAL,
+  "global": TokenType.GLOBAL,
+  "const": TokenType.CONST,
+  "dim": TokenType.DIM,
+  "type": TokenType.TYPE,
+  "field": TokenType.FIELD,
+  "new": TokenType.NEW,
+  "delete": TokenType.DELETE,
+  "first": TokenType.FIRST,
+  "last": TokenType.LAST,
+  "before": TokenType.BEFORE,
+  "after": TokenType.AFTER,
+  "each": TokenType.EACH,
+  "data": TokenType.DATA,
+  "read": TokenType.READ,
+  "restore": TokenType.RESTORE,
+  "include": TokenType.INCLUDE,
+  "mod": TokenType.MOD,
+  "and": TokenType.AND,
+  "or": TokenType.OR,
+  "not": TokenType.NOT,
+  "xor": TokenType.XOR,
+  "shl": TokenType.SHL,
+  "shr": TokenType.SHR,
+  "sar": TokenType.SAR,
 };
 
 export class Lexer {
@@ -164,112 +164,150 @@ export class Lexer {
   private line = 1;
   private column = 1;
   private errors: LexerError[] = [];
-  
+
   constructor(source: string) {
     this.source = source;
   }
-  
+
   tokenize(): { tokens: Token[]; errors: LexerError[] } {
     const tokens: Token[] = [];
-    
+
     while (!this.isAtEnd()) {
       this.skipWhitespace();
-      
+
       if (this.isAtEnd()) break;
-      
+
       const token = this.nextToken();
       if (token) {
         tokens.push(token);
       }
     }
-    
+
     tokens.push({
       type: TokenType.EOF,
-      value: '',
+      value: "",
       line: this.line,
       column: this.column,
     });
-    
+
     return { tokens, errors: this.errors };
   }
-  
+
   private nextToken(): Token | null {
     const start = this.pos;
     const startLine = this.line;
     const startColumn = this.column;
-    
+
     const ch = this.peek();
-    
+
     // Comments
-    if (ch === ';') {
+    if (ch === ";") {
       this.skipComment();
       return null;
     }
-    
+
     // Newlines
-    if (ch === '\n') {
+    if (ch === "\n") {
       this.advance();
-      const token = this.makeToken(TokenType.NEWLINE, '\n', startLine, startColumn);
+      const token = this.makeToken(
+        TokenType.NEWLINE,
+        "\n",
+        startLine,
+        startColumn,
+      );
       this.line++;
       this.column = 1;
       return token;
     }
-    
+
     // Strings
     if (ch === '"') {
       return this.scanString(startLine, startColumn);
     }
-    
+
     // Numbers
-    if (this.isDigit(ch) || (ch === '.' && this.isDigit(this.peekNext()))) {
+    if (this.isDigit(ch) || (ch === "." && this.isDigit(this.peekNext()))) {
       return this.scanNumber(startLine, startColumn);
     }
-    
+
     // Identifiers and keywords
     if (this.isAlpha(ch)) {
       return this.scanIdentifier(startLine, startColumn);
     }
-    
+
     // Operators and punctuation
     switch (ch) {
-      case '(': this.advance(); return this.makeToken(TokenType.LPAREN, '(', startLine, startColumn);
-      case ')': this.advance(); return this.makeToken(TokenType.RPAREN, ')', startLine, startColumn);
-      case ',': this.advance(); return this.makeToken(TokenType.COMMA, ',', startLine, startColumn);
-      case ':': this.advance(); return this.makeToken(TokenType.COLON, ':', startLine, startColumn);
-      case '.': this.advance(); return this.makeToken(TokenType.DOT, '.', startLine, startColumn);
-      case '\\': this.advance(); return this.makeToken(TokenType.BACKSLASH, '\\', startLine, startColumn);
-      case '+': this.advance(); return this.makeToken(TokenType.PLUS, '+', startLine, startColumn);
-      case '-': this.advance(); return this.makeToken(TokenType.MINUS, '-', startLine, startColumn);
-      case '*': this.advance(); return this.makeToken(TokenType.MULTIPLY, '*', startLine, startColumn);
-      case '/': this.advance(); return this.makeToken(TokenType.DIVIDE, '/', startLine, startColumn);
-      case '^': this.advance(); return this.makeToken(TokenType.POWER, '^', startLine, startColumn);
-      case '%': this.advance(); return this.makeToken(TokenType.PERCENT, '%', startLine, startColumn);
-      case '#': this.advance(); return this.makeToken(TokenType.HASH, '#', startLine, startColumn);
-      case '$': this.advance(); return this.makeToken(TokenType.DOLLAR, '$', startLine, startColumn);
-      
-      case '=':
+      case "(":
         this.advance();
-        return this.makeToken(TokenType.EQ, '=', startLine, startColumn);
-      
-      case '<':
+        return this.makeToken(TokenType.LPAREN, "(", startLine, startColumn);
+      case ")":
         this.advance();
-        if (this.peek() === '>') {
+        return this.makeToken(TokenType.RPAREN, ")", startLine, startColumn);
+      case ",":
+        this.advance();
+        return this.makeToken(TokenType.COMMA, ",", startLine, startColumn);
+      case ":":
+        this.advance();
+        return this.makeToken(TokenType.COLON, ":", startLine, startColumn);
+      case ".":
+        this.advance();
+        return this.makeToken(TokenType.DOT, ".", startLine, startColumn);
+      case "\\":
+        this.advance();
+        return this.makeToken(
+          TokenType.BACKSLASH,
+          "\\",
+          startLine,
+          startColumn,
+        );
+      case "+":
+        this.advance();
+        return this.makeToken(TokenType.PLUS, "+", startLine, startColumn);
+      case "-":
+        this.advance();
+        return this.makeToken(TokenType.MINUS, "-", startLine, startColumn);
+      case "*":
+        this.advance();
+        return this.makeToken(TokenType.MULTIPLY, "*", startLine, startColumn);
+      case "/":
+        this.advance();
+        return this.makeToken(TokenType.DIVIDE, "/", startLine, startColumn);
+      case "^":
+        this.advance();
+        return this.makeToken(TokenType.POWER, "^", startLine, startColumn);
+      case "%":
+        this.advance();
+        return this.makeToken(TokenType.PERCENT, "%", startLine, startColumn);
+      case "#":
+        this.advance();
+        return this.makeToken(TokenType.HASH, "#", startLine, startColumn);
+      case "$":
+        this.advance();
+        return this.makeToken(TokenType.DOLLAR, "$", startLine, startColumn);
+
+      case "=":
+        this.advance();
+        return this.makeToken(TokenType.EQ, "=", startLine, startColumn);
+
+      case "<":
+        this.advance();
+        if (this.peek() === ">") {
           this.advance();
-          return this.makeToken(TokenType.NE, '<>', startLine, startColumn);
-        } else if (this.peek() === '=') {
+          return this.makeToken(TokenType.NE, "<>", startLine, startColumn);
+        } else if (this.peek() === "=") {
           this.advance();
-          return this.makeToken(TokenType.LE, '<=', startLine, startColumn);
+          return this.makeToken(TokenType.LE, "<=", startLine, startColumn);
         }
-        return this.makeToken(TokenType.LT, '<', startLine, startColumn);
-      
-      case '>':
+        return this.makeToken(TokenType.LT, "<", startLine, startColumn);
+
+      case ">":
         this.advance();
-        if (this.peek() === '=') {
+        if (this.peek() === "=") {
           this.advance();
-          return this.makeToken(TokenType.GE, '>=', startLine, startColumn);
+          return this.makeToken(TokenType.GE, ">=", startLine, startColumn);
         }
-        return this.makeToken(TokenType.GT, '>', startLine, startColumn);
-      
+        return this.makeToken(TokenType.GT, ">", startLine, startColumn);
+
       default:
         this.errors.push({
           message: `Unexpected character: '${ch}'`,
@@ -280,135 +318,140 @@ export class Lexer {
         return null;
     }
   }
-  
+
   private scanString(startLine: number, startColumn: number): Token {
     this.advance(); // Skip opening quote
     const start = this.pos;
-    
+
     while (!this.isAtEnd() && this.peek() !== '"') {
-      if (this.peek() === '\n') {
+      if (this.peek() === "\n") {
         this.line++;
         this.column = 0;
       }
       this.advance();
     }
-    
+
     if (this.isAtEnd()) {
       this.errors.push({
-        message: 'Unterminated string',
+        message: "Unterminated string",
         line: startLine,
         column: startColumn,
       });
     } else {
       this.advance(); // Skip closing quote
     }
-    
+
     const value = this.source.substring(start, this.pos - 1);
     return this.makeToken(TokenType.STRING, value, startLine, startColumn);
   }
-  
+
   private scanNumber(startLine: number, startColumn: number): Token {
     const start = this.pos;
-    
+
     while (this.isDigit(this.peek())) {
       this.advance();
     }
-    
+
     // Float?
-    if (this.peek() === '.' && this.isDigit(this.peekNext())) {
+    if (this.peek() === "." && this.isDigit(this.peekNext())) {
       this.advance(); // Skip '.'
-      
+
       while (this.isDigit(this.peek())) {
         this.advance();
       }
-      
+
       const value = this.source.substring(start, this.pos);
       return this.makeToken(TokenType.FLOAT, value, startLine, startColumn);
     }
-    
+
     const value = this.source.substring(start, this.pos);
     return this.makeToken(TokenType.INTEGER, value, startLine, startColumn);
   }
-  
+
   private scanIdentifier(startLine: number, startColumn: number): Token {
     const start = this.pos;
-    
-    while (this.isAlphaNumeric(this.peek()) || this.peek() === '_') {
+
+    while (this.isAlphaNumeric(this.peek()) || this.peek() === "_") {
       this.advance();
     }
-    
+
     // Include type suffix if present (%, #, $)
-    if (this.peek() === '%' || this.peek() === '#' || this.peek() === '$') {
+    if (this.peek() === "%" || this.peek() === "#" || this.peek() === "$") {
       this.advance();
     }
-    
+
     const value = this.source.substring(start, this.pos);
     const lowerValue = value.toLowerCase();
-    
+
     // Check for keyword (without type suffix)
-    const baseValue = value.replace(/[%#$]$/, '').toLowerCase();
+    const baseValue = value.replace(/[%#$]$/, "").toLowerCase();
     const type = KEYWORDS[baseValue] || TokenType.IDENTIFIER;
-    
+
     return this.makeToken(type, value, startLine, startColumn);
   }
-  
+
   private skipWhitespace(): void {
     while (!this.isAtEnd()) {
       const ch = this.peek();
-      if (ch === ' ' || ch === '\t' || ch === '\r') {
+      if (ch === " " || ch === "\t" || ch === "\r") {
         this.advance();
       } else {
         break;
       }
     }
   }
-  
+
   private skipComment(): void {
-    while (!this.isAtEnd() && this.peek() !== '\n') {
+    while (!this.isAtEnd() && this.peek() !== "\n") {
       this.advance();
     }
   }
-  
+
   private peek(): string {
-    if (this.isAtEnd()) return '\0';
+    if (this.isAtEnd()) return "\0";
     return this.source[this.pos];
   }
-  
+
   private peekNext(): string {
-    if (this.pos + 1 >= this.source.length) return '\0';
+    if (this.pos + 1 >= this.source.length) return "\0";
     return this.source[this.pos + 1];
   }
-  
+
   private advance(): void {
     if (!this.isAtEnd()) {
       this.pos++;
       this.column++;
     }
   }
-  
+
   private isAtEnd(): boolean {
     return this.pos >= this.source.length;
   }
-  
+
   private isDigit(ch: string): boolean {
-    return ch >= '0' && ch <= '9';
+    return ch >= "0" && ch <= "9";
   }
-  
+
   private isAlpha(ch: string): boolean {
-    return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch === '_';
+    return (ch >= "a" && ch <= "z") || (ch >= "A" && ch <= "Z") || ch === "_";
   }
-  
+
   private isAlphaNumeric(ch: string): boolean {
     return this.isAlpha(ch) || this.isDigit(ch);
   }
-  
-  private makeToken(type: TokenType, value: string, line: number, column: number): Token {
+
+  private makeToken(
+    type: TokenType,
+    value: string,
+    line: number,
+    column: number,
+  ): Token {
     return { type, value, line, column };
   }
 }
 /**
  * Blitz3D AST (Abstract Syntax Tree)
- * 
+ *
  * Represents the parsed structure of Blitz3D programs
  */
 
@@ -427,7 +470,7 @@ export interface Node {
 // ============================================================================
 
 export interface Program extends Node {
-  kind: 'Program';
+  kind: "Program";
   statements: Statement[];
 }
 
@@ -453,8 +496,8 @@ export type Statement =
   | IncludeStatement;
 
 export interface VariableDeclaration extends Node {
-  kind: 'VariableDeclaration';
-  scope: 'Local' | 'Global' | 'Const' | 'Dim';
+  kind: "VariableDeclaration";
+  scope: "Local" | "Global" | "Const" | "Dim";
   name: string;
   type?: TypeAnnotation;
   initializer?: Expression;
@@ -462,7 +505,7 @@ export interface VariableDeclaration extends Node {
 }
 
 export interface FunctionDeclaration extends Node {
-  kind: 'FunctionDeclaration';
+  kind: "FunctionDeclaration";
   name: string;
   parameters: Parameter[];
   returnType?: TypeAnnotation;
@@ -476,7 +519,7 @@ export interface Parameter {
 }
 
 export interface TypeDeclaration extends Node {
-  kind: 'TypeDeclaration';
+  kind: "TypeDeclaration";
   name: string;
   fields: Field[];
 }
@@ -488,19 +531,19 @@ export interface Field {
 }
 
 export interface DataStatement extends Node {
-  kind: 'DataStatement';
+  kind: "DataStatement";
   values: Expression[];
   label?: string;
 }
 
 export interface Assignment extends Node {
-  kind: 'Assignment';
+  kind: "Assignment";
   target: Expression; // Variable, field access, or array element
   value: Expression;
 }
 
 export interface IfStatement extends Node {
-  kind: 'IfStatement';
+  kind: "IfStatement";
   condition: Expression;
   thenBranch: Statement[];
   elseIfBranches?: ElseIfBranch[];
@@ -513,7 +556,7 @@ export interface ElseIfBranch {
 }
 
 export interface ForStatement extends Node {
-  kind: 'ForStatement';
+  kind: "ForStatement";
   variable: string;
   start: Expression;
   end: Expression;
@@ -522,19 +565,19 @@ export interface ForStatement extends Node {
 }
 
 export interface WhileStatement extends Node {
-  kind: 'WhileStatement';
+  kind: "WhileStatement";
   condition: Expression;
   body: Statement[];
 }
 
 export interface RepeatStatement extends Node {
-  kind: 'RepeatStatement';
+  kind: "RepeatStatement";
   body: Statement[];
   condition?: Expression; // Until condition (optional for Forever)
 }
 
 export interface SelectStatement extends Node {
-  kind: 'SelectStatement';
+  kind: "SelectStatement";
   value: Expression;
   cases: CaseClause[];
   defaultCase?: Statement[];
@@ -546,27 +589,27 @@ export interface CaseClause {
 }
 
 export interface ReturnStatement extends Node {
-  kind: 'ReturnStatement';
+  kind: "ReturnStatement";
   value?: Expression;
 }
 
 export interface ExpressionStatement extends Node {
-  kind: 'ExpressionStatement';
+  kind: "ExpressionStatement";
   expression: Expression;
 }
 
 export interface LabelStatement extends Node {
-  kind: 'LabelStatement';
+  kind: "LabelStatement";
   name: string;
 }
 
 export interface GotoStatement extends Node {
-  kind: 'GotoStatement';
+  kind: "GotoStatement";
   label: string;
 }
 
 export interface IncludeStatement extends Node {
-  kind: 'IncludeStatement';
+  kind: "IncludeStatement";
   filename: string;
 }
 
@@ -593,97 +636,111 @@ export type Expression =
   | ObjectCastExpression;
 
 export interface IntegerLiteral extends Node {
-  kind: 'IntegerLiteral';
+  kind: "IntegerLiteral";
   value: number;
 }
 
 export interface FloatLiteral extends Node {
-  kind: 'FloatLiteral';
+  kind: "FloatLiteral";
   value: number;
 }
 
 export interface StringLiteral extends Node {
-  kind: 'StringLiteral';
+  kind: "StringLiteral";
   value: string;
 }
 
 export interface Identifier extends Node {
-  kind: 'Identifier';
+  kind: "Identifier";
   name: string;
   type?: TypeAnnotation; // For type suffixes: x%, y#, s$
 }
 
 export interface BinaryExpression extends Node {
-  kind: 'BinaryExpression';
+  kind: "BinaryExpression";
   operator: BinaryOperator;
   left: Expression;
   right: Expression;
 }
 
 export type BinaryOperator =
-  | '+' | '-' | '*' | '/' | 'Mod' | '^'
-  | '=' | '<>' | '<' | '<=' | '>' | '>='
-  | 'And' | 'Or' | 'Xor'
-  | 'Shl' | 'Shr' | 'Sar';
+  | "+"
+  | "-"
+  | "*"
+  | "/"
+  | "Mod"
+  | "^"
+  | "="
+  | "<>"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "And"
+  | "Or"
+  | "Xor"
+  | "Shl"
+  | "Shr"
+  | "Sar";
 
 export interface UnaryExpression extends Node {
-  kind: 'UnaryExpression';
+  kind: "UnaryExpression";
   operator: UnaryOperator;
   operand: Expression;
 }
 
-export type UnaryOperator = '+' | '-' | 'Not';
+export type UnaryOperator = "+" | "-" | "Not";
 
 export interface CallExpression extends Node {
-  kind: 'CallExpression';
+  kind: "CallExpression";
   callee: string;
   arguments: Expression[];
 }
 
 export interface FieldAccess extends Node {
-  kind: 'FieldAccess';
+  kind: "FieldAccess";
   object: Expression;
   field: string;
 }
 
 export interface ArrayAccess extends Node {
-  kind: 'ArrayAccess';
+  kind: "ArrayAccess";
   array: Expression;
   indices: Expression[];
 }
 
 export interface NewExpression extends Node {
-  kind: 'NewExpression';
+  kind: "NewExpression";
   typeName: string;
 }
 
 export interface FirstExpression extends Node {
-  kind: 'FirstExpression';
+  kind: "FirstExpression";
   typeName: string;
 }
 
 export interface LastExpression extends Node {
-  kind: 'LastExpression';
+  kind: "LastExpression";
   typeName: string;
 }
 
 export interface BeforeExpression extends Node {
-  kind: 'BeforeExpression';
+  kind: "BeforeExpression";
   object: Expression;
 }
 
 export interface AfterExpression extends Node {
-  kind: 'AfterExpression';
+  kind: "AfterExpression";
   object: Expression;
 }
 
 export interface HandleExpression extends Node {
-  kind: 'HandleExpression';
+  kind: "HandleExpression";
   object: Expression;
 }
 
 export interface ObjectCastExpression extends Node {
-  kind: 'ObjectCastExpression';
+  kind: "ObjectCastExpression";
   typeName: string;
   object: Expression;
 }
@@ -694,77 +751,85 @@ export interface ObjectCastExpression extends Node {
 
 export interface TypeAnnotation {
   name: string; // 'Int', 'Float', 'String', or custom type name
-  suffix?: '%' | '#' | '$'; // Type suffix
+  suffix?: "%" | "#" | "$"; // Type suffix
 }
 
 // ============================================================================
 // Utilities
 // ============================================================================
 
-export function inferTypeFromSuffix(suffix?: string): TypeAnnotation | undefined {
+export function inferTypeFromSuffix(
+  suffix?: string,
+): TypeAnnotation | undefined {
   if (!suffix) return undefined;
-  
+
   switch (suffix) {
-    case '%': return { name: 'Int', suffix: '%' };
-    case '#': return { name: 'Float', suffix: '#' };
-    case '$': return { name: 'String', suffix: '$' };
-    default: return undefined;
+    case "%":
+      return { name: "Int", suffix: "%" };
+    case "#":
+      return { name: "Float", suffix: "#" };
+    case "$":
+      return { name: "String", suffix: "$" };
+    default:
+      return undefined;
   }
 }
 
 export function isStatement(node: Node): node is Statement {
   return [
-    'VariableDeclaration',
-    'FunctionDeclaration',
-    'TypeDeclaration',
-    'DataStatement',
-    'Assignment',
-    'IfStatement',
-    'ForStatement',
-    'WhileStatement',
-    'RepeatStatement',
-    'SelectStatement',
-    'ReturnStatement',
-    'ExpressionStatement',
-    'LabelStatement',
-    'GotoStatement',
-    'IncludeStatement',
+    "VariableDeclaration",
+    "FunctionDeclaration",
+    "TypeDeclaration",
+    "DataStatement",
+    "Assignment",
+    "IfStatement",
+    "ForStatement",
+    "WhileStatement",
+    "RepeatStatement",
+    "SelectStatement",
+    "ReturnStatement",
+    "ExpressionStatement",
+    "LabelStatement",
+    "GotoStatement",
+    "IncludeStatement",
   ].includes(node.kind);
 }
 
 export function isExpression(node: Node): node is Expression {
   return [
-    'IntegerLiteral',
-    'FloatLiteral',
-    'StringLiteral',
-    'Identifier',
-    'BinaryExpression',
-    'UnaryExpression',
-    'CallExpression',
-    'FieldAccess',
-    'ArrayAccess',
-    'NewExpression',
-    'FirstExpression',
-    'LastExpression',
-    'BeforeExpression',
-    'AfterExpression',
-    'HandleExpression',
-    'ObjectCastExpression',
+    "IntegerLiteral",
+    "FloatLiteral",
+    "StringLiteral",
+    "Identifier",
+    "BinaryExpression",
+    "UnaryExpression",
+    "CallExpression",
+    "FieldAccess",
+    "ArrayAccess",
+    "NewExpression",
+    "FirstExpression",
+    "LastExpression",
+    "BeforeExpression",
+    "AfterExpression",
+    "HandleExpression",
+    "ObjectCastExpression",
   ].includes(node.kind);
 }
 /**
  * Blitz3D Parser
- * 
+ *
  * Converts tokens into an Abstract Syntax Tree (AST)
  */
 
-import { Token, TokenType, Lexer } from './lexer';
-import * as AST from './ast';
+import { Lexer, Token, TokenType } from "./lexer";
+import * as AST from "./ast";
 
 export class ParseError extends Error {
   constructor(message: string, public token: Token) {
-    super(`Parse error at line ${token.line}, column ${token.column}: ${message}`);
-    this.name = 'ParseError';
+    super(
+      `Parse error at line ${token.line}, column ${token.column}: ${message}`,
+    );
+    this.name = "ParseError";
   }
 }
 
@@ -776,16 +841,16 @@ export class Parser {
     const lexer = new Lexer(source);
     const result = lexer.tokenize();
     this.tokens = result.tokens;
-    
+
     // Report lexer errors
     if (result.errors.length > 0) {
-      console.error('Lexer errors:', result.errors);
+      console.error("Lexer errors:", result.errors);
     }
   }
 
   parse(): AST.Program {
     const statements: AST.Statement[] = [];
-    
+
     while (!this.isAtEnd()) {
       try {
         const stmt = this.statement();
@@ -800,14 +865,14 @@ export class Parser {
       }
     }
 
-    return { type: 'Program', statements };
+    return { type: "Program", statements };
   }
 
   // Statement parsing
   private statement(): AST.Statement | null {
     // Skip newlines
     while (this.match(TokenType.NEWLINE)) {}
-    
+
     if (this.isAtEnd()) return null;
 
     // Function declaration
@@ -821,7 +886,14 @@ export class Parser {
     }
 
     // Variable declaration
-    if (this.match(TokenType.LOCAL, TokenType.GLOBAL, TokenType.CONST, TokenType.DIM)) {
+    if (
+      this.match(
+        TokenType.LOCAL,
+        TokenType.GLOBAL,
+        TokenType.CONST,
+        TokenType.DIM,
+      )
+    ) {
       return this.variableDeclaration();
     }
 
@@ -838,26 +910,31 @@ export class Parser {
   }
 
   private functionDeclaration(): AST.FunctionDeclaration {
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected function name').value;
-    
+    const name =
+      this.consume(TokenType.IDENTIFIER, "Expected function name").value;
+
     // Check for type suffix
     let returnType: AST.TypeAnnotation | undefined;
-    if (this.peek().value.includes('#') || this.peek().value.includes('$') || this.peek().value.includes('%')) {
+    if (
+      this.peek().value.includes("#") || this.peek().value.includes("$") ||
+      this.peek().value.includes("%")
+    ) {
       const suffix = this.peek().value[this.peek().value.length - 1];
       returnType = this.suffixToType(suffix);
     }
 
     this.consume(TokenType.LPAREN, 'Expected "(" after function name');
-    
+
     const parameters: AST.Parameter[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        const paramName = this.consume(TokenType.IDENTIFIER, 'Expected parameter name').value;
-        let paramType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
-        
+        const paramName =
+          this.consume(TokenType.IDENTIFIER, "Expected parameter name").value;
+        let paramType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
+
         // Check for type suffix in parameter name
         const lastChar = paramName[paramName.length - 1];
-        if (['#', '$', '%'].includes(lastChar)) {
+        if (["#", "$", "%"].includes(lastChar)) {
           paramType = this.suffixToType(lastChar);
         }
 
@@ -870,7 +947,7 @@ export class Parser {
         parameters.push({ name: paramName, type: paramType, defaultValue });
       } while (this.match(TokenType.COMMA));
     }
-    
+
     this.consume(TokenType.RPAREN, 'Expected ")" after parameters');
     this.consumeNewlines();
 
@@ -884,29 +961,30 @@ export class Parser {
     this.consume(TokenType.FUNCTION, 'Expected "Function" after "End"');
 
     return {
-      type: 'FunctionDeclaration',
+      type: "FunctionDeclaration",
       name,
       parameters,
       returnType,
-      body
+      body,
     };
   }
 
   private typeDeclaration(): AST.TypeDeclaration {
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected type name').value;
+    const name = this.consume(TokenType.IDENTIFIER, "Expected type name").value;
     this.consumeNewlines();
 
     const fields: AST.TypeField[] = [];
     while (!this.check(TokenType.END) && !this.isAtEnd()) {
       if (this.match(TokenType.NEWLINE)) continue;
-      
+
       if (this.check(TokenType.FIELD)) {
         this.advance();
-        const fieldName = this.consume(TokenType.IDENTIFIER, 'Expected field name').value;
-        
-        let fieldType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
+        const fieldName =
+          this.consume(TokenType.IDENTIFIER, "Expected field name").value;
+
+        let fieldType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
         const lastChar = fieldName[fieldName.length - 1];
-        if (['#', '$', '%'].includes(lastChar)) {
+        if (["#", "$", "%"].includes(lastChar)) {
           fieldType = this.suffixToType(lastChar);
         }
 
@@ -920,19 +998,24 @@ export class Parser {
     this.consume(TokenType.END, 'Expected "End" after type body');
     this.consume(TokenType.TYPE, 'Expected "Type" after "End"');
 
-    return { type: 'TypeDeclaration', name, fields };
+    return { type: "TypeDeclaration", name, fields };
   }
 
   private variableDeclaration(): AST.VariableDeclaration {
-    const scope = this.previous().type === TokenType.LOCAL ? 'local' :
-                  this.previous().type === TokenType.GLOBAL ? 'global' :
-                  this.previous().type === TokenType.CONST ? 'const' : 'dim';
+    const scope = this.previous().type === TokenType.LOCAL
+      ? "local"
+      : this.previous().type === TokenType.GLOBAL
+      ? "global"
+      : this.previous().type === TokenType.CONST
+      ? "const"
+      : "dim";
 
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected variable name').value;
-    
-    let varType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
+    const name =
+      this.consume(TokenType.IDENTIFIER, "Expected variable name").value;
+
+    let varType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
     const lastChar = name[name.length - 1];
-    if (['#', '$', '%'].includes(lastChar)) {
+    if (["#", "$", "%"].includes(lastChar)) {
       varType = this.suffixToType(lastChar);
     }
 
@@ -954,12 +1037,12 @@ export class Parser {
     }
 
     return {
-      type: 'VariableDeclaration',
+      type: "VariableDeclaration",
       name,
       varType,
       scope,
       dimensions,
-      initializer
+      initializer,
     };
   }
 
@@ -969,19 +1052,35 @@ export class Parser {
     this.consumeNewlines();
 
     const thenBranch: AST.Statement[] = [];
-    while (!this.check(TokenType.ELSE, TokenType.ELSEIF, TokenType.ENDIF, TokenType.END) && !this.isAtEnd()) {
+    while (
+      !this.check(
+        TokenType.ELSE,
+        TokenType.ELSEIF,
+        TokenType.ENDIF,
+        TokenType.END,
+      ) && !this.isAtEnd()
+    ) {
       const stmt = this.statement();
       if (stmt) thenBranch.push(stmt);
     }
 
-    const elseIfBranches: Array<{ condition: AST.Expression; body: AST.Statement[] }> = [];
+    const elseIfBranches: Array<
+      { condition: AST.Expression; body: AST.Statement[] }
+    > = [];
     while (this.match(TokenType.ELSEIF)) {
       const elseIfCondition = this.expression();
       this.match(TokenType.THEN);
       this.consumeNewlines();
 
       const elseIfBody: AST.Statement[] = [];
-      while (!this.check(TokenType.ELSE, TokenType.ELSEIF, TokenType.ENDIF, TokenType.END) && !this.isAtEnd()) {
+      while (
+        !this.check(
+          TokenType.ELSE,
+          TokenType.ELSEIF,
+          TokenType.ENDIF,
+          TokenType.END,
+        ) && !this.isAtEnd()
+      ) {
         const stmt = this.statement();
         if (stmt) elseIfBody.push(stmt);
       }
@@ -1004,16 +1103,23 @@ export class Parser {
       this.consume(TokenType.ENDIF, 'Expected "EndIf" or "End If"');
     }
 
-    return { type: 'IfStatement', condition, thenBranch, elseIfBranches, elseBranch };
+    return {
+      type: "IfStatement",
+      condition,
+      thenBranch,
+      elseIfBranches,
+      elseBranch,
+    };
   }
 
   private forLoop(): AST.ForLoop {
-    const variable = this.consume(TokenType.IDENTIFIER, 'Expected loop variable').value;
+    const variable =
+      this.consume(TokenType.IDENTIFIER, "Expected loop variable").value;
     this.consume(TokenType.EQ, 'Expected "=" after loop variable');
     const start = this.expression();
     this.consume(TokenType.TO, 'Expected "To" in for loop');
     const end = this.expression();
-    
+
     let step: AST.Expression | undefined;
     if (this.match(TokenType.STEP)) {
       step = this.expression();
@@ -1030,7 +1136,7 @@ export class Parser {
     this.consume(TokenType.NEXT, 'Expected "Next" after for loop body');
     this.match(TokenType.IDENTIFIER); // Optional variable name after Next
 
-    return { type: 'ForLoop', variable, start, end, step, body };
+    return { type: "ForLoop", variable, start, end, step, body };
   }
 
   private whileLoop(): AST.WhileLoop {
@@ -1045,7 +1151,7 @@ export class Parser {
 
     this.consume(TokenType.WEND, 'Expected "Wend" after while loop body');
 
-    return { type: 'WhileLoop', condition, body };
+    return { type: "WhileLoop", condition, body };
   }
 
   private repeatLoop(): AST.RepeatLoop {
@@ -1061,10 +1167,13 @@ export class Parser {
     if (this.match(TokenType.UNTIL)) {
       condition = this.expression();
     } else {
-      this.consume(TokenType.FOREVER, 'Expected "Until" or "Forever" after repeat loop');
+      this.consume(
+        TokenType.FOREVER,
+        'Expected "Until" or "Forever" after repeat loop',
+      );
     }
 
-    return { type: 'RepeatLoop', body, condition };
+    return { type: "RepeatLoop", body, condition };
   }
 
   private selectStatement(): AST.SelectStatement {
@@ -1103,7 +1212,7 @@ export class Parser {
     this.consume(TokenType.END, 'Expected "End" after select statement');
     this.consume(TokenType.SELECT, 'Expected "Select" after "End"');
 
-    return { type: 'SelectStatement', expression, cases, defaultCase };
+    return { type: "SelectStatement", expression, cases, defaultCase };
   }
 
   private returnStatement(): AST.ReturnStatement {
@@ -1111,12 +1220,12 @@ export class Parser {
     if (!this.check(TokenType.NEWLINE) && !this.isAtEnd()) {
       value = this.expression();
     }
-    return { type: 'ReturnStatement', value };
+    return { type: "ReturnStatement", value };
   }
 
   private expressionStatement(): AST.ExpressionStatement {
     const expr = this.expression();
-    return { type: 'ExpressionStatement', expression: expr };
+    return { type: "ExpressionStatement", expression: expr };
   }
 
   // Expression parsing (precedence climbing)
@@ -1129,10 +1238,13 @@ export class Parser {
 
     if (this.match(TokenType.EQ)) {
       const value = this.assignment();
-      if (expr.type === 'Identifier' || expr.type === 'FieldAccess' || expr.type === 'ArrayAccess') {
-        return { type: 'Assignment', target: expr, value };
+      if (
+        expr.type === "Identifier" || expr.type === "FieldAccess" ||
+        expr.type === "ArrayAccess"
+      ) {
+        return { type: "Assignment", target: expr, value };
       }
-      throw new ParseError('Invalid assignment target', this.previous());
+      throw new ParseError("Invalid assignment target", this.previous());
     }
 
     return expr;
@@ -1144,7 +1256,7 @@ export class Parser {
     while (this.match(TokenType.OR)) {
       const operator = this.previous().value;
       const right = this.logicalAnd();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1156,7 +1268,7 @@ export class Parser {
     while (this.match(TokenType.AND)) {
       const operator = this.previous().value;
       const right = this.equality();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1168,7 +1280,7 @@ export class Parser {
     while (this.match(TokenType.NOT_EQUAL)) {
       const operator = this.previous().value;
       const right = this.comparison();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1177,10 +1289,17 @@ export class Parser {
   private comparison(): AST.Expression {
     let expr = this.additive();
 
-    while (this.match(TokenType.LESS_THAN, TokenType.LESS_EQUAL, TokenType.GREATER_THAN, TokenType.GREATER_EQUAL)) {
+    while (
+      this.match(
+        TokenType.LESS_THAN,
+        TokenType.LESS_EQUAL,
+        TokenType.GREATER_THAN,
+        TokenType.GREATER_EQUAL,
+      )
+    ) {
       const operator = this.previous().value;
       const right = this.additive();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1192,7 +1311,7 @@ export class Parser {
     while (this.match(TokenType.PLUS, TokenType.MINUS)) {
       const operator = this.previous().value;
       const right = this.multiplicative();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1204,7 +1323,7 @@ export class Parser {
     while (this.match(TokenType.MULTIPLY, TokenType.DIVIDE, TokenType.MOD)) {
       const operator = this.previous().value;
       const right = this.unary();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -1214,7 +1333,7 @@ export class Parser {
     if (this.match(TokenType.NOT, TokenType.MINUS)) {
       const operator = this.previous().value;
       const operand = this.unary();
-      return { type: 'UnaryOp', operator, operand };
+      return { type: "UnaryOp", operator, operand };
     }
 
     return this.postfix();
@@ -1233,11 +1352,13 @@ export class Parser {
           } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, 'Expected ")" after arguments');
-        expr = { type: 'FunctionCall', name: expr, arguments: args };
+        expr = { type: "FunctionCall", name: expr, arguments: args };
       } else if (this.match(TokenType.DOT)) {
         // Field access
-        const field = this.consume(TokenType.IDENTIFIER, 'Expected field name after "."').value;
-        expr = { type: 'FieldAccess', object: expr, field };
+        const field =
+          this.consume(TokenType.IDENTIFIER, 'Expected field name after "."')
+            .value;
+        expr = { type: "FieldAccess", object: expr, field };
       } else if (this.match(TokenType.LBRACKET)) {
         // Array access
         const indices: AST.Expression[] = [];
@@ -1245,7 +1366,7 @@ export class Parser {
           indices.push(this.expression());
         } while (this.match(TokenType.COMMA));
         this.consume(TokenType.RBRACKET, 'Expected "]" after array indices');
-        expr = { type: 'ArrayAccess', array: expr, indices };
+        expr = { type: "ArrayAccess", array: expr, indices };
       } else {
         break;
       }
@@ -1257,27 +1378,27 @@ export class Parser {
   private primary(): AST.Expression {
     // Literals
     if (this.match(TokenType.INTEGER)) {
-      return { type: 'IntegerLiteral', value: parseInt(this.previous().value) };
+      return { type: "IntegerLiteral", value: parseInt(this.previous().value) };
     }
     if (this.match(TokenType.FLOAT)) {
-      return { type: 'FloatLiteral', value: parseFloat(this.previous().value) };
+      return { type: "FloatLiteral", value: parseFloat(this.previous().value) };
     }
     if (this.match(TokenType.STRING)) {
-      return { type: 'StringLiteral', value: this.previous().value };
+      return { type: "StringLiteral", value: this.previous().value };
     }
     if (this.match(TokenType.TRUE)) {
-      return { type: 'IntegerLiteral', value: 1 };
+      return { type: "IntegerLiteral", value: 1 };
     }
     if (this.match(TokenType.FALSE)) {
-      return { type: 'IntegerLiteral', value: 0 };
+      return { type: "IntegerLiteral", value: 0 };
     }
     if (this.match(TokenType.NULL)) {
-      return { type: 'IntegerLiteral', value: 0 };
+      return { type: "IntegerLiteral", value: 0 };
     }
 
     // Identifier
     if (this.match(TokenType.IDENTIFIER)) {
-      return { type: 'Identifier', name: this.previous().value };
+      return { type: "Identifier", name: this.previous().value };
     }
 
     // Grouped expression
@@ -1289,8 +1410,10 @@ export class Parser {
 
     // New keyword
     if (this.match(TokenType.NEW)) {
-      const typeName = this.consume(TokenType.IDENTIFIER, 'Expected type name after "New"').value;
-      return { type: 'NewExpression', typeName };
+      const typeName =
+        this.consume(TokenType.IDENTIFIER, 'Expected type name after "New"')
+          .value;
+      return { type: "NewExpression", typeName };
     }
 
     throw new ParseError(`Unexpected token: ${this.peek().value}`, this.peek());
@@ -1299,10 +1422,14 @@ export class Parser {
   // Helper methods
   private suffixToType(suffix: string): AST.TypeAnnotation {
     switch (suffix) {
-      case '#': return { kind: 'primitive', name: 'Float' };
-      case '$': return { kind: 'primitive', name: 'String' };
-      case '%': return { kind: 'primitive', name: 'Int' };
-      default: return { kind: 'primitive', name: 'Int' };
+      case "#":
+        return { kind: "primitive", name: "Float" };
+      case "$":
+        return { kind: "primitive", name: "String" };
+      case "%":
+        return { kind: "primitive", name: "Int" };
+      default:
+        return { kind: "primitive", name: "Int" };
     }
   }
 
@@ -1373,11 +1500,11 @@ export class Parser {
 }
 /**
  * Blitz3D Code Generator - WASM Text Format
- * 
+ *
  * Generates WebAssembly Text Format (WAT) from AST
  */
 
-import * as AST from './ast';
+import * as AST from "./ast";
 
 export class CodeGenerator {
   private output: string[] = [];
@@ -1385,13 +1512,16 @@ export class CodeGenerator {
   private localIndex = 0;
   private locals = new Map<string, { index: number; type: string }>();
   private globals = new Map<string, { index: number; type: string }>();
-  private functions = new Map<string, { index: number; params: string[]; returns: string }>;
+  private functions = new Map<
+    string,
+    { index: number; params: string[]; returns: string }
+  >();
   private nextFunctionIndex = 0;
   private stringLiterals = new Map<string, number>();
   private nextStringIndex = 0;
 
   generate(program: AST.Program): string {
-    this.emit('(module');
+    this.emit("(module");
     this.indent++;
 
     // Import JavaScript runtime functions
@@ -1405,7 +1535,7 @@ export class CodeGenerator {
 
     // Generate functions
     for (const stmt of program.statements) {
-      if (stmt.type === 'FunctionDeclaration') {
+      if (stmt.type === "FunctionDeclaration") {
         this.generateFunction(stmt);
       }
     }
@@ -1414,9 +1544,9 @@ export class CodeGenerator {
     this.generateMainFunction(program);
 
     this.indent--;
-    this.emit(')');
+    this.emit(")");
 
-    return this.output.join('\n');
+    return this.output.join("\n");
   }
 
   private emitRuntimeImports(): void {
@@ -1424,7 +1554,7 @@ export class CodeGenerator {
     this.emit('(import "env" "print" (func $print (param i32)))');
     this.emit('(import "env" "printFloat" (func $printFloat (param f32)))');
     this.emit('(import "env" "printString" (func $printString (param i32)))');
-    this.emit('');
+    this.emit("");
   }
 
   private emitStringData(program: AST.Program): void {
@@ -1432,21 +1562,21 @@ export class CodeGenerator {
     this.collectStringLiterals(program);
 
     if (this.stringLiterals.size > 0) {
-      this.emit('; String data section');
+      this.emit("; String data section");
       let offset = 0;
       for (const [str, index] of this.stringLiterals.entries()) {
-        const escaped = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        const escaped = str.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
         this.emit(`(data (i32.const ${offset}) "${escaped}\\00")`);
         offset += str.length + 1; // +1 for null terminator
       }
-      this.emit('');
+      this.emit("");
     }
   }
 
   private collectStringLiterals(node: any): void {
-    if (!node || typeof node !== 'object') return;
+    if (!node || typeof node !== "object") return;
 
-    if (node.type === 'StringLiteral' && !this.stringLiterals.has(node.value)) {
+    if (node.type === "StringLiteral" && !this.stringLiterals.has(node.value)) {
       this.stringLiterals.set(node.value, this.nextStringIndex++);
     }
 
@@ -1454,7 +1584,7 @@ export class CodeGenerator {
     for (const key in node) {
       if (Array.isArray(node[key])) {
         node[key].forEach((item: any) => this.collectStringLiterals(item));
-      } else if (typeof node[key] === 'object') {
+      } else if (typeof node[key] === "object") {
         this.collectStringLiterals(node[key]);
       }
     }
@@ -1468,8 +1598,8 @@ export class CodeGenerator {
     const funcIndex = this.nextFunctionIndex++;
     this.functions.set(func.name, {
       index: funcIndex,
-      params: func.parameters.map(p => this.typeToWasm(p.type)),
-      returns: func.returnType ? this.typeToWasm(func.returnType) : ''
+      params: func.parameters.map((p) => this.typeToWasm(p.type)),
+      returns: func.returnType ? this.typeToWasm(func.returnType) : "",
     });
 
     // Function signature
@@ -1478,11 +1608,15 @@ export class CodeGenerator {
       this.locals.set(p.name, { index: i, type: wasmType });
       this.localIndex++;
       return `(param $${p.name} ${wasmType})`;
-    }).join(' ');
+    }).join(" ");
 
-    const returns = func.returnType ? `(result ${this.typeToWasm(func.returnType)})` : '';
+    const returns = func.returnType
+      ? `(result ${this.typeToWasm(func.returnType)})`
+      : "";
 
-    this.emit(`(func $${func.name} (export "${func.name}") ${params} ${returns}`);
+    this.emit(
+      `(func $${func.name} (export "${func.name}") ${params} ${returns}`,
+    );
     this.indent++;
 
     // Local variables (we'll add them as we encounter them)
@@ -1496,22 +1630,22 @@ export class CodeGenerator {
     // Add default return if no explicit return
     if (func.returnType) {
       const wasmType = this.typeToWasm(func.returnType);
-      if (wasmType === 'i32') {
-        this.emit('i32.const 0');
-      } else if (wasmType === 'f32') {
-        this.emit('f32.const 0');
+      if (wasmType === "i32") {
+        this.emit("i32.const 0");
+      } else if (wasmType === "f32") {
+        this.emit("f32.const 0");
       }
     }
 
     this.indent--;
-    this.emit(')');
-    this.emit('');
+    this.emit(")");
+    this.emit("");
   }
 
   private generateMainFunction(program: AST.Program): void {
     // Generate main function from top-level statements
-    const topLevelStmts = program.statements.filter(s => 
-      s.type !== 'FunctionDeclaration' && s.type !== 'TypeDeclaration'
+    const topLevelStmts = program.statements.filter((s) =>
+      s.type !== "FunctionDeclaration" && s.type !== "TypeDeclaration"
     );
 
     if (topLevelStmts.length === 0) return;
@@ -1524,36 +1658,36 @@ export class CodeGenerator {
     }
 
     this.indent--;
-    this.emit(')');
-    this.emit('');
+    this.emit(")");
+    this.emit("");
 
     // Start function
-    this.emit('(start $main)');
+    this.emit("(start $main)");
   }
 
   private generateStatement(stmt: AST.Statement): void {
     switch (stmt.type) {
-      case 'VariableDeclaration':
+      case "VariableDeclaration":
         this.generateVariableDeclaration(stmt);
         break;
-      case 'ExpressionStatement':
+      case "ExpressionStatement":
         this.generateExpression(stmt.expression);
-        this.emit('drop'); // Discard result
+        this.emit("drop"); // Discard result
         break;
-      case 'IfStatement':
+      case "IfStatement":
         this.generateIfStatement(stmt);
         break;
-      case 'ForLoop':
+      case "ForLoop":
         this.generateForLoop(stmt);
         break;
-      case 'WhileLoop':
+      case "WhileLoop":
         this.generateWhileLoop(stmt);
         break;
-      case 'ReturnStatement':
+      case "ReturnStatement":
         if (stmt.value) {
           this.generateExpression(stmt.value);
         }
-        this.emit('return');
+        this.emit("return");
         break;
       default:
         this.emit(`; TODO: ${stmt.type}`);
@@ -1562,21 +1696,22 @@ export class CodeGenerator {
 
   private generateVariableDeclaration(decl: AST.VariableDeclaration): void {
     const wasmType = this.typeToWasm(decl.varType);
-    
-    if (decl.scope === 'global') {
+
+    if (decl.scope === "global") {
       const globalIndex = this.globals.size;
       this.globals.set(decl.name, { index: globalIndex, type: wasmType });
-      
+
       // Emit global declaration
-      const initialValue = decl.initializer ? this.expressionToString(decl.initializer) : 
-                          (wasmType === 'i32' ? 'i32.const 0' : 'f32.const 0');
+      const initialValue = decl.initializer
+        ? this.expressionToString(decl.initializer)
+        : (wasmType === "i32" ? "i32.const 0" : "f32.const 0");
       this.emit(`(global $${decl.name} (mut ${wasmType}) (${initialValue}))`);
     } else {
       // Local variable
       const localIndex = this.localIndex++;
       this.locals.set(decl.name, { index: localIndex, type: wasmType });
       this.emit(`(local $${decl.name} ${wasmType})`);
-      
+
       if (decl.initializer) {
         this.generateExpression(decl.initializer);
         this.emit(`local.set $${decl.name}`);
@@ -1587,118 +1722,118 @@ export class CodeGenerator {
   private generateIfStatement(stmt: AST.IfStatement): void {
     // Generate condition
     this.generateExpression(stmt.condition);
-    
-    this.emit('(if');
+
+    this.emit("(if");
     this.indent++;
-    this.emit('(then');
+    this.emit("(then");
     this.indent++;
-    
+
     for (const s of stmt.thenBranch) {
       this.generateStatement(s);
     }
-    
+
     this.indent--;
-    this.emit(')');
-    
+    this.emit(")");
+
     if (stmt.elseBranch && stmt.elseBranch.length > 0) {
-      this.emit('(else');
+      this.emit("(else");
       this.indent++;
-      
+
       for (const s of stmt.elseBranch) {
         this.generateStatement(s);
       }
-      
+
       this.indent--;
-      this.emit(')');
+      this.emit(")");
     }
-    
+
     this.indent--;
-    this.emit(')');
+    this.emit(")");
   }
 
   private generateForLoop(loop: AST.ForLoop): void {
     // Initialize loop variable
     this.generateExpression(loop.start);
-    const wasmType = 'i32'; // For now assume int
+    const wasmType = "i32"; // For now assume int
     const varIndex = this.localIndex++;
     this.locals.set(loop.variable, { index: varIndex, type: wasmType });
     this.emit(`(local $${loop.variable} ${wasmType})`);
     this.emit(`local.set $${loop.variable}`);
-    
+
     // Calculate end value (store in temp)
     this.generateExpression(loop.end);
     const endVarIndex = this.localIndex++;
     this.emit(`(local $__for_end_${varIndex} ${wasmType})`);
     this.emit(`local.set $__for_end_${varIndex}`);
-    
+
     // Loop
-    this.emit('(block $break');
+    this.emit("(block $break");
     this.indent++;
-    this.emit('(loop $continue');
+    this.emit("(loop $continue");
     this.indent++;
-    
+
     // Check condition
     this.emit(`local.get $${loop.variable}`);
     this.emit(`local.get $__for_end_${varIndex}`);
-    this.emit('i32.gt_s');
-    this.emit('br_if $break');
-    
+    this.emit("i32.gt_s");
+    this.emit("br_if $break");
+
     // Loop body
     for (const stmt of loop.body) {
       this.generateStatement(stmt);
     }
-    
+
     // Increment
     this.emit(`local.get $${loop.variable}`);
     if (loop.step) {
       this.generateExpression(loop.step);
     } else {
-      this.emit('i32.const 1');
+      this.emit("i32.const 1");
     }
-    this.emit('i32.add');
+    this.emit("i32.add");
     this.emit(`local.set $${loop.variable}`);
-    
-    this.emit('br $continue');
-    
+
+    this.emit("br $continue");
+
     this.indent--;
-    this.emit(')');
+    this.emit(")");
     this.indent--;
-    this.emit(')');
+    this.emit(")");
   }
 
   private generateWhileLoop(loop: AST.WhileLoop): void {
-    this.emit('(block $break');
+    this.emit("(block $break");
     this.indent++;
-    this.emit('(loop $continue');
+    this.emit("(loop $continue");
     this.indent++;
-    
+
     // Check condition
     this.generateExpression(loop.condition);
-    this.emit('i32.eqz');
-    this.emit('br_if $break');
-    
+    this.emit("i32.eqz");
+    this.emit("br_if $break");
+
     // Loop body
     for (const stmt of loop.body) {
       this.generateStatement(stmt);
     }
-    
-    this.emit('br $continue');
-    
+
+    this.emit("br $continue");
+
     this.indent--;
-    this.emit(')');
+    this.emit(")");
     this.indent--;
-    this.emit(')');
+    this.emit(")");
   }
 
   private generateExpression(expr: AST.Expression): void {
     switch (expr.type) {
-      case 'IntegerLiteral':
+      case "IntegerLiteral":
         this.emit(`i32.const ${expr.value}`);
         break;
-      case 'FloatLiteral':
+      case "FloatLiteral":
         this.emit(`f32.const ${expr.value}`);
         break;
-      case 'StringLiteral': {
+      case "StringLiteral": {
         const index = this.stringLiterals.get(expr.value) || 0;
         // Return pointer to string in memory
         let offset = 0;
@@ -1709,7 +1844,7 @@ export class CodeGenerator {
         this.emit(`i32.const ${offset}`);
         break;
       }
-      case 'Identifier': {
+      case "Identifier": {
         const local = this.locals.get(expr.name);
         if (local) {
           this.emit(`local.get $${expr.name}`);
@@ -1719,83 +1854,83 @@ export class CodeGenerator {
             this.emit(`global.get $${expr.name}`);
           } else {
             this.emit(`; ERROR: Unknown identifier ${expr.name}`);
-            this.emit('i32.const 0');
+            this.emit("i32.const 0");
           }
         }
         break;
       }
-      case 'BinaryOp':
+      case "BinaryOp":
         this.generateBinaryOp(expr);
         break;
-      case 'UnaryOp':
+      case "UnaryOp":
         this.generateExpression(expr.operand);
-        if (expr.operator === 'Not') {
-          this.emit('i32.eqz');
-        } else if (expr.operator === '-') {
-          this.emit('i32.const -1');
-          this.emit('i32.mul');
+        if (expr.operator === "Not") {
+          this.emit("i32.eqz");
+        } else if (expr.operator === "-") {
+          this.emit("i32.const -1");
+          this.emit("i32.mul");
         }
         break;
-      case 'FunctionCall':
+      case "FunctionCall":
         this.generateFunctionCall(expr);
         break;
-      case 'Assignment':
+      case "Assignment":
         this.generateAssignment(expr);
         break;
       default:
         this.emit(`; TODO: Expression ${expr.type}`);
-        this.emit('i32.const 0');
+        this.emit("i32.const 0");
     }
   }
 
   private generateBinaryOp(expr: AST.BinaryOp): void {
     this.generateExpression(expr.left);
     this.generateExpression(expr.right);
-    
+
     // Determine type (simplified - assume i32 for now)
     const op = expr.operator;
-    
+
     switch (op) {
-      case '+':
-        this.emit('i32.add');
+      case "+":
+        this.emit("i32.add");
         break;
-      case '-':
-        this.emit('i32.sub');
+      case "-":
+        this.emit("i32.sub");
         break;
-      case '*':
-        this.emit('i32.mul');
+      case "*":
+        this.emit("i32.mul");
         break;
-      case '/':
-        this.emit('i32.div_s');
+      case "/":
+        this.emit("i32.div_s");
         break;
-      case 'Mod':
-        this.emit('i32.rem_s');
+      case "Mod":
+        this.emit("i32.rem_s");
         break;
-      case '=':
-      case '==':
-        this.emit('i32.eq');
+      case "=":
+      case "==":
+        this.emit("i32.eq");
         break;
-      case '<>':
-      case '!=':
-        this.emit('i32.ne');
+      case "<>":
+      case "!=":
+        this.emit("i32.ne");
         break;
-      case '<':
-        this.emit('i32.lt_s');
+      case "<":
+        this.emit("i32.lt_s");
         break;
-      case '<=':
-        this.emit('i32.le_s');
+      case "<=":
+        this.emit("i32.le_s");
         break;
-      case '>':
-        this.emit('i32.gt_s');
+      case ">":
+        this.emit("i32.gt_s");
         break;
-      case '>=':
-        this.emit('i32.ge_s');
+      case ">=":
+        this.emit("i32.ge_s");
         break;
-      case 'And':
-        this.emit('i32.and');
+      case "And":
+        this.emit("i32.and");
         break;
-      case 'Or':
-        this.emit('i32.or');
+      case "Or":
+        this.emit("i32.or");
         break;
       default:
         this.emit(`; Unknown operator: ${op}`);
@@ -1804,25 +1939,25 @@ export class CodeGenerator {
 
   private generateFunctionCall(expr: AST.FunctionCall): void {
     // Special built-in functions
-    if (expr.name.type === 'Identifier') {
+    if (expr.name.type === "Identifier") {
       const funcName = (expr.name as AST.Identifier).name.toLowerCase();
-      
-      if (funcName === 'print') {
+
+      if (funcName === "print") {
         if (expr.arguments.length > 0) {
           this.generateExpression(expr.arguments[0]);
           // Determine type and call appropriate print function
-          this.emit('call $print');
+          this.emit("call $print");
         }
         return;
       }
     }
-    
+
     // Regular function call
     for (const arg of expr.arguments) {
       this.generateExpression(arg);
     }
-    
-    if (expr.name.type === 'Identifier') {
+
+    if (expr.name.type === "Identifier") {
       const funcName = (expr.name as AST.Identifier).name;
       this.emit(`call $${funcName}`);
     }
@@ -1831,9 +1966,9 @@ export class CodeGenerator {
   private generateAssignment(expr: AST.Assignment): void {
     // Generate value
     this.generateExpression(expr.value);
-    
+
     // Set target
-    if (expr.target.type === 'Identifier') {
+    if (expr.target.type === "Identifier") {
       const varName = expr.target.name;
       const local = this.locals.get(varName);
       if (local) {
@@ -1845,9 +1980,9 @@ export class CodeGenerator {
         }
       }
     }
-    
+
     // Assignment also returns the value
-    if (expr.target.type === 'Identifier') {
+    if (expr.target.type === "Identifier") {
       const varName = expr.target.name;
       const local = this.locals.get(varName);
       if (local) {
@@ -1862,27 +1997,31 @@ export class CodeGenerator {
   }
 
   private expressionToString(expr: AST.Expression): string {
-    if (expr.type === 'IntegerLiteral') {
+    if (expr.type === "IntegerLiteral") {
       return `i32.const ${expr.value}`;
-    } else if (expr.type === 'FloatLiteral') {
+    } else if (expr.type === "FloatLiteral") {
       return `f32.const ${expr.value}`;
     }
-    return 'i32.const 0';
+    return "i32.const 0";
   }
 
   private typeToWasm(type: AST.TypeAnnotation): string {
-    if (type.kind === 'primitive') {
+    if (type.kind === "primitive") {
       switch (type.name) {
-        case 'Int': return 'i32';
-        case 'Float': return 'f32';
-        case 'String': return 'i32'; // Pointer to string
-        default: return 'i32';
+        case "Int":
+          return "i32";
+        case "Float":
+          return "f32";
+        case "String":
+          return "i32"; // Pointer to string
+        default:
+          return "i32";
       }
     }
-    return 'i32';
+    return "i32";
   }
 
   private emit(line: string): void {
-    this.output.push('  '.repeat(this.indent) + line);
+    this.output.push("  ".repeat(this.indent) + line);
   }
 }

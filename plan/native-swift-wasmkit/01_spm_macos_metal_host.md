@@ -5,6 +5,7 @@ Created: 2026-02-03
 ## Objective
 
 Create a standalone SwiftPM executable that:
+
 - creates an AppKit window,
 - embeds a `MTKView`,
 - drives a draw loop (`MTKViewDelegate`),
@@ -21,7 +22,8 @@ MetalHost/
 
 ## Tasks
 
-- [ ] Create `Examples/` or `Tools/`-adjacent native host package folder (location decision).
+- [ ] Create `Examples/` or `Tools/`-adjacent native host package folder
+      (location decision).
 - [ ] Add `Package.swift` with an executable target and linker settings:
   - `AppKit`
   - `Metal`
@@ -33,16 +35,19 @@ MetalHost/
   - sets `MTKViewDelegate` renderer
   - activates app (`NSApp.activate(ignoringOtherApps: true)`)
 - [ ] Add minimal renderer that clears to a known color each frame.
-- [ ] Define a predictable frame timing source (`CADisplayLink` is iOS; on macOS use MTKView callback timing + `CACurrentMediaTime()` or `mach_continuous_time` if needed).
+- [ ] Define a predictable frame timing source (`CADisplayLink` is iOS; on macOS
+      use MTKView callback timing + `CACurrentMediaTime()` or
+      `mach_continuous_time` if needed).
 
 ## Acceptance criteria
 
 - `swift build` succeeds on macOS.
-- `swift run` opens a resizable window and continuously clears to a chosen color.
+- `swift run` opens a resizable window and continuously clears to a chosen
+  color.
 - Window closes and app terminates cleanly.
 
 ## Notes
 
 - Keep all app setup programmatic (no storyboard).
-- Treat this as an embeddable “host shell” that will later call into WasmKit from the render loop.
-
+- Treat this as an embeddable “host shell” that will later call into WasmKit
+  from the render loop.

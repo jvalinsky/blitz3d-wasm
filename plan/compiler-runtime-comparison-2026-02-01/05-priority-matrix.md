@@ -1,6 +1,6 @@
 # Priority Matrix & Implementation Order
 
-**Date**: February 1, 2026  
+**Date**: February 1, 2026\
 **Purpose**: Prioritized list of all identified issues and gaps
 
 ---
@@ -18,22 +18,23 @@
 
 ### Compiler Issues
 
-| # | Issue | Component | Effort | Dependency |
-|---|-------|-----------|--------|------------|
-| 1 | Include file support | Compiler | Medium (2-3 days) | None - **START HERE** |
+| # | Issue                | Component | Effort            | Dependency            |
+| - | -------------------- | --------- | ----------------- | --------------------- |
+| 1 | Include file support | Compiler  | Medium (2-3 days) | None - **START HERE** |
 
 ### Runtime Issues
 
-| # | Issue | Component | Effort | Dependency |
-|---|-------|-----------|--------|------------|
-| 2 | Math library (29 functions) | Runtime | Low (2-5 days) | None |
-| 3 | String operations (28 functions) | Runtime | Medium (1-2 weeks) | None |
-| 4 | File I/O (30 functions) | Engine + Runtime | High (2-3 weeks) | VFS implementation |
-| 5 | Asset loading (LoadMesh, LoadTexture, LoadImage) | Engine + Runtime | High (2-3 weeks) | File I/O, Parsers |
+| # | Issue                                            | Component        | Effort             | Dependency         |
+| - | ------------------------------------------------ | ---------------- | ------------------ | ------------------ |
+| 2 | Math library (29 functions)                      | Runtime          | Low (2-5 days)     | None               |
+| 3 | String operations (28 functions)                 | Runtime          | Medium (1-2 weeks) | None               |
+| 4 | File I/O (30 functions)                          | Engine + Runtime | High (2-3 weeks)   | VFS implementation |
+| 5 | Asset loading (LoadMesh, LoadTexture, LoadImage) | Engine + Runtime | High (2-3 weeks)   | File I/O, Parsers  |
 
 **Estimated Total**: 7-11 weeks (can parallelize)
 
 **Critical Path**:
+
 ```
 Week 1: Include files + Math library
 Week 2-3: String operations + File I/O (parallel)
@@ -44,13 +45,13 @@ Week 4-6: Asset loading (depends on File I/O)
 
 ## P1: High Priority (Blocks Significant Features)
 
-| # | Issue | Category | Functions Missing | Effort | Impact |
-|---|-------|----------|-------------------|--------|--------|
-| 6 | Audio system | Engine | 29/32 (9% coverage) | Medium (2-3 weeks) | No music, limited sound |
-| 7 | Physics engine | Engine | 85/100 (15% coverage) | Very High (2-3 months) | Limited collision |
-| 8 | Geometric primitives | Engine | 5-10 functions | Low (1 week) | Cannot prototype |
-| 9 | Camera control | Engine | 8-10 functions | Low (3-5 days) | Limited rendering |
-| 10 | Entity picking | Engine | 7 functions | Medium (1 week) | No mouse selection |
+| #  | Issue                | Category | Functions Missing     | Effort                 | Impact                  |
+| -- | -------------------- | -------- | --------------------- | ---------------------- | ----------------------- |
+| 6  | Audio system         | Engine   | 29/32 (9% coverage)   | Medium (2-3 weeks)     | No music, limited sound |
+| 7  | Physics engine       | Engine   | 85/100 (15% coverage) | Very High (2-3 months) | Limited collision       |
+| 8  | Geometric primitives | Engine   | 5-10 functions        | Low (1 week)           | Cannot prototype        |
+| 9  | Camera control       | Engine   | 8-10 functions        | Low (3-5 days)         | Limited rendering       |
+| 10 | Entity picking       | Engine   | 7 functions           | Medium (1 week)        | No mouse selection      |
 
 **Estimated Total**: 3-5 months
 
@@ -58,15 +59,15 @@ Week 4-6: Asset loading (depends on File I/O)
 
 ## P2: Medium Priority (Limits Functionality)
 
-| # | Issue | Category | Functions Missing | Effort | Impact |
-|---|-------|----------|-------------------|--------|--------|
-| 11 | Animation sequences | Engine | 10/18 (22% coverage) | Medium (2-3 weeks) | Basic animation only |
-| 12 | Display management | Engine | 6 functions | Low (3-5 days) | Limited graphics modes |
-| 13 | Entity hierarchy | Engine | 6 functions | Medium (1 week) | No entity parenting |
-| 14 | Camera advanced | Engine | 5 functions | Low (3-5 days) | Limited camera options |
-| 15 | Memory/Banks | Engine | 19/30 (37% coverage) | Medium (1-2 weeks) | Limited bank operations |
-| 16 | Type suffix edge cases | Compiler | Testing only | Low (2-3 days) | Potential bugs |
-| 17 | Type inference | Compiler | Testing/fixes | Medium (1 week) | Wrong variable types |
+| #  | Issue                  | Category | Functions Missing    | Effort             | Impact                  |
+| -- | ---------------------- | -------- | -------------------- | ------------------ | ----------------------- |
+| 11 | Animation sequences    | Engine   | 10/18 (22% coverage) | Medium (2-3 weeks) | Basic animation only    |
+| 12 | Display management     | Engine   | 6 functions          | Low (3-5 days)     | Limited graphics modes  |
+| 13 | Entity hierarchy       | Engine   | 6 functions          | Medium (1 week)    | No entity parenting     |
+| 14 | Camera advanced        | Engine   | 5 functions          | Low (3-5 days)     | Limited camera options  |
+| 15 | Memory/Banks           | Engine   | 19/30 (37% coverage) | Medium (1-2 weeks) | Limited bank operations |
+| 16 | Type suffix edge cases | Compiler | Testing only         | Low (2-3 days)     | Potential bugs          |
+| 17 | Type inference         | Compiler | Testing/fixes        | Medium (1 week)    | Wrong variable types    |
 
 **Estimated Total**: 2-3 months
 
@@ -74,15 +75,15 @@ Week 4-6: Asset loading (depends on File I/O)
 
 ## P3: Low Priority (Nice to Have)
 
-| # | Issue | Category | Functions Missing | Effort | Impact |
-|---|-------|----------|-------------------|--------|--------|
-| 18 | Joystick support | Engine | 25 functions | Medium (1-2 weeks) | No gamepad |
-| 19 | 2D graphics | Engine | 50+ functions | High (1-2 months) | No 2D rendering |
-| 20 | Terrain system | Engine | 15 functions | High (2-3 weeks) | No terrain |
-| 21 | Sprite system | Engine | 10 functions | Medium (1 week) | No sprites |
-| 22 | Networking | Engine | 21 functions | Very High (2-3 months) | No multiplayer |
-| 23 | System functions | Engine | 12 functions | Low (1 week) | Limited sys info |
-| 24 | GetKey/WaitKey | Engine | 2 functions | Low (1-2 days) | Limited input |
+| #  | Issue            | Category | Functions Missing | Effort                 | Impact           |
+| -- | ---------------- | -------- | ----------------- | ---------------------- | ---------------- |
+| 18 | Joystick support | Engine   | 25 functions      | Medium (1-2 weeks)     | No gamepad       |
+| 19 | 2D graphics      | Engine   | 50+ functions     | High (1-2 months)      | No 2D rendering  |
+| 20 | Terrain system   | Engine   | 15 functions      | High (2-3 weeks)       | No terrain       |
+| 21 | Sprite system    | Engine   | 10 functions      | Medium (1 week)        | No sprites       |
+| 22 | Networking       | Engine   | 21 functions      | Very High (2-3 months) | No multiplayer   |
+| 23 | System functions | Engine   | 12 functions      | Low (1 week)           | Limited sys info |
+| 24 | GetKey/WaitKey   | Engine   | 2 functions       | Low (1-2 days)         | Limited input    |
 
 **Estimated Total**: 5-8 months
 
@@ -178,16 +179,19 @@ These tasks can be done simultaneously:
 **Team of 2-3 developers**:
 
 **Developer A**: Compiler & Core Runtime
+
 - Week 1: Include files
 - Week 2-3: String operations
 - Week 4+: Bug fixes, testing
 
 **Developer B**: Math & File I/O
+
 - Week 1-2: Math library
 - Week 3-5: File I/O + VFS
 - Week 6+: Asset loading
 
 **Developer C**: Graphics & Audio
+
 - Week 1-3: Asset loading prep (parsers)
 - Week 4-6: LoadMesh/LoadTexture
 - Week 7+: Audio system
@@ -200,28 +204,28 @@ These tasks can be done simultaneously:
 
 ### High Risk
 
-| Issue | Risk | Mitigation |
-|-------|------|------------|
-| Include files | May have complex dependency chains | Test incrementally with SCPCB |
-| Asset loading | File format edge cases | Use existing B3D/RMESH parsers, validate formats |
-| File I/O | VFS complexity | Use proven VFS library or ZIP.js |
-| Physics engine | Very large effort | Start with basic collision, defer full ODE |
+| Issue          | Risk                               | Mitigation                                       |
+| -------------- | ---------------------------------- | ------------------------------------------------ |
+| Include files  | May have complex dependency chains | Test incrementally with SCPCB                    |
+| Asset loading  | File format edge cases             | Use existing B3D/RMESH parsers, validate formats |
+| File I/O       | VFS complexity                     | Use proven VFS library or ZIP.js                 |
+| Physics engine | Very large effort                  | Start with basic collision, defer full ODE       |
 
 ### Medium Risk
 
-| Issue | Risk | Mitigation |
-|-------|------|------------|
-| Type inference | May guess wrong types | Add semantic analysis, extensive testing |
+| Issue             | Risk                         | Mitigation                                   |
+| ----------------- | ---------------------------- | -------------------------------------------- |
+| Type inference    | May guess wrong types        | Add semantic analysis, extensive testing     |
 | String operations | Memory management complexity | Use TypeScript strings, minimal WASM strings |
-| Audio system | 3D audio complexity | Start with 2D, add spatialization later |
+| Audio system      | 3D audio complexity          | Start with 2D, add spatialization later      |
 
 ### Low Risk
 
-| Issue | Risk | Mitigation |
-|-------|------|------------|
-| Math library | Very straightforward | Use WASM imports, standard JS Math |
-| Geometric primitives | Simple geometry | Standard algorithms |
-| Camera control | Well-defined APIs | Follow Blitz3D-NG reference |
+| Issue                | Risk                 | Mitigation                         |
+| -------------------- | -------------------- | ---------------------------------- |
+| Math library         | Very straightforward | Use WASM imports, standard JS Math |
+| Geometric primitives | Simple geometry      | Standard algorithms                |
+| Camera control       | Well-defined APIs    | Follow Blitz3D-NG reference        |
 
 ---
 
@@ -282,21 +286,25 @@ System:             1-2 weeks
 ## Success Metrics
 
 ### Phase 1 Complete (Week 2)
+
 - ✅ SCPCB compiles with all includes
 - ✅ Math functions working
 - ✅ Basic string operations
 
 ### Phase 2 Complete (Week 6)
+
 - ✅ Assets load successfully
 - ✅ Geometry displays in browser
 - ✅ File I/O functional
 
 ### Phase 3 Complete (Week 12)
+
 - ✅ Audio plays
 - ✅ Basic gameplay works
 - ✅ Mouse/keyboard input functional
 
 ### Phase 4 Complete (Month 6)
+
 - ✅ Full SCPCB feature set
 - ✅ Smooth performance
 - ✅ No critical bugs

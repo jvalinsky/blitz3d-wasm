@@ -5,4 +5,6 @@
 **Children**: None
 
 **Notes**:
-- This folder is for visualization artifacts; repo doc index: `docs/DOCS_CATALOG.md`.
+
+- This folder is for visualization artifacts; repo doc index:
+  `docs/DOCS_CATALOG.md`.

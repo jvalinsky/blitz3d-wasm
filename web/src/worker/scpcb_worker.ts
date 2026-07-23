@@ -233,7 +233,10 @@ const writeString = (
 // Minimal VFS for init/config reads.
 const vfs = new Map<string, Uint8Array>();
 const vfsIndexLower = new Map<string, string>();
-const openFiles = new Map<number, { data: Uint8Array; pos: number; path: string }>();
+const openFiles = new Map<
+  number,
+  { data: Uint8Array; pos: number; path: string }
+>();
 let nextHandle = 1;
 
 // Headless image/texture tracking (to satisfy init code that expects non-zero handles and sizes).
@@ -313,7 +316,8 @@ let bbdbgBreakpointsByFileId = new Map<number, Set<number>>();
 let bbdbgBreakpointHits: Array<{ fileId: number; line: number }> = [];
 let bbdbgCollecting = false;
 
-const bbdbgFilePath = (fileId: number) => bbdbgFileMap.get(fileId) ?? `file_${fileId}`;
+const bbdbgFilePath = (fileId: number) =>
+  bbdbgFileMap.get(fileId) ?? `file_${fileId}`;
 
 const bbdbgResetForCall = () => {
   bbdbgCollecting = true;
@@ -362,7 +366,9 @@ const bbdbgRecordStmt = (fileId: number, line: number) => {
   const depth = bbdbgStack.length | 0;
   // Deduplicate exact repeats to keep traces readable in tight loops.
   const last = bbdbgTrace.length ? bbdbgTrace[bbdbgTrace.length - 1]! : null;
-  if (last && last.fileId === fileId && last.line === line && last.depth === depth) return;
+  if (
+    last && last.fileId === fileId && last.line === line && last.depth === depth
+  ) return;
   bbdbgTrace.push({ fileId: fileId | 0, line: line | 0, depth });
   if (bbdbgTrace.length > bbdbgTraceMax) {
     bbdbgTrace.splice(0, bbdbgTrace.length - bbdbgTraceMax);
@@ -391,17 +397,24 @@ const loadBbdbgMetadata = async (wasmUrl: string) => {
     const files = Array.isArray(meta?.files) ? meta.files : [];
     const funcs = Array.isArray(meta?.functions) ? meta.functions : [];
     const types = Array.isArray(meta?.types) ? meta.types : [];
-    const versions = meta?.versions && typeof meta.versions === "object" ? meta.versions : undefined;
+    const versions = meta?.versions && typeof meta.versions === "object"
+      ? meta.versions
+      : undefined;
     for (const f of files) {
-      if (!f || typeof f.id !== "number" || typeof f.path !== "string") continue;
+      if (!f || typeof f.id !== "number" || typeof f.path !== "string") {
+        continue;
+      }
       bbdbgFileMap.set(f.id | 0, f.path);
     }
     for (const fn of funcs) {
-      if (!fn || typeof fn.id !== "number" || typeof fn.name !== "string") continue;
+      if (!fn || typeof fn.id !== "number" || typeof fn.name !== "string") {
+        continue;
+      }
       bbdbgFuncMap.set(fn.id | 0, fn);
     }
     bbdbgTypes = types.filter((t) =>
-      t && typeof t.id === "number" && typeof t.name === "string" && typeof t.instanceSizeBytes === "number" &&
+      t && typeof t.id === "number" && typeof t.name === "string" &&
+      typeof t.instanceSizeBytes === "number" &&
       Array.isArray(t.fields)
     );
     bbdbgHasMetadata = true;
@@ -413,7 +426,10 @@ const loadBbdbgMetadata = async (wasmUrl: string) => {
       functionCount: bbdbgFuncMap.size,
       typeCount: bbdbgTypes.length,
       versions,
-      files: files.slice(0, 500).map((f) => ({ id: f.id | 0, path: String(f.path ?? "") })),
+      files: files.slice(0, 500).map((f) => ({
+        id: f.id | 0,
+        path: String(f.path ?? ""),
+      })),
       functions: funcs.slice(0, 2000).map((fn) => ({
         id: fn.id | 0,
         name: String(fn.name ?? ""),
@@ -426,17 +442,25 @@ const loadBbdbgMetadata = async (wasmUrl: string) => {
         id: t.id | 0,
         name: String(t.name ?? ""),
         instanceSizeBytes: t.instanceSizeBytes | 0,
-        fields: (Array.isArray(t.fields) ? t.fields : []).slice(0, 2000).map((f) => ({
+        fields: (Array.isArray(t.fields) ? t.fields : []).slice(0, 2000).map((
+          f,
+        ) => ({
           name: String((f as any)?.name ?? ""),
           offsetBytes: Number((f as any)?.offsetBytes ?? 0) | 0,
           wasmType: String((f as any)?.wasmType ?? ""),
           declaredType: String((f as any)?.declaredType ?? ""),
-          customTypeName: (f as any)?.customTypeName == null ? null : String((f as any)?.customTypeName ?? ""),
+          customTypeName: (f as any)?.customTypeName == null
+            ? null
+            : String((f as any)?.customTypeName ?? ""),
           dimensions: Array.isArray((f as any)?.dimensions)
-            ? (f as any).dimensions.map((n: any) => Number(n) | 0).filter((n: number) => n > 0)
+            ? (f as any).dimensions.map((n: any) => Number(n) | 0).filter((
+              n: number,
+            ) => n > 0)
             : null,
         })).filter((f) => !!f.name && (f.offsetBytes | 0) >= 0),
-      })).filter((t) => (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0),
+      })).filter((t) =>
+        (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0
+      ),
     });
   } catch (e: any) {
     // Best-effort: don't fail init if metadata is missing/bad.
@@ -516,7 +540,11 @@ const readLineToWasmString = (h: number) => {
     }
   }
   maybePostStatus();
-  return writeString(memory, stringAlloc, latin1Decoder.decode(f.data.subarray(start, end)));
+  return writeString(
+    memory,
+    stringAlloc,
+    latin1Decoder.decode(f.data.subarray(start, end)),
+  );
 };
 
 const buildImports = () => {
@@ -526,7 +554,7 @@ const buildImports = () => {
   if (!videoRuntime && typeof document !== "undefined") {
     videoRuntime = new VideoRuntime();
   }
-  
+
   const imports: any = {
     env: {
       __indirect_function_table: new WebAssembly.Table({
@@ -769,7 +797,9 @@ const buildImports = () => {
     if (delta > maxDeltaMs) {
       if (clampWarns < 3) {
         postLog(
-          `[Time] clamping MilliSecs delta ${delta.toFixed(1)}ms -> ${maxDeltaMs}ms`,
+          `[Time] clamping MilliSecs delta ${
+            delta.toFixed(1)
+          }ms -> ${maxDeltaMs}ms`,
         );
         clampWarns++;
       }
@@ -829,7 +859,12 @@ const buildImports = () => {
   const zero = () => 0;
   const one = () => 1;
 
-  imports.env.Graphics3D = (_w: number, _h: number, _d: number, _m: number) => {};
+  imports.env.Graphics3D = (
+    _w: number,
+    _h: number,
+    _d: number,
+    _m: number,
+  ) => {};
   imports.env.CreateCamera = () => newHandle();
   imports.env.CameraClsColor = noop;
   imports.env.CameraFogMode = noop;
@@ -850,7 +885,8 @@ const buildImports = () => {
   imports.env.CreateMesh = (_parent?: number) => newHandle();
   imports.env.LoadMesh = (_pathPtr: number, _parent?: number) => newHandle();
   imports.env.LoadMesh_Strict = imports.env.LoadMesh;
-  imports.env.LoadAnimMesh = (_pathPtr: number, _parent?: number) => newHandle();
+  imports.env.LoadAnimMesh = (_pathPtr: number, _parent?: number) =>
+    newHandle();
   imports.env.LoadAnimMesh_Strict = imports.env.LoadAnimMesh;
 
   // Animation: SCPCB relies heavily on SetAnimTime/AnimTime for NPCs and scripted objects.
@@ -870,7 +906,13 @@ const buildImports = () => {
     bump("AnimLength");
     return 0;
   };
-  imports.env.Animate = (ent: number, mode: number, speed: number, seq: number, _trans: number) => {
+  imports.env.Animate = (
+    ent: number,
+    mode: number,
+    speed: number,
+    seq: number,
+    _trans: number,
+  ) => {
     bump("Animate");
     const s = getAnimState(ent);
     s.mode = mode | 0;
@@ -879,9 +921,12 @@ const buildImports = () => {
     // When switching into a playing mode, reset to 0 (best-effort; SCPCB usually uses SetAnimTime anyway).
     if (s.mode !== 0) s.frame = 0;
   };
-  imports.env.Animating = (ent: number) => (getAnimState(ent).mode !== 0 ? 1 : 0);
+  imports.env.Animating = (
+    ent: number,
+  ) => (getAnimState(ent).mode !== 0 ? 1 : 0);
   imports.env.AnimSeq = (ent: number) => getAnimState(ent).seq | 0;
-  imports.env.ExtractAnimSeq = (_ent: number, _first: number, _last: number) => 0;
+  imports.env.ExtractAnimSeq = (_ent: number, _first: number, _last: number) =>
+    0;
   imports.env.AddAnimSeq = (_ent: number, _len: number) => 0;
 
   // Images/textures/fonts (return non-zero handles so init code doesn't spin on failures).
@@ -897,8 +942,10 @@ const buildImports = () => {
   imports.env.LoadImage_Strict = (_pathPtr: number) => allocImage();
   imports.env.CreateImage = (_w: number, _h: number) => allocImage();
   imports.env.FreeImage = (_img: number) => {};
-  imports.env.ImageWidth = (img: number) => imageSizes.get(img | 0)?.w ?? defaultImageW;
-  imports.env.ImageHeight = (img: number) => imageSizes.get(img | 0)?.h ?? defaultImageH;
+  imports.env.ImageWidth = (img: number) =>
+    imageSizes.get(img | 0)?.w ?? defaultImageW;
+  imports.env.ImageHeight = (img: number) =>
+    imageSizes.get(img | 0)?.h ?? defaultImageH;
   imports.env.HandleImage = noop;
   imports.env.MidHandle = noop;
   imports.env.ScaleImage = noop;
@@ -917,11 +964,15 @@ const buildImports = () => {
   imports.env.StringWidth = (_strPtr: number) => 0;
   imports.env.StringHeight = () => 0;
 
-  imports.env.LoadTexture = (_pathPtr: number, _flags: number = 0) => allocImage();
-  imports.env.LoadTexture_Strict = (_pathPtr: number, _flags: number = 0) => allocImage();
+  imports.env.LoadTexture = (_pathPtr: number, _flags: number = 0) =>
+    allocImage();
+  imports.env.LoadTexture_Strict = (_pathPtr: number, _flags: number = 0) =>
+    allocImage();
   imports.env.FreeTexture = (_tex: number) => {};
-  imports.env.TextureWidth = (tex: number) => imageSizes.get(tex | 0)?.w ?? defaultImageW;
-  imports.env.TextureHeight = (tex: number) => imageSizes.get(tex | 0)?.h ?? defaultImageH;
+  imports.env.TextureWidth = (tex: number) =>
+    imageSizes.get(tex | 0)?.w ?? defaultImageW;
+  imports.env.TextureHeight = (tex: number) =>
+    imageSizes.get(tex | 0)?.h ?? defaultImageH;
   imports.env.BrushTexture = noop;
   imports.env.TextureBlend = noop;
   imports.env.TextureCoords = noop;
@@ -933,8 +984,13 @@ const buildImports = () => {
   imports.env.BrushBlend = noop;
   imports.env.BrushFX = noop;
 
-  imports.env.LoadFont = (_pathPtr: number, _size: number = 0, _bold: number = 0, _italic: number = 0, _underline: number = 0) =>
-    newHandle();
+  imports.env.LoadFont = (
+    _pathPtr: number,
+    _size: number = 0,
+    _bold: number = 0,
+    _italic: number = 0,
+    _underline: number = 0,
+  ) => newHandle();
   imports.env.LoadFont_Strict = imports.env.LoadFont;
   imports.env.SetFont = noop;
   imports.env.FreeFont = noop;
@@ -959,7 +1015,7 @@ const buildImports = () => {
     keysDown.clear();
     keyQueue.length = 0;
   };
-  imports.env.MouseDown = (b: number) => mouseDown.get((b | 0)) ? 1 : 0;
+  imports.env.MouseDown = (b: number) => mouseDown.get(b | 0) ? 1 : 0;
   imports.env.MouseHit = (b: number) => {
     const btn = b | 0;
     const n = mouseHit.get(btn) ?? 0;
@@ -998,7 +1054,7 @@ const buildImports = () => {
     if (!memory || !videoRuntime) return 0;
     const path = readString(memory, pathPtr);
     // Convert .avi to .mp4 if needed
-    const mp4Path = path.replace(/\.avi$/i, '.mp4');
+    const mp4Path = path.replace(/\.avi$/i, ".mp4");
     return videoRuntime.openMovie(mp4Path);
   };
   imports.env.BlitzMovie_Close = (handle: number): number => {
@@ -1055,7 +1111,8 @@ const buildImports = () => {
   imports.blitz3d.FreeBank = noop;
   imports.blitz3d.BankSize = (_id: number) => 0;
   imports.blitz3d.PeekInt = (_bank: number, _offset: number) => 0;
-  imports.blitz3d.PokeInt = (_bank: number, _offset: number, _value: number) => 0;
+  imports.blitz3d.PokeInt = (_bank: number, _offset: number, _value: number) =>
+    0;
 
   return imports;
 };
@@ -1067,13 +1124,18 @@ const fetchManifest = async (manifestUrl: string) => {
 };
 
 const fetchFile = async (basePath: string, entry: AssetManifestEntry) => {
-  const url = entry.url ?? `${basePath}${basePath.endsWith("/") ? "" : "/"}${entry.path}`;
+  const url = entry.url ??
+    `${basePath}${basePath.endsWith("/") ? "" : "/"}${entry.path}`;
   status.fetch = { loaded: 0, total: entry.size ?? null, file: entry.path };
   postStatus();
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) throw new Error(`asset HTTP ${res.status} ${entry.path}`);
   const buf = new Uint8Array(await res.arrayBuffer());
-  status.fetch = { loaded: buf.byteLength, total: buf.byteLength, file: entry.path };
+  status.fetch = {
+    loaded: buf.byteLength,
+    total: buf.byteLength,
+    file: entry.path,
+  };
   postStatus();
   return buf;
 };
@@ -1082,7 +1144,9 @@ const preloadGroup = async (manifest: AssetManifest, group: string) => {
   const files = manifest.groups?.[group] ?? [];
   const byPath = new Map<string, AssetManifestEntry>();
   for (const e of manifest.files ?? []) byPath.set(normalizePath(e.path), e);
-  const list = files.map((p) => byPath.get(normalizePath(p))).filter(Boolean) as AssetManifestEntry[];
+  const list = files.map((p) => byPath.get(normalizePath(p))).filter(
+    Boolean,
+  ) as AssetManifestEntry[];
   status.stage = `preload:${group}`;
   status.preload = { loaded: 0, total: list.length, file: "" };
   postStatus();
@@ -1192,7 +1256,9 @@ const callExport = (name: string, args: Array<number | string> = []) => {
     }
     const result = fn(...argv);
     const snap = bbdbgFinishCall(name);
-    if (snap) (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+    if (snap) {
+      (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+    }
     return result;
   } catch (e: any) {
     if (e?.__blitz3dEnd || e?.message === "__BLITZ3D_END__") {
@@ -1204,7 +1270,9 @@ const callExport = (name: string, args: Array<number | string> = []) => {
     postStatus();
     try {
       const snap = bbdbgFinishCall(name);
-      if (snap) (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+      if (snap) {
+        (self as any).postMessage({ type: "bbdbgSnapshot", snapshot: snap });
+      }
     } catch {}
     throw e;
   }
@@ -1307,7 +1375,9 @@ self.onmessage = async (ev: MessageEvent<WorkerMessage>) => {
         const fileId = Number(k) | 0;
         if (!Number.isFinite(fileId) || fileId <= 0) continue;
         const set = new Set<number>();
-        if (Array.isArray(lines)) for (const ln of lines) set.add(Number(ln) | 0);
+        if (Array.isArray(lines)) {
+          for (const ln of lines) set.add(Number(ln) | 0);
+        }
         if (set.size > 0) bbdbgBreakpointsByFileId.set(fileId, set);
       }
       (self as any).postMessage({
@@ -1320,7 +1390,11 @@ self.onmessage = async (ev: MessageEvent<WorkerMessage>) => {
     if (msg.cmd === "dbgReadMemory") {
       const reqId = Number(msg.reqId ?? 0) | 0;
       if (!memory) {
-        (self as any).postMessage({ type: "dbgMemoryError", reqId, error: "no memory" });
+        (self as any).postMessage({
+          type: "dbgMemoryError",
+          reqId,
+          error: "no memory",
+        });
         return;
       }
       const addr = Number(msg.addr ?? 0) >>> 0;
@@ -1351,20 +1425,41 @@ self.onmessage = async (ev: MessageEvent<WorkerMessage>) => {
       const reqId = Number(msg.reqId ?? 0) | 0;
       const name = String(msg.name ?? "");
       if (!instance) {
-        (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: "not initialized" });
+        (self as any).postMessage({
+          type: "dbgGlobalError",
+          reqId,
+          name,
+          error: "not initialized",
+        });
         return;
       }
       try {
         const exp = (instance.exports as any)[name];
-        const value =
-          exp && typeof exp === "object" && "value" in exp ? Number((exp as any).value) : NaN;
+        const value = exp && typeof exp === "object" && "value" in exp
+          ? Number((exp as any).value)
+          : NaN;
         if (!Number.isFinite(value)) {
-          (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: "missing/invalid export" });
+          (self as any).postMessage({
+            type: "dbgGlobalError",
+            reqId,
+            name,
+            error: "missing/invalid export",
+          });
           return;
         }
-        (self as any).postMessage({ type: "dbgGlobal", reqId, name, value: (value | 0) >>> 0 });
+        (self as any).postMessage({
+          type: "dbgGlobal",
+          reqId,
+          name,
+          value: (value | 0) >>> 0,
+        });
       } catch (e: any) {
-        (self as any).postMessage({ type: "dbgGlobalError", reqId, name, error: String(e?.message ?? e) });
+        (self as any).postMessage({
+          type: "dbgGlobalError",
+          reqId,
+          name,
+          error: String(e?.message ?? e),
+        });
       }
       return;
     }

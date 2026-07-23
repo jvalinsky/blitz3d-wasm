@@ -1,13 +1,16 @@
 # Swift Engine vs Blitz3D-NG Runtime
 
-**Date**: February 1, 2026  
-**Comparison**: Swift Engine (166 functions) vs Blitz3D-NG Runtime (750+ functions)
+**Date**: February 1, 2026\
+**Comparison**: Swift Engine (166 functions) vs Blitz3D-NG Runtime (750+
+functions)
 
 ---
 
 ## Overview
 
-The Swift Blitz3D engine provides **22% coverage** (166/750 functions) compared to Blitz3D-NG's comprehensive runtime. Strong in scene graph management, but missing critical functionality for asset loading, file I/O, math, and strings.
+The Swift Blitz3D engine provides **22% coverage** (166/750 functions) compared
+to Blitz3D-NG's comprehensive runtime. Strong in scene graph management, but
+missing critical functionality for asset loading, file I/O, math, and strings.
 
 ---
 
@@ -36,6 +39,7 @@ ResizeBankMaybe - Partial resize support
 ```
 
 **Strengths**:
+
 - ✅ Memory-safe with bounds checking
 - ✅ Clean API
 - ✅ Core functionality covered
@@ -56,7 +60,8 @@ WriteBytes    - Write bank to file
 BankCapacity  - Query bank capacity
 ```
 
-**Impact**: Limited but manageable. Short operations can be emulated. Stream operations would be useful.
+**Impact**: Limited but manageable. Short operations can be emulated. Stream
+operations would be useful.
 
 ---
 
@@ -69,6 +74,7 @@ BankCapacity  - Query bank capacity
 **Location**: `Sources/Blitz3DEngine/Graphics/`
 
 **Texture Operations** (11 functions):
+
 ```
 CreateTexture      - Generate texture
 TextureBlend       - Set blend mode
@@ -82,6 +88,7 @@ FreeTexture        - Release texture
 ```
 
 **Mesh Operations** (44 functions):
+
 ```
 CreateMesh         - Generate empty mesh
 AddMesh            - Combine meshes
@@ -101,6 +108,7 @@ FitMesh            - Fit to bounds
 ```
 
 **Surface/Vertex Operations** (20 functions):
+
 ```
 CreateSurface      - Add surface to mesh
 GetSurfaceFrom... - Query surface
@@ -120,6 +128,7 @@ TriangleVertex     - Query indices
 ```
 
 **Strengths**:
+
 - ✅ Comprehensive mesh manipulation
 - ✅ Good surface/vertex API
 - ✅ Texture configuration
@@ -129,6 +138,7 @@ TriangleVertex     - Query indices
 **Location**: `reference/blitz3d-ng/src/modules/bb/blitz3d/commands.h`
 
 **Asset Loading** (0 functions implemented):
+
 ```
 LoadMesh           - Load mesh from file (B3D, MD2, 3DS, X, BSP)
 LoadTexture        - Load texture from image file
@@ -138,6 +148,7 @@ LoadAnimMesh       - Load animated mesh
 ```
 
 **Geometric Primitives** (0 functions):
+
 ```
 CreateCube         - Generate cube mesh
 CreateSphere       - Generate sphere mesh
@@ -147,6 +158,7 @@ CreatePlane        - Generate plane mesh
 ```
 
 **Display Management** (0 functions):
+
 ```
 Graphics           - Set 2D graphics mode
 Graphics3D         - Set 3D graphics mode
@@ -157,6 +169,7 @@ Cls                - Clear screen
 ```
 
 **2D Drawing** (0 functions):
+
 ```
 Plot               - Draw pixel
 Rect               - Draw rectangle
@@ -167,6 +180,7 @@ DrawImage          - Draw image
 ```
 
 **Camera Control** (missing):
+
 ```
 CameraZoom         - Set FOV/zoom
 CameraClsMode      - Set clear mode
@@ -176,6 +190,7 @@ CameraProjMode     - Orthographic/perspective
 ```
 
 **Rendering** (minimal):
+
 ```
 RenderWorld        - Render 3D scene (basic version exists)
 UpdateWorld        - Update animations/physics
@@ -184,6 +199,7 @@ CaptureWorld       - Screenshot
 ```
 
 **Impact**: 🔴 **Critical blocker for games**
+
 - Cannot load assets → cannot display game content
 - No geometric primitives → cannot prototype
 - Limited rendering control
@@ -199,6 +215,7 @@ CaptureWorld       - Screenshot
 **Location**: `Sources/Blitz3DEngine/SceneGraph/`
 
 **Entity Lifecycle** (3):
+
 ```
 CreateEntity       - Instantiate entity
 FreeEntity         - Destroy entity
@@ -206,6 +223,7 @@ EntityType         - Get/set type
 ```
 
 **Transform** (11):
+
 ```
 PositionEntity     - Set world position
 RotateEntity       - Set world rotation
@@ -219,6 +237,7 @@ EntityPitch/Yaw/Roll - Query rotation
 ```
 
 **Appearance** (7):
+
 ```
 EntityColor        - Set color tint
 EntityAlpha        - Set transparency
@@ -230,6 +249,7 @@ PaintEntity        - Apply material
 ```
 
 **Visibility** (4):
+
 ```
 HideEntity         - Make invisible
 ShowEntity         - Make visible
@@ -238,6 +258,7 @@ EntityInView       - Frustum culling check
 ```
 
 **Camera** (3):
+
 ```
 CreateCamera       - Create camera entity
 CameraViewport     - Set viewport rect
@@ -245,6 +266,7 @@ CameraProject      - Project 3D→2D
 ```
 
 **Lighting** (4):
+
 ```
 CreateLight        - Create light entity
 LightColor         - Set RGB color
@@ -253,6 +275,7 @@ AmbientLight       - Set global ambient
 ```
 
 **Fog** (4):
+
 ```
 CameraFogMode      - Set fog type
 CameraFogRange     - Set fog distances
@@ -261,6 +284,7 @@ EntityFogEnabled   - Per-entity fog toggle
 ```
 
 **Queries** (15):
+
 ```
 EntityX/Y/Z        - World position
 EntityPitch/Yaw/Roll - World rotation
@@ -271,6 +295,7 @@ DeltaPitch/Yaw     - Angle to target
 ```
 
 **Strengths**:
+
 - ✅ Comprehensive entity management
 - ✅ Good transform API
 - ✅ Solid rendering properties
@@ -279,6 +304,7 @@ DeltaPitch/Yaw     - Angle to target
 #### ❌ Missing (Blitz3D-NG)
 
 **Entity Operations**:
+
 ```
 CopyEntity         - Duplicate entity with children
 NameEntity         - Assign string name
@@ -289,6 +315,7 @@ GetChild           - Get child by index
 ```
 
 **Camera Advanced**:
+
 ```
 CameraZoom         - FOV/zoom control
 CameraProjMode     - Ortho/perspective
@@ -297,6 +324,7 @@ CameraClsColor     - Clear color
 ```
 
 **Picking**:
+
 ```
 EntityPick         - Ray cast from entity
 CameraPick         - Ray cast from screen coords
@@ -307,7 +335,8 @@ PickedSurface      - Query pick surface
 PickedTriangle     - Query pick triangle
 ```
 
-**Impact**: ⚠️ **Medium** - Core functionality present, advanced features missing
+**Impact**: ⚠️ **Medium** - Core functionality present, advanced features
+missing
 
 ---
 
@@ -320,6 +349,7 @@ PickedTriangle     - Query pick triangle
 **Location**: `Sources/Blitz3DEngine/Input/`
 
 **Keyboard** (3):
+
 ```
 KeyDown            - Query key state
 KeyHit             - Query key press (one-frame)
@@ -327,6 +357,7 @@ FlushKeys          - Clear key buffer
 ```
 
 **Mouse** (10):
+
 ```
 MouseX             - Query X position
 MouseY             - Query Y position
@@ -345,12 +376,14 @@ ShowMouse          - Show cursor
 **Location**: `reference/blitz3d-ng/src/modules/bb/input/commands.h`
 
 **Keyboard**:
+
 ```
 GetKey             - Read ASCII character
 WaitKey            - Block until key pressed
 ```
 
 **Joystick/Gamepad** (25 functions):
+
 ```
 CountJoys          - Query joystick count
 JoyDown            - Query button state
@@ -388,6 +421,7 @@ FreeSound          - Release sound
 **Location**: `reference/blitz3d-ng/src/modules/bb/audio/commands.h`
 
 **Sound Management**:
+
 ```
 Load3DSound        - Load positional sound
 LoopSound          - Set looping
@@ -397,6 +431,7 @@ SoundPan           - Set stereo pan
 ```
 
 **Playback Control**:
+
 ```
 PlayMusic          - Play music file
 PlayCDTrack        - Play CD audio
@@ -406,6 +441,7 @@ ResumeChannel      - Resume channel
 ```
 
 **Channel Queries**:
+
 ```
 ChannelPlaying     - Is channel active?
 ChannelVolume      - Set channel volume
@@ -414,6 +450,7 @@ ChannelPitch       - Set channel pitch
 ```
 
 **3D Audio**:
+
 ```
 EmitSound          - Play at entity position
 UpdateListener     - Update 3D audio listener
@@ -421,7 +458,8 @@ Sound3D            - Set 3D sound mode
 ChannelDistance    - Query distance to listener
 ```
 
-**Impact**: 🟠 **High for atmosphere** - SCPCB uses ambient music and 3D positional audio
+**Impact**: 🟠 **High for atmosphere** - SCPCB uses ambient music and 3D
+positional audio
 
 ---
 
@@ -434,11 +472,13 @@ ChannelDistance    - Query distance to listener
 **Location**: `Sources/Blitz3DEngine/Physics/`
 
 **World Setup** (1):
+
 ```
 CreateCollisionWorld - Initialize collision system
 ```
 
 **Entity Configuration** (3):
+
 ```
 EntityType         - Set collision type
 EntityBox          - Set box collider
@@ -446,6 +486,7 @@ EntityRadius       - Set sphere collider
 ```
 
 **Collision Queries** (7):
+
 ```
 EntityCollided     - Check if entity collided
 CollisionX/Y/Z     - Query collision position
@@ -456,6 +497,7 @@ CollisionSurface   - Query surface hit
 ```
 
 **Advanced** (4):
+
 ```
 LinePick           - Ray-triangle intersection
 TFormedX           - Transform point to entity space
@@ -464,6 +506,7 @@ TFormedZ           - Transform point to entity space
 ```
 
 **Strengths**:
+
 - ✅ Ray casting implemented
 - ✅ Basic collision detection
 - ✅ Good query API
@@ -473,6 +516,7 @@ TFormedZ           - Transform point to entity space
 **Location**: `reference/blitz3d-ng/src/modules/bb/ode/commands.h`
 
 **ODE Physics Engine** (80+ functions):
+
 ```
 CreateWorld        - Initialize physics world
 SetWorldGravity    - Set gravity vector
@@ -499,7 +543,8 @@ CreateSpace        - Create collision space
 SpaceCollide       - Broad-phase detection
 ```
 
-**Impact**: 🟠 **High for realistic physics** - SCPCB uses collision but may not need full dynamics
+**Impact**: 🟠 **High for realistic physics** - SCPCB uses collision but may not
+need full dynamics
 
 ---
 
@@ -543,6 +588,7 @@ LoadAnimSeqMD2     - Load MD2 animation
 **Location**: `reference/blitz3d-ng/src/modules/bb/filesystem/commands.h`
 
 **File Operations**:
+
 ```
 OpenFile           - Open file for reading/writing
 ReadFile           - Open for reading
@@ -567,6 +613,7 @@ WriteLine          - Write text line
 ```
 
 **Directory Operations**:
+
 ```
 FileType           - Check file/dir/nothing
 FileSize           - Query size in bytes
@@ -580,11 +627,13 @@ CloseDir           - Close directory
 ```
 
 **Impact**: 🔴 **Critical blocker**
+
 - SCPCB loads config files (`options.ini`)
 - Cannot save games
 - Cannot read data files
 
-**Note**: TypeScript runtime may provide file I/O via browser APIs (FileSystem API, virtual filesystem)
+**Note**: TypeScript runtime may provide file I/O via browser APIs (FileSystem
+API, virtual filesystem)
 
 ---
 
@@ -616,6 +665,7 @@ Bin                - Convert to binary string
 ```
 
 **Impact**: 🟠 **High for UI/parsing**
+
 - SCPCB likely uses string manipulation for UI, config parsing
 - Can be provided by TypeScript runtime or WASM standard library
 
@@ -630,6 +680,7 @@ Bin                - Convert to binary string
 **Location**: `reference/blitz3d-ng/src/modules/bb/math/commands.h`
 
 **Trigonometry**:
+
 ```
 Sin                - Sine
 Cos                - Cosine
@@ -641,6 +692,7 @@ ATan2              - Two-argument arctangent
 ```
 
 **Arithmetic**:
+
 ```
 Sqrt               - Square root
 Sqr                - Square (x²)
@@ -654,6 +706,7 @@ Log10              - Base-10 log
 ```
 
 **Random**:
+
 ```
 Rand               - Random integer
 Rnd                - Random float [0,1)
@@ -661,6 +714,7 @@ SeedRnd            - Seed RNG
 ```
 
 **Other**:
+
 ```
 Min                - Minimum
 Max                - Maximum
@@ -668,9 +722,11 @@ Mod                - Modulo
 ```
 
 **Impact**: 🔴 **Critical blocker**
+
 - SCPCB uses trigonometry for transformations, camera control
 - Missing Sqrt breaks distance calculations
-- **Can be provided by WASM standard library** (faster than implementing in Swift)
+- **Can be provided by WASM standard library** (faster than implementing in
+  Swift)
 
 ---
 
@@ -681,6 +737,7 @@ Mod                - Modulo
 #### ❌ Not Implemented
 
 **System** (`system/commands.h`):
+
 ```
 MilliSecs          - Current time in ms
 CurrentDate        - Get date string
@@ -694,6 +751,7 @@ RuntimeError       - Trigger error
 ```
 
 **Networking** (`sockets/commands.h`):
+
 ```
 CreateTCPServer    - Listen for connections
 CreateTCPSocket    - Connect to server
@@ -708,6 +766,7 @@ WriteTCPStream     - Write data
 ```
 
 **Timers** (`timer/commands.h`):
+
 ```
 CreateTimer        - Create timer
 FreeTimer          - Destroy timer
@@ -720,42 +779,46 @@ WaitTimer          - Block until tick
 
 ## Coverage Summary
 
-| Category | Implemented | Total | Coverage | Priority | Status |
-|----------|-------------|-------|----------|----------|--------|
-| Scene Graph | 51 | 80 | 64% | P1 | ✅ Strong |
-| Memory/Banks | 11 | 30 | 37% | P2 | ⚠️ Partial |
-| Graphics | 44 | 150 | 29% | P0 | ⚠️ Limited |
-| Input | 13 | 60 | 22% | P2 | ⚠️ Basic |
-| Animation | 4 | 18 | 22% | P2 | ⚠️ Basic |
-| Physics | 15 | 100 | 15% | P1 | ❌ Minimal |
-| Audio | 3 | 32 | 9% | P1 | ❌ Minimal |
-| File I/O | 0 | 30 | 0% | P0 | 🔴 Blocking |
-| Strings | 0 | 28 | 0% | P0 | 🔴 Blocking |
-| Math | 0 | 29 | 0% | P0 | 🔴 Blocking |
-| System | 0 | 12 | 0% | P3 | ⚠️ Low priority |
-| Networking | 0 | 21 | 0% | P3 | ⚠️ Low priority |
-| **TOTAL** | **166** | **~750** | **22%** | - | **Insufficient** |
+| Category     | Implemented | Total    | Coverage | Priority | Status           |
+| ------------ | ----------- | -------- | -------- | -------- | ---------------- |
+| Scene Graph  | 51          | 80       | 64%      | P1       | ✅ Strong        |
+| Memory/Banks | 11          | 30       | 37%      | P2       | ⚠️ Partial       |
+| Graphics     | 44          | 150      | 29%      | P0       | ⚠️ Limited       |
+| Input        | 13          | 60       | 22%      | P2       | ⚠️ Basic         |
+| Animation    | 4           | 18       | 22%      | P2       | ⚠️ Basic         |
+| Physics      | 15          | 100      | 15%      | P1       | ❌ Minimal       |
+| Audio        | 3           | 32       | 9%       | P1       | ❌ Minimal       |
+| File I/O     | 0           | 30       | 0%       | P0       | 🔴 Blocking      |
+| Strings      | 0           | 28       | 0%       | P0       | 🔴 Blocking      |
+| Math         | 0           | 29       | 0%       | P0       | 🔴 Blocking      |
+| System       | 0           | 12       | 0%       | P3       | ⚠️ Low priority  |
+| Networking   | 0           | 21       | 0%       | P3       | ⚠️ Low priority  |
+| **TOTAL**    | **166**     | **~750** | **22%**  | -        | **Insufficient** |
 
 ---
 
 ## Strengths
 
 ✅ **Well-Designed Architecture**
+
 - Clean modular structure
 - Singleton managers
 - Memory-safe operations
 
 ✅ **Strong Scene Graph** (64% coverage)
+
 - Comprehensive entity management
 - Good transform API
 - Solid rendering properties
 
 ✅ **Good Foundation**
+
 - Core mesh/surface operations
 - Basic collision detection
 - Ray-triangle intersection (LinePick)
 
 ✅ **Custom Features**
+
 - B3D/RMesh parsers
 - Command buffer system
 - WASM-optimized design
@@ -765,20 +828,24 @@ WaitTimer          - Block until tick
 ## Critical Gaps (Blocking SCPCB)
 
 🔴 **Asset Loading** (0 functions)
+
 - No LoadMesh, LoadTexture, LoadImage
 - Cannot load game content
 
 🔴 **File I/O** (0/30 functions)
+
 - Cannot read config files
 - Cannot save/load games
 - Cannot access data files
 
 🔴 **Math Library** (0/29 functions)
+
 - No trigonometry (Sin, Cos, Tan)
 - No Sqrt (breaks distance calculations)
 - No Floor, Ceil, Abs
 
 🔴 **String Operations** (0/28 functions)
+
 - Cannot parse strings
 - Cannot build UI text
 - Cannot format output
@@ -788,22 +855,26 @@ WaitTimer          - Block until tick
 ## Recommendations
 
 ### Priority 0 (Immediate)
+
 1. Add math library (use WASM standard library)
 2. Add string operations (use WASM std or TypeScript)
 3. Implement asset loading (LoadMesh, LoadTexture, LoadImage)
 4. Add file I/O (via TypeScript runtime + virtual filesystem)
 
 ### Priority 1 (Short term)
+
 5. Expand audio system (channel management, 3D audio)
 6. Add geometric primitives (CreateCube, CreateSphere, etc.)
 7. Improve physics (may not need full ODE, but better collision)
 
 ### Priority 2 (Medium term)
+
 8. Complete animation system (sequences)
 9. Expand input (joystick support via Gamepad API)
 10. Add missing entity operations (CopyEntity, naming, picking)
 
 ### Priority 3 (Long term)
+
 11. System functions (timers, profiling)
 12. Networking (if multiplayer desired)
 

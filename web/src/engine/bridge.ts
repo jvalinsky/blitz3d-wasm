@@ -35,7 +35,12 @@ export interface EngineExports {
   EngineEntityFX(id: number, fx: number): void;
   EngineEntityBlend(id: number, blend: number): void;
   EngineEntityShininess(id: number, s: number): void;
-  EngineEntityTexture(id: number, texId: number, frame: number, index: number): void;
+  EngineEntityTexture(
+    id: number,
+    texId: number,
+    frame: number,
+    index: number,
+  ): void;
   EngineShowEntity(id: number): void;
   EngineHideEntity(id: number): void;
 
@@ -59,13 +64,26 @@ export interface EngineExports {
   EngineResetScene(): void;
 
   // Physics / Dynamics
-  EngineCollisions(srcType: number, destType: number, method: number, response: number): void;
+  EngineCollisions(
+    srcType: number,
+    destType: number,
+    method: number,
+    response: number,
+  ): void;
   EngineUpdateWorld(step: number): void;
   EngineResetEntity(id: number): void;
   ClearCollisions(): void;
   EngineEntityType(id: number, type: number): void;
   EngineEntityRadius(id: number, rx: number, ry: number): void;
-  EngineEntityBox(id: number, x: number, y: number, z: number, w: number, h: number, d: number): void;
+  EngineEntityBox(
+    id: number,
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+    h: number,
+    d: number,
+  ): void;
   EngineEntityCollided(id: number, typeIdx: number): number;
   EngineEntityPickMode(entityId: number, mode: number): void; // Added
   EngineCountCollisions(id: number): number;
@@ -134,22 +152,112 @@ export interface EngineExports {
   GetColliderPositionX(id: number): number;
   GetColliderPositionY(id: number): number;
   GetColliderPositionZ(id: number): number;
-  CollideWithMesh(colliderId: number, meshId: number, surfaceIdx: number): number;
-  CollisionDepth(colliderId: number, meshId: number, surfaceIdx: number): number;
-  CollisionNormalX(colliderId: number, meshId: number, surfaceIdx: number): number;
-  CollisionNormalY(colliderId: number, meshId: number, surfaceIdx: number): number;
-  CollisionNormalZ(colliderId: number, meshId: number, surfaceIdx: number): number;
+  CollideWithMesh(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number;
+  CollisionDepth(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number;
+  CollisionNormalX(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number;
+  CollisionNormalY(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number;
+  CollisionNormalZ(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number;
 
-  LinePick(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickDistance(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickX(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickY(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickZ(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickNX(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickNY(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
-  LinePickNZ(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number;
+  LinePick(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickDistance(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickX(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickY(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickZ(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickNX(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickNY(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
+  LinePickNZ(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number;
 
-  EngineUpdateInput(mouseX: number, mouseY: number, mouseZ: number, buttons: number, keysPtr: number): void;
+  EngineUpdateInput(
+    mouseX: number,
+    mouseY: number,
+    mouseZ: number,
+    buttons: number,
+    keysPtr: number,
+  ): void;
 
   // Gameplay
   EngineCreateFPSController(entityId: number): void;
@@ -159,8 +267,24 @@ export interface EngineExports {
   CreateMeshWithName(namePtr: number): number;
   GetMeshName(meshId: number): number;
   AddSurface(meshId: number, vertexCount: number, indexCount: number): number;
-  SetVertex(meshId: number, surfaceIdx: number, vertexIdx: number, x: number, y: number, z: number, u: number, v: number): void;
-  SetTriangle(meshId: number, surfaceIdx: number, triIdx: number, v0: number, v1: number, v2: number): void;
+  SetVertex(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+    x: number,
+    y: number,
+    z: number,
+    u: number,
+    v: number,
+  ): void;
+  SetTriangle(
+    meshId: number,
+    surfaceIdx: number,
+    triIdx: number,
+    v0: number,
+    v1: number,
+    v2: number,
+  ): void;
   GetMeshSurfaceCount(meshId: number): number;
   GetSurfaceVertexCount(meshId: number, surfaceIdx: number): number;
   GetSurfaceIndexCount(meshId: number, surfaceIdx: number): number;
@@ -168,12 +292,36 @@ export interface EngineExports {
   GetSurfaceIndicesPtr(meshId: number, surfaceIdx: number): number;
   GetSurfaceVertexStride(): number;
 
-  GetSurfaceVertexX(meshId: number, surfaceIdx: number, vertexIdx: number): number;
-  GetSurfaceVertexY(meshId: number, surfaceIdx: number, vertexIdx: number): number;
-  GetSurfaceVertexZ(meshId: number, surfaceIdx: number, vertexIdx: number): number;
-  GetSurfaceNormalX(meshId: number, surfaceIdx: number, vertexIdx: number): number;
-  GetSurfaceNormalY(meshId: number, surfaceIdx: number, vertexIdx: number): number;
-  GetSurfaceNormalZ(meshId: number, surfaceIdx: number, vertexIdx: number): number;
+  GetSurfaceVertexX(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
+  GetSurfaceVertexY(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
+  GetSurfaceVertexZ(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
+  GetSurfaceNormalX(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
+  GetSurfaceNormalY(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
+  GetSurfaceNormalZ(
+    meshId: number,
+    surfaceIdx: number,
+    vertexIdx: number,
+  ): number;
   GetSurfaceUVU(meshId: number, surfaceIdx: number, vertexIdx: number): number;
   GetSurfaceUVV(meshId: number, surfaceIdx: number, vertexIdx: number): number;
   GetSurfaceIndex(meshId: number, surfaceIdx: number, indexIdx: number): number;
@@ -396,7 +544,12 @@ export class EngineBridge {
   // Physics / Dynamics
   // ------------------------------------------------------------------
 
-  collisions(srcType: number, destType: number, method: number, response: number) {
+  collisions(
+    srcType: number,
+    destType: number,
+    method: number,
+    response: number,
+  ) {
     this.exports.EngineCollisions(srcType, destType, method, response);
   }
 
@@ -420,7 +573,15 @@ export class EngineBridge {
     this.exports.EngineEntityRadius(id, rx, ry);
   }
 
-  entityBox(id: number, x: number, y: number, z: number, w: number, h: number, d: number) {
+  entityBox(
+    id: number,
+    x: number,
+    y: number,
+    z: number,
+    w: number,
+    h: number,
+    d: number,
+  ) {
     this.exports.EngineEntityBox(id, x, y, z, w, h, d);
   }
 
@@ -533,41 +694,113 @@ export class EngineBridge {
   // Detailed Picking & Collision
   // ------------------------------------------------------------------
 
-  linePick(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePick(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePick(meshId, x, y, z, dx, dy, dz);
   }
 
-  linePickDistance(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickDistance(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickDistance(meshId, x, y, z, dx, dy, dz);
   }
 
-  linePickX(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickX(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickX(meshId, x, y, z, dx, dy, dz);
   }
-  linePickY(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickY(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickY(meshId, x, y, z, dx, dy, dz);
   }
-  linePickZ(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickZ(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickZ(meshId, x, y, z, dx, dy, dz);
   }
-  linePickNX(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickNX(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickNX(meshId, x, y, z, dx, dy, dz);
   }
-  linePickNY(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickNY(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickNY(meshId, x, y, z, dx, dy, dz);
   }
-  linePickNZ(meshId: number, x: number, y: number, z: number, dx: number, dy: number, dz: number): number {
+  linePickNZ(
+    meshId: number,
+    x: number,
+    y: number,
+    z: number,
+    dx: number,
+    dy: number,
+    dz: number,
+  ): number {
     return this.exports.LinePickNZ(meshId, x, y, z, dx, dy, dz);
   }
 
-  collisionDepth(colliderId: number, meshId: number, surfaceIdx: number): number {
+  collisionDepth(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): number {
     return this.exports.CollisionDepth(colliderId, meshId, surfaceIdx);
   }
-  collisionNormal(colliderId: number, meshId: number, surfaceIdx: number): { x: number, y: number, z: number } {
+  collisionNormal(
+    colliderId: number,
+    meshId: number,
+    surfaceIdx: number,
+  ): { x: number; y: number; z: number } {
     return {
       x: this.exports.CollisionNormalX(colliderId, meshId, surfaceIdx),
       y: this.exports.CollisionNormalY(colliderId, meshId, surfaceIdx),
-      z: this.exports.CollisionNormalZ(colliderId, meshId, surfaceIdx)
+      z: this.exports.CollisionNormalZ(colliderId, meshId, surfaceIdx),
     };
   }
 
@@ -583,7 +816,13 @@ export class EngineBridge {
     this.exports.EngineUpdateGameplay();
   }
 
-  updateInput(mouseX: number, mouseY: number, mouseZ: number, buttons: number, keysPtr: number) {
+  updateInput(
+    mouseX: number,
+    mouseY: number,
+    mouseZ: number,
+    buttons: number,
+    keysPtr: number,
+  ) {
     this.exports.EngineUpdateInput(mouseX, mouseY, mouseZ, buttons, keysPtr);
   }
 
@@ -719,7 +958,9 @@ export class EngineBridge {
   // Camera property getter
   // ------------------------------------------------------------------
 
-  getCameraParams(id: number): { fov: number; near: number; far: number; aspect: number } {
+  getCameraParams(
+    id: number,
+  ): { fov: number; near: number; far: number; aspect: number } {
     this.exports.EngineGetCameraParams(id, this._scratchFloat4Ptr);
     const f = new Float32Array(this.memoryBuffer, this._scratchFloat4Ptr, 4);
     return { fov: f[0], near: f[1], far: f[2], aspect: f[3] };
@@ -729,10 +970,26 @@ export class EngineBridge {
   // Global state getters
   // ------------------------------------------------------------------
 
-  getFogState(): { mode: number; r: number; g: number; b: number; start: number; end: number; density: number } {
+  getFogState(): {
+    mode: number;
+    r: number;
+    g: number;
+    b: number;
+    start: number;
+    end: number;
+    density: number;
+  } {
     this.exports.EngineGetFogState(this._scratchFloat8Ptr);
     const f = new Float32Array(this.memoryBuffer, this._scratchFloat8Ptr, 8);
-    return { mode: f[0], r: f[1], g: f[2], b: f[3], start: f[4], end: f[5], density: f[6] };
+    return {
+      mode: f[0],
+      r: f[1],
+      g: f[2],
+      b: f[3],
+      start: f[4],
+      end: f[5],
+      density: f[6],
+    };
   }
 
   getAmbientColor(): Float32Array {

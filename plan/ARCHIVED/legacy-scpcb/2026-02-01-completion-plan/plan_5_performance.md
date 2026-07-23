@@ -1,7 +1,7 @@
 # Phase 5: Performance and Polish
 
-**Duration**: 10-15 hours  
-**Priority**: Medium  
+**Duration**: 10-15 hours\
+**Priority**: Medium\
 **Prerequisites**: Phase 4 complete
 
 ---

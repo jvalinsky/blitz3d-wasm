@@ -16,15 +16,20 @@ tags: [compiler, object-references, field-access, scpb]
 
 ## Overview
 
-Complex object references enable advanced field access patterns like `object\field[index]` and `obj1\reference = obj2`. While basic `object\field` access works, indexed field access and object assignments fail compilation, blocking entity relationships and navigation systems.
+Complex object references enable advanced field access patterns like
+`object\field[index]` and `obj1\reference = obj2`. While basic `object\field`
+access works, indexed field access and object assignments fail compilation,
+blocking entity relationships and navigation systems.
 
-🔗 **Related:** [Compilation Gaps](compilation-gaps.md) | [Handle Arrays](handle-arrays.md) | [NPC AI](../../game-systems/entities/npc-ai.md)
+🔗 **Related:** [Compilation Gaps](compilation-gaps.md) |
+[Handle Arrays](handle-arrays.md) |
+[NPC AI](../../game-systems/entities/npc-ai.md)
 
 ## Current Implementation Status
 
-**✅ Basic Field Access:** `npc\Health` patterns work correctly
-**❌ Indexed Field Access:** `waypoint\Connected[i]` patterns fail
-**❌ Object Assignments:** `obj1\reference = obj2` patterns fail
+**✅ Basic Field Access:** `npc\Health` patterns work correctly **❌ Indexed
+Field Access:** `waypoint\Connected[i]` patterns fail **❌ Object Assignments:**
+`obj1\reference = obj2` patterns fail
 
 ## Problem Statement
 
@@ -40,7 +45,8 @@ npc\Target\EnemyX = playerX
 container\Items[slot]\Quantity = 5
 ```
 
-**Root Cause:** AST and code generation don't support nested/complex field access patterns.
+**Root Cause:** AST and code generation don't support nested/complex field
+access patterns.
 
 ## Technical Requirements
 
@@ -216,6 +222,7 @@ private func generateNestedFieldAccess(_ access: NestedFieldAccessNode) -> (inst
 ## SCPB Usage Patterns
 
 ### Entity Relationships
+
 ```blitzbasic
 ; MTF squad coordination - currently fails
 Type MTFUnit
@@ -233,6 +240,7 @@ End Function
 ```
 
 ### Navigation Systems
+
 ```blitzbasic
 ; Waypoint connections - currently fails
 Type WayPoint
@@ -251,6 +259,7 @@ End Function
 ```
 
 ### Inventory Management
+
 ```blitzbasic
 ; Item properties - currently fails
 Type Item
@@ -274,21 +283,25 @@ End Function
 ## Implementation Plan
 
 ### Phase 1: AST and Parser (Week 1)
+
 1. Add new AST node types for complex field access
 2. Update parser to recognize indexed and nested field patterns
 3. Add comprehensive test cases for parsing
 
 ### Phase 2: Code Generation (Week 2)
+
 1. Implement indexed field access generation
 2. Add nested field access generation
 3. Update type resolution for complex expressions
 
 ### Phase 3: Integration Testing (Week 3)
+
 1. Test with SCPB entity relationship code
 2. Validate navigation system compilation
 3. Performance testing with complex field chains
 
 ### Phase 4: Optimization (Week 4)
+
 1. Optimize code generation for common patterns
 2. Add caching for type lookups
 3. Implement bounds checking optimizations
@@ -296,6 +309,7 @@ End Function
 ## Testing Strategy
 
 ### Unit Tests
+
 ```swift
 func testIndexedFieldAccess() {
     let code = "obj\\field[5]"
@@ -319,6 +333,7 @@ func testComplexFieldChain() {
 ```
 
 ### Integration Tests
+
 ```blitzbasic
 ; Test SCPB-style complex field access
 Type WayPoint
@@ -365,13 +380,16 @@ End Function
 ## Risk Assessment
 
 ### Medium Risk
+
 - **AST Complexity:** Adding new node types increases AST complexity
 - **Type Resolution:** Complex field chains require accurate type tracking
 - **Performance:** Nested field access may impact runtime performance
 
 ### Low Risk
+
 - **Backward Compatibility:** New features don't break existing code
-- **Incremental Implementation:** Can implement indexed and nested access separately
+- **Incremental Implementation:** Can implement indexed and nested access
+  separately
 - **Testing:** Well-established patterns in SCPB provide clear test cases
 
 ## Related Work
@@ -383,4 +401,6 @@ End Function
 
 ---
 
-*Complex object references are essential for SCPB's entity relationships, navigation systems, and data structures, making this a high-priority implementation for achieving full game compatibility.*
+_Complex object references are essential for SCPB's entity relationships,
+navigation systems, and data structures, making this a high-priority
+implementation for achieving full game compatibility._

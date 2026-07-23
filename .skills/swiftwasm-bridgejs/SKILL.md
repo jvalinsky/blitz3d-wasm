@@ -5,12 +5,15 @@ description: Type-safe Swift-to-JavaScript bindings using BridgeJS for WebAssemb
 
 # BridgeJS Skill
 
-You are an expert in Swift and WebAssembly development using BridgeJS from JavaScriptKit. BridgeJS is a code generation tool that creates type-safe, bidirectional Swift-JavaScript bindings.
+You are an expert in Swift and WebAssembly development using BridgeJS from
+JavaScriptKit. BridgeJS is a code generation tool that creates type-safe,
+bidirectional Swift-JavaScript bindings.
 
 ## Core Capabilities
 
 1. **Export Swift to JavaScript** - Use `@JS` macros to expose Swift APIs
-2. **Import JavaScript to Swift** - Generate Swift bindings from TypeScript definitions
+2. **Import JavaScript to Swift** - Generate Swift bindings from TypeScript
+   definitions
 3. **Type-Safe Bindings** - Automatic `.d.ts` generation for TypeScript
 4. **Testing Integration** - End-to-end testing with Vitest
 
@@ -49,10 +52,10 @@ public class Statistics {
 ```javascript
 import { Calculator } from "./bridge.js";
 const calc = new Calculator();
-console.log(calc.add(5, 3));  // 8
+console.log(calc.add(5, 3)); // 8
 
 import { Math } from "./bridge.js";
-console.log(Math.Statistics.mean([1, 2, 3, 4, 5]));  // 3.0
+console.log(Math.Statistics.mean([1, 2, 3, 4, 5])); // 3.0
 ```
 
 ### Importing JavaScript APIs
@@ -64,8 +67,8 @@ Define TypeScript declarations in `bridge-js.d.ts` to generate Swift bindings:
 declare function fetchData(url: string): Promise<string>;
 
 declare namespace Storage {
-    function set(key: string, value: string): void;
-    function get(key: string): string | null;
+  function set(key: string, value: string): void;
+  function get(key: string): string | null;
 }
 ```
 
@@ -96,7 +99,8 @@ if let value = Storage.get("key") {
 
 ### ⚠️ Limitations
 
-- **Error Handling**: Only `throws(JSException)` is supported, not plain `throws`
+- **Error Handling**: Only `throws(JSException)` is supported, not plain
+  `throws`
 - **Generics**: Limited support - check current status
 - **Dictionaries**: Use `[String: T]` only (JavaScript objects)
 - **Tuples**: Not directly supported - use structs instead
@@ -117,9 +121,9 @@ public func riskyOperation() throws(JSException) -> String {
 
 ```javascript
 try {
-    const result = riskyOperation();
+  const result = riskyOperation();
 } catch (error) {
-    console.error(error.message);
+  console.error(error.message);
 }
 ```
 
@@ -166,7 +170,7 @@ public class AsyncTask {
 ```javascript
 const task = new AsyncTask();
 task.execute((result) => {
-    console.log(result);  // "Done!"
+  console.log(result); // "Done!"
 });
 ```
 
@@ -240,19 +244,19 @@ BridgeJS integrates with Vitest for end-to-end testing:
 
 ```typescript
 // tests/calculator.test.ts
-import { describe, it, expect } from 'vitest';
-import { Calculator } from '../dist/bridge.js';
+import { describe, expect, it } from "vitest";
+import { Calculator } from "../dist/bridge.js";
 
-describe('Calculator', () => {
-    it('adds numbers correctly', () => {
-        const calc = new Calculator();
-        expect(calc.add(2, 3)).toBe(5);
-    });
-    
-    it('multiplies numbers', () => {
-        const calc = new Calculator();
-        expect(calc.multiply(4, 5)).toBe(20);
-    });
+describe("Calculator", () => {
+  it("adds numbers correctly", () => {
+    const calc = new Calculator();
+    expect(calc.add(2, 3)).toBe(5);
+  });
+
+  it("multiplies numbers", () => {
+    const calc = new Calculator();
+    expect(calc.multiply(4, 5)).toBe(20);
+  });
 });
 ```
 
@@ -276,7 +280,7 @@ export default defineConfig({
    ```swift
    // Good
    @JS public func setTitle(_ title: String)
-   
+
    // Avoid (external label lost in JS)
    @JS public func set(title: String)
    ```
@@ -314,6 +318,7 @@ export default defineConfig({
 ## When to Use This Skill
 
 Load this skill when:
+
 - Creating type-safe Swift-JavaScript APIs
 - Generating TypeScript definitions from Swift
 - Importing JavaScript APIs into Swift

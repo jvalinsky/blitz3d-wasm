@@ -111,14 +111,14 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (canvasWidth <= 0 || canvasHeight <= 0) {
       console.error(
         "CreateCamera: invalid canvas dimensions " + canvasWidth + "x" +
-        canvasHeight,
+          canvasHeight,
       );
       return 0;
     }
 
     console.log(
       "Creating PerspectiveCamera with aspect: " +
-      (canvasWidth / canvasHeight),
+        (canvasWidth / canvasHeight),
     );
     const cam = new THREE.PerspectiveCamera(
       75,
@@ -133,7 +133,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     console.log(
       "Camera position set to: " + cam.position.x + ", " + cam.position.y +
-      ", " + cam.position.z,
+        ", " + cam.position.z,
     );
 
     const id = graphics.nextEntityId++;
@@ -159,7 +159,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     console.log("CreateCamera completed, ID: " + id);
     console.log(
       "Active camera is now: " +
-      (graphics.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
+        (graphics.camera === cam ? "NEW CAMERA" : "EXISTING CAMERA"),
     );
 
     return id;
@@ -230,7 +230,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
   };
 
   // Blitz3D light controls ----------------------------------------------------
-  imports.env.LightColor = (lightId: number, r: number, g: number, b: number) => {
+  imports.env.LightColor = (
+    lightId: number,
+    r: number,
+    g: number,
+    b: number,
+  ) => {
     const obj = graphics.entities[lightId];
     if (obj instanceof THREE.Light) {
       obj.color.setRGB(
@@ -299,7 +304,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         graphics.scene.add(mesh);
         console.log(
           "Mesh added directly to scene at position: " +
-          mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
+            mesh.position.x + ", " + mesh.position.y + ", " + mesh.position.z,
         );
       }
     }
@@ -572,14 +577,14 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       for (const m of mat) {
         try {
           if (m) fn(m);
-        } catch { }
+        } catch {}
       }
       return;
     }
     if (mat) {
       try {
         fn(mat);
-      } catch { }
+      } catch {}
     }
   };
 
@@ -589,7 +594,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       entity.traverse((o: any) => {
         try {
           fn(o);
-        } catch { }
+        } catch {}
       });
       return;
     }
@@ -613,34 +618,77 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
   // --- Batch 2 3D Stubs ---
 
   // Brush System (Non-functional stubs for now)
-  imports.env.BrushColor = (brush: number, r: number, g: number, b: number) => { };
-  imports.env.BrushAlpha = (brush: number, a: number) => { };
-  imports.env.BrushShininess = (brush: number, s: number) => { };
-  imports.env.BrushTexture = (brush: number, tex: number, frame: number, index: number) => { };
-  imports.env.BrushFX = (brush: number, fx: number) => { };
-  imports.env.BrushBlend = (brush: number, blend: number) => { };
-  imports.env.FreeBrush = (brush: number) => { };
+  imports.env.BrushColor = (
+    brush: number,
+    r: number,
+    g: number,
+    b: number,
+  ) => {};
+  imports.env.BrushAlpha = (brush: number, a: number) => {};
+  imports.env.BrushShininess = (brush: number, s: number) => {};
+  imports.env.BrushTexture = (
+    brush: number,
+    tex: number,
+    frame: number,
+    index: number,
+  ) => {};
+  imports.env.BrushFX = (brush: number, fx: number) => {};
+  imports.env.BrushBlend = (brush: number, blend: number) => {};
+  imports.env.FreeBrush = (brush: number) => {};
   imports.env.LoadBrush = (path: number, flags: number) => 0;
 
   // Mesh Geometry Manipulation
-  imports.env.AddMesh = (src: number, dest: number) => { };
-  imports.env.PositionMesh = (mesh: number, x: number, y: number, z: number) => { };
-  imports.env.RotateMesh = (mesh: number, x: number, y: number, z: number) => { };
-  imports.env.ScaleMesh = (mesh: number, x: number, y: number, z: number) => { };
-  imports.env.VertexCoords = (surf: number, index: number, x: number, y: number, z: number) => { };
+  imports.env.AddMesh = (src: number, dest: number) => {};
+  imports.env.PositionMesh = (
+    mesh: number,
+    x: number,
+    y: number,
+    z: number,
+  ) => {};
+  imports.env.RotateMesh = (
+    mesh: number,
+    x: number,
+    y: number,
+    z: number,
+  ) => {};
+  imports.env.ScaleMesh = (mesh: number, x: number, y: number, z: number) => {};
+  imports.env.VertexCoords = (
+    surf: number,
+    index: number,
+    x: number,
+    y: number,
+    z: number,
+  ) => {};
 
   // Surface Management
-  imports.env.ClearSurface = (surf: number, clearVerts: number, clearTris: number) => { };
-  imports.env.ClearWorld = (entities: number, brushes: number, textures: number) => { };
+  imports.env.ClearSurface = (
+    surf: number,
+    clearVerts: number,
+    clearTris: number,
+  ) => {};
+  imports.env.ClearWorld = (
+    entities: number,
+    brushes: number,
+    textures: number,
+  ) => {};
   imports.env.TrisRendered = () => 0;
 
   // Camera
-  imports.env.CameraClsMode = (cam: number, clsColor: number, clsZBuffer: number) => { };
-  imports.env.CameraProject = (cam: number, x: number, y: number, z: number) => { };
+  imports.env.CameraClsMode = (
+    cam: number,
+    clsColor: number,
+    clsZBuffer: number,
+  ) => {};
+  imports.env.CameraProject = (
+    cam: number,
+    x: number,
+    y: number,
+    z: number,
+  ) => {};
 
   // Render State
-  imports.env.AntiAlias = (state: number) => { };
-  imports.env.WireFrame = (state: number) => { };
+  imports.env.AntiAlias = (state: number) => {};
+  imports.env.WireFrame = (state: number) => {};
   imports.env.DeltaRoll = (src: number, dest: number) => {
     let delta = dest - src;
     while (delta > 180) delta -= 360;
@@ -705,7 +753,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (!graphics.scene) {
       try {
         graphics.init3D();
-      } catch { }
+      } catch {}
     }
 
     const parent = parentId ? graphics.entities[parentId] : graphics.scene;
@@ -724,10 +772,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     try {
       if (child.parent) child.parent.remove(child);
-    } catch { }
+    } catch {}
     try {
       parent.add(child);
-    } catch { }
+    } catch {}
 
     if (keepGlobal && worldMatrix) {
       try {
@@ -741,7 +789,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         const local = new THREE.Matrix4().multiplyMatrices(inv, worldMatrix);
         local.decompose(child.position, child.quaternion, child.scale);
         child.updateMatrixWorld(true);
-      } catch { }
+      } catch {}
     }
 
     graphics.engineCall(
@@ -956,7 +1004,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     if (entity) {
       try {
         graphics.disposeObject3D(entity);
-      } catch { }
+      } catch {}
       if (entity.parent) entity.parent.remove(entity);
       graphics.engineCall(
         ent,
@@ -982,7 +1030,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       clone.traverse((child: any) => {
         if (child?.isMesh) graphics.ensureUniqueMaterial(child);
       });
-    } catch { }
+    } catch {}
 
     const id = graphics.nextEntityId++;
     graphics.entities[id] = clone;
@@ -1023,7 +1071,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
               // Ensure uv2 exists for lightmap
               const geom = (child as THREE.Mesh).geometry;
               if (geom && !geom.attributes.uv2 && geom.attributes.uv) {
-                geom.setAttribute('uv2', geom.attributes.uv);
+                geom.setAttribute("uv2", geom.attributes.uv);
               }
             } else if (texture.blend === 4) {
               // Dot3 -> Bump/Normal
@@ -1032,7 +1080,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             } else {
               // Fallback: overwrite map? Or ignore?
               // For safety in this demo, ignore other modes or map to map
-              // mat.map = texture.texture; 
+              // mat.map = texture.texture;
             }
           }
 
@@ -1098,9 +1146,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       if (!graphics.animationSystem) {
         throw new Error("LoadMesh(.smpk) requires graphics.animationSystem");
       }
-      graphics.animationSystem.loadAnimMesh(path, parent || 0, placeholderId).then(() => {
-        console.log(`[SMPK] Loaded ${path} `);
-      }).catch((err: unknown) => console.error(`[SMPK] ${path}: `, err));
+      graphics.animationSystem.loadAnimMesh(path, parent || 0, placeholderId)
+        .then(() => {
+          console.log(`[SMPK] Loaded ${path} `);
+        }).catch((err: unknown) => console.error(`[SMPK] ${path}: `, err));
     } else if (
       lowerPath.endsWith(".b3d") || lowerPath.endsWith(".x") ||
       lowerPath.endsWith(".rmesh")
@@ -1116,9 +1165,13 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         try {
           const fileIO = graphics.core.fileIO as Blitz3DFileIO | undefined;
           if (!fileIO) {
-            throw new Error("LoadMesh(source) requires core.fileIO to be initialized");
+            throw new Error(
+              "LoadMesh(source) requires core.fileIO to be initialized",
+            );
           }
-          const coreWithFileIO = graphics.core as typeof graphics.core & { fileIO: Blitz3DFileIO };
+          const coreWithFileIO = graphics.core as typeof graphics.core & {
+            fileIO: Blitz3DFileIO;
+          };
           coreWithFileIO.fileIO = fileIO;
 
           if (lowerPath.endsWith(".b3d")) {
@@ -1161,7 +1214,8 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             const hook = (globalThis as any).__BLITZ3D_INTERPRETER_ASYNC_ERROR;
             if (typeof hook === "function") {
               hook(
-                `[LoadMesh] Failed to load ${rawPath}: ${(e as any)?.message ? String((e as any).message) : String(e)
+                `[LoadMesh] Failed to load ${rawPath}: ${
+                  (e as any)?.message ? String((e as any).message) : String(e)
                 }`,
               );
             }
@@ -1301,7 +1355,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
             if (mode === 2 || mode === 3) mat.transparent = true;
           }
           if (typeof mat.needsUpdate === "boolean") mat.needsUpdate = true;
-        } catch { }
+        } catch {}
       });
     });
   };
@@ -1452,7 +1506,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
   imports.env.CameraFogMode = (cam: number, mode: number) => {
     imports.env.FogMode(mode);
   };
-  imports.env.CameraFogColor = (cam: number, r: number, g: number, b: number) => {
+  imports.env.CameraFogColor = (
+    cam: number,
+    r: number,
+    g: number,
+    b: number,
+  ) => {
     imports.env.FogColor(r, g, b);
   };
   imports.env.CameraFogRange = (cam: number, near: number, far: number) => {
@@ -1465,12 +1524,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
 
     // --- Brush System ---
     imports.env.CreateBrush = (r: number, g: number, b: number) => {
-      const id = graphics.nextTextureId++; // Brushes share ID space? Or separate? 
+      const id = graphics.nextTextureId++; // Brushes share ID space? Or separate?
       // Types says brushes:Record<number, Blitz3DBrush>
       // but in code usage often resources share ID space or have separate.
       // Let's use a separate ID counter for brushes or just nextTextureId if simplest,
       // but types says brushes uses number. Let's assume unique ID needed.
-      // graphics.nextEntityId? No. Let's introduce nextBrushId if not exists 
+      // graphics.nextEntityId? No. Let's introduce nextBrushId if not exists
       // or just allow nextTextureId (if they don't collision).
       // Actually types says brushes: Record<number, Blitz3DBrush>.
       // Let's rely on a new counter if helpful, but types doesn't have nextBrushId.
@@ -1486,7 +1545,9 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       // Let's use a local counter in this scope for now if simpler, or patch graphics.
       // I'll use graphics.nextTextureId for uniqueness across resources if that's safer,
       // or just (graphics as any).nextBrushId = (graphics as any).nextBrushId || 1.
-      const brushId = ((graphics as any).nextBrushId = ((graphics as any).nextBrushId || 1) + 1);
+      const brushId =
+        ((graphics as any).nextBrushId = ((graphics as any).nextBrushId || 1) +
+          1);
 
       graphics.brushes[brushId] = {
         color: [r, g, b, 1.0],
@@ -1494,7 +1555,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         shininess: 0.0,
         blendMode: 1, // Normal
         fxMode: 0,
-        textures: []
+        textures: [],
       };
       return brushId;
     };
@@ -1512,7 +1573,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       delete graphics.brushes[brushId];
     };
 
-    imports.env.BrushColor = (brushId: number, r: number, g: number, b: number) => {
+    imports.env.BrushColor = (
+      brushId: number,
+      r: number,
+      g: number,
+      b: number,
+    ) => {
       const brush = graphics.brushes[brushId];
       if (brush) {
         brush.color[0] = r;
@@ -1541,7 +1607,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       if (brush) brush.fxMode = fx;
     };
 
-    imports.env.BrushTexture = (brushId: number, texId: number, frame: number, index: number) => {
+    imports.env.BrushTexture = (
+      brushId: number,
+      texId: number,
+      frame: number,
+      index: number,
+    ) => {
       const brush = graphics.brushes[brushId];
       const tex = graphics.textures[texId];
       if (brush && tex) {
@@ -1555,15 +1626,20 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     // TODO: Apply brush props to all materials of entity
     const brush = graphics.brushes[brushId];
     if (brush && graphics.entities[ent]) {
-      // Basic implementation: direct helpers call 
+      // Basic implementation: direct helpers call
       // NOTE: we can call imports.env directly since we are inside setup3D
-      imports.env.EntityColor(ent, brush.color[0], brush.color[1], brush.color[2]);
+      imports.env.EntityColor(
+        ent,
+        brush.color[0],
+        brush.color[1],
+        brush.color[2],
+      );
       imports.env.EntityAlpha(ent, brush.alpha);
       imports.env.EntityFX(ent, brush.fxMode);
       imports.env.EntityBlend(ent, brush.blendMode);
 
       if (brush.textures[0]) {
-        // We need reverse lookup for texture ID to call EntityTexture? 
+        // We need reverse lookup for texture ID to call EntityTexture?
         // Or just traverse and set directly?
         // Traversing directly is safer and faster here.
         const tex = brush.textures[0];
@@ -1596,7 +1672,14 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
   imports.env.CountSurfaces = (meshId: number) => 1; // Assume 1
   imports.env.GetSurface = (meshId: number, index: number) => meshId; // Return mesh as surface
 
-  imports.env.VertexColor = (surf: number, vert: number, r: number, g: number, b: number, a: number) => {
+  imports.env.VertexColor = (
+    surf: number,
+    vert: number,
+    r: number,
+    g: number,
+    b: number,
+    a: number,
+  ) => {
     // surf is treated as entity/mesh ID for now
     const entity = graphics.entities[surf] as any;
     if (entity && entity.geometry) {
@@ -1606,7 +1689,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
         color.setXYZW(vert, (r | 0) / 255, (g | 0) / 255, (b | 0) / 255, a);
         color.needsUpdate = true;
       } else {
-        // Create color attribute? Maybe later. 
+        // Create color attribute? Maybe later.
         // Three.js doesn't easily allow adding attrs after creation unless init with them
         // For now, assume geometry has colors if being painted
         // Or lazily add?
@@ -1615,12 +1698,18 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     }
   };
 
-  imports.env.VertexTexCoords = (surf: number, vert: number, u: number, v: number, set: number) => {
+  imports.env.VertexTexCoords = (
+    surf: number,
+    vert: number,
+    u: number,
+    v: number,
+    set: number,
+  ) => {
     const entity = graphics.entities[surf] as any;
     if (entity && entity.geometry) {
       const geom = entity.geometry as THREE.BufferGeometry;
       // set 0 = uv, set 1 = uv2
-      const attrName = (set === 1) ? 'uv2' : 'uv';
+      const attrName = (set === 1) ? "uv2" : "uv";
       const attr = geom.attributes[attrName];
       if (attr) {
         attr.setXY(vert, u, v);
@@ -1628,7 +1717,7 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       } else {
         // Lazy creation of uv2 if needed (for lightmaps)
         if (set === 1 && geom.attributes.uv && !geom.attributes.uv2) {
-          geom.setAttribute('uv2', geom.attributes.uv.clone());
+          geom.setAttribute("uv2", geom.attributes.uv.clone());
           const newAttr = geom.attributes.uv2;
           newAttr.setXY(vert, u, v);
           newAttr.needsUpdate = true;
@@ -1654,10 +1743,10 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
           // For MeshStandardMaterial:
           // roughness = 1.0 - shininess
           // metalness? Typically 0 for non-metallic.
-          if (typeof mat.roughness === 'number') {
+          if (typeof mat.roughness === "number") {
             mat.roughness = 1.0 - Math.min(1.0, Math.max(0.0, s));
             mat.needsUpdate = true;
-          } else if (typeof (mat as any).shininess === 'number') {
+          } else if (typeof (mat as any).shininess === "number") {
             // Phong/Lambert
             (mat as any).shininess = s * 100; // arbitrary scale
             mat.needsUpdate = true;
@@ -1666,7 +1755,12 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
       });
     }
   };
-  imports.env.TranslateEntity = (ent: number, x: number, y: number, z: number) => {
+  imports.env.TranslateEntity = (
+    ent: number,
+    x: number,
+    y: number,
+    z: number,
+  ) => {
     imports.env.MoveEntity(ent, x, y, z);
   };
 
@@ -1681,7 +1775,9 @@ export function setup3D(graphics: Blitz3DGraphicsInterface, imports: any) {
     // Real implementation would require a container object for the "Camera Entity" that holds the actual ThreeJS camera.
     // Given the scope, I will log a warning for Ortho mode as it's complex to hot-swap.
     if (mode === 2) {
-      console.warn("CameraProjMode: Orthographic projection not fully supported yet.");
+      console.warn(
+        "CameraProjMode: Orthographic projection not fully supported yet.",
+      );
     }
   };
 }

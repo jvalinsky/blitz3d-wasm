@@ -93,11 +93,14 @@ async function main() {
   const issuesReport = analyzer.getPrioritizedIssues();
   const functionReport = analyzer.getFunctionBreakdown();
 
-  const groupedIssues = groupIssues(issuesReport.issues || []).slice(0, maxMessages);
+  const groupedIssues = groupIssues(issuesReport.issues || []).slice(
+    0,
+    maxMessages,
+  );
   const topIssues = (issuesReport.issues || []).slice(0, maxIssues);
   const failingFunctions = getTopFailingFunctions(
     functionReport.functions || [],
-    maxFunctions
+    maxFunctions,
   );
 
   const payload = {
@@ -123,10 +126,10 @@ async function main() {
     console.log("LLM COMPACT REPORT");
     console.log(`status: ${summary.status}`);
     console.log(
-      `functions: ${summary.functions} | instructions: ${summary.instructions}`
+      `functions: ${summary.functions} | instructions: ${summary.instructions}`,
     );
     console.log(
-      `stack: ${summary.stackValid} | type: ${summary.typeValid} | control: ${summary.controlFlowValid}`
+      `stack: ${summary.stackValid} | type: ${summary.typeValid} | control: ${summary.controlFlowValid}`,
     );
     console.log(`issues: ${payload.issues.total}`);
     console.log("");
@@ -139,7 +142,7 @@ async function main() {
       console.log("top failing functions:");
       for (const fn of failingFunctions) {
         console.log(
-          `  func ${fn.idx}: errors=${fn.errorCount} maxStack=${fn.maxStack} finalStack=${fn.finalStackSize}`
+          `  func ${fn.idx}: errors=${fn.errorCount} maxStack=${fn.maxStack} finalStack=${fn.finalStackSize}`,
         );
         if (fn.sampleError) {
           console.log(`    ${normalizeMessage(fn.sampleError)}`);

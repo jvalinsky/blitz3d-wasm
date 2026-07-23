@@ -1,410 +1,582 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Blitz3D Web Compiler - Live</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+      header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+      h1 {
+        margin: 0;
+        font-size: 2.5rem;
+      }
+      .subtitle {
+        margin-top: 10px;
+        opacity: 0.9;
+        font-size: 1.1rem;
+      }
+      .content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+      }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .panel-header {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #667eea;
+        padding: 10px;
+        background: #f5f5f5;
+        border-radius: 5px;
+      }
+      textarea {
+        font-family: "Consolas", "Monaco", monospace;
+        font-size: 14px;
+        padding: 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        resize: vertical;
+        min-height: 400px;
+        line-height: 1.5;
+      }
+      textarea:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      pre {
+        font-family: "Consolas", "Monaco", monospace;
+        font-size: 13px;
+        padding: 15px;
+        background: #f8f8f8;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px;
+        overflow: auto;
+        min-height: 400px;
+        max-height: 600px;
+        line-height: 1.4;
+      }
+      button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      .error {
+        color: #d32f2f;
+        background: #ffebee;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #d32f2f;
+        font-family: monospace;
+        white-space: pre-wrap;
+      }
+      .success {
+        color: #2e7d32;
+        background: #e8f5e9;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border-left: 4px solid #2e7d32;
+        margin-bottom: 10px;
+      }
+      .info {
+        color: #1976d2;
+        background: #e3f2fd;
+        padding: 10px 15px;
+        border-radius: 5px;
+        border-left: 4px solid #1976d2;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+      }
+      @media (max-width: 1024px) {
+        .content {
+          grid-template-columns: 1fr;
         }
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-        header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-        h1 { margin: 0; font-size: 2.5rem; }
-        .subtitle { margin-top: 10px; opacity: 0.9; font-size: 1.1rem; }
-        .content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px; }
-        .panel { display: flex; flex-direction: column; gap: 10px; }
-        .panel-header {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #667eea;
-            padding: 10px;
-            background: #f5f5f5;
-            border-radius: 5px;
-        }
-        textarea {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 14px;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            resize: vertical;
-            min-height: 400px;
-            line-height: 1.5;
-        }
-        textarea:focus { outline: none; border-color: #667eea; }
-        pre {
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 13px;
-            padding: 15px;
-            background: #f8f8f8;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            overflow: auto;
-            min-height: 400px;
-            max-height: 600px;
-            line-height: 1.4;
-        }
-        button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        button:hover { transform: translateY(-2px); box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4); }
-        button:active { transform: translateY(0); }
-        .error { color: #d32f2f; background: #ffebee; padding: 15px; border-radius: 5px; border-left: 4px solid #d32f2f; font-family: monospace; white-space: pre-wrap; }
-        .success { color: #2e7d32; background: #e8f5e9; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #2e7d32; margin-bottom: 10px; }
-        .info { color: #1976d2; background: #e3f2fd; padding: 10px 15px; border-radius: 5px; border-left: 4px solid #1976d2; margin-bottom: 10px; font-size: 0.9rem; }
-        @media (max-width: 1024px) { .content { grid-template-columns: 1fr; } }
-        .tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
-        .tab {
-            padding: 8px 16px;
-            background: #f5f5f5;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px 5px 0 0;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-        .tab.active {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+      }
+      .tabs {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 10px;
+      }
+      .tab {
+        padding: 8px 16px;
+        background: #f5f5f5;
+        border: 2px solid #e0e0e0;
+        border-radius: 5px 5px 0 0;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: bold;
+      }
+      .tab.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <header>
-            <h1>🚀 Blitz3D Web Compiler</h1>
-            <div class="subtitle">Real TypeScript Compiler - Fully Client-Side</div>
-        </header>
-        <div class="content">
-            <div class="panel">
-                <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <span>📝 Blitz3D Source Code</span>
-                    <select id="examples" onchange="loadExample()" style="padding: 5px 10px; border-radius: 3px; border: 1px solid #ccc;">
-                        <option value="">📚 Load Example...</option>
-                        <optgroup label="🎓 Basics">
-                            <option value="hello">Hello World</option>
-                            <option value="math">Math Operations</option>
-                            <option value="loops">Loops (For/While/Repeat)</option>
-                            <option value="functions">Functions</option>
-                            <option value="types">Custom Types</option>
-                            <option value="arrays">Arrays & Dim</option>
-                            <option value="strings">String Operations</option>
-                            <option value="conditionals">If/Else/Select</option>
-                        </optgroup>
-                        <optgroup label="🎮 3D Graphics">
-                            <option value="cube3d">Rotating Cube</option>
-                            <option value="colorfulCube">Colorful Cube</option>
-                            <option value="particles">Particle System</option>
-                            <option value="textureLoad">Texture Loading</option>
-                            <option value="meshLoad">3D Model Loading</option>
-                            <option value="lighting">Lighting Effects</option>
-                            <option value="skybox">Skybox Scene</option>
-                        </optgroup>
-                        <optgroup label="🎨 2D Graphics">
-                            <option value="sprite2d">Sprite Movement</option>
-                            <option value="collision">Collision Detection</option>
-                        </optgroup>
-                    </select>
-                </div>
-                <div id="editor" style="height: 400px; border: 2px solid #e0e0e0; border-radius: 5px;"></div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="compile()" style="flex: 1">▶️ Compile to WASM</button>
-                    <button onclick="runWasm()" style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%);">▶️ Run (Safe)</button>
-                    <button onclick="stopRun()" style="flex: 0.7; background: linear-gradient(135deg, #b71c1c 0%, #ef5350 100%);">⏹ Stop</button>
-                </div>
-                <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                    <label style="font-size: 0.9rem; color: #555; flex: 1;">
-                        Timeout (ms):
-                        <input id="run-timeout-ms" type="number" min="50" step="50" value="2000"
-                            style="width: 120px; margin-left: 8px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    </label>
-                    <button onclick="runWasmUnsafe()" style="flex: 1; background: linear-gradient(135deg, #455a64 0%, #90a4ae 100%);" title="Runs on the main thread; may freeze if the program has a tight loop that never calls runtime imports.">⚠️ Run (Unsafe)</button>
-                </div>
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button onclick="shareURL()" style="flex: 1; background: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);">🔗 Share URL</button>
-                    <button onclick="saveLocal()" style="flex: 1; background: linear-gradient(135deg, #FF5722 0%, #FF8A65 100%);">💾 Save</button>
-                    <button onclick="loadLocal()" style="flex: 1; background: linear-gradient(135deg, #607D8B 0%, #90A4AE 100%);">📂 Load</button>
-                </div>
-            </div>
-            <div class="panel">
-                <div class="panel-header">⚙️ Compilation Output</div>
-                <div id="output-status"></div>
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('wasm')">WebAssembly (WAT)</div>
-                    <div class="tab" onclick="switchTab('ast')">AST (JSON)</div>
-                    <div class="tab" onclick="switchTab('console')">Program Output</div>
-                    <div class="tab" onclick="switchTab('canvas')">3D View</div>
-                </div>
-                <div id="wasm-output" class="tab-content active">
-                    <pre id="output">Click "Compile" to generate WebAssembly...</pre>
-                </div>
-                <div id="ast-output" class="tab-content">
-                    <pre id="ast">Abstract Syntax Tree will appear here...</pre>
-                </div>
-                <div id="console-output" class="tab-content">
-                    <pre id="console" style="background: #1e1e1e; color: #d4d4d4;">Click "Run Program" to execute compiled WASM...</pre>
-                </div>
-                <div id="canvas-output" class="tab-content" style="background: #000; display: flex; align-items: center; justify-content: center;">
-                    <canvas id="renderCanvas" style="max-width: 100%; max-height: 100%;"></canvas>
-                </div>
-            </div>
+      <header>
+        <h1>🚀 Blitz3D Web Compiler</h1>
+        <div class="subtitle">Real TypeScript Compiler - Fully Client-Side</div>
+      </header>
+      <div class="content">
+        <div class="panel">
+          <div
+            class="panel-header"
+            style="display: flex; justify-content: space-between; align-items: center"
+          >
+            <span>📝 Blitz3D Source Code</span>
+            <select
+              id="examples"
+              onchange="loadExample()"
+              style="padding: 5px 10px; border-radius: 3px; border: 1px solid #ccc"
+            >
+              <option value="">📚 Load Example...</option>
+              <optgroup label="🎓 Basics">
+                <option value="hello">Hello World</option>
+                <option value="math">Math Operations</option>
+                <option value="loops">Loops (For/While/Repeat)</option>
+                <option value="functions">Functions</option>
+                <option value="types">Custom Types</option>
+                <option value="arrays">Arrays & Dim</option>
+                <option value="strings">String Operations</option>
+                <option value="conditionals">If/Else/Select</option>
+              </optgroup>
+              <optgroup label="🎮 3D Graphics">
+                <option value="cube3d">Rotating Cube</option>
+                <option value="colorfulCube">Colorful Cube</option>
+                <option value="particles">Particle System</option>
+                <option value="textureLoad">Texture Loading</option>
+                <option value="meshLoad">3D Model Loading</option>
+                <option value="lighting">Lighting Effects</option>
+                <option value="skybox">Skybox Scene</option>
+              </optgroup>
+              <optgroup label="🎨 2D Graphics">
+                <option value="sprite2d">Sprite Movement</option>
+                <option value="collision">Collision Detection</option>
+              </optgroup>
+            </select>
+          </div>
+          <div
+            id="editor"
+            style="height: 400px; border: 2px solid #e0e0e0; border-radius: 5px"
+          >
+          </div>
+          <div style="display: flex; gap: 10px">
+            <button onclick="compile()" style="flex: 1">
+              ▶️ Compile to WASM
+            </button>
+            <button
+              onclick="runWasm()"
+              style="flex: 1; background: linear-gradient(135deg, #2e7d32 0%, #66bb6a 100%)"
+            >
+              ▶️ Run (Safe)
+            </button>
+            <button
+              onclick="stopRun()"
+              style="flex: 0.7; background: linear-gradient(135deg, #b71c1c 0%, #ef5350 100%)"
+            >
+              ⏹ Stop
+            </button>
+          </div>
+          <div
+            style="display: flex; gap: 10px; align-items: center; margin-top: 10px"
+          >
+            <label style="font-size: 0.9rem; color: #555; flex: 1">
+              Timeout (ms):
+              <input
+                id="run-timeout-ms"
+                type="number"
+                min="50"
+                step="50"
+                value="2000"
+                style="width: 120px; margin-left: 8px; padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px"
+              >
+            </label>
+            <button
+              onclick="runWasmUnsafe()"
+              style="flex: 1; background: linear-gradient(135deg, #455a64 0%, #90a4ae 100%)"
+              title="Runs on the main thread; may freeze if the program has a tight loop that never calls runtime imports."
+            >
+              ⚠️ Run (Unsafe)
+            </button>
+          </div>
+          <div style="display: flex; gap: 10px; margin-top: 10px">
+            <button
+              onclick="shareURL()"
+              style="flex: 1; background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%)"
+            >
+              🔗 Share URL
+            </button>
+            <button
+              onclick="saveLocal()"
+              style="flex: 1; background: linear-gradient(135deg, #ff5722 0%, #ff8a65 100%)"
+            >
+              💾 Save
+            </button>
+            <button
+              onclick="loadLocal()"
+              style="flex: 1; background: linear-gradient(135deg, #607d8b 0%, #90a4ae 100%)"
+            >
+              📂 Load
+            </button>
+          </div>
         </div>
+        <div class="panel">
+          <div class="panel-header">⚙️ Compilation Output</div>
+          <div id="output-status"></div>
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('wasm')">
+              WebAssembly (WAT)
+            </div>
+            <div class="tab" onclick="switchTab('ast')">AST (JSON)</div>
+            <div class="tab" onclick="switchTab('console')">Program Output</div>
+            <div class="tab" onclick="switchTab('canvas')">3D View</div>
+          </div>
+          <div id="wasm-output" class="tab-content active">
+            <pre id="output">Click "Compile" to generate WebAssembly...</pre>
+          </div>
+          <div id="ast-output" class="tab-content">
+            <pre id="ast">Abstract Syntax Tree will appear here...</pre>
+          </div>
+          <div id="console-output" class="tab-content">
+            <pre
+              id="console"
+              style="background: #1e1e1e; color: #d4d4d4"
+            >Click "Run Program" to execute compiled WASM...</pre>
+          </div>
+          <div
+            id="canvas-output"
+            class="tab-content"
+            style="background: #000; display: flex; align-items: center; justify-content: center"
+          >
+            <canvas
+              id="renderCanvas"
+              style="max-width: 100%; max-height: 100%"
+            ></canvas>
+          </div>
+        </div>
+      </div>
     </div>
-    
+
     <!-- Load dependencies in correct order -->
     <script src="https://cdn.jsdelivr.net/npm/wabt@1.0.24/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"
+    ></script>
+
     <!-- Import Three.js as ES module -->
     <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+        }
       }
-    }
     </script>
-    
+
     <!-- Load compiler bundle -->
     <script src="dist/compiler.bundle.js?v=2"></script>
-    
+
     <!-- Load Monaco last (it uses AMD loader which can conflict) -->
-    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"></script>
-    
+    <script
+      src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.min.js"
+    ></script>
+
     <!-- Load our modules -->
     <script type="module">
-        import * as THREE from 'three';
-        import { registerBlitz3DLanguage } from './blitz3d-language.js';
-        import { graphicsExamples } from './graphics-examples.js';
-        import { Blitz3DGraphicsRuntime } from './threejs-runtime.js';
-        
-        // Make Three.js available globally
-        window.THREE = THREE;
-        
-        window.registerBlitz3DLanguage = registerBlitz3DLanguage;
-        window.graphicsExamples = graphicsExamples;
-        window.Blitz3DGraphicsRuntime = Blitz3DGraphicsRuntime;
-        
-        // Signal that modules are loaded
-        window.modulesLoaded = true;
-        window.dispatchEvent(new Event('modulesReady'));
+      import * as THREE from "three";
+      import { registerBlitz3DLanguage } from "./blitz3d-language.js";
+      import { graphicsExamples } from "./graphics-examples.js";
+      import { Blitz3DGraphicsRuntime } from "./threejs-runtime.js";
+
+      // Make Three.js available globally
+      window.THREE = THREE;
+
+      window.registerBlitz3DLanguage = registerBlitz3DLanguage;
+      window.graphicsExamples = graphicsExamples;
+      window.Blitz3DGraphicsRuntime = Blitz3DGraphicsRuntime;
+
+      // Signal that modules are loaded
+      window.modulesLoaded = true;
+      window.dispatchEvent(new Event("modulesReady"));
     </script>
     <script>
-        // Compiler classes are already available globally from the bundle
-        let compiledWat = null; // Store the compiled WAT for execution
-        let editor = null; // Monaco editor instance
-        let graphicsRuntime = null; // Three.js runtime
-        let animationLoopId = null; // For canceling animation
-        let activeRunWorker = null; // Safe runner worker (killable)
-        let activeRunTimeoutId = null; // Safe runner watchdog
-        let unsafeStopRequested = false; // Best-effort stop flag for unsafe runs
+      // Compiler classes are already available globally from the bundle
+      let compiledWat = null; // Store the compiled WAT for execution
+      let editor = null; // Monaco editor instance
+      let graphicsRuntime = null; // Three.js runtime
+      let animationLoopId = null; // For canceling animation
+      let activeRunWorker = null; // Safe runner worker (killable)
+      let activeRunTimeoutId = null; // Safe runner watchdog
+      let unsafeStopRequested = false; // Best-effort stop flag for unsafe runs
 
-        // Example programs - will merge with graphics examples
-        let examples = {
-            hello: `; Hello World\nPrint "Hello from Blitz3D!"`,
-            math: `; Math Operations\nx% = 10\ny% = 5\nPrint x + y\nPrint x - y\nPrint x * y`,
-            loops: `; For loop\nFor i% = 1 To 5\n    Print i\nNext`,
-            functions: `; Functions\nFunction Add%(a%, b%)\n    Return a + b\nEnd Function\n\nPrint Add(5, 10)`,
-            types: `; Custom Types\nType Enemy\n    Field Health%\n    Field Name$\nEnd Type\n\nPrint "Type declared!"`,
-            arrays: `; Arrays with Dim\nDim arr%(10)\narr(0) = 42\narr(1) = 99\narr(2) = arr(0) + arr(1)\nPrint arr(0)\nPrint arr(1)\nPrint arr(2)`,
-            strings: `; String Printing\nPrint "Hello World"\nPrint "Strings work!"`,
-            conditionals: `; If/ElseIf/Else + Select/Case\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf\n\nSelect x\n    Case 85\n        Print "Eighty-five!"\n    Case 90\n        Print "Ninety!"\n    Default\n        Print "Something else"\nEnd Select`
-        };
-        
-        // Function to merge graphics examples
-        function mergeGraphicsExamples() {
-            if (window.graphicsExamples) {
-                examples = { ...examples, ...window.graphicsExamples };
-                console.log('Graphics examples loaded:', Object.keys(window.graphicsExamples).length, 'examples');
-                console.log('Total examples now:', Object.keys(examples).length);
-            } else {
-                console.log('Graphics examples not yet available');
-            }
+      // Example programs - will merge with graphics examples
+      let examples = {
+        hello: `; Hello World\nPrint "Hello from Blitz3D!"`,
+        math:
+          `; Math Operations\nx% = 10\ny% = 5\nPrint x + y\nPrint x - y\nPrint x * y`,
+        loops: `; For loop\nFor i% = 1 To 5\n    Print i\nNext`,
+        functions:
+          `; Functions\nFunction Add%(a%, b%)\n    Return a + b\nEnd Function\n\nPrint Add(5, 10)`,
+        types:
+          `; Custom Types\nType Enemy\n    Field Health%\n    Field Name$\nEnd Type\n\nPrint "Type declared!"`,
+        arrays:
+          `; Arrays with Dim\nDim arr%(10)\narr(0) = 42\narr(1) = 99\narr(2) = arr(0) + arr(1)\nPrint arr(0)\nPrint arr(1)\nPrint arr(2)`,
+        strings:
+          `; String Printing\nPrint "Hello World"\nPrint "Strings work!"`,
+        conditionals:
+          `; If/ElseIf/Else + Select/Case\nx% = 85\nIf x >= 90 Then\n    Print "A"\nElseIf x >= 80 Then\n    Print "B"\nElse\n    Print "F"\nEndIf\n\nSelect x\n    Case 85\n        Print "Eighty-five!"\n    Case 90\n        Print "Ninety!"\n    Default\n        Print "Something else"\nEnd Select`,
+      };
+
+      // Function to merge graphics examples
+      function mergeGraphicsExamples() {
+        if (window.graphicsExamples) {
+          examples = { ...examples, ...window.graphicsExamples };
+          console.log(
+            "Graphics examples loaded:",
+            Object.keys(window.graphicsExamples).length,
+            "examples",
+          );
+          console.log(
+            "Total examples now:",
+            Object.keys(examples).length,
+          );
+        } else {
+          console.log("Graphics examples not yet available");
         }
-        
-        // Try to merge immediately if already loaded
-        setTimeout(mergeGraphicsExamples, 100);
-        
-        // Also listen for the modules ready event
-        window.addEventListener('modulesReady', () => {
-            setTimeout(mergeGraphicsExamples, 50);
-        });
-        
-        window.loadExample = function() {
-            const sel = document.getElementById('examples');
-            if (sel.value && examples[sel.value] && editor) {
-                editor.setValue(examples[sel.value]);
-                sel.value = '';
-            } else if (sel.value && !examples[sel.value]) {
-                console.error('Example not found:', sel.value, 'Available:', Object.keys(examples));
-            }
-        };
-        
-        window.switchTab = function(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            
-            if (tab === 'wasm') {
-                document.querySelectorAll('.tab')[0].classList.add('active');
-                document.getElementById('wasm-output').classList.add('active');
-            } else if (tab === 'ast') {
-                document.querySelectorAll('.tab')[1].classList.add('active');
-                document.getElementById('ast-output').classList.add('active');
-            } else if (tab === 'console') {
-                document.querySelectorAll('.tab')[2].classList.add('active');
-                document.getElementById('console-output').classList.add('active');
-            } else if (tab === 'canvas') {
-                document.querySelectorAll('.tab')[3].classList.add('active');
-                document.getElementById('canvas-output').classList.add('active');
-            }
-        };
+      }
 
-        function getRunTimeoutMs() {
-            const el = document.getElementById('run-timeout-ms');
-            const parsed = el ? Number(el.value) : 2000;
-            if (!Number.isFinite(parsed) || parsed <= 0) return 2000;
-            return Math.max(50, Math.floor(parsed));
+      // Try to merge immediately if already loaded
+      setTimeout(mergeGraphicsExamples, 100);
+
+      // Also listen for the modules ready event
+      window.addEventListener("modulesReady", () => {
+        setTimeout(mergeGraphicsExamples, 50);
+      });
+
+      window.loadExample = function () {
+        const sel = document.getElementById("examples");
+        if (sel.value && examples[sel.value] && editor) {
+          editor.setValue(examples[sel.value]);
+          sel.value = "";
+        } else if (sel.value && !examples[sel.value]) {
+          console.error(
+            "Example not found:",
+            sel.value,
+            "Available:",
+            Object.keys(examples),
+          );
+        }
+      };
+
+      window.switchTab = function (tab) {
+        document.querySelectorAll(".tab").forEach((t) =>
+          t.classList.remove("active")
+        );
+        document.querySelectorAll(".tab-content").forEach((c) =>
+          c.classList.remove("active")
+        );
+
+        if (tab === "wasm") {
+          document.querySelectorAll(".tab")[0].classList.add("active");
+          document.getElementById("wasm-output").classList.add(
+            "active",
+          );
+        } else if (tab === "ast") {
+          document.querySelectorAll(".tab")[1].classList.add("active");
+          document.getElementById("ast-output").classList.add("active");
+        } else if (tab === "console") {
+          document.querySelectorAll(".tab")[2].classList.add("active");
+          document.getElementById("console-output").classList.add(
+            "active",
+          );
+        } else if (tab === "canvas") {
+          document.querySelectorAll(".tab")[3].classList.add("active");
+          document.getElementById("canvas-output").classList.add(
+            "active",
+          );
+        }
+      };
+
+      function getRunTimeoutMs() {
+        const el = document.getElementById("run-timeout-ms");
+        const parsed = el ? Number(el.value) : 2000;
+        if (!Number.isFinite(parsed) || parsed <= 0) return 2000;
+        return Math.max(50, Math.floor(parsed));
+      }
+
+      window.stopRun = function (reason = "Stopped") {
+        unsafeStopRequested = true;
+
+        if (animationLoopId) {
+          cancelAnimationFrame(animationLoopId);
+          animationLoopId = null;
         }
 
-        window.stopRun = function(reason = "Stopped") {
-            unsafeStopRequested = true;
+        if (activeRunTimeoutId) {
+          clearTimeout(activeRunTimeoutId);
+          activeRunTimeoutId = null;
+        }
 
-            if (animationLoopId) {
-                cancelAnimationFrame(animationLoopId);
-                animationLoopId = null;
-            }
+        if (activeRunWorker) {
+          activeRunWorker.terminate();
+          activeRunWorker = null;
+        }
 
-            if (activeRunTimeoutId) {
-                clearTimeout(activeRunTimeoutId);
-                activeRunTimeoutId = null;
-            }
+        const statusElement = document.getElementById("output-status");
+        if (statusElement) {
+          statusElement.innerHTML =
+            `<div class="info">⏹ ${reason}</div>`;
+        }
+      };
 
-            if (activeRunWorker) {
-                activeRunWorker.terminate();
-                activeRunWorker = null;
-            }
+      window.compile = function () {
+        const outputElement = document.getElementById("output");
+        const astElement = document.getElementById("ast");
+        const statusElement = document.getElementById("output-status");
 
-            const statusElement = document.getElementById('output-status');
-            if (statusElement) {
-                statusElement.innerHTML = `<div class="info">⏹ ${reason}</div>`;
-            }
-        };
+        // Get source from Monaco editor if available, otherwise from textarea
+        const source = editor
+          ? editor.getValue()
+          : document.getElementById("source").value;
 
-        window.compile = function() {
-            const outputElement = document.getElementById('output');
-            const astElement = document.getElementById('ast');
-            const statusElement = document.getElementById('output-status');
-            
-            // Get source from Monaco editor if available, otherwise from textarea
-            const source = editor ? editor.getValue() : document.getElementById('source').value;
-            
-            // Clear previous error markers
+        // Clear previous error markers
+        if (editor && monaco) {
+          monaco.editor.setModelMarkers(
+            editor.getModel(),
+            "blitz3d",
+            [],
+          );
+        }
+
+        try {
+          const startTime = performance.now();
+
+          // Lexical analysis
+          const { Lexer, Parser, CodeGenerator } =
+            window.Blitz3DCompiler;
+          const lexer = new Lexer(source);
+          const tokenResult = lexer.tokenize();
+
+          if (tokenResult.errors.length > 0) {
+            // Show lexer errors in Monaco
             if (editor && monaco) {
-                monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', []);
+              const markers = tokenResult.errors.map((e) => ({
+                severity: monaco.MarkerSeverity.Error,
+                message: e.message,
+                startLineNumber: e.line,
+                startColumn: e.column,
+                endLineNumber: e.line,
+                endColumn: e.column + 10,
+              }));
+              monaco.editor.setModelMarkers(
+                editor.getModel(),
+                "blitz3d",
+                markers,
+              );
             }
-            
-            try {
-                const startTime = performance.now();
-                
-                // Lexical analysis
-                const { Lexer, Parser, CodeGenerator } = window.Blitz3DCompiler;
-                const lexer = new Lexer(source);
-                const tokenResult = lexer.tokenize();
-                
-                if (tokenResult.errors.length > 0) {
-                    // Show lexer errors in Monaco
-                    if (editor && monaco) {
-                        const markers = tokenResult.errors.map(e => ({
-                            severity: monaco.MarkerSeverity.Error,
-                            message: e.message,
-                            startLineNumber: e.line,
-                            startColumn: e.column,
-                            endLineNumber: e.line,
-                            endColumn: e.column + 10
-                        }));
-                        monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', markers);
-                    }
-                    throw new Error('Lexer errors:\n' + tokenResult.errors.map(e => 
-                        `Line ${e.line}, Col ${e.column}: ${e.message}`
-                    ).join('\n'));
-                }
-                
-                const tokenCount = tokenResult.tokens.length - 1; // -1 for EOF
-                
-                // Parsing
-                const parser = new Parser(source);
-                const ast = parser.parse();
-                
-                if (parser.errors.length > 0) {
-                    // Show parser errors in Monaco
-                    if (editor && monaco) {
-                        const markers = parser.errors.map(err => {
-                            // Extract line number from error message if available
-                            const lineMatch = err.match(/line (\d+)/i);
-                            const line = lineMatch ? parseInt(lineMatch[1]) : 1;
-                            return {
-                                severity: monaco.MarkerSeverity.Error,
-                                message: err,
-                                startLineNumber: line,
-                                startColumn: 1,
-                                endLineNumber: line,
-                                endColumn: 100
-                            };
-                        });
-                        monaco.editor.setModelMarkers(editor.getModel(), 'blitz3d', markers);
-                    }
-                    throw new Error('Parser errors:\n' + parser.errors.join('\n'));
-                }
-                
-                // Code generation
-                const codegen = new CodeGenerator();
-                const wat = codegen.generate(ast);
-                
-                const endTime = performance.now();
-                const compileTime = (endTime - startTime).toFixed(2);
-                
-                // Store and display results
-                compiledWat = wat;
-                outputElement.textContent = wat;
-                astElement.textContent = JSON.stringify(ast, null, 2);
-                
-                const lines = source.split('\n').length;
-                statusElement.innerHTML = `
+            throw new Error(
+              "Lexer errors:\n" +
+                tokenResult.errors.map((e) =>
+                  `Line ${e.line}, Col ${e.column}: ${e.message}`
+                ).join("\n"),
+            );
+          }
+
+          const tokenCount = tokenResult.tokens.length - 1; // -1 for EOF
+
+          // Parsing
+          const parser = new Parser(source);
+          const ast = parser.parse();
+
+          if (parser.errors.length > 0) {
+            // Show parser errors in Monaco
+            if (editor && monaco) {
+              const markers = parser.errors.map((err) => {
+                // Extract line number from error message if available
+                const lineMatch = err.match(/line (\d+)/i);
+                const line = lineMatch ? parseInt(lineMatch[1]) : 1;
+                return {
+                  severity: monaco.MarkerSeverity.Error,
+                  message: err,
+                  startLineNumber: line,
+                  startColumn: 1,
+                  endLineNumber: line,
+                  endColumn: 100,
+                };
+              });
+              monaco.editor.setModelMarkers(
+                editor.getModel(),
+                "blitz3d",
+                markers,
+              );
+            }
+            throw new Error(
+              "Parser errors:\n" + parser.errors.join("\n"),
+            );
+          }
+
+          // Code generation
+          const codegen = new CodeGenerator();
+          const wat = codegen.generate(ast);
+
+          const endTime = performance.now();
+          const compileTime = (endTime - startTime).toFixed(2);
+
+          // Store and display results
+          compiledWat = wat;
+          outputElement.textContent = wat;
+          astElement.textContent = JSON.stringify(ast, null, 2);
+
+          const lines = source.split("\n").length;
+          statusElement.innerHTML = `
                     <div class="success">✅ Compilation successful!</div>
                     <div class="info">
                         📊 Statistics:<br>
@@ -414,348 +586,483 @@
                         • WASM size: ${wat.length} bytes
                     </div>
                 `;
-            } catch (e) {
-                outputElement.textContent = 'Compilation failed. See error above.';
-                astElement.textContent = 'No AST generated due to errors.';
-                statusElement.innerHTML = `<div class="error">❌ Compilation Error:\n\n${e.message}</div>`;
-                console.error('Compilation error:', e);
+        } catch (e) {
+          outputElement.textContent =
+            "Compilation failed. See error above.";
+          astElement.textContent = "No AST generated due to errors.";
+          statusElement.innerHTML =
+            `<div class="error">❌ Compilation Error:\n\n${e.message}</div>`;
+          console.error("Compilation error:", e);
+        }
+      };
+
+      // Run compiled WASM (safe runner: Worker + watchdog + Stop)
+      window.runWasm = async function () {
+        const consoleElement = document.getElementById("console");
+        const statusElement = document.getElementById("output-status");
+
+        if (!compiledWat) {
+          statusElement.innerHTML =
+            '<div class="error">❌ Please compile the code first!</div>';
+          return;
+        }
+
+        try {
+          window.stopRun("Restarting");
+          unsafeStopRequested = false;
+
+          // Switch to console tab
+          switchTab("console");
+          consoleElement.textContent =
+            "Executing WASM in safe runner (Worker)...\n\n";
+
+          // Strip error comments and (start ...) directive so we can
+          // call main() manually after capturing the memory export
+          const cleanWat = compiledWat.split("\n")
+            .filter((line) => !line.includes("; ERROR:"))
+            .filter((line) => !line.trim().startsWith("(start "))
+            .join("\n");
+
+          // Convert WAT to WASM using wabt
+          const wabt = await WabtModule();
+          const wasmModule = wabt.parseWat("program.wat", cleanWat);
+          const { buffer: wasmBinary } = wasmModule.toBinary({});
+          const wasmBytes = wasmBinary.buffer.slice(
+            wasmBinary.byteOffset,
+            wasmBinary.byteOffset + wasmBinary.byteLength,
+          );
+
+          // Start worker per-run so a stuck program can't poison future runs
+          activeRunWorker = new Worker("wasm_runner_worker.js");
+          const timeoutMs = getRunTimeoutMs();
+          const hasGraphics = compiledWat.includes("b3d_graphics3d") ||
+            compiledWat.includes("b3d_renderworld");
+
+          activeRunWorker.onmessage = (ev) => {
+            const msg = ev.data || {};
+            if (msg.kind === "stdout") {
+              consoleElement.textContent += msg.text;
+              return;
             }
-        };
-        
-        // Run compiled WASM (safe runner: Worker + watchdog + Stop)
-        window.runWasm = async function() {
-            const consoleElement = document.getElementById('console');
-            const statusElement = document.getElementById('output-status');
-            
-            if (!compiledWat) {
-                statusElement.innerHTML = '<div class="error">❌ Please compile the code first!</div>';
-                return;
+            if (msg.kind === "error") {
+              consoleElement.textContent +=
+                `\n\n❌ Runtime Error:\n${msg.message}\n\n${
+                  msg.stack || ""
+                }`;
+              statusElement.innerHTML =
+                `<div class="error">❌ Runtime Error:\n\n${msg.message}</div>`;
+              window.stopRun("Error");
+              return;
             }
-            
-            try {
-                window.stopRun("Restarting");
-                unsafeStopRequested = false;
+            if (msg.kind === "done") {
+              consoleElement.textContent += "\n✅ Program finished.";
+              statusElement.innerHTML = hasGraphics
+                ? '<div class="success">✅ Program finished (graphics calls were stubbed in safe mode).</div>'
+                : '<div class="success">✅ Program executed! Check Console tab.</div>';
+              window.stopRun("Done");
+              return;
+            }
+          };
 
-                // Switch to console tab
-                switchTab('console');
-                consoleElement.textContent = 'Executing WASM in safe runner (Worker)...\n\n';
+          activeRunWorker.onerror = (e) => {
+            consoleElement.textContent += `\n\n❌ Worker Error:\n${
+              e.message || String(e)
+            }`;
+            statusElement.innerHTML =
+              `<div class="error">❌ Worker Error:\n\n${
+                e.message || String(e)
+              }</div>`;
+            window.stopRun("Worker error");
+          };
 
-                // Strip error comments and (start ...) directive so we can
-                // call main() manually after capturing the memory export
-                const cleanWat = compiledWat.split('\n')
-                    .filter(line => !line.includes('; ERROR:'))
-                    .filter(line => !line.trim().startsWith('(start '))
-                    .join('\n');
+          statusElement.innerHTML = hasGraphics
+            ? '<div class="info">ℹ️ Safe mode: graphics calls are stubbed (no rendering). Use “Run (Unsafe)” for Three.js rendering.</div>'
+            : '<div class="info">ℹ️ Safe mode: running in a killable Worker with a watchdog timeout.</div>';
 
-                // Convert WAT to WASM using wabt
-                const wabt = await WabtModule();
-                const wasmModule = wabt.parseWat('program.wat', cleanWat);
-                const { buffer: wasmBinary } = wasmModule.toBinary({});
-                const wasmBytes = wasmBinary.buffer.slice(
-                    wasmBinary.byteOffset,
-                    wasmBinary.byteOffset + wasmBinary.byteLength,
+          activeRunTimeoutId = setTimeout(() => {
+            consoleElement.textContent +=
+              `\n\n⏱ Timed out after ${timeoutMs}ms.`;
+            window.stopRun(`Timed out after ${timeoutMs}ms`);
+          }, timeoutMs);
+
+          activeRunWorker.postMessage({ kind: "run", wasmBytes }, [
+            wasmBytes,
+          ]);
+        } catch (e) {
+          consoleElement.textContent +=
+            `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ""}`;
+          statusElement.innerHTML =
+            `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
+          console.error("WASM execution error:", e);
+        }
+      };
+
+      // Unsafe runner: runs on main thread. Best-effort stop via throwing from Flip/RenderWorld.
+      window.runWasmUnsafe = async function () {
+        const consoleElement = document.getElementById("console");
+        const statusElement = document.getElementById("output-status");
+
+        if (!compiledWat) {
+          statusElement.innerHTML =
+            '<div class="error">❌ Please compile the code first!</div>';
+          return;
+        }
+
+        window.stopRun("Restarting (unsafe)");
+        unsafeStopRequested = false;
+
+        try {
+          switchTab("console");
+          consoleElement.textContent =
+            "Executing WASM on main thread (unsafe)...\n\n";
+
+          let memory = null;
+          let wasmInstance = null;
+          const timeoutMs = getRunTimeoutMs();
+          const startTime = Date.now();
+
+          function shouldAbortUnsafe() {
+            if (unsafeStopRequested) return "Stopped";
+            if (Date.now() - startTime > timeoutMs) {
+              return `Timed out after ${timeoutMs}ms`;
+            }
+            return null;
+          }
+
+          function readStr(ptr) {
+            if (!memory) return "";
+            const view = new Uint8Array(memory.buffer);
+            let s = "";
+            while (ptr < view.length && view[ptr] !== 0) {
+              s += String.fromCharCode(view[ptr]);
+              ptr++;
+            }
+            return s;
+          }
+
+          function allocStr(str, instance) {
+            if (!memory) return 0;
+            const heapPtrGlobal = instance.exports.__heap_ptr;
+            let ptr = heapPtrGlobal ? heapPtrGlobal.value : 4096;
+            const view = new Uint8Array(memory.buffer);
+            for (let i = 0; i < str.length; i++) {
+              view[ptr + i] = str.charCodeAt(i) & 0xFF;
+            }
+            view[ptr + str.length] = 0;
+            const result = ptr;
+            ptr += str.length + 1;
+            ptr = (ptr + 3) & ~3;
+            if (heapPtrGlobal) heapPtrGlobal.value = ptr;
+            return result;
+          }
+
+          const imports = {
+            env: {
+              print: (value) => {
+                consoleElement.textContent += value + "\n";
+              },
+              printFloat: (value) => {
+                consoleElement.textContent += value + "\n";
+              },
+              printString: (ptr) => {
+                consoleElement.textContent += readStr(ptr) + "\n";
+              },
+
+              b3d_len: (ptr) => readStr(ptr).length,
+              b3d_left: (ptr, n) =>
+                allocStr(readStr(ptr).substring(0, n), wasmInstance),
+              b3d_right: (ptr, n) => {
+                const s = readStr(ptr);
+                return allocStr(
+                  s.substring(s.length - n),
+                  wasmInstance,
                 );
+              },
+              b3d_mid: (ptr, start, len) =>
+                allocStr(
+                  readStr(ptr).substring(start - 1, start - 1 + len),
+                  wasmInstance,
+                ),
+              b3d_instr: (ptr1, ptr2, start) => {
+                const s = readStr(ptr1);
+                const find = readStr(ptr2);
+                const idx = s.indexOf(find, (start || 1) - 1);
+                return idx === -1 ? 0 : idx + 1;
+              },
+              b3d_upper: (ptr) =>
+                allocStr(readStr(ptr).toUpperCase(), wasmInstance),
+              b3d_lower: (ptr) =>
+                allocStr(readStr(ptr).toLowerCase(), wasmInstance),
+              b3d_trim: (ptr) =>
+                allocStr(readStr(ptr).trim(), wasmInstance),
+              b3d_chr: (code) =>
+                allocStr(String.fromCharCode(code), wasmInstance),
+              b3d_asc: (ptr) => {
+                const s = readStr(ptr);
+                return s.length > 0 ? s.charCodeAt(0) : 0;
+              },
+              b3d_str: (val) => allocStr(String(val), wasmInstance),
+              b3d_string: (ptr, count) =>
+                allocStr(readStr(ptr).repeat(count), wasmInstance),
+              b3d_replace: (ptr, findPtr, replPtr) =>
+                allocStr(
+                  readStr(ptr).split(readStr(findPtr)).join(
+                    readStr(replPtr),
+                  ),
+                  wasmInstance,
+                ),
 
-                // Start worker per-run so a stuck program can't poison future runs
-                activeRunWorker = new Worker('wasm_runner_worker.js');
-                const timeoutMs = getRunTimeoutMs();
-                const hasGraphics = compiledWat.includes('b3d_graphics3d') || compiledWat.includes('b3d_renderworld');
+              b3d_abs: (x) => Math.abs(x),
+              b3d_sgn: (x) => x > 0 ? 1 : x < 0 ? -1 : 0,
+              b3d_sin: (x) =>
+                Math.round(Math.sin(x * Math.PI / 180) * 1000) / 1000 |
+                0,
+              b3d_cos: (x) =>
+                Math.round(Math.cos(x * Math.PI / 180) * 1000) / 1000 |
+                0,
+              b3d_tan: (x) =>
+                Math.round(Math.tan(x * Math.PI / 180) * 1000) / 1000 |
+                0,
+              b3d_asin: (x) =>
+                Math.round(Math.asin(x) * 180 / Math.PI) | 0,
+              b3d_acos: (x) =>
+                Math.round(Math.acos(x) * 180 / Math.PI) | 0,
+              b3d_atan: (x) =>
+                Math.round(Math.atan(x) * 180 / Math.PI) | 0,
+              b3d_atan2: (y, x) =>
+                Math.round(Math.atan2(y, x) * 180 / Math.PI) | 0,
+              b3d_sqr: (x) => Math.sqrt(x) | 0,
+              b3d_floor: (x) => Math.floor(x),
+              b3d_ceil: (x) => Math.ceil(x),
+              b3d_log: (x) => Math.log(x) | 0,
+              b3d_exp: (x) => Math.exp(x) | 0,
 
-                activeRunWorker.onmessage = (ev) => {
-                    const msg = ev.data || {};
-                    if (msg.kind === 'stdout') {
-                        consoleElement.textContent += msg.text;
-                        return;
-                    }
-                    if (msg.kind === 'error') {
-                        consoleElement.textContent += `\n\n❌ Runtime Error:\n${msg.message}\n\n${msg.stack || ''}`;
-                        statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${msg.message}</div>`;
-                        window.stopRun("Error");
-                        return;
-                    }
-                    if (msg.kind === 'done') {
-                        consoleElement.textContent += '\n✅ Program finished.';
-                        statusElement.innerHTML = hasGraphics
-                            ? '<div class="success">✅ Program finished (graphics calls were stubbed in safe mode).</div>'
-                            : '<div class="success">✅ Program executed! Check Console tab.</div>';
-                        window.stopRun("Done");
-                        return;
-                    }
-                };
+              b3d_int: (x) => x | 0,
+              b3d_float: (x) => x,
 
-                activeRunWorker.onerror = (e) => {
-                    consoleElement.textContent += `\n\n❌ Worker Error:\n${e.message || String(e)}`;
-                    statusElement.innerHTML = `<div class="error">❌ Worker Error:\n\n${e.message || String(e)}</div>`;
-                    window.stopRun("Worker error");
-                };
+              b3d_rand: (lo, hi) =>
+                Math.floor(Math.random() * (hi - lo + 1)) + lo,
+              b3d_rnd: (lo, hi) =>
+                Math.floor(Math.random() * (hi - lo + 1)) + lo,
+              b3d_seedrnd: (_seed) => {},
 
-                statusElement.innerHTML = hasGraphics
-                    ? '<div class="info">ℹ️ Safe mode: graphics calls are stubbed (no rendering). Use “Run (Unsafe)” for Three.js rendering.</div>'
-                    : '<div class="info">ℹ️ Safe mode: running in a killable Worker with a watchdog timeout.</div>';
+              b3d_millisecs: () => Date.now() | 0,
+              b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
 
-                activeRunTimeoutId = setTimeout(() => {
-                    consoleElement.textContent += `\n\n⏱ Timed out after ${timeoutMs}ms.`;
-                    window.stopRun(`Timed out after ${timeoutMs}ms`);
-                }, timeoutMs);
+              b3d_graphics3d: (w, h) => {
+                if (!graphicsRuntime) {
+                  const canvas = document.getElementById(
+                    "renderCanvas",
+                  );
+                  graphicsRuntime = new window.Blitz3DGraphicsRuntime(
+                    canvas,
+                  );
+                }
+                graphicsRuntime.graphics3d(w, h);
+              },
+              b3d_graphics: (w, h) => {
+                console.log(`Graphics ${w}x${h}`);
+              },
+              b3d_createsphere: (s) =>
+                graphicsRuntime?.createsphere(s) || 1,
+              b3d_createcube: () => graphicsRuntime?.createcube() || 2,
+              b3d_createmesh: () => graphicsRuntime?.createmesh() || 3,
+              b3d_createsurface: (m) => {
+                console.log(`CreateSurface ${m}`);
+                return 4;
+              },
+              b3d_createcamera: () =>
+                graphicsRuntime?.createcamera() || 5,
+              b3d_createlight: (t) =>
+                graphicsRuntime?.createlight(t) || 6,
+              b3d_positionentity: (h, x, y, z) =>
+                graphicsRuntime?.positionentity(h, x, y, z),
+              b3d_rotateentity: (h, p, y, r) =>
+                graphicsRuntime?.rotateentity(h, p, y, r),
+              b3d_turnentity: (h, p, y, r) =>
+                graphicsRuntime?.turnentity(h, p, y, r),
+              b3d_scaleentity: (h, x, y, z) =>
+                graphicsRuntime?.scaleentity(h, x, y, z),
+              b3d_entityx: (h) => graphicsRuntime?.entityx(h) || 0,
+              b3d_entityy: (h) => graphicsRuntime?.entityy(h) || 0,
+              b3d_entityz: (h) => graphicsRuntime?.entityz(h) || 0,
+              b3d_entitydistance: (h1, h2) =>
+                graphicsRuntime?.entitydistance(h1, h2) || 0,
+              b3d_pointentity: (h, t) =>
+                graphicsRuntime?.pointentity(h, t),
+              b3d_lightcolor: (h, r, g, b) =>
+                graphicsRuntime?.lightcolor(h, r, g, b),
+              b3d_entitycolor: (h, r, g, b) =>
+                graphicsRuntime?.entitycolor(h, r, g, b),
+              b3d_entitytexture: (_h, _t) => {},
+              b3d_renderworld: () => {
+                const abortReason = shouldAbortUnsafe();
+                if (abortReason) throw new Error(abortReason);
+                return graphicsRuntime?.renderworld();
+              },
+              b3d_flip: () => {
+                const abortReason = shouldAbortUnsafe();
+                if (abortReason) throw new Error(abortReason);
+                return graphicsRuntime?.flip();
+              },
+              b3d_cls: () => graphicsRuntime?.cls(),
+              b3d_loadtexture: (_p) => 10,
+              b3d_loadimage: (_p) => 11,
+              b3d_loadmesh: (_p) => 12,
+              b3d_drawimage: (_i, _x, _y) => {},
+              b3d_addvertex: (s, _x, _y, _z) => {
+                console.log(`AddVertex ${s}`);
+                return 0;
+              },
+              b3d_addtriangle: (s, _v0, _v1, _v2) => {
+                console.log(`AddTriangle ${s}`);
+              },
+              b3d_animate: (_e, _m, _s, _f) => {},
+              b3d_createplane: () => 20,
+              b3d_createskybox: (_t) => 21,
+              b3d_keydown: (_k) => 0,
+            },
+          };
 
-                activeRunWorker.postMessage({ kind: 'run', wasmBytes }, [wasmBytes]);
-                
-            } catch (e) {
-                consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;
-                statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
-                console.error('WASM execution error:', e);
+          const cleanWat = compiledWat.split("\n")
+            .filter((line) => !line.includes("; ERROR:"))
+            .filter((line) => !line.trim().startsWith("(start "))
+            .join("\n");
+
+          const wabt = await WabtModule();
+          const wasmModule = wabt.parseWat("program.wat", cleanWat);
+          const { buffer } = wasmModule.toBinary({});
+          const module = await WebAssembly.instantiate(buffer, imports);
+          wasmInstance = module.instance;
+          memory = module.instance.exports.memory;
+
+          const hasGraphics = compiledWat.includes("b3d_graphics3d") ||
+            compiledWat.includes("b3d_renderworld");
+          if (hasGraphics) switchTab("canvas");
+
+          if (module.instance.exports.main) {
+            module.instance.exports.main();
+          }
+
+          consoleElement.textContent +=
+            "\n✅ Program executed successfully!";
+          statusElement.innerHTML =
+            '<div class="success">✅ Program executed! (unsafe)</div>';
+        } catch (e) {
+          consoleElement.textContent +=
+            `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ""}`;
+          statusElement.innerHTML =
+            `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
+          console.error("WASM execution error:", e);
+        }
+      };
+
+      // Log available examples after a short delay
+      setTimeout(() => {
+        console.log(
+          "📚 Available examples:",
+          Object.keys(examples).length,
+        );
+        console.log(
+          "   Basics:",
+          [
+            "hello",
+            "math",
+            "loops",
+            "functions",
+            "types",
+            "arrays",
+            "strings",
+            "conditionals",
+          ].filter((k) => examples[k]).length,
+        );
+        const graphicsKeys = [
+          "cube3d",
+          "colorfulCube",
+          "particles",
+          "textureLoad",
+          "meshLoad",
+          "lighting",
+          "skybox",
+          "sprite2d",
+          "collision",
+        ];
+        console.log(
+          "   Graphics:",
+          graphicsKeys.filter((k) => examples[k]).length,
+        );
+      }, 100);
+
+      // Initialize Monaco Editor
+      require.config({
+        paths: {
+          vs:
+            "https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs",
+        },
+      });
+      require(["vs/editor/editor.main"], function () {
+        let initialCode =
+          "; Simple Blitz3D Example\nx% = 5\ny% = 10\nz% = x + y\nPrint z";
+
+        // Check for URL parameter (shared code)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has("code")) {
+          try {
+            const base64 = decodeURIComponent(urlParams.get("code"));
+            const compressed = Uint8Array.from(
+              atob(base64),
+              (c) => c.charCodeAt(0),
+            );
+            initialCode = pako.inflate(compressed, { to: "string" });
+          } catch (error) {
+            console.error("Error loading shared code:", error);
+            alert("Error loading shared code. Using default example.");
+          }
+        } else {
+          // Try to restore auto-saved code
+          try {
+            const autosaved = localStorage.getItem(
+              "blitz3d-web-ide-autosave",
+            );
+            if (autosaved) {
+              initialCode = autosaved;
             }
-        };
+          } catch (e) {
+            console.warn("Could not restore auto-saved code:", e);
+          }
+        }
 
-        // Unsafe runner: runs on main thread. Best-effort stop via throwing from Flip/RenderWorld.
-        window.runWasmUnsafe = async function() {
-            const consoleElement = document.getElementById('console');
-            const statusElement = document.getElementById('output-status');
+        // Register Blitz3D language
+        if (window.registerBlitz3DLanguage) {
+          window.registerBlitz3DLanguage(monaco);
+        }
 
-            if (!compiledWat) {
-                statusElement.innerHTML = '<div class="error">❌ Please compile the code first!</div>';
-                return;
-            }
+        editor = monaco.editor.create(
+          document.getElementById("editor"),
+          {
+            value: initialCode,
+            language: "blitz3d",
+            theme: "blitz3d-dark",
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: "on",
+            automaticLayout: true,
+            "bracketPairColorization.enabled": true,
+            smoothScrolling: true,
+            cursorBlinking: "smooth",
+          },
+        );
 
-            window.stopRun("Restarting (unsafe)");
-            unsafeStopRequested = false;
-
-            try {
-                switchTab('console');
-                consoleElement.textContent = 'Executing WASM on main thread (unsafe)...\n\n';
-
-                let memory = null;
-                let wasmInstance = null;
-                const timeoutMs = getRunTimeoutMs();
-                const startTime = Date.now();
-
-                function shouldAbortUnsafe() {
-                    if (unsafeStopRequested) return "Stopped";
-                    if (Date.now() - startTime > timeoutMs) return `Timed out after ${timeoutMs}ms`;
-                    return null;
-                }
-
-                function readStr(ptr) {
-                    if (!memory) return '';
-                    const view = new Uint8Array(memory.buffer);
-                    let s = '';
-                    while (ptr < view.length && view[ptr] !== 0) {
-                        s += String.fromCharCode(view[ptr]);
-                        ptr++;
-                    }
-                    return s;
-                }
-
-                function allocStr(str, instance) {
-                    if (!memory) return 0;
-                    const heapPtrGlobal = instance.exports.__heap_ptr;
-                    let ptr = heapPtrGlobal ? heapPtrGlobal.value : 4096;
-                    const view = new Uint8Array(memory.buffer);
-                    for (let i = 0; i < str.length; i++) {
-                        view[ptr + i] = str.charCodeAt(i) & 0xFF;
-                    }
-                    view[ptr + str.length] = 0;
-                    const result = ptr;
-                    ptr += str.length + 1;
-                    ptr = (ptr + 3) & ~3;
-                    if (heapPtrGlobal) heapPtrGlobal.value = ptr;
-                    return result;
-                }
-
-                const imports = {
-                    env: {
-                        print: (value) => { consoleElement.textContent += value + '\n'; },
-                        printFloat: (value) => { consoleElement.textContent += value + '\n'; },
-                        printString: (ptr) => { consoleElement.textContent += readStr(ptr) + '\n'; },
-
-                        b3d_len: (ptr) => readStr(ptr).length,
-                        b3d_left: (ptr, n) => allocStr(readStr(ptr).substring(0, n), wasmInstance),
-                        b3d_right: (ptr, n) => { const s = readStr(ptr); return allocStr(s.substring(s.length - n), wasmInstance); },
-                        b3d_mid: (ptr, start, len) => allocStr(readStr(ptr).substring(start - 1, start - 1 + len), wasmInstance),
-                        b3d_instr: (ptr1, ptr2, start) => {
-                            const s = readStr(ptr1);
-                            const find = readStr(ptr2);
-                            const idx = s.indexOf(find, (start || 1) - 1);
-                            return idx === -1 ? 0 : idx + 1;
-                        },
-                        b3d_upper: (ptr) => allocStr(readStr(ptr).toUpperCase(), wasmInstance),
-                        b3d_lower: (ptr) => allocStr(readStr(ptr).toLowerCase(), wasmInstance),
-                        b3d_trim: (ptr) => allocStr(readStr(ptr).trim(), wasmInstance),
-                        b3d_chr: (code) => allocStr(String.fromCharCode(code), wasmInstance),
-                        b3d_asc: (ptr) => { const s = readStr(ptr); return s.length > 0 ? s.charCodeAt(0) : 0; },
-                        b3d_str: (val) => allocStr(String(val), wasmInstance),
-                        b3d_string: (ptr, count) => allocStr(readStr(ptr).repeat(count), wasmInstance),
-                        b3d_replace: (ptr, findPtr, replPtr) => allocStr(readStr(ptr).split(readStr(findPtr)).join(readStr(replPtr)), wasmInstance),
-
-                        b3d_abs: (x) => Math.abs(x),
-                        b3d_sgn: (x) => x > 0 ? 1 : x < 0 ? -1 : 0,
-                        b3d_sin: (x) => Math.round(Math.sin(x * Math.PI / 180) * 1000) / 1000 | 0,
-                        b3d_cos: (x) => Math.round(Math.cos(x * Math.PI / 180) * 1000) / 1000 | 0,
-                        b3d_tan: (x) => Math.round(Math.tan(x * Math.PI / 180) * 1000) / 1000 | 0,
-                        b3d_asin: (x) => Math.round(Math.asin(x) * 180 / Math.PI) | 0,
-                        b3d_acos: (x) => Math.round(Math.acos(x) * 180 / Math.PI) | 0,
-                        b3d_atan: (x) => Math.round(Math.atan(x) * 180 / Math.PI) | 0,
-                        b3d_atan2: (y, x) => Math.round(Math.atan2(y, x) * 180 / Math.PI) | 0,
-                        b3d_sqr: (x) => Math.sqrt(x) | 0,
-                        b3d_floor: (x) => Math.floor(x),
-                        b3d_ceil: (x) => Math.ceil(x),
-                        b3d_log: (x) => Math.log(x) | 0,
-                        b3d_exp: (x) => Math.exp(x) | 0,
-
-                        b3d_int: (x) => x | 0,
-                        b3d_float: (x) => x,
-
-                        b3d_rand: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
-                        b3d_rnd: (lo, hi) => Math.floor(Math.random() * (hi - lo + 1)) + lo,
-                        b3d_seedrnd: (_seed) => {},
-
-                        b3d_millisecs: () => Date.now() | 0,
-                        b3d_pow: (base, exp) => Math.pow(base, exp) | 0,
-
-                        b3d_graphics3d: (w, h) => {
-                            if (!graphicsRuntime) {
-                                const canvas = document.getElementById('renderCanvas');
-                                graphicsRuntime = new window.Blitz3DGraphicsRuntime(canvas);
-                            }
-                            graphicsRuntime.graphics3d(w, h);
-                        },
-                        b3d_graphics: (w, h) => { console.log(`Graphics ${w}x${h}`); },
-                        b3d_createsphere: (s) => graphicsRuntime?.createsphere(s) || 1,
-                        b3d_createcube: () => graphicsRuntime?.createcube() || 2,
-                        b3d_createmesh: () => graphicsRuntime?.createmesh() || 3,
-                        b3d_createsurface: (m) => { console.log(`CreateSurface ${m}`); return 4; },
-                        b3d_createcamera: () => graphicsRuntime?.createcamera() || 5,
-                        b3d_createlight: (t) => graphicsRuntime?.createlight(t) || 6,
-                        b3d_positionentity: (h, x, y, z) => graphicsRuntime?.positionentity(h, x, y, z),
-                        b3d_rotateentity: (h, p, y, r) => graphicsRuntime?.rotateentity(h, p, y, r),
-                        b3d_turnentity: (h, p, y, r) => graphicsRuntime?.turnentity(h, p, y, r),
-                        b3d_scaleentity: (h, x, y, z) => graphicsRuntime?.scaleentity(h, x, y, z),
-                        b3d_entityx: (h) => graphicsRuntime?.entityx(h) || 0,
-                        b3d_entityy: (h) => graphicsRuntime?.entityy(h) || 0,
-                        b3d_entityz: (h) => graphicsRuntime?.entityz(h) || 0,
-                        b3d_entitydistance: (h1, h2) => graphicsRuntime?.entitydistance(h1, h2) || 0,
-                        b3d_pointentity: (h, t) => graphicsRuntime?.pointentity(h, t),
-                        b3d_lightcolor: (h, r, g, b) => graphicsRuntime?.lightcolor(h, r, g, b),
-                        b3d_entitycolor: (h, r, g, b) => graphicsRuntime?.entitycolor(h, r, g, b),
-                        b3d_entitytexture: (_h, _t) => {},
-                        b3d_renderworld: () => {
-                            const abortReason = shouldAbortUnsafe();
-                            if (abortReason) throw new Error(abortReason);
-                            return graphicsRuntime?.renderworld();
-                        },
-                        b3d_flip: () => {
-                            const abortReason = shouldAbortUnsafe();
-                            if (abortReason) throw new Error(abortReason);
-                            return graphicsRuntime?.flip();
-                        },
-                        b3d_cls: () => graphicsRuntime?.cls(),
-                        b3d_loadtexture: (_p) => 10,
-                        b3d_loadimage: (_p) => 11,
-                        b3d_loadmesh: (_p) => 12,
-                        b3d_drawimage: (_i, _x, _y) => {},
-                        b3d_addvertex: (s, _x, _y, _z) => { console.log(`AddVertex ${s}`); return 0; },
-                        b3d_addtriangle: (s, _v0, _v1, _v2) => { console.log(`AddTriangle ${s}`); },
-                        b3d_animate: (_e, _m, _s, _f) => {},
-                        b3d_createplane: () => 20,
-                        b3d_createskybox: (_t) => 21,
-                        b3d_keydown: (_k) => 0,
-                    }
-                };
-
-                const cleanWat = compiledWat.split('\n')
-                    .filter(line => !line.includes('; ERROR:'))
-                    .filter(line => !line.trim().startsWith('(start '))
-                    .join('\n');
-
-                const wabt = await WabtModule();
-                const wasmModule = wabt.parseWat('program.wat', cleanWat);
-                const { buffer } = wasmModule.toBinary({});
-                const module = await WebAssembly.instantiate(buffer, imports);
-                wasmInstance = module.instance;
-                memory = module.instance.exports.memory;
-
-                const hasGraphics = compiledWat.includes('b3d_graphics3d') || compiledWat.includes('b3d_renderworld');
-                if (hasGraphics) switchTab('canvas');
-
-                if (module.instance.exports.main) {
-                    module.instance.exports.main();
-                }
-
-                consoleElement.textContent += '\n✅ Program executed successfully!';
-                statusElement.innerHTML = '<div class="success">✅ Program executed! (unsafe)</div>';
-            } catch (e) {
-                consoleElement.textContent += `\n\n❌ Runtime Error:\n${e.message}\n\n${e.stack || ''}`;
-                statusElement.innerHTML = `<div class="error">❌ Runtime Error:\n\n${e.message}</div>`;
-                console.error('WASM execution error:', e);
-            }
-        };
-        
-        // Log available examples after a short delay
-        setTimeout(() => {
-            console.log('📚 Available examples:', Object.keys(examples).length);
-            console.log('   Basics:', ['hello', 'math', 'loops', 'functions', 'types', 'arrays', 'strings', 'conditionals'].filter(k => examples[k]).length);
-            const graphicsKeys = ['cube3d', 'colorfulCube', 'particles', 'textureLoad', 'meshLoad', 'lighting', 'skybox', 'sprite2d', 'collision'];
-            console.log('   Graphics:', graphicsKeys.filter(k => examples[k]).length);
-        }, 100);
-        
-        // Initialize Monaco Editor
-        require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
-        require(['vs/editor/editor.main'], function() {
-            let initialCode = '; Simple Blitz3D Example\nx% = 5\ny% = 10\nz% = x + y\nPrint z';
-            
-            // Check for URL parameter (shared code)
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('code')) {
-                try {
-                    const base64 = decodeURIComponent(urlParams.get('code'));
-                    const compressed = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-                    initialCode = pako.inflate(compressed, { to: 'string' });
-                } catch (error) {
-                    console.error('Error loading shared code:', error);
-                    alert('Error loading shared code. Using default example.');
-                }
-            } else {
-                // Try to restore auto-saved code
-                try {
-                    const autosaved = localStorage.getItem('blitz3d-web-ide-autosave');
-                    if (autosaved) {
-                        initialCode = autosaved;
-                    }
-                } catch (e) {
-                    console.warn('Could not restore auto-saved code:', e);
-                }
-            }
-            
-            // Register Blitz3D language
-            if (window.registerBlitz3DLanguage) {
-                window.registerBlitz3DLanguage(monaco);
-            }
-            
-            editor = monaco.editor.create(document.getElementById('editor'), {
-                value: initialCode,
-                language: 'blitz3d',
-                theme: 'blitz3d-dark',
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: 'on',
-                automaticLayout: true,
-                'bracketPairColorization.enabled': true,
-                smoothScrolling: true,
-                cursorBlinking: 'smooth'
-            });
-            
-            // Auto-compile on change
-            let compileTimeout;
-            editor.onDidChangeModelContent(() => {
-                clearTimeout(compileTimeout);
-                compileTimeout = setTimeout(() => compile(), 1000);
-            });
-            
-            // Initial compile
-            setTimeout(() => compile(), 500);
+        // Auto-compile on change
+        let compileTimeout;
+        editor.onDidChangeModelContent(() => {
+          clearTimeout(compileTimeout);
+          compileTimeout = setTimeout(() => compile(), 1000);
         });
-        
 
+        // Initial compile
+        setTimeout(() => compile(), 500);
+      });
     </script>
-</body>
+  </body>
 </html>

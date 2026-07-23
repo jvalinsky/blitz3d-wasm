@@ -8,4 +8,3 @@ if (Deno.args.length < 1) {
 const path = Deno.args[0];
 const bytes = Deno.readFileSync(path);
 new WebAssembly.Module(bytes);
-

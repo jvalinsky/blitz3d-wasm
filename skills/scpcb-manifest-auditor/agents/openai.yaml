@@ -2,4 +2,3 @@ interface:
   display_name: "SCPCB Manifest Auditor"
   short_description: "Fix/validate scpcb_manifest.json + dist assets"
   default_prompt: "Use $scpcb-manifest-auditor to diagnose this manifest/asset failure and provide the minimal manifest or asset-conversion fix plus the exact re-check command."
-

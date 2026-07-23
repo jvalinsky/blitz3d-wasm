@@ -6,7 +6,8 @@ const writeU32LE = (view: DataView, offset: number, value: number) => {
   view.setUint32(offset, value >>> 0, true);
 };
 
-const readU32LE = (view: DataView, offset: number) => view.getUint32(offset, true);
+const readU32LE = (view: DataView, offset: number) =>
+  view.getUint32(offset, true);
 
 export const encodeSmpk = (file: SmpkFile): Uint8Array => {
   const jsonText = JSON.stringify(file.json);
@@ -53,4 +54,3 @@ export const decodeSmpk = (bytes: Uint8Array): SmpkFile => {
   const bin = bytes.subarray(binStart, binEnd);
   return { json, bin };
 };
-

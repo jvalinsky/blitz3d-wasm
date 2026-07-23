@@ -1,13 +1,17 @@
 # WASM Analyzer for Blitz3D Compiler
 
-Comprehensive analysis toolkit for validating and debugging WebAssembly output from the Blitz3D compiler.
+Comprehensive analysis toolkit for validating and debugging WebAssembly output
+from the Blitz3D compiler.
 
 ## Features
 
-- **Stack Balance Validation**: Verifies WASM modules don't have stack underflow/overflow using the WASM spec 3-stack algorithm
-- **Type Consistency Checking**: Detects type mismatches in function calls and operations  
+- **Stack Balance Validation**: Verifies WASM modules don't have stack
+  underflow/overflow using the WASM spec 3-stack algorithm
+- **Type Consistency Checking**: Detects type mismatches in function calls and
+  operations
 - **Control Flow Analysis**: Validates block structure and branch depths
-- **Code Metrics**: Instruction counts, function sizes, stack depths, branch/call statistics
+- **Code Metrics**: Instruction counts, function sizes, stack depths,
+  branch/call statistics
 - **Visualizations**: SVG charts and interactive HTML dashboards
 - **Multiple Report Formats**: Text, JSON, Markdown, JUnit XML
 
@@ -59,12 +63,12 @@ python3 ../wasm_error_digest.py output.wasm --max 5 --context 1
 ### Programmatic Usage
 
 ```javascript
-import { WASMAnalyzer } from './core.js';
-import { visualizeAnalysis } from './visualize.js';
-import { generateReport } from './report.js';
+import { WASMAnalyzer } from "./core.js";
+import { visualizeAnalysis } from "./visualize.js";
+import { generateReport } from "./report.js";
 
 // Analyze a WASM file
-const analysis = await WASMAnalyzer.fromFile('output.wasm');
+const analysis = await WASMAnalyzer.fromFile("output.wasm");
 const report = analysis.generateReport();
 
 // Generate visualizations
@@ -79,26 +83,28 @@ console.log(`Stack Valid: ${report.summary.stackValid}`);
 
 When analyzing, the following files are generated:
 
-| File | Description |
-|------|-------------|
-| `dashboard.html` | Interactive summary dashboard with metrics |
-| `stack-depth.svg` | Bar chart of max stack depth per function |
-| `instructions.svg` | Top 15 most frequent instructions |
-| `function-sizes.svg` | Function size distribution |
-| `errors.svg` | Error heatmap by instruction index |
-| `analysis.json` | Complete analysis data (JSON) |
+| File                 | Description                                |
+| -------------------- | ------------------------------------------ |
+| `dashboard.html`     | Interactive summary dashboard with metrics |
+| `stack-depth.svg`    | Bar chart of max stack depth per function  |
+| `instructions.svg`   | Top 15 most frequent instructions          |
+| `function-sizes.svg` | Function size distribution                 |
+| `errors.svg`         | Error heatmap by instruction index         |
+| `analysis.json`      | Complete analysis data (JSON)              |
 
 ## Analysis Aspects
 
 ### Stack Balance
 
-The analyzer simulates WASM's three-stack validation algorithm (from the [WASM spec](https://webassembly.github.io/spec/core/appendix/algorithm.html)):
+The analyzer simulates WASM's three-stack validation algorithm (from the
+[WASM spec](https://webassembly.github.io/spec/core/appendix/algorithm.html)):
 
 - **Value Stack (vals)**: Tracks types of values on operand stack
 - **Control Stack (ctrls)**: Tracks block nesting and stack heights
 - **Initialization Stack (inits)**: Tracks initialized local variables
 
 Common issues detected:
+
 ```
 type mismatch at end of `if true` branch, expected [] but got [i32]
 Stack underflow at instruction 42
@@ -108,6 +114,7 @@ Function ends with 2 values on stack
 ### Type Consistency
 
 Verifies:
+
 - Function call argument types match signatures
 - Numeric literal types are correct
 - Type conversion operations are valid
@@ -115,6 +122,7 @@ Verifies:
 ### Control Flow
 
 Validates:
+
 - Block structure (if/loop nesting)
 - Branch depths don't exceed control stack
 - All blocks are properly closed
@@ -212,7 +220,7 @@ Generates JUnit-compatible XML for integration with CI systems.
 
 ```javascript
 // Create analyzer from file
-const analyzer = await WASMAnalyzer.fromFile('output.wasm');
+const analyzer = await WASMAnalyzer.fromFile("output.wasm");
 
 // Generate full report
 const report = analyzer.generateReport();
@@ -236,13 +244,14 @@ const markdown = generator.generateMarkdownReport();
 const junit = generator.generateJUnitXML();
 
 // Save to file
-generator.saveReport('report.txt', 'text');
-generator.saveReport('report.json', 'json');
+generator.saveReport("report.txt", "text");
+generator.saveReport("report.json", "json");
 ```
 
 ## Dependencies
 
 Uses **@webassemblyjs/wasm-parser** for WASM binary parsing:
+
 - AST-based parsing of WASM binaries
 - Full support for all WASM instruction types
 - Works in Deno and browser environments
@@ -252,6 +261,7 @@ Uses **@webassemblyjs/wasm-parser** for WASM binary parsing:
 ### "No module parsed"
 
 Ensure the file is a valid WASM binary:
+
 ```bash
 wasm-validate output.wasm
 ```
@@ -259,6 +269,7 @@ wasm-validate output.wasm
 ### Out of memory
 
 Increase Deno memory limit (if running on constrained systems):
+
 ```bash
 DENO_VERSION=$(deno --version | head -n1)
 # adjust Deno/V8 memory flags as needed
@@ -268,9 +279,11 @@ DENO_VERSION=$(deno --version | head -n1)
 
 ### Issue: "Type mismatch at end of if branch"
 
-**Cause**: Function call return values not being dropped when used as statements.
+**Cause**: Function call return values not being dropped when used as
+statements.
 
 **Fix**:
+
 ```blitz3d
 ' Before (problematic)
 If SomeFunction() Then
@@ -293,6 +306,7 @@ End If
 ## Performance
 
 The analyzer processes ~1000-5000 instructions/second. For large modules:
+
 - Use batch processing for multiple files
 - Consider parallel analysis for directory scans
 

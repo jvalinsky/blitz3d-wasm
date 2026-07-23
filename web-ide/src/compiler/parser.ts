@@ -1,16 +1,18 @@
 /**
  * Blitz3D Parser
- * 
+ *
  * Converts tokens into an Abstract Syntax Tree (AST)
  */
 
-import { Token, TokenType, Lexer } from './lexer';
-import * as AST from './ast';
+import { Lexer, Token, TokenType } from "./lexer";
+import * as AST from "./ast";
 
 export class ParseError extends Error {
   constructor(message: string, public token: Token) {
-    super(`Parse error at line ${token.line}, column ${token.column}: ${message}`);
-    this.name = 'ParseError';
+    super(
+      `Parse error at line ${token.line}, column ${token.column}: ${message}`,
+    );
+    this.name = "ParseError";
   }
 }
 
@@ -23,20 +25,20 @@ export class Parser {
     const lexer = new Lexer(source);
     const result = lexer.tokenize();
     this.tokens = result.tokens;
-    
+
     // Report lexer errors
     if (result.errors.length > 0) {
-      console.error('Lexer errors:', result.errors);
+      console.error("Lexer errors:", result.errors);
     }
   }
 
   parse(): AST.Program {
     const statements: AST.Statement[] = [];
-    
+
     // Safety guard: prevent infinite parsing loops
     let iterations = 0;
     const MAX_STATEMENTS = 10000; // Max statements in a program
-    
+
     while (!this.isAtEnd() && iterations++ < MAX_STATEMENTS) {
       try {
         const stmt = this.statement();
@@ -53,19 +55,20 @@ export class Parser {
     }
 
     if (iterations >= MAX_STATEMENTS) {
-      const error = 'Parser exceeded maximum statement count (possible infinite loop or extremely large program)';
+      const error =
+        "Parser exceeded maximum statement count (possible infinite loop or extremely large program)";
       this.errors.push(error);
       console.error(error);
     }
 
-    return { type: 'Program', statements };
+    return { type: "Program", statements };
   }
 
   // Statement parsing
   private statement(): AST.Statement | null {
     // Skip newlines
     while (this.match(TokenType.NEWLINE)) {}
-    
+
     if (this.isAtEnd()) return null;
 
     // Function declaration
@@ -79,7 +82,14 @@ export class Parser {
     }
 
     // Variable declaration
-    if (this.match(TokenType.LOCAL, TokenType.GLOBAL, TokenType.CONST, TokenType.DIM)) {
+    if (
+      this.match(
+        TokenType.LOCAL,
+        TokenType.GLOBAL,
+        TokenType.CONST,
+        TokenType.DIM,
+      )
+    ) {
       return this.variableDeclaration();
     }
 
@@ -93,21 +103,27 @@ export class Parser {
 
     // Goto statement
     if (this.match(TokenType.GOTO)) {
-      const label = this.consume(TokenType.IDENTIFIER, 'Expected label name after Goto').value;
-      return { type: 'GotoStatement', label };
+      const label =
+        this.consume(TokenType.IDENTIFIER, "Expected label name after Goto")
+          .value;
+      return { type: "GotoStatement", label };
     }
 
     // Gosub statement
     if (this.match(TokenType.GOSUB)) {
-      const label = this.consume(TokenType.IDENTIFIER, 'Expected label name after Gosub').value;
-      return { type: 'GosubStatement', label };
+      const label =
+        this.consume(TokenType.IDENTIFIER, "Expected label name after Gosub")
+          .value;
+      return { type: "GosubStatement", label };
     }
 
     // Dot-prefix labels (e.g. .labelName)
-    if (this.check(TokenType.DOT) && this.peekNext().type === TokenType.IDENTIFIER) {
+    if (
+      this.check(TokenType.DOT) && this.peekNext().type === TokenType.IDENTIFIER
+    ) {
       this.advance(); // consume DOT
       const labelName = this.advance().value; // consume IDENTIFIER
-      return { type: 'LabelStatement', name: labelName };
+      return { type: "LabelStatement", name: labelName };
     }
 
     // Check for function calls without parentheses (Blitz3D feature)
@@ -115,47 +131,61 @@ export class Parser {
     if (this.check(TokenType.IDENTIFIER)) {
       const name = this.peek().value;
       const nextToken = this.peekNext();
-      
+
       // Check for implicit variable assignment (identifier followed by =)
       if (nextToken.type === TokenType.EQ) {
         const varName = this.advance().value; // consume identifier
         this.advance(); // consume =
         const value = this.expression();
         return {
-          type: 'Assignment',
-          target: { type: 'Identifier', name: varName },
-          value: value
+          type: "Assignment",
+          target: { type: "Identifier", name: varName },
+          value: value,
         } as AST.Assignment;
       }
-      
+
       // Check if this looks like a function call without parentheses
       // (identifier followed by something that could be an argument)
-      if (nextToken.type !== TokenType.LPAREN && nextToken.type !== TokenType.NEWLINE && 
-          nextToken.type !== TokenType.EOF && !this.isEndOfStatement(nextToken)) {
+      if (
+        nextToken.type !== TokenType.LPAREN &&
+        nextToken.type !== TokenType.NEWLINE &&
+        nextToken.type !== TokenType.EOF && !this.isEndOfStatement(nextToken)
+      ) {
         this.advance(); // consume function name
-        
+
         // Parse comma-separated arguments
         const args: AST.Expression[] = [];
         if (!this.check(TokenType.NEWLINE) && !this.isAtEnd()) {
           do {
             args.push(this.expression());
-          } while (this.match(TokenType.COMMA) && !this.check(TokenType.NEWLINE));
+          } while (
+            this.match(TokenType.COMMA) && !this.check(TokenType.NEWLINE)
+          );
         }
-        
+
         return {
-          type: 'ExpressionStatement',
+          type: "ExpressionStatement",
           expression: {
-            type: 'FunctionCall',
-            name: { type: 'Identifier', name: name },
-            arguments: args
-          } as AST.FunctionCall
+            type: "FunctionCall",
+            name: { type: "Identifier", name: name },
+            arguments: args,
+          } as AST.FunctionCall,
         };
       }
     }
 
     // Check for loop/section terminators - return null to signal end of block
-    if (this.check(TokenType.NEXT, TokenType.WEND, TokenType.UNTIL, TokenType.FOREVER,
-                   TokenType.CASE, TokenType.DEFAULT, TokenType.ENDIF)) {
+    if (
+      this.check(
+        TokenType.NEXT,
+        TokenType.WEND,
+        TokenType.UNTIL,
+        TokenType.FOREVER,
+        TokenType.CASE,
+        TokenType.DEFAULT,
+        TokenType.ENDIF,
+      )
+    ) {
       return null;
     }
 
@@ -163,14 +193,16 @@ export class Parser {
     // otherwise it's a standalone End statement (program termination)
     if (this.check(TokenType.END)) {
       const next = this.peekNext();
-      if (next.type === TokenType.FUNCTION || next.type === TokenType.TYPE ||
-          next.type === TokenType.IF || next.type === TokenType.SELECT ||
-          next.type === TokenType.WHILE) {
+      if (
+        next.type === TokenType.FUNCTION || next.type === TokenType.TYPE ||
+        next.type === TokenType.IF || next.type === TokenType.SELECT ||
+        next.type === TokenType.WHILE
+      ) {
         return null; // Block terminator — caller consumes it
       }
       // Standalone End statement
       this.advance(); // consume END
-      return { type: 'EndStatement' };
+      return { type: "EndStatement" };
     }
 
     // ELSE / ELSEIF as block terminator
@@ -199,40 +231,42 @@ export class Parser {
   }
 
   private functionDeclaration(): AST.FunctionDeclaration {
-    let name = this.consume(TokenType.IDENTIFIER, 'Expected function name').value;
-    
+    let name =
+      this.consume(TokenType.IDENTIFIER, "Expected function name").value;
+
     // Check for type suffix and STRIP IT from name (like Swift compiler does)
     let returnType: AST.TypeAnnotation | undefined;
     const lastChar = name[name.length - 1];
-    if (lastChar === '%') {
-      returnType = { kind: 'primitive', name: 'Int' };
+    if (lastChar === "%") {
+      returnType = { kind: "primitive", name: "Int" };
       name = name.slice(0, -1); // STRIP SUFFIX
-    } else if (lastChar === '#') {
-      returnType = { kind: 'primitive', name: 'Float' };
+    } else if (lastChar === "#") {
+      returnType = { kind: "primitive", name: "Float" };
       name = name.slice(0, -1); // STRIP SUFFIX
-    } else if (lastChar === '$') {
-      returnType = { kind: 'primitive', name: 'String' };
+    } else if (lastChar === "$") {
+      returnType = { kind: "primitive", name: "String" };
       name = name.slice(0, -1); // STRIP SUFFIX
     }
 
     this.consume(TokenType.LPAREN, 'Expected "(" after function name');
-    
+
     const parameters: AST.Parameter[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        let paramName = this.consume(TokenType.IDENTIFIER, 'Expected parameter name').value;
-        let paramType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
-        
+        let paramName =
+          this.consume(TokenType.IDENTIFIER, "Expected parameter name").value;
+        let paramType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
+
         // Check for type suffix in parameter name and STRIP IT
         const lastChar = paramName[paramName.length - 1];
-        if (lastChar === '%') {
-          paramType = { kind: 'primitive', name: 'Int' };
+        if (lastChar === "%") {
+          paramType = { kind: "primitive", name: "Int" };
           paramName = paramName.slice(0, -1); // STRIP SUFFIX
-        } else if (lastChar === '#') {
-          paramType = { kind: 'primitive', name: 'Float' };
+        } else if (lastChar === "#") {
+          paramType = { kind: "primitive", name: "Float" };
           paramName = paramName.slice(0, -1); // STRIP SUFFIX
-        } else if (lastChar === '$') {
-          paramType = { kind: 'primitive', name: 'String' };
+        } else if (lastChar === "$") {
+          paramType = { kind: "primitive", name: "String" };
           paramName = paramName.slice(0, -1); // STRIP SUFFIX
         }
 
@@ -245,7 +279,7 @@ export class Parser {
         parameters.push({ name: paramName, type: paramType, defaultValue });
       } while (this.match(TokenType.COMMA));
     }
-    
+
     this.consume(TokenType.RPAREN, 'Expected ")" after parameters');
     this.consumeNewlines();
 
@@ -259,29 +293,30 @@ export class Parser {
     this.consume(TokenType.FUNCTION, 'Expected "Function" after "End"');
 
     return {
-      type: 'FunctionDeclaration',
+      type: "FunctionDeclaration",
       name,
       parameters,
       returnType,
-      body
+      body,
     };
   }
 
   private typeDeclaration(): AST.TypeDeclaration {
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected type name').value;
+    const name = this.consume(TokenType.IDENTIFIER, "Expected type name").value;
     this.consumeNewlines();
 
     const fields: AST.TypeField[] = [];
     while (!this.check(TokenType.END) && !this.isAtEnd()) {
       if (this.match(TokenType.NEWLINE)) continue;
-      
+
       if (this.check(TokenType.FIELD)) {
         this.advance();
-        const fieldName = this.consume(TokenType.IDENTIFIER, 'Expected field name').value;
-        
-        let fieldType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
+        const fieldName =
+          this.consume(TokenType.IDENTIFIER, "Expected field name").value;
+
+        let fieldType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
         const lastChar = fieldName[fieldName.length - 1];
-        if (['#', '$', '%'].includes(lastChar)) {
+        if (["#", "$", "%"].includes(lastChar)) {
           fieldType = this.suffixToType(lastChar);
         }
 
@@ -295,19 +330,24 @@ export class Parser {
     this.consume(TokenType.END, 'Expected "End" after type body');
     this.consume(TokenType.TYPE, 'Expected "Type" after "End"');
 
-    return { type: 'TypeDeclaration', name, fields };
+    return { type: "TypeDeclaration", name, fields };
   }
 
   private variableDeclaration(): AST.VariableDeclaration {
-    const scope = this.previous().type === TokenType.LOCAL ? 'local' :
-                  this.previous().type === TokenType.GLOBAL ? 'global' :
-                  this.previous().type === TokenType.CONST ? 'const' : 'dim';
+    const scope = this.previous().type === TokenType.LOCAL
+      ? "local"
+      : this.previous().type === TokenType.GLOBAL
+      ? "global"
+      : this.previous().type === TokenType.CONST
+      ? "const"
+      : "dim";
 
-    const name = this.consume(TokenType.IDENTIFIER, 'Expected variable name').value;
-    
-    let varType: AST.TypeAnnotation = { kind: 'primitive', name: 'Int' };
+    const name =
+      this.consume(TokenType.IDENTIFIER, "Expected variable name").value;
+
+    let varType: AST.TypeAnnotation = { kind: "primitive", name: "Int" };
     const lastChar = name[name.length - 1];
-    if (['#', '$', '%'].includes(lastChar)) {
+    if (["#", "$", "%"].includes(lastChar)) {
       varType = this.suffixToType(lastChar);
     }
 
@@ -329,12 +369,12 @@ export class Parser {
     }
 
     return {
-      type: 'VariableDeclaration',
+      type: "VariableDeclaration",
       name,
       varType,
       scope,
       dimensions,
-      initializer
+      initializer,
     };
   }
 
@@ -346,7 +386,7 @@ export class Parser {
       if (value) values.push(value);
       this.match(TokenType.COMMA); // optional comma
     }
-    return { type: 'DataStatement', values };
+    return { type: "DataStatement", values };
   }
 
   private readStatement(): AST.ReadStatement {
@@ -354,27 +394,30 @@ export class Parser {
     while (!this.check(TokenType.NEWLINE, TokenType.EOF) && !this.isAtEnd()) {
       if (this.check(TokenType.IDENTIFIER)) {
         const name = this.advance().value;
-        variables.push({ type: 'Identifier', name });
+        variables.push({ type: "Identifier", name });
       }
       this.match(TokenType.COMMA);
     }
-    return { type: 'ReadStatement', variables };
+    return { type: "ReadStatement", variables };
   }
 
   private restoreStatement(): AST.RestoreStatement {
     // Restore takes an optional label (not implemented yet)
-    return { type: 'RestoreStatement' };
+    return { type: "RestoreStatement" };
   }
 
   private includeStatement(): AST.IncludeStatement {
     // Include "filename"
     const filename = this.expression();
-    if (filename.type !== 'StringLiteral') {
-      throw new ParseError('Include requires a string literal', this.previous());
+    if (filename.type !== "StringLiteral") {
+      throw new ParseError(
+        "Include requires a string literal",
+        this.previous(),
+      );
     }
     return {
-      type: 'IncludeStatement',
-      filename: filename.value
+      type: "IncludeStatement",
+      filename: filename.value,
     };
   }
 
@@ -384,13 +427,25 @@ export class Parser {
     this.consumeNewlines();
 
     const thenBranch: AST.Statement[] = [];
-    while (!this.check(TokenType.ELSE, TokenType.ELSEIF, TokenType.ENDIF, TokenType.END) && !this.isAtEnd()) {
+    while (
+      !this.check(
+        TokenType.ELSE,
+        TokenType.ELSEIF,
+        TokenType.ENDIF,
+        TokenType.END,
+      ) && !this.isAtEnd()
+    ) {
       const stmt = this.statement();
       if (stmt) thenBranch.push(stmt);
     }
 
-    const elseIfBranches: Array<{ condition: AST.Expression; body: AST.Statement[] }> = [];
-    while (this.match(TokenType.ELSEIF) || (this.check(TokenType.ELSE) && this.peekNext().type === TokenType.IF)) {
+    const elseIfBranches: Array<
+      { condition: AST.Expression; body: AST.Statement[] }
+    > = [];
+    while (
+      this.match(TokenType.ELSEIF) ||
+      (this.check(TokenType.ELSE) && this.peekNext().type === TokenType.IF)
+    ) {
       // Handle both "ElseIf" (single token) and "Else If" (two tokens)
       if (this.previous().type !== TokenType.ELSEIF) {
         this.advance(); // consume ELSE
@@ -401,7 +456,14 @@ export class Parser {
       this.consumeNewlines();
 
       const elseIfBody: AST.Statement[] = [];
-      while (!this.check(TokenType.ELSE, TokenType.ELSEIF, TokenType.ENDIF, TokenType.END) && !this.isAtEnd()) {
+      while (
+        !this.check(
+          TokenType.ELSE,
+          TokenType.ELSEIF,
+          TokenType.ENDIF,
+          TokenType.END,
+        ) && !this.isAtEnd()
+      ) {
         const stmt = this.statement();
         if (stmt) elseIfBody.push(stmt);
       }
@@ -424,16 +486,23 @@ export class Parser {
       this.consume(TokenType.ENDIF, 'Expected "EndIf" or "End If"');
     }
 
-    return { type: 'IfStatement', condition, thenBranch, elseIfBranches, elseBranch };
+    return {
+      type: "IfStatement",
+      condition,
+      thenBranch,
+      elseIfBranches,
+      elseBranch,
+    };
   }
 
   private forLoop(): AST.ForLoop {
-    const variable = this.consume(TokenType.IDENTIFIER, 'Expected loop variable').value;
+    const variable =
+      this.consume(TokenType.IDENTIFIER, "Expected loop variable").value;
     this.consume(TokenType.EQ, 'Expected "=" after loop variable');
     const start = this.expression();
     this.consume(TokenType.TO, 'Expected "To" in for loop');
     const end = this.expression();
-    
+
     let step: AST.Expression | undefined;
     if (this.match(TokenType.STEP)) {
       step = this.expression();
@@ -450,7 +519,7 @@ export class Parser {
     this.consume(TokenType.NEXT, 'Expected "Next" after for loop body');
     this.match(TokenType.IDENTIFIER); // Optional variable name after Next
 
-    return { type: 'ForLoop', variable, start, end, step, body };
+    return { type: "ForLoop", variable, start, end, step, body };
   }
 
   private whileLoop(): AST.WhileLoop {
@@ -458,7 +527,12 @@ export class Parser {
     this.consumeNewlines();
 
     const body: AST.Statement[] = [];
-    while (!this.check(TokenType.WEND) && !(this.check(TokenType.END) && this.peekNext().type === TokenType.WHILE) && !this.isAtEnd()) {
+    while (
+      !this.check(TokenType.WEND) &&
+      !(this.check(TokenType.END) &&
+        this.peekNext().type === TokenType.WHILE) &&
+      !this.isAtEnd()
+    ) {
       const stmt = this.statement();
       if (stmt) body.push(stmt);
     }
@@ -469,10 +543,13 @@ export class Parser {
     } else if (this.match(TokenType.END)) {
       this.consume(TokenType.WHILE, 'Expected "While" after "End"');
     } else {
-      this.consume(TokenType.WEND, 'Expected "Wend" or "End While" after while loop body');
+      this.consume(
+        TokenType.WEND,
+        'Expected "Wend" or "End While" after while loop body',
+      );
     }
 
-    return { type: 'WhileLoop', condition, body };
+    return { type: "WhileLoop", condition, body };
   }
 
   private repeatLoop(): AST.RepeatLoop {
@@ -488,10 +565,13 @@ export class Parser {
     if (this.match(TokenType.UNTIL)) {
       condition = this.expression();
     } else {
-      this.consume(TokenType.FOREVER, 'Expected "Until" or "Forever" after repeat loop');
+      this.consume(
+        TokenType.FOREVER,
+        'Expected "Until" or "Forever" after repeat loop',
+      );
     }
 
-    return { type: 'RepeatStatement', body, condition };
+    return { type: "RepeatStatement", body, condition };
   }
 
   private selectStatement(): AST.SelectStatement {
@@ -501,13 +581,22 @@ export class Parser {
     const cases: AST.CaseClause[] = [];
     let defaultCase: AST.Statement[] | undefined;
 
-    while ((this.check(TokenType.CASE) || this.check(TokenType.DEFAULT)) && !this.isAtEnd()) {
-      if (this.match(TokenType.DEFAULT) || (this.match(TokenType.CASE) && this.check(TokenType.DEFAULT))) {
+    while (
+      (this.check(TokenType.CASE) || this.check(TokenType.DEFAULT)) &&
+      !this.isAtEnd()
+    ) {
+      if (
+        this.match(TokenType.DEFAULT) ||
+        (this.match(TokenType.CASE) && this.check(TokenType.DEFAULT))
+      ) {
         // Handle "Default" or "Case Default"
         if (this.check(TokenType.DEFAULT)) this.advance();
         this.consumeNewlines();
         defaultCase = [];
-        while (!this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) && !this.isAtEnd()) {
+        while (
+          !this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) &&
+          !this.isAtEnd()
+        ) {
           const stmt = this.statement();
           if (stmt) defaultCase.push(stmt);
         }
@@ -519,7 +608,10 @@ export class Parser {
 
         this.consumeNewlines();
         const body: AST.Statement[] = [];
-        while (!this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) && !this.isAtEnd()) {
+        while (
+          !this.check(TokenType.CASE, TokenType.DEFAULT, TokenType.END) &&
+          !this.isAtEnd()
+        ) {
           const stmt = this.statement();
           if (stmt) body.push(stmt);
         }
@@ -531,7 +623,7 @@ export class Parser {
     this.consume(TokenType.END, 'Expected "End" after select statement');
     this.consume(TokenType.SELECT, 'Expected "Select" after "End"');
 
-    return { type: 'SelectStatement', expression, cases, defaultCase };
+    return { type: "SelectStatement", expression, cases, defaultCase };
   }
 
   private returnStatement(): AST.ReturnStatement {
@@ -539,7 +631,7 @@ export class Parser {
     if (!this.check(TokenType.NEWLINE) && !this.isAtEnd()) {
       value = this.expression();
     }
-    return { type: 'ReturnStatement', value };
+    return { type: "ReturnStatement", value };
   }
 
   private expressionStatement(): AST.Statement {
@@ -548,18 +640,32 @@ export class Parser {
     // Check if this is really an assignment disguised as an equality BinaryOp
     // e.g. arr(0) = 42 gets parsed as BinaryOp{left: FunctionCall, op: '=', right: 42}
     // Convert to Assignment if the left side is a valid target
-    if (expr.type === 'BinaryOp' && expr.operator === '=') {
+    if (expr.type === "BinaryOp" && expr.operator === "=") {
       let target = expr.left;
       // Convert FunctionCall(Identifier, args) to ArrayAccess
-      if (target.type === 'FunctionCall' && target.name && target.name.type === 'Identifier') {
-        target = { type: 'ArrayAccess', array: target.name, indices: target.arguments };
+      if (
+        target.type === "FunctionCall" && target.name &&
+        target.name.type === "Identifier"
+      ) {
+        target = {
+          type: "ArrayAccess",
+          array: target.name,
+          indices: target.arguments,
+        };
       }
-      if (target.type === 'Identifier' || target.type === 'FieldAccess' || target.type === 'ArrayAccess') {
-        return { type: 'Assignment', target, value: expr.right } as AST.Assignment;
+      if (
+        target.type === "Identifier" || target.type === "FieldAccess" ||
+        target.type === "ArrayAccess"
+      ) {
+        return {
+          type: "Assignment",
+          target,
+          value: expr.right,
+        } as AST.Assignment;
       }
     }
 
-    return { type: 'ExpressionStatement', expression: expr };
+    return { type: "ExpressionStatement", expression: expr };
   }
 
   // Expression parsing (precedence climbing)
@@ -575,13 +681,23 @@ export class Parser {
       // Convert FunctionCall with Identifier callee to ArrayAccess for assignment
       // e.g. arr(5) = 10 is parsed as FunctionCall but should be ArrayAccess
       let target = expr;
-      if (target.type === 'FunctionCall' && target.name && target.name.type === 'Identifier') {
-        target = { type: 'ArrayAccess', array: target.name, indices: target.arguments };
+      if (
+        target.type === "FunctionCall" && target.name &&
+        target.name.type === "Identifier"
+      ) {
+        target = {
+          type: "ArrayAccess",
+          array: target.name,
+          indices: target.arguments,
+        };
       }
-      if (target.type === 'Identifier' || target.type === 'FieldAccess' || target.type === 'ArrayAccess') {
-        return { type: 'Assignment', target, value };
+      if (
+        target.type === "Identifier" || target.type === "FieldAccess" ||
+        target.type === "ArrayAccess"
+      ) {
+        return { type: "Assignment", target, value };
       }
-      throw new ParseError('Invalid assignment target', this.previous());
+      throw new ParseError("Invalid assignment target", this.previous());
     }
 
     return expr;
@@ -593,7 +709,7 @@ export class Parser {
     while (this.match(TokenType.OR)) {
       const operator = this.previous().value;
       const right = this.logicalXor();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -605,7 +721,7 @@ export class Parser {
     while (this.match(TokenType.XOR)) {
       const operator = this.previous().value;
       const right = this.logicalAnd();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -617,7 +733,7 @@ export class Parser {
     while (this.match(TokenType.AND)) {
       const operator = this.previous().value;
       const right = this.equality();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -629,7 +745,7 @@ export class Parser {
     while (this.match(TokenType.EQ, TokenType.NE)) {
       const operator = this.previous().value;
       const right = this.comparison();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -641,7 +757,7 @@ export class Parser {
     while (this.match(TokenType.LT, TokenType.LE, TokenType.GT, TokenType.GE)) {
       const operator = this.previous().value;
       const right = this.bitshift();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -653,7 +769,7 @@ export class Parser {
     while (this.match(TokenType.SHL, TokenType.SHR, TokenType.SAR)) {
       const operator = this.previous().value;
       const right = this.additive();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -665,7 +781,7 @@ export class Parser {
     while (this.match(TokenType.PLUS, TokenType.MINUS)) {
       const operator = this.previous().value;
       const right = this.multiplicative();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -677,7 +793,7 @@ export class Parser {
     while (this.match(TokenType.MULTIPLY, TokenType.DIVIDE, TokenType.MOD)) {
       const operator = this.previous().value;
       const right = this.power();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -689,7 +805,7 @@ export class Parser {
     while (this.match(TokenType.POWER)) {
       const operator = this.previous().value;
       const right = this.unary();
-      expr = { type: 'BinaryOp', left: expr, operator, right };
+      expr = { type: "BinaryOp", left: expr, operator, right };
     }
 
     return expr;
@@ -699,7 +815,7 @@ export class Parser {
     if (this.match(TokenType.NOT, TokenType.MINUS)) {
       const operator = this.previous().value;
       const operand = this.unary();
-      return { type: 'UnaryOp', operator, operand };
+      return { type: "UnaryOp", operator, operand };
     }
 
     return this.postfix();
@@ -722,22 +838,28 @@ export class Parser {
           } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, 'Expected ")" after arguments');
-        expr = { type: 'FunctionCall', name: expr, arguments: args };
+        expr = { type: "FunctionCall", name: expr, arguments: args };
       } else if (this.match(TokenType.DOT)) {
         // Field access (dot syntax)
-        const field = this.consume(TokenType.IDENTIFIER, 'Expected field name after "."').value;
-        expr = { type: 'FieldAccess', object: expr, field };
+        const field =
+          this.consume(TokenType.IDENTIFIER, 'Expected field name after "."')
+            .value;
+        expr = { type: "FieldAccess", object: expr, field };
       } else if (this.match(TokenType.BACKSLASH)) {
         // Field access (backslash syntax, e.g. npc\Health)
-        const field = this.consume(TokenType.IDENTIFIER, 'Expected field name after "\\"').value;
-        expr = { type: 'FieldAccess', object: expr, field };
+        const field =
+          this.consume(TokenType.IDENTIFIER, 'Expected field name after "\\"')
+            .value;
+        expr = { type: "FieldAccess", object: expr, field };
       } else {
         break;
       }
     }
 
     if (iterations >= MAX_POSTFIX_ITERATIONS) {
-      this.error('Parser exceeded maximum iterations in postfix expression (possible infinite loop)');
+      this.error(
+        "Parser exceeded maximum iterations in postfix expression (possible infinite loop)",
+      );
     }
 
     return expr;
@@ -746,27 +868,27 @@ export class Parser {
   private primary(): AST.Expression {
     // Literals
     if (this.match(TokenType.INTEGER)) {
-      return { type: 'IntegerLiteral', value: parseInt(this.previous().value) };
+      return { type: "IntegerLiteral", value: parseInt(this.previous().value) };
     }
     if (this.match(TokenType.FLOAT)) {
-      return { type: 'FloatLiteral', value: parseFloat(this.previous().value) };
+      return { type: "FloatLiteral", value: parseFloat(this.previous().value) };
     }
     if (this.match(TokenType.STRING)) {
-      return { type: 'StringLiteral', value: this.previous().value };
+      return { type: "StringLiteral", value: this.previous().value };
     }
     if (this.match(TokenType.TRUE)) {
-      return { type: 'IntegerLiteral', value: 1 };
+      return { type: "IntegerLiteral", value: 1 };
     }
     if (this.match(TokenType.FALSE)) {
-      return { type: 'IntegerLiteral', value: 0 };
+      return { type: "IntegerLiteral", value: 0 };
     }
     if (this.match(TokenType.NULL)) {
-      return { type: 'IntegerLiteral', value: 0 };
+      return { type: "IntegerLiteral", value: 0 };
     }
 
     // Identifier
     if (this.match(TokenType.IDENTIFIER)) {
-      return { type: 'Identifier', name: this.previous().value };
+      return { type: "Identifier", name: this.previous().value };
     }
 
     // Grouped expression
@@ -778,8 +900,10 @@ export class Parser {
 
     // New keyword
     if (this.match(TokenType.NEW)) {
-      const typeName = this.consume(TokenType.IDENTIFIER, 'Expected type name after "New"').value;
-      return { type: 'NewExpression', typeName };
+      const typeName =
+        this.consume(TokenType.IDENTIFIER, 'Expected type name after "New"')
+          .value;
+      return { type: "NewExpression", typeName };
     }
 
     throw new ParseError(`Unexpected token: ${this.peek().value}`, this.peek());
@@ -788,10 +912,14 @@ export class Parser {
   // Helper methods
   private suffixToType(suffix: string): AST.TypeAnnotation {
     switch (suffix) {
-      case '#': return { kind: 'primitive', name: 'Float' };
-      case '$': return { kind: 'primitive', name: 'String' };
-      case '%': return { kind: 'primitive', name: 'Int' };
-      default: return { kind: 'primitive', name: 'Int' };
+      case "#":
+        return { kind: "primitive", name: "Float" };
+      case "$":
+        return { kind: "primitive", name: "String" };
+      case "%":
+        return { kind: "primitive", name: "Int" };
+      default:
+        return { kind: "primitive", name: "Int" };
     }
   }
 
@@ -826,19 +954,19 @@ export class Parser {
   private peekNext(): Token {
     return this.tokens[this.current + 1] || this.peek();
   }
-  
+
   private isEndOfStatement(token: Token): boolean {
     // Tokens that typically end a statement
     return token.type === TokenType.NEWLINE ||
-           token.type === TokenType.EOF ||
-           token.type === TokenType.THEN ||
-           token.type === TokenType.END ||
-           token.type === TokenType.ELSE ||
-           token.type === TokenType.ELSEIF ||
-           token.type === TokenType.NEXT ||
-           token.type === TokenType.WEND ||
-           token.type === TokenType.UNTIL ||
-           token.type === TokenType.FOREVER;
+      token.type === TokenType.EOF ||
+      token.type === TokenType.THEN ||
+      token.type === TokenType.END ||
+      token.type === TokenType.ELSE ||
+      token.type === TokenType.ELSEIF ||
+      token.type === TokenType.NEXT ||
+      token.type === TokenType.WEND ||
+      token.type === TokenType.UNTIL ||
+      token.type === TokenType.FOREVER;
   }
 
   private previous(): Token {

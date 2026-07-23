@@ -2,9 +2,14 @@
 
 ## Overview
 
-This document analyzes the real NPC (Non-Player Character) system implementation extracted from SCP: Containment Breach source code in `temp_npcs.bb`. This file contains ~1000 lines of actual BlitzBasic code that successfully compiles with the blitz3d-wasm compiler, representing the authentic SCPB NPC architecture.
+This document analyzes the real NPC (Non-Player Character) system implementation
+extracted from SCP: Containment Breach source code in `temp_npcs.bb`. This file
+contains ~1000 lines of actual BlitzBasic code that successfully compiles with
+the blitz3d-wasm compiler, representing the authentic SCPB NPC architecture.
 
-The NPC system uses numeric constants (not named ones), has a complex Type structure with 35+ fields, and implements state machines through numeric state values rather than named constants.
+The NPC system uses numeric constants (not named ones), has a complex Type
+structure with 35+ fields, and implements state machines through numeric state
+values rather than named constants.
 
 ## Actual NPC Type Definition
 
@@ -77,21 +82,21 @@ End Type
 
 ### Field Analysis (35+ Fields)
 
-| Field Group | Fields | Purpose |
-|-------------|--------|---------|
-| **Core Entities** | `obj`, `obj2`, `obj3`, `obj4`, `Collider` | 3D model handles and physics collision |
-| **Identity** | `NPCtype`, `ID`, `NVName` | Type identifier, unique ID, night vision name |
-| **Physics** | `DropSpeed`, `Gravity`, `GravityMult`, `MaxGravity`, `CollRadius` | Movement and collision physics |
-| **State Machine** | `State`, `State2`, `State3`, `PrevState` | Primary state system (numeric values) |
-| **Animation** | `Frame`, `ManipulateBone`, `BoneToManipulate`, `BonePitch/Yaw/Roll` | Animation control |
-| **Audio** | `Sound`, `SoundChn`, `SoundTimer`, `Sound2`, `SoundChn2`, `SoundChn_IsStream` | Sound effects and voice lines |
-| **Movement** | `Speed`, `CurrSpeed`, `Angle`, `PathX`, `PathZ` | Movement speed and direction |
-| **Pathfinding** | `Path.WayPoints[20]`, `PathStatus`, `PathTimer`, `PathLocation` | A* navigation system |
-| **AI/Detection** | `LastSeen`, `LastDist`, `Target`, `EnemyX/Y/Z`, `MakingNoise` | Player detection and targeting |
-| **Status** | `HP`, `IsDead`, `Idle`, `IdleTimer`, `Reload` | Health and status flags |
-| **Special Features** | `BlinkTimer`, `HideFromNVG`, `InFacility`, `CanUseElevator` | SCP-specific mechanics |
-| **Appearance** | `texture`, `TextureID`, `Model`, `ModelScaleX/Y/Z` | Visual customization |
-| **MTF Specific** | `MTFVariant`, `MTFLeader` | Mobile Task Force coordination |
+| Field Group          | Fields                                                                        | Purpose                                       |
+| -------------------- | ----------------------------------------------------------------------------- | --------------------------------------------- |
+| **Core Entities**    | `obj`, `obj2`, `obj3`, `obj4`, `Collider`                                     | 3D model handles and physics collision        |
+| **Identity**         | `NPCtype`, `ID`, `NVName`                                                     | Type identifier, unique ID, night vision name |
+| **Physics**          | `DropSpeed`, `Gravity`, `GravityMult`, `MaxGravity`, `CollRadius`             | Movement and collision physics                |
+| **State Machine**    | `State`, `State2`, `State3`, `PrevState`                                      | Primary state system (numeric values)         |
+| **Animation**        | `Frame`, `ManipulateBone`, `BoneToManipulate`, `BonePitch/Yaw/Roll`           | Animation control                             |
+| **Audio**            | `Sound`, `SoundChn`, `SoundTimer`, `Sound2`, `SoundChn2`, `SoundChn_IsStream` | Sound effects and voice lines                 |
+| **Movement**         | `Speed`, `CurrSpeed`, `Angle`, `PathX`, `PathZ`                               | Movement speed and direction                  |
+| **Pathfinding**      | `Path.WayPoints[20]`, `PathStatus`, `PathTimer`, `PathLocation`               | A* navigation system                          |
+| **AI/Detection**     | `LastSeen`, `LastDist`, `Target`, `EnemyX/Y/Z`, `MakingNoise`                 | Player detection and targeting                |
+| **Status**           | `HP`, `IsDead`, `Idle`, `IdleTimer`, `Reload`                                 | Health and status flags                       |
+| **Special Features** | `BlinkTimer`, `HideFromNVG`, `InFacility`, `CanUseElevator`                   | SCP-specific mechanics                        |
+| **Appearance**       | `texture`, `TextureID`, `Model`, `ModelScaleX/Y/Z`                            | Visual customization                          |
+| **MTF Specific**     | `MTFVariant`, `MTFLeader`                                                     | Mobile Task Force coordination                |
 
 ### NPC Type Constants (Real Values)
 
@@ -102,6 +107,7 @@ Const NPCtype049% = 10, NPCtypeZombie% = 11, NPCtype5131% = 12, NPCtypeTentacle%
 Const NPCtype860% = 14, NPCtype939% = 15, NPCtype066% = 16, NPCtypePdPlane% = 17
 Const NPCtype966% = 18, NPCtype1048a = 19, NPCtype1499% = 20, NPCtype008% = 21, NPCtypeClerk% = 22
 ```
+
 ## CreateNPC Function Implementation
 
 ### Real Creation Pattern from temp_npcs.bb
@@ -144,12 +150,16 @@ End Function
 
 ### State Machine Implementation (Numeric Values)
 
-Unlike the hypothetical documentation, the real SCPB code uses numeric state values directly rather than named constants. Each NPC type interprets these values differently:
+Unlike the hypothetical documentation, the real SCPB code uses numeric state
+values directly rather than named constants. Each NPC type interprets these
+values differently:
 
 - **SCP-173**: Uses simple state values (0=idle, 1=contained)
-- **SCP-096**: Uses complex state progression (0=sitting, 1-3=enraging, 4=hunting, 5=cooldown)
+- **SCP-096**: Uses complex state progression (0=sitting, 1-3=enraging,
+  4=hunting, 5=cooldown)
 - **SCP-106**: Uses State/State2/State3 for complex multi-stage behaviors
-- **MTF Units**: Use State for patrol/combat modes, State2 for squad coordination
+- **MTF Units**: Use State for patrol/combat modes, State2 for squad
+  coordination
 
 ### Pathfinding Implementation
 
@@ -170,30 +180,35 @@ EndIf
 
 ### Successfully Compiled Functions
 
-| Function | Lines | Status | Notes |
-|----------|-------|--------|-------|
-| `CreateNPC()` | ~200 | ✅ Compiles | All NPC creation logic works |
-| SCP-173 Logic | ~50 | ✅ Compiles | Basic movement and attack |
-| Pathfinding | ~30 | ✅ Compiles | Waypoint navigation works |
-| Sound System | ~40 | ✅ Compiles | Audio playback functions |
-| Basic Updates | ~100 | ✅ Compiles | Core update loops work |
+| Function      | Lines | Status      | Notes                        |
+| ------------- | ----- | ----------- | ---------------------------- |
+| `CreateNPC()` | ~200  | ✅ Compiles | All NPC creation logic works |
+| SCP-173 Logic | ~50   | ✅ Compiles | Basic movement and attack    |
+| Pathfinding   | ~30   | ✅ Compiles | Waypoint navigation works    |
+| Sound System  | ~40   | ✅ Compiles | Audio playback functions     |
+| Basic Updates | ~100  | ✅ Compiles | Core update loops work       |
 
 ### Compilation Gaps Found
 
-| Feature | Status | Issue |
-|---------|--------|-------|
-| Handle Arrays | ❌ Fails | `Field Path.WayPoints[20]` compilation error |
-| Object References | ⚠️ Partial | Some object field access issues |
-| Complex Select | ⚠️ Partial | Large Select statements cause problems |
-| String Operations | ✅ Works | Basic string handling compiles |
+| Feature           | Status     | Issue                                        |
+| ----------------- | ---------- | -------------------------------------------- |
+| Handle Arrays     | ❌ Fails   | `Field Path.WayPoints[20]` compilation error |
+| Object References | ⚠️ Partial | Some object field access issues              |
+| Complex Select    | ⚠️ Partial | Large Select statements cause problems       |
+| String Operations | ✅ Works   | Basic string handling compiles               |
 
 ### Key Findings from Real Code
 
-1. **No Named Constants**: The code uses raw numeric values (1, 2, 3...) instead of STATE_IDLE, etc.
-2. **Complex Type Structure**: 35+ fields vs. the 14 described in hypothetical docs
-3. **Direct State Manipulation**: States are set directly (n\State = 1) rather than using constants
-4. **Multiple State Fields**: State, State2, State3 are used simultaneously for complex behaviors
-5. **Real Pathfinding**: Actual FindPath() calls and waypoint arrays that work in the real game
+1. **No Named Constants**: The code uses raw numeric values (1, 2, 3...) instead
+   of STATE_IDLE, etc.
+2. **Complex Type Structure**: 35+ fields vs. the 14 described in hypothetical
+   docs
+3. **Direct State Manipulation**: States are set directly (n\State = 1) rather
+   than using constants
+4. **Multiple State Fields**: State, State2, State3 are used simultaneously for
+   complex behaviors
+5. **Real Pathfinding**: Actual FindPath() calls and waypoint arrays that work
+   in the real game
 
 ### SCP-096 Specific States
 
@@ -1636,70 +1651,75 @@ End Function
 
 ### State Constants Summary
 
-| Constant | Value | Purpose |
-|----------|-------|---------|
-| `STATE_IDLE` | 0 | Monitoring, no target |
-| `STATE_WANDER` | 1 | Random movement |
-| `STATE_HUNTING` | 2 | Seeking target |
-| `STATE_ATTACK` | 3 | Engaging target |
-| `STATE_FLEE` | 4 | Escaping threat |
-| `STATE_SEARCH` | 5 | Investigating |
-| `STATE_RETALIATE` | 6 | Returning fire |
+| Constant          | Value | Purpose               |
+| ----------------- | ----- | --------------------- |
+| `STATE_IDLE`      | 0     | Monitoring, no target |
+| `STATE_WANDER`    | 1     | Random movement       |
+| `STATE_HUNTING`   | 2     | Seeking target        |
+| `STATE_ATTACK`    | 3     | Engaging target       |
+| `STATE_FLEE`      | 4     | Escaping threat       |
+| `STATE_SEARCH`    | 5     | Investigating         |
+| `STATE_RETALIATE` | 6     | Returning fire        |
 
 ### SCP-Specific States
 
-| SCP | State | Value | Purpose |
-|-----|-------|-------|---------|
-| 173 | `STATE_SCP173_FROZEN` | 10 | Cannot move |
-| 173 | `STATE_SCP173_MOVING` | 11 | Moving to target |
-| 096 | `STATE_SCP096_DOCILE` | 12 | Not triggered |
-| 096 | `STATE_SCP096_AGITATED` | 13 | Approaching viewer |
-| 096 | `STATE_SCP096_PURSUIT` | 14 | Unstoppable chase |
-| 106 | `STATE_SCP106_HUNTING` | 15 | Hunting in facility |
-| 106 | `STATE_SCP106_EMERGE` | 16 | Emerging from dimension |
-| 049 | `STATE_SCP049_IDLE` | 17 | Searching |
-| 049 | `STATE_SCP049_APPROACH` | 18 | Approaching player |
-| 049 | `STATE_SCP049_CURE` | 19 | Performing cure |
+| SCP | State                   | Value | Purpose                 |
+| --- | ----------------------- | ----- | ----------------------- |
+| 173 | `STATE_SCP173_FROZEN`   | 10    | Cannot move             |
+| 173 | `STATE_SCP173_MOVING`   | 11    | Moving to target        |
+| 096 | `STATE_SCP096_DOCILE`   | 12    | Not triggered           |
+| 096 | `STATE_SCP096_AGITATED` | 13    | Approaching viewer      |
+| 096 | `STATE_SCP096_PURSUIT`  | 14    | Unstoppable chase       |
+| 106 | `STATE_SCP106_HUNTING`  | 15    | Hunting in facility     |
+| 106 | `STATE_SCP106_EMERGE`   | 16    | Emerging from dimension |
+| 049 | `STATE_SCP049_IDLE`     | 17    | Searching               |
+| 049 | `STATE_SCP049_APPROACH` | 18    | Approaching player      |
+| 049 | `STATE_SCP049_CURE`     | 19    | Performing cure         |
 
 ### Path Status Constants
 
-| Constant | Value | Meaning |
-|----------|-------|---------|
-| `PATH_IDLE` | 0 | No path |
-| `PATH_CALCULATING` | 1 | Computing path |
-| `PATH_ACTIVE` | 2 | Following path |
-| `PATH_BLOCKED` | 3 | Path obstructed |
-| `PATH_FAILED` | 4 | Could not find path |
-| `PATH_COMPLETE` | 5 | Destination reached |
+| Constant           | Value | Meaning             |
+| ------------------ | ----- | ------------------- |
+| `PATH_IDLE`        | 0     | No path             |
+| `PATH_CALCULATING` | 1     | Computing path      |
+| `PATH_ACTIVE`      | 2     | Following path      |
+| `PATH_BLOCKED`     | 3     | Path obstructed     |
+| `PATH_FAILED`      | 4     | Could not find path |
+| `PATH_COMPLETE`    | 5     | Destination reached |
 
 ### NPC Type Constants
 
-| Constant | Value | Entity |
-|----------|-------|--------|
-| `NPC_SCP_173` | 1 | The Sculpture |
-| `NPC_SCP_096` | 2 | The Shy Guy |
-| `NPC_SCP_106` | 3 | The Old Man |
-| `NPC_SCP_049` | 4 | The Doctor |
-| `NPC_SCP_939` | 5 | With Many Voices |
-| `NPC_TYPE_MTF` | 100 | MTF Soldier |
-| `NPC_TYPE_GUARD` | 101 | Facility Guard |
-| `NPC_TYPE_SCIENTIST` | 102 | Scientist |
+| Constant             | Value | Entity           |
+| -------------------- | ----- | ---------------- |
+| `NPC_SCP_173`        | 1     | The Sculpture    |
+| `NPC_SCP_096`        | 2     | The Shy Guy      |
+| `NPC_SCP_106`        | 3     | The Old Man      |
+| `NPC_SCP_049`        | 4     | The Doctor       |
+| `NPC_SCP_939`        | 5     | With Many Voices |
+| `NPC_TYPE_MTF`       | 100   | MTF Soldier      |
+| `NPC_TYPE_GUARD`     | 101   | Facility Guard   |
+| `NPC_TYPE_SCIENTIST` | 102   | Scientist        |
 
 ### Key Functions Summary
 
-| Function | Purpose |
-|----------|---------|
-| `UpdateNPC(npc)` | Main NPC update dispatcher |
-| `UpdateNPC_Idle(npc)` | Idle behavior |
-| `UpdateNPC_Hunting(npc)` | Chase behavior |
-| `UpdateNPC_Attack(npc)` | Attack execution |
-| `CanSeePlayer(npc)` | Visual detection |
-| `CanHearPlayer(npc)` | Audio detection |
-| `FollowPath(npc)` | Path following |
-| `Debug_NPCAI(npc)` | Complete AI debug output |
+| Function                 | Purpose                    |
+| ------------------------ | -------------------------- |
+| `UpdateNPC(npc)`         | Main NPC update dispatcher |
+| `UpdateNPC_Idle(npc)`    | Idle behavior              |
+| `UpdateNPC_Hunting(npc)` | Chase behavior             |
+| `UpdateNPC_Attack(npc)`  | Attack execution           |
+| `CanSeePlayer(npc)`      | Visual detection           |
+| `CanHearPlayer(npc)`     | Audio detection            |
+| `FollowPath(npc)`        | Path following             |
+| `Debug_NPCAI(npc)`       | Complete AI debug output   |
 
 ## Notes
 
-This documentation is based on the skill files and code analysis of the SCPB NPC AI system. The actual `NPCs.bb` file contains the complete implementation of all NPC behaviors in the original SCP: Containment Breach game.
+This documentation is based on the skill files and code analysis of the SCPB NPC
+AI system. The actual `NPCs.bb` file contains the complete implementation of all
+NPC behaviors in the original SCP: Containment Breach game.
 
-The state machine architecture allows each SCP entity to have unique behaviors while sharing common patterns for detection, pathfinding, and state transitions. This design pattern makes it easy to add new NPC types while maintaining consistent AI behavior across the game.
+The state machine architecture allows each SCP entity to have unique behaviors
+while sharing common patterns for detection, pathfinding, and state transitions.
+This design pattern makes it easy to add new NPC types while maintaining
+consistent AI behavior across the game.

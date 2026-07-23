@@ -1,6 +1,6 @@
 /**
  * Graphics Examples for Blitz3D Web IDE
- * 
+ *
  * These examples demonstrate 3D graphics, 2D sprites, and asset loading
  */
 
@@ -324,5 +324,5 @@ While True
     
     RenderWorld
     Flip
-Wend`
+Wend`,
 };

@@ -1,19 +1,19 @@
 /**
  * Compilation timeout wrapper
- * 
+ *
  * Prevents runaway compilations from freezing the browser
  */
 
 export class CompilationTimeout extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'CompilationTimeout';
+    this.name = "CompilationTimeout";
   }
 }
 
 /**
  * Run a function with a timeout
- * 
+ *
  * @param fn Function to run
  * @param timeoutMs Timeout in milliseconds (default: 5000)
  * @returns Result of the function
@@ -21,11 +21,13 @@ export class CompilationTimeout extends Error {
  */
 export async function withTimeout<T>(
   fn: () => T,
-  timeoutMs: number = 5000
+  timeoutMs: number = 5000,
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
-      reject(new CompilationTimeout(`Compilation exceeded ${timeoutMs}ms timeout`));
+      reject(
+        new CompilationTimeout(`Compilation exceeded ${timeoutMs}ms timeout`),
+      );
     }, timeoutMs);
 
     try {
@@ -54,7 +56,9 @@ export class TimeoutChecker {
 
   check(): void {
     if (Date.now() - this.startTime > this.timeoutMs) {
-      throw new CompilationTimeout(`Operation exceeded ${this.timeoutMs}ms timeout`);
+      throw new CompilationTimeout(
+        `Operation exceeded ${this.timeoutMs}ms timeout`,
+      );
     }
   }
 

@@ -1,6 +1,8 @@
 # Project Planning Index
 
-**Start here**: [`00_GLOBAL_PLAN.md`](00_GLOBAL_PLAN.md) — vision, architecture, phase roadmap (A: playable SCPCB on current runtime → B: self-contained Swift engine takeover → C: production), milestones, and open decisions.
+**Start here**: [`00_GLOBAL_PLAN.md`](00_GLOBAL_PLAN.md) — vision, architecture,
+phase roadmap (A: playable SCPCB on current runtime → B: self-contained Swift
+engine takeover → C: production), milestones, and open decisions.
 
 ## Structure
 
@@ -25,13 +27,21 @@ plan/
 
 ## Conventions
 
-- Checklists: `- [ ]` / `- [x]`, add a `YYYY-MM-DD` note when completing significant items.
+- Checklists: `- [ ]` / `- [x]`, add a `YYYY-MM-DD` note when completing
+  significant items.
 - Measurable acceptance criteria; "done" = the CI gate is green.
-- Compiler metrics live **only** in `docs/COMPILER_STATUS_ANALYSIS.md` — link, never copy.
-- Log goals/decisions/actions/outcomes in deciduous in real time; link commits (`--commit HEAD`).
-- New plans go in `subplans/`; superseded plans move to `ARCHIVED/` (never deleted).
+- Compiler metrics live **only** in `docs/COMPILER_STATUS_ANALYSIS.md` — link,
+  never copy.
+- Log goals/decisions/actions/outcomes in deciduous in real time; link commits
+  (`--commit HEAD`).
+- New plans go in `subplans/`; superseded plans move to `ARCHIVED/` (never
+  deleted).
 
 ## History
 
-- **2026-07-22**: All prior plans consolidated into the global plan + subplans. Previous active plans (`ACTIVE/`, `scpcb-web-track-b/`, the 2026-02-02 WASM-owns-UI plan, root-level fix plans) are archived under `ARCHIVED/2026-07-22-consolidation/` with their open items absorbed into the subplans — see the Plan Inventory table in `00_GLOBAL_PLAN.md`.
+- **2026-07-22**: All prior plans consolidated into the global plan + subplans.
+  Previous active plans (`ACTIVE/`, `scpcb-web-track-b/`, the 2026-02-02
+  WASM-owns-UI plan, root-level fix plans) are archived under
+  `ARCHIVED/2026-07-22-consolidation/` with their open items absorbed into the
+  subplans — see the Plan Inventory table in `00_GLOBAL_PLAN.md`.
 - Earlier history: `COMPLETED/` (Phases 1–3, Feb 2026) and `ARCHIVED/legacy-*`.

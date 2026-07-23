@@ -1,8 +1,15 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-run
 
-import { dirname, fromFileUrl, join, existsSync } from "jsr:@std/path";
+import { dirname, existsSync, fromFileUrl, join } from "jsr:@std/path";
 
-const WASM_CLI_PATH = join(dirname(fromFileUrl(import.meta.url)), "..", "..", ".build", "debug", "blitz3d-wasm");
+const WASM_CLI_PATH = join(
+  dirname(fromFileUrl(import.meta.url)),
+  "..",
+  "..",
+  ".build",
+  "debug",
+  "blitz3d-wasm",
+);
 const TEST_DIR = join(dirname(fromFileUrl(import.meta.url)), "Assets");
 const OUTPUT_DIR = join(TEST_DIR, "output");
 
@@ -141,7 +148,8 @@ function runWASMMock(wasmPath, expectedOutput) {
   console.log(`  WASM file size: ${stat.size} bytes`);
 
   const buffer = Deno.readFileSync(wasmPath);
-  const isValidWASM = buffer[0] === 0x00 && buffer[1] === 0x61 && buffer[2] === 0x73 && buffer[3] === 0x6d;
+  const isValidWASM = buffer[0] === 0x00 && buffer[1] === 0x61 &&
+    buffer[2] === 0x73 && buffer[3] === 0x6d;
 
   if (!isValidWASM) {
     throw new Error("Invalid WASM file - missing magic number");
@@ -181,7 +189,11 @@ async function runTests() {
     try {
       console.log("  Compiling...");
       const result = await compileTest(test.file);
-      console.log(`  ✓ Compiled to ${result.output.split("/").pop()} (${result.size} bytes)`);
+      console.log(
+        `  ✓ Compiled to ${
+          result.output.split("/").pop()
+        } (${result.size} bytes)`,
+      );
 
       console.log("  Running...");
       runWASMMock(result.output, test.expectedOutput);

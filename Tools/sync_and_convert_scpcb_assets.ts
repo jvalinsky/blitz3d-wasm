@@ -1,7 +1,7 @@
 #!/usr/bin/env -S deno run -A
 /**
  * Sync SCPCB assets from /tmp/scpb and convert to web-ready formats
- * 
+ *
  * Usage:
  *   deno run -A Tools/sync_and_convert_scpcb_assets.ts
  */
@@ -37,7 +37,9 @@ try {
   console.log(`[sync] Found SCPCB GFX at ${scpcbGfx}`);
 } catch {
   console.error(`[sync] ERROR: SCPCB GFX not found at ${scpcbGfx}`);
-  console.error("       Run: git clone https://github.com/Regalis11/scpcb.git /tmp/scpcb");
+  console.error(
+    "       Run: git clone https://github.com/Regalis11/scpcb.git /tmp/scpcb",
+  );
   Deno.exit(1);
 }
 
@@ -50,27 +52,33 @@ try {
   const webGfxStat = await Deno.stat(webGfx);
   if (webGfxStat.isDirectory) {
     console.log(`[sync] GFX already exists at ${webGfx}`);
-    
+
     // Count existing files
     let b3dCount = 0, xCount = 0, rmeshCount = 0, smpkCount = 0;
     for await (const entry of Deno.readDir(webGfx)) {
       if (entry.isDirectory) continue;
       const name = entry.name.toLowerCase();
-      if (name.endsWith('.b3d')) b3dCount++;
-      if (name.endsWith('.x')) xCount++;
-      if (name.endsWith('.rmesh')) rmeshCount++;
-      if (name.endsWith('.smpk')) smpkCount++;
+      if (name.endsWith(".b3d")) b3dCount++;
+      if (name.endsWith(".x")) xCount++;
+      if (name.endsWith(".rmesh")) rmeshCount++;
+      if (name.endsWith(".smpk")) smpkCount++;
     }
-    
-    console.log(`[sync] Existing assets: ${b3dCount} B3D, ${xCount} X, ${rmeshCount} RMESH, ${smpkCount} SMPK`);
+
+    console.log(
+      `[sync] Existing assets: ${b3dCount} B3D, ${xCount} X, ${rmeshCount} RMESH, ${smpkCount} SMPK`,
+    );
   }
 } catch {
-  console.log(`[sync] GFX not found at ${webGfx}, would need to copy from SCPCB`);
+  console.log(
+    `[sync] GFX not found at ${webGfx}, would need to copy from SCPCB`,
+  );
 }
 
 // Step 5: Provide summary
 console.log("\n[sync] Summary:");
 console.log("  Videos: 2 MP4 files ready");
 console.log("  Models: Check web/public/GFX for SMPK files");
-console.log("  To convert: deno run -A Tools/assets_scpcb_convert.ts --delete-source");
+console.log(
+  "  To convert: deno run -A Tools/assets_scpcb_convert.ts --delete-source",
+);
 console.log("\n[sync] Done!");

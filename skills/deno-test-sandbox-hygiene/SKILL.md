@@ -7,19 +7,22 @@ description: Make Deno tests reliable in sandboxed/CI environments with restrict
 
 ## Checklist
 
-1) **Avoid `Deno.execPath()`** when `--allow-run` is restricted to `deno`:
+1. **Avoid `Deno.execPath()`** when `--allow-run` is restricted to `deno`:
    - Prefer `new Deno.Command("deno", ...)` for nested calls.
 
-2) **Force temp files under `/tmp`** when CI grants `--allow-write=/tmp`:
+2. **Force temp files under `/tmp`** when CI grants `--allow-write=/tmp`:
    - Use `Deno.makeTempFile({ dir: "/tmp", ... })`
    - Use `Deno.makeTempDir({ dir: "/tmp", ... })`
 
-3) **Keep tests hermetic**
-   - Avoid importing remote `std/*` in tests that run without network; inline tiny `assert` helpers.
-   - Avoid shelling out to external binaries (like `wasm-validate`) unless the test task grants it.
-   - Prefer `WebAssembly.validate` + `new WebAssembly.Module(bytes)` for basic WASM structural validation.
+3. **Keep tests hermetic**
+   - Avoid importing remote `std/*` in tests that run without network; inline
+     tiny `assert` helpers.
+   - Avoid shelling out to external binaries (like `wasm-validate`) unless the
+     test task grants it.
+   - Prefer `WebAssembly.validate` + `new WebAssembly.Module(bytes)` for basic
+     WASM structural validation.
 
-4) **Avoid DOM globals in worker/unit tests**
+4. **Avoid DOM globals in worker/unit tests**
    - Guard `document/window` usage with `typeof document !== "undefined"`.
 
 ## Quick triage commands

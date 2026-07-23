@@ -12,8 +12,8 @@
 
 import { assert } from "./assert.ts";
 import {
-  REQUIRED_WEB_EXPORTS,
   REQUIRED_CMDBUF_EXPORTS,
+  REQUIRED_WEB_EXPORTS,
 } from "../web_export_contract.ts";
 
 const WRAPPER_BB_PATH = new URL("../scpcb_wrapper.bb", import.meta.url);

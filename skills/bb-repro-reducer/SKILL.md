@@ -15,8 +15,10 @@ Helpful env vars:
 
 - `BB_DENO_TIMEOUT_MS=2000` (default) — tighten/relax as needed
 - `BB_DENO_DEBUG=1` — compile with debug hooks when available
-- `BB_DENO_BBDBG_LOG=1` — emit bbdbg stmt trace to stdout (if debug build + hooks)
-- `BLITZ3D_COMPILER=/abs/path/to/.build/debug/blitz3d-wasm` — override compiler binary
+- `BB_DENO_BBDBG_LOG=1` — emit bbdbg stmt trace to stdout (if debug build +
+  hooks)
+- `BLITZ3D_COMPILER=/abs/path/to/.build/debug/blitz3d-wasm` — override compiler
+  binary
 
 ## Reduction workflow (ddmin-style, manual)
 
@@ -34,8 +36,10 @@ Helpful env vars:
 
 - **Parse error**: likely `Sources/Compiler/Parser/*`
 - **Compile crash / invalid lowering**: `Sources/Compiler/Lowering/*`
-- **wasm-validate error**: codegen stack/control flow (`Sources/Compiler/CodeGen/*`)
-- **Runtime hang**: likely infinite loop or missing import semantics; confirm timeout triggers and inspect bbdbg trace if available
+- **wasm-validate error**: codegen stack/control flow
+  (`Sources/Compiler/CodeGen/*`)
+- **Runtime hang**: likely infinite loop or missing import semantics; confirm
+  timeout triggers and inspect bbdbg trace if available
 
 ## Output expectations
 
@@ -43,5 +47,5 @@ When you respond, include:
 
 - The minimal `.bb` file path and how to run it (exact command/env).
 - The observed failure text (first/most relevant lines).
-- The suspected subsystem and the smallest next debugging step (file/symbol to inspect).
-
+- The suspected subsystem and the smallest next debugging step (file/symbol to
+  inspect).

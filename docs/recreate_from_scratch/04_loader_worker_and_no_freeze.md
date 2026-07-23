@@ -19,6 +19,7 @@ execution model.
   - opt-in continuous running.
 
 This repo’s loader/worker architecture:
+
 - Loader: `web/src/main.ts`
 - Worker harness: `web/src/worker/scpcb_worker.ts`
 
@@ -56,4 +57,3 @@ Avoid implicit state in the UI thread; keep worker state in the worker.
 - Tight loop hangs: watchdog termination + “last successful stage” reporting.
 - Missing preloaded files: show which paths were requested and from where.
 - Memory growth detaches typed arrays: detect and recreate views.
-

@@ -12,13 +12,30 @@ export type CommandExecutor = {
   ) => void;
   onSetVisibility?: (id: number, visible: number) => void;
   onSetMaterial?: (id: number, materialId: number) => void;
-  onPlaySound?: (soundId: number, volume: number, loop: number, outChannelPtr?: number) => void;
+  onPlaySound?: (
+    soundId: number,
+    volume: number,
+    loop: number,
+    outChannelPtr?: number,
+  ) => void;
   onDebugLogPtrLen?: (ptr: number, len: number) => void;
   onSetPosition?: (id: number, x: number, y: number, z: number) => void;
-  onSetRotationEuler?: (id: number, pitch: number, yaw: number, roll: number, global: number) => void;
+  onSetRotationEuler?: (
+    id: number,
+    pitch: number,
+    yaw: number,
+    roll: number,
+    global: number,
+  ) => void;
   onSetScale?: (id: number, x: number, y: number, z: number) => void;
   onMoveEntity?: (id: number, x: number, y: number, z: number) => void;
-  onTurnEntity?: (id: number, pitch: number, yaw: number, roll: number, global: number) => void;
+  onTurnEntity?: (
+    id: number,
+    pitch: number,
+    yaw: number,
+    roll: number,
+    global: number,
+  ) => void;
   onSetParent?: (id: number, parent: number, global: number) => void;
   onLoadMesh?: (id: number, parent: number, pathPtr: number) => void;
   onLoadAnimMesh?: (id: number, parent: number, pathPtr: number) => void;
@@ -30,8 +47,18 @@ export type CommandExecutor = {
   onBrushColor?: (id: number, r: number, g: number, b: number) => void;
   onBrushAlpha?: (id: number, a: number) => void;
   onBrushShininess?: (id: number, s: number) => void;
-  onBrushTexture?: (brushId: number, textureId: number, frame: number, index: number) => void;
-  onEntityTexture?: (entityId: number, textureId: number, frame: number, index: number) => void;
+  onBrushTexture?: (
+    brushId: number,
+    textureId: number,
+    frame: number,
+    index: number,
+  ) => void;
+  onEntityTexture?: (
+    entityId: number,
+    textureId: number,
+    frame: number,
+    index: number,
+  ) => void;
   onEntityColor?: (entityId: number, r: number, g: number, b: number) => void;
   onEntityAlpha?: (entityId: number, a: number) => void;
   onEntityShininess?: (entityId: number, s: number) => void;
@@ -55,7 +82,13 @@ export const dispatchCmd = (exec: CommandExecutor, cmd: Cmd) => {
       exec.onSetPosition?.(cmd.id, cmd.x, cmd.y, cmd.z);
       return;
     case CmdOpcode.SetRotationEuler:
-      exec.onSetRotationEuler?.(cmd.id, cmd.pitch, cmd.yaw, cmd.roll, cmd.global);
+      exec.onSetRotationEuler?.(
+        cmd.id,
+        cmd.pitch,
+        cmd.yaw,
+        cmd.roll,
+        cmd.global,
+      );
       return;
     case CmdOpcode.SetScale:
       exec.onSetScale?.(cmd.id, cmd.x, cmd.y, cmd.z);

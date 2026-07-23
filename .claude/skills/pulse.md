@@ -6,9 +6,11 @@
 
 ## What This Is
 
-Pulse captures the current heartbeat of a system - what decisions define how it works TODAY.
+Pulse captures the current heartbeat of a system - what decisions define how it
+works TODAY.
 
-Not how it evolved. Not what was tried before. Just: *"What are the design decisions that make this system work the way it does?"*
+Not how it evolved. Not what was tried before. Just: _"What are the design
+decisions that make this system work the way it does?"_
 
 ---
 
@@ -38,9 +40,11 @@ Read the code. For the thing you're scoping, ask:
 
 > "What design questions had to be answered for this to work?"
 
-Not implementation questions ("which library?") - model questions ("what's the behavior?")
+Not implementation questions ("which library?") - model questions ("what's the
+behavior?")
 
 **Examples:**
+
 - "When should the fallback show?"
 - "How should nested components interact?"
 - "What happens on timeout?"
@@ -53,6 +57,7 @@ deciduous add goal "<Scope>: <Core question>" -c 90
 ```
 
 Example:
+
 ```bash
 deciduous add goal "Determine when and whether to show Suspense fallback" -c 90
 ```
@@ -67,6 +72,7 @@ deciduous link <parent> <decision> -r "leads_to"
 ```
 
 Decisions can spawn other decisions:
+
 ```bash
 # Root goal
 deciduous add goal "Suspense fallback behavior" -c 90
@@ -129,17 +135,20 @@ A decision tree showing the current model:
 ## Decision Criteria
 
 **Is this a decision worth capturing?**
+
 - Does it define BEHAVIOR (not implementation)? → Yes
 - Would changing it change how users experience the system? → Yes
 - Is it a choice that could have gone differently? → Yes
 - Is it just "how the code is organized"? → No
 
 **How deep to go?**
+
 - Stop when decisions become implementation details
 - Stop when the answer is obvious/forced (no real choice)
 - Stop when you've captured what someone needs to understand the model
 
 **Decision vs Option?**
+
 - Decision = the question ("How should timeout work?")
 - Option = an answer ("Use 1000ms default")
 

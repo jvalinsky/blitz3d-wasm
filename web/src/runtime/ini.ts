@@ -18,9 +18,9 @@ export class BlitzINI {
       let data: Uint8Array | undefined;
       const core = this.fileIO?.core || (globalThis as any).__core;
       const fileSystem = core?.fileSystem || this.fileIO?.fileSystem;
-      
+
       if (fileSystem && fileSystem.has(path)) {
-          data = fileSystem.get(path).data;
+        data = fileSystem.get(path).data;
       }
 
       if (!data) return defaultValue;

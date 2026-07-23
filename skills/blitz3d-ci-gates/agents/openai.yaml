@@ -2,4 +2,3 @@ interface:
   display_name: "Blitz3D CI Gates"
   short_description: "Run/triage Swift+Deno gate failures"
   default_prompt: "Use $blitz3d-ci-gates to triage a failing gate run and propose the smallest fix plus the next command to confirm."
-

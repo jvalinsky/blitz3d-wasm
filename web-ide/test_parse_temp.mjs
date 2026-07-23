@@ -1,4 +1,4 @@
-import './dist/compiler.bundle.js';
+import "./dist/compiler.bundle.js";
 
 const { Parser } = window.Blitz3DCompiler;
 
@@ -9,6 +9,6 @@ Next`;
 const parser = new Parser(code);
 const ast = parser.parse();
 
-console.log('AST:');
+console.log("AST:");
 console.log(JSON.stringify(ast, null, 2));
-console.log('\nParser errors:', parser.errors);
+console.log("\nParser errors:", parser.errors);

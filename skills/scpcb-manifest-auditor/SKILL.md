@@ -7,8 +7,10 @@ description: Validate and fix `web/public/scpcb_manifest.json` and dist asset la
 
 ## Context
 
-- The web loader expects `web/public/scpcb_manifest.json` (boot path is `/scpcb_manifest.json`).
-- Init can hang if SCPCB reads files synchronously that are not preloaded (especially in `?init=main` workflows).
+- The web loader expects `web/public/scpcb_manifest.json` (boot path is
+  `/scpcb_manifest.json`).
+- Init can hang if SCPCB reads files synchronously that are not preloaded
+  (especially in `?init=main` workflows).
 
 ## Validate a built dist (recommended)
 
@@ -31,14 +33,18 @@ If you need to run individual validators:
 
 - Rebuild/rewrite assets + manifest paths:
   - `deno task assets:scpcb:convert`
-  - This can rewrite `scpcb_manifest.json` paths and validate that `.b3d/.x/.rmesh` are gone.
+  - This can rewrite `scpcb_manifest.json` paths and validate that
+    `.b3d/.x/.rmesh` are gone.
 
 ## Preload-group hygiene (avoid init hangs)
 
-1. Identify which group is used for early preload (commonly `init` / `facility_assets`).
-2. Ensure early-read config files are included (e.g. `options.ini` and other init-time reads).
+1. Identify which group is used for early preload (commonly `init` /
+   `facility_assets`).
+2. Ensure early-read config files are included (e.g. `options.ini` and other
+   init-time reads).
 3. If paths differ by case or have `Data/` vs root quirks:
-   - Prefer fixing the manifest paths, but be aware of aliasing behavior in `web/src/shared/path_alias.ts`.
+   - Prefer fixing the manifest paths, but be aware of aliasing behavior in
+     `web/src/shared/path_alias.ts`.
 
 ## Output expectations
 
@@ -46,5 +52,5 @@ When you respond, include:
 
 - The failing validator output (first error block).
 - Which file path(s) are missing/mismatched.
-- The minimal manifest edit or conversion step to fix, plus the exact re-check command.
-
+- The minimal manifest edit or conversion step to fix, plus the exact re-check
+  command.

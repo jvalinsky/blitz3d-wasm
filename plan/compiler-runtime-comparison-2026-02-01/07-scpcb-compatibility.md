@@ -1,6 +1,6 @@
 # SCPCB Compatibility Requirements
 
-**Date**: February 1, 2026  
+**Date**: February 1, 2026\
 **Target**: SCP: Containment Breach v1.3.11
 
 ---
@@ -52,6 +52,7 @@ Include "save.bb"                 ; Save/load system
 ### High Frequency (Used Extensively)
 
 **Math**:
+
 ```
 Sin, Cos, Tan       - Camera rotation, movement
 Sqrt                - Distance calculations
@@ -60,6 +61,7 @@ ATan2               - Angle calculations
 ```
 
 **String**:
+
 ```
 Left, Right, Mid    - Config parsing, file paths
 Lower, Upper        - Case normalization
@@ -68,6 +70,7 @@ Len                 - String length checks
 ```
 
 **File I/O**:
+
 ```
 ReadFile            - Loading config (options.ini)
 ReadLine            - INI file parsing
@@ -76,6 +79,7 @@ WriteFile           - Save game functionality
 ```
 
 **Graphics**:
+
 ```
 LoadMesh            - ~100+ mesh files (.b3d, .rmesh, .x)
 LoadTexture         - ~200+ texture files (.jpg, .png)
@@ -85,6 +89,7 @@ UpdateWorld         - Physics/animation updates
 ```
 
 **Scene Graph**:
+
 ```
 PositionEntity      - Object placement
 RotateEntity        - Object orientation
@@ -94,6 +99,7 @@ EntityPick          - Ray casting for interactions
 ```
 
 **Audio**:
+
 ```
 LoadSound           - ~50+ sound effects
 PlaySound           - Sound playback
@@ -122,6 +128,7 @@ End Function
 ```
 
 **Requirements**:
+
 - File I/O (ReadFile, ReadInt, CloseFile)
 - Virtual filesystem access to Data/
 
@@ -142,6 +149,7 @@ End Function
 ```
 
 **Requirements**:
+
 - LoadMesh (B3D, RMESH, X formats)
 - LoadTexture (JPG, PNG)
 - EntityTexture
@@ -165,6 +173,7 @@ End Function
 ```
 
 **Requirements**:
+
 - Sin, Cos, ATan2
 - EntityX, EntityY, EntityZ
 - PositionEntity, RotateEntity
@@ -183,6 +192,7 @@ End Function
 ```
 
 **Requirements**:
+
 - Sqrt
 - EntityX/Y/Z queries
 
@@ -207,6 +217,7 @@ End Function
 ```
 
 **Requirements**:
+
 - EntityType
 - Collisions
 - EntityCollided
@@ -217,6 +228,7 @@ End Function
 ## Asset Inventory
 
 ### Meshes (~100 files)
+
 ```
 GFX/map/*.rmesh          ; Room meshes (SCPCB custom format)
 GFX/map/*.x              ; DirectX models
@@ -225,12 +237,14 @@ GFX/items/*.b3d          ; Item models
 ```
 
 **Formats Needed**:
+
 - ✅ B3D (parser exists)
 - ✅ RMESH (parser exists)
 - ❌ X (DirectX - need parser)
 - ❌ MD2 (Quake - for some NPCs)
 
 ### Textures (~200 files)
+
 ```
 GFX/map/*.jpg            ; Wall/floor textures
 GFX/overlays/*.png       ; UI overlays
@@ -238,17 +252,20 @@ GFX/items/*.png          ; Item icons
 ```
 
 **Formats Needed**:
+
 - ❌ JPG decoder
 - ❌ PNG decoder
 - ❌ BMP decoder (legacy)
 
 ### Sounds (~50 files)
+
 ```
 SFX/*.ogg                ; Sound effects
 Music/*.ogg              ; Ambient music
 ```
 
 **Formats Needed**:
+
 - ❌ OGG decoder (browser can handle via Web Audio API)
 
 ---
@@ -264,7 +281,8 @@ file = ReadFile("options.ini")  ; Blocks until file loaded
 value = ReadInt(file)           ; Immediate read
 ```
 
-**Solution**: 
+**Solution**:
+
 - Preload all files into VFS
 - Use synchronous reads from VFS
 - WASM linear memory for file buffers
@@ -285,6 +303,7 @@ Wend
 ```
 
 **Solution**:
+
 - Restructure to yield control per frame
 - Or: Skip launcher, go directly to game
 - Or: Use `requestAnimationFrame` for rendering
@@ -310,6 +329,7 @@ End Function
 ```
 
 **Solution**:
+
 - Short-circuit Main() to skip splash
 - OR: Implement as async state machine
 - URL flag: `?skip_intro=1`
@@ -327,6 +347,7 @@ Graphics3D(ScreenWidth, ScreenHeight, 0, Fullscreen)
 ```
 
 **Solution**:
+
 - Preload options.ini into VFS before WASM init
 - Or: Provide default values, allow override
 
@@ -338,8 +359,8 @@ Graphics3D(ScreenWidth, ScreenHeight, 0, Fullscreen)
 
 ```typescript
 // Load critical files before WASM init
-await vfs.loadZip('assets/facility_assets.zip');
-await vfs.loadFile('Data/options.ini');
+await vfs.loadZip("assets/facility_assets.zip");
+await vfs.loadFile("Data/options.ini");
 
 // Then initialize WASM
 const wasmModule = await WebAssembly.instantiate(wasmBinary, imports);
@@ -360,8 +381,8 @@ const wasmModule = await WebAssembly.instantiate(wasmBinary, imports);
 ```typescript
 // Simulate key press to skip intro
 function skipIntro() {
-    inputManager.injectKeyDown(1);  // ESC key
-    inputManager.injectKeyUp(1);
+  inputManager.injectKeyDown(1); // ESC key
+  inputManager.injectKeyUp(1);
 }
 ```
 
@@ -370,36 +391,42 @@ function skipIntro() {
 ## Testing Checkpoints
 
 ### Checkpoint 1: Compilation
+
 - [x] All 57 .bb files compile
 - [x] All 23 includes processed
 - [x] No compilation errors
 - [x] Valid WASM output
 
 ### Checkpoint 2: Asset Loading
+
 - [x] options.ini loads
 - [x] First room mesh loads
 - [x] First texture loads
 - [x] Models display correctly
 
 ### Checkpoint 3: Rendering
+
 - [x] Scene renders at 60 FPS
 - [x] Camera movement works
 - [x] Textures display properly
 - [x] Lighting works
 
 ### Checkpoint 4: Input
+
 - [x] Keyboard input works
 - [x] Mouse look works
 - [x] Movement feels correct
 - [x] UI responds to input
 
 ### Checkpoint 5: Audio
+
 - [x] Sound effects play
 - [x] Music plays
 - [x] 3D audio positioning works
 - [x] Volume controls work
 
 ### Checkpoint 6: Gameplay
+
 - [x] Can walk through rooms
 - [x] Doors open/close
 - [x] Items can be picked up
@@ -407,6 +434,7 @@ function skipIntro() {
 - [x] Events trigger correctly
 
 ### Checkpoint 7: Save/Load
+
 - [x] Can save game
 - [x] Can load game
 - [x] State persists correctly
@@ -425,6 +453,7 @@ Total budget: 16.67ms (60 FPS)
 ```
 
 **Optimization Strategies**:
+
 - Frustum culling
 - LOD (level of detail)
 - Occlusion culling

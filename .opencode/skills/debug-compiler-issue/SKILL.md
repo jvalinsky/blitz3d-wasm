@@ -7,7 +7,8 @@ description: Use when WASM compilation fails or produces validation errors - sys
 
 ## Overview
 
-When WASM compilation fails or produces validation errors, this skill provides systematic debugging to identify root causes and suggest fixes.
+When WASM compilation fails or produces validation errors, this skill provides
+systematic debugging to identify root causes and suggest fixes.
 
 ## When to Use
 
@@ -50,6 +51,7 @@ When WASM compilation fails or produces validation errors, this skill provides s
 ### Stack Balance Issues
 
 **Excess values at end of if/else:**
+
 ```
 Error: type mismatch at end of `if true` branch, expected [] but got [i32]
 
@@ -59,6 +61,7 @@ Fix: Ensure both branches have same stack effect
 ```
 
 **Stack underflow:**
+
 ```
 Error: Stack underflow at instruction N
 
@@ -68,6 +71,7 @@ Fix: Check expression generation order
 ```
 
 **Function ends with values:**
+
 ```
 Error: Function ends with N values on stack
 
@@ -79,6 +83,7 @@ Fix: Add proper return statement
 ### Type Issues
 
 **Argument type mismatch:**
+
 ```
 Error: type mismatch in call, expected [i32, f32] but got [f32, i32]
 
@@ -88,6 +93,7 @@ Fix: Check expression generation order
 ```
 
 **Literal type issues:**
+
 ```
 Error: type mismatch, expected f32 but got i32
 
@@ -99,6 +105,7 @@ Fix: Use explicit Float() conversion
 ### Control Flow Issues
 
 **Invalid branch depth:**
+
 ```
 Error: Invalid branch depth: N
 
@@ -110,18 +117,21 @@ Fix: Check depth calculation in code generation
 ## Debugging Workflow
 
 ### Step 1: Analyze the WASM
+
 ```
 Use /analyze-wasm on the failing file
 Note: status, issue count, specific errors
 ```
 
 ### Step 2: Identify Pattern
+
 ```
 Match error to common patterns above
 Determine category: stack, type, control flow
 ```
 
 ### Step 3: Trace to Source
+
 ```
 For stack issues: Check if/else branch balance
 For type issues: Check function signatures
@@ -129,6 +139,7 @@ For control flow: Check nesting depth
 ```
 
 ### Step 4: Check Compiler Code
+
 ```
 Stack issues: Sources/Compiler/CodeGen/StatementGeneration.swift
 Type issues: Sources/Compiler/CodeGen/ExpressionGeneration.swift  
@@ -136,6 +147,7 @@ Control flow: Sources/Compiler/CodeGen/CodeGenerator.swift
 ```
 
 ### Step 5: Suggest Fix
+
 ```
 Provide specific recommendation
 Reference relevant code location
@@ -145,11 +157,13 @@ Create test case if helpful
 ## Example Debug Session
 
 **Input:**
+
 - File: UpdateEvents.bb
 - Error: "type mismatch at end of `if true` branch, expected [] but got [i32]"
 - 90 total errors
 
 **Analysis:**
+
 ```
 1. /analyze-wasm shows 83 stack issues, 7 type issues
 2. Primary pattern: excess values at end of if branches
@@ -157,6 +171,7 @@ Create test case if helpful
 ```
 
 **Fix Suggestion:**
+
 ```
 In StatementGeneration.swift around line 150:
 When generating call statements, ensure return value is dropped
@@ -186,8 +201,9 @@ Location: StatementGeneration.swift:generateStatement() - call case
 ## Output Format
 
 The debug session returns:
+
 - **issue_summary**: What went wrong
-- **root_cause**: Underlying cause analysis  
+- **root_cause**: Underlying cause analysis
 - **affected_code**: Compiler locations to check
 - **suggested_fix**: Specific recommendation
 - **test_case**: Optional test to verify fix

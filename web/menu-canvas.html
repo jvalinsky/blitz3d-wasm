@@ -1,883 +1,1161 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>SCP: Containment Breach - Main Menu (Authentic)</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: #000;
-            overflow: hidden;
-            font-family: 'Courier New', monospace;
-        }
-        
-        #gameCanvas {
-            display: block;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
-        
-        #startScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        
-        #startScreen h1 {
-            color: #fff;
-            font-size: 48px;
-            margin-bottom: 30px;
-            text-shadow: 0 0 20px #fff;
-        }
-        
-        #startScreen button {
-            padding: 20px 60px;
-            font-size: 24px;
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            border: 3px solid #fff;
-            font-family: 'Courier New', monospace;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        #startScreen button:hover {
-            background: rgba(255,255,255,0.4);
-            transform: scale(1.1);
-            box-shadow: 0 0 30px rgba(255,255,255,0.5);
-        }
-        
-        #startScreen p {
-            color: #888;
-            margin-top: 20px;
-            font-size: 14px;
-        }
-        
-        #videoOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 900;
-        }
-        
-        #videoOverlay video {
-            max-width: 90%;
-            max-height: 90%;
-        }
-        
-        #videoOverlay button {
-            margin-top: 20px;
-            padding: 10px 30px;
-            background: rgba(255,255,255,0.2);
-            color: #fff;
-            border: 2px solid #fff;
-            font-family: 'Courier New', monospace;
-            font-size: 18px;
-            cursor: pointer;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #000;
+        overflow: hidden;
+        font-family: "Courier New", monospace;
+      }
+
+      #gameCanvas {
+        display: block;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+
+      #startScreen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      #startScreen h1 {
+        color: #fff;
+        font-size: 48px;
+        margin-bottom: 30px;
+        text-shadow: 0 0 20px #fff;
+      }
+
+      #startScreen button {
+        padding: 20px 60px;
+        font-size: 24px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: 3px solid #fff;
+        font-family: "Courier New", monospace;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      #startScreen button:hover {
+        background: rgba(255, 255, 255, 0.4);
+        transform: scale(1.1);
+        box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+      }
+
+      #startScreen p {
+        color: #888;
+        margin-top: 20px;
+        font-size: 14px;
+      }
+
+      #videoOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 900;
+      }
+
+      #videoOverlay video {
+        max-width: 90%;
+        max-height: 90%;
+      }
+
+      #videoOverlay button {
+        margin-top: 20px;
+        padding: 10px 30px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        border: 2px solid #fff;
+        font-family: "Courier New", monospace;
+        font-size: 18px;
+        cursor: pointer;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <canvas id="gameCanvas"></canvas>
-    
+
     <div id="startScreen">
-        <h1>SCP: Containment Breach</h1>
-        <button id="startButton">CLICK TO START</button>
-        <p>Press any key or click to begin</p>
+      <h1>SCP: Containment Breach</h1>
+      <button id="startButton">CLICK TO START</button>
+      <p>Press any key or click to begin</p>
     </div>
-    
+
     <div id="videoOverlay">
-        <video id="introVideo"></video>
-        <button onclick="skipVideo()">Skip Intro</button>
+      <video id="introVideo"></video>
+      <button onclick="skipVideo()">Skip Intro</button>
     </div>
 
     <script>
-        // Canvas setup
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Scale for high-DPI displays
-        const dpr = window.devicePixelRatio || 1;
-        const menuScale = 1.0;
-        
-        // Set canvas size (original game is 1024x768 base)
-        const baseWidth = 1024;
-        const baseHeight = 768;
-        canvas.width = baseWidth * menuScale;
-        canvas.height = baseHeight * menuScale;
-        canvas.style.width = baseWidth + 'px';
-        canvas.style.height = baseHeight + 'px';
-        
-        // Mouse state (matches Blitz3D globals)
-        let mouseX = 0;
-        let mouseY = 0;
-        let mouseHit1 = false;
-        let mouseDown1 = false;
-        let mouseUp1 = false;
-        
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            mouseX = (e.clientX - rect.left) * menuScale;
-            mouseY = (e.clientY - rect.top) * menuScale;
-        });
-        
-        canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 0) {
-                mouseDown1 = true;
-                mouseHit1 = true;
-            }
-        });
-        
-        canvas.addEventListener('mouseup', (e) => {
-            if (e.button === 0) {
-                mouseDown1 = false;
-                mouseUp1 = true;
-            }
-        });
-        
-        // Keyboard input for InputBox
-        document.addEventListener('keydown', (e) => {
-            if (selectedInputBox !== 0) {
-                e.preventDefault();
-                
-                const id = selectedInputBox;
-                let text = inputBoxText[id] || "";
-                
-                if (e.key === 'Backspace') {
-                    text = text.slice(0, -1);
-                } else if (e.key === 'Enter') {
-                    selectedInputBox = 0;  // Deselect
-                } else if (e.key.length === 1) {
-                    // Allow alphanumeric characters
-                    if (text.length < 15) {  // Max 15 chars (from Menu.bb)
-                        text += e.key;
-                    }
-                }
-                
-                inputBoxText[id] = text;
-                
-                // Update randomSeed directly
-                if (id === 3) randomSeed = text;
-            }
-        });
-        
-        // Assets (loaded images)
-        const assets = {
-            menuBack: null,
-            menu173: null,
-            menuText: null,
-            menuWhite: null,
-            menuBlack: null
-        };
-        
-        let assetsLoaded = 0;
-        const totalAssets = 5;
-        
-        function loadAsset(name, path) {
-            const img = new Image();
-            img.onload = () => {
-                assets[name] = img;
-                assetsLoaded++;
-                if (assetsLoaded === totalAssets) {
-                    console.log('[Menu] All assets loaded');
-                }
-            };
-            img.onerror = () => {
-                console.error('[Menu] Failed to load:', path);
-                assetsLoaded++;
-            };
-            img.src = path;
+      // Canvas setup
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      // Scale for high-DPI displays
+      const dpr = window.devicePixelRatio || 1;
+      const menuScale = 1.0;
+
+      // Set canvas size (original game is 1024x768 base)
+      const baseWidth = 1024;
+      const baseHeight = 768;
+      canvas.width = baseWidth * menuScale;
+      canvas.height = baseHeight * menuScale;
+      canvas.style.width = baseWidth + "px";
+      canvas.style.height = baseHeight + "px";
+
+      // Mouse state (matches Blitz3D globals)
+      let mouseX = 0;
+      let mouseY = 0;
+      let mouseHit1 = false;
+      let mouseDown1 = false;
+      let mouseUp1 = false;
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left) * menuScale;
+        mouseY = (e.clientY - rect.top) * menuScale;
+      });
+
+      canvas.addEventListener("mousedown", (e) => {
+        if (e.button === 0) {
+          mouseDown1 = true;
+          mouseHit1 = true;
         }
-        
-        // Load assets
-        loadAsset('menuBack', './dist/assets/back.jpg');
-        loadAsset('menu173', './dist/assets/173back.jpg');
-        loadAsset('menuText', './dist/assets/scptext.jpg');
-        loadAsset('menuWhite', './dist/assets/menuwhite.jpg');
-        loadAsset('menuBlack', './dist/assets/menublack.jpg');
-        
-        // Menu state
-        let mainMenuTab = 0;  // 0 = main, 1 = new game, 2 = load, 3 = options
-        let randomSeed = "";
-        let selectedDifficulty = 1;  // 0=safe, 1=euclid, 2=keter
-        let introEnabled = true;
-        const difficulties = [
-            { name: "SAFE", color: "rgb(120,200,120)", description: "For beginners. Easier to survive." },
-            { name: "EUCLID", color: "rgb(200,200,120)", description: "Normal difficulty. Balanced challenge." },
-            { name: "KETER", color: "rgb(200,120,120)", description: "For experts. Very difficult to survive." }
-        ];
-        
-        // Options state
-        let optionsMenu = 1;  // 1=graphics, 2=audio, 3=controls, 4=advanced
-        let settings = {
-            // Graphics
-            vsync: true,
-            antiAlias: true,
-            roomLights: true,
-            screenGamma: 1.0,
-            particleAmount: 2,  // 0=minimal, 1=reduced, 2=full
-            textureQuality: 2,  // 0-4
-            // Audio
-            musicVolume: 0.5,
-            soundVolume: 0.7,
-            // Controls
-            mouseSensitivity: 0.5,
-            invertY: false
+      });
+
+      canvas.addEventListener("mouseup", (e) => {
+        if (e.button === 0) {
+          mouseDown1 = false;
+          mouseUp1 = true;
+        }
+      });
+
+      // Keyboard input for InputBox
+      document.addEventListener("keydown", (e) => {
+        if (selectedInputBox !== 0) {
+          e.preventDefault();
+
+          const id = selectedInputBox;
+          let text = inputBoxText[id] || "";
+
+          if (e.key === "Backspace") {
+            text = text.slice(0, -1);
+          } else if (e.key === "Enter") {
+            selectedInputBox = 0; // Deselect
+          } else if (e.key.length === 1) {
+            // Allow alphanumeric characters
+            if (text.length < 15) { // Max 15 chars (from Menu.bb)
+              text += e.key;
+            }
+          }
+
+          inputBoxText[id] = text;
+
+          // Update randomSeed directly
+          if (id === 3) randomSeed = text;
+        }
+      });
+
+      // Assets (loaded images)
+      const assets = {
+        menuBack: null,
+        menu173: null,
+        menuText: null,
+        menuWhite: null,
+        menuBlack: null,
+      };
+
+      let assetsLoaded = 0;
+      const totalAssets = 5;
+
+      function loadAsset(name, path) {
+        const img = new Image();
+        img.onload = () => {
+          assets[name] = img;
+          assetsLoaded++;
+          if (assetsLoaded === totalAssets) {
+            console.log("[Menu] All assets loaded");
+          }
         };
-        
-        // SCP-173 blink effect (matches original timing)
-        let menuBlinkTimer = [1, 700 + Math.random() * 100];
-        let menuBlinkDuration = [0, 0];
-        
+        img.onerror = () => {
+          console.error("[Menu] Failed to load:", path);
+          assetsLoaded++;
+        };
+        img.src = path;
+      }
+
+      // Load assets
+      loadAsset("menuBack", "./dist/assets/back.jpg");
+      loadAsset("menu173", "./dist/assets/173back.jpg");
+      loadAsset("menuText", "./dist/assets/scptext.jpg");
+      loadAsset("menuWhite", "./dist/assets/menuwhite.jpg");
+      loadAsset("menuBlack", "./dist/assets/menublack.jpg");
+
+      // Menu state
+      let mainMenuTab = 0; // 0 = main, 1 = new game, 2 = load, 3 = options
+      let randomSeed = "";
+      let selectedDifficulty = 1; // 0=safe, 1=euclid, 2=keter
+      let introEnabled = true;
+      const difficulties = [
+        {
+          name: "SAFE",
+          color: "rgb(120,200,120)",
+          description: "For beginners. Easier to survive.",
+        },
+        {
+          name: "EUCLID",
+          color: "rgb(200,200,120)",
+          description: "Normal difficulty. Balanced challenge.",
+        },
+        {
+          name: "KETER",
+          color: "rgb(200,120,120)",
+          description: "For experts. Very difficult to survive.",
+        },
+      ];
+
+      // Options state
+      let optionsMenu = 1; // 1=graphics, 2=audio, 3=controls, 4=advanced
+      let settings = {
+        // Graphics
+        vsync: true,
+        antiAlias: true,
+        roomLights: true,
+        screenGamma: 1.0,
+        particleAmount: 2, // 0=minimal, 1=reduced, 2=full
+        textureQuality: 2, // 0-4
+        // Audio
+        musicVolume: 0.5,
+        soundVolume: 0.7,
+        // Controls
+        mouseSensitivity: 0.5,
+        invertY: false,
+      };
+
+      // SCP-173 blink effect (matches original timing)
+      let menuBlinkTimer = [1, 700 + Math.random() * 100];
+      let menuBlinkDuration = [0, 0];
+
+      // Creepy text effect
+      let menuStr = "";
+      let menuStrX = 700 * menuScale;
+      let menuStrY = 100 * menuScale;
+      const creepyMessages = [
+        "DON'T BLINK",
+        "DON'T BLINK",
+        "DON'T BLINK",
+        "Secure. Contain. Protect.",
+        "Secure. Contain. Protect.",
+        "You want happy endings? Fuck you.",
+        "You want happy endings? Fuck you.",
+        "You want happy endings? Fuck you.",
+        "Sometimes we would have had time to scream.",
+        "Sometimes we would have had time to scream.",
+        "Sometimes we would have had time to scream.",
+        "NIL",
+        "NO",
+        "black white black white black white gray",
+        "Stone does not care",
+        "9341",
+        "It controls the doors",
+        "e8m106]af173o+079m895w914",
+        "NIL",
+        "It has taken over everything",
+        "The spiral is growing",
+        '"Some kind of gestalt effect due to massive reality damage."',
+      ];
+
+      // Blitz3D-style helper functions
+      function MouseOn(x, y, width, height) {
+        return mouseX >= x && mouseX <= x + width &&
+          mouseY >= y && mouseY <= y + height;
+      }
+
+      // Authentic DrawFrame (matches Menu.bb exactly)
+      function DrawFrame(x, y, width, height) {
+        // White outer border
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, y, width, height);
+
+        // Black inner inset
+        ctx.fillStyle = "black";
+        ctx.fillRect(
+          x + 3 * menuScale,
+          y + 3 * menuScale,
+          width - 6 * menuScale,
+          height - 6 * menuScale,
+        );
+      }
+
+      // Authentic DrawButton (matches Menu.bb:1680)
+      function DrawButton(x, y, width, height, txt, bigfont = true) {
+        DrawFrame(x, y, width, height);
+
+        let clicked = false;
+        if (MouseOn(x, y, width, height)) {
+          ctx.fillStyle = "rgb(30,30,30)";
+          if (mouseHit1) {
+            clicked = true;
+            // Play button sound (TODO: add audio)
+          }
+          ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
+        } else {
+          ctx.fillStyle = "rgb(0,0,0)";
+          ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
+        }
+
+        // Draw text
+        ctx.fillStyle = "white";
+        ctx.font = bigfont ? "28px Courier New" : "18px Courier New";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(txt, x + width / 2, y + height / 2);
+
+        return clicked;
+      }
+
+      // Authentic DrawTick (matches Menu.bb:1727)
+      function DrawTick(x, y, selected, locked = false) {
+        const width = 20 * menuScale;
+        const height = 20 * menuScale;
+
+        // White background
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, y, width, height);
+
+        const highlight = MouseOn(x, y, width, height) && !locked;
+
+        if (highlight) {
+          ctx.fillStyle = "rgb(50,50,50)";
+          if (mouseHit1) {
+            selected = !selected;
+            // Play button sound
+          }
+        } else {
+          ctx.fillStyle = "rgb(0,0,0)";
+        }
+
+        ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+
+        // Draw checkmark if selected
+        if (selected) {
+          ctx.fillStyle = highlight
+            ? "rgb(255,255,255)"
+            : "rgb(200,200,200)";
+          ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
+        }
+
+        return selected;
+      }
+
+      // Authentic SlideBar (matches Menu.bb:1760)
+      function SlideBar(x, y, width, value) {
+        if (mouseDown1) {
+          if (
+            mouseX >= x && mouseX <= x + width + 14 &&
+            mouseY >= y && mouseY <= y + 20
+          ) {
+            value = Math.min(
+              Math.max((mouseX - x) * 100 / width, 0),
+              100,
+            );
+          }
+        }
+
+        // Draw slider track
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, width + 14, 20);
+
+        // Draw slider handle
+        const handleX = x + width * value / 100 + 3;
+        ctx.fillStyle = "white";
+        ctx.fillRect(handleX, y + 3, 8, 14);
+
+        // Draw labels
+        ctx.fillStyle = "rgb(170,170,170)";
+        ctx.font = "16px Courier New";
+        ctx.textAlign = "left";
+        ctx.fillText("LOW", x - 50 * menuScale, y + 4 * menuScale);
+        ctx.textAlign = "right";
+        ctx.fillText(
+          "HIGH",
+          x + width + 38 * menuScale,
+          y + 4 * menuScale,
+        );
+
+        return value;
+      }
+
+      // Authentic InputBox (matches Menu.bb:1644)
+      let selectedInputBox = 0;
+      let inputBoxText = {};
+
+      function InputBox(x, y, width, height, txt, id = 0) {
+        // White background
+        ctx.fillStyle = "white";
+        ctx.fillRect(x, y, width, height);
+
+        const mouseOnBox = MouseOn(x, y, width, height);
+
+        if (mouseOnBox) {
+          ctx.fillStyle = "rgb(50,50,50)";
+          if (mouseHit1) {
+            selectedInputBox = id;
+            // Store text for this box
+            inputBoxText[id] = txt;
+          }
+        } else {
+          ctx.fillStyle = "rgb(0,0,0)";
+        }
+
+        ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+
+        // Deselect if clicked outside
+        if (!mouseOnBox && mouseHit1 && selectedInputBox === id) {
+          selectedInputBox = 0;
+        }
+
+        // Draw text
+        ctx.fillStyle = "white";
+        ctx.font = "18px Courier New";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(txt, x + width / 2, y + height / 2);
+
+        // Draw cursor if selected
+        if (selectedInputBox === id) {
+          const textWidth = ctx.measureText(txt).width;
+          if (Date.now() % 800 < 400) {
+            ctx.fillRect(
+              x + width / 2 + textWidth / 2 + 2,
+              y + height / 2 - 5,
+              2,
+              12,
+            );
+          }
+        }
+
+        return txt;
+      }
+
+      // Authentic RowText (matches Menu.bb:1784)
+      function RowText(text, x, y, w, h, align = false, leading = 1) {
+        if (h < 1) h = 2048;
+
+        const lineHeight = 20 + leading; // Approximate
+        let linesShown = 0;
+        let currentLine = "";
+
+        const words = text.split(" ");
+
+        ctx.font = "18px Courier New";
+        ctx.fillStyle = "white";
+        ctx.textBaseline = "top";
+
+        for (let word of words) {
+          const testLine = currentLine + (currentLine ? " " : "") +
+            word;
+          const testWidth = ctx.measureText(testLine).width;
+
+          if (testWidth > w && currentLine) {
+            // Print current line
+            if (align) {
+              const lineWidth = ctx.measureText(currentLine).width;
+              ctx.fillText(
+                currentLine,
+                x + w / 2 - lineWidth / 2,
+                linesShown * lineHeight + y,
+              );
+            } else {
+              ctx.fillText(currentLine, x, linesShown * lineHeight + y);
+            }
+
+            linesShown++;
+            currentLine = word;
+
+            if ((linesShown + 1) * lineHeight > h) break;
+          } else {
+            currentLine = testLine;
+          }
+        }
+
+        // Print remaining text
+        if (currentLine && (linesShown + 1) * lineHeight <= h) {
+          if (align) {
+            const lineWidth = ctx.measureText(currentLine).width;
+            ctx.fillText(
+              currentLine,
+              x + w / 2 - lineWidth / 2,
+              linesShown * lineHeight + y,
+            );
+          } else {
+            ctx.fillText(currentLine, x, linesShown * lineHeight + y);
+          }
+        }
+      }
+
+      // Main menu rendering
+      function UpdateMainMenu() {
+        // Clear screen
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw background
+        if (assets.menuBack) {
+          ctx.drawImage(
+            assets.menuBack,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+        }
+
+        // SCP-173 blink effect (matches original)
+        const currentTime = Date.now();
+        if (
+          (currentTime % menuBlinkTimer[0]) >=
+            (menuBlinkTimer[0] - menuBlinkDuration[0])
+        ) {
+          if (assets.menu173) {
+            const img = assets.menu173;
+            const scale = canvas.height * 0.4 / img.height;
+            const w = img.width * scale;
+            const h = img.height * scale;
+            ctx.drawImage(
+              img,
+              canvas.width - w,
+              canvas.height - h,
+              w,
+              h,
+            );
+          }
+        }
+
+        if (Math.random() < 0.0033) {
+          menuBlinkTimer[0] = 4000 + Math.random() * 4000;
+          menuBlinkDuration[0] = 200 + Math.random() * 300;
+        }
+
         // Creepy text effect
-        let menuStr = "";
-        let menuStrX = 700 * menuScale;
-        let menuStrY = 100 * menuScale;
-        const creepyMessages = [
-            "DON'T BLINK", "DON'T BLINK", "DON'T BLINK",
-            "Secure. Contain. Protect.", "Secure. Contain. Protect.",
-            "You want happy endings? Fuck you.",
-            "You want happy endings? Fuck you.",
-            "You want happy endings? Fuck you.",
-            "Sometimes we would have had time to scream.",
-            "Sometimes we would have had time to scream.",
-            "Sometimes we would have had time to scream.",
-            "NIL", "NO", "black white black white black white gray",
-            "Stone does not care", "9341", "It controls the doors",
-            "e8m106]af173o+079m895w914", "NIL",
-            "It has taken over everything", "The spiral is growing",
-            '"Some kind of gestalt effect due to massive reality damage."'
-        ];
-        
-        // Blitz3D-style helper functions
-        function MouseOn(x, y, width, height) {
-            return mouseX >= x && mouseX <= x + width &&
-                   mouseY >= y && mouseY <= y + height;
+        menuBlinkTimer[1]--;
+        if (menuBlinkTimer[1] < menuBlinkDuration[1]) {
+          ctx.fillStyle = "rgb(50,50,50)";
+          ctx.font = "24px Courier New";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "top";
+
+          // Slight random offset (like original)
+          const offsetX = (Math.random() - 0.5) * 10;
+          const offsetY = (Math.random() - 0.5) * 10;
+          ctx.fillText(menuStr, menuStrX + offsetX, menuStrY + offsetY);
+
+          if (menuBlinkTimer[1] < 0) {
+            menuBlinkTimer[1] = 700 + Math.random() * 100;
+            menuBlinkDuration[1] = 10 + Math.random() * 25;
+            menuStrX = (700 + Math.random() * 300) * menuScale;
+            menuStrY = (100 + Math.random() * 500) * menuScale;
+            menuStr = creepyMessages[
+              Math.floor(Math.random() * creepyMessages.length)
+            ];
+          }
         }
-        
-        // Authentic DrawFrame (matches Menu.bb exactly)
-        function DrawFrame(x, y, width, height) {
-            // White outer border
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x, y, width, height);
-            
-            // Black inner inset
-            ctx.fillStyle = 'black';
-            ctx.fillRect(x + 3 * menuScale, y + 3 * menuScale, 
-                        width - 6 * menuScale, height - 6 * menuScale);
+
+        // Draw SCP logo
+        if (assets.menuText) {
+          const img = assets.menuText;
+          const x = canvas.width / 2 - img.width / 2;
+          const y = canvas.height - 20 * menuScale - img.height;
+          ctx.drawImage(img, x, y);
         }
-        
-        // Authentic DrawButton (matches Menu.bb:1680)
-        function DrawButton(x, y, width, height, txt, bigfont = true) {
-            DrawFrame(x, y, width, height);
-            
-            let clicked = false;
-            if (MouseOn(x, y, width, height)) {
-                ctx.fillStyle = 'rgb(30,30,30)';
-                if (mouseHit1) {
-                    clicked = true;
-                    // Play button sound (TODO: add audio)
-                }
-                ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
-            } else {
-                ctx.fillStyle = 'rgb(0,0,0)';
-                ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
-            }
-            
-            // Draw text
-            ctx.fillStyle = 'white';
-            ctx.font = bigfont ? '28px Courier New' : '18px Courier New';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(txt, x + width / 2, y + height / 2);
-            
-            return clicked;
-        }
-        
-        // Authentic DrawTick (matches Menu.bb:1727)
-        function DrawTick(x, y, selected, locked = false) {
-            const width = 20 * menuScale;
-            const height = 20 * menuScale;
-            
-            // White background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x, y, width, height);
-            
-            const highlight = MouseOn(x, y, width, height) && !locked;
-            
-            if (highlight) {
-                ctx.fillStyle = 'rgb(50,50,50)';
-                if (mouseHit1) {
-                    selected = !selected;
-                    // Play button sound
-                }
-            } else {
-                ctx.fillStyle = 'rgb(0,0,0)';
-            }
-            
-            ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
-            
-            // Draw checkmark if selected
-            if (selected) {
-                ctx.fillStyle = highlight ? 'rgb(255,255,255)' : 'rgb(200,200,200)';
-                ctx.fillRect(x + 4, y + 4, width - 8, height - 8);
-            }
-            
-            return selected;
-        }
-        
-        // Authentic SlideBar (matches Menu.bb:1760)
-        function SlideBar(x, y, width, value) {
-            if (mouseDown1) {
-                if (mouseX >= x && mouseX <= x + width + 14 && 
-                    mouseY >= y && mouseY <= y + 20) {
-                    value = Math.min(Math.max((mouseX - x) * 100 / width, 0), 100);
-                }
-            }
-            
-            // Draw slider track
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(x, y, width + 14, 20);
-            
-            // Draw slider handle
-            const handleX = x + width * value / 100 + 3;
-            ctx.fillStyle = 'white';
-            ctx.fillRect(handleX, y + 3, 8, 14);
-            
-            // Draw labels
-            ctx.fillStyle = 'rgb(170,170,170)';
-            ctx.font = '16px Courier New';
-            ctx.textAlign = 'left';
-            ctx.fillText('LOW', x - 50 * menuScale, y + 4 * menuScale);
-            ctx.textAlign = 'right';
-            ctx.fillText('HIGH', x + width + 38 * menuScale, y + 4 * menuScale);
-            
-            return value;
-        }
-        
-        // Authentic InputBox (matches Menu.bb:1644)
-        let selectedInputBox = 0;
-        let inputBoxText = {};
-        
-        function InputBox(x, y, width, height, txt, id = 0) {
-            // White background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(x, y, width, height);
-            
-            const mouseOnBox = MouseOn(x, y, width, height);
-            
-            if (mouseOnBox) {
-                ctx.fillStyle = 'rgb(50,50,50)';
-                if (mouseHit1) {
-                    selectedInputBox = id;
-                    // Store text for this box
-                    inputBoxText[id] = txt;
-                }
-            } else {
-                ctx.fillStyle = 'rgb(0,0,0)';
-            }
-            
-            ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
-            
-            // Deselect if clicked outside
-            if (!mouseOnBox && mouseHit1 && selectedInputBox === id) {
-                selectedInputBox = 0;
-            }
-            
-            // Draw text
-            ctx.fillStyle = 'white';
-            ctx.font = '18px Courier New';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(txt, x + width / 2, y + height / 2);
-            
-            // Draw cursor if selected
-            if (selectedInputBox === id) {
-                const textWidth = ctx.measureText(txt).width;
-                if (Date.now() % 800 < 400) {
-                    ctx.fillRect(x + width / 2 + textWidth / 2 + 2, y + height / 2 - 5, 2, 12);
-                }
-            }
-            
-            return txt;
-        }
-        
-        // Authentic RowText (matches Menu.bb:1784)
-        function RowText(text, x, y, w, h, align = false, leading = 1) {
-            if (h < 1) h = 2048;
-            
-            const lineHeight = 20 + leading; // Approximate
-            let linesShown = 0;
-            let currentLine = "";
-            
-            const words = text.split(' ');
-            
-            ctx.font = '18px Courier New';
-            ctx.fillStyle = 'white';
-            ctx.textBaseline = 'top';
-            
-            for (let word of words) {
-                const testLine = currentLine + (currentLine ? ' ' : '') + word;
-                const testWidth = ctx.measureText(testLine).width;
-                
-                if (testWidth > w && currentLine) {
-                    // Print current line
-                    if (align) {
-                        const lineWidth = ctx.measureText(currentLine).width;
-                        ctx.fillText(currentLine, x + w / 2 - lineWidth / 2, linesShown * lineHeight + y);
-                    } else {
-                        ctx.fillText(currentLine, x, linesShown * lineHeight + y);
-                    }
-                    
-                    linesShown++;
-                    currentLine = word;
-                    
-                    if ((linesShown + 1) * lineHeight > h) break;
-                } else {
-                    currentLine = testLine;
-                }
-            }
-            
-            // Print remaining text
-            if (currentLine && (linesShown + 1) * lineHeight <= h) {
-                if (align) {
-                    const lineWidth = ctx.measureText(currentLine).width;
-                    ctx.fillText(currentLine, x + w / 2 - lineWidth / 2, linesShown * lineHeight + y);
-                } else {
-                    ctx.fillText(currentLine, x, linesShown * lineHeight + y);
-                }
-            }
-        }
-        
-        // Main menu rendering
-        function UpdateMainMenu() {
-            // Clear screen
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw background
-            if (assets.menuBack) {
-                ctx.drawImage(assets.menuBack, 0, 0, canvas.width, canvas.height);
-            }
-            
-            // SCP-173 blink effect (matches original)
-            const currentTime = Date.now();
-            if ((currentTime % menuBlinkTimer[0]) >= (menuBlinkTimer[0] - menuBlinkDuration[0])) {
-                if (assets.menu173) {
-                    const img = assets.menu173;
-                    const scale = canvas.height * 0.4 / img.height;
-                    const w = img.width * scale;
-                    const h = img.height * scale;
-                    ctx.drawImage(img, canvas.width - w, canvas.height - h, w, h);
-                }
-            }
-            
-            if (Math.random() < 0.0033) {
-                menuBlinkTimer[0] = 4000 + Math.random() * 4000;
-                menuBlinkDuration[0] = 200 + Math.random() * 300;
-            }
-            
-            // Creepy text effect
-            menuBlinkTimer[1]--;
-            if (menuBlinkTimer[1] < menuBlinkDuration[1]) {
-                ctx.fillStyle = 'rgb(50,50,50)';
-                ctx.font = '24px Courier New';
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'top';
-                
-                // Slight random offset (like original)
-                const offsetX = (Math.random() - 0.5) * 10;
-                const offsetY = (Math.random() - 0.5) * 10;
-                ctx.fillText(menuStr, menuStrX + offsetX, menuStrY + offsetY);
-                
-                if (menuBlinkTimer[1] < 0) {
-                    menuBlinkTimer[1] = 700 + Math.random() * 100;
-                    menuBlinkDuration[1] = 10 + Math.random() * 25;
-                    menuStrX = (700 + Math.random() * 300) * menuScale;
-                    menuStrY = (100 + Math.random() * 500) * menuScale;
-                    menuStr = creepyMessages[Math.floor(Math.random() * creepyMessages.length)];
-                }
-            }
-            
-            // Draw SCP logo
-            if (assets.menuText) {
-                const img = assets.menuText;
-                const x = canvas.width / 2 - img.width / 2;
-                const y = canvas.height - 20 * menuScale - img.height;
-                ctx.drawImage(img, x, y);
-            }
-            
-            // Main menu buttons (matches original positions)
-            if (mainMenuTab === 0) {
-                for (let i = 0; i < 4; i++) {
-                    const x = 159 * menuScale;
-                    const y = (286 + 100 * i) * menuScale;
-                    const width = 400 * menuScale;
-                    const height = 70 * menuScale;
-                    
-                    let txt = "";
-                    switch (i) {
-                        case 0: txt = "NEW GAME"; break;
-                        case 1: txt = "LOAD GAME"; break;
-                        case 2: txt = "OPTIONS"; break;
-                        case 3: txt = "QUIT"; break;
-                    }
-                    
-                    if (DrawButton(x, y, width, height, txt)) {
-                        handleMenuClick(i);
-                    }
-                }
-            }
-            // NEW GAME screen
-            else if (mainMenuTab === 1) {
-                DrawNewGameMenu();
-            }
-            // LOAD GAME screen
-            else if (mainMenuTab === 2) {
-                DrawLoadGameMenu();
-            }
-            // OPTIONS screen
-            else if (mainMenuTab === 3) {
-                DrawOptionsMenu();
-            }
-            
-            // Reset mouse hit state
-            mouseHit1 = false;
-            mouseUp1 = false;
-            
-            requestAnimationFrame(UpdateMainMenu);
-        }
-        
-        function handleMenuClick(index) {
-            console.log('[Menu] Button clicked:', index);
-            switch (index) {
-                case 0: // NEW GAME
-                    mainMenuTab = 1;
-                    randomSeed = "";
-                    break;
-                case 1: // LOAD GAME
-                    mainMenuTab = 2;
-                    break;
-                case 2: // OPTIONS
-                    mainMenuTab = 3;
-                    break;
-                case 3: // QUIT
-                    if (confirm('Are you sure you want to quit?')) {
-                        window.close();
-                    }
-                    break;
-            }
-        }
-        
-        // NEW GAME submenu
-        function DrawNewGameMenu() {
+
+        // Main menu buttons (matches original positions)
+        if (mainMenuTab === 0) {
+          for (let i = 0; i < 4; i++) {
             const x = 159 * menuScale;
-            const y = 286 * menuScale;
-            const width = 580 * menuScale;
-            const height = 400 * menuScale;
-            
-            // Title
-            ctx.fillStyle = 'white';
-            ctx.font = '32px Courier New';
-            ctx.textAlign = 'center';
-            ctx.fillText('NEW GAME', canvas.width / 2, y - 40 * menuScale);
-            
-            // Map seed input
-            ctx.font = '18px Courier New';
-            ctx.textAlign = 'left';
-            ctx.fillText('Map seed:', x + 20 * menuScale, y + 60 * menuScale);
-            randomSeed = InputBox(x + 150 * menuScale, y + 55 * menuScale, 
-                                  200 * menuScale, 30 * menuScale, randomSeed, 3);
-            
-            // Intro enabled checkbox
-            ctx.fillText('Enable intro sequence:', x + 20 * menuScale, y + 110 * menuScale);
-            introEnabled = DrawTick(x + 280 * menuScale, y + 110 * menuScale, introEnabled);
-            
-            // Difficulty selection
-            ctx.fillText('Difficulty:', x + 20 * menuScale, y + 150 * menuScale);
-            
-            for (let i = 0; i < difficulties.length; i++) {
-                const isSelected = selectedDifficulty === i;
-                const result = DrawTick(x + 20 * menuScale, y + (180 + 30 * i) * menuScale, isSelected);
-                if (result !== isSelected) {
-                    selectedDifficulty = i;
-                }
-                
-                ctx.fillStyle = difficulties[i].color;
-                ctx.fillText(difficulties[i].name, x + 60 * menuScale, y + (180 + 30 * i) * menuScale);
+            const y = (286 + 100 * i) * menuScale;
+            const width = 400 * menuScale;
+            const height = 70 * menuScale;
+
+            let txt = "";
+            switch (i) {
+              case 0:
+                txt = "NEW GAME";
+                break;
+              case 1:
+                txt = "LOAD GAME";
+                break;
+              case 2:
+                txt = "OPTIONS";
+                break;
+              case 3:
+                txt = "QUIT";
+                break;
             }
-            
-            // Difficulty description box
-            ctx.fillStyle = 'white';
-            DrawFrame(x + 150 * menuScale, y + 155 * menuScale, 410 * menuScale, 150 * menuScale);
-            ctx.fillStyle = 'white';
-            RowText(difficulties[selectedDifficulty].description, 
-                   x + 160 * menuScale, y + 165 * menuScale, 
-                   390 * menuScale, 130 * menuScale, false);
-            
-            // BACK button
-            if (DrawButton(x, y + height + 20 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
-                mainMenuTab = 0;
+
+            if (DrawButton(x, y, width, height, txt)) {
+              handleMenuClick(i);
             }
-            
-            // START button
-            ctx.font = '28px Courier New';
-            if (DrawButton(x + 420 * menuScale, y + height + 20 * menuScale, 160 * menuScale, 70 * menuScale, 'START', true)) {
-                // Generate seed if empty
-                if (randomSeed === "") {
-                    randomSeed = Math.floor(Math.random() * 1000000).toString();
-                }
-                
-                console.log('[NewGame] Starting game with seed:', randomSeed, 'difficulty:', difficulties[selectedDifficulty].name);
-                
-                // Check if we're in the integrated game page (has window.startNewGame)
-                if (typeof window.startNewGame === 'function') {
-                    // Integrated mode - start game initialization
-                    window.startNewGame(randomSeed, selectedDifficulty);
-                } else {
-                    // Standalone menu - show alert
-                    alert(`Starting new game!\nSeed: ${randomSeed}\nDifficulty: ${difficulties[selectedDifficulty].name}\n\n(Load game/scpcb_game.html for full integration)`);
-                }
-            }
+          }
+        } // NEW GAME screen
+        else if (mainMenuTab === 1) {
+          DrawNewGameMenu();
+        } // LOAD GAME screen
+        else if (mainMenuTab === 2) {
+          DrawLoadGameMenu();
+        } // OPTIONS screen
+        else if (mainMenuTab === 3) {
+          DrawOptionsMenu();
         }
-        
-        // LOAD GAME submenu
-        function DrawLoadGameMenu() {
-            const x = 159 * menuScale;
-            const y = 286 * menuScale;
-            
-            ctx.fillStyle = 'white';
-            ctx.font = '32px Courier New';
-            ctx.textAlign = 'center';
-            ctx.fillText('LOAD GAME', canvas.width / 2, y - 40 * menuScale);
-            
-            ctx.font = '18px Courier New';
-            ctx.fillText('No saved games found', canvas.width / 2, y + 100 * menuScale);
-            ctx.fillText('(Save system not yet implemented)', canvas.width / 2, y + 130 * menuScale);
-            
-            // BACK button
-            if (DrawButton(x, y + 300 * menuScale, 160 * menuScale, 70 * menuScale, 'BACK', false)) {
-                mainMenuTab = 0;
+
+        // Reset mouse hit state
+        mouseHit1 = false;
+        mouseUp1 = false;
+
+        requestAnimationFrame(UpdateMainMenu);
+      }
+
+      function handleMenuClick(index) {
+        console.log("[Menu] Button clicked:", index);
+        switch (index) {
+          case 0: // NEW GAME
+            mainMenuTab = 1;
+            randomSeed = "";
+            break;
+          case 1: // LOAD GAME
+            mainMenuTab = 2;
+            break;
+          case 2: // OPTIONS
+            mainMenuTab = 3;
+            break;
+          case 3: // QUIT
+            if (confirm("Are you sure you want to quit?")) {
+              window.close();
             }
+            break;
         }
-        
-        // OPTIONS submenu
-        function DrawOptionsMenu() {
-            // Move options menu more to the right to avoid overlap
-            const x = 280 * menuScale;  // Centered with good spacing
-            const y = 286 * menuScale;
-            
-            ctx.fillStyle = 'white';
-            ctx.font = '32px Courier New';
-            ctx.textAlign = 'center';
-            ctx.fillText('OPTIONS', canvas.width / 2, y - 40 * menuScale);
-            
-            // Draw tab selection bar
-            if (optionsMenu === 1) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(x - 10 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
-            } else if (optionsMenu === 2) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(x + 100 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
-            } else if (optionsMenu === 3) {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(x + 210 * menuScale, y - 5 * menuScale, 110 * menuScale, 40 * menuScale);
-            }
-            
-            // Tab buttons
-            if (DrawButton(x - 5 * menuScale, y, 100 * menuScale, 30 * menuScale, 'GRAPHICS', false)) {
-                optionsMenu = 1;
-            }
-            if (DrawButton(x + 105 * menuScale, y, 100 * menuScale, 30 * menuScale, 'AUDIO', false)) {
-                optionsMenu = 2;
-            }
-            if (DrawButton(x + 215 * menuScale, y, 100 * menuScale, 30 * menuScale, 'CONTROLS', false)) {
-                optionsMenu = 3;
-            }
-            
-            // Content area
-            const contentX = x + 20 * menuScale;  // Content offset from x
-            let optY = y + 50 * menuScale;
-            ctx.font = '18px Courier New';
-            ctx.textAlign = 'left';
-            
-            // Tab content
-            if (optionsMenu === 1) {
-                // GRAPHICS
-                ctx.fillStyle = 'white';
-                ctx.fillText('VSync:', contentX, optY);
-                settings.vsync = DrawTick(contentX + 270 * menuScale, optY, settings.vsync);
-                optY += 30 * menuScale;
-                
-                ctx.fillText('Anti-aliasing:', contentX, optY);
-                settings.antiAlias = DrawTick(contentX + 270 * menuScale, optY, settings.antiAlias);
-                optY += 30 * menuScale;
-                
-                ctx.fillText('Enable room lights:', contentX, optY);
-                settings.roomLights = DrawTick(contentX + 270 * menuScale, optY, settings.roomLights);
-                optY += 30 * menuScale;
-                
-                ctx.fillText('Screen gamma:', contentX, optY);
-                settings.screenGamma = SlideBar(contentX + 270 * menuScale, optY + 6 * menuScale, 
-                                               100 * menuScale, settings.screenGamma * 100) / 100;
-                optY += 50 * menuScale;
-                
-                ctx.fillText('Particle amount:', contentX, optY);
-                const particleLabels = ['MINIMAL', 'REDUCED', 'FULL'];
-                ctx.font = '14px Courier New';
-                ctx.fillText(particleLabels[settings.particleAmount], contentX + 270 * menuScale, optY);
-                // Simple left/right arrows for particle amount
-                optY += 50 * menuScale;
-                
-                ctx.font = '18px Courier New';
-                ctx.fillText('Texture quality:', contentX, optY);
-                const qualityLabels = ['LOWEST', 'LOW', 'MEDIUM', 'HIGH', 'HIGHEST'];
-                ctx.font = '14px Courier New';
-                ctx.fillText(qualityLabels[settings.textureQuality], contentX + 270 * menuScale, optY);
-                
-            } else if (optionsMenu === 2) {
-                // AUDIO
-                ctx.fillStyle = 'white';
-                ctx.fillText('Music volume:', contentX, optY);
-                settings.musicVolume = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
-                                               100 * menuScale, settings.musicVolume * 100) / 100;
-                optY += 30 * menuScale;
-                
-                ctx.fillText('Sound volume:', contentX, optY);
-                settings.soundVolume = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
-                                               100 * menuScale, settings.soundVolume * 100) / 100;
-                optY += 30 * menuScale;
-                
-                ctx.fillText(`Music: ${Math.round(settings.musicVolume * 100)}%`, contentX, optY + 40 * menuScale);
-                ctx.fillText(`Sound: ${Math.round(settings.soundVolume * 100)}%`, contentX, optY + 70 * menuScale);
-                
-            } else if (optionsMenu === 3) {
-                // CONTROLS
-                ctx.fillStyle = 'white';
-                ctx.fillText('Mouse sensitivity:', contentX, optY);
-                settings.mouseSensitivity = SlideBar(contentX + 250 * menuScale, optY - 4 * menuScale, 
-                                                    100 * menuScale, settings.mouseSensitivity * 100) / 100;
-                optY += 30 * menuScale;
-                
-                ctx.fillText('Invert Y axis:', contentX, optY);
-                settings.invertY = DrawTick(contentX + 270 * menuScale, optY, settings.invertY);
-                optY += 30 * menuScale;
-                
-                ctx.fillText(`Sensitivity: ${Math.round(settings.mouseSensitivity * 100)}%`, contentX, optY + 40 * menuScale);
-                ctx.fillText('(Key bindings not yet implemented)', contentX, optY + 70 * menuScale);
-            }
-            
-            // BACK button
-            if (DrawButton(x + 101 * menuScale, y + 390 * menuScale, 230 * menuScale, 60 * menuScale, 'BACK', false)) {
-                mainMenuTab = 0;
-                // Save settings to localStorage
-                localStorage.setItem('scpcb_settings', JSON.stringify(settings));
-                console.log('[Options] Settings saved:', settings);
-            }
+      }
+
+      // NEW GAME submenu
+      function DrawNewGameMenu() {
+        const x = 159 * menuScale;
+        const y = 286 * menuScale;
+        const width = 580 * menuScale;
+        const height = 400 * menuScale;
+
+        // Title
+        ctx.fillStyle = "white";
+        ctx.font = "32px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("NEW GAME", canvas.width / 2, y - 40 * menuScale);
+
+        // Map seed input
+        ctx.font = "18px Courier New";
+        ctx.textAlign = "left";
+        ctx.fillText(
+          "Map seed:",
+          x + 20 * menuScale,
+          y + 60 * menuScale,
+        );
+        randomSeed = InputBox(
+          x + 150 * menuScale,
+          y + 55 * menuScale,
+          200 * menuScale,
+          30 * menuScale,
+          randomSeed,
+          3,
+        );
+
+        // Intro enabled checkbox
+        ctx.fillText(
+          "Enable intro sequence:",
+          x + 20 * menuScale,
+          y + 110 * menuScale,
+        );
+        introEnabled = DrawTick(
+          x + 280 * menuScale,
+          y + 110 * menuScale,
+          introEnabled,
+        );
+
+        // Difficulty selection
+        ctx.fillText(
+          "Difficulty:",
+          x + 20 * menuScale,
+          y + 150 * menuScale,
+        );
+
+        for (let i = 0; i < difficulties.length; i++) {
+          const isSelected = selectedDifficulty === i;
+          const result = DrawTick(
+            x + 20 * menuScale,
+            y + (180 + 30 * i) * menuScale,
+            isSelected,
+          );
+          if (result !== isSelected) {
+            selectedDifficulty = i;
+          }
+
+          ctx.fillStyle = difficulties[i].color;
+          ctx.fillText(
+            difficulties[i].name,
+            x + 60 * menuScale,
+            y + (180 + 30 * i) * menuScale,
+          );
         }
-        
-        // Video playback
-        const videoOverlay = document.getElementById('videoOverlay');
-        const introVideo = document.getElementById('introVideo');
-        let currentVideoIndex = 0;
-        const introVideos = [
-            './dist/assets/startup_TSS.mp4',
-            './dist/assets/startup_Undertow.mp4'
-        ];
-        
-        function playIntroVideos() {
-            if (currentVideoIndex >= introVideos.length) {
-                videoOverlay.style.display = 'none';
-                UpdateMainMenu();
-                return;
-            }
-            
-            videoOverlay.style.display = 'flex';
-            introVideo.src = introVideos[currentVideoIndex];
-            introVideo.load();
-            
-            introVideo.onloadedmetadata = () => {
-                introVideo.play();
-            };
-            
-            introVideo.onended = () => {
-                currentVideoIndex++;
-                playIntroVideos();
-            };
+
+        // Difficulty description box
+        ctx.fillStyle = "white";
+        DrawFrame(
+          x + 150 * menuScale,
+          y + 155 * menuScale,
+          410 * menuScale,
+          150 * menuScale,
+        );
+        ctx.fillStyle = "white";
+        RowText(
+          difficulties[selectedDifficulty].description,
+          x + 160 * menuScale,
+          y + 165 * menuScale,
+          390 * menuScale,
+          130 * menuScale,
+          false,
+        );
+
+        // BACK button
+        if (
+          DrawButton(
+            x,
+            y + height + 20 * menuScale,
+            160 * menuScale,
+            70 * menuScale,
+            "BACK",
+            false,
+          )
+        ) {
+          mainMenuTab = 0;
         }
-        
-        function skipVideo() {
-            introVideo.pause();
-            currentVideoIndex = introVideos.length;
-            videoOverlay.style.display = 'none';
-            UpdateMainMenu();
+
+        // START button
+        ctx.font = "28px Courier New";
+        if (
+          DrawButton(
+            x + 420 * menuScale,
+            y + height + 20 * menuScale,
+            160 * menuScale,
+            70 * menuScale,
+            "START",
+            true,
+          )
+        ) {
+          // Generate seed if empty
+          if (randomSeed === "") {
+            randomSeed = Math.floor(Math.random() * 1000000).toString();
+          }
+
+          console.log(
+            "[NewGame] Starting game with seed:",
+            randomSeed,
+            "difficulty:",
+            difficulties[selectedDifficulty].name,
+          );
+
+          // Check if we're in the integrated game page (has window.startNewGame)
+          if (typeof window.startNewGame === "function") {
+            // Integrated mode - start game initialization
+            window.startNewGame(randomSeed, selectedDifficulty);
+          } else {
+            // Standalone menu - show alert
+            alert(
+              `Starting new game!\nSeed: ${randomSeed}\nDifficulty: ${
+                difficulties[selectedDifficulty].name
+              }\n\n(Load game/scpcb_game.html for full integration)`,
+            );
+          }
         }
-        
-        // Start screen
-        const startScreen = document.getElementById('startScreen');
-        const startButton = document.getElementById('startButton');
-        
-        function startGame() {
-            startScreen.style.display = 'none';
-            
-            const introEnabled = localStorage.getItem('introEnabled') !== 'false';
-            if (introEnabled) {
-                playIntroVideos();
-            } else {
-                UpdateMainMenu();
-            }
+      }
+
+      // LOAD GAME submenu
+      function DrawLoadGameMenu() {
+        const x = 159 * menuScale;
+        const y = 286 * menuScale;
+
+        ctx.fillStyle = "white";
+        ctx.font = "32px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("LOAD GAME", canvas.width / 2, y - 40 * menuScale);
+
+        ctx.font = "18px Courier New";
+        ctx.fillText(
+          "No saved games found",
+          canvas.width / 2,
+          y + 100 * menuScale,
+        );
+        ctx.fillText(
+          "(Save system not yet implemented)",
+          canvas.width / 2,
+          y + 130 * menuScale,
+        );
+
+        // BACK button
+        if (
+          DrawButton(
+            x,
+            y + 300 * menuScale,
+            160 * menuScale,
+            70 * menuScale,
+            "BACK",
+            false,
+          )
+        ) {
+          mainMenuTab = 0;
         }
-        
-        startButton.addEventListener('click', startGame);
-        document.addEventListener('keydown', (e) => {
-            if (startScreen.style.display !== 'none') {
-                startGame();
-            } else if (e.key === 'Escape' && videoOverlay.style.display === 'flex') {
-                skipVideo();
-            }
-        });
-        
-        // Load settings from localStorage on startup
-        function loadSettings() {
-            const saved = localStorage.getItem('scpcb_settings');
-            if (saved) {
-                try {
-                    const loaded = JSON.parse(saved);
-                    settings = {...settings, ...loaded};
-                    console.log('[Settings] Loaded from localStorage:', settings);
-                } catch (e) {
-                    console.error('[Settings] Failed to load:', e);
-                }
-            }
-            
-            // Load intro enabled setting
-            const introSetting = localStorage.getItem('introEnabled');
-            if (introSetting !== null) {
-                introEnabled = introSetting !== 'false';
-            }
+      }
+
+      // OPTIONS submenu
+      function DrawOptionsMenu() {
+        // Move options menu more to the right to avoid overlap
+        const x = 280 * menuScale; // Centered with good spacing
+        const y = 286 * menuScale;
+
+        ctx.fillStyle = "white";
+        ctx.font = "32px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("OPTIONS", canvas.width / 2, y - 40 * menuScale);
+
+        // Draw tab selection bar
+        if (optionsMenu === 1) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(
+            x - 10 * menuScale,
+            y - 5 * menuScale,
+            110 * menuScale,
+            40 * menuScale,
+          );
+        } else if (optionsMenu === 2) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(
+            x + 100 * menuScale,
+            y - 5 * menuScale,
+            110 * menuScale,
+            40 * menuScale,
+          );
+        } else if (optionsMenu === 3) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(
+            x + 210 * menuScale,
+            y - 5 * menuScale,
+            110 * menuScale,
+            40 * menuScale,
+          );
         }
-        
-        loadSettings();
+
+        // Tab buttons
+        if (
+          DrawButton(
+            x - 5 * menuScale,
+            y,
+            100 * menuScale,
+            30 * menuScale,
+            "GRAPHICS",
+            false,
+          )
+        ) {
+          optionsMenu = 1;
+        }
+        if (
+          DrawButton(
+            x + 105 * menuScale,
+            y,
+            100 * menuScale,
+            30 * menuScale,
+            "AUDIO",
+            false,
+          )
+        ) {
+          optionsMenu = 2;
+        }
+        if (
+          DrawButton(
+            x + 215 * menuScale,
+            y,
+            100 * menuScale,
+            30 * menuScale,
+            "CONTROLS",
+            false,
+          )
+        ) {
+          optionsMenu = 3;
+        }
+
+        // Content area
+        const contentX = x + 20 * menuScale; // Content offset from x
+        let optY = y + 50 * menuScale;
+        ctx.font = "18px Courier New";
+        ctx.textAlign = "left";
+
+        // Tab content
+        if (optionsMenu === 1) {
+          // GRAPHICS
+          ctx.fillStyle = "white";
+          ctx.fillText("VSync:", contentX, optY);
+          settings.vsync = DrawTick(
+            contentX + 270 * menuScale,
+            optY,
+            settings.vsync,
+          );
+          optY += 30 * menuScale;
+
+          ctx.fillText("Anti-aliasing:", contentX, optY);
+          settings.antiAlias = DrawTick(
+            contentX + 270 * menuScale,
+            optY,
+            settings.antiAlias,
+          );
+          optY += 30 * menuScale;
+
+          ctx.fillText("Enable room lights:", contentX, optY);
+          settings.roomLights = DrawTick(
+            contentX + 270 * menuScale,
+            optY,
+            settings.roomLights,
+          );
+          optY += 30 * menuScale;
+
+          ctx.fillText("Screen gamma:", contentX, optY);
+          settings.screenGamma = SlideBar(
+            contentX + 270 * menuScale,
+            optY + 6 * menuScale,
+            100 * menuScale,
+            settings.screenGamma * 100,
+          ) / 100;
+          optY += 50 * menuScale;
+
+          ctx.fillText("Particle amount:", contentX, optY);
+          const particleLabels = ["MINIMAL", "REDUCED", "FULL"];
+          ctx.font = "14px Courier New";
+          ctx.fillText(
+            particleLabels[settings.particleAmount],
+            contentX + 270 * menuScale,
+            optY,
+          );
+          // Simple left/right arrows for particle amount
+          optY += 50 * menuScale;
+
+          ctx.font = "18px Courier New";
+          ctx.fillText("Texture quality:", contentX, optY);
+          const qualityLabels = [
+            "LOWEST",
+            "LOW",
+            "MEDIUM",
+            "HIGH",
+            "HIGHEST",
+          ];
+          ctx.font = "14px Courier New";
+          ctx.fillText(
+            qualityLabels[settings.textureQuality],
+            contentX + 270 * menuScale,
+            optY,
+          );
+        } else if (optionsMenu === 2) {
+          // AUDIO
+          ctx.fillStyle = "white";
+          ctx.fillText("Music volume:", contentX, optY);
+          settings.musicVolume = SlideBar(
+            contentX + 250 * menuScale,
+            optY - 4 * menuScale,
+            100 * menuScale,
+            settings.musicVolume * 100,
+          ) / 100;
+          optY += 30 * menuScale;
+
+          ctx.fillText("Sound volume:", contentX, optY);
+          settings.soundVolume = SlideBar(
+            contentX + 250 * menuScale,
+            optY - 4 * menuScale,
+            100 * menuScale,
+            settings.soundVolume * 100,
+          ) / 100;
+          optY += 30 * menuScale;
+
+          ctx.fillText(
+            `Music: ${Math.round(settings.musicVolume * 100)}%`,
+            contentX,
+            optY + 40 * menuScale,
+          );
+          ctx.fillText(
+            `Sound: ${Math.round(settings.soundVolume * 100)}%`,
+            contentX,
+            optY + 70 * menuScale,
+          );
+        } else if (optionsMenu === 3) {
+          // CONTROLS
+          ctx.fillStyle = "white";
+          ctx.fillText("Mouse sensitivity:", contentX, optY);
+          settings.mouseSensitivity = SlideBar(
+            contentX + 250 * menuScale,
+            optY - 4 * menuScale,
+            100 * menuScale,
+            settings.mouseSensitivity * 100,
+          ) / 100;
+          optY += 30 * menuScale;
+
+          ctx.fillText("Invert Y axis:", contentX, optY);
+          settings.invertY = DrawTick(
+            contentX + 270 * menuScale,
+            optY,
+            settings.invertY,
+          );
+          optY += 30 * menuScale;
+
+          ctx.fillText(
+            `Sensitivity: ${
+              Math.round(settings.mouseSensitivity * 100)
+            }%`,
+            contentX,
+            optY + 40 * menuScale,
+          );
+          ctx.fillText(
+            "(Key bindings not yet implemented)",
+            contentX,
+            optY + 70 * menuScale,
+          );
+        }
+
+        // BACK button
+        if (
+          DrawButton(
+            x + 101 * menuScale,
+            y + 390 * menuScale,
+            230 * menuScale,
+            60 * menuScale,
+            "BACK",
+            false,
+          )
+        ) {
+          mainMenuTab = 0;
+          // Save settings to localStorage
+          localStorage.setItem(
+            "scpcb_settings",
+            JSON.stringify(settings),
+          );
+          console.log("[Options] Settings saved:", settings);
+        }
+      }
+
+      // Video playback
+      const videoOverlay = document.getElementById("videoOverlay");
+      const introVideo = document.getElementById("introVideo");
+      let currentVideoIndex = 0;
+      const introVideos = [
+        "./dist/assets/startup_TSS.mp4",
+        "./dist/assets/startup_Undertow.mp4",
+      ];
+
+      function playIntroVideos() {
+        if (currentVideoIndex >= introVideos.length) {
+          videoOverlay.style.display = "none";
+          UpdateMainMenu();
+          return;
+        }
+
+        videoOverlay.style.display = "flex";
+        introVideo.src = introVideos[currentVideoIndex];
+        introVideo.load();
+
+        introVideo.onloadedmetadata = () => {
+          introVideo.play();
+        };
+
+        introVideo.onended = () => {
+          currentVideoIndex++;
+          playIntroVideos();
+        };
+      }
+
+      function skipVideo() {
+        introVideo.pause();
+        currentVideoIndex = introVideos.length;
+        videoOverlay.style.display = "none";
+        UpdateMainMenu();
+      }
+
+      // Start screen
+      const startScreen = document.getElementById("startScreen");
+      const startButton = document.getElementById("startButton");
+
+      function startGame() {
+        startScreen.style.display = "none";
+
+        const introEnabled =
+          localStorage.getItem("introEnabled") !== "false";
+        if (introEnabled) {
+          playIntroVideos();
+        } else {
+          UpdateMainMenu();
+        }
+      }
+
+      startButton.addEventListener("click", startGame);
+      document.addEventListener("keydown", (e) => {
+        if (startScreen.style.display !== "none") {
+          startGame();
+        } else if (
+          e.key === "Escape" && videoOverlay.style.display === "flex"
+        ) {
+          skipVideo();
+        }
+      });
+
+      // Load settings from localStorage on startup
+      function loadSettings() {
+        const saved = localStorage.getItem("scpcb_settings");
+        if (saved) {
+          try {
+            const loaded = JSON.parse(saved);
+            settings = { ...settings, ...loaded };
+            console.log(
+              "[Settings] Loaded from localStorage:",
+              settings,
+            );
+          } catch (e) {
+            console.error("[Settings] Failed to load:", e);
+          }
+        }
+
+        // Load intro enabled setting
+        const introSetting = localStorage.getItem("introEnabled");
+        if (introSetting !== null) {
+          introEnabled = introSetting !== "false";
+        }
+      }
+
+      loadSettings();
     </script>
-</body>
+  </body>
 </html>

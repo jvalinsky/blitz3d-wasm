@@ -1,21 +1,81 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400"><style>
-      .bar { fill: #3498db; }
-      .bar:hover { fill: #2980b9; }
-      .axis { font-size: 10px; }
-      .label { font-size: 12px; }
-    </style><rect class="bar" x="50" y="340" width="30" height="0"/><text class="axis" x="65" y="355" 
-        text-anchor="end" transform="rotate(-45, 65, 355)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400">
+  <style>
+  .bar {
+    fill: #3498db;
+  }
+  .bar:hover {
+    fill: #2980b9;
+  }
+  .axis {
+    font-size: 10px;
+  }
+  .label {
+    font-size: 12px;
+  }
+  </style><rect class="bar" x="50" y="340" width="30" height="0" /><text
+    class="axis"
+    x="65"
+    y="355"
+    text-anchor="end"
+    transform="rotate(-45, 65, 355)"
+  >
         Func 0
-      </text><text class="axis" x="65" y="335" text-anchor="middle">0</text><rect class="bar" x="82" y="340" width="30" height="0"/><text class="axis" x="97" y="355" 
-        text-anchor="end" transform="rotate(-45, 97, 355)">
+      </text><text
+    class="axis"
+    x="65"
+    y="335"
+    text-anchor="middle"
+  >0</text><rect class="bar" x="82" y="340" width="30" height="0" /><text
+    class="axis"
+    x="97"
+    y="355"
+    text-anchor="end"
+    transform="rotate(-45, 97, 355)"
+  >
         Func 1
-      </text><text class="axis" x="97" y="335" text-anchor="middle">0</text><rect class="bar" x="114" y="310" width="30" height="30"/><text class="axis" x="129" y="355" 
-        text-anchor="end" transform="rotate(-45, 129, 355)">
+      </text><text
+    class="axis"
+    x="97"
+    y="335"
+    text-anchor="middle"
+  >0</text><rect class="bar" x="114" y="310" width="30" height="30" /><text
+    class="axis"
+    x="129"
+    y="355"
+    text-anchor="end"
+    transform="rotate(-45, 129, 355)"
+  >
         Func 2
-      </text><text class="axis" x="129" y="305" text-anchor="middle">1</text><rect class="bar" x="146" y="340" width="30" height="0"/><text class="axis" x="161" y="355" 
-        text-anchor="end" transform="rotate(-45, 161, 355)">
+      </text><text
+    class="axis"
+    x="129"
+    y="305"
+    text-anchor="middle"
+  >1</text><rect class="bar" x="146" y="340" width="30" height="0" /><text
+    class="axis"
+    x="161"
+    y="355"
+    text-anchor="end"
+    transform="rotate(-45, 161, 355)"
+  >
         Func 3
-      </text><text class="axis" x="161" y="335" text-anchor="middle">0</text><text class="label" x="415" y="20" text-anchor="middle">
+      </text><text
+    class="axis"
+    x="161"
+    y="335"
+    text-anchor="middle"
+  >0</text><text
+    class="label"
+    x="415"
+    y="20"
+    text-anchor="middle"
+  >
       Maximum Stack Depth per Function
-    </text><text class="label" x="15" y="190" transform="rotate(-90, 15, 190)" 
-      text-anchor="middle">Stack Depth</text></svg>
+    </text><text
+    class="label"
+    x="15"
+    y="190"
+    transform="rotate(-90, 15, 190)"
+    text-anchor="middle"
+  >Stack Depth</text>
+</svg>

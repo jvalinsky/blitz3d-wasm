@@ -1,16 +1,22 @@
 # State Management Systems Documentation
 
 ## Overview
-State management systems handle the persistence, loading, and synchronization of game state across all systems, ensuring consistent gameplay and save/load functionality.
+
+State management systems handle the persistence, loading, and synchronization of
+game state across all systems, ensuring consistent gameplay and save/load
+functionality.
 
 ## Game State Manager
 
 ### Purpose
-The game state manager coordinates overall game state, manages game sessions, and handles transitions between different game modes.
+
+The game state manager coordinates overall game state, manages game sessions,
+and handles transitions between different game modes.
 
 ### Architecture
 
 #### Game State Structure
+
 ```blitzbasic
 Type GameState
     Field CurrentMode%         ; Current game mode
@@ -44,6 +50,7 @@ Const MODE_CREDITS% = 5       ; Credits screen
 ```
 
 ### State Management Functions
+
 ```blitzbasic
 Global CurrentGameState.GameState
 
@@ -138,9 +145,12 @@ End Function
 ## Entity State System
 
 ### Purpose
-The entity state system manages the state of all game entities, ensuring consistent behavior and proper save/load functionality.
+
+The entity state system manages the state of all game entities, ensuring
+consistent behavior and proper save/load functionality.
 
 ### Entity State Management
+
 ```blitzbasic
 Type EntityState
     Field EntityID%            ; Unique entity identifier
@@ -241,9 +251,12 @@ End Function
 ## World State System
 
 ### Purpose
-The world state system manages the state of the game world, including rooms, environmental conditions, and global game state.
+
+The world state system manages the state of the game world, including rooms,
+environmental conditions, and global game state.
 
 ### World State Management
+
 ```blitzbasic
 Type WorldState
     Field WorldSeed%           ; Random seed for world generation
@@ -374,6 +387,7 @@ End Function
 ## Save/Load System Integration
 
 ### Comprehensive Save System
+
 ```blitzbasic
 Function CreateCompleteSave(slot%)
     ; Create save directory
@@ -431,6 +445,7 @@ End Function
 ## State Synchronization
 
 ### Multi-System State Sync
+
 ```blitzbasic
 Function SynchronizeState()
     ; Ensure all systems reflect current state
@@ -484,12 +499,14 @@ End Function
 ```
 
 ## Performance Considerations
+
 - **State Compression**: Efficient save file formats
 - **Incremental Saves**: Partial state updates
 - **Background Saving**: Non-blocking save operations
 - **State Caching**: Frequently accessed state data
 
 ### Integration Points
+
 - **[Save/Load System](GAME_MECHANICS.md#saveload-system)**: State persistence
 - **[Entity Systems](ENTITY_SYSTEMS.md)**: Entity state management
 - **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Event state tracking
@@ -497,4 +514,6 @@ End Function
 
 ---
 
-*State management systems ensure consistent game behavior across sessions, providing the foundation for save/load functionality and maintaining game world integrity.*
+_State management systems ensure consistent game behavior across sessions,
+providing the foundation for save/load functionality and maintaining game world
+integrity._

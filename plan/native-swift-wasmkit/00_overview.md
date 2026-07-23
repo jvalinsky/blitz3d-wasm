@@ -5,6 +5,7 @@ Created: 2026-02-03
 ## Goal
 
 Create a native macOS runner for BB→WASM output that:
+
 - uses SwiftPM (no Xcode project),
 - opens a window (AppKit),
 - renders via Metal (MetalKit `MTKView`),
@@ -15,13 +16,15 @@ Create a native macOS runner for BB→WASM output that:
 
 - Replacing the existing web runtime/loader.
 - Implementing full SCPCB parity in one pass.
-- Solving all performance issues immediately (correctness + iteration speed first).
+- Solving all performance issues immediately (correctness + iteration speed
+  first).
 
 ## Why this plan exists
 
 - Faster iteration on runtime/ABI decisions without browser constraints.
 - Easier profiling and debugging of WASM execution on desktop.
-- A stepping stone toward “single-player native” builds and/or shared logic between web and native.
+- A stepping stone toward “single-player native” builds and/or shared logic
+  between web and native.
 
 ## Architecture sketch
 
@@ -41,12 +44,14 @@ Native Host (SwiftPM executable)
 
 Pick one primary path (can support both later):
 
-1) **Command Buffer (preferred long-term)**
+1. **Command Buffer (preferred long-term)**
+
 - WASM writes a compact command stream into linear memory.
 - Host reads + executes commands into a Metal renderer.
 - Aligns with Track B philosophy (“coarse-grained boundary”).
 
-2) **Framebuffer upload (fastest to bootstrap)**
+2. **Framebuffer upload (fastest to bootstrap)**
+
 - WASM writes a BGRA8/RGBA8 pixel buffer into linear memory.
 - Host copies into a `MTLTexture` each frame and draws a fullscreen quad.
 - Great for early bring-up; may be bandwidth-heavy for higher resolutions.
@@ -54,9 +59,12 @@ Pick one primary path (can support both later):
 ## Risks / known hard parts
 
 - Import surface area: SCPCB and demo programs may call many Blitz3D functions.
-- Determinism vs UI responsiveness: avoid calling a non-returning WASM function on the main thread.
-- Memory growth & bridging: ensure correct handling if WasmKit grows memory or if the host caches pointers.
-- Packaging: assets + VFS mapping must mirror enough of Track B conventions to be useful.
+- Determinism vs UI responsiveness: avoid calling a non-returning WASM function
+  on the main thread.
+- Memory growth & bridging: ensure correct handling if WasmKit grows memory or
+  if the host caches pointers.
+- Packaging: assets + VFS mapping must mirror enough of Track B conventions to
+  be useful.
 
 ## Milestones
 
@@ -71,6 +79,6 @@ Pick one primary path (can support both later):
 
 - App launches with no Xcode project.
 - Can load a `.wasm` from disk and call exports deterministically.
-- Frame loop remains responsive; runaway code can be stopped (watchdog / time budget).
+- Frame loop remains responsive; runaway code can be stopped (watchdog / time
+  budget).
 - Clear diagnostics on missing imports and contract violations.
-

@@ -1,11 +1,7 @@
 #!/usr/bin/env -S deno run -A
 import { parseB3D } from "./b3d/parse.ts";
 import { encodeSmpk } from "./smpk/codec.ts";
-import type {
-  SmpkAccessor,
-  SmpkFile,
-  SmpkJson,
-} from "./smpk/types.ts";
+import type { SmpkAccessor, SmpkFile, SmpkJson } from "./smpk/types.ts";
 
 type Args = {
   input: string;
@@ -16,12 +12,20 @@ type Args = {
 
 const parseArgs = (): Args => {
   const input = Deno.args[0];
-  if (!input) throw new Error("usage: Tools/convert_b3d_to_smpk.ts <input.b3d> [-o out.smpk] [--clip name]");
+  if (!input) {
+    throw new Error(
+      "usage: Tools/convert_b3d_to_smpk.ts <input.b3d> [-o out.smpk] [--clip name]",
+    );
+  }
   const oIdx = Deno.args.findIndex((a) => a === "-o" || a === "--out");
-  const output = oIdx >= 0 ? (Deno.args[oIdx + 1] ?? "") : input.replace(/\.b3d$/i, ".smpk");
+  const output = oIdx >= 0
+    ? (Deno.args[oIdx + 1] ?? "")
+    : input.replace(/\.b3d$/i, ".smpk");
   if (!output) throw new Error("missing -o output");
   const clipIdx = Deno.args.findIndex((a) => a === "--clip");
-  const clipName = clipIdx >= 0 ? (Deno.args[clipIdx + 1] ?? "default") : "default";
+  const clipName = clipIdx >= 0
+    ? (Deno.args[clipIdx + 1] ?? "default")
+    : "default";
 
   const fmtIdx = Deno.args.findIndex((a) => a === "--texture-format");
   const textureFormat = fmtIdx >= 0 ? Deno.args[fmtIdx + 1] : undefined;
@@ -29,7 +33,12 @@ const parseArgs = (): Args => {
   return { input, output, clipName, textureFormat };
 };
 
-const quatWxyzToXyzw = (w: number, x: number, y: number, z: number): [number, number, number, number] => [x, y, z, w];
+const quatWxyzToXyzw = (
+  w: number,
+  x: number,
+  y: number,
+  z: number,
+): [number, number, number, number] => [x, y, z, w];
 
 const mat4FromTRS = (
   t: [number, number, number],
@@ -59,10 +68,22 @@ const mat4FromTRS = (
 
   // Column-major output (WebGL/glTF style)
   return new Float32Array([
-    m00, m10, m20, 0,
-    m01, m11, m21, 0,
-    m02, m12, m22, 0,
-    tx, ty, tz, 1,
+    m00,
+    m10,
+    m20,
+    0,
+    m01,
+    m11,
+    m21,
+    0,
+    m02,
+    m12,
+    m22,
+    0,
+    tx,
+    ty,
+    tz,
+    1,
   ]);
 };
 
@@ -70,8 +91,7 @@ const mat4Mul = (a: Float32Array, b: Float32Array): Float32Array => {
   const out = new Float32Array(16);
   for (let c = 0; c < 4; c++) {
     for (let r = 0; r < 4; r++) {
-      out[c * 4 + r] =
-        a[0 * 4 + r] * b[c * 4 + 0] +
+      out[c * 4 + r] = a[0 * 4 + r] * b[c * 4 + 0] +
         a[1 * 4 + r] * b[c * 4 + 1] +
         a[2 * 4 + r] * b[c * 4 + 2] +
         a[3 * 4 + r] * b[c * 4 + 3];
@@ -102,7 +122,8 @@ const mat4Invert = (m: Float32Array): Float32Array => {
   const b10 = a21 * a33 - a23 * a31;
   const b11 = a22 * a33 - a23 * a32;
 
-  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
+  let det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 +
+    b05 * b06;
   if (!det) return new Float32Array(m); // non-invertible; return copy
   det = 1.0 / det;
 
@@ -130,7 +151,11 @@ const gatherNodes = (b3d: ReturnType<typeof parseB3D>) => {
     name: string;
     parent: number | null;
     children: number[];
-    trs: { t: [number, number, number]; s: [number, number, number]; qWxyz: [number, number, number, number] };
+    trs: {
+      t: [number, number, number];
+      s: [number, number, number];
+      qWxyz: [number, number, number, number];
+    };
     mesh?: any;
     bone?: any;
     keys?: any;
@@ -168,7 +193,9 @@ const main = async () => {
   const textures = b3d.textures ?? [];
   const brushes = b3d.brushes ?? [];
 
-  console.log(`[b3d] Found ${textures.length} textures, ${brushes.length} brushes`);
+  console.log(
+    `[b3d] Found ${textures.length} textures, ${brushes.length} brushes`,
+  );
   for (const tex of textures) {
     console.log(`  texture: ${tex.name}`);
   }
@@ -185,14 +212,20 @@ const main = async () => {
 
   // Build joint mapping: nodeIndex -> jointIndex
   const nodeToJoint = new Map<number, number>();
-  for (let i = 0; i < jointNodeIndices.length; i++) nodeToJoint.set(jointNodeIndices[i]!, i);
+  for (let i = 0; i < jointNodeIndices.length; i++) {
+    nodeToJoint.set(jointNodeIndices[i]!, i);
+  }
 
   // Compute world bind matrices for all nodes (column-major)
-  const localMats = flatNodes.map((n) => mat4FromTRS(n.trs.t, n.trs.qWxyz, n.trs.s));
+  const localMats = flatNodes.map((n) =>
+    mat4FromTRS(n.trs.t, n.trs.qWxyz, n.trs.s)
+  );
   const worldMats: Float32Array[] = [];
   for (let i = 0; i < flatNodes.length; i++) {
     const p = flatNodes[i]!.parent;
-    worldMats[i] = p == null ? localMats[i]! : mat4Mul(worldMats[p]!, localMats[i]!);
+    worldMats[i] = p == null
+      ? localMats[i]!
+      : mat4Mul(worldMats[p]!, localMats[i]!);
   }
 
   // Inverse bind matrices for joints
@@ -207,11 +240,15 @@ const main = async () => {
   const jointIndices = new Uint16Array(vCount * 4);
   const jointWeights = new Float32Array(vCount * 4);
 
-  const influences: Array<Array<{ j: number; w: number }>> = Array.from({ length: vCount }, () => []);
+  const influences: Array<Array<{ j: number; w: number }>> = Array.from({
+    length: vCount,
+  }, () => []);
   for (const nIdx of jointNodeIndices) {
     const j = nodeToJoint.get(nIdx)!;
     for (const bw of flatNodes[nIdx]!.bone ?? []) {
-      if (bw.vertex >= 0 && bw.vertex < vCount) influences[bw.vertex]!.push({ j, w: bw.weight });
+      if (bw.vertex >= 0 && bw.vertex < vCount) {
+        influences[bw.vertex]!.push({ j, w: bw.weight });
+      }
     }
   }
 
@@ -246,17 +283,42 @@ const main = async () => {
     return accessors.length - 1;
   };
 
-  const f32 = (a: ArrayBufferView) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+  const f32 = (a: ArrayBufferView) =>
+    new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
 
   const posAcc = push("POSITION", f32(mesh.positions), "f32", "VEC3", vCount);
-  const normAcc = push("NORMAL", f32(mesh.normals ?? new Float32Array(vCount * 3)), "f32", "VEC3", vCount);
+  const normAcc = push(
+    "NORMAL",
+    f32(mesh.normals ?? new Float32Array(vCount * 3)),
+    "f32",
+    "VEC3",
+    vCount,
+  );
   // Use uvs1 if available (second UV set), otherwise uvs0
   const uvData = mesh.uvs1 ?? mesh.uvs0 ?? new Float32Array(vCount * 2);
   const uvAcc = push("TEXCOORD_0", f32(uvData), "f32", "VEC2", vCount);
   const jointsAcc = push("JOINTS_0", f32(jointIndices), "u16", "VEC4", vCount);
-  const weightsAcc = push("WEIGHTS_0", f32(jointWeights), "f32", "VEC4", vCount);
-  const idxAcc = push("INDICES", f32(mesh.indices), "u32", "SCALAR", mesh.indices.length);
-  const invBindAcc = push("inverseBindMatrices", f32(invBind), "f32", "MAT4", jointNodeIndices.length);
+  const weightsAcc = push(
+    "WEIGHTS_0",
+    f32(jointWeights),
+    "f32",
+    "VEC4",
+    vCount,
+  );
+  const idxAcc = push(
+    "INDICES",
+    f32(mesh.indices),
+    "u32",
+    "SCALAR",
+    mesh.indices.length,
+  );
+  const invBindAcc = push(
+    "inverseBindMatrices",
+    f32(invBind),
+    "f32",
+    "MAT4",
+    jointNodeIndices.length,
+  );
 
   const makeBin = () => {
     const total = currentBinOff();
@@ -275,7 +337,12 @@ const main = async () => {
     parent: n.parent ?? undefined,
     children: n.children.length ? n.children : undefined,
     translation: n.trs.t,
-    rotation: quatWxyzToXyzw(n.trs.qWxyz[0], n.trs.qWxyz[1], n.trs.qWxyz[2], n.trs.qWxyz[3]),
+    rotation: quatWxyzToXyzw(
+      n.trs.qWxyz[0],
+      n.trs.qWxyz[1],
+      n.trs.qWxyz[2],
+      n.trs.qWxyz[3],
+    ),
     scale: n.trs.s,
     mesh: undefined as number | undefined,
     skin: undefined as number | undefined,
@@ -342,7 +409,10 @@ const main = async () => {
     const normalizeTex = (texName: string) => {
       if (!texName) return "";
       // Handle Windows paths
-      const lastSlash = Math.max(texName.lastIndexOf('/'), texName.lastIndexOf('\\'));
+      const lastSlash = Math.max(
+        texName.lastIndexOf("/"),
+        texName.lastIndexOf("\\"),
+      );
       if (lastSlash >= 0) {
         texName = texName.substring(lastSlash + 1);
       }
@@ -355,31 +425,52 @@ const main = async () => {
     };
 
     // Link textures (texIds[0] = base, texIds[1] = detail, texIds[7] = environment)
-    if (brush.texIds.length > 0 && brush.texIds[0] >= 0 && textures[brush.texIds[0]]) {
+    if (
+      brush.texIds.length > 0 && brush.texIds[0] >= 0 &&
+      textures[brush.texIds[0]]
+    ) {
       mat.baseColorTexture = normalizeTex(textures[brush.texIds[0]].name);
     }
-    if (brush.texIds.length > 1 && brush.texIds[1] >= 0 && textures[brush.texIds[1]]) {
+    if (
+      brush.texIds.length > 1 && brush.texIds[1] >= 0 &&
+      textures[brush.texIds[1]]
+    ) {
       const tex = textures[brush.texIds[1]];
       const lowerName = tex.name.toLowerCase();
       // Heuristic: check if texture looks like a normal map
-      const isNormal = lowerName.includes("_n") || lowerName.includes("_nrm") || lowerName.includes("_bump") || lowerName.includes("normal") || (tex.flags & 65536) !== 0;
+      const isNormal = lowerName.includes("_n") || lowerName.includes("_nrm") ||
+        lowerName.includes("_bump") || lowerName.includes("normal") ||
+        (tex.flags & 65536) !== 0;
       if (isNormal) {
         mat.normalTexture = normalizeTex(tex.name);
       } else {
         mat.detailTexture = normalizeTex(tex.name);
       }
     }
-    if (brush.texIds.length > 2 && brush.texIds[2] >= 0 && textures[brush.texIds[2]]) {
+    if (
+      brush.texIds.length > 2 && brush.texIds[2] >= 0 &&
+      textures[brush.texIds[2]]
+    ) {
       mat.detailTexture2 = normalizeTex(textures[brush.texIds[2]].name);
     }
-    if (brush.texIds.length > 3 && brush.texIds[3] >= 0 && textures[brush.texIds[3]]) {
+    if (
+      brush.texIds.length > 3 && brush.texIds[3] >= 0 &&
+      textures[brush.texIds[3]]
+    ) {
       mat.detailTexture3 = normalizeTex(textures[brush.texIds[3]].name);
     }
-    if (brush.texIds.length > 7 && brush.texIds[7] >= 0 && textures[brush.texIds[7]]) {
+    if (
+      brush.texIds.length > 7 && brush.texIds[7] >= 0 &&
+      textures[brush.texIds[7]]
+    ) {
       mat.cubeTexture = normalizeTex(textures[brush.texIds[7]].name);
     }
 
-    console.log(`  material ${i}: ${brush.name} -> ${mat.baseColorTexture || '(no texture)'} (shininess: ${brush.shininess.toFixed(2)}, blend: ${brush.blend})`);
+    console.log(
+      `  material ${i}: ${brush.name} -> ${
+        mat.baseColorTexture || "(no texture)"
+      } (shininess: ${brush.shininess.toFixed(2)}, blend: ${brush.blend})`,
+    );
 
     return mat;
   });
@@ -416,7 +507,14 @@ const main = async () => {
   smpkNodes[meshNodeIdx]!.skin = 0;
 
   // Animations (simple): build per-joint channels from KEYS frames if present.
-  const animations = buildAnimations(args.clipName, flatNodes, b3d.animFps, accessors, binParts, currentBinOff);
+  const animations = buildAnimations(
+    args.clipName,
+    flatNodes,
+    b3d.animFps,
+    accessors,
+    binParts,
+    currentBinOff,
+  );
   const bin2 = makeBin();
 
   const json: SmpkJson = {
@@ -427,15 +525,17 @@ const main = async () => {
     nodes: smpkNodes,
     skins,
     materials: materials.length ? materials : undefined,
-    animations: animations.length ? animations.map((a) => ({
-      ...a,
-      sequences: b3d.sequences?.map((s) => ({
-        name: s.name,
-        firstFrame: s.firstFrame,
-        lastFrame: s.lastFrame,
-      })) ?? undefined,
-      fps: b3d.animFps,
-    })) : undefined,
+    animations: animations.length
+      ? animations.map((a) => ({
+        ...a,
+        sequences: b3d.sequences?.map((s) => ({
+          name: s.name,
+          firstFrame: s.firstFrame,
+          lastFrame: s.lastFrame,
+        })) ?? undefined,
+        fps: b3d.animFps,
+      }))
+      : undefined,
     sceneRoots: [0],
   };
 
@@ -457,7 +557,8 @@ const buildAnimations = (
   const samplers: any[] = [];
   const channels: any[] = [];
 
-  const f32 = (a: ArrayBufferView) => new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+  const f32 = (a: ArrayBufferView) =>
+    new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
   const pushAcc = (
     name: string,
     buf: Uint8Array,
@@ -477,21 +578,49 @@ const buildAnimations = (
     if (!k || !k.frames?.length) continue;
 
     const times = new Float32Array(k.frames.length);
-    for (let i = 0; i < k.frames.length; i++) times[i] = (k.frames[i] ?? 0) / fps;
-    const timeAcc = pushAcc(`anim:${clipName}:time:${nodeIndex}`, f32(times), "f32", "SCALAR", times.length);
+    for (let i = 0; i < k.frames.length; i++) {
+      times[i] = (k.frames[i] ?? 0) / fps;
+    }
+    const timeAcc = pushAcc(
+      `anim:${clipName}:time:${nodeIndex}`,
+      f32(times),
+      "f32",
+      "SCALAR",
+      times.length,
+    );
 
     if (k.positions) {
       const out = new Float32Array(k.positions);
-      const outAcc = pushAcc(`anim:${clipName}:t:${nodeIndex}`, f32(out), "f32", "VEC3", times.length);
+      const outAcc = pushAcc(
+        `anim:${clipName}:t:${nodeIndex}`,
+        f32(out),
+        "f32",
+        "VEC3",
+        times.length,
+      );
       const s = samplers.length;
-      samplers.push({ input: timeAcc, output: outAcc, interpolation: "LINEAR" });
+      samplers.push({
+        input: timeAcc,
+        output: outAcc,
+        interpolation: "LINEAR",
+      });
       channels.push({ sampler: s, targetNode: nodeIndex, path: "translation" });
     }
     if (k.scales) {
       const out = new Float32Array(k.scales);
-      const outAcc = pushAcc(`anim:${clipName}:s:${nodeIndex}`, f32(out), "f32", "VEC3", times.length);
+      const outAcc = pushAcc(
+        `anim:${clipName}:s:${nodeIndex}`,
+        f32(out),
+        "f32",
+        "VEC3",
+        times.length,
+      );
       const s = samplers.length;
-      samplers.push({ input: timeAcc, output: outAcc, interpolation: "LINEAR" });
+      samplers.push({
+        input: timeAcc,
+        output: outAcc,
+        interpolation: "LINEAR",
+      });
       channels.push({ sampler: s, targetNode: nodeIndex, path: "scale" });
     }
     if (k.rotationsWxyz) {
@@ -504,9 +633,19 @@ const buildAnimations = (
         const z = k.rotationsWxyz[i * 4 + 3];
         out.set([x, y, z, w], i * 4);
       }
-      const outAcc = pushAcc(`anim:${clipName}:r:${nodeIndex}`, f32(out), "f32", "VEC4", times.length);
+      const outAcc = pushAcc(
+        `anim:${clipName}:r:${nodeIndex}`,
+        f32(out),
+        "f32",
+        "VEC4",
+        times.length,
+      );
       const s = samplers.length;
-      samplers.push({ input: timeAcc, output: outAcc, interpolation: "LINEAR" });
+      samplers.push({
+        input: timeAcc,
+        output: outAcc,
+        interpolation: "LINEAR",
+      });
       channels.push({ sampler: s, targetNode: nodeIndex, path: "rotation" });
     }
   }

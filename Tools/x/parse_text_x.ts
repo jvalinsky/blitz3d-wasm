@@ -166,8 +166,14 @@ class Parser {
 
   private eat(type?: TokType, text?: string): Tok {
     const t = this.look;
-    if (type && t.type !== type) throw new Error(`X parse: expected ${type}, got ${t.type} at ${t.pos}`);
-    if (text && t.text !== text) throw new Error(`X parse: expected '${text}', got '${t.text}' at ${t.pos}`);
+    if (type && t.type !== type) {
+      throw new Error(`X parse: expected ${type}, got ${t.type} at ${t.pos}`);
+    }
+    if (text && t.text !== text) {
+      throw new Error(
+        `X parse: expected '${text}', got '${t.text}' at ${t.pos}`,
+      );
+    }
     this.look = this.lex.next();
     return t;
   }
@@ -222,7 +228,9 @@ class Parser {
       }
       break;
     }
-    if (!consumed) throw new Error(`X parse: expected delimiter at ${this.look.pos}`);
+    if (!consumed) {
+      throw new Error(`X parse: expected delimiter at ${this.look.pos}`);
+    }
   }
 
   private readFloatList(count: number): Float32Array {
@@ -248,7 +256,10 @@ class Parser {
     if (name == null) name = this.parseName();
     this.eat("sym", "{");
     const frame: XFrame = { name, children: [] };
-    while (this.look.type !== "eof" && !(this.look.type === "sym" && this.look.text === "}")) {
+    while (
+      this.look.type !== "eof" &&
+      !(this.look.type === "sym" && this.look.text === "}")
+    ) {
       if (this.look.type === "id" && this.look.text === "template") {
         this.skipTemplate();
         continue;
@@ -322,26 +333,41 @@ class Parser {
     // Material [name] { r;g;b;a;; power; spec(r,g,b); emiss(r,g,b); [TextureFilename { "..." ; }]
     if (name == null) name = this.parseName();
     this.eat("sym", "{");
-    const r = this.readF32(); this.eat("sym", ";");
-    const g = this.readF32(); this.eat("sym", ";");
-    const b = this.readF32(); this.eat("sym", ";");
-    const a = this.readF32(); this.eat("sym", ";");
+    const r = this.readF32();
+    this.eat("sym", ";");
+    const g = this.readF32();
+    this.eat("sym", ";");
+    const b = this.readF32();
+    this.eat("sym", ";");
+    const a = this.readF32();
+    this.eat("sym", ";");
     this.maybeEat("sym", ";");
 
     // power
-    this.readF32(); this.expectSep();
+    this.readF32();
+    this.expectSep();
     // specular rgb
-    this.readF32(); this.eat("sym", ";");
-    this.readF32(); this.eat("sym", ";");
-    this.readF32(); this.expectSep();
+    this.readF32();
+    this.eat("sym", ";");
+    this.readF32();
+    this.eat("sym", ";");
+    this.readF32();
+    this.expectSep();
     // emissive rgb
-    this.readF32(); this.eat("sym", ";");
-    this.readF32(); this.eat("sym", ";");
-    this.readF32(); this.expectSep();
+    this.readF32();
+    this.eat("sym", ";");
+    this.readF32();
+    this.eat("sym", ";");
+    this.readF32();
+    this.expectSep();
 
     let texture: string | undefined;
     while (!(this.look.type === "sym" && this.look.text === "}")) {
-      if (this.look.type === "id" && (this.look.text === "TextureFilename" || this.look.text === "TextureFileName")) {
+      if (
+        this.look.type === "id" &&
+        (this.look.text === "TextureFilename" ||
+          this.look.text === "TextureFileName")
+      ) {
         this.eat("id");
         this.eat("sym", "{");
         texture = this.eat("str").text;
@@ -359,17 +385,23 @@ class Parser {
   private parseMeshNormals(): Float32Array | undefined {
     // MeshNormals { nNormals; normals[nNormals]; nFaceNormals; faceNormals[...] }
     this.eat("sym", "{");
-    const n = this.readU32(); this.expectSep();
+    const n = this.readU32();
+    this.expectSep();
     const normals = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) {
-      normals[i * 3 + 0] = this.readF32(); this.eat("sym", ";");
-      normals[i * 3 + 1] = this.readF32(); this.eat("sym", ";");
-      normals[i * 3 + 2] = this.readF32(); this.expectSep();
+      normals[i * 3 + 0] = this.readF32();
+      this.eat("sym", ";");
+      normals[i * 3 + 1] = this.readF32();
+      this.eat("sym", ";");
+      normals[i * 3 + 2] = this.readF32();
+      this.expectSep();
     }
     // face normals section: skip (we only support per-vertex)
-    const fn = this.readU32(); this.expectSep();
+    const fn = this.readU32();
+    this.expectSep();
     for (let i = 0; i < fn; i++) {
-      const cnt = this.readU32(); this.eat("sym", ";");
+      const cnt = this.readU32();
+      this.eat("sym", ";");
       for (let j = 0; j < cnt; j++) {
         this.readU32();
         if (j + 1 < cnt) this.maybeEat("sym", ",");
@@ -382,11 +414,14 @@ class Parser {
 
   private parseMeshTexCoords(): Float32Array | undefined {
     this.eat("sym", "{");
-    const n = this.readU32(); this.expectSep();
+    const n = this.readU32();
+    this.expectSep();
     const uvs = new Float32Array(n * 2);
     for (let i = 0; i < n; i++) {
-      uvs[i * 2 + 0] = this.readF32(); this.expectSep();
-      uvs[i * 2 + 1] = this.readF32(); this.expectSep();
+      uvs[i * 2 + 0] = this.readF32();
+      this.expectSep();
+      uvs[i * 2 + 1] = this.readF32();
+      this.expectSep();
     }
     this.eat("sym", "}");
     return uvs;
@@ -397,7 +432,8 @@ class Parser {
     this.eat("sym", "{");
     const boneName = this.eat("str").text;
     this.expectSep();
-    const n = this.readU32(); this.expectSep();
+    const n = this.readU32();
+    this.expectSep();
     const vertexIndices = this.readIntList(n);
     this.expectSep();
     const weights = this.readFloatList(n);
@@ -408,10 +444,14 @@ class Parser {
     return { boneName, vertexIndices, weights, matrixOffset };
   }
 
-  private parseMeshMaterialList(faceCount: number): { materials: XMaterial[]; faceMat: Uint32Array } {
+  private parseMeshMaterialList(
+    faceCount: number,
+  ): { materials: XMaterial[]; faceMat: Uint32Array } {
     this.eat("sym", "{");
-    const nMat = this.readU32(); this.expectSep();
-    const nFaceIdx = this.readU32(); this.expectSep();
+    const nMat = this.readU32();
+    this.expectSep();
+    const nFaceIdx = this.readU32();
+    this.expectSep();
     const faceIdx = new Uint32Array(nFaceIdx);
     for (let i = 0; i < nFaceIdx; i++) {
       faceIdx[i] = this.readU32();
@@ -444,19 +484,25 @@ class Parser {
 
   private parseMesh(name?: string): XMesh {
     this.eat("sym", "{");
-    const nVerts = this.readU32(); this.expectSep();
+    const nVerts = this.readU32();
+    this.expectSep();
     const positions = new Float32Array(nVerts * 3);
     for (let i = 0; i < nVerts; i++) {
-      positions[i * 3 + 0] = this.readF32(); this.eat("sym", ";");
-      positions[i * 3 + 1] = this.readF32(); this.eat("sym", ";");
-      positions[i * 3 + 2] = this.readF32(); this.expectSep();
+      positions[i * 3 + 0] = this.readF32();
+      this.eat("sym", ";");
+      positions[i * 3 + 1] = this.readF32();
+      this.eat("sym", ";");
+      positions[i * 3 + 2] = this.readF32();
+      this.expectSep();
     }
 
-    const nFaces = this.readU32(); this.expectSep();
+    const nFaces = this.readU32();
+    this.expectSep();
     const triIndices: number[] = [];
     const faceTriMap: number[] = []; // triangle index -> face index
     for (let f = 0; f < nFaces; f++) {
-      const cnt = this.readU32(); this.eat("sym", ";");
+      const cnt = this.readU32();
+      this.eat("sym", ";");
       const verts: number[] = [];
       for (let j = 0; j < cnt; j++) {
         verts.push(this.readU32());
@@ -584,7 +630,9 @@ class Parser {
       this.skipObjectBodyIfPresent();
     }
 
-    if (!root.children.length && !meshes.length) throw new Error("X parse: no top-level objects found");
+    if (!root.children.length && !meshes.length) {
+      throw new Error("X parse: no top-level objects found");
+    }
     const out: XFile = { root, meshes };
     if (animTicksPerSecond != null) out.animTicksPerSecond = animTicksPerSecond;
     return out;
@@ -594,9 +642,15 @@ class Parser {
 export const parseTextX = (text: string): XFile => {
   // Quick format check
   const head = text.slice(0, 16).toLowerCase();
-  if (!head.includes("xof")) throw new Error("Not an X file (missing xof header)");
+  if (!head.includes("xof")) {
+    throw new Error("Not an X file (missing xof header)");
+  }
   if (!head.includes("txt")) {
-    console.warn(`[x-convert] Skipping unsupported format: ${head.substring(4, 16).trim()}`);
+    console.warn(
+      `[x-convert] Skipping unsupported format: ${
+        head.substring(4, 16).trim()
+      }`,
+    );
     return { root: { name: "__skipped", children: [] }, meshes: [] }; // Return empty/ignored
   }
   const p = new Parser(text);

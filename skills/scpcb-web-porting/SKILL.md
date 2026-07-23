@@ -8,20 +8,24 @@ description: Practical workflow for porting the SCPCB Blitz3D codebase under `~/
 ## Quick map of SCPCB subsystems
 
 - `Main.bb`: boot + options.ini + graphics init + global includes
-- `StrictLoads.bb`: wrappers around Load* + audio stream helpers (hard-fail behavior)
+- `StrictLoads.bb`: wrappers around Load* + audio stream helpers (hard-fail
+  behavior)
 - `Save.bb`: save/load + directory walking (`ReadDir`, `CreateDir`, `WriteFile`)
-- `Update.bb`: updater + remote file HTTP/FTP (`OpenTCPStream`) (not browser-friendly)
+- `Update.bb`: updater + remote file HTTP/FTP (`OpenTCPStream`) (not
+  browser-friendly)
 - `Map Creator/*`: Windows GUI + user32/kernel32 hacks (not browser-friendly)
 - `.decls` + `.dll`: Windows native dependencies (not browser-friendly)
 
 ## Porting principles (keep correctness visible)
 
-1. Prefer **removing/feature-gating** Windows-only systems in SCPCB over stubbing everything.
+1. Prefer **removing/feature-gating** Windows-only systems in SCPCB over
+   stubbing everything.
 2. Avoid hiding correctness bugs behind host stubs:
    - Run the import-leak gate after any SCPCB compile:
      - `deno run -A Tools/scpcb_import_leak_gate.ts --wasm web/public/scpcb.wasm --require-root`
 3. Make init deterministic:
-   - Ensure init-time file reads are in preload groups in `web/public/scpcb_manifest.json`.
+   - Ensure init-time file reads are in preload groups in
+     `web/public/scpcb_manifest.json`.
 
 ## High-risk SCPCB areas (common port blockers)
 
@@ -45,4 +49,3 @@ description: Practical workflow for porting the SCPCB Blitz3D codebase under `~/
 - If you touched runtime imports/stubs:
   - `deno task interpreter:audit`
   - `deno task interpreter:scpcb-coverage:check`
-

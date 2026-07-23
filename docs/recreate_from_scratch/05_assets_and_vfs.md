@@ -8,8 +8,8 @@ To run real games (SCPCB-class), you need:
 
 ## The Browser Constraint: Sync IO Is Effectively Gone
 
-Old code often assumes synchronous file reads. Browsers increasingly restrict
-or deprecate synchronous XHR, and modern fetch APIs are async.
+Old code often assumes synchronous file reads. Browsers increasingly restrict or
+deprecate synchronous XHR, and modern fetch APIs are async.
 
 Practical implication:
 
@@ -17,6 +17,7 @@ Practical implication:
 - When running legacy init paths, missing preloads will look like “hangs”.
 
 See also:
+
 - `docs/ASSET_PIPELINE.md`
 - `docs/SMPK_SYSTEM.md`
 - `web/src/runtime/fileio.ts`
@@ -28,7 +29,8 @@ Use explicit groups:
 
 - `boot`: the minimum needed to show UI + load WASM
 - `init`: files required for deterministic initialization steps
-- `facility_assets` (or similar): heavy assets required before calling legacy init
+- `facility_assets` (or similar): heavy assets required before calling legacy
+  init
 
 This repo’s loader uses a boot manifest and staged progress reporting.
 
@@ -53,4 +55,3 @@ Offline conversion enables:
 - consistent GPU-ready layouts.
 
 See: `docs/SMPK_SYSTEM.md`, `docs/SMPK_FORMAT.md`.
-

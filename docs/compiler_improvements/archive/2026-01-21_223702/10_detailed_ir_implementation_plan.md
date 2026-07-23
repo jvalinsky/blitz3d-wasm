@@ -2,21 +2,22 @@
 
 ## Current State
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| IR Types (Types.swift) | ✅ Complete | `IRType` enum (i32, f32, void) |
-| IR Nodes (IR.swift) | ✅ Complete | `IRValue`, `IREffect`, `IRBuilder` (with `indirect`) |
-| AST Lowering (ASTLowering.swift) | ✅ Complete | AST → IR, Case-insensitive, Arrays, Loops, Globals, Strings |
-| ParserTests.swift | ✅ Fixed | All 30 tests passing |
-| IR → WASM Emitter | ✅ Complete | `IREmitter.swift` handles loops, arrays, strings |
-| Wire into CodeGenerator | ✅ Integrated | `generateFromIR()` added |
-| CLI Flag (--use-ir) | ✅ Added | Enabled in `main.swift` |
-| IRPipelineTests | ✅ Verified | 8/8 tests passing (including Deduplication) |
-| WASMValidationTests | ✅ Fixed | 39/39 tests passing |
+| Component                        | Status        | Notes                                                       |
+| -------------------------------- | ------------- | ----------------------------------------------------------- |
+| IR Types (Types.swift)           | ✅ Complete   | `IRType` enum (i32, f32, void)                              |
+| IR Nodes (IR.swift)              | ✅ Complete   | `IRValue`, `IREffect`, `IRBuilder` (with `indirect`)        |
+| AST Lowering (ASTLowering.swift) | ✅ Complete   | AST → IR, Case-insensitive, Arrays, Loops, Globals, Strings |
+| ParserTests.swift                | ✅ Fixed      | All 30 tests passing                                        |
+| IR → WASM Emitter                | ✅ Complete   | `IREmitter.swift` handles loops, arrays, strings            |
+| Wire into CodeGenerator          | ✅ Integrated | `generateFromIR()` added                                    |
+| CLI Flag (--use-ir)              | ✅ Added      | Enabled in `main.swift`                                     |
+| IRPipelineTests                  | ✅ Verified   | 8/8 tests passing (including Deduplication)                 |
+| WASMValidationTests              | ✅ Fixed      | 39/39 tests passing                                         |
 
 ## Decision Pending: Integration Strategy
 
 **Decision 9**: Choose IR Integration Strategy
+
 - Option 10: Parallel Pipeline (Opt-in) - Lower risk
 - Option 11: Replace Primary Codegen - Cleaner but higher risk
 
@@ -25,9 +26,11 @@
 ### Phase 1: Fix Tests and Verify IR Foundation (IMMEDIATE)
 
 #### Step 1.1: Fix ParserTests.swift Syntax Errors
+
 **Action 12** | Priority: HIGH | Confidence: 90%
 
 **Problem**: ParserTests.swift uses deprecated Swift pattern matching:
+
 ```swift
 // BROKEN (deprecated)
 if case .constant(let decl) = program.statements[0] {
@@ -35,6 +38,7 @@ if case .constant(let decl) = program.statements[0] {
 ```
 
 **FIXED** (correct syntax with tuple pattern matching):
+
 ```swift
 // CORRECT
 if case .constant(let (decl, _)) = program.statements[0] {
@@ -42,6 +46,7 @@ if case .constant(let (decl, _)) = program.statements[0] {
 ```
 
 **Affected Test Methods** (need manual fixing):
+
 1. `testParseIntegerLiteral` - lines 16-17
 2. `testParseFloatLiteral` - lines 32-33
 3. `testParseStringLiteral` - lines 48-49
@@ -69,6 +74,7 @@ if case .constant(let (decl, _)) = program.statements[0] {
 25. `testParseGosub` - lines 408-409
 
 **Verification**:
+
 ```bash
 cd /Users/jack/Software/scp_port/blitz3d-wasm
 swift test --test-product Blitz3DCompilerPackageTests --filter ParserTests
@@ -76,11 +82,13 @@ swift test --test-product Blitz3DCompilerPackageTests --filter ParserTests
 ```
 
 #### Step 1.2: Create IR Type Tests
+
 **New Action** | Priority: HIGH | Confidence: 95%
 
 **Deliverable**: `Tests/CompilerTests/IRTests/IRTypeTests.swift`
 
 **Test Cases**:
+
 ```swift
 func testIRTypeEquality() {
     XCTAssertEqual(IRType.i32, IRType.i32)
@@ -102,16 +110,19 @@ func testIRTypeDescription() {
 ```
 
 **Verification**:
+
 ```bash
 swift test --test-product Blitz3DCompilerPackageTests --filter IRTypeTests
 ```
 
 #### Step 1.3: Create IR Builder Tests
+
 **New Action** | Priority: HIGH | Confidence: 90%
 
 **Deliverable**: `Tests/CompilerTests/IRTests/IRBuilderTests.swift`
 
 **Test Cases**:
+
 ```swift
 func testBuildConstI32() {
     let value = builder.buildConstI32(42)
@@ -137,6 +148,7 @@ func testBuildIfStatement() {
 ```
 
 **Verification**:
+
 ```bash
 swift test --test-product Blitz3DCompilerPackageTests --filter IRBuilderTests
 ```
@@ -144,11 +156,13 @@ swift test --test-product Blitz3DCompilerPackageTests --filter IRBuilderTests
 ### Phase 2: Create IR → WASM Emitter
 
 #### Step 2.1: Design IREmitter Interface
+
 **New Action** | Priority: HIGH | Confidence: 85%
 
 **Deliverable**: `Sources/Compiler/CodeGen/IREmitter.swift`
 
 **Interface Design**:
+
 ```swift
 public class IREmitter {
     private var context: ModuleContext
@@ -177,14 +191,17 @@ public class IREmitter {
 ```
 
 **Key Invariants**:
+
 - `emit(effect:)` never changes stack height
 - `emit(value:)` pushes exactly one value of `value.type`
 - `Discard(value)` emits `drop` only if `value.type != .void`
 
 #### Step 2.2: Implement IREmitter for Basic Types
+
 **New Action** | Priority: HIGH | Confidence: 85%
 
 **Emit Logic**:
+
 ```swift
 // IRValue → WASMInstruction[]
 case .constI32(let value):
@@ -211,9 +228,11 @@ case .binary(let op, let lhs, let rhs, let resultType):
 ```
 
 #### Step 2.3: Implement IREmitter for Control Flow
+
 **New Action** | Priority: HIGH | Confidence: 80%
 
 **Emit Logic**:
+
 ```swift
 case .ifStmt(let condition, let thenBody, let elseBody):
     var instrs = emit(value: condition)
@@ -239,6 +258,7 @@ case .ifStmt(let condition, let thenBody, let elseBody):
 ### Phase 3: Wire IR Pipeline into CodeGenerator
 
 #### Step 3.1: Add IR Generation Path
+
 **Action 8** | Priority: HIGH | Confidence: 75%
 
 **Modifications to `CodeGenerator.swift`**:
@@ -262,6 +282,7 @@ private func generateViaIR(_ program: ProgramNode) -> WASMModule {
 ```
 
 #### Step 3.2: Add CLI Flag
+
 **New Action** | Priority: MEDIUM | Confidence: 90%
 
 **Modifications to `Tools/wasm-cli/main.swift`**:
@@ -279,9 +300,11 @@ codeGen.useIRPipeline = useIRPipeline
 ### Phase 4: Integration Testing
 
 #### Step 4.1: Test Simple Programs
+
 **New Action** | Priority: HIGH | Confidence: 90%
 
 **Test Cases**:
+
 ```swift
 // test_ir_simple.bb
 Local x% = 42
@@ -290,6 +313,7 @@ Return y%
 ```
 
 **Verification**:
+
 ```bash
 # Test with IR pipeline
 swift run blitz3d-wasm test_ir_simple.bb --use-ir -o /tmp/test.wasm
@@ -297,9 +321,11 @@ wasm-validate /tmp/test.wasm
 ```
 
 #### Step 4.2: Test Control Flow
+
 **New Action** | Priority: HIGH | Confidence: 85%
 
 **Test Cases**:
+
 ```swift
 # test_ir_if.bb
 Local x% = 10
@@ -311,58 +337,64 @@ EndIf
 ```
 
 **Verification**:
+
 ```bash
 swift run blitz3d-wasm test_ir_if.bb --use-ir -o /tmp/test.wasm
 wasm-validate /tmp/test.wasm
 ```
 
 #### Step 4.3: Test SCPCB UpdateEvents.bb
+
 **New Action** | Priority: HIGH | Confidence: 70%
 
 **Verification**:
+
 ```bash
 swift run blitz3d-wasm ../scpcb/UpdateEvents.bb --use-ir -o /tmp/test.wasm
 wasm-validate /tmp/test.wasm
 ```
 
 #### Step 4.4: Test SCPCB MapSystem.bb
+
 **New Action** | Priority: HIGH | Confidence: 80%
 
 **Verification**:
+
 ```bash
 swift run blitz3d-wasm ../scpcb/MapSystem.bb --use-ir -o /tmp/MapSystem.wasm
 wasm-validate /tmp/MapSystem.wasm
 ```
 
-**Current Result (Jan 26 2026)**: `wasm-validate` fails with large clusters of type/stack errors (see `11_ir_followup.md`).
+**Current Result (Jan 26 2026)**: `wasm-validate` fails with large clusters of
+type/stack errors (see `11_ir_followup.md`).
 
 ### Success Criteria
 
-| Criterion | Target | Measurement |
-|-----------|--------|-------------|
-| Tests Compile | 100% | `swift test --filter ParserTests` passes |
-| IR Type Tests | 3/3 pass | `swift test --filter IRTypeTests` |
-| IR Builder Tests | 5/5 pass | `swift test --filter IRBuilderTests` |
-| Simple Program | Validates | `wasm-validate` passes |
-| Control Flow | Validates | `wasm-validate` passes |
-| SCPCB UpdateEvents | Validates | `wasm-validate` passes |
-| SCPCB MapSystem | Validates | `wasm-validate` passes (currently failing Jan 26 2026) |
+| Criterion          | Target    | Measurement                                            |
+| ------------------ | --------- | ------------------------------------------------------ |
+| Tests Compile      | 100%      | `swift test --filter ParserTests` passes               |
+| IR Type Tests      | 3/3 pass  | `swift test --filter IRTypeTests`                      |
+| IR Builder Tests   | 5/5 pass  | `swift test --filter IRBuilderTests`                   |
+| Simple Program     | Validates | `wasm-validate` passes                                 |
+| Control Flow       | Validates | `wasm-validate` passes                                 |
+| SCPCB UpdateEvents | Validates | `wasm-validate` passes                                 |
+| SCPCB MapSystem    | Validates | `wasm-validate` passes (currently failing Jan 26 2026) |
 
 ### Risk Mitigation
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| ParserTests syntax errors | HIGH | Manual fixing of each test method |
-| IR → WASM emission bugs | HIGH | Incremental testing (simple → complex) |
-| Stack validation failures | HIGH | Use `StackValidator` on output |
-| Performance regression | MEDIUM | Benchmark before/after with --use-ir flag |
+| Risk                      | Impact | Mitigation                                |
+| ------------------------- | ------ | ----------------------------------------- |
+| ParserTests syntax errors | HIGH   | Manual fixing of each test method         |
+| IR → WASM emission bugs   | HIGH   | Incremental testing (simple → complex)    |
+| Stack validation failures | HIGH   | Use `StackValidator` on output            |
+| Performance regression    | MEDIUM | Benchmark before/after with --use-ir flag |
 
 ### Estimated Timeline
 
-| Phase | Effort | Duration |
-|-------|--------|----------|
-| Phase 1: Fix Tests + IR Tests | 2-3 hours | Day 1 |
-| Phase 2: IREmitter | 4-6 hours | Day 2 |
-| Phase 3: Wire into CodeGenerator | 2-3 hours | Day 3 |
-| Phase 4: Integration Testing | 2-4 hours | Day 3-4 |
-| **Total** | **10-16 hours** | **4 days** |
+| Phase                            | Effort          | Duration   |
+| -------------------------------- | --------------- | ---------- |
+| Phase 1: Fix Tests + IR Tests    | 2-3 hours       | Day 1      |
+| Phase 2: IREmitter               | 4-6 hours       | Day 2      |
+| Phase 3: Wire into CodeGenerator | 2-3 hours       | Day 3      |
+| Phase 4: Integration Testing     | 2-4 hours       | Day 3-4    |
+| **Total**                        | **10-16 hours** | **4 days** |

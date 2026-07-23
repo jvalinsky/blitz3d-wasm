@@ -93,8 +93,7 @@ function makeImports() {
       b3d_asin: (x) => Math.round((Math.asin(x) * 180) / Math.PI) | 0,
       b3d_acos: (x) => Math.round((Math.acos(x) * 180) / Math.PI) | 0,
       b3d_atan: (x) => Math.round((Math.atan(x) * 180) / Math.PI) | 0,
-      b3d_atan2: (y, x) =>
-        Math.round((Math.atan2(y, x) * 180) / Math.PI) | 0,
+      b3d_atan2: (y, x) => Math.round((Math.atan2(y, x) * 180) / Math.PI) | 0,
       b3d_sqr: (x) => Math.sqrt(x) | 0,
       b3d_floor: (x) => Math.floor(x),
       b3d_ceil: (x) => Math.ceil(x),
@@ -181,4 +180,3 @@ self.onmessage = async (ev) => {
     });
   }
 };
-

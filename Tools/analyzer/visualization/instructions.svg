@@ -1,67 +1,81 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400"><style>
-      .bar { fill: #2ecc71; }
-      .bar-label { font-size: 10px; }
-      .count-label { font-size: 10px; }
-    </style><g>
-        <text class="bar-label" x="95" y="52" text-anchor="end">const</text>
-        <rect class="bar" x="100" y="42" width="580" height="16"/>
-        <text class="count-label" x="685" y="54">17075</text>
-      </g><g>
-        <text class="bar-label" x="95" y="72" text-anchor="end">call</text>
-        <rect class="bar" x="100" y="62" width="250.20673499267937" height="16"/>
-        <text class="count-label" x="355.20673499267934" y="74">7366</text>
-      </g><g>
-        <text class="bar-label" x="95" y="92" text-anchor="end">get_local</text>
-        <rect class="bar" x="100" y="82" width="86.8896046852123" height="16"/>
-        <text class="count-label" x="191.8896046852123" y="94">2558</text>
-      </g><g>
-        <text class="bar-label" x="95" y="112" text-anchor="end">get_global</text>
-        <rect class="bar" x="100" y="102" width="84.64773060029282" height="16"/>
-        <text class="count-label" x="189.64773060029282" y="114">2492</text>
-      </g><g>
-        <text class="bar-label" x="95" y="132" text-anchor="end">if</text>
-        <rect class="bar" x="100" y="122" width="49.287262079062955" height="16"/>
-        <text class="count-label" x="154.28726207906294" y="134">1451</text>
-      </g><g>
-        <text class="bar-label" x="95" y="152" text-anchor="end">set_global</text>
-        <rect class="bar" x="100" y="142" width="46.637774524158125" height="16"/>
-        <text class="count-label" x="151.63777452415812" y="154">1373</text>
-      </g><g>
-        <text class="bar-label" x="95" y="172" text-anchor="end">set_local</text>
-        <rect class="bar" x="100" y="162" width="41.33879941434846" height="16"/>
-        <text class="count-label" x="146.33879941434844" y="174">1217</text>
-      </g><g>
-        <text class="bar-label" x="95" y="192" text-anchor="end">add</text>
-        <rect class="bar" x="100" y="182" width="34.884919472913616" height="16"/>
-        <text class="count-label" x="139.88491947291362" y="194">1027</text>
-      </g><g>
-        <text class="bar-label" x="95" y="212" text-anchor="end">drop</text>
-        <rect class="bar" x="100" y="202" width="28.498975109809663" height="16"/>
-        <text class="count-label" x="133.49897510980966" y="214">839</text>
-      </g><g>
-        <text class="bar-label" x="95" y="232" text-anchor="end">eqz</text>
-        <rect class="bar" x="100" y="222" width="25.98535871156662" height="16"/>
-        <text class="count-label" x="130.98535871156662" y="234">765</text>
-      </g><g>
-        <text class="bar-label" x="95" y="252" text-anchor="end">convert_s/i32</text>
-        <rect class="bar" x="100" y="242" width="23.845387994143486" height="16"/>
-        <text class="count-label" x="128.8453879941435" y="254">702</text>
-      </g><g>
-        <text class="bar-label" x="95" y="272" text-anchor="end">mul</text>
-        <rect class="bar" x="100" y="262" width="21.161932650073204" height="16"/>
-        <text class="count-label" x="126.1619326500732" y="274">623</text>
-      </g><g>
-        <text class="bar-label" x="95" y="292" text-anchor="end">store</text>
-        <rect class="bar" x="100" y="282" width="18.7502196193265" height="16"/>
-        <text class="count-label" x="123.7502196193265" y="294">552</text>
-      </g><g>
-        <text class="bar-label" x="95" y="312" text-anchor="end">local</text>
-        <rect class="bar" x="100" y="302" width="15.896925329428989" height="16"/>
-        <text class="count-label" x="120.896925329429" y="314">468</text>
-      </g><g>
-        <text class="bar-label" x="95" y="332" text-anchor="end">end</text>
-        <rect class="bar" x="100" y="322" width="13.315373352855051" height="16"/>
-        <text class="count-label" x="118.31537335285505" y="334">392</text>
-      </g><text x="390" y="20" text-anchor="middle" font-weight="bold">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400">
+  <style>
+  .bar {
+    fill: #2ecc71;
+  }
+  .bar-label {
+    font-size: 10px;
+  }
+  .count-label {
+    font-size: 10px;
+  }
+  </style><g>
+    <text class="bar-label" x="95" y="52" text-anchor="end">const</text>
+    <rect class="bar" x="100" y="42" width="580" height="16" />
+    <text class="count-label" x="685" y="54">17075</text>
+  </g><g>
+    <text class="bar-label" x="95" y="72" text-anchor="end">call</text>
+    <rect class="bar" x="100" y="62" width="250.20673499267937" height="16" />
+    <text class="count-label" x="355.20673499267934" y="74">7366</text>
+  </g><g>
+    <text class="bar-label" x="95" y="92" text-anchor="end">get_local</text>
+    <rect class="bar" x="100" y="82" width="86.8896046852123" height="16" />
+    <text class="count-label" x="191.8896046852123" y="94">2558</text>
+  </g><g>
+    <text class="bar-label" x="95" y="112" text-anchor="end">get_global</text>
+    <rect class="bar" x="100" y="102" width="84.64773060029282" height="16" />
+    <text class="count-label" x="189.64773060029282" y="114">2492</text>
+  </g><g>
+    <text class="bar-label" x="95" y="132" text-anchor="end">if</text>
+    <rect class="bar" x="100" y="122" width="49.287262079062955" height="16" />
+    <text class="count-label" x="154.28726207906294" y="134">1451</text>
+  </g><g>
+    <text class="bar-label" x="95" y="152" text-anchor="end">set_global</text>
+    <rect class="bar" x="100" y="142" width="46.637774524158125" height="16" />
+    <text class="count-label" x="151.63777452415812" y="154">1373</text>
+  </g><g>
+    <text class="bar-label" x="95" y="172" text-anchor="end">set_local</text>
+    <rect class="bar" x="100" y="162" width="41.33879941434846" height="16" />
+    <text class="count-label" x="146.33879941434844" y="174">1217</text>
+  </g><g>
+    <text class="bar-label" x="95" y="192" text-anchor="end">add</text>
+    <rect class="bar" x="100" y="182" width="34.884919472913616" height="16" />
+    <text class="count-label" x="139.88491947291362" y="194">1027</text>
+  </g><g>
+    <text class="bar-label" x="95" y="212" text-anchor="end">drop</text>
+    <rect class="bar" x="100" y="202" width="28.498975109809663" height="16" />
+    <text class="count-label" x="133.49897510980966" y="214">839</text>
+  </g><g>
+    <text class="bar-label" x="95" y="232" text-anchor="end">eqz</text>
+    <rect class="bar" x="100" y="222" width="25.98535871156662" height="16" />
+    <text class="count-label" x="130.98535871156662" y="234">765</text>
+  </g><g>
+    <text class="bar-label" x="95" y="252" text-anchor="end"
+    >convert_s/i32</text>
+    <rect class="bar" x="100" y="242" width="23.845387994143486" height="16" />
+    <text class="count-label" x="128.8453879941435" y="254">702</text>
+  </g><g>
+    <text class="bar-label" x="95" y="272" text-anchor="end">mul</text>
+    <rect class="bar" x="100" y="262" width="21.161932650073204" height="16" />
+    <text class="count-label" x="126.1619326500732" y="274">623</text>
+  </g><g>
+    <text class="bar-label" x="95" y="292" text-anchor="end">store</text>
+    <rect class="bar" x="100" y="282" width="18.7502196193265" height="16" />
+    <text class="count-label" x="123.7502196193265" y="294">552</text>
+  </g><g>
+    <text class="bar-label" x="95" y="312" text-anchor="end">local</text>
+    <rect class="bar" x="100" y="302" width="15.896925329428989" height="16" />
+    <text class="count-label" x="120.896925329429" y="314">468</text>
+  </g><g>
+    <text class="bar-label" x="95" y="332" text-anchor="end">end</text>
+    <rect class="bar" x="100" y="322" width="13.315373352855051" height="16" />
+    <text class="count-label" x="118.31537335285505" y="334">392</text>
+  </g><text
+    x="390"
+    y="20"
+    text-anchor="middle"
+    font-weight="bold"
+  >
       Top 15 Instructions by Frequency
-    </text></svg>
+    </text>
+</svg>

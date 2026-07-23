@@ -7,12 +7,16 @@ We are migrating the compiler AST to carry `SourceSpan` at the enum-layer:
 - `StatementNode` cases are now `case foo(FooNode, SourceSpan)` (or similar).
 - `ExpressionNode` cases are now `case bar(BarNode, SourceSpan)` (or similar).
 
-The build currently fails because several compiler subsystems still pattern-match enum cases as if they had a single associated value (or construct enum cases without providing the required `SourceSpan`). Swift also warns that matching multi-associated-value cases “as a tuple” is deprecated.
+The build currently fails because several compiler subsystems still
+pattern-match enum cases as if they had a single associated value (or construct
+enum cases without providing the required `SourceSpan`). Swift also warns that
+matching multi-associated-value cases “as a tuple” is deprecated.
 
 This plan is designed to minimize churn:
 
 - Do **not** “panic revert” after partial compiler failures.
-- Avoid compiling after every small edit; instead, fix a whole category across a file-set, then do a single build to validate.
+- Avoid compiling after every small edit; instead, fix a whole category across a
+  file-set, then do a single build to validate.
 
 ## Symptoms (from `/tmp/swift_build.log`)
 
@@ -20,9 +24,12 @@ This plan is designed to minimize churn:
 
 Typical failure patterns:
 
-- `case .binary(let binaryOp):` → `binaryOp` becomes `(BinaryOpNode, SourceSpan)` so `binaryOp.op` fails.
-- `case .label(let name):` → `name` becomes `(String, SourceSpan)` so dictionary subscripts misbehave.
-- `if case .identifier(let id) = expr { ... id.name ... }` → `id` becomes `(IdentifierNode, SourceSpan)`.
+- `case .binary(let binaryOp):` → `binaryOp` becomes
+  `(BinaryOpNode, SourceSpan)` so `binaryOp.op` fails.
+- `case .label(let name):` → `name` becomes `(String, SourceSpan)` so dictionary
+  subscripts misbehave.
+- `if case .identifier(let id) = expr { ... id.name ... }` → `id` becomes
+  `(IdentifierNode, SourceSpan)`.
 
 Typical fix:
 
@@ -38,12 +45,15 @@ Typical failure patterns:
 
 Standardize on one of these strategies:
 
-1. Prefer using an existing span (e.g. `call.span` if `FunctionCallNode` already carries one).
-2. Otherwise use `SourceSpan.unknown` (or an equivalent sentinel) for synthetic nodes created during codegen.
+1. Prefer using an existing span (e.g. `call.span` if `FunctionCallNode` already
+   carries one).
+2. Otherwise use `SourceSpan.unknown` (or an equivalent sentinel) for synthetic
+   nodes created during codegen.
 
 ### Category C — Arity changes in “special” expression cases
 
-Some expression cases are multi-argument beyond `(payload, span)`. Example observed:
+Some expression cases are multi-argument beyond `(payload, span)`. Example
+observed:
 
 - `.objectCast` is `(String, ExpressionNode, SourceSpan)`
 
@@ -58,18 +68,23 @@ Example from `ExpressionGeneration.swift`:
 - `instrs.append(.if(.i32, [ .globalGet(...) ], [ .i32Const(0) ]))`
 - Error: `type 'Any' has no member 'globalGet'`
 
-This usually means the array literals lost type context (Swift inferred `[Any]`) because the surrounding `.if(...)` call is no longer type-checking cleanly. Fix the upstream mismatch first (often a signature/argument mismatch), and/or add explicit array typing:
+This usually means the array literals lost type context (Swift inferred `[Any]`)
+because the surrounding `.if(...)` call is no longer type-checking cleanly. Fix
+the upstream mismatch first (often a signature/argument mismatch), and/or add
+explicit array typing:
 
 - `let thenInstrs: [WasmInstruction] = [ .globalGet(...) ]`
 - `let elseInstrs: [WasmInstruction] = [ .i32Const(0) ]`
 
 ## Repair Strategy (Order Matters)
 
-The goal is to get back to a clean build with *consistent* span-carrying enums, without repeatedly undoing work.
+The goal is to get back to a clean build with _consistent_ span-carrying enums,
+without repeatedly undoing work.
 
 ### Step 1 — Make CodeGen compile against the new AST (highest leverage)
 
-Fix the CodeGen layer first because it touches most enum patterns and tends to produce the most errors.
+Fix the CodeGen layer first because it touches most enum patterns and tends to
+produce the most errors.
 
 Primary file groups:
 
@@ -77,14 +92,18 @@ Primary file groups:
 2. `Sources/Compiler/CodeGen/FunctionGeneration.swift`
 3. `Sources/Compiler/CodeGen/ExpressionGeneration.swift`
 4. `Sources/Compiler/CodeGen/StatementGeneration.swift`
-5. Any remaining `Sources/Compiler/CodeGen/*.swift` files that pattern-match `StatementNode` / `ExpressionNode`
+5. Any remaining `Sources/Compiler/CodeGen/*.swift` files that pattern-match
+   `StatementNode` / `ExpressionNode`
 
 For each file:
 
-- Replace tuple-pattern matches (`case .foo(let x):`) with destructured matches (`case .foo(let x, _):`).
+- Replace tuple-pattern matches (`case .foo(let x):`) with destructured matches
+  (`case .foo(let x, _):`).
 - Update `if case .foo(let x) = …` similarly.
-- Update enum constructions to pass a span (`.foo(payload, payloadSpanOrUnknown)`).
-- Fix “special arity” cases like `.insert(..., ..., span)` and `.objectCast(type, expr, span)`.
+- Update enum constructions to pass a span
+  (`.foo(payload, payloadSpanOrUnknown)`).
+- Fix “special arity” cases like `.insert(..., ..., span)` and
+  `.objectCast(type, expr, span)`.
 
 Expected outcome:
 
@@ -93,13 +112,16 @@ Expected outcome:
 
 ### Step 2 — Verify Parser is producing the new enum shapes consistently
 
-Once CodeGen compiles, ensure the Parser is returning the correct arity for every node it emits.
+Once CodeGen compiles, ensure the Parser is returning the correct arity for
+every node it emits.
 
 Checks:
 
-- Every `return .integerLiteral(value, span)`-style call matches the new enum definition.
+- Every `return .integerLiteral(value, span)`-style call matches the new enum
+  definition.
 - Every `return .identifier(IdentifierNode(...), span)` is consistent.
-- Ensure helper methods that synthesize nodes set span sanely (`startSpan()`/`endSpan(from:)`).
+- Ensure helper methods that synthesize nodes set span sanely
+  (`startSpan()`/`endSpan(from:)`).
 
 Goal:
 
@@ -120,9 +142,11 @@ To reduce future churn and make debugging features easier to build:
 - Add helpers to unwrap payloads while ignoring span:
   - e.g. `ExpressionNode.payload` or `ExpressionNode.destructureBinary()`
 - Add helpers to construct new nodes with a default span:
-  - e.g. `ExpressionNode.binary(_ node: BinaryOpNode, span: SourceSpan = .unknown)`
+  - e.g.
+    `ExpressionNode.binary(_ node: BinaryOpNode, span: SourceSpan = .unknown)`
 
-Only do this *after* the basic build is green, to avoid adding more moving parts mid-repair.
+Only do this _after_ the basic build is green, to avoid adding more moving parts
+mid-repair.
 
 ### Step 5 — One validation build at the end of the sweep
 
@@ -154,5 +178,5 @@ Once this compiles cleanly:
 
 - Every statement/expression has a `SourceSpan`.
 - CodeGen can emit bbdbg hooks with line/column information.
-- The browser debugger can reliably “jump to source” and highlight the exact BB line that produced each WASM fragment.
-
+- The browser debugger can reliably “jump to source” and highlight the exact BB
+  line that produced each WASM fragment.

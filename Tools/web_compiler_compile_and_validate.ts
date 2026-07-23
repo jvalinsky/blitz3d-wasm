@@ -189,7 +189,9 @@ if (rc !== 0) {
   throw new Error(`compile_blitz3d returned ${rc}`);
 }
 if (!resultPtr || !resultLen) {
-  throw new Error(`compile_blitz3d returned empty result (ptr=${resultPtr}, len=${resultLen})`);
+  throw new Error(
+    `compile_blitz3d returned empty result (ptr=${resultPtr}, len=${resultLen})`,
+  );
 }
 
 const resultBytes = new Uint8Array(exports.memory.buffer, resultPtr, resultLen);
@@ -215,7 +217,8 @@ if (outPath) {
 if (shouldValidate) {
   // Default temp dir on macOS is often under `/var/folders`, but many tasks/tests
   // run with `--allow-write=/tmp`. Prefer `/tmp` for the default output.
-  const tmp = outPath ?? await Deno.makeTempFile({ dir: "/tmp", suffix: ".wasm" });
+  const tmp = outPath ??
+    await Deno.makeTempFile({ dir: "/tmp", suffix: ".wasm" });
   if (!outPath) await Deno.writeFile(tmp, wasmBytes);
   const p = new Deno.Command("wasm-validate", {
     args: [tmp],

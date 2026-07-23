@@ -25,11 +25,16 @@ description: Run and interpret Blitz3D-WASM’s repo-native memory leak tooling 
 
 ## Interpret results → likely root cause
 
-- **RAF/interval growth**: a loop wasn’t canceled on dispose/unload; check owners in web runtime/loader.
-- **Listener growth**: `addEventListener` without removal; watch anonymous handlers.
-- **Three.js GPU leak**: missing `.dispose()` on geometry/material/texture, or cloning materials repeatedly.
-- **Retained maps**: caches keyed by id/path that are never cleared between runs.
-- **WASM instance retention**: references to `WebAssembly.Instance/Module/Memory` or typed array views held globally.
+- **RAF/interval growth**: a loop wasn’t canceled on dispose/unload; check
+  owners in web runtime/loader.
+- **Listener growth**: `addEventListener` without removal; watch anonymous
+  handlers.
+- **Three.js GPU leak**: missing `.dispose()` on geometry/material/texture, or
+  cloning materials repeatedly.
+- **Retained maps**: caches keyed by id/path that are never cleared between
+  runs.
+- **WASM instance retention**: references to
+  `WebAssembly.Instance/Module/Memory` or typed array views held globally.
 
 ## Fix strategy (minimal, correct)
 
@@ -39,9 +44,10 @@ description: Run and interpret Blitz3D-WASM’s repo-native memory leak tooling 
    - removes all listeners
    - disposes Three.js resources and clears maps
    - drops references to WASM handles so GC can collect
-3. Re-run the same memleak command to confirm improvement (don’t switch tests mid-stream).
+3. Re-run the same memleak command to confirm improvement (don’t switch tests
+   mid-stream).
 
 ## When to use the deeper checklist
 
-If you need browser-side best practices beyond the repo tools, also use `js-wasm-memory-audit`.
-
+If you need browser-side best practices beyond the repo tools, also use
+`js-wasm-memory-audit`.

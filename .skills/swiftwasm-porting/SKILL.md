@@ -5,7 +5,9 @@ description: Check Swift on WASM compatibility, identify incompatible frameworks
 
 # Swift WebAssembly Porting Skill
 
-You are a Swift on WebAssembly (WASM) compatibility expert. Your task is to help port Swift projects to run in WebAssembly environments by identifying incompatibilities and providing WebAssembly-safe alternatives.
+You are a Swift on WebAssembly (WASM) compatibility expert. Your task is to help
+port Swift projects to run in WebAssembly environments by identifying
+incompatibilities and providing WebAssembly-safe alternatives.
 
 ## Core Capabilities
 
@@ -20,11 +22,13 @@ You are a Swift on WebAssembly (WASM) compatibility expert. Your task is to help
 These frameworks are **NOT available** on WebAssembly:
 
 ### UI Frameworks
+
 - ❌ `UIKit` - iOS UI framework
-- ❌ `AppKit` - macOS UI framework  
+- ❌ `AppKit` - macOS UI framework
 - ❌ `SwiftUI` - Declarative UI (partially supported with Tokamak)
 
 ### Graphics & Media
+
 - ❌ `CoreGraphics` - 2D graphics rendering
 - ❌ `CoreImage` - Image processing
 - ❌ `CoreML` - Machine learning models
@@ -32,6 +36,7 @@ These frameworks are **NOT available** on WebAssembly:
 - ❌ `Metal` - GPU programming
 
 ### System Frameworks
+
 - ❌ `URLSession` - Network requests (use fetch via JavaScript)
 - ❌ `Accelerate` - SIMD/BLAS operations
 - ❌ `CoreLocation` - GPS/location services
@@ -39,6 +44,7 @@ These frameworks are **NOT available** on WebAssembly:
 - ❌ `HealthKit` - Health data access
 
 ### File System
+
 - ⚠️ `FileManager` - Limited support (WASI virtual filesystem only)
 - ⚠️ `Foundation.URL` - Limited to in-memory or WASI paths
 
@@ -126,6 +132,7 @@ func fetchData(from url: String) async throws -> String {
 **Problem**: `Accelerate` not available
 
 **Solutions**:
+
 1. **Matft** - NumPy-like library for Swift
 2. **CLAPACK** - Linear algebra (can be compiled to WASM)
 3. **Pure Swift** - Implement algorithms directly
@@ -155,6 +162,7 @@ func vectorAdd(_ a: [Float], _ b: [Float]) -> [Float] {
 **Problem**: `CoreGraphics`, `Metal` not available
 
 **Solutions**:
+
 - **Canvas API** - Use JavaScript Canvas via JavaScriptKit
 - **WebGL** - Access WebGL for 3D rendering
 - **SVG** - Generate SVG programmatically
@@ -280,7 +288,8 @@ class NativeFileSystem: FileSystemProtocol {
 
 ### Install SwiftWasm Toolchain
 
-1. Download from [SwiftWasm Releases](https://github.com/swiftwasm/swift/releases)
+1. Download from
+   [SwiftWasm Releases](https://github.com/swiftwasm/swift/releases)
 2. Extract to `~/Library/Developer/Toolchains/`
 3. Select toolchain:
    ```bash
@@ -371,6 +380,7 @@ class WebButton: ButtonProtocol {
 ## When to Use This Skill
 
 Load this skill when:
+
 - Porting existing Swift libraries to WebAssembly
 - Analyzing codebase for WASM compatibility
 - Finding alternatives to platform-specific frameworks

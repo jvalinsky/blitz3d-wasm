@@ -92,8 +92,12 @@ function printScoreboard(runs, agg) {
     const ts = data.test_run?.timestamp ?? "unknown";
     const sum = data.summary ?? {};
     console.log(
-      `- ${path.basename(file)} @ ${ts}: ${sum.passed ?? 0}/${sum.total_files ?? 0} passed ` +
-        `(compileErr=${sum.compile_errors ?? 0}, validateErr=${sum.validation_errors ?? 0})`
+      `- ${path.basename(file)} @ ${ts}: ${sum.passed ?? 0}/${
+        sum.total_files ?? 0
+      } passed ` +
+        `(compileErr=${sum.compile_errors ?? 0}, validateErr=${
+          sum.validation_errors ?? 0
+        })`,
     );
   }
   console.log("");
@@ -104,9 +108,11 @@ function printScoreboard(runs, agg) {
 
   console.log("Aggregated totals:");
   console.log(
-    `- Total files: ${agg.totalFiles}, Passed: ${agg.totalPassed}, Failed: ${agg.totalFailed} (pass rate: ${overallPassRate})`
+    `- Total files: ${agg.totalFiles}, Passed: ${agg.totalPassed}, Failed: ${agg.totalFailed} (pass rate: ${overallPassRate})`,
   );
-  console.log(`- Compile errors: ${overallCompileFail}, Validation errors: ${overallValidateFail}`);
+  console.log(
+    `- Compile errors: ${overallCompileFail}, Validation errors: ${overallValidateFail}`,
+  );
   console.log("");
 
   const topCategories = Object.entries(agg.errorCategories)

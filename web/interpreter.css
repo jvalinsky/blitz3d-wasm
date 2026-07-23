@@ -161,9 +161,7 @@ select {
   display: flex;
   min-height: 180px;
   background: #fff;
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
 }
 
 .editor-gutter {
@@ -329,9 +327,7 @@ select {
 
 .example-req {
   background: #fff;
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   font-size: 12px;
   line-height: 1.35;
@@ -360,9 +356,7 @@ select {
 .vfs-list {
   overflow: auto;
   background: #fff;
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   font-family: "Monaco", "Menlo", "Consolas", monospace;
   font-size: 12px;
@@ -458,9 +452,7 @@ select {
   white-space: pre-wrap;
   background: #fff;
   color: #000;
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   min-height: 100%;
 }
@@ -501,9 +493,7 @@ select {
 
 .runtime-gaps-list,
 .runtime-gaps-called {
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   background: #fff;
   font-family: "Monaco", "Menlo", "Consolas", monospace;
@@ -608,9 +598,7 @@ select {
 
 .bbdbg-stack,
 .bbdbg-trace {
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   background: #fff;
   font-family: "Monaco", "Menlo", "Consolas", monospace;
@@ -675,9 +663,7 @@ select {
 }
 
 .mem-dump {
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   background: #fff;
   font-family: "Monaco", "Menlo", "Consolas", monospace;
@@ -738,9 +724,7 @@ select {
 }
 
 .wat-code {
-  box-shadow:
-    inset -1px -1px #dfdfdf,
-    inset 1px 1px grey;
+  box-shadow: inset -1px -1px #dfdfdf, inset 1px 1px grey;
   padding: 6px;
   background: #fff;
   font-family: "Monaco", "Menlo", "Consolas", monospace;

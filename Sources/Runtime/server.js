@@ -55,13 +55,19 @@ Deno.serve({ port: Number(PORT) }, async (req) => {
   const ext = extname(normalizedPath).toLowerCase();
   const contentType = MIME_TYPES[ext] || "application/octet-stream";
 
-  if (!normalizedPath.startsWith(EXAMPLES_DIR) && !normalizedPath.startsWith(SCPCB_DIR)) {
+  if (
+    !normalizedPath.startsWith(EXAMPLES_DIR) &&
+    !normalizedPath.startsWith(SCPCB_DIR)
+  ) {
     return new Response("Forbidden", { status: 403 });
   }
 
   try {
     const data = await Deno.readFile(normalizedPath);
-    return new Response(data, { status: 200, headers: { "Content-Type": contentType } });
+    return new Response(data, {
+      status: 200,
+      headers: { "Content-Type": contentType },
+    });
   } catch (err) {
     console.log(`  Not found: ${normalizedPath}`);
     if (err instanceof Deno.errors.NotFound) {

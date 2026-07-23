@@ -1,16 +1,22 @@
 # Graphics/Rendering Systems Documentation
 
 ## Overview
-The graphics/rendering systems in SCP: Containment Breach handle advanced visual effects, particle systems, and dynamic lighting to create the game's distinctive horror atmosphere.
+
+The graphics/rendering systems in SCP: Containment Breach handle advanced visual
+effects, particle systems, and dynamic lighting to create the game's distinctive
+horror atmosphere.
 
 ## Material System
 
 ### Purpose
-The material system manages surface properties, textures, and visual effects that define how objects appear and interact with light.
+
+The material system manages surface properties, textures, and visual effects
+that define how objects appear and interact with light.
 
 ### Architecture
 
 #### Material Data Structure
+
 ```blitzbasic
 Type Material
     Field MaterialID%          ; Unique material identifier
@@ -48,6 +54,7 @@ Const BLEND_MULTIPLY% = 3     ; Multiply blending
 ```
 
 ### Material Management
+
 ```blitzbasic
 Global Materials.Material[1000] ; Material library
 
@@ -119,11 +126,14 @@ End Function
 ## Particle System
 
 ### Purpose
-The particle system creates environmental effects, damage visualization, and atmospheric elements that enhance the horror experience.
+
+The particle system creates environmental effects, damage visualization, and
+atmospheric elements that enhance the horror experience.
 
 ### Architecture
 
 #### Particle Emitter Structure
+
 ```blitzbasic
 Type ParticleEmitter
     Field EmitterID%           ; Unique emitter identifier
@@ -164,6 +174,7 @@ End Type
 ```
 
 ### Particle Management
+
 ```blitzbasic
 Function CreateParticleEmitter(template$, x#, y#, z#)
     emitter.ParticleEmitter = New ParticleEmitter
@@ -289,6 +300,7 @@ End Function
 ```
 
 ### Specialized Particle Effects
+
 ```blitzbasic
 Function CreateBloodParticles(x#, y#, z#, amount%)
     For i = 1 To amount
@@ -329,11 +341,14 @@ End Function
 ## Lighting System
 
 ### Purpose
-The lighting system creates dynamic horror atmosphere through carefully controlled illumination, shadows, and SCP-specific lighting effects.
+
+The lighting system creates dynamic horror atmosphere through carefully
+controlled illumination, shadows, and SCP-specific lighting effects.
 
 ### Architecture
 
 #### Light Source Structure
+
 ```blitzbasic
 Type LightSource
     Field LightID%             ; Unique light identifier
@@ -364,6 +379,7 @@ Const LIGHT_DIRECTIONAL% = 3  ; Directional light (sun)
 ```
 
 ### Dynamic Lighting Management
+
 ```blitzbasic
 Global Lights.LightSource[200] ; Light sources
 Global AmbientColor#[3] = [0.1, 0.1, 0.1] ; Global ambient
@@ -449,6 +465,7 @@ End Function
 ```
 
 ### SCP-Specific Lighting Effects
+
 ```blitzbasic
 Function UpdateSCPLighting()
     ; SCP-173 containment chamber
@@ -496,6 +513,7 @@ End Function
 ```
 
 ### Fog and Atmospheric Effects
+
 ```blitzbasic
 Function UpdateFogEffects()
     ; Base fog for horror atmosphere
@@ -524,6 +542,7 @@ End Function
 ## Graphics System Integration
 
 ### Render Pipeline
+
 ```blitzbasic
 Function RenderGraphics()
     ; Update lighting
@@ -572,17 +591,22 @@ End Function
 ```
 
 ### Performance Optimizations
+
 - **LOD System**: Reduce detail for distant objects
 - **Frustum Culling**: Only render visible objects
 - **Batch Rendering**: Group similar objects
 - **Texture Atlasing**: Combine small textures
 
 ### Integration Points
-- **[Rendering System](CORE_SYSTEMS.md#rendering-system)**: Core graphics pipeline
+
+- **[Rendering System](CORE_SYSTEMS.md#rendering-system)**: Core graphics
+  pipeline
 - **[Material System](#material-system)**: Surface properties
 - **[Lighting System](#lighting-system)**: Dynamic illumination
 - **[Particle System](#particle-system)**: Environmental effects
 
 ---
 
-*Graphics/rendering systems create the visual horror of SCP: Containment Breach through sophisticated lighting, particle effects, and material systems that react to game state and player sanity.*
+_Graphics/rendering systems create the visual horror of SCP: Containment Breach
+through sophisticated lighting, particle effects, and material systems that
+react to game state and player sanity._

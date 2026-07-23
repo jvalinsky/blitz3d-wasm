@@ -1,22 +1,28 @@
 # Executive Summary: Blitz3D Compiler & Runtime Analysis
 
-**Date**: February 1, 2026  
-**Analysis Scope**: Swift compiler + Swift engine vs Blitz3D-NG reference  
+**Date**: February 1, 2026\
+**Analysis Scope**: Swift compiler + Swift engine vs Blitz3D-NG reference\
 **Primary Goal**: Identify gaps preventing SCPCB from running in browser
 
 ---
 
 ## TL;DR
 
-Our Swift-based Blitz3D→WASM compiler and runtime implementation has a **solid architectural foundation** but is missing **critical functionality** needed for SCPCB. The compiler has **good language coverage** but lacks include file support. The runtime covers only **22% of Blitz3D-NG's functions**, with major gaps in asset loading, file I/O, and math operations.
+Our Swift-based Blitz3D→WASM compiler and runtime implementation has a **solid
+architectural foundation** but is missing **critical functionality** needed for
+SCPCB. The compiler has **good language coverage** but lacks include file
+support. The runtime covers only **22% of Blitz3D-NG's functions**, with major
+gaps in asset loading, file I/O, and math operations.
 
-**Bottom Line**: Cannot run SCPCB without implementing include files, asset loading, and core runtime functions.
+**Bottom Line**: Cannot run SCPCB without implementing include files, asset
+loading, and core runtime functions.
 
 ---
 
 ## What We Have
 
 ### Swift Compiler ✅
+
 - **Individual file compilation**: 94.7% success rate (54/57 SCPCB files)
 - **Language features**: Most Blitz3D constructs supported
 - **WASM generation**: 100% spec compliance
@@ -24,6 +30,7 @@ Our Swift-based Blitz3D→WASM compiler and runtime implementation has a **solid
 - **Relooper**: Correctly handles GOTO/GOSUB for WASM
 
 ### Swift Engine ✅
+
 - **Scene graph**: 64% coverage (51/80 functions) - Strong foundation
 - **Entity management**: Comprehensive transform/appearance/visibility support
 - **Memory operations**: 37% coverage with bounds checking
@@ -31,6 +38,7 @@ Our Swift-based Blitz3D→WASM compiler and runtime implementation has a **solid
 - **Architecture**: Clean modular design with singleton managers
 
 ### TypeScript Runtime 🤔
+
 - **Status**: Not yet audited in this analysis
 - **Potential**: May provide missing browser-specific functionality
 - **Role**: Three.js rendering, Web Audio, asset loading via browser APIs
@@ -45,7 +53,8 @@ Our Swift-based Blitz3D→WASM compiler and runtime implementation has a **solid
    - **Status**: Stubbed out in Swift compiler (Parser.swift:495-501)
    - **Impact**: SCPCB Main.bb uses 23 #Include statements
    - **Why Critical**: Individual files compile, but assembled game won't work
-   - **Files Affected**: Items.bb, NPCs.bb, MapSystem.bb, Particles.bb, menu.bb, etc.
+   - **Files Affected**: Items.bb, NPCs.bb, MapSystem.bb, Particles.bb, menu.bb,
+     etc.
 
 2. **Asset Loading Pipeline**
    - **Missing**: LoadMesh, LoadTexture, LoadImage (0 functions)
@@ -304,6 +313,7 @@ P3          Input Devices         ⚠️ 22%    No
 ## Success Metrics
 
 ### Phase 1: Core Functionality (Month 1-2)
+
 - ✅ Include files working
 - ✅ Math library implemented
 - ✅ String operations implemented
@@ -312,12 +322,14 @@ P3          Input Devices         ⚠️ 22%    No
 - **Target**: Can compile and load SCPCB assets
 
 ### Phase 2: Basic Gameplay (Month 3-4)
+
 - ✅ Graphics pipeline expanded
 - ✅ Audio system functional
 - ✅ Physics collision working
 - **Target**: Basic SCPCB gameplay working
 
 ### Phase 3: Full Compatibility (Month 5-12)
+
 - ✅ Physics engine integrated
 - ✅ Animation system complete
 - ✅ All SCPCB features working
@@ -329,18 +341,21 @@ P3          Input Devices         ⚠️ 22%    No
 
 **Current State**: Strong foundation with critical gaps
 
-**Viability**: SCPCB port is **achievable** but requires significant runtime expansion
+**Viability**: SCPCB port is **achievable** but requires significant runtime
+expansion
 
 **Effort Estimate**: 6-12 months to full compatibility (medium team)
 
-**Recommendation**: 
+**Recommendation**:
+
 1. Implement include files immediately
 2. Audit TypeScript runtime for existing functionality
 3. Prioritize math/string/file I/O functions
 4. Add asset loading pipeline
 5. Iterate based on SCPCB testing
 
-**Strategic Decision**: The import-based architecture is sound. Focus on expanding runtime coverage rather than redesigning the compiler.
+**Strategic Decision**: The import-based architecture is sound. Focus on
+expanding runtime coverage rather than redesigning the compiler.
 
 ---
 

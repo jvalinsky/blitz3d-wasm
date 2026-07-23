@@ -34,13 +34,19 @@ Deno.test("No SCPCB top functions missing from allowlist", async () => {
   const workerPath = `${repoRoot}/web/compiler_worker.ts`;
 
   const summaryText = await Deno.readTextFile(summaryPath);
-  const summary = JSON.parse(summaryText) as { name: string; calls: number; fileCount: number }[];
+  const summary = JSON.parse(summaryText) as {
+    name: string;
+    calls: number;
+    fileCount: number;
+  }[];
   const requiredNames = summary.map((e) => e.name.toLowerCase());
 
   const workerSrc = await Deno.readTextFile(workerPath);
   const m = workerSrc.match(/const autoImports = \[(.*?)\];/s);
   assert(m, "Could not find autoImports array in compiler_worker.ts");
-  const autoImports = Array.from(m![1].matchAll(/"([^"]+)"/g)).map((x) => x[1]!);
+  const autoImports = Array.from(m![1].matchAll(/"([^"]+)"/g)).map((x) =>
+    x[1]!
+  );
   const allowSet = new Set(autoImports.map((s) => s.toLowerCase()));
 
   const missing: string[] = [];
@@ -49,6 +55,9 @@ Deno.test("No SCPCB top functions missing from allowlist", async () => {
       missing.push(name);
     }
   }
-  assertEquals(missing.length, 0, `Missing from allowlist: ${missing.join(", ")}`);
+  assertEquals(
+    missing.length,
+    0,
+    `Missing from allowlist: ${missing.join(", ")}`,
+  );
 });
-

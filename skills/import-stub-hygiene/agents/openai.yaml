@@ -2,4 +2,3 @@ interface:
   display_name: "Import/Stub Hygiene"
   short_description: "Control WASM imports and avoid silent stubs"
   default_prompt: "Use $import-stub-hygiene to decide implement vs stub for a missing WASM import, and list the guardrails to ensure SCPCB correctness isn’t masked."
-

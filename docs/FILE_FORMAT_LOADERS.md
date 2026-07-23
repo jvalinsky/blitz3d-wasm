@@ -1,16 +1,22 @@
 # File Format Loaders Documentation
 
 ## Overview
-File format loaders handle the loading and management of all game assets including 3D models, textures, audio files, and game data, providing the infrastructure for content management.
+
+File format loaders handle the loading and management of all game assets
+including 3D models, textures, audio files, and game data, providing the
+infrastructure for content management.
 
 ## Mesh Loaders
 
 ### Purpose
-Mesh loaders import 3D model data from various formats, enabling the use of complex geometry in the game world.
+
+Mesh loaders import 3D model data from various formats, enabling the use of
+complex geometry in the game world.
 
 ### Supported Formats
 
 #### B3D Format (Blitz3D Native)
+
 ```blitzbasic
 Function LoadB3D(file$)
     file = ReadFile(file + ".b3d")
@@ -73,6 +79,7 @@ End Function
 ```
 
 #### X Format (DirectX)
+
 ```blitzbasic
 Function LoadX(file$)
     file = ReadFile(file + ".x")
@@ -97,6 +104,7 @@ End Function
 ```
 
 #### RMesh Format (Custom Room Format)
+
 ```blitzbasic
 Type RMeshHeader
     Field Version%             ; File version
@@ -180,9 +188,12 @@ End Function
 ## Texture Loaders
 
 ### Purpose
-Texture loaders handle image loading and processing for surface materials and UI elements.
+
+Texture loaders handle image loading and processing for surface materials and UI
+elements.
 
 ### Supported Formats
+
 ```blitzbasic
 Function LoadTexture(file$, flags% = 1)
     ; Determine format from extension
@@ -248,9 +259,12 @@ End Function
 ## Audio Loaders
 
 ### Purpose
-Audio loaders handle sound file loading and streaming for music and sound effects.
+
+Audio loaders handle sound file loading and streaming for music and sound
+effects.
 
 ### Supported Formats
+
 ```blitzbasic
 Function LoadSound(file$)
     ; Determine format
@@ -322,9 +336,11 @@ End Function
 ## Archive Systems
 
 ### Purpose
+
 Archive systems provide compressed asset storage and streaming capabilities.
 
 ### ZIP Archive Support
+
 ```blitzbasic
 Type ZipArchive
     Field FileName$            ; Archive file path
@@ -462,6 +478,7 @@ End Function
 ## Asset Management
 
 ### Asset Caching System
+
 ```blitzbasic
 Type AssetCache
     Field Assets%[1000]        ; Cached asset handles
@@ -523,6 +540,7 @@ End Function
 ```
 
 ### Streaming System
+
 ```blitzbasic
 Type StreamingAsset
     Field AssetName$           ; Asset identifier
@@ -559,11 +577,16 @@ End Function
 ```
 
 ## Integration Points
-- **[Rendering System](CORE_SYSTEMS.md#rendering-system)**: Mesh and texture loading
+
+- **[Rendering System](CORE_SYSTEMS.md#rendering-system)**: Mesh and texture
+  loading
 - **[Audio System](CORE_SYSTEMS.md#audio-system)**: Sound file loading
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Asset state persistence
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Asset state
+  persistence
 - **[Archive Systems](#archive-systems)**: Compressed asset storage
 
 ---
 
-*File format loaders provide the foundation for asset management in SCP: Containment Breach, handling diverse formats and providing efficient loading and caching systems.*
+_File format loaders provide the foundation for asset management in SCP:
+Containment Breach, handling diverse formats and providing efficient loading and
+caching systems._

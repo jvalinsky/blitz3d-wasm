@@ -19,6 +19,7 @@ description: Debug SCPCB `.rmesh` room meshes in Blitz3D-WASM, including header/
   - `uvs1`: lightmap UV
 
 If lighting/materials look wrong, confirm slot swapping in:
+
 - `Tools/convert_rmesh_to_smpk.ts`
 
 ## Parse-level debug
@@ -26,7 +27,8 @@ If lighting/materials look wrong, confirm slot swapping in:
 - Parser: `Tools/rmesh/parse.ts`
 - Validate basic counts:
   - `drawnCount`, `collisionCount`, optional `triggerCount`, `entityCount`
-- Look for malformed “empty trigger surfaces” (converter tolerates them and emits a zero AABB for diagnostics).
+- Look for malformed “empty trigger surfaces” (converter tolerates them and
+  emits a zero AABB for diagnostics).
 
 ## Validate output correctness
 
@@ -37,4 +39,3 @@ If lighting/materials look wrong, confirm slot swapping in:
 
 - RMESH loader: `web/src/runtime/rmesh.ts`
 - SMPK loader: `web/src/runtime/smpk.ts`
-

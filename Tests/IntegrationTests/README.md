@@ -1,6 +1,7 @@
 # Blitz3D WASM Integration Tests
 
-This directory contains integration tests for the Blitz3D WASM compiler and runtime.
+This directory contains integration tests for the Blitz3D WASM compiler and
+runtime.
 
 ## Test Structure
 
@@ -30,8 +31,9 @@ swift test
 ```
 
 This runs all unit tests including:
+
 - Lexer tests
-- Parser tests  
+- Parser tests
 - Code generator tests
 - Binary encoder tests
 - NEW: Integration tests for data/asset compilation
@@ -44,6 +46,7 @@ node run_tests.js
 ```
 
 This compiles test BASIC files and verifies:
+
 - Successful WASM compilation
 - Valid WASM binary structure
 - Data section generation
@@ -121,6 +124,7 @@ Then create the corresponding `.bb` file in `Assets/`.
 ## Test Results
 
 Current test results:
+
 - **Swift XCTests**: 82 tests, 0 failures
 - **Deno Integration**: 4 tests, 0 failures
 

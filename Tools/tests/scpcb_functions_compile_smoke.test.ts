@@ -45,7 +45,12 @@ async function getCompiler() {
       view.setUint32(env_buf_size, 0, true);
       return errno.success;
     },
-    fd_write: (fd: number, iovs: number, iovs_len: number, nwritten: number) => {
+    fd_write: (
+      fd: number,
+      iovs: number,
+      iovs_len: number,
+      nwritten: number,
+    ) => {
       if (!wasmMemoryRef) return errno.success;
       if (fd === 1 || fd === 2) {
         const view = new DataView(wasmMemoryRef.buffer);
@@ -121,7 +126,9 @@ async function getCompiler() {
   wasmMemoryRef = exports.memory;
 
   if (typeof exports._start === "function") {
-    try { exports._start(); } catch { /* ignore */ }
+    try {
+      exports._start();
+    } catch { /* ignore */ }
   }
 
   // Read autoImports from compiler_worker.ts
@@ -165,9 +172,12 @@ async function getCompiler() {
     const resultLenPtr = allocU32();
 
     const rc = exports.compile_blitz3d(
-      sourcePtr, sourceBytes.length,
-      optionsPtr, optionsBytes.length,
-      resultPtrPtr, resultLenPtr,
+      sourcePtr,
+      sourceBytes.length,
+      optionsPtr,
+      optionsBytes.length,
+      resultPtrPtr,
+      resultLenPtr,
     );
     if (rc !== 0) throw new Error(`compile_blitz3d returned ${rc}`);
 
@@ -178,13 +188,18 @@ async function getCompiler() {
       throw new Error(`compile_blitz3d returned empty result`);
     }
 
-    const resultText = td.decode(new Uint8Array(exports.memory.buffer, resultPtr, resultLen));
+    const resultText = td.decode(
+      new Uint8Array(exports.memory.buffer, resultPtr, resultLen),
+    );
     const result = JSON.parse(resultText) as
       | { success: true; wasm: string; size: number }
       | { success: false; error: string };
 
     if (!result.success) throw new Error((result as any).error);
-    return Uint8Array.from(atob((result as any).wasm), (ch) => ch.charCodeAt(0));
+    return Uint8Array.from(
+      atob((result as any).wasm),
+      (ch) => ch.charCodeAt(0),
+    );
   };
 
   cachedCompiler = { compile };
@@ -194,7 +209,9 @@ async function getCompiler() {
 function validateWasm(wasm: Uint8Array) {
   // Create an ArrayBuffer-backed view to satisfy TS (BufferSource excludes SharedArrayBuffer).
   const bytes = new Uint8Array(wasm);
-  if (!WebAssembly.validate(bytes)) throw new Error("WebAssembly.validate failed");
+  if (!WebAssembly.validate(bytes)) {
+    throw new Error("WebAssembly.validate failed");
+  }
   try {
     new WebAssembly.Module(bytes);
   } catch (e) {

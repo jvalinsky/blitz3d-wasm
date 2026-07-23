@@ -1,8 +1,8 @@
 # Runtime docs (Deno)
 
 The web runtime is authored in TypeScript under `web/src/runtime/` and bundled
-via Deno + Vite. Deno can generate API docs directly from the source using
-JSDoc and TypeScript types.
+via Deno + Vite. Deno can generate API docs directly from the source using JSDoc
+and TypeScript types.
 
 ## Generate docs (text)
 

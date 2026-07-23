@@ -1,20 +1,33 @@
 # NPC AI & Path Tracking System
+
 ## Overview
-The NPC system in SCP: Containment Breach relies on a state-machine architecture combined with A* pathfinding. Each NPC type (`Type NPCs`) has a distinct update loop handling state transitions, movement, and interaction with the world.
+
+The NPC system in SCP: Containment Breach relies on a state-machine architecture
+combined with A* pathfinding. Each NPC type (`Type NPCs`) has a distinct update
+loop handling state transitions, movement, and interaction with the world.
+
 ## Common Architecture
+
 ### The NPC Struct
+
 The `NPCs` type (in `NPCs.bb`) holds state for all entities:
+
 - `State`, `State2`, `State3`: Generic state variables (usage varies by NPC).
 - `Path[20]`: Array of `WayPoints` for the current A* path.
 - `PathStatus`: 0 (No path), 1 (Path found), 2 (Path failed).
 - `Target`: Reference to another NPC or the Player.
 - `EnemyX/Y/Z`: Last known position of the target.
+
 ### Pathfinding
-The `FindPath(npc, x, y, z)` function (in `Update.bb` or `NPCs.bb`) calculates a route using the pre-placed `WayPoints` node graph.
+
+The `FindPath(npc, x, y, z)` function (in `Update.bb` or `NPCs.bb`) calculates a
+route using the pre-placed `WayPoints` node graph.
+
 - **Nodes:** `WayPoints` entities placed in Room meshes (`.rmesh`).
 - **Graph:** Connected at runtime based on room adjacency.
 - **Algorithm:** A* (A-Star) search.
 - **Output:** Fills `n\Path[]` with a sequence of Waypoints.
+
 ---
 ## Specific NPC AI
 ### 1. SCP-173 (The Statue)
@@ -85,18 +98,30 @@ The `FindPath(npc, x, y, z)` function (in `Update.bb` or `NPCs.bb`) calculates a
     *   Communicates via radio (plays audio cues for "Target Lost", "Contact", etc.).
     *   Can re-contain SCP-173 if they reach its chamber.
 ---
+
 ## Pathfinding Details
+
 ### Waypoint System
-*   **Grid:** Not a tile grid, but a node graph.
-*   **Placement:** Waypoints are entities in the `.rmesh` files.
-*   **Connections:** Runtime script (`CreateWayPoints`) connects nodes within visible range (LOS check).
+
+- **Grid:** Not a tile grid, but a node graph.
+- **Placement:** Waypoints are entities in the `.rmesh` files.
+- **Connections:** Runtime script (`CreateWayPoints`) connects nodes within
+  visible range (LOS check).
+
 ### The Algorithm (A*)
-1.  **Start:** Nearest visible waypoint to NPC.
-2.  **End:** Nearest visible waypoint to Target.
-3.  **Heuristic:** Euclidian distance.
-4.  **Result:** Populates `n\Path[]` with the sequence of nodes.
-5.  **Execution:** NPC rotates towards `n\Path[0]`, moves forward. When close (`dist < 0.5`), pops node and proceeds to next.
+
+1. **Start:** Nearest visible waypoint to NPC.
+2. **End:** Nearest visible waypoint to Target.
+3. **Heuristic:** Euclidian distance.
+4. **Result:** Populates `n\Path[]` with the sequence of nodes.
+5. **Execution:** NPC rotates towards `n\Path[0]`, moves forward. When close
+   (`dist < 0.5`), pops node and proceeds to next.
+
 ### Teleportation System
+
 To prevent getting stuck or falling behind:
-*   **TeleportCloser(npc):** If NPC is > N rooms away, moves them to a random waypoint in an adjacent room to the player (out of sight).
-*   **Elevators:** NPCs can "use" elevators by teleporting between connected elevator floors.
+
+- **TeleportCloser(npc):** If NPC is > N rooms away, moves them to a random
+  waypoint in an adjacent room to the player (out of sight).
+- **Elevators:** NPCs can "use" elevators by teleporting between connected
+  elevator floors.

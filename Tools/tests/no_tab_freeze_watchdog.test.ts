@@ -15,10 +15,17 @@ type WorkerCallMsg = {
   args?: Array<number | string>;
 };
 
-const withTimeout = async <T>(p: Promise<T>, ms: number, label: string): Promise<T> => {
+const withTimeout = async <T>(
+  p: Promise<T>,
+  ms: number,
+  label: string,
+): Promise<T> => {
   let id: number | null = null;
   const timeout = new Promise<T>((_resolve, reject) => {
-    id = setTimeout(() => reject(new Error(`timeout after ${ms}ms: ${label}`)), ms) as unknown as number;
+    id = setTimeout(
+      () => reject(new Error(`timeout after ${ms}ms: ${label}`)),
+      ms,
+    ) as unknown as number;
   });
   try {
     return await Promise.race([p, timeout]);
@@ -32,7 +39,12 @@ const startWorker = () => {
   return new Worker(url.href, { type: "module" });
 };
 
-const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: number, label: string) => {
+const waitFor = async (
+  worker: Worker,
+  predicate: (msg: any) => boolean,
+  ms: number,
+  label: string,
+) => {
   return await withTimeout(
     new Promise<any>((resolve, reject) => {
       const onMsg = (ev: MessageEvent) => {
@@ -63,9 +75,19 @@ const waitFor = async (worker: Worker, predicate: (msg: any) => boolean, ms: num
   );
 };
 
-const callExport = async (worker: Worker, callId: number, exportName: string, args?: Array<number | string>) => {
+const callExport = async (
+  worker: Worker,
+  callId: number,
+  exportName: string,
+  args?: Array<number | string>,
+) => {
   const msg: WorkerCallMsg = { cmd: "call", callId, exportName, args };
-  const pDone = waitFor(worker, (m) => m?.type === "callDone" && m?.callId === callId, 5000, `callDone ${exportName}`);
+  const pDone = waitFor(
+    worker,
+    (m) => m?.type === "callDone" && m?.callId === callId,
+    5000,
+    `callDone ${exportName}`,
+  );
   worker.postMessage(msg);
   const done = await pDone;
   return done?.result as number;
@@ -80,7 +102,10 @@ Deno.test("no-freeze watchdog: main thread stays responsive while worker steps",
     "AGFzbQEAAAABBQFgAAF/AwMCAAAGBgF/AUEACwcZAghJbml0T25jZQAAClVwZGF0ZUdhbWUAAQoZAgsAIwBBAWokACMACwsAIwBBAWokACMACw==";
   const wasmBytes = Uint8Array.from(atob(wasmB64), (c) => c.charCodeAt(0));
 
-  const tmp = await Deno.makeTempDir({ dir: "/tmp", prefix: "blitz3d-wasm-no-freeze-" });
+  const tmp = await Deno.makeTempDir({
+    dir: "/tmp",
+    prefix: "blitz3d-wasm-no-freeze-",
+  });
   const wasmPath = `${tmp}/stepper.wasm`;
   await Deno.writeFile(wasmPath, wasmBytes);
 
@@ -104,7 +129,12 @@ Deno.test("no-freeze watchdog: main thread stays responsive while worker steps",
       preloadGroup: "boot",
       wasmUrl: pathToFileURL(wasmPath).href,
     };
-    const pReady = waitFor(worker, (m) => m?.type === "ready", 20_000, "worker ready");
+    const pReady = waitFor(
+      worker,
+      (m) => m?.type === "ready",
+      20_000,
+      "worker ready",
+    );
     worker.postMessage(initMsg);
     await pReady;
 
@@ -127,7 +157,9 @@ Deno.test("no-freeze watchdog: main thread stays responsive while worker steps",
     // timers were still able to run at least once during the stepping loop.
     assert(
       heartbeats >= 1,
-      `expected main thread heartbeats to advance (elapsed=${Math.round(elapsedMs)}ms), got ${heartbeats}`,
+      `expected main thread heartbeats to advance (elapsed=${
+        Math.round(elapsedMs)
+      }ms), got ${heartbeats}`,
     );
   } finally {
     clearInterval(hb);

@@ -38,9 +38,11 @@ Complete modular system for menu → WASM → game integration.
 ## Files
 
 ### launcher.html
+
 **Entry point** - Loads TypeScript modules
 
 **Contains:**
+
 - `#startScreen` - Click to Start (autoplay policy)
 - `#menuCanvas` - Menu rendering surface
 - `#canvas` - Game canvas (Three.js)
@@ -49,9 +51,11 @@ Complete modular system for menu → WASM → game integration.
 **Imports:** `launcher_main.ts` as ES module
 
 ### launcher_main.ts
+
 **Coordinator** - Manages phases and wires systems together
 
 **Responsibilities:**
+
 - Phase management (start → menu → loading → game)
 - Initialize MenuSystem
 - Wire START button to GameLauncher
@@ -62,9 +66,11 @@ Complete modular system for menu → WASM → game integration.
 **Exports:** Debug object on `window.__LAUNCHER`
 
 ### menu.ts
+
 **Menu rendering** - Canvas-based menu system
 
 **MenuSystem class:**
+
 - Canvas-based 2D rendering
 - Mouse/keyboard input
 - Asset loading (menu images)
@@ -72,13 +78,16 @@ Complete modular system for menu → WASM → game integration.
 - Game start callback
 
 **Interfaces:**
+
 - `MenuSettings` - All game settings
 - `GameStartParams` - seed, difficulty, introEnabled
 
 ### game_launcher.ts
+
 **Game initialization** - Loads WASM and initializes world
 
 **GameLauncher class:**
+
 - WASM module loading (TODO: wire to main.ts)
 - Room template loading
 - Asset streaming
@@ -87,26 +96,33 @@ Complete modular system for menu → WASM → game integration.
 - Progress callbacks
 
 **Interfaces:**
+
 - `LauncherCallbacks` - onProgress, onError, onReady
 
 ## Phase Flow
 
 ### 1. START Phase
+
 **URL:** Open `launcher.html`
 
 **Display:**
+
 - Black screen with "CLICK TO START" button
 
 **Actions:**
+
 - User clicks button OR presses any key
 - → showPhase('menu')
 
 ### 2. MENU Phase
+
 **Display:**
+
 - Menu canvas visible
 - MenuSystem rendering active
 
 **Actions:**
+
 - User navigates menu (Main → New Game → Options)
 - User selects seed + difficulty
 - User clicks START button
@@ -114,22 +130,28 @@ Complete modular system for menu → WASM → game integration.
 - → showPhase('loading')
 
 ### 3. LOADING Phase
+
 **Display:**
+
 - Loader overlay with progress bar
 - Menu canvas hidden
 
 **Actions:**
+
 - GameLauncher.initGameWorld() runs
 - Progress updates: 10% → 30% → 50% → 70% → 90% → 100%
 - onProgress callback updates UI
 - → showPhase('game')
 
 ### 4. GAME Phase
+
 **Display:**
+
 - Game canvas visible (#canvas)
 - Three.js rendering active
 
 **Actions:**
+
 - Game loop running
 - Player control enabled
 - HUD rendering
@@ -137,38 +159,41 @@ Complete modular system for menu → WASM → game integration.
 ## TypeScript Modules
 
 ### MenuSystem
-```typescript
-import { MenuSystem } from './menu.ts';
 
-const menu = new MenuSystem('menuCanvas');
+```typescript
+import { MenuSystem } from "./menu.ts";
+
+const menu = new MenuSystem("menuCanvas");
 menu.setStartCallback((params) => {
-    console.log('Starting game:', params);
-    // { seed: "CRUNCH", difficulty: 2, introEnabled: true }
+  console.log("Starting game:", params);
+  // { seed: "CRUNCH", difficulty: 2, introEnabled: true }
 });
 menu.start();
 ```
 
 ### GameLauncher
+
 ```typescript
-import { GameLauncher } from './game_launcher.ts';
+import { GameLauncher } from "./game_launcher.ts";
 
 const launcher = new GameLauncher({
-    onProgress: (percent, message) => {
-        updateProgressBar(percent, message);
-    },
-    onReady: () => {
-        showGameCanvas();
-    }
+  onProgress: (percent, message) => {
+    updateProgressBar(percent, message);
+  },
+  onReady: () => {
+    showGameCanvas();
+  },
 });
 
 await launcher.initGameWorld({
-    seed: 'CRUNCH',
-    difficulty: 2,
-    introEnabled: true
+  seed: "CRUNCH",
+  difficulty: 2,
+  introEnabled: true,
 });
 ```
 
 ### Unified Entry
+
 ```typescript
 import { MenuSystem } from './menu.ts';
 import { GameLauncher } from './game_launcher.ts';
@@ -187,14 +212,14 @@ Exposed on `window.__LAUNCHER`:
 
 ```javascript
 // Check current phase
-window.__LAUNCHER.currentPhase()  // 'menu' | 'loading' | 'game'
+window.__LAUNCHER.currentPhase(); // 'menu' | 'loading' | 'game'
 
 // Force phase change
-window.__LAUNCHER.showPhase('menu')
+window.__LAUNCHER.showPhase("menu");
 
 // Access systems
-window.__LAUNCHER.menuSystem()     // MenuSystem instance
-window.__LAUNCHER.gameLauncher()   // GameLauncher instance
+window.__LAUNCHER.menuSystem(); // MenuSystem instance
+window.__LAUNCHER.gameLauncher(); // GameLauncher instance
 ```
 
 ## Integration with main.ts
@@ -220,6 +245,7 @@ private async loadWASM(): Promise<void> {
 ## Testing
 
 ### Test launcher.html
+
 ```bash
 # Serve with Deno
 deno task web:dev
@@ -229,6 +255,7 @@ open http://localhost:8000/web/launcher.html
 ```
 
 **Expected flow:**
+
 1. ✅ Start screen appears
 2. ✅ Click → Menu canvas shows
 3. ✅ Menu buttons clickable (simplified UI)
@@ -239,6 +266,7 @@ open http://localhost:8000/web/launcher.html
 8. ✅ Game canvas would appear (placeholder)
 
 ### Test menu-canvas.html (Standalone)
+
 ```bash
 open http://localhost:8000/web/menu-canvas.html
 ```
@@ -246,6 +274,7 @@ open http://localhost:8000/web/menu-canvas.html
 **Full menu UI** - Authentic canvas rendering with all features
 
 ### Test game.html (Simple Bridge)
+
 ```bash
 open http://localhost:8000/web/game.html
 ```
@@ -255,6 +284,7 @@ open http://localhost:8000/web/game.html
 ## Implementation Status
 
 ### ✅ Complete
+
 - launcher.html entry point
 - launcher_main.ts coordinator
 - menu.ts MenuSystem class
@@ -265,12 +295,14 @@ open http://localhost:8000/web/game.html
 - Debug API
 
 ### 🚧 In Progress
+
 - Wire GameLauncher to main.ts
 - Load first room (room2)
 - Player spawning
 - Game loop activation
 
 ### ⏳ TODO
+
 - Full menu UI in MenuSystem (currently simplified)
 - WASM module loading (import main.ts)
 - Room template loading
@@ -298,5 +330,5 @@ open http://localhost:8000/web/game.html
 
 ---
 
-*Phase 4B Status: 80% Complete (modules + HTML done, WASM wiring pending)*  
-*Last updated: February 1, 2026*
+_Phase 4B Status: 80% Complete (modules + HTML done, WASM wiring pending)_\
+_Last updated: February 1, 2026_

@@ -87,38 +87,38 @@ type WorkerBbdbgSnapshot = {
 type WorkerBbdbgState = {
   required: boolean;
   meta:
-  | null
-  | {
-    ok: boolean;
-    url: string;
-    fileCount?: number;
-    functionCount?: number;
-    typeCount?: number;
-    versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
-    error?: string;
-    files?: Array<{ id: number; path: string }>;
-    functions?: Array<{
-      id: number;
-      name: string;
-      signature: string;
-      fileId: number;
-      startLine: number;
-      endLine: number;
-    }>;
-    types?: Array<{
-      id: number;
-      name: string;
-      instanceSizeBytes: number;
-      fields: Array<{
+    | null
+    | {
+      ok: boolean;
+      url: string;
+      fileCount?: number;
+      functionCount?: number;
+      typeCount?: number;
+      versions?: { bbdbgSchemaVersion: number; runtimeLayoutVersion: number };
+      error?: string;
+      files?: Array<{ id: number; path: string }>;
+      functions?: Array<{
+        id: number;
         name: string;
-        offsetBytes: number;
-        wasmType: string;
-        declaredType: string;
-        customTypeName?: string | null;
-        dimensions?: number[] | null;
+        signature: string;
+        fileId: number;
+        startLine: number;
+        endLine: number;
       }>;
-    }>;
-  };
+      types?: Array<{
+        id: number;
+        name: string;
+        instanceSizeBytes: number;
+        fields: Array<{
+          name: string;
+          offsetBytes: number;
+          wasmType: string;
+          declaredType: string;
+          customTypeName?: string | null;
+          dimensions?: number[] | null;
+        }>;
+      }>;
+    };
   config: { enabled: boolean; traceMax: number } | null;
   lastSnapshot: WorkerBbdbgSnapshot | null;
 };
@@ -167,21 +167,21 @@ const terminateWorker = () => {
   if (currentWorkerUpdateLoopCancel) {
     try {
       currentWorkerUpdateLoopCancel();
-    } catch { }
+    } catch {}
     currentWorkerUpdateLoopCancel = null;
   }
   currentWorkerUpdateLoopPausedReason = "terminated";
   if (currentWorkerWatchdog != null) {
     try {
       clearTimeout(currentWorkerWatchdog);
-    } catch { }
+    } catch {}
     currentWorkerWatchdog = null;
   }
   const prevStatus = (window as any).__WORKER_STATUS;
   if (currentWorker) {
     try {
       currentWorker.terminate();
-    } catch { }
+    } catch {}
   }
   currentWorker = null;
   // Keep last status for HUD/debugging after termination.
@@ -193,22 +193,22 @@ const terminateWorker = () => {
     try {
       clearTimeout(p.timeoutId);
       p.reject(new Error("worker terminated"));
-    } catch { }
+    } catch {}
   }
   currentWorkerPending.clear();
   for (const [_id, p] of currentWorkerMemPending) {
     try {
       clearTimeout(p.timeoutId);
       p.reject(new Error("worker terminated"));
-    } catch { }
+    } catch {}
   }
   currentWorkerMemPending.clear();
   try {
     currentWorkerUiRefresh?.();
-  } catch { }
+  } catch {}
   try {
     currentWorkerBbdbgUiRefresh?.();
-  } catch { }
+  } catch {}
 };
 
 const formatMaybeNumber = (v: unknown) => {
@@ -222,13 +222,16 @@ const formatMaybeNumber = (v: unknown) => {
   return String(v);
 };
 
-const getExportValue = (instance: WebAssembly.Instance | null, name: string) => {
+const getExportValue = (
+  instance: WebAssembly.Instance | null,
+  name: string,
+) => {
   if (!instance) return undefined;
   try {
     const v: any = (instance.exports as any)[name];
     if (typeof v === "number" || typeof v === "bigint") return v;
     if (v && typeof v === "object" && "value" in v) return v.value;
-  } catch { }
+  } catch {}
   return undefined;
 };
 
@@ -278,9 +281,11 @@ const wrapHudText = (
 };
 
 const drawDebugHud = (core: Blitz3DCore) => {
-  const flags = (window as any).__BLITZ3D_FLAGS as ReturnType<
-    typeof getUrlFlags
-  > | undefined;
+  const flags = (window as any).__BLITZ3D_FLAGS as
+    | ReturnType<
+      typeof getUrlFlags
+    >
+    | undefined;
   if (!flags?.debugHud) return;
 
   const ctx: CanvasRenderingContext2D | null = (core as any).ctx2d ?? null;
@@ -344,13 +349,14 @@ const drawDebugHud = (core: Blitz3DCore) => {
       if (canvas.style.display !== "block") canvas.style.display = "block";
       if (canvas.style.zIndex !== "100000") canvas.style.zIndex = "100000";
     }
-  } catch { }
+  } catch {}
 
   const instance = (core as any).instance as WebAssembly.Instance | null;
 
   const workerStatus = (globalThis as any).__WORKER_STATUS as any;
   const lastFileReq = String(
-    workerStatus?.lastFileReq ?? (globalThis as any).__SCPCB_LAST_FILE_REQ ?? "",
+    workerStatus?.lastFileReq ?? (globalThis as any).__SCPCB_LAST_FILE_REQ ??
+      "",
   );
   const initFile = String(
     workerStatus?.preload?.file ?? (globalThis as any).__SCPCB_INIT_FILE ?? "",
@@ -376,17 +382,23 @@ const drawDebugHud = (core: Blitz3DCore) => {
   const baseLines: string[] = [];
   baseLines.push(`Blitz3D HUD • v=${LOADER_BUILD_ID}`);
   baseLines.push(
-    `initDone=${initDone} stage=${initStage || "(none)"} file=${lastFileReq ||
-    "(none)"}`,
+    `initDone=${initDone} stage=${initStage || "(none)"} file=${
+      lastFileReq ||
+      "(none)"
+    }`,
   );
   if (initFile || preload) {
     baseLines.push(
-      `preload=${preload ? `${preload.loaded}/${preload.total}` : "(none)"} initFile=${initFile || "(none)"}`,
+      `preload=${
+        preload ? `${preload.loaded}/${preload.total}` : "(none)"
+      } initFile=${initFile || "(none)"}`,
     );
   }
   if (fetchStatus?.file) {
     baseLines.push(
-      `fetch=${formatMaybeNumber(fetchStatus.loaded)}/${formatMaybeNumber(fetchStatus.total)} ${String(fetchStatus.file)}`,
+      `fetch=${formatMaybeNumber(fetchStatus.loaded)}/${
+        formatMaybeNumber(fetchStatus.total)
+      } ${String(fetchStatus.file)}`,
     );
   }
   if (workerStatus?.lastDebugLog) {
@@ -395,41 +407,60 @@ const drawDebugHud = (core: Blitz3DCore) => {
   if (workerStatus?.counters) {
     try {
       const c = workerStatus.counters as Record<string, number>;
-      const keys = Object.keys(c).sort((a, b) => (c[b] ?? 0) - (c[a] ?? 0)).slice(0, 6);
+      const keys = Object.keys(c).sort((a, b) => (c[b] ?? 0) - (c[a] ?? 0))
+        .slice(0, 6);
       if (keys.length) {
         baseLines.push(
-          `workerCtr=${keys.map((k) => `${k}:${formatMaybeNumber(c[k])}`).join(" ")}`,
+          `workerCtr=${
+            keys.map((k) => `${k}:${formatMaybeNumber(c[k])}`).join(" ")
+          }`,
         );
       }
-    } catch { }
+    } catch {}
   }
   baseLines.push(
-    `fps=${perf.fps ?? "?"} mem=${perf.memoryUsage ?? "?"} heap=${perf.heapAllocations ?? "?"
+    `fps=${perf.fps ?? "?"} mem=${perf.memoryUsage ?? "?"} heap=${
+      perf.heapAllocations ?? "?"
     } str=${perf.stringAllocations ?? "?"}`,
   );
   baseLines.push(
-    `entities=${gfx ? Object.keys(gfx.entities).length : "?"} render=${gfx?.renderer?.info?.render?.calls ?? "?"} draws=${gfx?.renderer?.info?.render?.triangles ?? "?"}`,
+    `entities=${gfx ? Object.keys(gfx.entities).length : "?"} render=${
+      gfx?.renderer?.info?.render?.calls ?? "?"
+    } draws=${gfx?.renderer?.info?.render?.triangles ?? "?"}`,
   );
   baseLines.push(
-    `canvas=${core.canvas?.width ?? "?"}x${core.canvas?.height ?? "?"} overlay=${canvas.width}x${canvas.height}`,
+    `canvas=${core.canvas?.width ?? "?"}x${
+      core.canvas?.height ?? "?"
+    } overlay=${canvas.width}x${canvas.height}`,
   );
   baseLines.push(
-    `three scene=${gfx?.scene ? "ok" : "missing"} camera=${gfx?.camera ? "ok" : "missing"
+    `three scene=${gfx?.scene ? "ok" : "missing"} camera=${
+      gfx?.camera ? "ok" : "missing"
     } children=${gfx?.scene?.children?.length ?? "?"}`,
   );
   baseLines.push(
-    `WebPort=${formatMaybeNumber(getExportValue(instance, "WebPort"))} LauncherEnabled=${formatMaybeNumber(getExportValue(instance, "LauncherEnabled"))
-    } MenuOpen=${formatMaybeNumber(getExportValue(instance, "MenuOpen"))} MainMenuOpen=${formatMaybeNumber(getExportValue(instance, "MainMenuOpen"))
+    `WebPort=${
+      formatMaybeNumber(getExportValue(instance, "WebPort"))
+    } LauncherEnabled=${
+      formatMaybeNumber(getExportValue(instance, "LauncherEnabled"))
+    } MenuOpen=${
+      formatMaybeNumber(getExportValue(instance, "MenuOpen"))
+    } MainMenuOpen=${
+      formatMaybeNumber(getExportValue(instance, "MainMenuOpen"))
     }`,
   );
   baseLines.push(
-    `Graphic=${formatMaybeNumber(getExportValue(instance, "GraphicWidth"))}x${formatMaybeNumber(getExportValue(instance, "GraphicHeight"))
-    } Real=${formatMaybeNumber(getExportValue(instance, "RealGraphicWidth"))}x${formatMaybeNumber(getExportValue(instance, "RealGraphicHeight"))
-    } MenuScale=${formatMaybeNumber(getExportValue(instance, "MenuScale"))} AR=${formatMaybeNumber(getExportValue(instance, "AspectRatioRatio"))
-    }`,
+    `Graphic=${formatMaybeNumber(getExportValue(instance, "GraphicWidth"))}x${
+      formatMaybeNumber(getExportValue(instance, "GraphicHeight"))
+    } Real=${formatMaybeNumber(getExportValue(instance, "RealGraphicWidth"))}x${
+      formatMaybeNumber(getExportValue(instance, "RealGraphicHeight"))
+    } MenuScale=${
+      formatMaybeNumber(getExportValue(instance, "MenuScale"))
+    } AR=${formatMaybeNumber(getExportValue(instance, "AspectRatioRatio"))}`,
   );
   baseLines.push(
-    `player=${formatMaybeNumber(getExportValue(instance, "player"))} cam=${formatMaybeNumber(getExportValue(instance, "cam"))
+    `player=${formatMaybeNumber(getExportValue(instance, "player"))} cam=${
+      formatMaybeNumber(getExportValue(instance, "cam"))
     } Camera=${formatMaybeNumber(getExportValue(instance, "Camera"))}`,
   );
 
@@ -450,7 +481,8 @@ const drawDebugHud = (core: Blitz3DCore) => {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, w, h);
   ctx.globalAlpha = 1;
-  ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+  ctx.font =
+    "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
   ctx.fillStyle = "#e8e8e8";
   for (let i = 0; i < lines.length; i++) {
     ctx.fillText(lines[i], padding, padding + (i + 1) * lineH);
@@ -459,10 +491,12 @@ const drawDebugHud = (core: Blitz3DCore) => {
 };
 
 const startDebugHudLoop = (core: Blitz3DCore) => {
-  const flags = (window as any).__BLITZ3D_FLAGS as ReturnType<
-    typeof getUrlFlags
-  > | undefined;
-  if (!flags?.debugHud) return () => { };
+  const flags = (window as any).__BLITZ3D_FLAGS as
+    | ReturnType<
+      typeof getUrlFlags
+    >
+    | undefined;
+  if (!flags?.debugHud) return () => {};
 
   let raf = 0;
   let running = true;
@@ -470,7 +504,7 @@ const startDebugHudLoop = (core: Blitz3DCore) => {
     if (!running) return;
     try {
       drawDebugHud(core);
-    } catch { }
+    } catch {}
     raf = requestAnimationFrame(loop);
   };
   raf = requestAnimationFrame(loop);
@@ -478,7 +512,7 @@ const startDebugHudLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch { }
+    } catch {}
   };
 };
 
@@ -487,7 +521,7 @@ const installOnscreenConsole = (elements: LoaderElements) => {
     elements.detail.style.whiteSpace = "pre-wrap";
     elements.detail.style.maxHeight = "40vh";
     elements.detail.style.overflow = "auto";
-  } catch { }
+  } catch {}
 
   const lines: string[] = [];
   const max = 200;
@@ -539,7 +573,7 @@ const installOnscreenConsole = (elements: LoaderElements) => {
     if (raf) {
       try {
         cancelAnimationFrame(raf);
-      } catch { }
+      } catch {}
       raf = 0;
     }
     console.log = origLog;
@@ -603,7 +637,7 @@ const setMutableGlobal = (
       (g as WebAssembly.Global).value = value as any;
       return true;
     }
-  } catch { }
+  } catch {}
   return false;
 };
 
@@ -615,7 +649,7 @@ const getGlobalNumber = (instance: WebAssembly.Instance, name: string) => {
       const gv = (v as WebAssembly.Global).value as any;
       return typeof gv === "number" ? gv : Number(gv);
     }
-  } catch { }
+  } catch {}
   return undefined as undefined | number;
 };
 
@@ -633,7 +667,10 @@ const dumpScpcbScaleGlobals = (instance: WebAssembly.Instance) => {
   console.log("[SCPCB] globals:", obj);
 };
 
-const ensureScpcbScaleGlobals = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
+const ensureScpcbScaleGlobals = (
+  core: Blitz3DCore,
+  instance: WebAssembly.Instance,
+) => {
   const cw = core.canvas?.width ?? 0;
   const ch = core.canvas?.height ?? 0;
   const gw = getGlobalNumber(instance, "GraphicWidth") ?? 0;
@@ -647,7 +684,9 @@ const ensureScpcbScaleGlobals = (core: Blitz3DCore, instance: WebAssembly.Instan
   if ((gh | 0) === 0 && ch) setMutableGlobal(instance, "GraphicHeight", ch);
   if ((rw | 0) === 0 && cw) setMutableGlobal(instance, "RealGraphicWidth", cw);
   if ((rh | 0) === 0 && ch) setMutableGlobal(instance, "RealGraphicHeight", ch);
-  if (!Number.isFinite(ar) || ar === 0) setMutableGlobal(instance, "AspectRatioRatio", 1.0);
+  if (!Number.isFinite(ar) || ar === 0) {
+    setMutableGlobal(instance, "AspectRatioRatio", 1.0);
+  }
 
   const ms = getGlobalNumber(instance, "MenuScale");
   if ((!Number.isFinite(ms) || ms === 0) && ch) {
@@ -687,7 +726,9 @@ antialias = 1
 HUD enabled = 1
 intro enabled = 1
 room lights enabled = 1
-texture details = ${flags.quality === "low" ? "1" : flags.quality === "high" ? "3" : "2"}
+texture details = ${
+    flags.quality === "low" ? "1" : flags.quality === "high" ? "3" : "2"
+  }
 16bit = false
 antialiased text = 0
 particle amount = ${flags.quality === "low" ? "0" : "2"}
@@ -932,20 +973,20 @@ const setupImports = (
 
   // Ensure a few SCPCB-specific imports exist even if HMR/caching gets weird.
   // These are safe no-ops/basic stubs.
-  if (!imports.env.UpdateSoundOrigin) imports.env.UpdateSoundOrigin = () => { };
+  if (!imports.env.UpdateSoundOrigin) imports.env.UpdateSoundOrigin = () => {};
   if (!imports.env.UpdateSoundOrigin2) {
-    imports.env.UpdateSoundOrigin2 = () => { };
+    imports.env.UpdateSoundOrigin2 = () => {};
   }
   if (!imports.env.LoadEventSound) imports.env.LoadEventSound = () => 0;
-  if (!imports.env.PlayAnnouncement) imports.env.PlayAnnouncement = () => { };
+  if (!imports.env.PlayAnnouncement) imports.env.PlayAnnouncement = () => {};
   if (!imports.env.KeyName) imports.env.KeyName = (_k: number) => 0;
-  if (!imports.env.FlipMesh) imports.env.FlipMesh = () => { };
-  if (!imports.env.MeshCullBox) imports.env.MeshCullBox = () => { };
-  if (!imports.env.LightConeAngles) imports.env.LightConeAngles = () => { };
+  if (!imports.env.FlipMesh) imports.env.FlipMesh = () => {};
+  if (!imports.env.MeshCullBox) imports.env.MeshCullBox = () => {};
+  if (!imports.env.LightConeAngles) imports.env.LightConeAngles = () => {};
 
   if (flags.noAudio) {
     console.warn("noaudio=1: stubbing audio imports");
-    const noop = () => { };
+    const noop = () => {};
     const zero = () => 0;
     imports.env.FSOUND_Init = () => 1;
     imports.env.FSOUND_Close = noop;
@@ -971,7 +1012,8 @@ const setupImports = (
       ? (w: number, h: number) => (imports.env.CreateImage as Function)(w, h, 1)
       : () => 0;
     const createTexture = imports.env.CreateTexture
-      ? (w: number, h: number) => (imports.env.CreateTexture as Function)(w, h, 0)
+      ? (w: number, h: number) =>
+        (imports.env.CreateTexture as Function)(w, h, 0)
       : () => 0;
 
     imports.env.LoadTexture = (_pathPtr: number, _flags: number) =>
@@ -1086,7 +1128,9 @@ const attachRuntime = (
         const base = (tableObj + 8) >>> 0;
         core.entityTable = new EntityTableView(mem.buffer, base, tableBytes);
         setMutableGlobal(instance, "__EntityTablePtr", base);
-        console.log(`[EntityTable] allocated ptr=${base} limit=${ENTITY_LIMIT}`);
+        console.log(
+          `[EntityTable] allocated ptr=${base} limit=${ENTITY_LIMIT}`,
+        );
       }
     }
   } catch (e) {
@@ -1099,7 +1143,10 @@ const attachRuntime = (
 const startGameLoop = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
   let rafHandle = 0;
   let lastTime = performance.now();
-  const updateGame = (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) as Function | undefined;
+  const updateGame =
+    (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) as
+      | Function
+      | undefined;
 
   const loop = (time: number) => {
     rafHandle = requestAnimationFrame(loop);
@@ -1114,15 +1161,19 @@ const startGameLoop = (core: Blitz3DCore, instance: WebAssembly.Instance) => {
       }
 
       // 2. Synchronize State (CMDB -> Three.js)
-      if (core.graphics && typeof (core.graphics as any).drainCommandBuffer === 'function') {
+      if (
+        core.graphics &&
+        typeof (core.graphics as any).drainCommandBuffer === "function"
+      ) {
         (core.graphics as any).drainCommandBuffer();
       }
 
       // 3. Render Visuals (JS)
-      if (core.graphics && typeof (core.graphics as any).render === 'function') {
+      if (
+        core.graphics && typeof (core.graphics as any).render === "function"
+      ) {
         (core.graphics as any).render(time);
       }
-
     } catch (e) {
       console.error("[Loop] Error:", e);
       cancelAnimationFrame(rafHandle);
@@ -1158,15 +1209,15 @@ const startMain = (instance: WebAssembly.Instance, core: Blitz3DCore) => {
     return () => {
       try {
         cancelAnimationFrame(raf);
-      } catch { }
+      } catch {}
     };
   } else if (instance.exports._start) {
     console.log("Starting WASI _start...");
     (instance.exports._start as Function)();
-    return () => { };
+    return () => {};
   } else {
     console.warn("No Main/Update found, assuming auto-start or library mode");
-    return () => { };
+    return () => {};
   }
 };
 
@@ -1178,12 +1229,22 @@ const runInitIfPresent = async (
   options: { forceMain?: boolean } = {},
 ) => {
   const mainFn = (instance.exports as any).Main;
-  const flags = (window as any).__BLITZ3D_FLAGS as ReturnType<
-    typeof getUrlFlags
-  > | undefined;
+  const flags = (window as any).__BLITZ3D_FLAGS as
+    | ReturnType<
+      typeof getUrlFlags
+    >
+    | undefined;
 
   // Prefer a non-blocking web init export if present.
-  for (const name of ["__WebInit%", "__WebInit", "WebInit", "__InitWeb%", "InitOnce"]) {
+  for (
+    const name of [
+      "__WebInit%",
+      "__WebInit",
+      "WebInit",
+      "__InitWeb%",
+      "InitOnce",
+    ]
+  ) {
     const fn = (instance.exports as any)[name];
     if (typeof fn === "function") {
       console.log(`[Blitz3D] calling ${name}()...`);
@@ -1198,7 +1259,9 @@ const runInitIfPresent = async (
 
       // After a non-blocking init, we should automatically start the game loop
       // if UpdateGame/WebUpdate is present.
-      if (instance.exports.UpdateGame || (instance.exports as any).__WebUpdate) {
+      if (
+        instance.exports.UpdateGame || (instance.exports as any).__WebUpdate
+      ) {
         (window as any).__GAME_LOOP_STOP = startMain(instance, core);
       }
       return;
@@ -1259,7 +1322,7 @@ const runInitIfPresent = async (
       g.mouseDown = g.mouseDown ?? {};
       g.mouseDown[1] = true;
     }
-  } catch { }
+  } catch {}
   // Guard against divide-by-zero traps if options/config didn't load.
   ensureScpcbScaleGlobals(core, instance);
 
@@ -1314,12 +1377,14 @@ const runInitIfPresent = async (
         detail: "Calling Main() once (may freeze if init is not resumable)",
       });
     }
-  } catch { }
+  } catch {}
 
   // Yield once so loader/logs can paint before calling into potentially heavy WASM init.
   try {
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-  } catch { }
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => resolve())
+    );
+  } catch {}
 
   try {
     mainFn();
@@ -1341,7 +1406,7 @@ const runInitIfPresent = async (
 const startUpdateLoop = (core: Blitz3DCore) => {
   if (!core.exports || typeof core.exports.UpdateGame !== "function") {
     console.warn("No UpdateGame export found; skipping tick loop");
-    return () => { };
+    return () => {};
   }
 
   let raf = 0;
@@ -1365,7 +1430,8 @@ const startUpdateLoop = (core: Blitz3DCore) => {
       if (lastTickMs > longTickLimitMs) {
         longTickCount++;
         console.warn(
-          `warn: long UpdateGame tick ${lastTickMs.toFixed(1)
+          `warn: long UpdateGame tick ${
+            lastTickMs.toFixed(1)
           }ms (${longTickCount}/${maxConsecutiveLongTicks})`,
         );
         if (longTickCount >= maxConsecutiveLongTicks) {
@@ -1388,7 +1454,7 @@ const startUpdateLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch { }
+    } catch {}
   };
 };
 
@@ -1399,7 +1465,7 @@ const startRenderLoop = (core: Blitz3DCore) => {
     if (!running) return;
     try {
       core.graphics?.drainCommandBuffer?.();
-    } catch { }
+    } catch {}
     core.beginFrame();
     raf = requestAnimationFrame(loop);
   };
@@ -1408,7 +1474,7 @@ const startRenderLoop = (core: Blitz3DCore) => {
     running = false;
     try {
       cancelAnimationFrame(raf);
-    } catch { }
+    } catch {}
   };
 };
 
@@ -1416,13 +1482,13 @@ async function init() {
   if (currentRuntime) {
     try {
       currentRuntime.dispose();
-    } catch { }
+    } catch {}
     currentRuntime = null;
   }
   if (currentHudCancel) {
     try {
       currentHudCancel();
-    } catch { }
+    } catch {}
     currentHudCancel = null;
   }
   if (currentWorker) {
@@ -1443,7 +1509,7 @@ async function init() {
     if (bootWatchdogId == null) return;
     try {
       clearInterval(bootWatchdogId);
-    } catch { }
+    } catch {}
     bootWatchdogId = null;
   };
   const startBootWatchdog = () => {
@@ -1458,13 +1524,13 @@ async function init() {
       console.warn("[boot]", msg);
       try {
         updateLoader(loader, { detail: msg });
-      } catch { }
+      } catch {}
     }, 250) as unknown as number;
   };
   console.log(`[Blitz3D] loader build ${LOADER_BUILD_ID}`, flags);
   const uninstallOnscreen = flags.debug
     ? installOnscreenConsole(loader)
-    : () => { };
+    : () => {};
   updateLoader(loader, {
     section: "wasm",
     text: "Initializing...",
@@ -1562,7 +1628,11 @@ async function init() {
           let lastUpdate = 0;
           bootPreload = fileIO.preloadAssetGroup(BOOT_ASSET_GROUP, {
             concurrency: 4,
-            onProgress: (loaded: number, total: number | null, file?: string) => {
+            onProgress: (
+              loaded: number,
+              total: number | null,
+              file?: string,
+            ) => {
               const now = performance.now();
               if (now - lastUpdate > 32 || loaded === total) {
                 const ratio = total ? loaded / total : 0;
@@ -1615,9 +1685,14 @@ async function init() {
     updateLoader(loader, { section: "wasm", text: "Imports...", progress: 1 });
     boot.setPhase("INSTANTIATE_WASM", "imports");
     const imports = setupImports(core, graphics, fileIO, flags);
-    console.log("DEBUG: imports.env keys:", Object.keys(imports.env).filter(k => k.includes("Graph")));
-    console.log("DEBUG: imports.env.Graphics3D type:", typeof imports.env.Graphics3D);
-
+    console.log(
+      "DEBUG: imports.env keys:",
+      Object.keys(imports.env).filter((k) => k.includes("Graph")),
+    );
+    console.log(
+      "DEBUG: imports.env.Graphics3D type:",
+      typeof imports.env.Graphics3D,
+    );
 
     // CRITICAL FIX: Fallback injection if setupCore failed
     if (!imports.env.Graphics3D) {
@@ -1626,7 +1701,10 @@ async function init() {
         console.log(`[Main] Graphics3D(${w}, ${h}, ${d}, ${m})`);
         graphics.init3D();
         if (graphics.renderer) graphics.renderer.setSize(w, h);
-        if (core.canvas) { core.canvas.width = w; core.canvas.height = h; }
+        if (core.canvas) {
+          core.canvas.width = w;
+          core.canvas.height = h;
+        }
       };
     }
     if (!imports.env.Cls) {
@@ -1641,10 +1719,10 @@ async function init() {
       };
     }
     // 2D Stubs
-    if (!imports.env.Rect) imports.env.Rect = () => { };
-    if (!imports.env.Color) imports.env.Color = () => { };
-    if (!imports.env.ClsColor) imports.env.ClsColor = () => { };
-    if (!imports.env.Text) imports.env.Text = () => { };
+    if (!imports.env.Rect) imports.env.Rect = () => {};
+    if (!imports.env.Color) imports.env.Color = () => {};
+    if (!imports.env.ClsColor) imports.env.ClsColor = () => {};
+    if (!imports.env.Text) imports.env.Text = () => {};
     if (!imports.env.LoadImage) imports.env.LoadImage = () => 0;
 
     const { module, instance } = await instantiateWasm(
@@ -1672,7 +1750,8 @@ async function init() {
 
     // Default auto-running if ?auto=1 or no Main/Update found
     const exportsList = WebAssembly.Module.exports(module).map((e) => e.name);
-    const hasUpdateGame = exportsList.includes("UpdateGame") || exportsList.includes("__WebUpdate");
+    const hasUpdateGame = exportsList.includes("UpdateGame") ||
+      exportsList.includes("__WebUpdate");
     const hasMain = exportsList.includes("Main");
 
     if (!(window as any).__GAME_LOOP_STOP && (hasUpdateGame || hasMain)) {
@@ -1687,13 +1766,14 @@ async function init() {
       try {
         boot.setPhase("PAUSED", "no auto-run");
         stopBootWatchdog();
-      } catch { }
+      } catch {}
       updateLoader(loader, {
         section: "wasm",
         text: "Paused (no auto-run)",
         progress: 1,
-        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${exportsList.length > 80 ? ", ..." : ""
-          }`,
+        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${
+          exportsList.length > 80 ? ", ..." : ""
+        }`,
       });
       loader.overlay.style.display = "block";
 
@@ -1701,7 +1781,10 @@ async function init() {
       bar.innerHTML = "";
       addLabel(
         bar,
-        `${flags.worker ? "worker-ui • " : ""}paused • v=${LOADER_BUILD_ID} • add ?auto=1 to run • add ?tick=manual to step • exports: ${hasUpdateGame ? "UpdateGame" : ""
+        `${
+          flags.worker ? "worker-ui • " : ""
+        }paused • v=${LOADER_BUILD_ID} • add ?auto=1 to run • add ?tick=manual to step • exports: ${
+          hasUpdateGame ? "UpdateGame" : ""
         }${hasMain ? " Main" : ""}`,
       );
       if (flags.worker && !flags.allowMain) {
@@ -1757,7 +1840,10 @@ async function init() {
       const addGuardedButton = (
         label: string,
         onClick: () => void,
-        guards: { requiresWorkerReady?: boolean; requiresWorkerIdle?: boolean } = {},
+        guards: {
+          requiresWorkerReady?: boolean;
+          requiresWorkerIdle?: boolean;
+        } = {},
       ) => {
         const btn = addButton(bar, label, onClick) as HTMLButtonElement;
         guardedButtons.push({ btn, ...guards });
@@ -1767,9 +1853,12 @@ async function init() {
 
       const ensureWorker = () => {
         if (currentWorker) return currentWorker;
-        const w = new Worker(new URL("./worker/scpcb_worker.ts", import.meta.url), {
-          type: "module",
-        });
+        const w = new Worker(
+          new URL("./worker/scpcb_worker.ts", import.meta.url),
+          {
+            type: "module",
+          },
+        );
         currentWorker = w;
         currentWorkerReady = false;
         (window as any).__WORKER_STATUS = { stage: "starting" };
@@ -1787,20 +1876,24 @@ async function init() {
           } else if (m?.type === "log") {
             console.log(`[worker] ${m.message}`);
           } else if (m?.type === "exports") {
-            (window as any).__WORKER_EXPORTS = Array.isArray(m.exports) ? m.exports : [];
+            (window as any).__WORKER_EXPORTS = Array.isArray(m.exports)
+              ? m.exports
+              : [];
             try {
               const n = (window as any).__WORKER_EXPORTS.length;
               console.log(`[worker] exports: ${n}`);
-            } catch { }
+            } catch {}
           } else if (m?.type === "bbdbgRequired") {
-            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            const st =
+              ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
             st.required = !!m.required;
             (window as any).__WORKER_BBDBG = st;
             try {
               currentWorkerBbdbgUiRefresh?.();
-            } catch { }
+            } catch {}
           } else if (m?.type === "bbdbgMeta") {
-            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            const st =
+              ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
             const files = Array.isArray(m.files)
               ? (m.files as Array<any>).map((f) => ({
                 id: Number(f?.id ?? 0) | 0,
@@ -1828,18 +1921,25 @@ async function init() {
                     offsetBytes: Number(f?.offsetBytes ?? 0) | 0,
                     wasmType: String(f?.wasmType ?? ""),
                     declaredType: String(f?.declaredType ?? ""),
-                    customTypeName: f?.customTypeName == null ? null : String(f?.customTypeName ?? ""),
+                    customTypeName: f?.customTypeName == null
+                      ? null
+                      : String(f?.customTypeName ?? ""),
                     dimensions: Array.isArray(f?.dimensions)
-                      ? (f.dimensions as Array<any>).map((n) => Number(n) | 0).filter((n) => n > 0)
+                      ? (f.dimensions as Array<any>).map((n) => Number(n) | 0)
+                        .filter((n) => n > 0)
                       : null,
                   })).filter((f) => !!f.name && (f.offsetBytes | 0) >= 0)
                   : [],
-              })).filter((t) => (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0)
+              })).filter((t) =>
+                (t.id | 0) > 0 && !!t.name && (t.instanceSizeBytes | 0) > 0
+              )
               : undefined;
             const versions = m.versions && typeof m.versions === "object"
               ? {
-                bbdbgSchemaVersion: Number(m.versions?.bbdbgSchemaVersion ?? 0) | 0,
-                runtimeLayoutVersion: Number(m.versions?.runtimeLayoutVersion ?? 0) | 0,
+                bbdbgSchemaVersion:
+                  Number(m.versions?.bbdbgSchemaVersion ?? 0) | 0,
+                runtimeLayoutVersion:
+                  Number(m.versions?.runtimeLayoutVersion ?? 0) | 0,
               }
               : undefined;
             st.meta = {
@@ -1857,9 +1957,10 @@ async function init() {
             (window as any).__WORKER_BBDBG = st;
             try {
               currentWorkerBbdbgUiRefresh?.();
-            } catch { }
+            } catch {}
           } else if (m?.type === "bbdbgConfig") {
-            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            const st =
+              ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
             st.config = {
               enabled: !!m.enabled,
               traceMax: Number(m.traceMax ?? 0) | 0,
@@ -1867,20 +1968,23 @@ async function init() {
             (window as any).__WORKER_BBDBG = st;
             try {
               currentWorkerBbdbgUiRefresh?.();
-            } catch { }
+            } catch {}
           } else if (m?.type === "bbdbgSnapshot") {
-            const st = ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
-            st.lastSnapshot = (m.snapshot ?? null) as WorkerBbdbgSnapshot | null;
+            const st =
+              ((window as any).__WORKER_BBDBG ?? {}) as WorkerBbdbgState;
+            st.lastSnapshot = (m.snapshot ?? null) as
+              | WorkerBbdbgSnapshot
+              | null;
             (window as any).__WORKER_BBDBG = st;
             try {
               const hits = st.lastSnapshot?.breakpointHits?.length ?? 0;
               if (hits > 0 && currentWorkerUpdateLoopCancel) {
                 stopWorkerUpdateLoop(`breakpoint hit (${hits})`);
               }
-            } catch { }
+            } catch {}
             try {
               currentWorkerBbdbgUiRefresh?.();
-            } catch { }
+            } catch {}
           } else if (m?.type === "dbgMemory") {
             const id = Number(m.reqId ?? 0) | 0;
             const pending = currentWorkerMemPending.get(id);
@@ -1889,7 +1993,9 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 const addr = Number(m.addr ?? 0) >>> 0;
-                const bytes = m.bytes instanceof Uint8Array ? m.bytes : new Uint8Array(m.bytes ?? []);
+                const bytes = m.bytes instanceof Uint8Array
+                  ? m.bytes
+                  : new Uint8Array(m.bytes ?? []);
                 pending.resolve({ addr, bytes });
               } catch (e) {
                 pending.reject(e);
@@ -1903,7 +2009,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.reject(new Error(String(m.error ?? "dbgMemoryError")));
-              } catch { }
+              } catch {}
             }
           } else if (m?.type === "dbgGlobal") {
             const id = Number(m.reqId ?? 0) | 0;
@@ -1928,7 +2034,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.reject(new Error(String(m.error ?? "dbgGlobalError")));
-              } catch { }
+              } catch {}
             }
           } else if (m?.type === "ready") {
             console.log("[worker] ready");
@@ -1937,15 +2043,17 @@ async function init() {
             try {
               // Query bbdbg config immediately (best-effort; no-op if worker doesn't support it).
               w.postMessage({ cmd: "dbgConfig" });
-            } catch { }
+            } catch {}
             if (workerAutoProbePending) {
               workerAutoProbePending = false;
               // Defer so the UI updates before starting probe calls.
               setTimeout(() => {
                 try {
-                  const btnHint = flags.allowMain ? "" : " (add ?noprobes=1 to disable)";
+                  const btnHint = flags.allowMain
+                    ? ""
+                    : " (add ?noprobes=1 to disable)";
                   console.log(`[worker] auto-probe starting${btnHint}...`);
-                } catch { }
+                } catch {}
                 void runWorkerProbe();
               }, 0);
             }
@@ -1960,7 +2068,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.resolve(m.result);
-              } catch { }
+              } catch {}
             }
             refreshWorkerButtons();
           } else if (m?.type === "error") {
@@ -1972,7 +2080,7 @@ async function init() {
               try {
                 clearTimeout(pending.timeoutId);
                 pending.reject(new Error(String(m.error ?? "worker error")));
-              } catch { }
+              } catch {}
             }
             refreshWorkerButtons();
           }
@@ -1984,7 +2092,7 @@ async function init() {
             try {
               clearTimeout(p.timeoutId);
               p.reject(new Error("worker error"));
-            } catch { }
+            } catch {}
           }
           currentWorkerPending.clear();
           refreshWorkerButtons();
@@ -1995,7 +2103,8 @@ async function init() {
 
       const workerInit = (preloadGroup: string) => {
         if (currentWorkerPending.size > 0) {
-          const inflight = [...currentWorkerPending.values()][0]?.exportName ?? "?";
+          const inflight = [...currentWorkerPending.values()][0]?.exportName ??
+            "?";
           console.warn(
             `[worker] cannot init while busy (in-flight: ${inflight}). Click 'Terminate Worker' first.`,
           );
@@ -2034,7 +2143,8 @@ async function init() {
           return Promise.reject(new Error("worker not ready"));
         }
         if (currentWorkerPending.size > 0) {
-          const inflight = [...currentWorkerPending.values()][0]?.exportName ?? "?";
+          const inflight = [...currentWorkerPending.values()][0]?.exportName ??
+            "?";
           console.warn(
             `[worker] busy (in-flight: ${inflight}). Wait or click 'Terminate Worker' to abort.`,
           );
@@ -2064,13 +2174,20 @@ async function init() {
                 null,
                 0,
               );
-            } catch { }
+            } catch {}
             console.error(
-              `[worker] watchdog: ${exportName} exceeded ${timeoutMs}ms; terminating worker${snapSummary ? ` snapshot=${snapSummary}` : ""}`,
+              `[worker] watchdog: ${exportName} exceeded ${timeoutMs}ms; terminating worker${
+                snapSummary ? ` snapshot=${snapSummary}` : ""
+              }`,
             );
             terminateWorker();
           }, timeoutMs) as any;
-          currentWorkerPending.set(callId, { exportName, resolve, reject, timeoutId });
+          currentWorkerPending.set(callId, {
+            exportName,
+            resolve,
+            reject,
+            timeoutId,
+          });
         });
         refreshWorkerButtons();
         w.postMessage({ cmd: "call", callId, exportName, args });
@@ -2081,16 +2198,16 @@ async function init() {
         if (currentWorkerUpdateLoopCancel) {
           try {
             currentWorkerUpdateLoopCancel();
-          } catch { }
+          } catch {}
           currentWorkerUpdateLoopCancel = null;
         }
         currentWorkerUpdateLoopPausedReason = reason ? String(reason) : null;
         try {
           currentWorkerBbdbgUiRefresh?.();
-        } catch { }
+        } catch {}
         try {
           refreshWorkerButtons();
-        } catch { }
+        } catch {}
       };
 
       const startWorkerUpdateLoop = () => {
@@ -2099,7 +2216,8 @@ async function init() {
         let running = true;
         currentWorkerUpdateLoopPausedReason = null;
 
-        const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+        const delay = (ms: number) =>
+          new Promise<void>((r) => setTimeout(r, ms));
         const loop = async () => {
           while (running) {
             if (!currentWorker || !currentWorkerReady) {
@@ -2114,7 +2232,9 @@ async function init() {
             try {
               await workerCall("UpdateGame", 500);
             } catch (e: any) {
-              stopWorkerUpdateLoop(`UpdateGame failed: ${String(e?.message ?? e)}`);
+              stopWorkerUpdateLoop(
+                `UpdateGame failed: ${String(e?.message ?? e)}`,
+              );
               return;
             }
             // Yield to keep UI responsive.
@@ -2127,10 +2247,10 @@ async function init() {
         };
         try {
           currentWorkerBbdbgUiRefresh?.();
-        } catch { }
+        } catch {}
         try {
           refreshWorkerButtons();
-        } catch { }
+        } catch {}
       };
 
       const workerCallUI = (
@@ -2145,7 +2265,8 @@ async function init() {
           return;
         }
         if (currentWorkerPending.size > 0) {
-          const inflight = [...currentWorkerPending.values()][0]?.exportName ?? "?";
+          const inflight = [...currentWorkerPending.values()][0]?.exportName ??
+            "?";
           console.warn(
             `[worker] busy (in-flight: ${inflight}). Wait or click 'Terminate Worker' to abort.`,
           );
@@ -2163,8 +2284,11 @@ async function init() {
           return;
         }
         if (currentWorkerPending.size > 0) {
-          const inflight = [...currentWorkerPending.values()][0]?.exportName ?? "?";
-          console.warn(`[worker] probe blocked: worker is busy (in-flight: ${inflight})`);
+          const inflight = [...currentWorkerPending.values()][0]?.exportName ??
+            "?";
+          console.warn(
+            `[worker] probe blocked: worker is busy (in-flight: ${inflight})`,
+          );
           return;
         }
         const exportSet = new Set<string>(
@@ -2201,8 +2325,9 @@ async function init() {
         for (const name of probes) {
           if (exportSet.size > 0 && !exportSet.has(name)) continue;
           try {
-            const args: Array<number | string> =
-              name === "InitLoadingScreens" ? ["Data/events.ini"] : [];
+            const args: Array<number | string> = name === "InitLoadingScreens"
+              ? ["Data/events.ini"]
+              : [];
             await workerCall(name, timeoutByExport[name] ?? 1500, args);
             console.log(`[worker] probe ok: ${name}`);
           } catch (e) {
@@ -2282,15 +2407,15 @@ async function init() {
             try {
               const text = await f.text();
               bbdbgSources.set(f.name, text);
-            } catch { }
+            } catch {}
           }
           try {
             refreshBbdbgPanel();
-          } catch { }
+          } catch {}
           // Allow re-selecting the same file(s).
           try {
             dbgFileInput.value = "";
-          } catch { }
+          } catch {}
         });
         dbgWrap.appendChild(dbgFileInput);
 
@@ -2354,7 +2479,8 @@ async function init() {
         metaFuncs.style.marginTop = "6px";
         metaFuncs.style.maxHeight = "260px";
         metaFuncs.style.overflow = "auto";
-        metaFuncs.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+        metaFuncs.style.fontFamily =
+          "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
         metaFuncs.style.fontSize = "12px";
         metaFuncs.style.borderTop = "1px solid rgba(255,255,255,0.08)";
         metaFuncs.style.paddingTop = "6px";
@@ -2477,26 +2603,41 @@ async function init() {
         };
 
         const refreshMetaViz = () => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const files = st?.meta?.files ?? [];
           const funcs = st?.meta?.functions ?? [];
           const q = String(metaSearch.value ?? "").trim().toLowerCase();
-          const lim = Math.max(10, Math.min(5000, Number(metaLimit.value ?? "200") | 0));
+          const lim = Math.max(
+            10,
+            Math.min(5000, Number(metaLimit.value ?? "200") | 0),
+          );
 
           const fileLines: string[] = [];
-          fileLines.push(`files (${files.length}${files.length > 500 ? "+ (truncated in worker)" : ""})`);
+          fileLines.push(
+            `files (${files.length}${
+              files.length > 500 ? "+ (truncated in worker)" : ""
+            })`,
+          );
           const fileRows = q
-            ? files.filter((f) => String(f.path ?? "").toLowerCase().includes(q))
+            ? files.filter((f) =>
+              String(f.path ?? "").toLowerCase().includes(q)
+            )
             : files;
           for (const f of fileRows.slice(0, 30)) {
             fileLines.push(`  ${String(f.id).padStart(4, " ")}  ${f.path}`);
           }
-          if (fileRows.length > 30) fileLines.push(`  ... (${fileRows.length - 30} more)`);
+          if (fileRows.length > 30) {
+            fileLines.push(`  ... (${fileRows.length - 30} more)`);
+          }
           metaFiles.textContent = fileLines.join("\n");
 
           metaFuncs.textContent = "";
           const title = document.createElement("div");
-          title.textContent = `functions (${funcs.length}${funcs.length > 2000 ? "+ (truncated in worker)" : ""})`;
+          title.textContent = `functions (${funcs.length}${
+            funcs.length > 2000 ? "+ (truncated in worker)" : ""
+          })`;
           title.style.marginBottom = "6px";
           metaFuncs.appendChild(title);
 
@@ -2504,8 +2645,11 @@ async function init() {
             ? funcs.filter((fn) => {
               const name = String(fn.name ?? "").toLowerCase();
               const sig = String(fn.signature ?? "").toLowerCase();
-              const file = files.find((f) => (f.id | 0) === (fn.fileId | 0))?.path ?? "";
-              return name.includes(q) || sig.includes(q) || String(file).toLowerCase().includes(q);
+              const file = files.find((f) =>
+                (f.id | 0) === (fn.fileId | 0)
+              )?.path ?? "";
+              return name.includes(q) || sig.includes(q) ||
+                String(file).toLowerCase().includes(q);
             })
             : funcs;
           const list = fnRows.slice(0, lim);
@@ -2524,7 +2668,9 @@ async function init() {
             btn.dataset.line = String(fn.startLine | 0);
             btn.title = "Set breakpoint at function startLine";
 
-            const filePath = files.find((f) => (f.id | 0) === (fn.fileId | 0))?.path ?? `file_${fn.fileId | 0}`;
+            const filePath = files.find((f) =>
+              (f.id | 0) === (fn.fileId | 0)
+            )?.path ?? `file_${fn.fileId | 0}`;
             const label = document.createElement("div");
             label.style.flex = "1";
             label.textContent =
@@ -2537,20 +2683,26 @@ async function init() {
           }
           if (fnRows.length > lim) {
             const more = document.createElement("div");
-            more.textContent = `... (${fnRows.length - lim} more; refine filter)`;
+            more.textContent = `... (${
+              fnRows.length - lim
+            } more; refine filter)`;
             more.style.marginTop = "6px";
             metaFuncs.appendChild(more);
           }
         };
 
         const refreshTypeDecodeSelect = () => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const types = st?.meta?.types ?? [];
           const cur = String(typeSelect.value ?? "");
           typeSelect.textContent = "";
           const opt0 = document.createElement("option");
           opt0.value = "";
-          opt0.textContent = types.length ? "(choose type)" : "(no bbdbg types)";
+          opt0.textContent = types.length
+            ? "(choose type)"
+            : "(no bbdbg types)";
           typeSelect.appendChild(opt0);
 
           const rank = (name: string) => {
@@ -2570,14 +2722,18 @@ async function init() {
           for (const t of sorted) {
             const opt = document.createElement("option");
             opt.value = String(t.id | 0);
-            opt.textContent = `${t.name} (id=${t.id | 0}, ${t.instanceSizeBytes | 0} bytes)`;
+            opt.textContent = `${t.name} (id=${t.id | 0}, ${
+              t.instanceSizeBytes | 0
+            } bytes)`;
             typeSelect.appendChild(opt);
           }
           if (cur) typeSelect.value = cur;
         };
 
         const getSelectedType = () => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const types = st?.meta?.types ?? [];
           const id = Number(typeSelect.value ?? "0") | 0;
           if (id <= 0) return null;
@@ -2585,10 +2741,14 @@ async function init() {
         };
 
         const selectTypeByName = (name: string) => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const types = st?.meta?.types ?? [];
           const want = name.toLowerCase();
-          const hit = types.find((t) => String(t.name ?? "").toLowerCase() === want);
+          const hit = types.find((t) =>
+            String(t.name ?? "").toLowerCase() === want
+          );
           if (!hit) return false;
           typeSelect.value = String(hit.id | 0);
           return true;
@@ -2611,14 +2771,25 @@ async function init() {
             return Promise.reject(new Error("worker not ready"));
           }
           const reqId = (currentWorkerMemReqId++ | 0) >>> 0;
-          return new Promise<{ addr: number; bytes: Uint8Array }>((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              currentWorkerMemPending.delete(reqId);
-              reject(new Error("dbgReadMemory timeout"));
-            }, 1500) as any as number;
-            currentWorkerMemPending.set(reqId, { resolve, reject, timeoutId });
-            currentWorker!.postMessage({ cmd: "dbgReadMemory", reqId, addr, len });
-          });
+          return new Promise<{ addr: number; bytes: Uint8Array }>(
+            (resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                currentWorkerMemPending.delete(reqId);
+                reject(new Error("dbgReadMemory timeout"));
+              }, 1500) as any as number;
+              currentWorkerMemPending.set(reqId, {
+                resolve,
+                reject,
+                timeoutId,
+              });
+              currentWorker!.postMessage({
+                cmd: "dbgReadMemory",
+                reqId,
+                addr,
+                len,
+              });
+            },
+          );
         };
 
         const readWorkerGlobal = (name: string) => {
@@ -2626,48 +2797,61 @@ async function init() {
             return Promise.reject(new Error("worker not ready"));
           }
           const reqId = (currentWorkerGlobalReqId++ | 0) >>> 0;
-          return new Promise<{ name: string; value: number }>((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-              currentWorkerGlobalPending.delete(reqId);
-              reject(new Error("dbgReadGlobal timeout"));
-            }, 1500) as any as number;
-            currentWorkerGlobalPending.set(reqId, { resolve, reject, timeoutId });
-            currentWorker!.postMessage({ cmd: "dbgReadGlobal", reqId, name });
-          });
+          return new Promise<{ name: string; value: number }>(
+            (resolve, reject) => {
+              const timeoutId = setTimeout(() => {
+                currentWorkerGlobalPending.delete(reqId);
+                reject(new Error("dbgReadGlobal timeout"));
+              }, 1500) as any as number;
+              currentWorkerGlobalPending.set(reqId, {
+                resolve,
+                reject,
+                timeoutId,
+              });
+              currentWorker!.postMessage({ cmd: "dbgReadGlobal", reqId, name });
+            },
+          );
         };
 
         const readU32le = async (addr: number) => {
           const { bytes } = await readWorkerMemory(addr, 4);
           if (bytes.byteLength < 4) throw new Error("short read");
-          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(0, true) >>> 0;
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+            .getUint32(0, true) >>> 0;
         };
 
         const readI32le = async (addr: number) => {
           const { bytes } = await readWorkerMemory(addr, 4);
           if (bytes.byteLength < 4) throw new Error("short read");
-          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getInt32(0, true) | 0;
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+            .getInt32(0, true) | 0;
         };
 
         const readF32le = async (addr: number) => {
           const { bytes } = await readWorkerMemory(addr, 4);
           if (bytes.byteLength < 4) throw new Error("short read");
-          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getFloat32(0, true);
+          return new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+            .getFloat32(0, true);
         };
 
         const readB3DString = async (ptr: number) => {
           const maxStringLen = 1024 * 1024;
           const head = await readWorkerMemory(ptr >>> 0, 8);
           const hb = head.bytes;
-          if (hb.byteLength < 8) return `<invalid_str_ptr:0x${(ptr >>> 0).toString(16)}>`;
+          if (hb.byteLength < 8) {
+            return `<invalid_str_ptr:0x${(ptr >>> 0).toString(16)}>`;
+          }
           const hv = new DataView(hb.buffer, hb.byteOffset, hb.byteLength);
           const len = hv.getInt32(4, true) | 0;
           if (len < 0 || len > maxStringLen) {
             return `<invalid_str_len:0x${(ptr >>> 0).toString(16)}:${len}>`;
           }
-          const body = await readWorkerMemory(((ptr + 8) >>> 0), len);
+          const body = await readWorkerMemory((ptr + 8) >>> 0, len);
           const b = body.bytes;
           const text = latin1.decode(b.subarray(0, Math.min(b.length, len)));
-          return b.length < len ? `${text}<...truncated ${len - b.length}>` : text;
+          return b.length < len
+            ? `${text}<...truncated ${len - b.length}>`
+            : text;
         };
 
         const typeSizeBytes = (wasmType: string) => {
@@ -2676,7 +2860,11 @@ async function init() {
           return 4;
         };
 
-        const readScalarFrom = (dv: DataView, wasmType: string, off: number) => {
+        const readScalarFrom = (
+          dv: DataView,
+          wasmType: string,
+          off: number,
+        ) => {
           const t = wasmType.toLowerCase();
           try {
             if (t === "f32") return String(dv.getFloat32(off, true));
@@ -2689,19 +2877,29 @@ async function init() {
           return String(dv.getInt32(off, true));
         };
 
-        const fmtHex32 = (v: number) => `0x${(v >>> 0).toString(16).padStart(8, "0")}`;
+        const fmtHex32 = (v: number) =>
+          `0x${(v >>> 0).toString(16).padStart(8, "0")}`;
 
         const decodeTypeInstance = async (
           ptr: number,
           typeInfo: NonNullable<ReturnType<typeof getSelectedType>>,
         ) => {
-          const size = Math.max(0, Math.min(16 * 1024, typeInfo.instanceSizeBytes | 0));
+          const size = Math.max(
+            0,
+            Math.min(16 * 1024, typeInfo.instanceSizeBytes | 0),
+          );
           if (size <= 0) throw new Error("invalid instance size");
           const { bytes } = await readWorkerMemory(ptr >>> 0, size);
-          const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          const dv = new DataView(
+            bytes.buffer,
+            bytes.byteOffset,
+            bytes.byteLength,
+          );
           const lines: string[] = [];
           lines.push(
-            `Type ${typeInfo.name} (id=${typeInfo.id | 0}) @ ${fmtHex32(ptr >>> 0)} size=${size} bytes`,
+            `Type ${typeInfo.name} (id=${typeInfo.id | 0}) @ ${
+              fmtHex32(ptr >>> 0)
+            } size=${size} bytes`,
           );
           lines.push("");
 
@@ -2713,14 +2911,18 @@ async function init() {
             if (off < 0 || off >= dv.byteLength) continue;
             const dims = Array.isArray(f.dimensions) ? f.dimensions : null;
             const elemSize = typeSizeBytes(String(f.wasmType ?? "i32"));
-            const isString = String(f.declaredType ?? "").toLowerCase() === "string";
+            const isString =
+              String(f.declaredType ?? "").toLowerCase() === "string";
             const isPtr = isString || !!f.customTypeName;
 
             const label =
-              `${String(f.name ?? "").padEnd(18, " ")} +${String(off).padStart(5, " ")}  ` +
+              `${String(f.name ?? "").padEnd(18, " ")} +${
+                String(off).padStart(5, " ")
+              }  ` +
               `${String(f.wasmType ?? "").padEnd(4, " ")}`;
             if (dims && dims.length) {
-              const count = dims.reduce((a, b) => a * Math.max(1, b | 0), 1) | 0;
+              const count = dims.reduce((a, b) => a * Math.max(1, b | 0), 1) |
+                0;
               const maxElems = Math.max(1, Math.min(8, count));
               const vals: string[] = [];
               for (let i = 0; i < maxElems; i++) {
@@ -2730,7 +2932,9 @@ async function init() {
                 vals.push(v);
               }
               const tail = count > maxElems ? `, ... (${count} total)` : "";
-              lines.push(`${label}  [${dims.join(",")}] = [${vals.join(", ")}${tail}]`);
+              lines.push(
+                `${label}  [${dims.join(",")}] = [${vals.join(", ")}${tail}]`,
+              );
               continue;
             }
 
@@ -2742,14 +2946,18 @@ async function init() {
             }
 
             const p = dv.getUint32(off, true) >>> 0;
-            const hint = isString ? "String" : (f.customTypeName ? `.${String(f.customTypeName)}` : "ptr");
+            const hint = isString
+              ? "String"
+              : (f.customTypeName ? `.${String(f.customTypeName)}` : "ptr");
             let extra = "";
             if (isString && p !== 0 && decodedStrings < maxStringDecodes) {
               decodedStrings++;
               try {
                 const s = await readB3DString(p);
-                extra = `  "${String(s).slice(0, 120)}${String(s).length > 120 ? "…" : ""}"`;
-              } catch { }
+                extra = `  "${String(s).slice(0, 120)}${
+                  String(s).length > 120 ? "…" : ""
+                }"`;
+              } catch {}
             }
             lines.push(`${label}  = ${fmtHex32(p)} (${hint})${extra}`);
           }
@@ -2760,27 +2968,47 @@ async function init() {
         const hexDump = (addr: number, bytes: Uint8Array) => {
           const lines: string[] = [];
           const row = 16;
-          const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+          const view = new DataView(
+            bytes.buffer,
+            bytes.byteOffset,
+            bytes.byteLength,
+          );
           // Typed preview at start.
           if (bytes.byteLength >= 4) {
             const i32 = view.getInt32(0, true);
             const u32 = view.getUint32(0, true);
             const f32 = view.getFloat32(0, true);
-            lines.push(`@0x${addr.toString(16)} i32=${i32} u32=${u32} f32=${Number.isFinite(f32) ? f32.toFixed(6) : String(f32)}`);
+            lines.push(
+              `@0x${addr.toString(16)} i32=${i32} u32=${u32} f32=${
+                Number.isFinite(f32) ? f32.toFixed(6) : String(f32)
+              }`,
+            );
           } else {
             lines.push(`@0x${addr.toString(16)} len=${bytes.byteLength}`);
           }
           lines.push("");
           for (let off = 0; off < bytes.length; off += row) {
-            const chunk = bytes.subarray(off, Math.min(bytes.length, off + row));
-            const hex = Array.from(chunk).map((b) => b.toString(16).padStart(2, "0")).join(" ");
-            const ascii = Array.from(chunk).map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("");
-            lines.push(`0x${(addr + off).toString(16).padStart(8, "0")}  ${hex.padEnd(row * 3 - 1, " ")}  |${ascii}|`);
+            const chunk = bytes.subarray(
+              off,
+              Math.min(bytes.length, off + row),
+            );
+            const hex = Array.from(chunk).map((b) =>
+              b.toString(16).padStart(2, "0")
+            ).join(" ");
+            const ascii = Array.from(chunk).map((
+              b,
+            ) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : ".")).join("");
+            lines.push(
+              `0x${(addr + off).toString(16).padStart(8, "0")}  ${
+                hex.padEnd(row * 3 - 1, " ")
+              }  |${ascii}|`,
+            );
           }
           return lines.join("\n");
         };
 
-        const memWatches: Array<{ addr: number; kind: string; label: string }> = [];
+        const memWatches: Array<{ addr: number; kind: string; label: string }> =
+          [];
         const refreshWatches = async () => {
           if (!memWatches.length) {
             watchPre.textContent = "(no watches)";
@@ -2791,16 +3019,23 @@ async function init() {
             try {
               let v = "";
               if (w.kind === "i32") v = String(await readI32le(w.addr));
-              else if (w.kind === "u32") v = `0x${(await readU32le(w.addr)).toString(16)}`;
-              else if (w.kind === "f32") {
+              else if (w.kind === "u32") {
+                v = `0x${(await readU32le(w.addr)).toString(16)}`;
+              } else if (w.kind === "f32") {
                 const f = await readF32le(w.addr);
                 v = Number.isFinite(f) ? f.toFixed(6) : String(f);
               } else if (w.kind === "b3dstr") {
                 v = JSON.stringify(await readB3DString(w.addr));
               } else v = "(unknown)";
-              lines.push(`${w.label || w.kind}@0x${w.addr.toString(16)} = ${v}`);
+              lines.push(
+                `${w.label || w.kind}@0x${w.addr.toString(16)} = ${v}`,
+              );
             } catch (e: any) {
-              lines.push(`${w.label || w.kind}@0x${w.addr.toString(16)} = <error: ${String(e?.message ?? e)}>`);
+              lines.push(
+                `${w.label || w.kind}@0x${w.addr.toString(16)} = <error: ${
+                  String(e?.message ?? e)
+                }>`,
+              );
             }
           }
           watchPre.textContent = lines.join("\n");
@@ -2810,20 +3045,29 @@ async function init() {
           if (!currentWorker || !currentWorkerReady) return;
           const out: Record<string, number[]> = {};
           for (const [fileId, set] of bbdbgBreakpointsByFileId) {
-            const list = [...set].filter((n) => Number.isFinite(n) && (n | 0) > 0).sort((a, b) => a - b);
+            const list = [...set].filter((n) =>
+              Number.isFinite(n) && (n | 0) > 0
+            ).sort((a, b) => a - b);
             if (list.length) out[String(fileId | 0)] = list.map((n) => n | 0);
           }
-          currentWorker.postMessage({ cmd: "dbgSetBreakpoints", breakpointsByFileId: out });
+          currentWorker.postMessage({
+            cmd: "dbgSetBreakpoints",
+            breakpointsByFileId: out,
+          });
         };
 
         const refreshBreakpointFiles = () => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const files = st?.meta?.files ?? [];
           const cur = Number(bpFileSelect.value ?? "0") | 0;
           bpFileSelect.textContent = "";
           const opt0 = document.createElement("option");
           opt0.value = "0";
-          opt0.textContent = files.length ? "(choose file)" : "(no bbdbg files)";
+          opt0.textContent = files.length
+            ? "(choose file)"
+            : "(no bbdbg files)";
           bpFileSelect.appendChild(opt0);
           for (const f of files.slice(0, 200)) {
             const opt = document.createElement("option");
@@ -2840,15 +3084,19 @@ async function init() {
             refreshBreakpointFiles();
             refreshMetaViz();
             refreshTypeDecodeSelect();
-          } catch { }
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          } catch {}
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const snap = st?.lastSnapshot ?? null;
           const lines: string[] = [];
           lines.push(`required=${st?.required ? "1" : "0"}`);
           if (st?.meta) {
             lines.push(
               st.meta.ok
-                ? `meta=ok files=${st.meta.fileCount ?? 0} funcs=${st.meta.functionCount ?? 0}`
+                ? `meta=ok files=${st.meta.fileCount ?? 0} funcs=${
+                  st.meta.functionCount ?? 0
+                }`
                 : `meta=error ${st.meta.error ?? "unknown"}`,
             );
           } else {
@@ -2856,7 +3104,9 @@ async function init() {
           }
           if (st?.config) {
             lines.push(
-              `config enabled=${st.config.enabled ? "1" : "0"} traceMax=${st.config.traceMax | 0}`,
+              `config enabled=${st.config.enabled ? "1" : "0"} traceMax=${
+                st.config.traceMax | 0
+              }`,
             );
           } else {
             lines.push("config=(unknown; click Toggle once to query)");
@@ -2864,7 +3114,8 @@ async function init() {
           if (bbdbgBreakpointsByFileId.size > 0) {
             const parts: string[] = [];
             const fileName = (id: number) =>
-              st?.meta?.files?.find((f) => (f.id | 0) === (id | 0))?.path ?? `file_${id | 0}`;
+              st?.meta?.files?.find((f) => (f.id | 0) === (id | 0))?.path ??
+                `file_${id | 0}`;
             for (const [fileId, set] of bbdbgBreakpointsByFileId) {
               const list = [...set].sort((a, b) => a - b);
               parts.push(`${basename(fileName(fileId))}:${list.join(",")}`);
@@ -2876,7 +3127,9 @@ async function init() {
           if (currentWorkerUpdateLoopCancel) {
             lines.push("UpdateGame loop: running");
           } else if (currentWorkerUpdateLoopPausedReason) {
-            lines.push(`UpdateGame loop: paused (${currentWorkerUpdateLoopPausedReason})`);
+            lines.push(
+              `UpdateGame loop: paused (${currentWorkerUpdateLoopPausedReason})`,
+            );
           } else {
             lines.push("UpdateGame loop: stopped");
           }
@@ -2887,14 +3140,20 @@ async function init() {
           }
           lines.push(`last export=${snap.exportName}`);
           if (snap.location) {
-            lines.push(`at ${snap.location.file}:${snap.location.line} (fileId=${snap.location.fileId})`);
+            lines.push(
+              `at ${snap.location.file}:${snap.location.line} (fileId=${snap.location.fileId})`,
+            );
           } else {
             lines.push("at (unknown)");
           }
-          if (snap.stack?.length) lines.push(`stack: ${snap.stack.join(" -> ")}`);
+          if (snap.stack?.length) {
+            lines.push(`stack: ${snap.stack.join(" -> ")}`);
+          }
           if (snap.breakpointHits?.length) {
             lines.push(
-              `breakpoints hit: ${snap.breakpointHits.map((h) => `${h.file}:${h.line}`).join(", ")}`,
+              `breakpoints hit: ${
+                snap.breakpointHits.map((h) => `${h.file}:${h.line}`).join(", ")
+              }`,
             );
           }
           if (snap.trace?.length) {
@@ -2909,7 +3168,8 @@ async function init() {
           // Best-effort source preview: user can drag in / select .bb files locally.
           if (snap.location?.file && snap.location.line > 0) {
             const want = String(snap.location.file);
-            const src = bbdbgSources.get(want) ?? bbdbgSources.get(basename(want)) ?? null;
+            const src = bbdbgSources.get(want) ??
+              bbdbgSources.get(basename(want)) ?? null;
             if (src) {
               const all = src.split(/\r?\n/);
               const cur = snap.location.line | 0;
@@ -2925,7 +3185,11 @@ async function init() {
               }
             } else {
               lines.push("");
-              lines.push(`source: not loaded for ${basename(want)} (use "Load sources…")`);
+              lines.push(
+                `source: not loaded for ${
+                  basename(want)
+                } (use "Load sources…")`,
+              );
             }
           }
           dbgPre.textContent = lines.join("\n");
@@ -2936,20 +3200,24 @@ async function init() {
         refreshTypeDecodeSelect();
         refreshBbdbgPanel();
 
-        const postDbgConfig = (patch: { enabled?: boolean; traceMax?: number }) => {
+        const postDbgConfig = (
+          patch: { enabled?: boolean; traceMax?: number },
+        ) => {
           if (!currentWorker || !currentWorkerReady) return;
           currentWorker.postMessage({ cmd: "dbgConfig", ...patch });
         };
 
         const btnToggle = addButton(dbgBar, "Toggle", () => {
-          const st = ((window as any).__WORKER_BBDBG ?? null) as WorkerBbdbgState | null;
+          const st = ((window as any).__WORKER_BBDBG ?? null) as
+            | WorkerBbdbgState
+            | null;
           const cur = st?.config?.enabled ?? true;
           postDbgConfig({ enabled: !cur });
         }) as HTMLButtonElement;
         const btnLoadSources = addButton(dbgBar, "Load sources…", () => {
           try {
             dbgFileInput.click();
-          } catch { }
+          } catch {}
         }) as HTMLButtonElement;
         const btnMemRead = addButton(memBar, "Read", () => {
           const addr = parseU32(memAddrInput.value);
@@ -2964,31 +3232,45 @@ async function init() {
             void readI32le(addr).then((v) => {
               memPre.textContent = `i32@0x${addr.toString(16)} = ${v}`;
             }).catch((e) => {
-              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+              memPre.textContent = `read failed: ${
+                String((e as any)?.message ?? e)
+              }`;
             });
           } else if (mode === "u32") {
             void readU32le(addr).then((v) => {
-              memPre.textContent = `u32@0x${addr.toString(16)} = 0x${v.toString(16)}`;
+              memPre.textContent = `u32@0x${addr.toString(16)} = 0x${
+                v.toString(16)
+              }`;
             }).catch((e) => {
-              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+              memPre.textContent = `read failed: ${
+                String((e as any)?.message ?? e)
+              }`;
             });
           } else if (mode === "f32") {
             void readF32le(addr).then((v) => {
-              memPre.textContent = `f32@0x${addr.toString(16)} = ${Number.isFinite(v) ? v.toFixed(6) : String(v)}`;
+              memPre.textContent = `f32@0x${addr.toString(16)} = ${
+                Number.isFinite(v) ? v.toFixed(6) : String(v)
+              }`;
             }).catch((e) => {
-              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+              memPre.textContent = `read failed: ${
+                String((e as any)?.message ?? e)
+              }`;
             });
           } else if (mode === "b3dstr") {
             void readB3DString(addr).then((s) => {
               memPre.textContent = `b3dstr@0x${addr.toString(16)} = ${s}`;
             }).catch((e) => {
-              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+              memPre.textContent = `read failed: ${
+                String((e as any)?.message ?? e)
+              }`;
             });
           } else {
             void readWorkerMemory(addr, len).then(({ addr: a, bytes }) => {
               memPre.textContent = hexDump(a, bytes);
             }).catch((e) => {
-              memPre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+              memPre.textContent = `read failed: ${
+                String((e as any)?.message ?? e)
+              }`;
             });
           }
         }) as HTMLButtonElement;
@@ -3021,7 +3303,9 @@ async function init() {
             typePre.textContent = "choose a type first";
             return;
           }
-          const exportName = `__bbdbg_first_${String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")}`;
+          const exportName = `__bbdbg_first_${
+            String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")
+          }`;
           typePre.textContent = `reading ${exportName}...`;
           void readWorkerGlobal(exportName).then(({ value }) => {
             const hex = `0x${(value >>> 0).toString(16)}`;
@@ -3029,7 +3313,9 @@ async function init() {
             memAddrInput.value = hex;
             typePre.textContent = `${exportName} = ${hex}`;
           }).catch((e) => {
-            typePre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            typePre.textContent = `read failed: ${
+              String((e as any)?.message ?? e)
+            }`;
           });
         }) as HTMLButtonElement;
         const btnTypeUseLast = addButton(typeDecodeBar, "Use Last", () => {
@@ -3038,7 +3324,9 @@ async function init() {
             typePre.textContent = "choose a type first";
             return;
           }
-          const exportName = `__bbdbg_last_${String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")}`;
+          const exportName = `__bbdbg_last_${
+            String(t.name ?? "").replace(/[^A-Za-z0-9_]/g, "_")
+          }`;
           typePre.textContent = `reading ${exportName}...`;
           void readWorkerGlobal(exportName).then(({ value }) => {
             const hex = `0x${(value >>> 0).toString(16)}`;
@@ -3046,23 +3334,27 @@ async function init() {
             memAddrInput.value = hex;
             typePre.textContent = `${exportName} = ${hex}`;
           }).catch((e) => {
-            typePre.textContent = `read failed: ${String((e as any)?.message ?? e)}`;
+            typePre.textContent = `read failed: ${
+              String((e as any)?.message ?? e)
+            }`;
           });
         }) as HTMLButtonElement;
         const btnTypeDecode = addButton(typeDecodeBar, "Decode Type", () => {
-          const addr =
-            parseU32(typePtrInput.value) ??
+          const addr = parseU32(typePtrInput.value) ??
             parseU32(memAddrInput.value);
           const t = getSelectedType();
           if (addr == null || !t) {
-            typePre.textContent = "need ptr + type (debug build must provide .bbdbg.json)";
+            typePre.textContent =
+              "need ptr + type (debug build must provide .bbdbg.json)";
             return;
           }
           typePre.textContent = "decoding...";
           void decodeTypeInstance(addr, t).then((s) => {
             typePre.textContent = s;
           }).catch((e) => {
-            typePre.textContent = `decode failed: ${String((e as any)?.message ?? e)}`;
+            typePre.textContent = `decode failed: ${
+              String((e as any)?.message ?? e)
+            }`;
           });
         }) as HTMLButtonElement;
         const btnAddBp = addButton(dbgBar, "Add BP", () => {
@@ -3075,14 +3367,14 @@ async function init() {
           syncBreakpoints();
           try {
             refreshBbdbgPanel();
-          } catch { }
+          } catch {}
         }) as HTMLButtonElement;
         const btnClearBp = addButton(dbgBar, "Clear BPs", () => {
           bbdbgBreakpointsByFileId.clear();
           syncBreakpoints();
           try {
             refreshBbdbgPanel();
-          } catch { }
+          } catch {}
         }) as HTMLButtonElement;
         const btnTrace300 = addButton(
           dbgBar,
@@ -3098,11 +3390,17 @@ async function init() {
         guardedButtons.push({ btn: btnLoadSources });
         guardedButtons.push({ btn: btnMemRead, requiresWorkerReady: true });
         guardedButtons.push({ btn: btnWatchAdd, requiresWorkerReady: true });
-        guardedButtons.push({ btn: btnWatchRefresh, requiresWorkerReady: true });
+        guardedButtons.push({
+          btn: btnWatchRefresh,
+          requiresWorkerReady: true,
+        });
         guardedButtons.push({ btn: btnWatchClear, requiresWorkerReady: true });
         guardedButtons.push({ btn: btnTypeNPCs, requiresWorkerReady: true });
         guardedButtons.push({ btn: btnTypeItems, requiresWorkerReady: true });
-        guardedButtons.push({ btn: btnTypeUseFirst, requiresWorkerReady: true });
+        guardedButtons.push({
+          btn: btnTypeUseFirst,
+          requiresWorkerReady: true,
+        });
         guardedButtons.push({ btn: btnTypeUseLast, requiresWorkerReady: true });
         guardedButtons.push({ btn: btnTypeDecode, requiresWorkerReady: true });
         guardedButtons.push({ btn: btnAddBp, requiresWorkerReady: true });
@@ -3113,17 +3411,21 @@ async function init() {
         metaSearch.addEventListener("input", () => {
           try {
             refreshMetaViz();
-          } catch { }
+          } catch {}
         });
         metaLimit.addEventListener("change", () => {
           try {
             refreshMetaViz();
-          } catch { }
+          } catch {}
         });
         metaFuncs.addEventListener("click", (ev) => {
           const t = ev.target as any;
-          const btn = t && typeof t === "object" && "dataset" in t ? t as HTMLButtonElement : null;
-          const fileId = btn?.dataset?.fileId ? Number(btn.dataset.fileId) | 0 : 0;
+          const btn = t && typeof t === "object" && "dataset" in t
+            ? t as HTMLButtonElement
+            : null;
+          const fileId = btn?.dataset?.fileId
+            ? Number(btn.dataset.fileId) | 0
+            : 0;
           const line = btn?.dataset?.line ? Number(btn.dataset.line) | 0 : 0;
           if (fileId <= 0 || line <= 0) return;
           bpFileSelect.value = String(fileId);
@@ -3132,10 +3434,10 @@ async function init() {
             // Keep focus on the breakpoint controls for quick repeated additions.
             bpLineInput.focus();
             bpLineInput.select?.();
-          } catch { }
+          } catch {}
           try {
             refreshBbdbgPanel();
-          } catch { }
+          } catch {}
         });
       }
 
@@ -3146,15 +3448,21 @@ async function init() {
               forceMain: false,
             });
           });
-          addButton(bar, "Dump SCPCB globals", () =>
-            dumpScpcbScaleGlobals(instance)
+          addButton(
+            bar,
+            "Dump SCPCB globals",
+            () => dumpScpcbScaleGlobals(instance),
           );
         }
         addGuardedButton(
           "Step UpdateGame",
           () =>
-            flags.worker ? workerCallUI("UpdateGame", 500) : callExport(instance, "UpdateGame"),
-          flags.worker ? { requiresWorkerReady: true, requiresWorkerIdle: true } : {},
+            flags.worker
+              ? workerCallUI("UpdateGame", 500)
+              : callExport(instance, "UpdateGame"),
+          flags.worker
+            ? { requiresWorkerReady: true, requiresWorkerIdle: true }
+            : {},
         );
         addGuardedButton(
           "Step UpdateMainMenu",
@@ -3162,7 +3470,9 @@ async function init() {
             flags.worker
               ? workerCallUI("UpdateMainMenu", 1500)
               : callExport(instance, "UpdateMainMenu"),
-          flags.worker ? { requiresWorkerReady: true, requiresWorkerIdle: true } : {},
+          flags.worker
+            ? { requiresWorkerReady: true, requiresWorkerIdle: true }
+            : {},
         );
         addGuardedButton(
           "Step UpdateMusic",
@@ -3170,7 +3480,9 @@ async function init() {
             flags.worker
               ? workerCallUI("UpdateMusic", 1500)
               : callExport(instance, "UpdateMusic"),
-          flags.worker ? { requiresWorkerReady: true, requiresWorkerIdle: true } : {},
+          flags.worker
+            ? { requiresWorkerReady: true, requiresWorkerIdle: true }
+            : {},
         );
         addGuardedButton(
           "Step UpdateStreamSounds",
@@ -3178,7 +3490,9 @@ async function init() {
             flags.worker
               ? workerCallUI("UpdateStreamSounds", 1500)
               : callExport(instance, "UpdateStreamSounds"),
-          flags.worker ? { requiresWorkerReady: true, requiresWorkerIdle: true } : {},
+          flags.worker
+            ? { requiresWorkerReady: true, requiresWorkerIdle: true }
+            : {},
         );
 
         if (!flags.worker) {
@@ -3188,7 +3502,9 @@ async function init() {
           });
           addButton(bar, "Force MainMenuOpen=1", () => {
             const ok = setMutableGlobal(instance, "MainMenuOpen", 1);
-            console.log(ok ? "set MainMenuOpen=1" : "failed to set MainMenuOpen");
+            console.log(
+              ok ? "set MainMenuOpen=1" : "failed to set MainMenuOpen",
+            );
           });
         }
       }
@@ -3226,8 +3542,9 @@ async function init() {
         section: "wasm",
         text: "Safe mode (not starting WASM)",
         progress: 1,
-        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${exportsList.length > 80 ? ", ..." : ""
-          }`,
+        detail: `Exports: ${exportsList.slice(0, 80).join(", ")}${
+          exportsList.length > 80 ? ", ..." : ""
+        }`,
       });
       loader.overlay.style.display = "block";
       uninstallOnscreen();
@@ -3237,7 +3554,7 @@ async function init() {
     // Start Game Loop (non-blocking by default)
     // If only `Main()` exists, it may contain a tight loop that will freeze the tab in WASM.
     // Require an explicit URL opt-in: `?run=main`.
-    let cancelMain = () => { };
+    let cancelMain = () => {};
     if (hasUpdateGame) {
       // Modules that export UpdateGame are expected to be JS-ticked.
       // Default is safe init (no Main). Opt into forcing Main via `?init=main`.
@@ -3260,11 +3577,17 @@ async function init() {
     }
 
     // If tick=manual, don't start the RAF update loop.
-    const cancelUpdate = flags.tickManual ? () => { } : startUpdateLoop(core);
+    const cancelUpdate = flags.tickManual ? () => {} : startUpdateLoop(core);
 
     // Override initGameWorld to call WASM StartNewGame
-    (window as any).initGameWorld = async (seed: string, difficulty: number) => {
-      console.log("[Main] initGameWorld: Calling WASM StartNewGame", { seed, difficulty });
+    (window as any).initGameWorld = async (
+      seed: string,
+      difficulty: number,
+    ) => {
+      console.log("[Main] initGameWorld: Calling WASM StartNewGame", {
+        seed,
+        difficulty,
+      });
 
       // Find StartNewGame export
       // Find InitNewGame export (Non-blocking init)
@@ -3273,7 +3596,10 @@ async function init() {
 
       if (typeof initNewGame === "function") {
         try {
-          console.log("[Main] initGameWorld: Calling WASM InitNewGame (safe)", { seed, difficulty });
+          console.log("[Main] initGameWorld: Calling WASM InitNewGame (safe)", {
+            seed,
+            difficulty,
+          });
           // Seed string needs to be allocated
           const seedPtr = core.writeString(seed || "test");
           // Call WASM
@@ -3284,7 +3610,7 @@ async function init() {
           console.log("[Main] Starting manual update loop...");
           // We rely on the core.update loop which is already running (startUpdateLoop)
           // But we need to make sure it calls something?
-          // core.update calls instance.exports.UpdateGame if present. 
+          // core.update calls instance.exports.UpdateGame if present.
           // If not, we might not get updates.
           // Let's try to find a ticker.
           const syncGame = instance.exports.SyncGame as CallableFunction;
@@ -3300,13 +3626,16 @@ async function init() {
         }
       } else if (typeof startNewGame === "function") {
         // Fallback to blocking start
-        console.warn("[Main] InitNewGame not found, calling StartNewGame (LOCK WARNING)");
+        console.warn(
+          "[Main] InitNewGame not found, calling StartNewGame (LOCK WARNING)",
+        );
         const seedPtr = core.writeString(seed || "test");
         startNewGame(seedPtr, difficulty || 0);
-      }
-
-      else {
-        console.warn("[Main] StartNewGame export not found! Available:", Object.keys(instance.exports).filter(k => !k.startsWith('_')));
+      } else {
+        console.warn(
+          "[Main] StartNewGame export not found! Available:",
+          Object.keys(instance.exports).filter((k) => !k.startsWith("_")),
+        );
 
         // If no StartNewGame, maybe UpdateGame handles it if we set globals?
         // Fallback: Just ensure loop is running (it is).
@@ -3314,11 +3643,11 @@ async function init() {
       }
 
       // Remove loader
-      if (loader && loader.overlay) loader.overlay.style.display = 'none';
+      if (loader && loader.overlay) loader.overlay.style.display = "none";
     };
 
     // Optional FPS limiter for render loop: `?fps=10` (or disable entirely with `?nogl=1`)
-    const cancelRender = flags.noGL ? () => { } : flags.fps > 0
+    const cancelRender = flags.noGL ? () => {} : flags.fps > 0
       ? (() => {
         let raf = 0;
         let running = true;
@@ -3337,7 +3666,7 @@ async function init() {
           running = false;
           try {
             cancelAnimationFrame(raf);
-          } catch { }
+          } catch {}
         };
       })()
       : startRenderLoop(core);
@@ -3346,26 +3675,26 @@ async function init() {
       dispose: () => {
         try {
           cancelMain();
-        } catch { }
+        } catch {}
         try {
           cancelUpdate();
-        } catch { }
+        } catch {}
         try {
           cancelRender();
-        } catch { }
+        } catch {}
         // HUD loop is managed globally so it can run in paused mode too.
         try {
           graphics.dispose?.();
-        } catch { }
+        } catch {}
         try {
           fileIO.dispose?.({ clearCache: true });
-        } catch { }
+        } catch {}
         try {
           core.dispose?.();
-        } catch { }
+        } catch {}
         try {
           uninstallOnscreen();
-        } catch { }
+        } catch {}
       },
     };
 
@@ -3373,7 +3702,7 @@ async function init() {
       window.addEventListener("beforeunload", () => {
         try {
           currentRuntime?.dispose();
-        } catch { }
+        } catch {}
       });
       unloadHookInstalled = true;
     }
@@ -3381,7 +3710,7 @@ async function init() {
     // Hide loader immediately to show game
     try {
       boot.setPhase("RUNNING", "started");
-    } catch { }
+    } catch {}
     updateLoader(loader, { section: "wasm", text: "Running", progress: 1 });
     loader.overlay.style.display = "none";
 
@@ -3421,32 +3750,34 @@ async function init() {
             lastUpdate = now;
           }
         },
-      }).catch((err: unknown) => console.error("Facility asset preload failed:", err));
+      }).catch((err: unknown) =>
+        console.error("Facility asset preload failed:", err)
+      );
     }
   } catch (e: any) {
     console.error("Game Launch Error:", e);
     try {
       boot.setPhase("ERROR", e?.message ?? String(e));
-    } catch { }
+    } catch {}
     try {
       stopBootWatchdog();
-    } catch { }
+    } catch {}
     try {
       currentRuntime?.dispose();
-    } catch { }
+    } catch {}
     currentRuntime = null;
     try {
       graphics.dispose?.();
-    } catch { }
+    } catch {}
     try {
       fileIO.dispose?.({ clearCache: true });
-    } catch { }
+    } catch {}
     try {
       core.dispose?.();
-    } catch { }
+    } catch {}
     try {
       uninstallOnscreen();
-    } catch { }
+    } catch {}
     updateLoader(loader, {
       section: "wasm",
       text: "Error",
@@ -3518,7 +3849,9 @@ function runThinClientDemo(graphics: Blitz3DGraphics) {
   bridge.entityType(wall, 2); // Level
   bridge.entityColor(wall, 200, 50, 50); // Red
 
-  console.log("Demo setup complete. Use WASD to move into the red corner and verify sliding.");
+  console.log(
+    "Demo setup complete. Use WASD to move into the red corner and verify sliding.",
+  );
 }
 
 // 6. Test Sound (Async stub)

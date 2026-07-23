@@ -5,6 +5,7 @@ Created: 2026-02-03
 ## Objective
 
 Make the native host reliable to iterate on:
+
 - tests for ABI/memory helpers,
 - deterministic smoke runs for WASM modules,
 - packaging strategy for distributing the app + assets.
@@ -12,6 +13,7 @@ Make the native host reliable to iterate on:
 ## Tests
 
 ### Tasks
+
 - [ ] Add unit tests for:
   - string decoding/encoding helpers,
   - memory bounds checks,
@@ -27,13 +29,17 @@ Make the native host reliable to iterate on:
 ## Diagnostics
 
 ### Tasks
-- [ ] Add structured logging categories (WASM instantiation, imports, render bridge, FS).
-- [ ] Add per-frame timing metrics (tick time, render time, upload time if applicable).
+
+- [ ] Add structured logging categories (WASM instantiation, imports, render
+      bridge, FS).
+- [ ] Add per-frame timing metrics (tick time, render time, upload time if
+      applicable).
 - [ ] Add a watchdog trigger report when execution exceeds a threshold.
 
 ## Packaging
 
 ### Tasks
+
 - [ ] Decide how to bundle:
   - host executable,
   - `.wasm` payload(s),
@@ -47,6 +53,6 @@ Make the native host reliable to iterate on:
 ## Acceptance criteria
 
 - One command builds and runs the native host against a specified `.wasm`.
-- Failing modules produce actionable output (missing import names, ABI mismatch, etc.).
+- Failing modules produce actionable output (missing import names, ABI mismatch,
+  etc.).
 - Basic stability: no unbounded memory growth in a short smoke run.
-

@@ -2,19 +2,23 @@
 
 ## Overview
 
-This document provides a comprehensive analysis of the Blitz3D-to-WebAssembly compiler infrastructure. This repository contains a complete Swift-based compiler that translates BlitzBasic code to WebAssembly, with a JavaScript runtime for browser execution. The compiler has been tested extensively against SCP: Containment Breach source code.
+This document provides a comprehensive analysis of the Blitz3D-to-WebAssembly
+compiler infrastructure. This repository contains a complete Swift-based
+compiler that translates BlitzBasic code to WebAssembly, with a JavaScript
+runtime for browser execution. The compiler has been tested extensively against
+SCP: Containment Breach source code.
 
 ## Project Summary
 
-| Attribute | Value |
-|-----------|-------|
-| **Project Type** | BlitzBasic-to-WebAssembly Compiler |
-| **Compiler Language** | Swift 5.x |
-| **Runtime Language** | JavaScript (ES6+) with Three.js |
-| **Target Format** | WebAssembly + JavaScript |
-| **Test Case** | SCP: Containment Breach (~52K lines BlitzBasic) |
-| **Compilation Success** | ~75% of SCPB codebase |
-| **License** | MIT (compiler), CC BY-SA 3.0 (SCPB test case) |
+| Attribute               | Value                                           |
+| ----------------------- | ----------------------------------------------- |
+| **Project Type**        | BlitzBasic-to-WebAssembly Compiler              |
+| **Compiler Language**   | Swift 5.x                                       |
+| **Runtime Language**    | JavaScript (ES6+) with Three.js                 |
+| **Target Format**       | WebAssembly + JavaScript                        |
+| **Test Case**           | SCP: Containment Breach (~52K lines BlitzBasic) |
+| **Compilation Success** | ~75% of SCPB codebase                           |
+| **License**             | MIT (compiler), CC BY-SA 3.0 (SCPB test case)   |
 
 ## Directory Structure
 
@@ -114,21 +118,21 @@ blitz3d-wasm/
 
 ### File Sizes (Lines of Code)
 
-| File | Lines | Complexity |
-|------|-------|------------|
-| Parser.swift | 1,162 | High |
-| CodeGenerator.swift | 905 | High |
-| WASMBinaryEncoder.swift | 640 | Medium |
-| WASMTextWriter.swift | 516 | Medium |
-| ExpressionGeneration.swift | 425 | Medium |
-| Lexer.swift | 364 | Medium |
-| TypeHandling.swift | 359 | Medium |
-| FunctionGeneration.swift | 357 | Medium |
-| AST.swift | 357 | Low |
-| VariableManagement.swift | 258 | Low |
-| StatementGeneration.swift | 253 | Low |
-| Token.swift | 233 | Low |
-| Preprocessor.swift | 99 | Low |
+| File                       | Lines | Complexity |
+| -------------------------- | ----- | ---------- |
+| Parser.swift               | 1,162 | High       |
+| CodeGenerator.swift        | 905   | High       |
+| WASMBinaryEncoder.swift    | 640   | Medium     |
+| WASMTextWriter.swift       | 516   | Medium     |
+| ExpressionGeneration.swift | 425   | Medium     |
+| Lexer.swift                | 364   | Medium     |
+| TypeHandling.swift         | 359   | Medium     |
+| FunctionGeneration.swift   | 357   | Medium     |
+| AST.swift                  | 357   | Low        |
+| VariableManagement.swift   | 258   | Low        |
+| StatementGeneration.swift  | 253   | Low        |
+| Token.swift                | 233   | Low        |
+| Preprocessor.swift         | 99    | Low        |
 
 ### Compiler Pipeline
 
@@ -166,21 +170,21 @@ Source (.bb) → Lexer → Parser → AST → CodeGen → WASM (.wasm)
 
 ### File Sizes (Lines of Code)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| particles.js | 532 | Custom WebGL particle system |
-| modules/runtime.js | 291 | Main integration module |
-| modules/physics.js | 168 | Collision detection |
-| modules/graphics.js | 152 | Three.js integration |
-| modules/input.js | 105 | Input handling |
-| bank.js | 138 | Memory bank management |
-| ini.js | 103 | INI file parsing |
-| vfs.js | 104 | Virtual file system |
-| collision.js | 106 | Collision utilities |
-| video.js | 143 | Video playback |
-| debug.js | 95 | Debug utilities |
-| modules/core.js | 89 | Core functionality |
-| runtime.js | 36 | Entry point |
+| File                | Lines | Purpose                      |
+| ------------------- | ----- | ---------------------------- |
+| particles.js        | 532   | Custom WebGL particle system |
+| modules/runtime.js  | 291   | Main integration module      |
+| modules/physics.js  | 168   | Collision detection          |
+| modules/graphics.js | 152   | Three.js integration         |
+| modules/input.js    | 105   | Input handling               |
+| bank.js             | 138   | Memory bank management       |
+| ini.js              | 103   | INI file parsing             |
+| vfs.js              | 104   | Virtual file system          |
+| collision.js        | 106   | Collision utilities          |
+| video.js            | 143   | Video playback               |
+| debug.js            | 95    | Debug utilities              |
+| modules/core.js     | 89    | Core functionality           |
+| runtime.js          | 36    | Entry point                  |
 
 ### Runtime Module Structure
 
@@ -198,16 +202,16 @@ runtime.js (entry point)
 
 ```javascript
 class Blitz3DGraphics {
-    setupImports(imports) {
-        imports.env.CreateCamera    // Create viewpoint
-        imports.env.CreateLight     // Create light source
-        imports.env.CreateMesh      // Create 3D mesh
-        imports.env.PositionEntity  // Set position
-        imports.env.RotateEntity    // Set rotation
-        imports.env.ScaleEntity     // Set scale
-        imports.env.ClsColor        // Clear color
-        imports.env.Color           // Drawing color
-    }
+  setupImports(imports) {
+    imports.env.CreateCamera; // Create viewpoint
+    imports.env.CreateLight; // Create light source
+    imports.env.CreateMesh; // Create 3D mesh
+    imports.env.PositionEntity; // Set position
+    imports.env.RotateEntity; // Set rotation
+    imports.env.ScaleEntity; // Set scale
+    imports.env.ClsColor; // Clear color
+    imports.env.Color; // Drawing color
+  }
 }
 ```
 
@@ -215,14 +219,14 @@ class Blitz3DGraphics {
 
 ```javascript
 class Blitz3DPhysics {
-    setupImports(imports) {
-        imports.env.EntityPick      // Raycast from entity
-        imports.env.LinePick        // Raycast from point
-        imports.env.Collisions      // Setup collision rules
-        imports.env.CountCollisions // Get collision count
-        imports.env.CollisionX/Y/Z  // Get collision position
-        imports.env.CollisionEntity // Get collided entity
-    }
+  setupImports(imports) {
+    imports.env.EntityPick; // Raycast from entity
+    imports.env.LinePick; // Raycast from point
+    imports.env.Collisions; // Setup collision rules
+    imports.env.CountCollisions; // Get collision count
+    imports.env.CollisionX / Y / Z; // Get collision position
+    imports.env.CollisionEntity; // Get collided entity
+  }
 }
 ```
 
@@ -230,14 +234,14 @@ class Blitz3DPhysics {
 
 ```javascript
 class Blitz3DInput {
-    setupImports(imports) {
-        imports.env.KeyDown      // Check key state
-        imports.env.KeyHit       // Check key press
-        imports.env.MouseX/Y    // Mouse position
-        imports.env.MouseDown   // Mouse button
-        imports.env.MouseHit    // Mouse click
-        imports.env.EnablePointerLock // Mouse capture
-    }
+  setupImports(imports) {
+    imports.env.KeyDown; // Check key state
+    imports.env.KeyHit; // Check key press
+    imports.env.MouseX / Y; // Mouse position
+    imports.env.MouseDown; // Mouse button
+    imports.env.MouseHit; // Mouse click
+    imports.env.EnablePointerLock; // Mouse capture
+  }
 }
 ```
 
@@ -245,12 +249,12 @@ class Blitz3DInput {
 
 ```javascript
 class Blitz3DCore {
-    setupImports(imports) {
-        imports.env.Graphics3D   // Initialize 3D
-        imports.env.Cls          // Clear screen
-        imports.env.PrintInt     // Debug output
-        imports.env.PrintString  // Debug string output
-    }
+  setupImports(imports) {
+    imports.env.Graphics3D; // Initialize 3D
+    imports.env.Cls; // Clear screen
+    imports.env.PrintInt; // Debug output
+    imports.env.PrintString; // Debug string output
+  }
 }
 ```
 
@@ -263,23 +267,23 @@ class Blitz3DCore {
 
 ### Game Mechanics
 
-| System | File | Description |
-|--------|------|-------------|
-| Blink System | Main.bb | Periodic eye blink to avoid SCP-173 |
-| Stamina | Main.bb | Running depletes stamina |
-| Inventory | Items.bb | Drag-drop and item combination |
-| Sanity | Main.bb | Environmental effects on player |
-| Save/Load | Save.bb | Game state serialization |
+| System       | File     | Description                         |
+| ------------ | -------- | ----------------------------------- |
+| Blink System | Main.bb  | Periodic eye blink to avoid SCP-173 |
+| Stamina      | Main.bb  | Running depletes stamina            |
+| Inventory    | Items.bb | Drag-drop and item combination      |
+| Sanity       | Main.bb  | Environmental effects on player     |
+| Save/Load    | Save.bb  | Game state serialization            |
 
 ### SCP Entities
 
-| SCP | File | Behavior |
-|-----|------|----------|
-| SCP-173 | NPCs.bb | Moves when not observed, snaps necks |
+| SCP     | File    | Behavior                                |
+| ------- | ------- | --------------------------------------- |
+| SCP-173 | NPCs.bb | Moves when not observed, snaps necks    |
 | SCP-096 | NPCs.bb | Killer when viewed, unstoppable pursuit |
-| SCP-106 | NPCs.bb | Corrosion attacks, pocket dimension |
-| SCP-049 | NPCs.bb | "Cures" pestilence with lethal touch |
-| SCP-939 | NPCs.bb | Mimics voices, pack behavior |
+| SCP-106 | NPCs.bb | Corrosion attacks, pocket dimension     |
+| SCP-049 | NPCs.bb | "Cures" pestilence with lethal touch    |
+| SCP-939 | NPCs.bb | Mimics voices, pack behavior            |
 
 ### Type System Pattern
 
@@ -344,12 +348,12 @@ class INIManager {
 
 ### External Libraries
 
-| Library | Purpose | Source |
-|---------|---------|--------|
-| Three.js | 3D graphics rendering | CDN/Deno |
-| JSZip | ZIP file handling | Deno |
-| Web Audio API | Audio playback | Browser native |
-| WebGL | GPU rendering | Browser native |
+| Library       | Purpose               | Source         |
+| ------------- | --------------------- | -------------- |
+| Three.js      | 3D graphics rendering | CDN/Deno       |
+| JSZip         | ZIP file handling     | Deno           |
+| Web Audio API | Audio playback        | Browser native |
+| WebGL         | GPU rendering         | Browser native |
 
 ### Compiler Dependencies
 
@@ -431,54 +435,62 @@ main(args: [String]) {
 ```javascript
 // Sources/Runtime/modules/runtime.js
 const Blitz3D = {
-    init(canvasId) {
-        this.core = new Blitz3DCore()
-        this.core.init(canvasId)
-        
-        this.graphics = new Blitz3DGraphics(this.core)
-        this.graphics.init3D()
-        
-        this.physics = new Blitz3DPhysics(this.core, this.graphics)
-        this.input = new Blitz3DInput(this.core, this.graphics)
-    },
-    
-    async load(wasmUrl) {
-        const result = await WebAssembly.instantiateStreaming(fetch(wasmUrl), this.imports)
-        this.core.instance = result.instance
-        this.core.memory = result.instance.exports.memory
-        
-        // Call main or Main function
-        if (result.instance.exports.main) {
-            result.instance.exports.main()
-        }
+  init(canvasId) {
+    this.core = new Blitz3DCore();
+    this.core.init(canvasId);
+
+    this.graphics = new Blitz3DGraphics(this.core);
+    this.graphics.init3D();
+
+    this.physics = new Blitz3DPhysics(this.core, this.graphics);
+    this.input = new Blitz3DInput(this.core, this.graphics);
+  },
+
+  async load(wasmUrl) {
+    const result = await WebAssembly.instantiateStreaming(
+      fetch(wasmUrl),
+      this.imports,
+    );
+    this.core.instance = result.instance;
+    this.core.memory = result.instance.exports.memory;
+
+    // Call main or Main function
+    if (result.instance.exports.main) {
+      result.instance.exports.main();
     }
-}
+  },
+};
 ```
 
 ## Largest Files Analysis
 
 ### 1. Parser.swift (1,162 lines)
+
 - Complex recursive descent parser
 - Handles all BlitzBasic syntax
 - Largest file due to many language constructs
 
 ### 2. CodeGenerator.swift (905 lines)
+
 - WASM module orchestration
 - User type support
 - GOTO/Label handling
 - Data section management
 
 ### 3. WASMBinaryEncoder.swift (640 lines)
+
 - Binary WASM format encoding
 - Instruction encoding
 - Section writing
 
 ### 4. particles.js (532 lines)
+
 - Custom WebGL particle system
 - Shader-based rendering
 - Instanced particle rendering
 
 ### 5. WASMTextWriter.swift (516 lines)
+
 - Human-readable WAT output
 - Debugging tool for WASM generation
 
@@ -519,35 +531,38 @@ No .ini files found in the current repository, but the runtime supports:
 
 ### Compiler
 
-| Function | File | Purpose |
-|----------|------|---------|
-| `tokenize()` | Lexer.swift | Convert source to tokens |
-| `parse()` | Parser.swift | Build AST from tokens |
-| `generate(from:)` | CodeGenerator.swift | Create WASM from AST |
-| `generateExpression(_:)` | ExpressionGeneration.swift | WASM for expressions |
-| `generateStatement(_:)` | StatementGeneration.swift | WASM for statements |
-| `generateFunction(_:)` | FunctionGeneration.swift | WASM for functions |
+| Function                 | File                       | Purpose                  |
+| ------------------------ | -------------------------- | ------------------------ |
+| `tokenize()`             | Lexer.swift                | Convert source to tokens |
+| `parse()`                | Parser.swift               | Build AST from tokens    |
+| `generate(from:)`        | CodeGenerator.swift        | Create WASM from AST     |
+| `generateExpression(_:)` | ExpressionGeneration.swift | WASM for expressions     |
+| `generateStatement(_:)`  | StatementGeneration.swift  | WASM for statements      |
+| `generateFunction(_:)`   | FunctionGeneration.swift   | WASM for functions       |
 
 ### Runtime
 
-| Function | File | Purpose |
-|----------|------|---------|
-| `init()` | modules/core.js | Initialize core |
-| `init3D()` | modules/graphics.js | Setup Three.js |
-| `setupImports()` | Each module | Register WASM imports |
-| `setupEventListeners()` | modules/input.js | Bind input events |
-| `updateCollisions()` | modules/physics.js | Physics processing |
+| Function                | File                | Purpose               |
+| ----------------------- | ------------------- | --------------------- |
+| `init()`                | modules/core.js     | Initialize core       |
+| `init3D()`              | modules/graphics.js | Setup Three.js        |
+| `setupImports()`        | Each module         | Register WASM imports |
+| `setupEventListeners()` | modules/input.js    | Bind input events     |
+| `updateCollisions()`    | modules/physics.js  | Physics processing    |
 
 ## Summary
 
-The SCPB codebase in this repository is primarily a **Blitz3D-to-WASM compiler infrastructure** with:
+The SCPB codebase in this repository is primarily a **Blitz3D-to-WASM compiler
+infrastructure** with:
 
 1. **Compiler** - Swift-based toolchain converting BlitzBasic to WebAssembly
-2. **Runtime** - JavaScript library providing browser APIs (Three.js, WebGL, Web Audio)
+2. **Runtime** - JavaScript library providing browser APIs (Three.js, WebGL, Web
+   Audio)
 3. **Test Suite** - Integration tests validating compilation and runtime
 4. **SCP Content** - Reference documentation for the original game systems
 
 The project demonstrates:
+
 - Language virtualization (BlitzBasic → WASM)
 - Graphics API wrapping (Three.js for Blitz3D compatibility)
 - Modular architecture (separated compiler and runtime concerns)

@@ -1,6 +1,6 @@
 /**
  * Three.js Graphics Runtime for Blitz3D Web IDE
- * 
+ *
  * Implements the Blitz3D graphics API using Three.js
  */
 
@@ -21,9 +21,9 @@ export class Blitz3DGraphicsRuntime {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x000000);
 
-    this.renderer = new THREE.WebGLRenderer({ 
+    this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: true 
+      antialias: true,
     });
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -40,11 +40,11 @@ export class Blitz3DGraphicsRuntime {
     const geometry = new THREE.BoxGeometry(1, 1, 1);
     const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
     const cube = new THREE.Mesh(geometry, material);
-    
+
     const handle = this.nextHandle++;
     this.entities.set(handle, cube);
     this.scene.add(cube);
-    
+
     console.log(`Created cube, handle: ${handle}`);
     return handle;
   }
@@ -53,11 +53,11 @@ export class Blitz3DGraphicsRuntime {
     const geometry = new THREE.SphereGeometry(1, segments, segments);
     const material = new THREE.MeshStandardMaterial({ color: 0x0088ff });
     const sphere = new THREE.Mesh(geometry, material);
-    
+
     const handle = this.nextHandle++;
     this.entities.set(handle, sphere);
     this.scene.add(sphere);
-    
+
     console.log(`Created sphere, handle: ${handle}`);
     return handle;
   }
@@ -66,27 +66,28 @@ export class Blitz3DGraphicsRuntime {
     const geometry = new THREE.BufferGeometry();
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
     const mesh = new THREE.Mesh(geometry, material);
-    
+
     const handle = this.nextHandle++;
     this.entities.set(handle, mesh);
     this.scene.add(mesh);
-    
+
     return handle;
   }
 
   createcamera() {
     if (!this.renderer) {
-      throw new Error('Graphics3D must be called before CreateCamera');
+      throw new Error("Graphics3D must be called before CreateCamera");
     }
-    
-    const aspect = this.renderer.domElement.width / this.renderer.domElement.height;
+
+    const aspect = this.renderer.domElement.width /
+      this.renderer.domElement.height;
     const camera = new THREE.PerspectiveCamera(60, aspect, 0.1, 1000);
     camera.position.set(0, 0, 5);
-    
+
     const handle = this.nextHandle++;
     this.entities.set(handle, camera);
     this.camera = camera; // Set as active camera
-    
+
     console.log(`Created camera, handle: ${handle}`);
     return handle;
   }
@@ -104,11 +105,11 @@ export class Blitz3DGraphicsRuntime {
       // Ambient light
       light = new THREE.AmbientLight(0xffffff, 0.5);
     }
-    
+
     const handle = this.nextHandle++;
     this.entities.set(handle, light);
     this.scene.add(light);
-    
+
     console.log(`Created light type ${type}, handle: ${handle}`);
     return handle;
   }
@@ -128,7 +129,7 @@ export class Blitz3DGraphicsRuntime {
       entity.rotation.set(
         pitch * Math.PI / 180,
         yaw * Math.PI / 180,
-        roll * Math.PI / 180
+        roll * Math.PI / 180,
       );
     }
   }
@@ -221,18 +222,18 @@ export class Blitz3DGraphicsRuntime {
   startAnimationLoop(stepCallback) {
     const animate = () => {
       this.animationFrameId = requestAnimationFrame(animate);
-      
+
       // Call the WASM step function
       if (stepCallback) {
         try {
           stepCallback();
         } catch (e) {
-          console.error('Animation loop error:', e);
+          console.error("Animation loop error:", e);
           this.stopAnimationLoop();
         }
       }
     };
-    
+
     animate();
   }
 
@@ -246,16 +247,16 @@ export class Blitz3DGraphicsRuntime {
   // Cleanup
   dispose() {
     this.stopAnimationLoop();
-    
+
     if (this.renderer) {
       this.renderer.dispose();
     }
-    
-    this.entities.forEach(entity => {
+
+    this.entities.forEach((entity) => {
       if (entity.geometry) entity.geometry.dispose();
       if (entity.material) entity.material.dispose();
     });
-    
+
     this.entities.clear();
   }
 }

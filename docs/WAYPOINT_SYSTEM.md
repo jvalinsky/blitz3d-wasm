@@ -1,12 +1,20 @@
 # Waypoint System Documentation
+
 ## Overview
-The waypoint system in SCP: Containment Breach is a node-based navigation graph that enables NPCs to perform intelligent pathfinding through the facility's complex multi-room layout. The system combines pre-placed waypoints in room meshes with runtime A* pathfinding algorithms.
+
+The waypoint system in SCP: Containment Breach is a node-based navigation graph
+that enables NPCs to perform intelligent pathfinding through the facility's
+complex multi-room layout. The system combines pre-placed waypoints in room
+meshes with runtime A* pathfinding algorithms.
 
 ## Architecture
+
 ### Core Components
 
 #### 1. Waypoint Storage in RMesh Files
+
 Waypoints are embedded as entities within room mesh files (`.rmesh`):
+
 ```blitzbasic
 ; In RMeshLoader.bb - parsing waypoint entities
 If entityType$ = "waypoint" Then
@@ -15,11 +23,13 @@ EndIf
 ```
 
 **Waypoint Entity Structure:**
-- **Position**: World coordinates (x, y, z) 
+
+- **Position**: World coordinates (x, y, z)
 - **Type**: "waypoint" identifier
 - **Connection**: String ID of connected waypoint (forming graph edges)
 
 #### 2. WayPoint Type System
+
 ```blitzbasic
 Type WayPoints
     Field obj%              ; 3D entity representing waypoint
@@ -31,7 +41,9 @@ End Type
 ```
 
 #### 3. NPC Path Storage
+
 Each NPC maintains pathfinding state:
+
 ```blitzbasic
 Type NPCs
     Field Path.WayPoints[20]   ; Current calculated path (max 20 waypoints)
@@ -43,6 +55,7 @@ End Type
 ```
 
 ## Path Status States
+
 ```blitzbasic
 Const PATH_IDLE% = 0          ; No active pathfinding
 Const PATH_CALCULATING% = 1   ; Currently computing path
@@ -55,7 +68,9 @@ Const PATH_COMPLETE% = 5       ; Reached destination successfully
 ## System Functions
 
 ### CreateWayPoints()
+
 Builds the navigation graph at runtime:
+
 ```blitzbasic
 Function CreateWayPoints()
     ; Connect nodes within visible range using line-of-sight checks
@@ -79,7 +94,9 @@ End Function
 ```
 
 ### FindPath()
+
 A* pathfinding implementation:
+
 ```blitzbasic
 Function FindPath%(npc.NPCs, targetX#, targetY#, targetZ#)
     ; 1. Find nearest visible waypoint to NPC
@@ -107,7 +124,9 @@ End Function
 ```
 
 ### A* Algorithm Details
-- **Heuristic Function**: Euclidean distance `h(n) = sqrt((x2-x1)² + (y2-y1)² + (z2-z1)²)`
+
+- **Heuristic Function**: Euclidean distance
+  `h(n) = sqrt((x2-x1)² + (y2-y1)² + (z2-z1)²)`
 - **Cost Function**: Actual distance between connected waypoints
 - **Open Set**: Priority queue sorted by f(n) = g(n) + h(n)
 - **Closed Set**: Explored nodes to prevent revisiting
@@ -115,6 +134,7 @@ End Function
 ## Path Execution
 
 ### NPC Path Following Pattern
+
 ```blitzbasic
 Function UpdateNPCPath(npc.NPCs)
     If npc\PathStatus = PATH_ACTIVE Then
@@ -150,7 +170,9 @@ End Function
 ## Special Features
 
 ### Teleportation System
+
 Prevents NPCs from getting stuck or falling too far behind:
+
 ```blitzbasic
 Function TeleportCloser(npc.NPCs)
     ; Find player's current room
@@ -178,7 +200,9 @@ End Function
 ```
 
 ### Elevator Navigation
+
 NPCs can navigate between floors using elevators:
+
 ```blitzbasic
 Function UseElevatorNPC(npc.NPCs, elevator.Elevators)
     ; Find connected elevator waypoint
@@ -196,9 +220,11 @@ End Function
 ## Integration with NPC AI
 
 ### State Machine Integration
+
 Pathfinding integrates with NPC behavior states:
 
 #### SCP-173 (The Statue)
+
 ```blitzbasic
 Case NPCtype173
     ; Teleport if too far from player (maintain pressure)
@@ -209,6 +235,7 @@ Case NPCtype173
 ```
 
 #### Standard NPCs (MTF, Guards)
+
 ```blitzbasic
 Case NPCtypeMTF
     ; Recalculate path if blocked
@@ -220,6 +247,7 @@ Case NPCtypeMTF
 ```
 
 #### SCP-049 (The Plague Doctor)
+
 ```blitzbasic
 Case NPCtype049
     ; Advanced tactics - teleport to adjacent rooms to flank player
@@ -237,17 +265,20 @@ Case NPCtype049
 ## Performance Optimizations
 
 ### Memory Management
+
 - **Static Arrays**: Path arrays reused per NPC (no dynamic allocation)
 - **Limited Path Length**: Maximum 20 waypoints prevents memory bloat
 - **Room-based Culling**: Only consider waypoints in current or adjacent rooms
 
 ### Computational Optimizations
+
 - **Distance-based Pruning**: Ignore waypoints beyond maximum range
 - **Lazy Evaluation**: Paths calculated only when needed
 - **Cached Connections**: Waypoint graph built once at level load
 - **Line-of-Sight Caching**: Visibility checks cached for performance
 
 ### Query Optimization
+
 ```blitzbasic
 Function FindNearestWaypoint(entity)
     nearestWP.WayPoints = Null
@@ -273,6 +304,7 @@ End Function
 ## Debug Visualization
 
 ### Development Tools
+
 ```blitzbasic
 Function DebugWaypoints()
     For w.WayPoints = Each WayPoints
@@ -307,7 +339,9 @@ End Function
 ## File Structure Integration
 
 ### RMesh Format Enhancement
+
 The `.rmesh` format includes waypoint entities:
+
 ```
 [ENTITIES]
 count: 15
@@ -322,6 +356,7 @@ entity_1:
 ```
 
 ### Loading Sequence
+
 1. **Room Load**: RMesh file parsed for waypoint entities
 2. **Waypoint Creation**: WayPoints type instances created
 3. **Graph Building**: CreateWayPoints() connects visible nodes
@@ -331,20 +366,25 @@ entity_1:
 ## Limitations and Considerations
 
 ### System Constraints
+
 - **Maximum Path Length**: 20 waypoints per path
 - **Connection Range**: Limited by visibility checks
 - **Static Graph**: Cannot be modified at runtime
 - **Memory Usage**: O(n²) for connection storage
 
 ### Edge Cases
+
 - **Disconnected Graph**: Path returns FALSE if no valid route exists
 - **Dynamic Obstacles**: Doors/blocks handled by recalculation
 - **Multi-floor Navigation**: Requires elevator waypoint connections
 - **Large Distances**: Teleportation system prevents stuck NPCs
 
 ### Performance Trade-offs
+
 - **Pre-computation**: Graph built at load time vs. runtime
 - **Memory vs. Speed**: Cached connections increase memory usage
 - **Accuracy vs. Performance**: Simplified collision for waypoint connections
 
-This waypoint system provides the foundation for all NPC navigation in SCP: Containment Breach, enabling everything from simple patrol routes to complex SCP containment behaviors and coordinated MTF tactics.
+This waypoint system provides the foundation for all NPC navigation in SCP:
+Containment Breach, enabling everything from simple patrol routes to complex SCP
+containment behaviors and coordinated MTF tactics.

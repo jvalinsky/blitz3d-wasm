@@ -12,7 +12,8 @@ Keep this list short and updated; convert answered items into the relevant docs.
 
 ## Imports and ABI
 
-- How strict should import name compatibility be (case, suffixes, legacy aliases)?
+- How strict should import name compatibility be (case, suffixes, legacy
+  aliases)?
 - Do we want a formal “runtime ABI version” handshake for all import surfaces?
 
 ## Memory and Debugging
@@ -24,4 +25,3 @@ Keep this list short and updated; convert answered items into the relevant docs.
 
 - Which formats must be runtime-supported vs offline-only?
 - How do we version converted asset packs (SMPK) across game/mod variants?
-

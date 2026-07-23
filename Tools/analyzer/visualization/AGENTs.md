@@ -5,4 +5,5 @@
 **Children**: None
 
 **Notes**:
+
 - Related tool documentation: `docs/WASM_ANALYZER.md`.

@@ -2,7 +2,11 @@
 
 const wasmPath = Deno.args[0] || "input_test.wasm";
 const wasmBuffer = Deno.readFileSync(wasmPath);
-const view = new DataView(wasmBuffer.buffer, wasmBuffer.byteOffset, wasmBuffer.byteLength);
+const view = new DataView(
+  wasmBuffer.buffer,
+  wasmBuffer.byteOffset,
+  wasmBuffer.byteLength,
+);
 
 console.log(`WASM file size: ${wasmBuffer.length} bytes`);
 console.log(`Magic number: 0x${toHex(wasmBuffer.subarray(0, 4))}`);
@@ -21,7 +25,11 @@ while (offset < wasmBuffer.length) {
   console.log(`  ID: ${sectionId}`);
   console.log(`  Size: ${size} bytes`);
   console.log(`  Content starts at: ${contentStart}`);
-  console.log(`  Content: ${toHex(wasmBuffer.subarray(offset, offset + Math.min(20, size)))}`);
+  console.log(
+    `  Content: ${
+      toHex(wasmBuffer.subarray(offset, offset + Math.min(20, size)))
+    }`,
+  );
 
   offset = contentStart + size;
   sectionIndex++;

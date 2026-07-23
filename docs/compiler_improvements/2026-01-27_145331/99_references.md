@@ -12,4 +12,3 @@
 - `wasm-tools validate`
 - `wasm-tools print`
 - `wasm-objdump`
-

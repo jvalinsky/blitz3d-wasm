@@ -1,198 +1,215 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Blitz3D Thin Runtime - Demo</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="console.error('Failed to load Three.js')"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+      onerror="console.error('Failed to load Three.js')"
+    ></script>
     <style>
-        body {
-            margin: 0;
-            background: #1a1a2e;
-            color: #0f0;
-            font-family: monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        #canvas {
-            border: 1px solid #333;
-            background: #000;
-        }
-        #log {
-            width: 800px;
-            height: 150px;
-            background: #0a0a1a;
-            border: 1px solid #333;
-            padding: 10px;
-            overflow-y: auto;
-            white-space: pre;
-            margin-top: 10px;
-            font-size: 11px;
-        }
-        h1 { color: #4af; margin: 10px; font-size: 18px; }
-        .info { color: #888; }
-        #controls {
-            margin: 10px;
-        }
-        button {
-            background: #2a4a6a;
-            color: #fff;
-            border: 1px solid #4a6a8a;
-            padding: 8px 16px;
-            margin: 5px;
-            cursor: pointer;
-            font-family: monospace;
-        }
-        button:hover { background: #3a5a7a; }
-        #loading { color: #fa0; }
+      body {
+        margin: 0;
+        background: #1a1a2e;
+        color: #0f0;
+        font-family: monospace;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+      }
+      #canvas {
+        border: 1px solid #333;
+        background: #000;
+      }
+      #log {
+        width: 800px;
+        height: 150px;
+        background: #0a0a1a;
+        border: 1px solid #333;
+        padding: 10px;
+        overflow-y: auto;
+        white-space: pre;
+        margin-top: 10px;
+        font-size: 11px;
+      }
+      h1 {
+        color: #4af;
+        margin: 10px;
+        font-size: 18px;
+      }
+      .info {
+        color: #888;
+      }
+      #controls {
+        margin: 10px;
+      }
+      button {
+        background: #2a4a6a;
+        color: #fff;
+        border: 1px solid #4a6a8a;
+        padding: 8px 16px;
+        margin: 5px;
+        cursor: pointer;
+        font-family: monospace;
+      }
+      button:hover {
+        background: #3a5a7a;
+      }
+      #loading {
+        color: #fa0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Blitz3D WASM - Thin Runtime Demo</h1>
     <div id="loading">Loading Three.js...</div>
-    <div id="controls" style="display:none">
-        <button onclick="listExports()">List Exports</button>
-        <button onclick="runMain()">Run Main()</button>
+    <div id="controls" style="display: none">
+      <button onclick="listExports()">List Exports</button>
+      <button onclick="runMain()">Run Main()</button>
     </div>
     <canvas id="canvas" width="800" height="500"></canvas>
     <div id="log">Loading...</div>
-    
+
     <script src="runtime.js"></script>
     <script>
-    const logDiv = document.getElementById('log');
-    logDiv.innerHTML = '';
-    const origLog = console.log;
-    console.log = (...args) => {
+      const logDiv = document.getElementById("log");
+      logDiv.innerHTML = "";
+      const origLog = console.log;
+      console.log = (...args) => {
         origLog(...args);
-        logDiv.innerHTML += args.join(' ') + '\n';
+        logDiv.innerHTML += args.join(" ") + "\n";
         logDiv.scrollTop = logDiv.scrollHeight;
-    };
-    
-    let runtime, instance;
-    
-    function listExports() {
+      };
+
+      let runtime, instance;
+
+      function listExports() {
         if (!instance) {
-            console.log('WASM not loaded yet');
-            return;
+          console.log("WASM not loaded yet");
+          return;
         }
-        console.log('\n=== WASM Exports ===');
+        console.log("\n=== WASM Exports ===");
         const exports = Object.keys(instance.exports).sort();
-        exports.forEach(name => {
-            const exp = instance.exports[name];
-            const type = typeof exp === 'function' ? 'func' : (exp instanceof WebAssembly.Memory ? 'memory' : 'global');
-            console.log(`  ${name}: ${type}`);
+        exports.forEach((name) => {
+          const exp = instance.exports[name];
+          const type = typeof exp === "function"
+            ? "func"
+            : (exp instanceof WebAssembly.Memory ? "memory" : "global");
+          console.log(`  ${name}: ${type}`);
         });
         console.log(`Total: ${exports.length} exports`);
-    }
-    
-    function runMain() {
+      }
+
+      function runMain() {
         if (!instance) {
-            console.log('WASM not loaded yet');
-            return;
+          console.log("WASM not loaded yet");
+          return;
         }
         if (instance.exports.Main) {
-            console.log('\nRunning Main()...');
-            try {
-                instance.exports.Main();
-                console.log('Main() completed');
-                console.log(`Entities in scene: ${runtime.entities.size}`);
-            } catch (e) {
-                console.log('Main() error: ' + e.message);
-            }
+          console.log("\nRunning Main()...");
+          try {
+            instance.exports.Main();
+            console.log("Main() completed");
+            console.log(`Entities in scene: ${runtime.entities.size}`);
+          } catch (e) {
+            console.log("Main() error: " + e.message);
+          }
         } else {
-            console.log('No Main export found');
+          console.log("No Main export found");
         }
-    }
-    
-    async function init() {
+      }
+
+      async function init() {
         // Wait for Three.js to be available
         const waitForThree = () => {
-            return new Promise((resolve, reject) => {
-                if (typeof THREE !== 'undefined') {
-                    resolve(THREE);
+          return new Promise((resolve, reject) => {
+            if (typeof THREE !== "undefined") {
+              resolve(THREE);
+            } else {
+              setTimeout(() => {
+                if (typeof THREE !== "undefined") {
+                  resolve(THREE);
                 } else {
-                    setTimeout(() => {
-                        if (typeof THREE !== 'undefined') {
-                            resolve(THREE);
-                        } else {
-                            reject(new Error('Three.js failed to load'));
-                        }
-                    }, 100);
+                  reject(new Error("Three.js failed to load"));
                 }
-            });
-        };
-        
-        try {
-            await waitForThree();
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('controls').style.display = 'block';
-        } catch (e) {
-            console.error('Three.js not available:', e.message);
-            document.getElementById('loading').textContent = 'Error: Three.js failed to load';
-            return;
-        }
-        
-        console.log('Initializing Blitz3D Thin Runtime...');
-        
-        const canvas = document.getElementById('canvas');
-        try {
-            runtime = new Blitz3DThinRuntime(canvas);
-        } catch (e) {
-            console.error('Failed to create runtime:', e.message);
-            return;
-        }
-        
-        // Load WASM
-        console.log('Loading particles.wasm...');
-        try {
-            const response = await fetch('particles.wasm');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const bytes = await response.arrayBuffer();
-            console.log(`Loaded ${bytes.byteLength} bytes`);
-            
-            const imports = runtime.getImports();
-            const result = await WebAssembly.instantiate(bytes, imports);
-            instance = result.instance;
-            window.wasmInstance = instance;
-            runtime.memory = instance.exports.memory;
-            
-            console.log('WASM instantiated successfully');
-            console.log(`Found ${Object.keys(instance.exports).length} exports`);
-            
-            // Setup basic scene
-            const camId = imports.env.CreateCamera(0);
-            imports.env.PositionEntity(camId, 0, 2, -6);
-            runtime.activeCamera.lookAt(0, 1, 0);
-            imports.env.CreateLight(0, 0);
-            
-            // Add ground plane
-            const groundGeom = new THREE.PlaneGeometry(10, 10);
-            const groundMat = new THREE.MeshBasicMaterial({ 
-                color: 0x222244, 
-                side: THREE.DoubleSide,
-                transparent: true,
-                opacity: 0.5
-            });
-            const ground = new THREE.Mesh(groundGeom, groundMat);
-            ground.rotation.x = Math.PI / 2;
-            ground.position.y = -0.5;
-            runtime.scene.add(ground);
-            
-            console.log('\nReady! Click "List Exports" or "Run Main()"');
-            
-            // Start render loop
-            function gameLoop() {
-                runtime.render();
-                requestAnimationFrame(gameLoop);
+              }, 100);
             }
-            gameLoop();
-            
+          });
+        };
+
+        try {
+          await waitForThree();
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("controls").style.display = "block";
         } catch (e) {
-            console.log('Error: ' + e.message);
+          console.error("Three.js not available:", e.message);
+          document.getElementById("loading").textContent =
+            "Error: Three.js failed to load";
+          return;
         }
-    }
-    
-    init();
+
+        console.log("Initializing Blitz3D Thin Runtime...");
+
+        const canvas = document.getElementById("canvas");
+        try {
+          runtime = new Blitz3DThinRuntime(canvas);
+        } catch (e) {
+          console.error("Failed to create runtime:", e.message);
+          return;
+        }
+
+        // Load WASM
+        console.log("Loading particles.wasm...");
+        try {
+          const response = await fetch("particles.wasm");
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const bytes = await response.arrayBuffer();
+          console.log(`Loaded ${bytes.byteLength} bytes`);
+
+          const imports = runtime.getImports();
+          const result = await WebAssembly.instantiate(bytes, imports);
+          instance = result.instance;
+          window.wasmInstance = instance;
+          runtime.memory = instance.exports.memory;
+
+          console.log("WASM instantiated successfully");
+          console.log(
+            `Found ${Object.keys(instance.exports).length} exports`,
+          );
+
+          // Setup basic scene
+          const camId = imports.env.CreateCamera(0);
+          imports.env.PositionEntity(camId, 0, 2, -6);
+          runtime.activeCamera.lookAt(0, 1, 0);
+          imports.env.CreateLight(0, 0);
+
+          // Add ground plane
+          const groundGeom = new THREE.PlaneGeometry(10, 10);
+          const groundMat = new THREE.MeshBasicMaterial({
+            color: 0x222244,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.5,
+          });
+          const ground = new THREE.Mesh(groundGeom, groundMat);
+          ground.rotation.x = Math.PI / 2;
+          ground.position.y = -0.5;
+          runtime.scene.add(ground);
+
+          console.log('\nReady! Click "List Exports" or "Run Main()"');
+
+          // Start render loop
+          function gameLoop() {
+            runtime.render();
+            requestAnimationFrame(gameLoop);
+          }
+          gameLoop();
+        } catch (e) {
+          console.log("Error: " + e.message);
+        }
+      }
+
+      init();
     </script>
-</body>
+  </body>
 </html>

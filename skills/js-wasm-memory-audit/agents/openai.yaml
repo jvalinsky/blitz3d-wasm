@@ -2,4 +2,3 @@ interface:
   display_name: "JS/WASM Memory Audit"
   short_description: "Find JS/WebGL/WASM memory and GPU leaks"
   default_prompt: "Use $js-wasm-memory-audit to review this runtime for leak risks and suggest concrete fixes (RAF/listeners/Three.js dispose/WASM refs)."
-

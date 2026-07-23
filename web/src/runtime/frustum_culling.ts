@@ -7,7 +7,11 @@ export class FrustumCullingManager {
     }
   }
 
-  updateVisibility(entities: Record<number, any>, camera: any, enableCulling: boolean) {
+  updateVisibility(
+    entities: Record<number, any>,
+    camera: any,
+    enableCulling: boolean,
+  ) {
     if (!enableCulling) return;
   }
 }

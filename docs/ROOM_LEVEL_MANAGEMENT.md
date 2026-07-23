@@ -1,16 +1,24 @@
 # Room/Level Management Documentation
 
 ## Overview
-Room and level management systems handle the procedural generation and organization of the SCP facility environment. These systems create the vast, multi-room complex that players navigate while managing room states, connections, and environmental interactions.
+
+Room and level management systems handle the procedural generation and
+organization of the SCP facility environment. These systems create the vast,
+multi-room complex that players navigate while managing room states,
+connections, and environmental interactions.
 
 ## Room System
 
 ### Purpose
-The room system manages individual facility rooms, their connections, and state, creating the navigable environment that houses SCP entities and provides gameplay locations.
+
+The room system manages individual facility rooms, their connections, and state,
+creating the navigable environment that houses SCP entities and provides
+gameplay locations.
 
 ### Architecture
 
 #### Room Data Structure
+
 ```blitzbasic
 Type Rooms
     Field RoomID%               ; Unique room identifier
@@ -43,6 +51,7 @@ End Type
 ```
 
 #### Room Types
+
 ```blitzbasic
 Const ROOMTYPE_OFFICE% = 1     ; Office/workspace
 Const ROOMTYPE_HALLWAY% = 2    ; Connecting corridor
@@ -59,6 +68,7 @@ Const ROOMTYPE_SPECIAL% = 10   ; Unique/special rooms
 ### Core Functions
 
 #### Room Generation
+
 ```blitzbasic
 Function CreateRoom(roomTemplate$, x#, y#, z#, angle#)
     ; Load room template
@@ -93,6 +103,7 @@ End Function
 ```
 
 #### Room Connection System
+
 ```blitzbasic
 Function ConnectRooms(room1.Rooms, room2.Rooms, doorX#, doorZ#)
     ; Find available connection slot
@@ -133,6 +144,7 @@ End Function
 ```
 
 #### Room State Management
+
 ```blitzbasic
 Function UpdateRoomStates()
     For r.Rooms = Each Rooms
@@ -170,21 +182,27 @@ End Function
 ```
 
 ### Integration Points
+
 - **[Waypoint System](WAYPOINT_SYSTEM.md)**: Room-based waypoint generation
 - **[Entity Systems](ENTITY_SYSTEMS.md)**: Room occupancy and NPC placement
 - **[Event/Trigger Systems](EVENT_TRIGGER_SYSTEMS.md)**: Room-specific events
-- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Room state persistence
+- **[State Management Systems](STATE_MANAGEMENT_SYSTEMS.md)**: Room state
+  persistence
 
 ---
 
 ## Level Generation
 
 ### Purpose
-Level generation creates the complete facility layout through procedural algorithms, ensuring each playthrough offers a unique but coherent facility to explore.
+
+Level generation creates the complete facility layout through procedural
+algorithms, ensuring each playthrough offers a unique but coherent facility to
+explore.
 
 ### Architecture
 
 #### Facility Zones
+
 ```blitzbasic
 Const ZONE_LIGHT_CONTAINMENT% = 1   ; Safe research areas
 Const ZONE_HEAVY_CONTAINMENT% = 2   ; High-security SCP areas
@@ -196,6 +214,7 @@ Const ZONE_OUTSIDE% = 7             ; External areas
 ```
 
 #### Generation Parameters
+
 ```blitzbasic
 Type GenerationConfig
     Field Seed%                 ; Random seed for reproducible generation
@@ -210,6 +229,7 @@ End Type
 ### Core Generation Functions
 
 #### Facility Layout Generation
+
 ```blitzbasic
 Function GenerateFacility(config.GenerationConfig)
     ; Initialize random seed
@@ -271,6 +291,7 @@ End Function
 ```
 
 #### Containment Zone Generation
+
 ```blitzbasic
 Function GenerateContainmentZones(config.GenerationConfig)
     ; Light containment zone
@@ -316,6 +337,7 @@ End Function
 ```
 
 #### SCP Placement Algorithm
+
 ```blitzbasic
 Function PlaceSCPEntities(config.GenerationConfig)
     ; Get list of available SCPs
@@ -348,6 +370,7 @@ End Function
 ### Special Room Generation
 
 #### Elevator Systems
+
 ```blitzbasic
 Function GenerateElevators()
     ; Find vertical spaces for elevators
@@ -371,6 +394,7 @@ End Function
 ```
 
 #### Security Checkpoints
+
 ```blitzbasic
 Function GenerateSecurityCheckpoints()
     ; Place checkpoints at zone boundaries
@@ -396,6 +420,7 @@ End Function
 ### Navigation Data Generation
 
 #### Waypoint Generation
+
 ```blitzbasic
 Function GenerateFacilityWaypoints()
     For r.Rooms = Each Rooms
@@ -437,6 +462,7 @@ End Function
 ## Level Management Integration
 
 ### Facility Update Loop
+
 ```blitzbasic
 Function UpdateFacility()
     ; Update room states
@@ -457,6 +483,7 @@ End Function
 ```
 
 ### State Persistence
+
 ```blitzbasic
 Function SaveFacilityState()
     ; Save room states
@@ -496,12 +523,14 @@ End Function
 ```
 
 ### Performance Considerations
+
 - **Room Culling**: Only update rooms near player
 - **Zone Streaming**: Load/unload zones as needed
 - **Navigation Caching**: Cache pathfinding data
 - **Memory Pooling**: Reuse room objects
 
 ### Balancing Considerations
+
 - **Facility Size**: Balance exploration vs. claustrophobia
 - **Room Distribution**: Ensure logical facility flow
 - **Hazard Placement**: Create tension without frustration
@@ -509,4 +538,6 @@ End Function
 
 ---
 
-*Room and level management systems create the vast, living facility that serves as the backdrop for SCP: Containment Breach, providing the procedural environment that makes each playthrough unique.*
+_Room and level management systems create the vast, living facility that serves
+as the backdrop for SCP: Containment Breach, providing the procedural
+environment that makes each playthrough unique._

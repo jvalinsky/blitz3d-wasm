@@ -1,6 +1,6 @@
 # NPCs.bb Investigation Notes
 
-**Status**: 22 TYPE errors  
+**Status**: 22 TYPE errors\
 **Difficulty**: Medium (estimated 2-3 hours)
 
 ---
@@ -10,19 +10,23 @@
 ### Error Categories
 
 **Category 1** (6 errors): Field store mismatches
+
 ```
 global.set, expected [i32] but got [f32]
 f32.store, expected [i32, f32] but got [i32, i32]
 ```
+
 Pattern repeats 3 times at offsets: 0x3777-0x3782, 0x3798-0x37a3, 0x37aa-0x37b5
 
 **Category 2** (16 errors): Local variable type mismatches
+
 ```
 local.set, expected [i32] but got [f32]
 i32.gt_s, expected [i32, i32] but got [i32, f32]
 ```
-Pattern occurs at: 0xcb30, 0xcb43, 0xcb53, 0xcb66, 0xd1a3, 0xd1b6, 0xd1c6, 0xd1d9, 
-                   0x17bee, 0x17c04, 0x17c14, 0x17c2a, 0x183d7, 0x18409
+
+Pattern occurs at: 0xcb30, 0xcb43, 0xcb53, 0xcb66, 0xd1a3, 0xd1b6, 0xd1c6,
+0xd1d9, 0x17bee, 0x17c04, 0x17c14, 0x17c2a, 0x183d7, 0x18409
 
 ---
 
@@ -81,13 +85,14 @@ End Type
 ## Test Results
 
 ### Working Tests
-✅ Simple field access (NPCtype%, ID%)
-✅ Parameter name matching field name
-✅ Mixed integer/float fields (State#, State2#, etc.)
+
+✅ Simple field access (NPCtype%, ID%) ✅ Parameter name matching field name ✅
+Mixed integer/float fields (State#, State2#, etc.)
 
 ### Hypothesis
 
-The errors are NOT in simple test cases but occur in the actual NPCs.bb file. Possibilities:
+The errors are NOT in simple test cases but occur in the actual NPCs.bb file.
+Possibilities:
 
 1. **Field initializers with wrong types**
    - Lines with `GravityMult# = 1.0`, `MaxGravity# = 0.2`, etc.
@@ -96,11 +101,11 @@ The errors are NOT in simple test cases but occur in the actual NPCs.bb file. Po
 2. **Complex field access patterns**
    - Array fields: `Field Path.WayPoints[20]`
    - Reference fields: `Field Target.NPCs`, `Field MTFLeader.NPCs`
-   
+
 3. **Local variable inference issues**
    - Pattern shows `local.set, expected [i32] but got [f32]`
    - Local variables auto-declared with wrong types
-   
+
 4. **Comparison operations**
    - `i32.gt_s, expected [i32, i32] but got [i32, f32]`
    - Comparing integer locals with float values
@@ -110,22 +115,28 @@ The errors are NOT in simple test cases but occur in the actual NPCs.bb file. Po
 ## Investigation Strategy
 
 ### Step 1: Find Problematic Code Sections
+
 Use WASM offsets to locate exact functions/lines:
+
 ```bash
 wasm-objdump -d /tmp/npcs.wasm | grep -B 30 "0003777:"
 wasm-objdump -d /tmp/npcs.wasm | grep -B 30 "000cb30:"
 ```
 
 ### Step 2: Identify Pattern
+
 - Are all errors in same function?
 - Are they related to specific fields?
 - Are they in initialization code?
 
 ### Step 3: Create Minimal Reproduction
+
 Once pattern is found, create test case that reproduces issue
 
 ### Step 4: Fix Root Cause
+
 Likely one of:
+
 - Field offset calculation bug
 - Type registration for fields with initializers
 - Local variable type inference in complex expressions
@@ -136,6 +147,7 @@ Likely one of:
 ## Quick Checks to Try
 
 ### Check 1: Field Initializers
+
 ```bash
 cd /Users/jack/Software/scp_port/blitz3d-wasm
 cat > /tmp/test_field_init.bb << 'EOF'
@@ -155,6 +167,7 @@ wasm-validate /tmp/test.wasm
 ```
 
 ### Check 2: Array Fields
+
 ```bash
 cat > /tmp/test_array_field.bb << 'EOF'
 Type Test
@@ -171,6 +184,7 @@ wasm-validate /tmp/test.wasm
 ```
 
 ### Check 3: Reference Fields
+
 ```bash
 cat > /tmp/test_ref_field.bb << 'EOF'
 Type Test
@@ -215,4 +229,6 @@ wasm-validate /tmp/test.wasm
 4. Focus on field initializers first (most suspicious)
 5. Check if problem is in type registration or code generation
 
-This issue is contained to NPCs.bb, suggesting it's a specific pattern that file uses that others don't. The large number of fields with mixed types and initializers makes it a prime suspect.
+This issue is contained to NPCs.bb, suggesting it's a specific pattern that file
+uses that others don't. The large number of fields with mixed types and
+initializers makes it a prime suspect.

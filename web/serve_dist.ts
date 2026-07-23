@@ -14,8 +14,8 @@ const enableCrossOriginIsolation = Deno.env.get("CROSS_ORIGIN_ISOLATION") ===
 // Serve from public/ for demos, or dist/ for production
 const usePublic = Deno.env.get("SERVE_PUBLIC") === "1";
 const root = usePublic
-    ? new URL("./public/", import.meta.url).pathname
-    : new URL("../dist/", import.meta.url).pathname;
+  ? new URL("./public/", import.meta.url).pathname
+  : new URL("../dist/", import.meta.url).pathname;
 
 const contentTypes: Record<string, string> = {
   ".html": "text/html; charset=utf-8",

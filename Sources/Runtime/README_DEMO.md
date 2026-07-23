@@ -1,6 +1,7 @@
 # SCPCB Asset Viewer Demo
 
-A web-based demo showcasing the Blitz3D-WASM runtime for loading and rendering SCP: Containment Breach assets in the browser.
+A web-based demo showcasing the Blitz3D-WASM runtime for loading and rendering
+SCP: Containment Breach assets in the browser.
 
 ## Features
 
@@ -13,6 +14,7 @@ A web-based demo showcasing the Blitz3D-WASM runtime for loading and rendering S
 ## Quick Start
 
 ### Option 1: Using the server script
+
 ```bash
 cd Sources/Runtime
 deno task serve
@@ -21,6 +23,7 @@ deno task serve
 Then open http://localhost:8080 in your browser.
 
 ### Option 2: Direct HTML file
+
 Open `examples/scpcb_asset_viewer.html` directly in a web browser.
 
 ## Requirements
@@ -32,6 +35,7 @@ Open `examples/scpcb_asset_viewer.html` directly in a web browser.
 ## Asset Categories
 
 ### Rooms
+
 - SCP-173 Containment Chamber
 - Checkpoint Rooms
 - Server Room
@@ -39,6 +43,7 @@ Open `examples/scpcb_asset_viewer.html` directly in a web browser.
 - And more...
 
 ### Textures
+
 - Environment textures
 - Decals
 - Light effects

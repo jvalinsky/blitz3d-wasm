@@ -4,13 +4,13 @@ Last Updated: January 2026
 
 ## Summary
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| Compiler | **Production Ready** | 94.7% SCPCB pass rate (54/57 files) |
-| TypeScript Runtime | **Production Ready** | ~12K lines with command buffers |
-| Asset Pipeline | **Complete** | B3D/X/RMESH → SMPK conversion |
-| Memory Management | **Tested** | Zero leaks in runtime tests |
-| WASM Validation | **100%** | Full compliance |
+| Category           | Status               | Notes                               |
+| ------------------ | -------------------- | ----------------------------------- |
+| Compiler           | **Production Ready** | 94.7% SCPCB pass rate (54/57 files) |
+| TypeScript Runtime | **Production Ready** | ~12K lines with command buffers     |
+| Asset Pipeline     | **Complete**         | B3D/X/RMESH → SMPK conversion       |
+| Memory Management  | **Tested**           | Zero leaks in runtime tests         |
+| WASM Validation    | **100%**             | Full compliance                     |
 
 ## Language Features
 
@@ -19,7 +19,8 @@ Last Updated: January 2026
 - **Variables**: Local, Global, Const, Dim arrays
 - **Types**: Custom types with fields and linked lists
 - **Type Operations**: New, Delete, First, Last, After, Before, Each
-- **Control Flow**: If/Then/Else, For/Next, While/Wend, Repeat/Until, Select/Case
+- **Control Flow**: If/Then/Else, For/Next, While/Wend, Repeat/Until,
+  Select/Case
 - **Functions**: User-defined with return values and parameter defaults
 - **Field Access**: Case-insensitive `object\field` syntax
 - **Include Files**: Multi-file compilation
@@ -30,20 +31,21 @@ Last Updated: January 2026
 
 The TypeScript runtime (`web/src/runtime/`) implements browser bindings for:
 
-| Category | File | Lines | Status |
-|----------|------|-------|--------|
-| Core | `core.ts` | ~2066 | Complete |
-| Graphics | `graphics.ts` | ~3695 | Complete |
-| File I/O | `fileio.ts` | ~1010 | Complete |
-| B3D Loader | `b3d.ts` | ~880 | Complete |
-| Animation | `animation.ts` | ~144 | Complete |
-| Mesh | `mesh.ts` | ~278 | Complete |
-| SMPK | `smpk.ts` | ~332 | Complete |
-| X Loader | `xloader.ts` | ~402 | Complete |
+| Category   | File           | Lines | Status   |
+| ---------- | -------------- | ----- | -------- |
+| Core       | `core.ts`      | ~2066 | Complete |
+| Graphics   | `graphics.ts`  | ~3695 | Complete |
+| File I/O   | `fileio.ts`    | ~1010 | Complete |
+| B3D Loader | `b3d.ts`       | ~880  | Complete |
+| Animation  | `animation.ts` | ~144  | Complete |
+| Mesh       | `mesh.ts`      | ~278  | Complete |
+| SMPK       | `smpk.ts`      | ~332  | Complete |
+| X Loader   | `xloader.ts`   | ~402  | Complete |
 
 ### Thin Demo Runtime
 
 For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
+
 - Basic Three.js entity management
 - Simple input handling
 - Timer and frame management
@@ -96,12 +98,12 @@ In the worker or main entry point, add to the imports object.
 
 ### Type Mapping
 
-| BB Type | WASM Type | TypeScript |
-|---------|-----------|------------|
-| `%` (Int) | `i32` | `number` |
-| `#` (Float) | `f32` | `number` |
-| `$` (String) | `i32` | `number` (pointer) |
-| Entity/Handle | `i32` | `number` |
+| BB Type       | WASM Type | TypeScript         |
+| ------------- | --------- | ------------------ |
+| `%` (Int)     | `i32`     | `number`           |
+| `#` (Float)   | `f32`     | `number`           |
+| `$` (String)  | `i32`     | `number` (pointer) |
+| Entity/Handle | `i32`     | `number`           |
 
 ## Testing
 

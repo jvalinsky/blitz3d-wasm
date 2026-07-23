@@ -1,226 +1,269 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>SCPCB Model Browser</title>
     <style>
-        body {
-            margin: 0;
-            background: #1a1a1a;
-            color: #fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .header {
-            background: #2a2a2a;
-            padding: 15px 20px;
-            border-bottom: 2px solid #4CAF50;
-        }
-        h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .controls {
-            background: #2a2a2a;
-            padding: 15px 20px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            border-bottom: 1px solid #333;
-        }
-        select {
-            padding: 8px 12px;
-            background: #333;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 4px;
-            font-size: 14px;
-            min-width: 300px;
-        }
-        canvas {
-            display: block;
-            margin: 0 auto;
-            background: #000;
-        }
-        .info {
-            position: fixed;
-            top: 120px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #4CAF50;
-            min-width: 200px;
-        }
-        .info-row {
-            margin: 5px 0;
-            font-size: 13px;
-        }
-        .info-label {
-            color: #4CAF50;
-            font-weight: bold;
-        }
+      body {
+        margin: 0;
+        background: #1a1a1a;
+        color: #fff;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+      .header {
+        background: #2a2a2a;
+        padding: 15px 20px;
+        border-bottom: 2px solid #4caf50;
+      }
+      h1 {
+        margin: 0;
+        font-size: 24px;
+      }
+      .controls {
+        background: #2a2a2a;
+        padding: 15px 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        border-bottom: 1px solid #333;
+      }
+      select {
+        padding: 8px 12px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #555;
+        border-radius: 4px;
+        font-size: 14px;
+        min-width: 300px;
+      }
+      canvas {
+        display: block;
+        margin: 0 auto;
+        background: #000;
+      }
+      .info {
+        position: fixed;
+        top: 120px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #4caf50;
+        min-width: 200px;
+      }
+      .info-row {
+        margin: 5px 0;
+        font-size: 13px;
+      }
+      .info-label {
+        color: #4caf50;
+        font-weight: bold;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="header">
-        <h1>🎮 SCP: Containment Breach - Model Browser</h1>
-        <p style="margin: 5px 0 0 0; color: #aaa;">285 models available • Cross-browser compatible</p>
+      <h1>🎮 SCP: Containment Breach - Model Browser</h1>
+      <p style="margin: 5px 0 0 0; color: #aaa">
+        285 models available • Cross-browser compatible
+      </p>
     </div>
-    
+
     <div class="controls">
-        <label>Model:</label>
-        <select id="modelSelect">
-            <optgroup label="🚪 Doors">
-                <option value="assets/Door01.smpk" selected>Door01 - Standard Door</option>
-                <option value="GFX/map/heavydoor1.smpk">Heavy Door 1</option>
-                <option value="GFX/map/heavydoor2.smpk">Heavy Door 2</option>
-                <option value="GFX/map/ContDoorLeft.smpk">Containment Door Left</option>
-                <option value="GFX/map/ContDoorRight.smpk">Containment Door Right</option>
-                <option value="GFX/map/DoorFrame.smpk">Door Frame</option>
-                <option value="GFX/map/DoorColl.smpk">Door Collision</option>
-            </optgroup>
-            <optgroup label="👤 NPCs - SCPs">
-                <option value="GFX/npcs/173_2.smpk">SCP-173</option>
-                <option value="GFX/npcs/scp-049.smpk">SCP-049</option>
-                <option value="GFX/npcs/scp096.smpk">SCP-096</option>
-                <option value="GFX/npcs/106_2.smpk">SCP-106</option>
-                <option value="GFX/npcs/scp-939.smpk">SCP-939</option>
-                <option value="GFX/npcs/scp-966.smpk">SCP-966</option>
-                <option value="GFX/npcs/scp-1048.smpk">SCP-1048</option>
-                <option value="GFX/npcs/scp-1048a.smpk">SCP-1048-A</option>
-                <option value="GFX/npcs/scp-066.smpk">SCP-066</option>
-                <option value="GFX/npcs/035.smpk">SCP-035</option>
-                <option value="GFX/npcs/372.smpk">SCP-372</option>
-                <option value="GFX/npcs/1499-1.smpk">SCP-1499-1</option>
-            </optgroup>
-            <optgroup label="👤 NPCs - Humans">
-                <option value="GFX/npcs/guard.smpk">Guard</option>
-                <option value="GFX/npcs/MTF2.smpk">MTF Soldier</option>
-                <option value="GFX/npcs/classd.smpk">Class-D Personnel</option>
-                <option value="GFX/npcs/clerk.smpk">Clerk</option>
-                <option value="GFX/npcs/naziofficer.smpk">Nazi Officer</option>
-            </optgroup>
-            <optgroup label="👤 NPCs - Monsters">
-                <option value="GFX/npcs/zombie1.smpk">Zombie</option>
-                <option value="GFX/npcs/zombiesurgeon.smpk">Zombie Surgeon</option>
-                <option value="GFX/npcs/bll.smpk">Bll</option>
-                <option value="GFX/npcs/forestmonster.smpk">Forest Monster</option>
-                <option value="GFX/npcs/205_demon1.smpk">205 Demon 1</option>
-                <option value="GFX/npcs/205_woman.smpk">205 Woman</option>
-            </optgroup>
-            <optgroup label="🏢 Rooms - Small">
-                <option value="assets/testroom_opt.smpk">Test Room</option>
-                <option value="GFX/map/room1062.smpk">Room 1062</option>
-                <option value="GFX/map/checkpoint1_opt.smpk">Checkpoint 1</option>
-                <option value="GFX/map/checkpoint2_opt.smpk">Checkpoint 2</option>
-            </optgroup>
-            <optgroup label="🏢 Rooms - Large">
-                <option value="assets/room2offices3_opt.smpk">Offices</option>
-                <option value="assets/room2cafeteria_opt.smpk">Cafeteria</option>
-                <option value="assets/room2_opt.smpk">Room 2</option>
-                <option value="assets/room2tunnel_opt.smpk">Tunnel</option>
-            </optgroup>
-            <optgroup label="📦 Props">
-                <option value="GFX/map/Props/monitor.smpk">Monitor</option>
-                <option value="GFX/map/Props/keyboard.smpk">Keyboard</option>
-                <option value="GFX/map/Props/lamp1.smpk">Lamp 1</option>
-                <option value="GFX/map/Props/lamp2.smpk">Lamp 2</option>
-                <option value="GFX/map/Props/crate1.smpk">Crate 1</option>
-                <option value="GFX/map/Button.smpk">Button</option>
-                <option value="GFX/map/ButtonScanner.smpk">Scanner Button</option>
-                <option value="GFX/map/CamHead.smpk">Camera Head</option>
-                <option value="GFX/map/fan.smpk">Fan</option>
-            </optgroup>
-            <optgroup label="🎯 SCP Chambers">
-                <option value="assets/173.smpk">SCP-173 Chamber</option>
-                <option value="GFX/173box.smpk">SCP-173 Box</option>
-                <option value="GFX/map/079.smpk">SCP-079</option>
-                <option value="GFX/map/294.smpk">SCP-294</option>
-            </optgroup>
-        </select>
-        <span id="status" style="margin-left: auto;">Ready</span>
+      <label>Model:</label>
+      <select id="modelSelect">
+        <optgroup label="🚪 Doors">
+          <option value="assets/Door01.smpk" selected>
+            Door01 - Standard Door
+          </option>
+          <option value="GFX/map/heavydoor1.smpk">Heavy Door 1</option>
+          <option value="GFX/map/heavydoor2.smpk">Heavy Door 2</option>
+          <option value="GFX/map/ContDoorLeft.smpk">
+            Containment Door Left
+          </option>
+          <option value="GFX/map/ContDoorRight.smpk">
+            Containment Door Right
+          </option>
+          <option value="GFX/map/DoorFrame.smpk">Door Frame</option>
+          <option value="GFX/map/DoorColl.smpk">Door Collision</option>
+        </optgroup>
+        <optgroup label="👤 NPCs - SCPs">
+          <option value="GFX/npcs/173_2.smpk">SCP-173</option>
+          <option value="GFX/npcs/scp-049.smpk">SCP-049</option>
+          <option value="GFX/npcs/scp096.smpk">SCP-096</option>
+          <option value="GFX/npcs/106_2.smpk">SCP-106</option>
+          <option value="GFX/npcs/scp-939.smpk">SCP-939</option>
+          <option value="GFX/npcs/scp-966.smpk">SCP-966</option>
+          <option value="GFX/npcs/scp-1048.smpk">SCP-1048</option>
+          <option value="GFX/npcs/scp-1048a.smpk">SCP-1048-A</option>
+          <option value="GFX/npcs/scp-066.smpk">SCP-066</option>
+          <option value="GFX/npcs/035.smpk">SCP-035</option>
+          <option value="GFX/npcs/372.smpk">SCP-372</option>
+          <option value="GFX/npcs/1499-1.smpk">SCP-1499-1</option>
+        </optgroup>
+        <optgroup label="👤 NPCs - Humans">
+          <option value="GFX/npcs/guard.smpk">Guard</option>
+          <option value="GFX/npcs/MTF2.smpk">MTF Soldier</option>
+          <option value="GFX/npcs/classd.smpk">Class-D Personnel</option>
+          <option value="GFX/npcs/clerk.smpk">Clerk</option>
+          <option value="GFX/npcs/naziofficer.smpk">Nazi Officer</option>
+        </optgroup>
+        <optgroup label="👤 NPCs - Monsters">
+          <option value="GFX/npcs/zombie1.smpk">Zombie</option>
+          <option value="GFX/npcs/zombiesurgeon.smpk">Zombie Surgeon</option>
+          <option value="GFX/npcs/bll.smpk">Bll</option>
+          <option value="GFX/npcs/forestmonster.smpk">Forest Monster</option>
+          <option value="GFX/npcs/205_demon1.smpk">205 Demon 1</option>
+          <option value="GFX/npcs/205_woman.smpk">205 Woman</option>
+        </optgroup>
+        <optgroup label="🏢 Rooms - Small">
+          <option value="assets/testroom_opt.smpk">Test Room</option>
+          <option value="GFX/map/room1062.smpk">Room 1062</option>
+          <option value="GFX/map/checkpoint1_opt.smpk">Checkpoint 1</option>
+          <option value="GFX/map/checkpoint2_opt.smpk">Checkpoint 2</option>
+        </optgroup>
+        <optgroup label="🏢 Rooms - Large">
+          <option value="assets/room2offices3_opt.smpk">Offices</option>
+          <option value="assets/room2cafeteria_opt.smpk">Cafeteria</option>
+          <option value="assets/room2_opt.smpk">Room 2</option>
+          <option value="assets/room2tunnel_opt.smpk">Tunnel</option>
+        </optgroup>
+        <optgroup label="📦 Props">
+          <option value="GFX/map/Props/monitor.smpk">Monitor</option>
+          <option value="GFX/map/Props/keyboard.smpk">Keyboard</option>
+          <option value="GFX/map/Props/lamp1.smpk">Lamp 1</option>
+          <option value="GFX/map/Props/lamp2.smpk">Lamp 2</option>
+          <option value="GFX/map/Props/crate1.smpk">Crate 1</option>
+          <option value="GFX/map/Button.smpk">Button</option>
+          <option value="GFX/map/ButtonScanner.smpk">Scanner Button</option>
+          <option value="GFX/map/CamHead.smpk">Camera Head</option>
+          <option value="GFX/map/fan.smpk">Fan</option>
+        </optgroup>
+        <optgroup label="🎯 SCP Chambers">
+          <option value="assets/173.smpk">SCP-173 Chamber</option>
+          <option value="GFX/173box.smpk">SCP-173 Box</option>
+          <option value="GFX/map/079.smpk">SCP-079</option>
+          <option value="GFX/map/294.smpk">SCP-294</option>
+        </optgroup>
+      </select>
+      <span id="status" style="margin-left: auto">Ready</span>
     </div>
-    
+
     <canvas id="c" width="1200" height="800"></canvas>
-    
+
     <div class="info">
-        <div class="info-row"><span class="info-label">Model:</span> <span id="modelName">-</span></div>
-        <div class="info-row"><span class="info-label">Vertices:</span> <span id="verts">-</span></div>
-        <div class="info-row"><span class="info-label">Triangles:</span> <span id="tris">-</span></div>
-        <div class="info-row"><span class="info-label">Primitives:</span> <span id="prims">-</span></div>
-        <div class="info-row"><span class="info-label">FPS:</span> <span id="fps">-</span></div>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px; color: #888;">
-            💡 Drag to rotate
-        </div>
+      <div class="info-row">
+        <span class="info-label">Model:</span> <span id="modelName">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Vertices:</span> <span id="verts">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Triangles:</span> <span id="tris">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Primitives:</span> <span id="prims">-</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">FPS:</span> <span id="fps">-</span>
+      </div>
+      <div
+        style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #333; font-size: 12px; color: #888"
+      >
+        💡 Drag to rotate
+      </div>
     </div>
 
     <script type="module">
-        import { SimpleCamera, loadSMPK } from './dist/test-graphics-bundle.js';
-        
-        const canvas = document.getElementById('c');
-        const modelSelect = document.getElementById('modelSelect');
-        const statusEl = document.getElementById('status');
-        
-        let gl, prog, camera, currentMesh;
-        let mvpLoc, diffuseLoc, lightmapLoc, hasLightmapLoc;
-        let primitiveData = []; // Array of {vbo, nbo, ubo, uv2bo, ibo, diffuseTexture, lightmapTexture}
-        let isDragging = false;
-        let lastX = 0, lastY = 0;
-        
-        function log(msg) {
-            console.log(msg);
+      import {
+        loadSMPK,
+        SimpleCamera,
+      } from "./dist/test-graphics-bundle.js";
+
+      const canvas = document.getElementById("c");
+      const modelSelect = document.getElementById("modelSelect");
+      const statusEl = document.getElementById("status");
+
+      let gl, prog, camera, currentMesh;
+      let mvpLoc, diffuseLoc, lightmapLoc, hasLightmapLoc;
+      let primitiveData = []; // Array of {vbo, nbo, ubo, uv2bo, ibo, diffuseTexture, lightmapTexture}
+      let isDragging = false;
+      let lastX = 0, lastY = 0;
+
+      function log(msg) {
+        console.log(msg);
+      }
+
+      // Async texture loader
+      function loadTextureAsync(texturePath, glTexture) {
+        const texPaths = [
+          "./dist/GFX/map/" + texturePath,
+          "./dist/GFX/npcs/" + texturePath,
+          "./dist/GFX/" + texturePath,
+          "./dist/assets/" + texturePath,
+        ];
+
+        let pathIndex = 0;
+        const img = new Image();
+
+        img.onload = () => {
+          gl.bindTexture(gl.TEXTURE_2D, glTexture);
+          gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.UNSIGNED_BYTE,
+            img,
+          );
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MIN_FILTER,
+            gl.LINEAR,
+          );
+          gl.texParameteri(
+            gl.TEXTURE_2D,
+            gl.TEXTURE_MAG_FILTER,
+            gl.LINEAR,
+          );
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        };
+
+        img.onerror = () => {
+          pathIndex++;
+          if (pathIndex < texPaths.length) {
+            img.src = texPaths[pathIndex];
+          } else {
+            console.warn("❌ Texture not found:", texturePath);
+          }
+        };
+
+        img.src = texPaths[0];
+      }
+
+      // Initialize WebGL
+      async function init() {
+        gl = canvas.getContext("webgl2");
+        if (!gl) {
+          alert("WebGL 2 not supported");
+          return;
         }
-        
-        // Async texture loader
-        function loadTextureAsync(texturePath, glTexture) {
-            const texPaths = [
-                './dist/GFX/map/' + texturePath,
-                './dist/GFX/npcs/' + texturePath,
-                './dist/GFX/' + texturePath,
-                './dist/assets/' + texturePath
-            ];
-            
-            let pathIndex = 0;
-            const img = new Image();
-            
-            img.onload = () => {
-                gl.bindTexture(gl.TEXTURE_2D, glTexture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-            };
-            
-            img.onerror = () => {
-                pathIndex++;
-                if (pathIndex < texPaths.length) {
-                    img.src = texPaths[pathIndex];
-                } else {
-                    console.warn('❌ Texture not found:', texturePath);
-                }
-            };
-            
-            img.src = texPaths[0];
-        }
-        
-        // Initialize WebGL
-        async function init() {
-            gl = canvas.getContext('webgl2');
-            if (!gl) {
-                alert('WebGL 2 not supported');
-                return;
-            }
-            
-            gl.enable(gl.DEPTH_TEST);
-            gl.depthFunc(gl.LEQUAL);
-            
-            // Firefox WebGL compatibility
-            console.log('Browser:', navigator.userAgent.includes('Firefox') ? 'Firefox' : 'Chrome/Other');
-            console.log('WebGL Vendor:', gl.getParameter(gl.VENDOR));
-            console.log('WebGL Renderer:', gl.getParameter(gl.RENDERER));
-            
-            // Compile shaders
-            const vs = `#version 300 es
+
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+
+        // Firefox WebGL compatibility
+        console.log(
+          "Browser:",
+          navigator.userAgent.includes("Firefox")
+            ? "Firefox"
+            : "Chrome/Other",
+        );
+        console.log("WebGL Vendor:", gl.getParameter(gl.VENDOR));
+        console.log("WebGL Renderer:", gl.getParameter(gl.RENDERER));
+
+        // Compile shaders
+        const vs = `#version 300 es
                 uniform mat4 u_mvp;
                 in vec3 position;
                 in vec3 normal;
@@ -236,8 +279,8 @@
                     v_uv2 = uv2;
                 }
             `;
-            
-            const fs = `#version 300 es
+
+        const fs = `#version 300 es
                 precision mediump float;
                 uniform sampler2D u_diffuse;
                 uniform sampler2D u_lightmap;
@@ -263,299 +306,386 @@
                     }
                 }
             `;
-            
-            prog = createProgram(vs, fs);
-            
-            // Firefox: Bind attributes BEFORE linking
-            gl.bindAttribLocation(prog, 0, 'position');
-            gl.bindAttribLocation(prog, 1, 'normal');
-            gl.bindAttribLocation(prog, 2, 'uv');
-            gl.linkProgram(prog); // Re-link with explicit locations
-            
-            gl.useProgram(prog);
-            
-            mvpLoc = gl.getUniformLocation(prog, 'u_mvp');
-            diffuseLoc = gl.getUniformLocation(prog, 'u_diffuse');
-            lightmapLoc = gl.getUniformLocation(prog, 'u_lightmap');
-            hasLightmapLoc = gl.getUniformLocation(prog, 'u_hasLightmap');
-            
-            // Setup camera
-            camera = new SimpleCamera();
-            camera.aspect = canvas.width / canvas.height;
-            
-            // Mouse controls
-            canvas.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                lastX = e.clientX;
-                lastY = e.clientY;
-            });
-            canvas.addEventListener('mousemove', (e) => {
-                if (isDragging) {
-                    camera.rotateAroundTarget(e.clientX - lastX, e.clientY - lastY);
-                    lastX = e.clientX;
-                    lastY = e.clientY;
-                }
-            });
-            canvas.addEventListener('mouseup', () => isDragging = false);
-            canvas.addEventListener('mouseleave', () => isDragging = false);
-            
-            // Model selector
-            modelSelect.addEventListener('change', () => loadModel(modelSelect.value));
-            
-            // Load initial model
-            await loadModel(modelSelect.value);
-            
-            // Start render loop
-            requestAnimationFrame(render);
-        }
-        
-        function createProgram(vs, fs) {
-            const vShader = gl.createShader(gl.VERTEX_SHADER);
-            gl.shaderSource(vShader, vs);
-            gl.compileShader(vShader);
-            
-            const fShader = gl.createShader(gl.FRAGMENT_SHADER);
-            gl.shaderSource(fShader, fs);
-            gl.compileShader(fShader);
-            
-            const program = gl.createProgram();
-            gl.attachShader(program, vShader);
-            gl.attachShader(program, fShader);
-            return program;
-        }
-        
-        async function loadModel(path) {
-            try {
-                statusEl.textContent = 'Loading...';
-                statusEl.style.color = '#ff9800';
-                
-                // Clean up old data
-                for (const prim of primitiveData) {
-                    if (prim.vbo) gl.deleteBuffer(prim.vbo);
-                    if (prim.nbo) gl.deleteBuffer(prim.nbo);
-                    if (prim.ubo) gl.deleteBuffer(prim.ubo);
-                    if (prim.uv2bo) gl.deleteBuffer(prim.uv2bo);
-                    if (prim.ibo) gl.deleteBuffer(prim.ibo);
-                    if (prim.diffuseTexture) gl.deleteTexture(prim.diffuseTexture);
-                    if (prim.lightmapTexture) gl.deleteTexture(prim.lightmapTexture);
-                }
-                primitiveData = [];
-                
-                // Load mesh
-                console.log('Loading:', path);
-                currentMesh = await loadSMPK('./dist/' + path);
-                console.log('Loaded mesh:', currentMesh);
-                
-                if (currentMesh.primitives.length === 0) {
-                    throw new Error('No primitives in mesh');
-                }
-                
-                if (!currentMesh.primitives[0].positions) {
-                    throw new Error('No positions in first primitive!');
-                }
-                
-                console.log(`📦 Loaded ${currentMesh.primitives.length} primitive(s)`);
-                for (let i = 0; i < currentMesh.primitives.length; i++) {
-                    const p = currentMesh.primitives[i];
-                    console.log(`  Primitive ${i}: ${p.vertexCount} verts, texture: ${p.texturePath || 'none'}`);
-                }
-                log(`📦 Loaded ${currentMesh.primitives.length} primitive(s)`);
-                
-                // Calculate total stats
-                let totalVerts = 0;
-                let totalTris = 0;
-                for (const prim of currentMesh.primitives) {
-                    totalVerts += prim.vertexCount;
-                    totalTris += prim.indexCount ? (prim.indexCount / 3) : (prim.vertexCount / 3);
-                }
-                
-                // Calculate bounds across all primitives
-                let minX=Infinity, minY=Infinity, minZ=Infinity;
-                let maxX=-Infinity, maxY=-Infinity, maxZ=-Infinity;
-                for (const prim of currentMesh.primitives) {
-                    for (let i = 0; i < prim.positions.length; i += 3) {
-                        minX = Math.min(minX, prim.positions[i]);
-                        minY = Math.min(minY, prim.positions[i+1]);
-                        minZ = Math.min(minZ, prim.positions[i+2]);
-                        maxX = Math.max(maxX, prim.positions[i]);
-                        maxY = Math.max(maxY, prim.positions[i+1]);
-                        maxZ = Math.max(maxZ, prim.positions[i+2]);
-                    }
-                }
-                const cx = (minX + maxX) / 2;
-                const cy = (minY + maxY) / 2;
-                const cz = (minZ + maxZ) / 2;
-                const size = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
-                
-                console.log(`📐 Bounds: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], [${minY.toFixed(2)}, ${maxY.toFixed(2)}], [${minZ.toFixed(2)}, ${maxZ.toFixed(2)}]`);
-                console.log(`📏 Size: ${size.toFixed(2)}, Center: (${cx.toFixed(2)}, ${cy.toFixed(2)}, ${cz.toFixed(2)})`);
-                
-                // For large rooms (size > 1000), put camera INSIDE looking around
-                // For small objects, put camera outside looking at them
-                let camPos, camTarget;
-                if (size > 1000) {
-                    // Room - camera inside, slightly above floor, looking forward
-                    camPos = [cx, cy * 0.3, cz]; // Lower camera (30% of center height)
-                    camTarget = [cx, cy * 0.3, cz - 500]; // Look forward into room
-                } else {
-                    // Object - camera outside looking at object
-                    camPos = [cx, cy, cz + size * 2.5];
-                    camTarget = [cx, cy, cz];
-                }
-                
-                console.log(`📷 Camera: pos=(${camPos[0].toFixed(2)}, ${camPos[1].toFixed(2)}, ${camPos[2].toFixed(2)}), target=(${camTarget[0].toFixed(2)}, ${camTarget[1].toFixed(2)}, ${camTarget[2].toFixed(2)})`);
-                
-                camera.position = camPos;
-                camera.target = camTarget;
-                
-                // Process each primitive
-                for (const prim of currentMesh.primitives) {
-                    const primData = {};
-                    
-                    // Upload vertex buffers
-                    primData.vbo = gl.createBuffer();
-                    gl.bindBuffer(gl.ARRAY_BUFFER, primData.vbo);
-                    gl.bufferData(gl.ARRAY_BUFFER, prim.positions, gl.STATIC_DRAW);
-                    
-                    if (prim.normals) {
-                        primData.nbo = gl.createBuffer();
-                        gl.bindBuffer(gl.ARRAY_BUFFER, primData.nbo);
-                        gl.bufferData(gl.ARRAY_BUFFER, prim.normals, gl.STATIC_DRAW);
-                    }
-                    
-                    if (prim.uvs) {
-                        primData.ubo = gl.createBuffer();
-                        gl.bindBuffer(gl.ARRAY_BUFFER, primData.ubo);
-                        gl.bufferData(gl.ARRAY_BUFFER, prim.uvs, gl.STATIC_DRAW);
-                    }
-                    
-                    if (prim.uv2) {
-                        primData.uv2bo = gl.createBuffer();
-                        gl.bindBuffer(gl.ARRAY_BUFFER, primData.uv2bo);
-                        gl.bufferData(gl.ARRAY_BUFFER, prim.uv2, gl.STATIC_DRAW);
-                    }
-                    
-                    if (prim.indices) {
-                        primData.ibo = gl.createBuffer();
-                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primData.ibo);
-                        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, prim.indices, gl.STATIC_DRAW);
-                        primData.indexCount = prim.indexCount;
-                        primData.indexType = prim.indices instanceof Uint32Array ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT;
-                    } else {
-                        primData.vertexCount = prim.vertexCount;
-                    }
-                    
-                    // Load diffuse texture
-                    primData.diffuseTexture = gl.createTexture();
-                    gl.bindTexture(gl.TEXTURE_2D, primData.diffuseTexture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([200,200,200,255]));
-                    
-                    if (prim.texturePath) {
-                        loadTextureAsync(prim.texturePath, primData.diffuseTexture);
-                    }
-                    
-                    // Load lightmap texture
-                    if (prim.lightmapPath) {
-                        primData.lightmapTexture = gl.createTexture();
-                        gl.bindTexture(gl.TEXTURE_2D, primData.lightmapTexture);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([255,255,255,255]));
-                        loadTextureAsync(prim.lightmapPath, primData.lightmapTexture);
-                    }
-                    
-                    primitiveData.push(primData);
-                }
-                
-                // Update UI
-                document.getElementById('modelName').textContent = path.split('/').pop();
-                document.getElementById('verts').textContent = totalVerts.toLocaleString();
-                document.getElementById('tris').textContent = Math.floor(totalTris).toLocaleString();
-                document.getElementById('prims').textContent = currentMesh.primitives.length;
-                
-                statusEl.textContent = 'Ready';
-                statusEl.style.color = '#4CAF50';
-            } catch (e) {
-                statusEl.textContent = 'Error: ' + e.message;
-                statusEl.style.color = '#f44';
-                console.error(e);
+
+        prog = createProgram(vs, fs);
+
+        // Firefox: Bind attributes BEFORE linking
+        gl.bindAttribLocation(prog, 0, "position");
+        gl.bindAttribLocation(prog, 1, "normal");
+        gl.bindAttribLocation(prog, 2, "uv");
+        gl.linkProgram(prog); // Re-link with explicit locations
+
+        gl.useProgram(prog);
+
+        mvpLoc = gl.getUniformLocation(prog, "u_mvp");
+        diffuseLoc = gl.getUniformLocation(prog, "u_diffuse");
+        lightmapLoc = gl.getUniformLocation(prog, "u_lightmap");
+        hasLightmapLoc = gl.getUniformLocation(prog, "u_hasLightmap");
+
+        // Setup camera
+        camera = new SimpleCamera();
+        camera.aspect = canvas.width / canvas.height;
+
+        // Mouse controls
+        canvas.addEventListener("mousedown", (e) => {
+          isDragging = true;
+          lastX = e.clientX;
+          lastY = e.clientY;
+        });
+        canvas.addEventListener("mousemove", (e) => {
+          if (isDragging) {
+            camera.rotateAroundTarget(
+              e.clientX - lastX,
+              e.clientY - lastY,
+            );
+            lastX = e.clientX;
+            lastY = e.clientY;
+          }
+        });
+        canvas.addEventListener("mouseup", () => isDragging = false);
+        canvas.addEventListener("mouseleave", () => isDragging = false);
+
+        // Model selector
+        modelSelect.addEventListener(
+          "change",
+          () => loadModel(modelSelect.value),
+        );
+
+        // Load initial model
+        await loadModel(modelSelect.value);
+
+        // Start render loop
+        requestAnimationFrame(render);
+      }
+
+      function createProgram(vs, fs) {
+        const vShader = gl.createShader(gl.VERTEX_SHADER);
+        gl.shaderSource(vShader, vs);
+        gl.compileShader(vShader);
+
+        const fShader = gl.createShader(gl.FRAGMENT_SHADER);
+        gl.shaderSource(fShader, fs);
+        gl.compileShader(fShader);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vShader);
+        gl.attachShader(program, fShader);
+        return program;
+      }
+
+      async function loadModel(path) {
+        try {
+          statusEl.textContent = "Loading...";
+          statusEl.style.color = "#ff9800";
+
+          // Clean up old data
+          for (const prim of primitiveData) {
+            if (prim.vbo) gl.deleteBuffer(prim.vbo);
+            if (prim.nbo) gl.deleteBuffer(prim.nbo);
+            if (prim.ubo) gl.deleteBuffer(prim.ubo);
+            if (prim.uv2bo) gl.deleteBuffer(prim.uv2bo);
+            if (prim.ibo) gl.deleteBuffer(prim.ibo);
+            if (prim.diffuseTexture) {
+              gl.deleteTexture(prim.diffuseTexture);
             }
-        }
-        
-        let frames = 0;
-        let lastTime = performance.now();
-        
-        function render() {
-            frames++;
-            const now = performance.now();
-            if (now - lastTime >= 1000) {
-                document.getElementById('fps').textContent = frames;
-                frames = 0;
-                lastTime = now;
+            if (prim.lightmapTexture) {
+              gl.deleteTexture(prim.lightmapTexture);
             }
-            
-            if (primitiveData.length > 0) {
-                const mvp = camera.getMVP();
-                
-                gl.clearColor(0.1, 0.1, 0.15, 1.0);
-                gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-                
-                gl.uniformMatrix4fv(mvpLoc, false, mvp);
-                
-                // Draw each primitive with its textures
-                for (const prim of primitiveData) {
-                    // Bind vertex data
-                    gl.bindBuffer(gl.ARRAY_BUFFER, prim.vbo);
-                    gl.enableVertexAttribArray(0);
-                    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-                    
-                    if (prim.nbo) {
-                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.nbo);
-                        gl.enableVertexAttribArray(1);
-                        gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
-                    }
-                    
-                    // Bind first UV set (diffuse)
-                    if (prim.ubo) {
-                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.ubo);
-                        gl.enableVertexAttribArray(2);
-                        gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
-                    }
-                    
-                    // Bind second UV set (lightmap)
-                    if (prim.uv2bo) {
-                        gl.bindBuffer(gl.ARRAY_BUFFER, prim.uv2bo);
-                        gl.enableVertexAttribArray(3);
-                        gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
-                    }
-                    
-                    // Bind diffuse texture (unit 0)
-                    gl.activeTexture(gl.TEXTURE0);
-                    gl.bindTexture(gl.TEXTURE_2D, prim.diffuseTexture);
-                    gl.uniform1i(diffuseLoc, 0);
-                    
-                    // Bind lightmap texture (unit 1) if exists
-                    if (prim.lightmapTexture) {
-                        gl.activeTexture(gl.TEXTURE1);
-                        gl.bindTexture(gl.TEXTURE_2D, prim.lightmapTexture);
-                        gl.uniform1i(lightmapLoc, 1);
-                        gl.uniform1i(hasLightmapLoc, 1);
-                    } else {
-                        gl.uniform1i(hasLightmapLoc, 0);
-                    }
-                    
-                    // Draw
-                    if (prim.ibo) {
-                        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.ibo);
-                        gl.drawElements(gl.TRIANGLES, prim.indexCount, prim.indexType, 0);
-                    } else {
-                        gl.drawArrays(gl.TRIANGLES, 0, prim.vertexCount);
-                    }
-                }
+          }
+          primitiveData = [];
+
+          // Load mesh
+          console.log("Loading:", path);
+          currentMesh = await loadSMPK("./dist/" + path);
+          console.log("Loaded mesh:", currentMesh);
+
+          if (currentMesh.primitives.length === 0) {
+            throw new Error("No primitives in mesh");
+          }
+
+          if (!currentMesh.primitives[0].positions) {
+            throw new Error("No positions in first primitive!");
+          }
+
+          console.log(
+            `📦 Loaded ${currentMesh.primitives.length} primitive(s)`,
+          );
+          for (let i = 0; i < currentMesh.primitives.length; i++) {
+            const p = currentMesh.primitives[i];
+            console.log(
+              `  Primitive ${i}: ${p.vertexCount} verts, texture: ${
+                p.texturePath || "none"
+              }`,
+            );
+          }
+          log(
+            `📦 Loaded ${currentMesh.primitives.length} primitive(s)`,
+          );
+
+          // Calculate total stats
+          let totalVerts = 0;
+          let totalTris = 0;
+          for (const prim of currentMesh.primitives) {
+            totalVerts += prim.vertexCount;
+            totalTris += prim.indexCount
+              ? (prim.indexCount / 3)
+              : (prim.vertexCount / 3);
+          }
+
+          // Calculate bounds across all primitives
+          let minX = Infinity, minY = Infinity, minZ = Infinity;
+          let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+          for (const prim of currentMesh.primitives) {
+            for (let i = 0; i < prim.positions.length; i += 3) {
+              minX = Math.min(minX, prim.positions[i]);
+              minY = Math.min(minY, prim.positions[i + 1]);
+              minZ = Math.min(minZ, prim.positions[i + 2]);
+              maxX = Math.max(maxX, prim.positions[i]);
+              maxY = Math.max(maxY, prim.positions[i + 1]);
+              maxZ = Math.max(maxZ, prim.positions[i + 2]);
             }
-            
-            requestAnimationFrame(render);
+          }
+          const cx = (minX + maxX) / 2;
+          const cy = (minY + maxY) / 2;
+          const cz = (minZ + maxZ) / 2;
+          const size = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
+
+          console.log(
+            `📐 Bounds: [${minX.toFixed(2)}, ${maxX.toFixed(2)}], [${
+              minY.toFixed(2)
+            }, ${maxY.toFixed(2)}], [${minZ.toFixed(2)}, ${
+              maxZ.toFixed(2)
+            }]`,
+          );
+          console.log(
+            `📏 Size: ${size.toFixed(2)}, Center: (${cx.toFixed(2)}, ${
+              cy.toFixed(2)
+            }, ${cz.toFixed(2)})`,
+          );
+
+          // For large rooms (size > 1000), put camera INSIDE looking around
+          // For small objects, put camera outside looking at them
+          let camPos, camTarget;
+          if (size > 1000) {
+            // Room - camera inside, slightly above floor, looking forward
+            camPos = [cx, cy * 0.3, cz]; // Lower camera (30% of center height)
+            camTarget = [cx, cy * 0.3, cz - 500]; // Look forward into room
+          } else {
+            // Object - camera outside looking at object
+            camPos = [cx, cy, cz + size * 2.5];
+            camTarget = [cx, cy, cz];
+          }
+
+          console.log(
+            `📷 Camera: pos=(${camPos[0].toFixed(2)}, ${
+              camPos[1].toFixed(2)
+            }, ${camPos[2].toFixed(2)}), target=(${
+              camTarget[0].toFixed(2)
+            }, ${camTarget[1].toFixed(2)}, ${camTarget[2].toFixed(2)})`,
+          );
+
+          camera.position = camPos;
+          camera.target = camTarget;
+
+          // Process each primitive
+          for (const prim of currentMesh.primitives) {
+            const primData = {};
+
+            // Upload vertex buffers
+            primData.vbo = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, primData.vbo);
+            gl.bufferData(
+              gl.ARRAY_BUFFER,
+              prim.positions,
+              gl.STATIC_DRAW,
+            );
+
+            if (prim.normals) {
+              primData.nbo = gl.createBuffer();
+              gl.bindBuffer(gl.ARRAY_BUFFER, primData.nbo);
+              gl.bufferData(
+                gl.ARRAY_BUFFER,
+                prim.normals,
+                gl.STATIC_DRAW,
+              );
+            }
+
+            if (prim.uvs) {
+              primData.ubo = gl.createBuffer();
+              gl.bindBuffer(gl.ARRAY_BUFFER, primData.ubo);
+              gl.bufferData(gl.ARRAY_BUFFER, prim.uvs, gl.STATIC_DRAW);
+            }
+
+            if (prim.uv2) {
+              primData.uv2bo = gl.createBuffer();
+              gl.bindBuffer(gl.ARRAY_BUFFER, primData.uv2bo);
+              gl.bufferData(gl.ARRAY_BUFFER, prim.uv2, gl.STATIC_DRAW);
+            }
+
+            if (prim.indices) {
+              primData.ibo = gl.createBuffer();
+              gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, primData.ibo);
+              gl.bufferData(
+                gl.ELEMENT_ARRAY_BUFFER,
+                prim.indices,
+                gl.STATIC_DRAW,
+              );
+              primData.indexCount = prim.indexCount;
+              primData.indexType = prim.indices instanceof Uint32Array
+                ? gl.UNSIGNED_INT
+                : gl.UNSIGNED_SHORT;
+            } else {
+              primData.vertexCount = prim.vertexCount;
+            }
+
+            // Load diffuse texture
+            primData.diffuseTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, primData.diffuseTexture);
+            gl.texImage2D(
+              gl.TEXTURE_2D,
+              0,
+              gl.RGBA,
+              1,
+              1,
+              0,
+              gl.RGBA,
+              gl.UNSIGNED_BYTE,
+              new Uint8Array([200, 200, 200, 255]),
+            );
+
+            if (prim.texturePath) {
+              loadTextureAsync(
+                prim.texturePath,
+                primData.diffuseTexture,
+              );
+            }
+
+            // Load lightmap texture
+            if (prim.lightmapPath) {
+              primData.lightmapTexture = gl.createTexture();
+              gl.bindTexture(gl.TEXTURE_2D, primData.lightmapTexture);
+              gl.texImage2D(
+                gl.TEXTURE_2D,
+                0,
+                gl.RGBA,
+                1,
+                1,
+                0,
+                gl.RGBA,
+                gl.UNSIGNED_BYTE,
+                new Uint8Array([255, 255, 255, 255]),
+              );
+              loadTextureAsync(
+                prim.lightmapPath,
+                primData.lightmapTexture,
+              );
+            }
+
+            primitiveData.push(primData);
+          }
+
+          // Update UI
+          document.getElementById("modelName").textContent = path.split(
+            "/",
+          ).pop();
+          document.getElementById("verts").textContent = totalVerts
+            .toLocaleString();
+          document.getElementById("tris").textContent = Math.floor(
+            totalTris,
+          ).toLocaleString();
+          document.getElementById("prims").textContent =
+            currentMesh.primitives.length;
+
+          statusEl.textContent = "Ready";
+          statusEl.style.color = "#4CAF50";
+        } catch (e) {
+          statusEl.textContent = "Error: " + e.message;
+          statusEl.style.color = "#f44";
+          console.error(e);
         }
-        
-        init();
+      }
+
+      let frames = 0;
+      let lastTime = performance.now();
+
+      function render() {
+        frames++;
+        const now = performance.now();
+        if (now - lastTime >= 1000) {
+          document.getElementById("fps").textContent = frames;
+          frames = 0;
+          lastTime = now;
+        }
+
+        if (primitiveData.length > 0) {
+          const mvp = camera.getMVP();
+
+          gl.clearColor(0.1, 0.1, 0.15, 1.0);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          gl.uniformMatrix4fv(mvpLoc, false, mvp);
+
+          // Draw each primitive with its textures
+          for (const prim of primitiveData) {
+            // Bind vertex data
+            gl.bindBuffer(gl.ARRAY_BUFFER, prim.vbo);
+            gl.enableVertexAttribArray(0);
+            gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+
+            if (prim.nbo) {
+              gl.bindBuffer(gl.ARRAY_BUFFER, prim.nbo);
+              gl.enableVertexAttribArray(1);
+              gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 0, 0);
+            }
+
+            // Bind first UV set (diffuse)
+            if (prim.ubo) {
+              gl.bindBuffer(gl.ARRAY_BUFFER, prim.ubo);
+              gl.enableVertexAttribArray(2);
+              gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 0, 0);
+            }
+
+            // Bind second UV set (lightmap)
+            if (prim.uv2bo) {
+              gl.bindBuffer(gl.ARRAY_BUFFER, prim.uv2bo);
+              gl.enableVertexAttribArray(3);
+              gl.vertexAttribPointer(3, 2, gl.FLOAT, false, 0, 0);
+            }
+
+            // Bind diffuse texture (unit 0)
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, prim.diffuseTexture);
+            gl.uniform1i(diffuseLoc, 0);
+
+            // Bind lightmap texture (unit 1) if exists
+            if (prim.lightmapTexture) {
+              gl.activeTexture(gl.TEXTURE1);
+              gl.bindTexture(gl.TEXTURE_2D, prim.lightmapTexture);
+              gl.uniform1i(lightmapLoc, 1);
+              gl.uniform1i(hasLightmapLoc, 1);
+            } else {
+              gl.uniform1i(hasLightmapLoc, 0);
+            }
+
+            // Draw
+            if (prim.ibo) {
+              gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, prim.ibo);
+              gl.drawElements(
+                gl.TRIANGLES,
+                prim.indexCount,
+                prim.indexType,
+                0,
+              );
+            } else {
+              gl.drawArrays(gl.TRIANGLES, 0, prim.vertexCount);
+            }
+          }
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      init();
     </script>
-</body>
+  </body>
 </html>

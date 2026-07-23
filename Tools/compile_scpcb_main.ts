@@ -1,11 +1,14 @@
 #!/usr/bin/env -S deno run -A
 
-import { join } from "node:path";
+import { join, basename } from "node:path";
 import { checkCmdbufExports } from "./cmdbuf_wasm_check.ts";
+import { REQUIRED_WEB_EXPORTS } from "./web_export_contract.ts";
 
 type Options = {
   scpcbRoot: string;
   entryBb: string;
+  /** In-repo wrapper .bb to use as the entry point (copied to SCPCB root). */
+  wrapperBb: string | null;
   outRuntimeWasm: string;
   outWebPublicWasm: string | null;
   buildCompiler: boolean;
@@ -30,6 +33,7 @@ const parseArgs = (args: string[]): Options => {
   const opts: Options = {
     scpcbRoot: new URL("../../scpcb/", import.meta.url).pathname,
     entryBb: "Main.bb",
+    wrapperBb: null,
     // Default to a temp output. The Track B web loader consumes `web/public/scpcb.wasm`
     // (copied to dist during `deno task web:build`), and we avoid writing generated
     // artifacts into source directories.
@@ -46,6 +50,7 @@ const parseArgs = (args: string[]): Options => {
     const a = args[i];
     if (a === "--scpcb-root") opts.scpcbRoot = args[++i] ?? opts.scpcbRoot;
     else if (a === "--entry") opts.entryBb = args[++i] ?? opts.entryBb;
+    else if (a === "--wrapper") opts.wrapperBb = args[++i] ?? opts.wrapperBb;
     else if (a === "--out-runtime") {
       opts.outRuntimeWasm = args[++i] ?? opts.outRuntimeWasm;
     } else if (a === "--out-web-public") {
@@ -66,6 +71,7 @@ const parseArgs = (args: string[]): Options => {
           "Options:",
           "  --scpcb-root <dir>        path to SCPCB repo (default: ../../scpcb)",
           "  --entry <file.bb>         entry BB file inside scpcb root (default: Main.bb)",
+          "  --wrapper <file.bb>        use in-repo wrapper .bb as entry (copied to scpcb root)",
           "  --out-runtime <path>      write to a .wasm output (default: /tmp/scpcb_cmdbuf.wasm)",
           "  --out-web-public <path>   also write to web/public/scpcb.wasm",
           "  --no-web-public           do not write web/public/scpcb.wasm",
@@ -460,23 +466,50 @@ const main = async () => {
     new URL("../.build/debug/blitz3d-wasm", import.meta.url).pathname;
 
   const scpcbRoot = opts.scpcbRoot.replace(/\/+$/g, "");
-  const entryBb = join(scpcbRoot, opts.entryBb);
-  try {
-    await Deno.stat(entryBb);
-  } catch {
-    throw new Error(
-      `Entry BB not found at ${entryBb} (set --scpcb-root/--entry)`,
-    );
-  }
 
-  // If the user compiles something other than Main.bb, avoid overwriting the
-  // web loader's `web/public/scpcb.wasm` unless they explicitly asked for it.
-  if (
-    opts.entryBb.toLowerCase() != "main.bb" &&
-    Deno.args.every((a) => a !== "--out-web-public") &&
-    Deno.args.every((a) => a !== "--no-web-public")
-  ) {
-    opts.outWebPublicWasm = null;
+  // ── Resolve entry point ───────────────────────────────────────────
+
+  // ── Resolve entry point ────────────────────────────────────────
+  let entryBb: string;
+  let tempWrapperPath: string | null = null;
+
+  if (opts.wrapperBb) {
+    // Wrapper mode: copy the in-repo wrapper to a temp file inside the
+    // SCPCB root so `Include "Main.bb"` resolves correctly.
+    const wrapperPath = join(repoRoot, opts.wrapperBb);
+    try {
+      await Deno.stat(wrapperPath);
+    } catch {
+      throw new Error(
+        `Wrapper BB not found at ${wrapperPath} (set --wrapper)`,
+      );
+    }
+    const wrapperName = basename(opts.wrapperBb);
+    tempWrapperPath = join(scpcbRoot, `.scpcb_wrapper_${Date.now()}.bb`);
+    await Deno.copyFile(wrapperPath, tempWrapperPath);
+    console.log(
+      `[scpcb] copied wrapper ${opts.wrapperBb} → ${tempWrapperPath}`,
+    );
+    entryBb = tempWrapperPath;
+    // Always write to web/public when using the wrapper.
+  } else {
+    entryBb = join(scpcbRoot, opts.entryBb);
+    try {
+      await Deno.stat(entryBb);
+    } catch {
+      throw new Error(
+        `Entry BB not found at ${entryBb} (set --scpcb-root/--entry)`,
+      );
+    }
+    // If the user compiles something other than Main.bb, avoid overwriting the
+    // web loader's `web/public/scpcb.wasm` unless they explicitly asked for it.
+    if (
+      opts.entryBb.toLowerCase() != "main.bb" &&
+      Deno.args.every((a) => a !== "--out-web-public") &&
+      Deno.args.every((a) => a !== "--no-web-public")
+    ) {
+      opts.outWebPublicWasm = null;
+    }
   }
 
   if (opts.buildCompiler) {
@@ -513,22 +546,30 @@ const main = async () => {
     );
   }
 
-  // Add web-port export aliases when SCPCB lacks safe entrypoints.
-  const aliasResult = addExportAliases(bytes, [
-    { name: "__WebUpdate", target: "UpdateMainMenu" },
-    { name: "UpdateGame", target: "UpdateMainMenu" },
-    { name: "__WebInit", target: "UpdateMainMenu" },
-    { name: "InitOnce", target: "UpdateMainMenu" },
-  ]);
-  if (aliasResult.missing.length) {
-    console.warn(
-      `[scpcb] missing alias targets: ${[...new Set(aliasResult.missing)].join(", ")}`,
+  // Validate Web_* entrypoint exports (wrapper mode or post-hoc check).
+  {
+    const mod = new WebAssembly.Module(bytes as unknown as BufferSource);
+    const exported = new Set(
+      WebAssembly.Module.exports(mod).map((e) => e.name),
     );
-  }
-  if (aliasResult.added > 0) {
-    bytes = aliasResult.bytes;
-    await Deno.writeFile(opts.outRuntimeWasm, bytes);
-    console.log(`[scpcb] added ${aliasResult.added} export alias(es)`);
+    const missingWeb: string[] = [];
+    for (const name of REQUIRED_WEB_EXPORTS) {
+      if (!exported.has(name)) missingWeb.push(name);
+    }
+    if (missingWeb.length > 0) {
+      console.warn(
+        `[scpcb] ⚠ missing Web_* entrypoint exports: ${missingWeb.join(", ")}`,
+      );
+      if (opts.wrapperBb) {
+        throw new Error(
+          `wrapper build missing required Web_* exports: ${missingWeb.join(", ")}`,
+        );
+      }
+    } else {
+      console.log(
+        `[scpcb] ✓ all ${REQUIRED_WEB_EXPORTS.length} Web_* entrypoints exported`,
+      );
+    }
   }
 
   if (opts.outWebPublicWasm) {
@@ -550,6 +591,15 @@ const main = async () => {
       } catch {
         // Best-effort: source maps are optional.
       }
+    }
+  }
+
+  // ── Cleanup temp wrapper ──────────────────────────────────────
+  if (tempWrapperPath) {
+    try {
+      await Deno.remove(tempWrapperPath);
+    } catch {
+      // Best-effort cleanup.
     }
   }
 

@@ -3,6 +3,7 @@
 #elseif os(Linux) || os(Android) || os(FreeBSD) || os(OpenBSD) || os(Windows)
     import Glibc
 #endif
+import Foundation
 
 public enum CompilerLogLevel: Int, Comparable {
     case error = 0
@@ -43,12 +44,17 @@ public enum CompilerLogger {
     private static func log(_ at: CompilerLogLevel, _ message: String) {
         guard level >= at else { return }
         #if os(WASI)
-            // WASM/WASI doesn't support stderr
+            // WASM/WASI doesn't support stderr well in some hosts
             print(message)
         #elseif os(Windows)
             // Handle Windows if needed
+            print(message)
         #else
-            fputs(message + "\n", stderr)
+            if let data = (message + "\n").data(using: .utf8) {
+                FileHandle.standardError.write(data)
+            } else {
+                print(message)
+            }
         #endif
     }
 }

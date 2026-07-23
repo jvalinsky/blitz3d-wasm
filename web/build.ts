@@ -187,11 +187,15 @@ try {
 }
 
 const files: { path: string; size: number; type?: string }[] = [];
-files.push({
-  path: "scpcb.wasm",
-  size: (await Deno.stat(`${distRoot}scpcb.wasm`)).size,
-  type: "wasm",
-});
+try {
+  files.push({
+    path: "scpcb.wasm",
+    size: (await Deno.stat(`${distRoot}scpcb.wasm`)).size,
+    type: "wasm",
+  });
+} catch (e) {
+  if (!(e instanceof Deno.errors.NotFound)) throw e;
+}
 
 for (const filename of rootFiles) {
   const path = join(distRoot, filename);

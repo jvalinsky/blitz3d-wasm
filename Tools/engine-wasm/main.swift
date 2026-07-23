@@ -4,12 +4,14 @@
 
 import Blitz3DEngine
 
+#if os(WASI)
 // Mark all @_cdecl functions as used so they're exported
 @_silgen_name("_start")
 public func _start() {
     // This ensures the compiler doesn't strip the exports
     // We don't actually call these - just reference them
 }
+#endif
 
 // Explicitly mark for export using Swift's C-decl mechanism
 // This ensures WASM exports are generated

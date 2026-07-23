@@ -23,7 +23,9 @@
       "Sources/Runtime/thin/",
       "Tests/IntegrationTests/",
       "web-ide/dist/",
-      "**/*.html"
+      "visualization/",
+      "**/*.html",
+      "**/*.svg"
     ]
   },
   "lint": {
@@ -39,7 +41,9 @@
       "Sources/Runtime/thin/",
       "Tests/IntegrationTests/",
       "web-ide/dist/",
-      "**/*.html"
+      "visualization/",
+      "**/*.html",
+      "**/*.svg"
     ]
   },
   "tasks": {

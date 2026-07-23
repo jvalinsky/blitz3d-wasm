@@ -11,10 +11,11 @@
 ;   Web_EnterGame()      — enter gameplay mode
 ;   Web_LeaveGame()      — leave gameplay mode
 ;   Web_Tick(dt#)        — single-frame update dispatch
-
+Global WebPort% = 1
 Include "Main.bb"
 
 ; ── Web Mode Constants ──────────────────────────────────────────
+
 Const WEBMODE_BOOT    = 0
 Const WEBMODE_MENU    = 1
 Const WEBMODE_LOADING = 2

@@ -165,7 +165,9 @@ try {
 } catch (e) {
   console.warn(`[build] failed to copy KTX2 transcoders: ${e}`);
 }
-{
+
+// Validate Track B / Command Buffer Exports
+try {
   const wasmBytes = await Deno.readFile(`${distRoot}scpcb.wasm`);
   const r = checkCmdbufExports(wasmBytes);
   if (r.missing.length) {
@@ -175,6 +177,12 @@ try {
       }. ` +
         `Rebuild scpcb.wasm with --cmdbuf (e.g. \`deno task scpcb:compile:main\`).`,
     );
+  }
+} catch (e) {
+  if (e instanceof Deno.errors.NotFound) {
+    console.warn("[build] skipping Track B validation because scpcb.wasm was not found in dist.");
+  } else {
+    throw e;
   }
 }
 

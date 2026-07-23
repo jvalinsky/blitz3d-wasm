@@ -1,0 +1,1693 @@
+{
+  "summary": {
+    "root": "../scpcb",
+    "totals": {
+      "assetHits": 225,
+      "dynamicMeshCalls": 13
+    },
+    "extensions": {
+      "b3d": {
+        "hits": 114,
+        "unique": 81
+      },
+      "x": {
+        "hits": 102,
+        "unique": 22
+      },
+      "rmesh": {
+        "hits": 9,
+        "unique": 9
+      }
+    }
+  },
+  "assets": [
+    {
+      "file": "../scpcb/UpdateEvents.bb",
+      "line": 1459,
+      "text": "\t\t\t\t\t\t\te\\room\\Objects[1]=LoadAnimMesh_Strict(\"GFX\\npcs\\scp-1048.b3d\")",
+      "asset": "GFX\\npcs\\scp-1048.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/UpdateEvents.bb",
+      "line": 4031,
+      "text": "\t\t\t\t\t\te\\room\\Objects[2] =\tLoadMesh_Strict(\"GFX\\npcs\\duck_low_res.b3d\")",
+      "asset": "GFX\\npcs\\duck_low_res.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/UpdateEvents.bb",
+      "line": 4060,
+      "text": "\t\t\t\t\t\te\\room\\Objects[2] =\tLoadAnimMesh_Strict(\"GFX\\npcs\\scp-1048pp.b3d\")",
+      "asset": "GFX\\npcs\\scp-1048pp.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/UpdateEvents.bb",
+      "line": 5221,
+      "text": "\t\t\t\t\t\t\tn\\Model = \"GFX\\NPCs\\035.b3d\"",
+      "asset": "GFX\\NPCs\\035.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/UpdateEvents.bb",
+      "line": 5241,
+      "text": "\t\t\t\t\t\t\t\t\te\\room\\NPC[0]\\obj = LoadAnimMesh_Strict(\"GFX\\NPCs\\035.b3d\")",
+      "asset": "GFX\\NPCs\\035.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 52,
+      "text": "Global Door_LCZ = LoadMesh(\"..\\GFX\\map\\Door01.x\")",
+      "asset": "..\\GFX\\map\\Door01.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 54,
+      "text": "Global Door_HCZ_1 = LoadMesh(\"..\\GFX\\map\\heavydoor1.x\")",
+      "asset": "..\\GFX\\map\\heavydoor1.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 56,
+      "text": "Global Door_HCZ_2 = LoadMesh(\"..\\GFX\\map\\heavydoor2.x\")",
+      "asset": "..\\GFX\\map\\heavydoor2.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 58,
+      "text": "Global Door_Frame = LoadMesh(\"..\\GFX\\map\\DoorFrame.x\")",
+      "asset": "..\\GFX\\map\\DoorFrame.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 60,
+      "text": "Global Door_Button = LoadMesh(\"..\\GFX\\map\\Button.x\")",
+      "asset": "..\\GFX\\map\\Button.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 685,
+      "text": "\trt\\objPath = \"GFX\\map\\mt1.rmesh\"",
+      "asset": "GFX\\map\\mt1.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 689,
+      "text": "\trt\\objPath = \"GFX\\map\\mt2.rmesh\"",
+      "asset": "GFX\\map\\mt2.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 693,
+      "text": "\trt\\objPath = \"GFX\\map\\mt2c.rmesh\"",
+      "asset": "GFX\\map\\mt2c.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 697,
+      "text": "\trt\\objPath = \"GFX\\map\\mt3.rmesh\"",
+      "asset": "GFX\\map\\mt3.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 701,
+      "text": "\trt\\objPath = \"GFX\\map\\mt4.rmesh\"",
+      "asset": "GFX\\map\\mt4.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 705,
+      "text": "\trt\\objPath = \"GFX\\map\\mt_elevator.rmesh\"",
+      "asset": "GFX\\map\\mt_elevator.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 709,
+      "text": "\trt\\objPath = \"GFX\\map\\mt_generator.rmesh\"",
+      "asset": "GFX\\map\\mt_generator.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 954,
+      "text": "\t\t\t\t\tr\\forestwallobj = LoadMesh(\"..\\GFX\\map\\forest\\wall.b3d\")",
+      "asset": "..\\GFX\\map\\forest\\wall.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Save.bb",
+      "line": 1964,
+      "text": "\t\t\t\tr\\Objects[13]=LoadMesh_Strict(\"GFX\\map\\gateawall1.b3d\",r\\obj)",
+      "asset": "GFX\\map\\gateawall1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Save.bb",
+      "line": 1971,
+      "text": "\t\t\t\tr\\Objects[14]=LoadMesh_Strict(\"GFX\\map\\gateawall2.b3d\",r\\obj)",
+      "asset": "GFX\\map\\gateawall2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1102,
+      "text": "\tfr\\DetailMesh[1]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\treetest4.b3d\");1.b3d)",
+      "asset": "GFX\\map\\forest\\detail\\treetest4.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1104,
+      "text": "\tfr\\DetailMesh[2]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\rock.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\rock.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1105,
+      "text": "\tfr\\DetailMesh[3]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\rock2.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\rock2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1106,
+      "text": "\tfr\\DetailMesh[4]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\treetest5.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\treetest5.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1107,
+      "text": "\tfr\\DetailMesh[5]=LoadMesh_Strict(\"GFX\\map\\forest\\wall.b3d\")",
+      "asset": "GFX\\map\\forest\\wall.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1371,
+      "text": "\tfr\\DetailMesh[1]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\treetest4.b3d\");1.b3d)",
+      "asset": "GFX\\map\\forest\\detail\\treetest4.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1373,
+      "text": "\tfr\\DetailMesh[2]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\rock.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\rock.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1374,
+      "text": "\tfr\\DetailMesh[3]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\rock2.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\rock2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1375,
+      "text": "\tfr\\DetailMesh[4]=LoadMesh_Strict(\"GFX\\map\\forest\\detail\\treetest5.b3d\")",
+      "asset": "GFX\\map\\forest\\detail\\treetest5.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 1376,
+      "text": "\tfr\\DetailMesh[5]=LoadMesh_Strict(\"GFX\\map\\forest\\wall.b3d\")",
+      "asset": "GFX\\map\\forest\\wall.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2121,
+      "text": "\t\t\tr\\Objects[2] = LoadMesh_Strict(\"GFX\\map\\forest\\door_frame.b3d\")",
+      "asset": "GFX\\map\\forest\\door_frame.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2126,
+      "text": "\t\t\tr\\Objects[3] =  LoadMesh_Strict(\"GFX\\map\\forest\\door.b3d\")",
+      "asset": "GFX\\map\\forest\\door.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2393,
+      "text": "\t\t\tr\\Objects[13]=LoadMesh_Strict(\"GFX\\map\\gateawall1.b3d\",r\\obj)",
+      "asset": "GFX\\map\\gateawall1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2399,
+      "text": "\t\t\tr\\Objects[14]=LoadMesh_Strict(\"GFX\\map\\gateawall2.b3d\",r\\obj)",
+      "asset": "GFX\\map\\gateawall2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2408,
+      "text": "\t\t\tr\\Objects[16] = LoadMesh_Strict(\"GFX\\map\\gatea_hitbox1.b3d\",r\\obj)",
+      "asset": "GFX\\map\\gatea_hitbox1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2544,
+      "text": "\t\t\tr\\Objects[3] = LoadMesh_Strict(\"GFX\\map\\372_hb.b3d\",r\\obj)",
+      "asset": "GFX\\map\\372_hb.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 2572,
+      "text": "\t\t\tr\\Objects[0] = LoadAnimMesh_Strict(\"GFX\\map\\079.b3d\")",
+      "asset": "GFX\\map\\079.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3060,
+      "text": "\t\t\tr\\Objects[1] = LoadMesh_Strict(\"GFX\\map\\008_2.b3d\")",
+      "asset": "GFX\\map\\008_2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3329,
+      "text": "\t\t\tr\\Objects[20] = LoadMesh_Strict(\"GFX\\map\\room3storage_hb.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room3storage_hb.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3568,
+      "text": "\t\t\tIf r\\Objects[0]=0 Then r\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\fan.b3d\")",
+      "asset": "GFX\\map\\fan.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3602,
+      "text": "\t\t\tr\\Objects[2] = LoadMesh_Strict(\"GFX\\map\\room012_2.b3d\")",
+      "asset": "GFX\\map\\room012_2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3615,
+      "text": "\t\t\tr\\Objects[4] = LoadMesh_Strict(\"GFX\\map\\room012_3.b3d\")",
+      "asset": "GFX\\map\\room012_3.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3761,
+      "text": "\t\t\tr\\Objects[3] = LoadMesh_Strict(\"GFX\\npcs\\duck_low_res.b3d\")",
+      "asset": "GFX\\npcs\\duck_low_res.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3890,
+      "text": "\t\t\tr\\Objects[0] = LoadMesh_Strict(\"GFX\\npcs\\duck_low_res.b3d\")",
+      "asset": "GFX\\npcs\\duck_low_res.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3981,
+      "text": "\t\t\tr\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\IntroDesk.b3d\")",
+      "asset": "GFX\\map\\IntroDesk.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 3989,
+      "text": "\t\t\tr\\Objects[1] = LoadMesh_Strict(\"GFX\\map\\IntroDrawer.b3d\")",
+      "asset": "GFX\\map\\IntroDrawer.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4312,
+      "text": "\t\t\tIf r\\Objects[7]=0 Then r\\Objects[7] = LoadMesh_Strict(\"GFX\\map\\room2tesla_caution.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room2tesla_caution.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4346,
+      "text": "\t\t\tr\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\914key.x\")",
+      "asset": "GFX\\map\\914key.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4347,
+      "text": "\t\t\tr\\Objects[1] = LoadMesh_Strict(\"GFX\\map\\914knob.x\")",
+      "asset": "GFX\\map\\914knob.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4511,
+      "text": "\t\t\tr\\Objects[9] = LoadMesh_Strict(\"GFX\\map\\173_2.b3d\",r\\obj)",
+      "asset": "GFX\\map\\173_2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4515,
+      "text": "\t\t\tr\\Objects[10] = LoadMesh_Strict(\"GFX\\map\\intro_labels.b3d\",r\\obj)",
+      "asset": "GFX\\map\\intro_labels.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4569,
+      "text": "\t\t\tr\\Objects[6] = LoadMesh_Strict(\"GFX\\map\\room1062.b3d\")",
+      "asset": "GFX\\map\\room1062.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4823,
+      "text": "\t\t\tr\\Objects[8] = LoadMesh_Strict(\"GFX\\map\\forest\\door_frame.b3d\")",
+      "asset": "GFX\\map\\forest\\door_frame.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4829,
+      "text": "\t\t\tr\\Objects[9] =  LoadMesh_Strict(\"GFX\\map\\forest\\door.b3d\")",
+      "asset": "GFX\\map\\forest\\door.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4862,
+      "text": "\t\t\tr\\Objects[14] = LoadMesh_Strict(\"GFX\\map\\1123_hb.b3d\",r\\obj)",
+      "asset": "GFX\\map\\1123_hb.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4869,
+      "text": "\t\t\tLocal hallway = LoadMesh_Strict(\"GFX\\map\\pocketdimension2.b3d\") ;the tunnels in the first room",
+      "asset": "GFX\\map\\pocketdimension2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4870,
+      "text": "\t\t\tr\\Objects[8]=LoadMesh_Strict(\"GFX\\map\\pocketdimension3.b3d\")\t;the room with the throne, moving pillars etc ",
+      "asset": "GFX\\map\\pocketdimension3.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4871,
+      "text": "\t\t\tr\\Objects[9]=LoadMesh_Strict(\"GFX\\map\\pocketdimension4.b3d\") ;the flying pillar",
+      "asset": "GFX\\map\\pocketdimension4.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4874,
+      "text": "\t\t\tr\\Objects[11]=LoadMesh_Strict(\"GFX\\map\\pocketdimension5.b3d\") ;the pillar room",
+      "asset": "GFX\\map\\pocketdimension5.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 4877,
+      "text": "\t\t\tterrain = LoadMesh_Strict(\"GFX\\map\\pocketdimensionterrain.b3d\")",
+      "asset": "GFX\\map\\pocketdimensionterrain.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5104,
+      "text": "\t\t\tIf r\\Objects[3]=0 Then r\\Objects[3] = LoadMesh_Strict(\"GFX\\map\\room2gw_pipes.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room2gw_pipes.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5170,
+      "text": "\t\t\tIf r\\Objects[3]=0 Then r\\Objects[3] = LoadMesh_Strict(\"GFX\\map\\room3gw_pipes.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room3gw_pipes.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5228,
+      "text": "\t\t\tr\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\room3offices_hb.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room3offices_hb.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5421,
+      "text": "\t\t\tIf r\\Objects[0]=0 Then r\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\room3z2_hb.b3d\",r\\obj)",
+      "asset": "GFX\\map\\room3z2_hb.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5464,
+      "text": "\t\t\tr\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\medibay_props.b3d\",r\\obj)",
+      "asset": "GFX\\map\\medibay_props.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 5503,
+      "text": "\t\t\tr\\Levers[1] = LoadMesh_Strict(\"GFX\\map\\dimension1499\\1499object0_cull.b3d\",r\\obj)",
+      "asset": "GFX\\map\\dimension1499\\1499object0_cull.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Menu.bb",
+      "line": 2265,
+      "text": "\tMenu_TestIMG = Create3DIcon(200,200,\"GFX\\map\\room3z3_opt.rmesh\",0,-0.75,1,0,0,0,menuroomscale#,menuroomscale#,menuroomscale#,True)",
+      "asset": "GFX\\map\\room3z3_opt.rmesh",
+      "ext": "rmesh"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 92,
+      "text": "\t\t\tn\\obj = LoadMesh_Strict(\"GFX\\npcs\\173_2.b3d\")",
+      "asset": "GFX\\npcs\\173_2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 107,
+      "text": "\t\t\tn\\obj2 = LoadMesh_Strict(\"GFX\\173box.b3d\")",
+      "asset": "GFX\\173box.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 121,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\106_2.b3d\")",
+      "asset": "GFX\\npcs\\106_2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 146,
+      "text": "\t\t\tn\\obj = CopyEntity(GuardObj) ;LoadAnimMesh_Strict(\"GFX\\npcs\\mtf.b3d\")",
+      "asset": "GFX\\npcs\\mtf.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 163,
+      "text": "\t\t\tn\\obj = CopyEntity(MTFObj) ;LoadAnimMesh_Strict(\"GFX\\npcs\\mtf.b3d\")",
+      "asset": "GFX\\npcs\\mtf.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 225,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\372.b3d\")",
+      "asset": "GFX\\npcs\\372.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 235,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\bll.b3d\")",
+      "asset": "GFX\\npcs\\bll.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 250,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\scp096.b3d\")",
+      "asset": "GFX\\npcs\\scp096.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 320,
+      "text": "\t\t\tn\\obj = CopyEntity(ApacheObj);LoadAnimMesh_Strict(\"GFX\\apache.b3d\")",
+      "asset": "GFX\\apache.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 322,
+      "text": "\t\t\tn\\obj2 = CopyEntity(ApacheRotorObj);LoadAnimMesh_Strict(\"GFX\\apacherotor.b3d\",n\\obj)",
+      "asset": "GFX\\apacherotor.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 331,
+      "text": "\t\t\tn\\obj3 = LoadAnimMesh_Strict(\"GFX\\apacherotor2.b3d\",n\\obj)",
+      "asset": "GFX\\apacherotor2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 369,
+      "text": "\t\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\NPCs\\035tentacle.b3d\")",
+      "asset": "GFX\\NPCs\\035tentacle.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 382,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\forestmonster.b3d\")",
+      "asset": "GFX\\npcs\\forestmonster.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 435,
+      "text": "\t\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\NPCs\\scp-939.b3d\")",
+      "asset": "GFX\\NPCs\\scp-939.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 480,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\NPCs\\scp-066.b3d\")",
+      "asset": "GFX\\NPCs\\scp-066.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 515,
+      "text": "\t\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\scp-966.b3d\")",
+      "asset": "GFX\\npcs\\scp-966.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 534,
+      "text": "\t\t\tn\\obj =\tLoadAnimMesh_Strict(\"GFX\\npcs\\scp-1048a.b3d\")",
+      "asset": "GFX\\npcs\\scp-1048a.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 555,
+      "text": "\t\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\1499-1.b3d\")",
+      "asset": "GFX\\npcs\\1499-1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/NPCs.bb",
+      "line": 574,
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(\"GFX\\npcs\\zombiesurgeon.b3d\")",
+      "asset": "GFX\\npcs\\zombiesurgeon.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 118,
+      "text": "\tit = CreateItemTemplate(\"Some SCP-420-J\", \"420\", \"GFX\\items\\420.x\", \"GFX\\items\\INV420.jpg\", \"\", 0.0005)",
+      "asset": "GFX\\items\\420.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 121,
+      "text": "\tCreateItemTemplate(\"Level 1 Key Card\", \"key1\",  \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkey1.jpg\", \"\", 0.0004,\"GFX\\items\\keycard1.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 122,
+      "text": "\tCreateItemTemplate(\"Level 2 Key Card\", \"key2\",  \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkey2.jpg\", \"\", 0.0004,\"GFX\\items\\keycard2.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 123,
+      "text": "\tCreateItemTemplate(\"Level 3 Key Card\", \"key3\",  \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkey3.jpg\", \"\", 0.0004,\"GFX\\items\\keycard3.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 124,
+      "text": "\tCreateItemTemplate(\"Level 4 Key Card\", \"key4\",  \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkey4.jpg\", \"\", 0.0004,\"GFX\\items\\keycard4.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 125,
+      "text": "\tCreateItemTemplate(\"Level 5 Key Card\", \"key5\", \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkey5.jpg\", \"\", 0.0004,\"GFX\\items\\keycard5.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 126,
+      "text": "\tCreateItemTemplate(\"Playing Card\", \"misc\", \"GFX\\items\\keycard.x\", \"GFX\\items\\INVcard.jpg\", \"\", 0.0004,\"GFX\\items\\card.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 127,
+      "text": "\tCreateItemTemplate(\"Mastercard\", \"misc\", \"GFX\\items\\keycard.x\", \"GFX\\items\\INVmastercard.jpg\", \"\", 0.0004,\"GFX\\items\\mastercard.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 128,
+      "text": "\tCreateItemTemplate(\"Key Card Omni\", \"key6\", \"GFX\\items\\keycard.x\", \"GFX\\items\\INVkeyomni.jpg\", \"\", 0.0004,\"GFX\\items\\keycardomni.jpg\")",
+      "asset": "GFX\\items\\keycard.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 130,
+      "text": "\tit = CreateItemTemplate(\"SCP-860\", \"scp860\", \"GFX\\items\\key.b3d\", \"GFX\\items\\INVkey.jpg\", \"\", 0.001)",
+      "asset": "GFX\\items\\key.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 133,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-079\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc079.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 134,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-895\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc895.jpg\", 0.003) : it\\sound = 0 ",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 135,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-860\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc860.jpg\", 0.003) : it\\sound = 0 \t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 136,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-860-1\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc8601.jpg\", 0.003) : it\\sound = 0 \t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 137,
+      "text": "\tit = CreateItemTemplate(\"SCP-093 Recovered Materials\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc093rm.jpg\", 0.003) : it\\sound = 0 \t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 138,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-106\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc106.jpg\", 0.003) : it\\sound = 0\t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 139,
+      "text": "\tit = CreateItemTemplate(\"Dr. Allok's Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc106_2.jpg\", 0.0025) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 140,
+      "text": "\tit = CreateItemTemplate(\"Recall Protocol RP-106-N\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docRP.jpg\", 0.0025) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 141,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-682\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc682.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 142,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-173\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc173.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 143,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-372\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc372.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 144,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-049\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc049.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 145,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-096\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc096.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 146,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-008\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc008.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 147,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-012\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc012.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 148,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-500\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc500.png\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 149,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-714\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc714.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 150,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-513\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc513.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 151,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-035\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc035.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 152,
+      "text": "\tit = CreateItemTemplate(\"SCP-035 Addendum\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc035ad.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 153,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-939\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc939.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 154,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-966\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc966.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 155,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-970\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc970.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 156,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-1048\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1048.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 157,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-1123\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1123.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 158,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-1162\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1162.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 159,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-1499\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1499.png\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 160,
+      "text": "\tit = CreateItemTemplate(\"Incident Report SCP-1048-A\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1048a.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 162,
+      "text": "\tit = CreateItemTemplate(\"Drawing\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc1048.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 164,
+      "text": "\tit = CreateItemTemplate(\"Leaflet\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\leaflet.jpg\", 0.003, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 166,
+      "text": "\tit = CreateItemTemplate(\"Dr. L's Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docL1.jpg\", 0.0025, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 167,
+      "text": "\tit = CreateItemTemplate(\"Dr L's Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docL2.jpg\", 0.0025, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 168,
+      "text": "\tit = CreateItemTemplate(\"Blood-stained Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docL3.jpg\", 0.0025, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 169,
+      "text": "\tit = CreateItemTemplate(\"Dr. L's Burnt Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVbn.jpg\", \"GFX\\items\\docL4.jpg\", 0.0025, \"GFX\\items\\BurntNoteTexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 170,
+      "text": "\tit = CreateItemTemplate(\"Dr L's Burnt Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVbn.jpg\", \"GFX\\items\\docL5.jpg\", 0.0025, \"GFX\\items\\BurntNoteTexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 171,
+      "text": "\tit = CreateItemTemplate(\"Scorched Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVbn.jpg\", \"GFX\\items\\docL6.jpg\", 0.0025, \"GFX\\items\\BurntNoteTexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 173,
+      "text": "\tit = CreateItemTemplate(\"Journal Page\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docGonzales.jpg\", 0.0025) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 176,
+      "text": "\tit = CreateItemTemplate(\"Log #1\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\f4.jpg\", 0.004, \"GFX\\items\\f4.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 177,
+      "text": "\tit = CreateItemTemplate(\"Log #2\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\f5.jpg\", 0.004, \"GFX\\items\\f4.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 178,
+      "text": "\tit = CreateItemTemplate(\"Log #3\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\f6.jpg\", 0.004, \"GFX\\items\\f4.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 180,
+      "text": "\tit = CreateItemTemplate(\"Strange Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docStrange.jpg\", 0.0025, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 182,
+      "text": "\tit = CreateItemTemplate(\"Nuclear Device Document\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docNDP.jpg\", 0.003) : it\\sound = 0\t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 183,
+      "text": "\tit = CreateItemTemplate(\"Class D Orientation Leaflet\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docORI.jpg\", 0.003) : it\\sound = 0\t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 185,
+      "text": "\tit = CreateItemTemplate(\"Note from Daniel\", \"paper\", \"GFX\\items\\note.x\", \"GFX\\items\\INVnote2.jpg\", \"GFX\\items\\docdan.jpg\", 0.0025) : it\\sound = 0",
+      "asset": "GFX\\items\\note.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 187,
+      "text": "\tit = CreateItemTemplate(\"Burnt Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVbn.jpg\", \"GFX\\items\\bn.it\", 0.003, \"GFX\\items\\BurntNoteTexture.jpg\")",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 190,
+      "text": "\tit = CreateItemTemplate(\"Mysterious Note\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\sn.it\", 0.003, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0\t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 192,
+      "text": "\tit = CreateItemTemplate(\"Mobile Task Forces\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docMTF.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 193,
+      "text": "\tit = CreateItemTemplate(\"Security Clearance Levels\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docSC.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 194,
+      "text": "\tit = CreateItemTemplate(\"Object Classes\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docOBJC.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 195,
+      "text": "\tit = CreateItemTemplate(\"Document\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docRAND3.jpg\", 0.003) : it\\sound = 0 ",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 196,
+      "text": "\tit = CreateItemTemplate(\"Addendum: 5/14 Test Log\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docRAND2.jpg\", 0.003, \"GFX\\items\\notetexture.jpg\") : it\\sound = 0 ",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 197,
+      "text": "\tit = CreateItemTemplate(\"Notification\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVnote.jpg\", \"GFX\\items\\docRAND1.jpg\", 0.003, \"GFX\\items\\notetexture.jpg\") :it\\sound = 0 \t",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 198,
+      "text": "\tit = CreateItemTemplate(\"Incident Report SCP-106-0204\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docIR106.jpg\", 0.003) : it\\sound = 0 ",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 200,
+      "text": "\tit = CreateItemTemplate(\"Ballistic Vest\", \"vest\", \"GFX\\items\\vest.x\", \"GFX\\items\\INVvest.jpg\", \"\", 0.02,\"GFX\\items\\Vest.png\") : it\\sound = 2",
+      "asset": "GFX\\items\\vest.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 201,
+      "text": "\tit = CreateItemTemplate(\"Heavy Ballistic Vest\", \"finevest\", \"GFX\\items\\vest.x\", \"GFX\\items\\INVvest.jpg\", \"\", 0.022,\"GFX\\items\\Vest.png\")",
+      "asset": "GFX\\items\\vest.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 203,
+      "text": "\tit = CreateItemTemplate(\"Bulky Ballistic Vest\", \"veryfinevest\", \"GFX\\items\\vest.x\", \"GFX\\items\\INVvest.jpg\", \"\", 0.025,\"GFX\\items\\Vest.png\")",
+      "asset": "GFX\\items\\vest.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 206,
+      "text": "\tit = CreateItemTemplate(\"Hazmat Suit\", \"hazmatsuit\", \"GFX\\items\\hazmat.b3d\", \"GFX\\items\\INVhazmat.jpg\", \"\", 0.013)",
+      "asset": "GFX\\items\\hazmat.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 208,
+      "text": "\tit = CreateItemTemplate(\"Hazmat Suit\", \"hazmatsuit2\", \"GFX\\items\\hazmat.b3d\", \"GFX\\items\\INVhazmat.jpg\", \"\", 0.013)",
+      "asset": "GFX\\items\\hazmat.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 210,
+      "text": "\tit = CreateItemTemplate(\"Heavy Hazmat Suit\", \"hazmatsuit3\", \"GFX\\items\\hazmat.b3d\", \"GFX\\items\\INVhazmat.jpg\", \"\", 0.013)",
+      "asset": "GFX\\items\\hazmat.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 213,
+      "text": "\tit = CreateItemTemplate(\"cup\", \"cup\", \"GFX\\items\\cup.x\", \"GFX\\items\\INVcup.jpg\", \"\", 0.04) : it\\sound = 2",
+      "asset": "GFX\\items\\cup.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 215,
+      "text": "\tit = CreateItemTemplate(\"Empty Cup\", \"emptycup\", \"GFX\\items\\cup.x\", \"GFX\\items\\INVcup.jpg\", \"\", 0.04) : it\\sound = 2\t",
+      "asset": "GFX\\items\\cup.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 217,
+      "text": "\tit = CreateItemTemplate(\"SCP-500-01\", \"scp500\", \"GFX\\items\\pill.b3d\", \"GFX\\items\\INVpill.jpg\", \"\", 0.0001) : it\\sound = 2",
+      "asset": "GFX\\items\\pill.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 220,
+      "text": "\tit = CreateItemTemplate(\"First Aid Kit\", \"firstaid\", \"GFX\\items\\firstaid.x\", \"GFX\\items\\INVfirstaid.jpg\", \"\", 0.05)",
+      "asset": "GFX\\items\\firstaid.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 221,
+      "text": "\tit = CreateItemTemplate(\"Small First Aid Kit\", \"finefirstaid\", \"GFX\\items\\firstaid.x\", \"GFX\\items\\INVfirstaid.jpg\", \"\", 0.03)",
+      "asset": "GFX\\items\\firstaid.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 222,
+      "text": "\tit = CreateItemTemplate(\"Blue First Aid Kit\", \"firstaid2\", \"GFX\\items\\firstaid.x\", \"GFX\\items\\INVfirstaid2.jpg\", \"\", 0.03, \"GFX\\items\\firstaidkit2.jpg\")",
+      "asset": "GFX\\items\\firstaid.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 223,
+      "text": "\tit = CreateItemTemplate(\"Strange Bottle\", \"veryfinefirstaid\", \"GFX\\items\\eyedrops.b3d\", \"GFX\\items\\INVbottle.jpg\", \"\", 0.002, \"GFX\\items\\bottle.jpg\")\t",
+      "asset": "GFX\\items\\eyedrops.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 225,
+      "text": "\tit = CreateItemTemplate(\"Gas Mask\", \"gasmask\", \"GFX\\items\\gasmask.b3d\", \"GFX\\items\\INVgasmask.jpg\", \"\", 0.02) : it\\sound = 2",
+      "asset": "GFX\\items\\gasmask.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 226,
+      "text": "\tit = CreateItemTemplate(\"Gas Mask\", \"supergasmask\", \"GFX\\items\\gasmask.b3d\", \"GFX\\items\\INVgasmask.jpg\", \"\", 0.021) : it\\sound = 2",
+      "asset": "GFX\\items\\gasmask.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 227,
+      "text": "\tit = CreateItemTemplate(\"Heavy Gas Mask\", \"gasmask3\", \"GFX\\items\\gasmask.b3d\", \"GFX\\items\\INVgasmask.jpg\", \"\", 0.021) : it\\sound = 2",
+      "asset": "GFX\\items\\gasmask.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 229,
+      "text": "\tit = CreateItemTemplate(\"Origami\", \"misc\", \"GFX\\items\\origami.b3d\", \"GFX\\items\\INVorigami.jpg\", \"\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\origami.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 231,
+      "text": "\tCreateItemTemplate(\"Electronical components\", \"misc\", \"GFX\\items\\electronics.x\", \"GFX\\items\\INVelectronics.jpg\", \"\", 0.0011)",
+      "asset": "GFX\\items\\electronics.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 233,
+      "text": "\tit = CreateItemTemplate(\"Metal Panel\", \"scp148\", \"GFX\\items\\metalpanel.x\", \"GFX\\items\\INVmetalpanel.jpg\", \"\", RoomScale) : it\\sound = 2",
+      "asset": "GFX\\items\\metalpanel.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 234,
+      "text": "\tit = CreateItemTemplate(\"SCP-148 Ingot\", \"scp148ingot\", \"GFX\\items\\scp148.x\", \"GFX\\items\\INVscp148.jpg\", \"\", RoomScale) : it\\sound = 2",
+      "asset": "GFX\\items\\scp148.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 236,
+      "text": "\tCreateItemTemplate(\"S-NAV 300 Navigator\", \"nav\", \"GFX\\items\\navigator.x\", \"GFX\\items\\INVnavigator.jpg\", \"GFX\\items\\navigator.png\", 0.0008)",
+      "asset": "GFX\\items\\navigator.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 237,
+      "text": "\tCreateItemTemplate(\"S-NAV Navigator\", \"nav\", \"GFX\\items\\navigator.x\", \"GFX\\items\\INVnavigator.jpg\", \"GFX\\items\\navigator.png\", 0.0008)",
+      "asset": "GFX\\items\\navigator.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 238,
+      "text": "\tCreateItemTemplate(\"S-NAV Navigator Ultimate\", \"nav\", \"GFX\\items\\navigator.x\", \"GFX\\items\\INVnavigator.jpg\", \"GFX\\items\\navigator.png\", 0.0008)",
+      "asset": "GFX\\items\\navigator.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 239,
+      "text": "\tCreateItemTemplate(\"S-NAV 310 Navigator\", \"nav\", \"GFX\\items\\navigator.x\", \"GFX\\items\\INVnavigator.jpg\", \"GFX\\items\\navigator.png\", 0.0008)",
+      "asset": "GFX\\items\\navigator.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 241,
+      "text": "\tCreateItemTemplate(\"Radio Transceiver\", \"radio\", \"GFX\\items\\radio.x\", \"GFX\\items\\INVradio.jpg\", \"GFX\\items\\radioHUD.png\", 1.0);0.0010)",
+      "asset": "GFX\\items\\radio.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 242,
+      "text": "\tCreateItemTemplate(\"Radio Transceiver\", \"fineradio\", \"GFX\\items\\radio.x\", \"GFX\\items\\INVradio.jpg\", \"GFX\\items\\radioHUD.png\", 1.0)",
+      "asset": "GFX\\items\\radio.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 243,
+      "text": "\tCreateItemTemplate(\"Radio Transceiver\", \"veryfineradio\", \"GFX\\items\\radio.x\", \"GFX\\items\\INVradio.jpg\", \"GFX\\items\\radioHUD.png\", 1.0)",
+      "asset": "GFX\\items\\radio.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 244,
+      "text": "\tCreateItemTemplate(\"Radio Transceiver\", \"18vradio\", \"GFX\\items\\radio.x\", \"GFX\\items\\INVradio.jpg\", \"GFX\\items\\radioHUD.png\", 1.02)",
+      "asset": "GFX\\items\\radio.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 246,
+      "text": "\tit = CreateItemTemplate(\"Cigarette\", \"cigarette\", \"GFX\\items\\420.x\", \"GFX\\items\\INV420.jpg\", \"\", 0.0004) : it\\sound = 2",
+      "asset": "GFX\\items\\420.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 248,
+      "text": "\tit = CreateItemTemplate(\"Joint\", \"420s\", \"GFX\\items\\420.x\", \"GFX\\items\\INV420.jpg\", \"\", 0.0004) : it\\sound = 2",
+      "asset": "GFX\\items\\420.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 250,
+      "text": "\tit = CreateItemTemplate(\"Smelly Joint\", \"420s\", \"GFX\\items\\420.x\", \"GFX\\items\\INV420.jpg\", \"\", 0.0004) : it\\sound = 2",
+      "asset": "GFX\\items\\420.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 252,
+      "text": "\tit = CreateItemTemplate(\"Severed Hand\", \"hand\", \"GFX\\items\\severedhand.b3d\", \"GFX\\items\\INVhand.jpg\", \"\", 0.04) : it\\sound = 2",
+      "asset": "GFX\\items\\severedhand.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 253,
+      "text": "\tit = CreateItemTemplate(\"Black Severed Hand\", \"hand2\", \"GFX\\items\\severedhand.b3d\", \"GFX\\items\\INVhand2.jpg\", \"\", 0.04, \"GFX\\items\\shand2.png\") : it\\sound = 2",
+      "asset": "GFX\\items\\severedhand.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 255,
+      "text": "\tCreateItemTemplate(\"9V Battery\", \"bat\", \"GFX\\items\\Battery\\Battery.x\", \"GFX\\items\\Battery\\INVbattery9v.jpg\", \"\", 0.008)",
+      "asset": "GFX\\items\\Battery\\Battery.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 256,
+      "text": "\tCreateItemTemplate(\"18V Battery\", \"18vbat\", \"GFX\\items\\Battery\\Battery.x\", \"GFX\\items\\Battery\\INVbattery18v.jpg\", \"\", 0.01, \"GFX\\items\\Battery\\Battery 18V.jpg\")",
+      "asset": "GFX\\items\\Battery\\Battery.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 257,
+      "text": "\tCreateItemTemplate(\"Strange Battery\", \"killbat\", \"GFX\\items\\Battery\\Battery.x\", \"GFX\\items\\Battery\\INVbattery22900.jpg\", \"\", 0.01,\"GFX\\items\\Battery\\Strange Battery.jpg\")",
+      "asset": "GFX\\items\\Battery\\Battery.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 259,
+      "text": "\tCreateItemTemplate(\"Eyedrops\", \"fineeyedrops\", \"GFX\\items\\eyedrops.b3d\", \"GFX\\items\\INVeyedrops.jpg\", \"\", 0.0012, \"GFX\\items\\eyedrops.jpg\")",
+      "asset": "GFX\\items\\eyedrops.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 260,
+      "text": "\tCreateItemTemplate(\"Eyedrops\", \"supereyedrops\", \"GFX\\items\\eyedrops.b3d\", \"GFX\\items\\INVeyedrops.jpg\", \"\", 0.0012, \"GFX\\items\\eyedrops.jpg\")",
+      "asset": "GFX\\items\\eyedrops.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 261,
+      "text": "\tCreateItemTemplate(\"ReVision Eyedrops\", \"eyedrops\",\"GFX\\items\\eyedrops.b3d\", \"GFX\\items\\INVeyedrops.jpg\", \"\", 0.0012, \"GFX\\items\\eyedrops.jpg\")",
+      "asset": "GFX\\items\\eyedrops.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 262,
+      "text": "\tCreateItemTemplate(\"RedVision Eyedrops\", \"eyedrops\", \"GFX\\items\\eyedrops.b3d\", \"GFX\\items\\INVeyedropsred.jpg\", \"\", 0.0012,\"GFX\\items\\eyedropsred.jpg\")",
+      "asset": "GFX\\items\\eyedrops.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 264,
+      "text": "\tit = CreateItemTemplate(\"SCP-714\", \"scp714\", \"GFX\\items\\scp714.b3d\", \"GFX\\items\\INV714.jpg\", \"\", 0.3)",
+      "asset": "GFX\\items\\scp714.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 267,
+      "text": "\tit = CreateItemTemplate(\"SCP-1025\", \"scp1025\", \"GFX\\items\\scp1025.b3d\", \"GFX\\items\\INV1025.jpg\", \"\", 0.1)",
+      "asset": "GFX\\items\\scp1025.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 270,
+      "text": "\tit = CreateItemTemplate(\"SCP-513\", \"scp513\", \"GFX\\items\\513.x\", \"GFX\\items\\INV513.jpg\", \"\", 0.1)",
+      "asset": "GFX\\items\\513.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 275,
+      "text": "\tit = CreateItemTemplate(\"Clipboard\", \"clipboard\", \"GFX\\items\\clipboard.b3d\", \"GFX\\items\\INVclipboard.jpg\", \"\", 0.003, \"\", \"GFX\\items\\INVclipboard2.jpg\", 1)",
+      "asset": "GFX\\items\\clipboard.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 277,
+      "text": "\tit = CreateItemTemplate(\"SCP-1123\", \"1123\", \"GFX\\items\\HGIB_Skull1.b3d\", \"GFX\\items\\inv1123.jpg\", \"\", 0.015) : it\\sound = 2",
+      "asset": "GFX\\items\\HGIB_Skull1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 282,
+      "text": "\tit = CreateItemTemplate(\"Night Vision Goggles\", \"supernv\", \"GFX\\items\\NVG.b3d\", \"GFX\\items\\INVsupernightvision.jpg\", \"\", 0.02) : it\\sound = 2",
+      "asset": "GFX\\items\\NVG.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 283,
+      "text": "\tit = CreateItemTemplate(\"Night Vision Goggles\", \"nvgoggles\", \"GFX\\items\\NVG.b3d\", \"GFX\\items\\INVnightvision.jpg\", \"\", 0.02) : it\\sound = 2",
+      "asset": "GFX\\items\\NVG.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 284,
+      "text": "\tit = CreateItemTemplate(\"Night Vision Goggles\", \"finenvgoggles\", \"GFX\\items\\NVG.b3d\", \"GFX\\items\\INVveryfinenightvision.jpg\", \"\", 0.02) : it\\sound = 2",
+      "asset": "GFX\\items\\NVG.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 286,
+      "text": "\tit = CreateItemTemplate(\"Syringe\", \"syringe\", \"GFX\\items\\Syringe\\syringe.b3d\", \"GFX\\items\\Syringe\\inv.png\", \"\", 0.005) : it\\sound = 2",
+      "asset": "GFX\\items\\Syringe\\syringe.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 287,
+      "text": "\tit = CreateItemTemplate(\"Syringe\", \"finesyringe\", \"GFX\\items\\Syringe\\syringe.b3d\", \"GFX\\items\\Syringe\\inv.png\", \"\", 0.005) : it\\sound = 2",
+      "asset": "GFX\\items\\Syringe\\syringe.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 288,
+      "text": "\tit = CreateItemTemplate(\"Syringe\", \"veryfinesyringe\", \"GFX\\items\\Syringe\\syringe.b3d\", \"GFX\\items\\Syringe\\inv.png\", \"\", 0.005) : it\\sound = 2",
+      "asset": "GFX\\items\\Syringe\\syringe.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 293,
+      "text": "\tit = CreateItemTemplate(\"SCP-1499\",\"scp1499\",\"GFX\\items\\SCP-1499.b3d\",\"GFX\\items\\INVscp1499.jpg\", \"\", 0.023) : it\\sound = 2",
+      "asset": "GFX\\items\\SCP-1499.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 294,
+      "text": "\tit = CreateItemTemplate(\"SCP-1499\",\"super1499\",\"GFX\\items\\SCP-1499.b3d\",\"GFX\\items\\INVscp1499.jpg\", \"\", 0.023) : it\\sound = 2",
+      "asset": "GFX\\items\\SCP-1499.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 295,
+      "text": "\tCreateItemTemplate(\"Emily Ross' Badge\", \"badge\", \"GFX\\items\\badge.x\", \"GFX\\items\\INVbadge.jpg\", \"GFX\\items\\badge1.jpg\", 0.0001, \"GFX\\items\\badge1_tex.jpg\")",
+      "asset": "GFX\\items\\badge.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 296,
+      "text": "\tit = CreateItemTemplate(\"Lost Key\", \"key\", \"GFX\\items\\key.b3d\", \"GFX\\items\\INV1162_1.jpg\", \"\", 0.001, \"GFX\\items\\key2.png\",\"\",0,1+2+8) : it\\sound = 3",
+      "asset": "GFX\\items\\key.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 297,
+      "text": "\tit = CreateItemTemplate(\"Disciplinary Hearing DH-S-4137-17092\", \"oldpaper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\dh.s\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 298,
+      "text": "\tit = CreateItemTemplate(\"Coin\", \"coin\", \"GFX\\items\\key.b3d\", \"GFX\\items\\INVcoin.jpg\", \"\", 0.0005, \"GFX\\items\\coin.png\",\"\",0,1+2+8) : it\\sound = 3",
+      "asset": "GFX\\items\\key.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 299,
+      "text": "\tit = CreateItemTemplate(\"Movie Ticket\", \"ticket\", \"GFX\\items\\key.b3d\", \"GFX\\items\\INVticket.jpg\", \"GFX\\items\\ticket.png\", 0.002, \"GFX\\items\\tickettexture.png\",\"\",0,1+2+8) : it\\sound = 0",
+      "asset": "GFX\\items\\key.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 300,
+      "text": "\tCreateItemTemplate(\"Old Badge\", \"badge\", \"GFX\\items\\badge.x\", \"GFX\\items\\INVoldbadge.jpg\", \"GFX\\items\\badge2.png\", 0.0001, \"GFX\\items\\badge2_tex.png\",\"\",0,1+2+8)",
+      "asset": "GFX\\items\\badge.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 302,
+      "text": "\tit = CreateItemTemplate(\"Quarter\",\"25ct\", \"GFX\\items\\key.b3d\", \"GFX\\items\\INVcoin.jpg\", \"\", 0.0005, \"GFX\\items\\coin.png\",\"\",0,1+2+8) : it\\sound = 3",
+      "asset": "GFX\\items\\key.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 303,
+      "text": "\tit = CreateItemTemplate(\"Wallet\",\"wallet\", \"GFX\\items\\wallet.b3d\", \"GFX\\items\\INVwallet.jpg\", \"\", 0.0005,\"\",\"\",1) : it\\sound = 2",
+      "asset": "GFX\\items\\wallet.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 305,
+      "text": "\tCreateItemTemplate(\"SCP-427\",\"scp427\",\"GFX\\items\\427.b3d\",\"GFX\\items\\INVscp427.jpg\", \"\", 0.001)",
+      "asset": "GFX\\items\\427.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 306,
+      "text": "\tit = CreateItemTemplate(\"Upgraded pill\", \"scp500death\", \"GFX\\items\\pill.b3d\", \"GFX\\items\\INVpill.jpg\", \"\", 0.0001) : it\\sound = 2",
+      "asset": "GFX\\items\\pill.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 308,
+      "text": "\tit = CreateItemTemplate(\"Pill\", \"pill\", \"GFX\\items\\pill.b3d\", \"GFX\\items\\INVpillwhite.jpg\", \"\", 0.0001) : it\\sound = 2",
+      "asset": "GFX\\items\\pill.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 311,
+      "text": "\tit = CreateItemTemplate(\"Sticky Note\", \"paper\", \"GFX\\items\\note.x\", \"GFX\\items\\INVnote2.jpg\", \"GFX\\items\\note682.jpg\", 0.0025) : it\\sound = 0",
+      "asset": "GFX\\items\\note.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 312,
+      "text": "\tit = CreateItemTemplate(\"The Modular Site Project\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docMSP.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 314,
+      "text": "\tit = CreateItemTemplate(\"Research Sector-02 Scheme\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\docmap.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 316,
+      "text": "\tit = CreateItemTemplate(\"Document SCP-427\", \"paper\", \"GFX\\items\\paper.x\", \"GFX\\items\\INVpaper.jpg\", \"GFX\\items\\doc427.jpg\", 0.003) : it\\sound = 0",
+      "asset": "GFX\\items\\paper.x",
+      "ext": "x"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 1906,
+      "text": "\t\t\td\\obj = LoadMesh_Strict(\"GFX\\map\\elevatordoor.b3d\")",
+      "asset": "GFX\\map\\elevatordoor.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 2020,
+      "text": "\t\t\td\\DoorHitOBJ = LoadMesh_Strict(\"GFX\\doorhit.b3d\",d\\frameobj)",
+      "asset": "GFX\\doorhit.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 3563,
+      "text": "\t\t\t\t\te\\room\\Objects[3] = LoadAnimMesh_Strict(\"GFX\\npcs\\205_demon1.b3d\")",
+      "asset": "GFX\\npcs\\205_demon1.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 3567,
+      "text": "\t\t\t\t\te\\room\\Objects[4] = LoadAnimMesh_Strict(\"GFX\\npcs\\205_demon2.b3d\")",
+      "asset": "GFX\\npcs\\205_demon2.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 3571,
+      "text": "\t\t\t\t\te\\room\\Objects[5] = LoadAnimMesh_Strict(\"GFX\\npcs\\205_demon3.b3d\")",
+      "asset": "GFX\\npcs\\205_demon3.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 3575,
+      "text": "\t\t\t\t\te\\room\\Objects[6] = LoadAnimMesh_Strict(\"GFX\\npcs\\205_woman.b3d\")",
+      "asset": "GFX\\npcs\\205_woman.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/Main.bb",
+      "line": 3650,
+      "text": "\t\t\t\t\te\\room\\Objects[0] = LoadMesh_Strict(\"GFX\\map\\dimension1499\\1499plane.b3d\")",
+      "asset": "GFX\\map\\dimension1499\\1499plane.b3d",
+      "ext": "b3d"
+    },
+    {
+      "file": "../scpcb/TestLoadRMesh.bb",
+      "line": 70,
+      "text": "Local mesh = LoadRMesh(\"GFX/map/173.rmesh\", rt)",
+      "asset": "GFX/map/173.rmesh",
+      "ext": "rmesh"
+    }
+  ],
+  "dynamicCalls": [
+    {
+      "file": "../scpcb/Map Creator/window3d.bb",
+      "line": 892,
+      "fn": "LoadMesh",
+      "arg": "file",
+      "text": "\tp\\obj = LoadMesh(file)"
+    },
+    {
+      "file": "../scpcb/Save.bb",
+      "line": 671,
+      "fn": "LoadAnimMesh_Strict",
+      "arg": "n\\Model",
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(n\\Model)"
+    },
+    {
+      "file": "../scpcb/Save.bb",
+      "line": 1506,
+      "fn": "LoadAnimMesh_Strict",
+      "arg": "n\\Model",
+      "text": "\t\t\tn\\obj = LoadAnimMesh_Strict(n\\Model)"
+    },
+    {
+      "file": "../scpcb/Converter.bb",
+      "line": 599,
+      "fn": "LoadAnimMesh",
+      "arg": "Stri",
+      "text": "\t\t\t\tmesh=LoadAnimMesh(Stri)"
+    },
+    {
+      "file": "../scpcb/Converter.bb",
+      "line": 633,
+      "fn": "LoadAnimMesh",
+      "arg": "Stri",
+      "text": "\tmesh=LoadAnimMesh(Stri)"
+    },
+    {
+      "file": "../scpcb/StrictLoads.bb",
+      "line": 301,
+      "fn": "LoadMesh_Strict",
+      "arg": "File$",
+      "text": "Function LoadMesh_Strict(File$,parent=0)"
+    },
+    {
+      "file": "../scpcb/StrictLoads.bb",
+      "line": 303,
+      "fn": "LoadMesh",
+      "arg": "File$",
+      "text": "\ttmp = LoadMesh(File$, parent)"
+    },
+    {
+      "file": "../scpcb/StrictLoads.bb",
+      "line": 308,
+      "fn": "LoadAnimMesh_Strict",
+      "arg": "File$",
+      "text": "Function LoadAnimMesh_Strict(File$,parent=0)"
+    },
+    {
+      "file": "../scpcb/StrictLoads.bb",
+      "line": 311,
+      "fn": "LoadAnimMesh",
+      "arg": "File$",
+      "text": "\ttmp = LoadAnimMesh(File$, parent)"
+    },
+    {
+      "file": "../scpcb/MapSystem.bb",
+      "line": 55,
+      "fn": "LoadAnimMesh_Strict",
+      "arg": "file",
+      "text": "\tLocal map=LoadAnimMesh_Strict(file)"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 40,
+      "fn": "LoadMesh",
+      "arg": "objpath",
+      "text": "\tIf it\\obj = 0 Then; it\\obj = LoadMesh(objpath)"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 42,
+      "fn": "LoadAnimMesh_Strict",
+      "arg": "objpath",
+      "text": "\t\t\tit\\obj = LoadAnimMesh_Strict(objpath)"
+    },
+    {
+      "file": "../scpcb/Items.bb",
+      "line": 45,
+      "fn": "LoadMesh_Strict",
+      "arg": "objpath",
+      "text": "\t\t\tit\\obj = LoadMesh_Strict(objpath)"
+    }
+  ]
+}

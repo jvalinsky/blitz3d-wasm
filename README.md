@@ -11,7 +11,7 @@ A Swift-based compiler that translates Blitz3D BASIC to WebAssembly for browser 
 ## 📌 Source Of Truth (Plans + Status)
 
 - **Plan index**: `plan/README.md`
-- **SCPCB Web Port (Track B execution checklists)**: `plan/scpcb-web-track-b/README.md`
+- **SCPCB Web Port (Track B execution checklists)**: `plan/00_GLOBAL_PLAN.md`
 - **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
 - **Docs catalog**: `docs/DOCS_CATALOG.md`
 
@@ -149,7 +149,7 @@ blitz3d-wasm/
 │   └── SMPK_SYSTEM.md
 └── plan/                       # Implementation phases
     ├── README.md               # Plan index
-    └── scpcb-web-track-b/      # SCPCB web port execution plans
+    └── subplans/              # Global plan subplans (01-08)
 ```
 
 ## 🗺️ Key Entry Points

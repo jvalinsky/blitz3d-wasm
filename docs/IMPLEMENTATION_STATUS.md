@@ -58,7 +58,7 @@ For simple demos, `Sources/Runtime/thin/runtime.js` (~500 lines) provides:
 
 ### Web Port Progress (Track B)
 
-See `plan/scpcb-web-track-b/README.md` for execution checklists:
+See `plan/00_GLOBAL_PLAN.md` for execution checklists:
 
 - [x] Asset pipeline (B3D/X/RMESH → SMPK)
 - [x] Path aliasing for legacy paths
@@ -143,7 +143,7 @@ deno task memleak:scpcb:churn # SCPCB-specific validation
 
 ## Next Steps
 
-See `plan/scpcb-web-track-b/` for detailed execution plans:
+See `plan/subplans/` for detailed execution plans:
 
 1. Complete SMPK room loading integration
 2. Audio feature parity

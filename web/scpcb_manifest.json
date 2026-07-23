@@ -1118,6 +1118,7 @@
       "assets/GFX/sneakicon.png",
       "assets/GFX/spark.jpg",
       "assets/GFX/sprinticon.png",
+      "assets/SFX/.DS_Store",
       "assets/SFX/Alarm/Alarm.ogg",
       "assets/SFX/Alarm/Alarm2_1.ogg",
       "assets/SFX/Alarm/Alarm2_10.ogg",
@@ -2052,7 +2053,7 @@
     },
     {
       "path": "assets/GFX/.DS_Store",
-      "size": 6148
+      "size": 8196
     },
     {
       "path": "assets/GFX/173box.smpk",
@@ -6423,6 +6424,10 @@
       "size": 11797
     },
     {
+      "path": "assets/SFX/.DS_Store",
+      "size": 8196
+    },
+    {
       "path": "assets/SFX/Alarm/Alarm.ogg",
       "size": 37874
     },
@@ -10016,7 +10021,7 @@
     },
     {
       "path": "scpcb.wasm",
-      "size": 3551528,
+      "size": 2037879,
       "type": "wasm"
     }
   ]

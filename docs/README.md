@@ -12,7 +12,7 @@
 
 - **Compiler status + metrics**: `COMPILER_STATUS_ANALYSIS.md`
 - **Project plan index**: `../plan/README.md`
-- **SCPCB web port execution (Track B)**: `../plan/scpcb-web-track-b/README.md`
+- **SCPCB web port execution (Track B)**: `../plan/00_GLOBAL_PLAN.md`
  - **Docs catalog (what to read next)**: `DOCS_CATALOG.md`
 
 The compiler successfully translates Blitz3D BASIC to WebAssembly. Recent achievements include:
@@ -57,7 +57,7 @@ These documents analyze the target game for porting:
 
 ### Implementation Plans
 - `../plan/README.md` - Plan index
-- `../plan/scpcb-web-track-b/README.md` - Track B execution checklists
+- `../plan/00_GLOBAL_PLAN.md` - Track B execution checklists
 - [ASSET_PIPELINE.md](ASSET_PIPELINE.md) - Asset handling strategy
 
 ## Recent Achievements

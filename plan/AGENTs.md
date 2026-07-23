@@ -2,26 +2,22 @@
 
 Implementation roadmaps and phase plans.
 
-## Current Phases
+**Canonical entry point**: `00_GLOBAL_PLAN.md` (vision, architecture, Phase A/B/C roadmap, milestones, open decisions). Task-level checklists live in `subplans/01…08`.
 
-| Track | Location | Status |
-|------:|----------|--------|
-| A | `ACTIVE/` | Active workstreams |
-| B | `scpcb-web-track-b/` | Active (SCPCB web port checklists) |
-| — | `COMPLETED/` | Completed plan snapshots |
-| — | `ARCHIVED/` | Historical/legacy plan snapshots |
+## Layout
 
-## Long-term Plans
+| Location | Status |
+|----------|--------|
+| `00_GLOBAL_PLAN.md` | Canonical master plan (2026-07-22) |
+| `subplans/` | Active subplans 01–08 (compiler, Swift engine, browser shim, assets, SCPCB integration, testing, perf/deploy, native host) |
+| `native-swift-wasmkit/` | Optional-track detail plans (wrapped by `subplans/08_native_host.md`) |
+| `compiler-runtime-comparison-2026-02-01/` | Reference analysis (read-only) |
+| `REFERENCE/` | Architecture decisions, debug patterns, legacy SCPCB strategy |
+| `COMPLETED/` | Completed plan snapshots |
+| `ARCHIVED/` | Superseded plans — incl. `2026-07-22-consolidation/` (former `ACTIVE/`, `scpcb-web-track-b/`, root fix plans) |
+| `archive/` | Old dated plans |
 
-- `REFERENCE/SCPCB_STRATEGY/SCPCB_FULL_IMPLEMENTATION_PLAN.md` — Legacy comprehensive SCPCB strategy (reference)
-- `ARCHIVED/legacy-scpcb/` — Superseded SCPCB deployment/technical plans (historical reference)
-- `ARCHIVED/legacy-phases/` — Original phase plan set (historical reference)
-
-## Archived
-
-Old dated plans in `archive/`.
-
-## 2026-02-02 note
+## Notes
 
 - BB→WASM smoke tests live at `Tests/deno_smoke/` and are executed by `Tools/tests/bb_deno_compile_and_run_smoke.test.ts`.
-- Web “safe runner” execution (Worker + watchdog timeout) is now the default for interpreter-style demos.
+- Web "safe runner" execution (Worker + watchdog timeout) is the default for interpreter-style demos.

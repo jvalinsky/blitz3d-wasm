@@ -104,7 +104,7 @@ blitz3d-wasm/
 │
 ├── plan/                  # Implementation phases
 │   ├── README.md          # Plan index
-│   └── scpcb-web-track-b/ # SCPCB web port execution plans
+│   └── subplans/          # Global plan subplans (01-08)
 │
 └── Examples/              # Demo projects
 ```
@@ -347,7 +347,7 @@ deno task memleak:scpcb:churn -- --wasm Main.leaktest.wasm --export "__LeakTestS
 ## Source of Truth
 
 - **Plan index**: `plan/README.md`
-- **SCPCB web port (Track B)**: `plan/scpcb-web-track-b/README.md`
+- **SCPCB web port (Track B)**: `plan/00_GLOBAL_PLAN.md`
 - **Compiler status + metrics**: `docs/COMPILER_STATUS_ANALYSIS.md`
 
 ## Breaking Changes (January 2026)

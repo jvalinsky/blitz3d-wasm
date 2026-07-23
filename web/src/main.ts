@@ -4,7 +4,6 @@ import { Blitz3DCore } from "./runtime/core.ts";
 import { Blitz3DAudio } from "./runtime/audio.ts";
 import { Blitz3DGraphics } from "./runtime/graphics/index.ts";
 import { Blitz3DFileIO } from "./runtime/fileio.ts";
-import { initDebugOverlay, DebugOverlay } from "./runtime/debug_overlay.ts";
 import { initCmdBuf } from "./shared/command_buffer.ts";
 import { assertCmdBufAbi } from "./shared/cmdbuf_abi.ts";
 import { EntityTableView } from "./shared/entity_table.ts";
@@ -34,7 +33,6 @@ const BOOT_ASSET_GROUP = "boot";
 const LOADER_BUILD_ID = "2026-01-29.1";
 
 let currentRuntime: { dispose: () => void } | null = null;
-let currentDebugOverlay: DebugOverlay | null = null;
 let unloadHookInstalled = false;
 let currentHudCancel: (() => void) | null = null;
 let currentWorker: Worker | null = null;
@@ -130,7 +128,6 @@ const getUrlFlags = () => {
   return {
     debug: params.has("debug"),
     debugHud: params.get("debughud") === "1" || params.has("debughud"),
-    debugOverlay: params.get("debugoverlay") === "1" || params.has("debugoverlay"),
     worker: params.get("worker") === "1" || params.has("worker"),
     // Worker UX controls:
     // - `?allowmain=1`: show buttons that call `Main()` (can hang forever).
@@ -1502,12 +1499,6 @@ async function init() {
     );
   } else {
     console.warn("Graphics init3D skipped (nogl/safe)");
-  }
-
-  // Initialize debug overlay if requested
-  if (flags.debugOverlay || flags.debugHud) {
-    currentDebugOverlay = initDebugOverlay(graphics, core, fileIO, true);
-    console.log("Debug overlay initialized (F3 to toggle)");
   }
 
   // Restore saved games from IndexedDB
@@ -3374,11 +3365,6 @@ async function init() {
         } catch { }
         try {
           uninstallOnscreen();
-        } catch { }
-        // Clean up debug overlay
-        try {
-          currentDebugOverlay?.dispose();
-          currentDebugOverlay = null;
         } catch { }
       },
     };

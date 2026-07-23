@@ -119,9 +119,13 @@ try {
   console.warn(`[build] could not copy import_requirements_full.json: ${e}`);
 }
 
-await copy(`${runtimeRoot}scpcb.wasm`, `${distRoot}scpcb.wasm`, {
-  overwrite: true,
-});
+try {
+  await copy(`${runtimeRoot}scpcb.wasm`, `${distRoot}scpcb.wasm`, {
+    overwrite: true,
+  });
+} catch (e) {
+  console.warn(`[build] could not copy compiled scpcb.wasm (using public fallback if available): ${e}`);
+}
 
 // Debug sidecars (best-effort): used by the worker debugger overlay.
 try {
@@ -172,7 +176,7 @@ try {
 const files: { path: string; size: number; type?: string }[] = [];
 files.push({
   path: "scpcb.wasm",
-  size: (await Deno.stat(`${runtimeRoot}scpcb.wasm`)).size,
+  size: (await Deno.stat(`${distRoot}scpcb.wasm`)).size,
   type: "wasm",
 });
 

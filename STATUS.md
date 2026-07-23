@@ -54,7 +54,7 @@ Demonstrates:
 ## Source of Truth
 
 - **Plan index**: `plan/README.md`
-- **SCPCB web port**: `plan/scpcb-web-track-b/README.md`
+- **SCPCB web port**: `plan/00_GLOBAL_PLAN.md`
 - **Compiler status**: `docs/COMPILER_STATUS_ANALYSIS.md`
 
 ## Recent Achievements

@@ -4,7 +4,7 @@ Created: 2026-02-03
 
 Goal: run compiled BB→WASM **natively on macOS** (no browser) using **WasmKit** as the runtime, with a minimal **AppKit + MetalKit** host created via **SwiftPM** (no Xcode project required).
 
-This is a *host/runner* plan: it does not replace Track B (`plan/scpcb-web-track-b/`) or the web runtime. It adds a native execution/debug target that:
+This is a *host/runner* plan: it does not replace Track B (`plan/subplans/`) or the web runtime. It adds a native execution/debug target that:
 - loads `.wasm`,
 - provides the required imports (filesystem/input/audio/render submission),
 - drives the update loop at ~60Hz, and

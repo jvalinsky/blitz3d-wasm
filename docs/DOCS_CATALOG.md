@@ -15,7 +15,7 @@ If you only read one page, start with:
 - `BUILD.md`, `BUILD_DOCKER.md` — Build workflows.
 - `BROWSER_TEST_README.md`, `browser_tests.js` — Browser testing notes.
 - `STATUS.md`, `CHANGELOG.md` — Status and change history.
-- `NEXT_STEPS.md`, `ROADMAP_TO_BROWSER.md` — High-level roadmap.
+- `plan/00_GLOBAL_PLAN.md` — High-level roadmap (former root roadmaps archived in `plan/ARCHIVED/2026-07-22-consolidation/root-plans/`).
 - `STACK_VALIDATOR_INTEGRATION.md`, `STACK_BALANCING_*` — WASM stack validation/balancing work.
 - `*_SUMMARY.md`, `*_ANALYSIS.md` — Session/triage summaries and investigations.
 
@@ -71,8 +71,8 @@ If you only read one page, start with:
 ## `plan/` (execution plans)
 
 - `plan/README.md` — Plan hub.
-- `plan/scpcb-web-track-b/README.md` — Track B execution plan (browser SCPCB port).
-- `plan/ACTIVE/` — Current active workstreams.
+- `plan/00_GLOBAL_PLAN.md` — Track B execution plan (browser SCPCB port).
+- `plan/subplans/` — Current active workstreams.
 - `plan/COMPLETED/` and `plan/ARCHIVED/` — Historical plan snapshots.
 
 ## `notes/` (working notes)

@@ -42,7 +42,7 @@ This collection contains strategic planning documents for implementing SCP: Cont
 - User interface considerations
 
 ### 4. Web Track B Implementation
-**Directory**: `../../scpcb-web-track-b/`
+**Directory**: `../../ARCHIVED/2026-07-22-consolidation/scpcb-web-track-b/`
 **Status**: Active development
 **Focus Areas**:
 - Real-time debugging and profiling

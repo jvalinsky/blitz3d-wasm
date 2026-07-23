@@ -21,7 +21,7 @@
     "test:deno": "deno test --allow-read --allow-write=/tmp --allow-run=deno Tools/tests",
     "test:web:unit": "deno test --allow-read web/src/runtime/runtime.test.ts",
     "test:web:interpreter": "deno test --allow-read --allow-write --allow-env --allow-net --allow-run --allow-sys web/interpreter_browser.test.ts",
-    "test:web:build": "cd web && deno task build && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno run -A Tools/validate_smpk_material_textures.ts dist && deno task dist:report",
+    "test:web:build": "cd web && deno task build && cd .. && deno run -A Tools/validate_no_source_models.ts --ban b3d,x,rmesh dist dist/scpcb_manifest.json && deno run -A Tools/validate_manifest_files.ts dist dist/scpcb_manifest.json && deno run -A Tools/validate_smpk_material_textures.ts dist",
     "test:wasm": "deno run -A browser_tests.js",
     "test:swift": "swift test",
     "test:all": "deno task test:swift && deno task test:deno && deno task test:web:build && deno task test:wasm && deno task engine:build",

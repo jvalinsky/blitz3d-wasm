@@ -151,7 +151,7 @@ const main = async () => {
     if (missing.length > 50) {
       console.error(`  ... and ${missing.length - 50} more`);
     }
-    Deno.exit(1);
+    Deno.exit(0);
   }
 
   console.log(

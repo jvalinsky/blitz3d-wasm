@@ -3,20 +3,20 @@ name: Nightly Performance Tests
 on:
   schedule:
     # Run nightly at 2 AM UTC to avoid peak times
-    - cron: '0 2 * * *'
+    - cron: "0 2 * * *"
   workflow_dispatch:
     inputs:
       extended_tests:
-        description: 'Run extended test suite'
+        description: "Run extended test suite"
         required: false
-        default: 'false'
+        default: "false"
         type: boolean
 
 env:
   # Use specific versions for consistency
-  SWIFT_VERSION: '5.9'
-  DENO_VERSION: 'v2.x'
-  NODE_VERSION: '20'
+  SWIFT_VERSION: "5.9"
+  DENO_VERSION: "v2.x"
+  NODE_VERSION: "20"
 
 jobs:
   # Extended performance benchmarks
@@ -26,119 +26,119 @@ jobs:
     if: github.event.inputs.extended_tests == 'true' || github.event_name == 'schedule'
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Swift
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: ${{ env.SWIFT_VERSION }}
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: ${{ env.SWIFT_VERSION }}
 
-    - name: Setup Deno
-      uses: denoland/setup-deno@v2
-      with:
-        deno-version: ${{ env.DENO_VERSION }}
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
-    - name: Cache all dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/deno
-          ~/.npm
-          .build
-        key: ${{ runner.os }}-nightly-${{ hashFiles('deno.lock', 'Package.resolved', 'package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-nightly-
-          ${{ runner.os }}-deps-
+      - name: Cache all dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+            ~/.npm
+            .build
+          key: ${{ runner.os }}-nightly-${{ hashFiles('deno.lock', 'Package.resolved', 'package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nightly-
+            ${{ runner.os }}-deps-
 
-    - name: Build release version
-      run: |
-        swift build -c release
-        
-    - name: Run extended memory leak tests
-      run: |
-        echo "=== Running extended memory leak tests ==="
-        
-        # Run comprehensive leak check with more cycles
-        deno run -A --node-modules-dir --v8-flags=--expose-gc \
-          Tools/memleak/leakcheck.ts \
-          --cycles 10 \
-          --settle-ms 10 \
-          --fail-on-growth-bytes 52428800 \
-          --verbose
+      - name: Build release version
+        run: |
+          swift build -c release
 
-    - name: Run WebGPU extended tests (if available)
-      run: |
-        echo "=== Running WebGPU extended tests ==="
-        
-        # Check if WebGPU is available
-        if deno run --unstable-webgpu --check=/dev/null 2>/dev/null; then
-          deno run -A --unstable-webgpu --v8-flags=--expose-gc \
-            Tools/memleak/webgpu_smoke.ts \
-            --iterations 100 \
-            --buffers 500 \
-            --textures 100 \
-            --fail-on-growth-bytes 104857600 \
-            --strict-queue \
-            --verbose || echo "WebGPU tests failed (possibly expected in CI)"
-        else
-          echo "WebGPU not available, skipping extended GPU tests"
-        fi
+      - name: Run extended memory leak tests
+        run: |
+          echo "=== Running extended memory leak tests ==="
 
-    - name: Run SCPCB extended churn test
-      run: |
-        echo "=== Running SCPCB extended churn test ==="
-        
-        # Compile SCPCB leak test if source exists
-        if [ -f Tools/memleak/scpcb_leaktest.bb ]; then
-          .build/debug/blitz3d-wasm Tools/memleak/scpcb_leaktest.bb -o Main.leaktest.wasm
-          
-          # Run extended churn test
-          deno run -A --sloppy-imports --node-modules-dir --v8-flags=--expose-gc \
-            Tools/memleak/scpcb_churn.ts \
-            --wasm Main.leaktest.wasm \
-            --steps 5000 \
-            --check-every 100 \
+          # Run comprehensive leak check with more cycles
+          deno run -A --node-modules-dir --v8-flags=--expose-gc \
+            Tools/memleak/leakcheck.ts \
+            --cycles 10 \
+            --settle-ms 10 \
             --fail-on-growth-bytes 52428800 \
-            --wasm-fail-on-growth-bytes 134217728 \
-            --runtime-logs \
             --verbose
-        else
-          echo "SCPCB leak test source not found, skipping"
-        fi
 
-    - name: System performance metrics
-      run: |
-        echo "=== System Performance Metrics ==="
-        echo "CPU Info:"
-        cat /proc/cpuinfo | grep "model name" | head -1
-        echo ""
-        echo "Memory Info:"
-        free -h
-        echo ""
-        echo "Disk Usage:"
-        df -h /
-        echo ""
-        
-        # Deno version and V8 info
-        deno --version
-        echo ""
-        echo "Swift version:"
-        swift --version
+      - name: Run WebGPU extended tests (if available)
+        run: |
+          echo "=== Running WebGPU extended tests ==="
 
-    - name: Upload extended test results
-      uses: actions/upload-artifact@v4
-      with:
-        name: extended-performance-results-${{ github.run_number }}
-        path: |
-          performance-results.json
-          nightly-metrics.txt
-        retention-days: 30
+          # Check if WebGPU is available
+          if deno run --unstable-webgpu --check=/dev/null 2>/dev/null; then
+            deno run -A --unstable-webgpu --v8-flags=--expose-gc \
+              Tools/memleak/webgpu_smoke.ts \
+              --iterations 100 \
+              --buffers 500 \
+              --textures 100 \
+              --fail-on-growth-bytes 104857600 \
+              --strict-queue \
+              --verbose || echo "WebGPU tests failed (possibly expected in CI)"
+          else
+            echo "WebGPU not available, skipping extended GPU tests"
+          fi
+
+      - name: Run SCPCB extended churn test
+        run: |
+          echo "=== Running SCPCB extended churn test ==="
+
+          # Compile SCPCB leak test if source exists
+          if [ -f Tools/memleak/scpcb_leaktest.bb ]; then
+            .build/debug/blitz3d-wasm Tools/memleak/scpcb_leaktest.bb -o Main.leaktest.wasm
+
+            # Run extended churn test
+            deno run -A --sloppy-imports --node-modules-dir --v8-flags=--expose-gc \
+              Tools/memleak/scpcb_churn.ts \
+              --wasm Main.leaktest.wasm \
+              --steps 5000 \
+              --check-every 100 \
+              --fail-on-growth-bytes 52428800 \
+              --wasm-fail-on-growth-bytes 134217728 \
+              --runtime-logs \
+              --verbose
+          else
+            echo "SCPCB leak test source not found, skipping"
+          fi
+
+      - name: System performance metrics
+        run: |
+          echo "=== System Performance Metrics ==="
+          echo "CPU Info:"
+          cat /proc/cpuinfo | grep "model name" | head -1
+          echo ""
+          echo "Memory Info:"
+          free -h
+          echo ""
+          echo "Disk Usage:"
+          df -h /
+          echo ""
+
+          # Deno version and V8 info
+          deno --version
+          echo ""
+          echo "Swift version:"
+          swift --version
+
+      - name: Upload extended test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: extended-performance-results-${{ github.run_number }}
+          path: |
+            performance-results.json
+            nightly-metrics.txt
+          retention-days: 30
 
   # Cross-platform compatibility tests
   cross-platform:
@@ -147,63 +147,63 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Deno
-      uses: denoland/setup-deno@v2
-      with:
-        deno-version: ${{ env.DENO_VERSION }}
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
 
-    - name: Setup Swift (non-Windows)
-      if: runner.os != 'Windows'
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: ${{ env.SWIFT_VERSION }}
+      - name: Setup Swift (non-Windows)
+        if: runner.os != 'Windows'
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: ${{ env.SWIFT_VERSION }}
 
-    - name: Setup Node.js (Windows fallback)
-      if: runner.os == 'Windows'
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ env.NODE_VERSION }}
+      - name: Setup Node.js (Windows fallback)
+        if: runner.os == 'Windows'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/deno
-          .build
-        key: ${{ runner.os }}-cross-${{ hashFiles('deno.lock', 'Package.resolved') }}
-        restore-keys: |
-          ${{ runner.os }}-cross-
-          ${{ runner.os }}-
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+            .build
+          key: ${{ runner.os }}-cross-${{ hashFiles('deno.lock', 'Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-cross-
+            ${{ runner.os }}-
 
-    - name: Run Deno compatibility tests
-      run: |
-        deno task test:deno
-        deno task memleak:scan
-        deno run -A Tools/memleak/leakcheck.ts --cycles 2
+      - name: Run Deno compatibility tests
+        run: |
+          deno task test:deno
+          deno task memleak:scan
+          deno run -A Tools/memleak/leakcheck.ts --cycles 2
 
-    - name: Build and test Swift (non-Windows)
-      if: runner.os != 'Windows'
-      run: |
-        swift build -c release
-        swift test
+      - name: Build and test Swift (non-Windows)
+        if: runner.os != 'Windows'
+        run: |
+          swift build -c release
+          swift test
 
-    - name: Platform-specific notes
-      run: |
-        echo "Platform: ${{ runner.os }}"
-        echo "Deno version:"
-        deno --version
-        
-        if command -v swift &> /dev/null; then
-          echo "Swift version:"
-          swift --version
-        else
-          echo "Swift not available on this platform"
-        fi
+      - name: Platform-specific notes
+        run: |
+          echo "Platform: ${{ runner.os }}"
+          echo "Deno version:"
+          deno --version
+
+          if command -v swift &> /dev/null; then
+            echo "Swift version:"
+            swift --version
+          else
+            echo "Swift not available on this platform"
+          fi
 
   # Security vulnerability monitoring
   security-monitoring:
@@ -211,29 +211,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Run dependency security audit
-      run: |
-        echo "=== Checking Deno dependencies ==="
-        deno info --json | deno run -A --allow-read --allow-net security-check.ts || echo "Deno security check completed"
-        
-        echo "=== Checking for outdated dependencies ==="
-        # Note: This would need custom implementation for Deno
-        echo "Manual dependency review recommended"
+      - name: Run dependency security audit
+        run: |
+          echo "=== Checking Deno dependencies ==="
+          deno info --json | deno run -A --allow-read --allow-net security-check.ts || echo "Deno security check completed"
 
-    - name: Run CodeQL analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        languages: javascript, typescript, swift
+          echo "=== Checking for outdated dependencies ==="
+          # Note: This would need custom implementation for Deno
+          echo "Manual dependency review recommended"
 
-    - name: Check for secrets in recent commits
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        base: ${{ github.event_name == 'schedule' && 'HEAD~7' || 'main' }}
-        head: HEAD
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          languages: javascript, typescript, swift
+
+      - name: Check for secrets in recent commits
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event_name == 'schedule' && 'HEAD~7' || 'main' }}
+          head: HEAD
 
   # Performance regression detection
   regression-detection:
@@ -242,72 +242,72 @@ jobs:
     if: github.event_name == 'schedule'
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Need full history for comparison
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Need full history for comparison
 
-    - name: Setup Deno
-      uses: denoland/setup-deno@v2
-      with:
-        deno-version: ${{ env.DENO_VERSION }}
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: ${{ env.DENO_VERSION }}
 
-    - name: Setup Swift
-      uses: swift-actions/setup-swift@v2
-      with:
-        swift-version: ${{ env.SWIFT_VERSION }}
+      - name: Setup Swift
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: ${{ env.SWIFT_VERSION }}
 
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/deno
-          .build
-        key: ${{ runner.os }}-regression-${{ hashFiles('deno.lock', 'Package.resolved') }}
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/deno
+            .build
+          key: ${{ runner.os }}-regression-${{ hashFiles('deno.lock', 'Package.resolved') }}
 
-    - name: Build project
-      run: |
-        swift build -c release
+      - name: Build project
+        run: |
+          swift build -c release
 
-    - name: Run performance benchmarks
-      run: |
-        # Run benchmarks and capture metrics
-        deno run -A --node-modules-dir --v8-flags=--expose-gc \
-          Tools/memleak/leakcheck.ts \
-          --cycles 5 \
-          --settle-ms 5 \
-          --fail-on-growth-bytes 20971520 \
-          --verbose > performance-output.txt 2>&1
+      - name: Run performance benchmarks
+        run: |
+          # Run benchmarks and capture metrics
+          deno run -A --node-modules-dir --v8-flags=--expose-gc \
+            Tools/memleak/leakcheck.ts \
+            --cycles 5 \
+            --settle-ms 5 \
+            --fail-on-growth-bytes 20971520 \
+            --verbose > performance-output.txt 2>&1
 
-    - name: Compare with baseline
-      run: |
-        echo "=== Performance Comparison ==="
-        
-        # Extract key metrics from performance output
-        HEAP_START=$(grep "heapUsed:" performance-output.txt | head -1 | sed 's/.*heapUsed: \([0-9.]*\) B.*/\1/')
-        HEAP_END=$(grep "heapUsed:" performance-output.txt | tail -1 | sed 's/.*heapUsed: \([0-9.]*\) B.*/\1/')
-        
-        if [[ -n "$HEAP_START" && -n "$HEAP_END" ]]; then
-          HEAP_GROWTH=$((HEAP_END - HEAP_START))
-          echo "Heap growth: $HEAP_GROWTH bytes"
-          
-          # Set threshold for regression detection (e.g., 20MB)
-          REGRESSION_THRESHOLD=20971520
-          if [[ $HEAP_GROWTH -gt $REGRESSION_THRESHOLD ]]; then
-            echo "🚨 Performance regression detected: $HEAP_GROWTH bytes growth"
-            exit 1
+      - name: Compare with baseline
+        run: |
+          echo "=== Performance Comparison ==="
+
+          # Extract key metrics from performance output
+          HEAP_START=$(grep "heapUsed:" performance-output.txt | head -1 | sed 's/.*heapUsed: \([0-9.]*\) B.*/\1/')
+          HEAP_END=$(grep "heapUsed:" performance-output.txt | tail -1 | sed 's/.*heapUsed: \([0-9.]*\) B.*/\1/')
+
+          if [[ -n "$HEAP_START" && -n "$HEAP_END" ]]; then
+            HEAP_GROWTH=$((HEAP_END - HEAP_START))
+            echo "Heap growth: $HEAP_GROWTH bytes"
+
+            # Set threshold for regression detection (e.g., 20MB)
+            REGRESSION_THRESHOLD=20971520
+            if [[ $HEAP_GROWTH -gt $REGRESSION_THRESHOLD ]]; then
+              echo "🚨 Performance regression detected: $HEAP_GROWTH bytes growth"
+              exit 1
+            else
+              echo "✅ No significant performance regression detected"
+            fi
           else
-            echo "✅ No significant performance regression detected"
+            echo "Could not extract performance metrics"
           fi
-        else
-          echo "Could not extract performance metrics"
-        fi
 
-    - name: Upload regression results
-      uses: actions/upload-artifact@v4
-      with:
-        name: performance-regression-${{ github.run_number }}
-        path: |
-          performance-output.txt
-          regression-report.txt
-        retention-days: 90
+      - name: Upload regression results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-regression-${{ github.run_number }}
+          path: |
+            performance-output.txt
+            regression-report.txt
+          retention-days: 90

@@ -10,6 +10,36 @@
     "noImplicitAny": false
   },
   "nodeModulesDir": "auto",
+  "fmt": {
+    "exclude": [
+      ".claude/",
+      "three.min.js",
+      "dist/",
+      "docs/",
+      "node_modules/",
+      "web/public/vendor/",
+      "Sources/Runtime/modules/",
+      "Sources/Runtime/examples/",
+      "Sources/Runtime/thin/",
+      "Tests/IntegrationTests/",
+      "web-ide/dist/"
+    ]
+  },
+  "lint": {
+    "exclude": [
+      ".claude/",
+      "three.min.js",
+      "dist/",
+      "docs/",
+      "node_modules/",
+      "web/public/vendor/",
+      "Sources/Runtime/modules/",
+      "Sources/Runtime/examples/",
+      "Sources/Runtime/thin/",
+      "Tests/IntegrationTests/",
+      "web-ide/dist/"
+    ]
+  },
   "tasks": {
     "playwright:install": "PLAYWRIGHT_BROWSERS_PATH=.playwright npx playwright install chromium",
     "playwright:install:all": "PLAYWRIGHT_BROWSERS_PATH=.playwright npx playwright install",

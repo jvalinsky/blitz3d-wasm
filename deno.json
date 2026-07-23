@@ -22,7 +22,8 @@
       "Sources/Runtime/examples/",
       "Sources/Runtime/thin/",
       "Tests/IntegrationTests/",
-      "web-ide/dist/"
+      "web-ide/dist/",
+      "**/*.html"
     ]
   },
   "lint": {
@@ -37,7 +38,8 @@
       "Sources/Runtime/examples/",
       "Sources/Runtime/thin/",
       "Tests/IntegrationTests/",
-      "web-ide/dist/"
+      "web-ide/dist/",
+      "**/*.html"
     ]
   },
   "tasks": {

@@ -29,14 +29,16 @@ A small wrapper `.bb` that `Include`s SCPCB's `Main.bb` (pulling in mod includes
 
 ## Milestones & workstreams
 
-### A-M0 — Contract validation ⚠ current blocker
+### A-M0 — Contract validation ✅ done
 
 The shipped `scpcb.wasm` exports many SCPCB functions but **neither `Main`, `UpdateGame`, nor any `Web_*` entrypoints**. Nothing can boot until this lands.
 
 - [x] Write wrapper entry `.bb` (in-repo, versioned) with all six `Web_*` exports (2026-07-22: `Tools/scpcb_wrapper.bb`)
 - [x] Extend `Tools/compile_scpcb_main.ts` to compile the wrapper (2026-07-22: added `--wrapper` flag, Web_* export validation, removed stub aliases)
-- [x] CI gate (Deno test): `WebAssembly.Module.exports(dist/scpcb.wasm)` contains all required names + `__CmdBuf*` ABI globals (2026-07-22: `Tools/tests/scpcb_web_exports.test.ts` — passes on wrapper .bb source; WASM validation pending compiler crash fix)
+- [x] CI gate (Deno test): `WebAssembly.Module.exports(dist/scpcb.wasm)` contains all required names + `__CmdBuf*` ABI globals (2026-07-23: `Tools/tests/scpcb_web_exports.test.ts` — all 3 tests pass, including live WASM export validation, now that the wrapper actually builds; see below)
 - [x] Freeze export names + ABI version (log as deciduous decision, closes D2) (2026-07-22: decision node 8 in deciduous; `Tools/web_export_contract.ts` is the single source of truth)
+- [x] Fix compiler crash blocking the WASM build (2026-07-23): `Const C_WS_POPUP = $80000000` (a Windows API constant pulled in via SCPCB includes) lexes to the Swift `Int` 2147483648 — hex/binary literals are unsigned bit patterns and can exceed `Int32.max`. Reading that constant back as an identifier did `Int32(constValue)`, a trapping conversion, instead of `Int32(truncatingIfNeeded:)` like integer-literal codegen already used — SIGTRAP (`Fatal error: Not enough bits to represent the passed value`) in `ExpressionGeneration.generateWithInfo` (`.identifier` constant-read case). Fixed both this call site and the equivalent `DATA`-pool serialization in `ASTLowering.serializeDataPool` (same root cause, unreached until now). Regression tests: `Tests/CompilerTests/ConstantOverflowTests.swift`.
+- [x] Fix wrapper `Web_*` export-name mismatch (2026-07-23): the wrapper declared `Function Web_InitOnce%()` etc. with explicit `%` (Integer) suffixes, which the compiler faithfully carries into the *export name* (`Web_InitOnce%`, not `Web_InitOnce`) whenever a suffix is explicit in source — this only matters for `Web_*` because the frozen ABI (decision D2 / `Tools/web_export_contract.ts`) requires unsuffixed names. Dropped the suffixes in `Tools/scpcb_wrapper.bb`; return type still defaults to Integer so behavior is unchanged.
 
 ### A-M1 — Boot to menu without freezing
 

@@ -5,12 +5,12 @@
 ; This file is versioned in the blitz3d-wasm repo under Tools/.
 ;
 ; Entrypoint contract (frozen at A-M0, see plan/subplans/05_scpcb_integration.md):
-;   Web_InitOnce%()       — one-time startup, no blocking loops
-;   Web_EnterMenu%()      — enter menu mode
-;   Web_LeaveMenu%()      — leave menu mode
-;   Web_EnterGame%()      — enter gameplay mode
-;   Web_LeaveGame%()      — leave gameplay mode
-;   Web_Tick%(dt#)        — single-frame update dispatch
+;   Web_InitOnce()       — one-time startup, no blocking loops
+;   Web_EnterMenu()      — enter menu mode
+;   Web_LeaveMenu()      — leave menu mode
+;   Web_EnterGame()      — enter gameplay mode
+;   Web_LeaveGame()      — leave gameplay mode
+;   Web_Tick(dt#)        — single-frame update dispatch
 
 Include "Main.bb"
 
@@ -30,7 +30,7 @@ Global Web_RequestEnterMenu% = 0
 
 ; ── Web Entrypoints ─────────────────────────────────────────────
 
-Function Web_InitOnce%()
+Function Web_InitOnce()
     ; One-time startup.  Must NOT contain blocking loops
     ; (launcher, "press any key", wait-for-file spins).
     ; SCPCB global init happens via the Include chain above;
@@ -39,20 +39,20 @@ Function Web_InitOnce%()
     Return 1
 End Function
 
-Function Web_EnterMenu%()
+Function Web_EnterMenu()
     ; Enter menu mode.  JS preloads the "menu" asset group
     ; before calling this.
     WebMode = WEBMODE_MENU
     Return 1
 End Function
 
-Function Web_LeaveMenu%()
+Function Web_LeaveMenu()
     ; Tear down menu resources.  Called before transitioning
     ; out of menu mode (e.g. into game or loading).
     Return 1
 End Function
 
-Function Web_EnterGame%()
+Function Web_EnterGame()
     ; Enter gameplay mode.  JS preloads the room pack before
     ; calling this.  Calls SCPCB's InitNewGame() to set up
     ; player, camera, and game state.
@@ -61,14 +61,14 @@ Function Web_EnterGame%()
     Return 1
 End Function
 
-Function Web_LeaveGame%()
+Function Web_LeaveGame()
     ; Tear down gameplay resources and return to menu.
     NullGame()
     WebMode = WEBMODE_MENU
     Return 1
 End Function
 
-Function Web_Tick%(dt#)
+Function Web_Tick(dt#)
     ; Single-frame update dispatch.
     ; dt# = delta time in seconds (clamped by JS before calling).
     If WebMode = WEBMODE_MENU

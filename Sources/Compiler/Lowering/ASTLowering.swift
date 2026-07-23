@@ -266,7 +266,7 @@ public final class ASTLowering {
             offsets.append(buffer.count)
             switch value {
             case .integer(let v):
-                var val = Int32(v)
+                var val = Int32(truncatingIfNeeded: v)
                 buffer.append(Data(bytes: &val, count: 4))
             case .float(let v):
                 var val = Float32(v)

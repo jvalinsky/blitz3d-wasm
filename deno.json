@@ -25,7 +25,9 @@
       "web-ide/dist/",
       "visualization/",
       "**/*.html",
-      "**/*.svg"
+      "**/*.svg",
+      "**/*.md",
+      "**/*.css"
     ]
   },
   "lint": {
@@ -43,7 +45,9 @@
       "web-ide/dist/",
       "visualization/",
       "**/*.html",
-      "**/*.svg"
+      "**/*.svg",
+      "**/*.md",
+      "**/*.css"
     ]
   },
   "tasks": {

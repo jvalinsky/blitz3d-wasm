@@ -96,7 +96,8 @@ jobs:
 
           # Compile SCPCB leak test if source exists
           if [ -f Tools/memleak/scpcb_leaktest.bb ]; then
-            .build/debug/blitz3d-wasm Tools/memleak/scpcb_leaktest.bb -o Main.leaktest.wasm
+            # Build the compiler leaktest flavor
+            swift run -c release blitz3d-wasm Tools/memleak/scpcb_leaktest.bb -o Main.leaktest.wasm
 
             # Run extended churn test
             deno run -A --sloppy-imports --node-modules-dir --v8-flags=--expose-gc \

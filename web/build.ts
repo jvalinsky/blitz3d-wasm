@@ -180,7 +180,9 @@ try {
   }
 } catch (e) {
   if (e instanceof Deno.errors.NotFound) {
-    console.warn("[build] skipping Track B validation because scpcb.wasm was not found in dist.");
+    console.warn(
+      "[build] skipping Track B validation because scpcb.wasm was not found in dist.",
+    );
   } else {
     throw e;
   }
